@@ -14,7 +14,7 @@ class RainEffect(base_effect.Effect):
         self.group_by_y = {}
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by setting all characters y position to the input height and shuffling."""
+        """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""
 
         for character in self.characters:
             self.pending_chars.append(
