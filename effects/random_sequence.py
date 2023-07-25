@@ -1,7 +1,6 @@
 import random
 import time
 import utils.terminaloperations as tops
-from utils import utils
 from effects import base_effect
 
 
