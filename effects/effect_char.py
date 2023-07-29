@@ -120,3 +120,7 @@ class EffectCharacter:
         elif self.current_coord.row > self.target_coord.row:
             self.tweened_row -= self.row_delta
             self.current_coord.row = int(self.tweened_row)
+
+    def animation_completed(self) -> bool:
+        """Returns True if the character has reached its final position."""
+        return self.last_coord == self.final_coord
