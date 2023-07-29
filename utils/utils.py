@@ -1,29 +1,24 @@
-from dataclasses import dataclass
+from effects.effect_char import EffectCharacter
 
 
-@dataclass
-class Character:
-    """A character symbol and its coordinates, y as number of rows above the current cursor position."""
+def decompose_input(input_data: str) -> list[EffectCharacter]:
+    """Decomposes the output into a list of Character objects containing the symbol and its row/column coordinates
+    relative to the input input display location.
 
-    symbol: str
-    x: int
-    y: int
-
-
-def decompose_input(input_data: str) -> list[Character]:
-    """Decomposes the output into a list of Character objects containing the symbol and the relative position.
+    Coordinates are relative to the cursor row position at the time of execution. 1,1 is the bottom left corner of the row
+    above the cursor.
 
     Args:
         input_data (str): string from stdin
 
     Returns:
-        list[Character]: list of tuples containing Character objects
+        list[Character]: list EffectCharacter objects
     """
     output_lines = input_data.splitlines()
-    output_height = len(output_lines)
+    input_height = len(output_lines)
     output_characters = []
-    for y, line in enumerate(output_lines):
-        for x, symbol in enumerate(line):
+    for row, line in enumerate(output_lines):
+        for column, symbol in enumerate(line):
             if symbol != " ":
-                output_characters.append(Character(symbol, x + 1, output_height - y))
+                output_characters.append(EffectCharacter(symbol, column + 1, input_height - row))
     return output_characters
