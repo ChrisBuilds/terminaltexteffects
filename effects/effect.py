@@ -20,6 +20,8 @@ class Effect:
         ]
         self.input_height = len(input_data.splitlines())
         self.input_width = max([character.final_coord.column for character in self.characters])
+        self.output_area_top = min(self.terminal_height - 1, self.input_height)
+        "Distance to the top row of the adjusted output area. Top of the terminal if input is too long."
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
         self.completed_chars: list[EffectCharacter] = []
