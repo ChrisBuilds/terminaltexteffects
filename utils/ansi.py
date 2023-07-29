@@ -4,7 +4,7 @@
 class ANSIcodes:
     """ANSI escape codes for terminal formatting."""
 
-    def DEC_SAVE_CURSOR_POSITION(self) -> str:
+    def DEC_SAVE_CURSOR_POSITION() -> str:
         """Saves the cursor position using DEC sequence.
 
         Returns:
@@ -12,7 +12,7 @@ class ANSIcodes:
         """
         return "\0337"
 
-    def DEC_RESTORE_CURSOR_POSITION(self) -> str:
+    def DEC_RESTORE_CURSOR_POSITION() -> str:
         """Restores the cursor position using DEC sequence.
 
         Returns:
@@ -20,7 +20,7 @@ class ANSIcodes:
         """
         return "\0338"
 
-    def MOVE_CURSOR_UP(self, y: int) -> str:
+    def MOVE_CURSOR_UP(y: int) -> str:
         """Moves the cursor up y lines.
 
         Args:
@@ -31,7 +31,7 @@ class ANSIcodes:
         """
         return f"\033[{y}A"
 
-    def MOVE_CURSOR_TO_COLUMN(self, x: int) -> str:
+    def MOVE_CURSOR_TO_COLUMN(x: int) -> str:
         """Moves the cursor to the x column.
 
         Args:
@@ -42,7 +42,7 @@ class ANSIcodes:
         """
         return f"\033[{x}G"
 
-    def RESET_ALL(self) -> str:
+    def RESET_ALL() -> str:
         """Resets all formatting.
 
         Returns:
@@ -50,7 +50,7 @@ class ANSIcodes:
         """
         return "\033[0m"
 
-    def APPLY_BOLD(self) -> str:
+    def APPLY_BOLD() -> str:
         """Applies bold formatting.
 
         Returns:
@@ -58,7 +58,7 @@ class ANSIcodes:
         """
         return "\033[1m"
 
-    def APPLY_DIM(self) -> str:
+    def APPLY_DIM() -> str:
         """Applies dim formatting.
 
         Returns:
@@ -66,7 +66,7 @@ class ANSIcodes:
         """
         return "\033[2m"
 
-    def APPLY_ITALIC(self) -> str:
+    def APPLY_ITALIC() -> str:
         """Applies italic formatting.
 
         Returns:
@@ -74,7 +74,7 @@ class ANSIcodes:
         """
         return "\033[3m"
 
-    def APPLY_UNDERLINE(self) -> str:
+    def APPLY_UNDERLINE() -> str:
         """Applies underline formatting.
 
         Returns:
@@ -82,7 +82,7 @@ class ANSIcodes:
         """
         return "\033[4m"
 
-    def APPLY_BLINK(self) -> str:
+    def APPLY_BLINK() -> str:
         """Applies blink formatting.
 
         Returns:
@@ -90,7 +90,7 @@ class ANSIcodes:
         """
         return "\033[5m"
 
-    def APPLY_REVERSE(self) -> str:
+    def APPLY_REVERSE() -> str:
         """Applies reverse formatting.
 
         Returns:
@@ -98,7 +98,7 @@ class ANSIcodes:
         """
         return "\033[7m"
 
-    def APPLY_HIDDEN(self) -> str:
+    def APPLY_HIDDEN() -> str:
         """Applies hidden formatting.
 
         Returns:
@@ -106,8 +106,8 @@ class ANSIcodes:
         """
         return "\033[8m"
 
-    def APPLY_CROSSED_OUT(self) -> str:
-        """Applies crossed out formatting.
+    def APPLY_STRIKETHROUGH() -> str:
+        """Applies strikethrough formatting.
 
         Returns:
             str: ANSI escape code
