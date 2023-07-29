@@ -1,5 +1,5 @@
 """This module contains functions for terminal operations."""
-from utils.ansi import ANSIcodes
+from utils import ansicodes
 from effects.effect_char import EffectCharacter
 import shutil
 import sys
@@ -31,11 +31,11 @@ def print_character(character: EffectCharacter, clear_last: bool = False) -> Non
             symbol (str): the character symbol.
             row (int): the row position of the character.
             column (int): the column position of the character."""
-        sys.stdout.write(ANSIcodes.DEC_SAVE_CURSOR_POSITION())
-        sys.stdout.write(ANSIcodes.MOVE_CURSOR_UP(row))
-        sys.stdout.write(ANSIcodes.MOVE_CURSOR_TO_COLUMN(column))
+        sys.stdout.write(ansicodes.DEC_SAVE_CURSOR_POSITION())
+        sys.stdout.write(ansicodes.MOVE_CURSOR_UP(row))
+        sys.stdout.write(ansicodes.MOVE_CURSOR_TO_COLUMN(column))
         sys.stdout.write(symbol)
-        sys.stdout.write(ANSIcodes.DEC_RESTORE_CURSOR_POSITION())
+        sys.stdout.write(ansicodes.DEC_RESTORE_CURSOR_POSITION())
         sys.stdout.flush()
 
     move_and_print(character.symbol, character.current_coord.row, character.current_coord.column)
