@@ -1,13 +1,18 @@
 import random
 import time
 import utils.terminaloperations as tops
-from effects import base_effect
+from effects import effect
 
 
-class RandomSequence(base_effect.Effect):
+class RandomSequence(effect.Effect):
     """Prints the input data in a random sequence."""
 
     def __init__(self, input_data: str):
+        """Initializes the effect.
+
+        Args:
+            input_data (str): The input data.
+        """
         super().__init__(input_data)
 
     def run(self, rate: float = 0) -> None:
@@ -19,5 +24,5 @@ class RandomSequence(base_effect.Effect):
         self.prep_terminal()
         random.shuffle(self.characters)
         for character in self.characters:
-            tops.print_character_at_relative_position(character.symbol, character.x, character.y)
+            tops.print_character(character)
             time.sleep(rate)
