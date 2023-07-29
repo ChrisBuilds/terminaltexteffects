@@ -1,5 +1,6 @@
 """This module contains functions for terminal operations."""
-
+from utils.ansi import ANSIcodes
+from effects.effect_char import EffectCharacter
 import shutil
 import sys
 
@@ -14,26 +15,32 @@ def get_terminal_dimensions() -> tuple[int, int]:
     return terminal_width, terminal_height
 
 
-def print_character_at_relative_position(character: str, x: int, y: int) -> None:
-    """Moves the cursor to a relative position on the terminal window.
+def print_character(character: EffectCharacter, clear_last: bool = False) -> None:
+    """Moves the cursor on the terminal window and prints the character. Will optionally clear the last
+    location of the character.
 
     Args:
-        character (str): character to print
-        x (int): x position
-        y (int): y as number of rows above the current cursor position
+        character (EffectCharacter): EffectCharacter object
+        clear_last (bool, optional): Whether to clear the last character. Defaults to False.
     """
 
-    # save cursor position using DEC sequence
-    sys.stdout.write("\0337")
-    # move cursor y lines up
-    sys.stdout.write(f"\033[{y}A")
-    # move cursor to x column
-    sys.stdout.write(f"\033[{x}G")
-    # print character
-    sys.stdout.write(character)
-    # restore cursor position using DEC sequence
-    sys.stdout.write("\0338")
-    sys.stdout.flush()
+    def move_and_print(symbol, row, column) -> None:
+        """Handle managing the cursor and printing the character.
+
+        Attributes:
+            symbol (str): the character symbol.
+            row (int): the row position of the character.
+            column (int): the column position of the character."""
+        sys.stdout.write(ANSIcodes.DEC_SAVE_CURSOR_POSITION())
+        sys.stdout.write(ANSIcodes.MOVE_CURSOR_UP(row))
+        sys.stdout.write(ANSIcodes.MOVE_CURSOR_TO_COLUMN(column))
+        sys.stdout.write(symbol)
+        sys.stdout.write(ANSIcodes.DEC_RESTORE_CURSOR_POSITION())
+        sys.stdout.flush()
+
+    move_and_print(character.symbol, character.current_coord.row, character.current_coord.column)
+    if clear_last:
+        move_and_print(" ", character.last_coord.row, character.last_coord.column)
 
 
 def get_piped_input() -> str:
@@ -43,8 +50,7 @@ def get_piped_input() -> str:
         str: piped input
     """
     if not sys.stdin.isatty():
-        with sys.stdin as stdin:
-            input_data = sys.stdin.read()
-            return input_data
+        input_data = sys.stdin.read()
+        return input_data
     else:
         return ""
