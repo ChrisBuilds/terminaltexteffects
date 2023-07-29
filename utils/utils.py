@@ -3,7 +3,7 @@ from effects.effect_char import EffectCharacter
 
 def decompose_input(input_data: str) -> list[EffectCharacter]:
     """Decomposes the output into a list of Character objects containing the symbol and its row/column coordinates
-    relative to the input input display location.
+    relative to the input display location.
 
     Coordinates are relative to the cursor row position at the time of execution. 1,1 is the bottom left corner of the row
     above the cursor.
