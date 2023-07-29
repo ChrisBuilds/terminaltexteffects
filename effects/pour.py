@@ -2,7 +2,7 @@
 
 import time
 import utils.terminaloperations as tops
-from effects import base_effect
+from effects import effect
 from enum import Enum, auto
 
 
@@ -13,7 +13,7 @@ class PourDirection(Enum):
     RIGHT = auto()
 
 
-class PouringEffect(base_effect.Effect):
+class PouringEffect(effect.Effect):
     """Effect that pours the characters into position from the top, bottom, left, or right."""
 
     def __init__(self, input_data: str, pour_direction: PourDirection = PourDirection.DOWN):
@@ -23,32 +23,26 @@ class PouringEffect(base_effect.Effect):
     def prepare_data(self) -> None:
         """Prepares the data for the effect by sorting the characters by the pour direction."""
         sort_map = {
-            PourDirection.DOWN: lambda character: character.y,
-            PourDirection.UP: lambda character: -character.y,
-            PourDirection.LEFT: lambda character: character.x,
-            PourDirection.RIGHT: lambda character: -character.x,
+            PourDirection.DOWN: lambda character: character.final_coord.row,
+            PourDirection.UP: lambda character: -character.final_coord.row,
+            PourDirection.LEFT: lambda character: character.final_coord.column,
+            PourDirection.RIGHT: lambda character: -character.final_coord.column,
         }
         self.characters.sort(key=sort_map[self.pour_direction])
         for character in self.characters:
             if self.pour_direction == PourDirection.DOWN:
-                current_x = character.x
-                current_y = min(self.terminal_height - 1, self.input_height)
+                character.current_coord.column = character.final_coord.column
+                character.current_coord.row = self.output_area_top
             elif self.pour_direction == PourDirection.UP:
-                current_x = character.x
-                current_y = 0
+                character.current_coord.column = character.final_coord.column
+                character.current_coord.row = 0
             elif self.pour_direction == PourDirection.LEFT:
-                current_x = self.terminal_width - 1
-                current_y = character.y
+                character.current_coord.column = self.terminal_width - 1
+                character.current_coord.row = character.final_coord.row
             elif self.pour_direction == PourDirection.RIGHT:
-                current_x = 0
-                current_y = character.y
-            self.pending_chars.append(
-                base_effect.EffectCharacter(
-                    character=character,
-                    current_x=current_x,
-                    current_y=current_y,
-                )
-            )
+                character.current_coord.column = 0
+                character.current_coord.row = character.final_coord.row
+            self.pending_chars.append(character)
 
     def run(self, rate: float = 0) -> None:
         """Runs the effect.
@@ -63,19 +57,12 @@ class PouringEffect(base_effect.Effect):
                 self.animating_chars.append(self.pending_chars.pop(0))
             self.animate_chars(rate)
             self.animating_chars = [
-                animating_char
-                for animating_char in self.animating_chars
-                if animating_char.last_y != animating_char.target_y or animating_char.last_x != animating_char.target_x
+                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
 
     def animate_chars(self, rate: float) -> None:
         """Animates the sliding characters."""
         for animating_char in self.animating_chars:
-            tops.print_character_at_relative_position(
-                animating_char.character, animating_char.current_x, animating_char.current_y
-            )
-            if animating_char.last_x and animating_char.last_y:
-                tops.print_character_at_relative_position(" ", animating_char.last_x, animating_char.last_y)
-            animating_char.tween()
-
+            tops.print_character(animating_char, clear_last=True)
+            animating_char.move()
         time.sleep(rate)
