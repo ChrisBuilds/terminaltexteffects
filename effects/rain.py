@@ -11,23 +11,19 @@ class RainEffect(base_effect.Effect):
 
     def __init__(self, input_data: str):
         super().__init__(input_data)
-        self.group_by_y = {}
+        self.group_by_row = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""
 
         for character in self.characters:
-            self.pending_chars.append(
-                base_effect.EffectCharacter(
-                    character=character,
-                    current_x=character.x,
-                    current_y=min(self.input_height, self.terminal_height - 1),
-                )
-            )
-        for character in sorted(self.pending_chars, key=lambda x: x.target_y):
-            if character.target_y not in self.group_by_y:
-                self.group_by_y[character.target_y] = []
-            self.group_by_y[character.target_y].append(character)
+            character.current_coord.column = character.final_coord.column
+            character.current_coord.row = min(self.input_height, self.terminal_height - 1)
+            self.pending_chars.append(character)
+        for character in sorted(self.pending_chars, key=lambda c: c.final_coord.row):
+            if character.final_coord.row not in self.group_by_row:
+                self.group_by_row[character.final_coord.row] = []
+            self.group_by_row[character.final_coord.row].append(character)
 
     def run(self, rate: float = 0) -> None:
         """Runs the effect.
@@ -38,9 +34,9 @@ class RainEffect(base_effect.Effect):
         self.prep_terminal()
         self.prepare_data()
         self.pending_chars.clear()
-        while self.group_by_y or self.animating_chars or self.pending_chars:
-            if not self.pending_chars and self.group_by_y:
-                self.pending_chars.extend(self.group_by_y.pop(min(self.group_by_y.keys())))
+        while self.group_by_row or self.animating_chars or self.pending_chars:
+            if not self.pending_chars and self.group_by_row:
+                self.pending_chars.extend(self.group_by_row.pop(min(self.group_by_row.keys())))
             if self.pending_chars:
                 for _ in range(random.randint(1, 3)):
                     if self.pending_chars:
@@ -55,8 +51,8 @@ class RainEffect(base_effect.Effect):
                 [
                     animating_char
                     for animating_char in self.animating_chars
-                    if animating_char.last_x == animating_char.target_x
-                    and animating_char.last_y == animating_char.target_y
+                    if animating_char.last_coord.column == animating_char.target_coord.column
+                    and animating_char.last_coord.row == animating_char.target_coord.row
                 ]
             )
             self.maintain_completed()
@@ -65,7 +61,8 @@ class RainEffect(base_effect.Effect):
             self.animating_chars = [
                 animating
                 for animating in self.animating_chars
-                if animating.last_x != animating.target_x or animating.last_y != animating.target_y
+                if animating.last_coord.column != animating.target_coord.column
+                or animating.last_coord.row != animating.target_coord.row
             ]
 
     def animate_chars(self, rate: float) -> None:
@@ -75,10 +72,6 @@ class RainEffect(base_effect.Effect):
             rate (float): time to sleep between animation steps
         """
         for animating_char in self.animating_chars:
-            tops.print_character_at_relative_position(
-                animating_char.character, animating_char.current_x, animating_char.current_y
-            )
-            if animating_char.last_x and animating_char.last_y:
-                tops.print_character_at_relative_position(" ", animating_char.last_x, animating_char.last_y)
-            animating_char.tween()
+            tops.print_character(animating_char, True)
+            animating_char.move()
         time.sleep(rate)
