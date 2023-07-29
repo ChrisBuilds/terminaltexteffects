@@ -1,9 +1,9 @@
 import time
 import utils.terminaloperations as tops
-from effects import base_effect
+from effects import effect
 
 
-class ExpandEffect(base_effect.Effect):
+class ExpandEffect(effect.Effect):
     """Effect that draws the characters expanding from a single point."""
 
     def __init__(self, input_data: str):
@@ -13,13 +13,9 @@ class ExpandEffect(base_effect.Effect):
         """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""
 
         for character in self.characters:
-            self.animating_chars.append(
-                base_effect.EffectCharacter(
-                    character=character,
-                    current_x=self.input_width // 2,
-                    current_y=min(self.terminal_height // 2, self.input_height // 2),
-                )
-            )
+            character.current_coord.column = self.input_width // 2
+            character.current_coord.row = self.output_area_top // 2
+            self.animating_chars.append(character)
 
     def run(self, rate: float = 0) -> None:
         """Runs the effect.
@@ -29,29 +25,18 @@ class ExpandEffect(base_effect.Effect):
         """
         self.prep_terminal()
         self.prepare_data()
-        while self.pending_chars or self.animating_chars:
+        while self.animating_chars:
             self.animate_chars(rate)
             self.completed_chars.extend(
-                [
-                    animating_char
-                    for animating_char in self.animating_chars
-                    if animating_char.last_x == animating_char.target_x
-                    and animating_char.last_y == animating_char.target_y
-                ]
+                [animating_char for animating_char in self.animating_chars if animating_char.animation_completed()]
             )
             self.maintain_completed()
             self.animating_chars = [
-                animating
-                for animating in self.animating_chars
-                if animating.last_x != animating.target_x or animating.last_y != animating.target_y
+                animating for animating in self.animating_chars if not animating.animation_completed()
             ]
 
     def animate_chars(self, rate: float) -> None:
         for animating_char in self.animating_chars:
-            tops.print_character_at_relative_position(
-                animating_char.character, animating_char.current_x, animating_char.current_y
-            )
-            if animating_char.last_x and animating_char.last_y:
-                tops.print_character_at_relative_position(" ", animating_char.last_x, animating_char.last_y)
-            animating_char.tween()
+            tops.print_character(animating_char, clear_last=True)
+            animating_char.move()
         time.sleep(rate)
