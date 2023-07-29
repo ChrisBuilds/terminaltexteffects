@@ -16,7 +16,7 @@ class Effect:
         self.terminal_width, self.terminal_height = tops.get_terminal_dimensions()
         self.characters = utils.decompose_input(input_data)
         self.characters = [
-            character for character in self.characters if character.final_coord.column < self.terminal_height - 1
+            character for character in self.characters if character.final_coord.row < self.terminal_height - 1
         ]
         self.input_height = len(input_data.splitlines())
         self.input_width = max([character.final_coord.column for character in self.characters])
