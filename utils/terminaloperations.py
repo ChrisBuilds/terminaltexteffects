@@ -39,7 +39,7 @@ def print_character(character: EffectCharacter, clear_last: bool = False) -> Non
         sys.stdout.flush()
 
     move_and_print(character.symbol, character.current_coord.row, character.current_coord.column)
-    if clear_last:
+    if clear_last and character.last_coord != character.current_coord:
         move_and_print(" ", character.last_coord.row, character.last_coord.column)
 
 
