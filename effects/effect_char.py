@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class Coord:
     """A coordinate with row and column values.
 
-    Attributes:
+    Args:
         column (int): column value
         row (int): row value"""
 
@@ -20,7 +20,7 @@ class GraphicalModes:
     Supported graphical modes:
     bold, dim, italic, underline, blink, inverse, hidden, strike
 
-    Attributes:
+    Args:
         bold (bool): bold mode
         dim (bool): dim mode
         italic (bool): italic mode
@@ -44,7 +44,7 @@ class GraphicalModes:
 class EffectCharacter:
     """A single character from the input data. Contains the symbol and the state of the character.
 
-    Attributes:
+    Args:
         symbol (str): the character symbol.
         final_coord (Coord): the final coordinate of the character.
         current_coord (Coord): the current coordinate of the character. If different from the final coordinate, the character is moving.
@@ -56,7 +56,7 @@ class EffectCharacter:
     def __init__(self, symbol: str, final_column: int, final_row: int):
         """Initializes the EffectCharacter class.
 
-        Attributes:
+        Args:
             symbol (str): the character symbol.
             final_column (int): the final column position of the character.
             final_row (int): the final row position of the character.
