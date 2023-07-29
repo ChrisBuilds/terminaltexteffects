@@ -3,10 +3,10 @@
 import time
 import random
 import utils.terminaloperations as tops
-from effects import base_effect
+from effects import effect
 
 
-class RainEffect(base_effect.Effect):
+class RainEffect(effect.Effect):
     """Creates a rain effect where characters fall from the top of the terminal."""
 
     def __init__(self, input_data: str):
