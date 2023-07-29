@@ -12,7 +12,7 @@ def decompose_input(input_data: str) -> list[EffectCharacter]:
         input_data (str): string from stdin
 
     Returns:
-        list[Character]: list EffectCharacter objects
+        list[Character]: list of EffectCharacter objects
     """
     output_lines = input_data.splitlines()
     input_height = len(output_lines)
