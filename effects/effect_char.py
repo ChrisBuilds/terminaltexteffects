@@ -75,6 +75,8 @@ class EffectCharacter:
         self.graphical_modes: GraphicalModes = GraphicalModes()
         # move_delta is the floating point distance to move each step
         self.move_delta: float = 0
+        self.row_delta: float = 0
+        self.column_delta: float = 0
         # tweened_column and tweened_row are the floating point values for the current column and row positions
         self.tweened_column: float = 0
         self.tweened_row: float = 0
