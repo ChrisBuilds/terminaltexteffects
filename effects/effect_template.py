@@ -1,9 +1,9 @@
 import time
 import utils.terminaloperations as tops
-from effects import base_effect
+from effects import effect
 
 
-class NamedEffect(base_effect.Effect):
+class NamedEffect(effect.Effect):
     """Effect that ___."""
 
     def __init__(self, input_data: str):
@@ -29,20 +29,13 @@ class NamedEffect(base_effect.Effect):
 
             # tracking completed chars (remove if unnecessary)
             self.completed_chars.extend(
-                [
-                    animating_char
-                    for animating_char in self.animating_chars
-                    if animating_char.last_x == animating_char.target_x
-                    and animating_char.last_y == animating_char.target_y
-                ]
+                [animating_char for animating_char in self.animating_chars if animating_char.animation_completed()]
             )
             self.maintain_completed()
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating
-                for animating in self.animating_chars
-                if animating.last_x != animating.target_x or animating.last_y != animating.target_y
+                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
 
     def animate_chars(self, rate: float) -> None:
@@ -52,10 +45,6 @@ class NamedEffect(base_effect.Effect):
             rate (float): time to sleep between animation steps
         """
         for animating_char in self.animating_chars:
-            tops.print_character_at_relative_position(
-                animating_char.character, animating_char.current_x, animating_char.current_y
-            )
-            if animating_char.last_x and animating_char.last_y:
-                tops.print_character_at_relative_position(" ", animating_char.last_x, animating_char.last_y)
-            animating_char.tween()
+            tops.print_character(animating_char, clear_last=True)
+            animating_char.move()
         time.sleep(rate)
