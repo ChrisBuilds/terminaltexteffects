@@ -4,6 +4,7 @@ import time
 import random
 import utils.terminaloperations as tops
 from effects import effect
+from effects.effect_char import EffectCharacter
 
 
 class RainEffect(effect.Effect):
@@ -11,7 +12,7 @@ class RainEffect(effect.Effect):
 
     def __init__(self, input_data: str):
         super().__init__(input_data)
-        self.group_by_row = {}
+        self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""
@@ -36,7 +37,7 @@ class RainEffect(effect.Effect):
         self.pending_chars.clear()
         while self.group_by_row or self.animating_chars or self.pending_chars:
             if not self.pending_chars and self.group_by_row:
-                self.pending_chars.extend(self.group_by_row.pop(min(self.group_by_row.keys())))
+                self.pending_chars.extend(self.group_by_row.pop(min(self.group_by_row.keys())))  # type: ignore
             if self.pending_chars:
                 for _ in range(random.randint(1, 3)):
                     if self.pending_chars:
