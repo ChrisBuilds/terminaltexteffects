@@ -20,6 +20,13 @@ class RainEffect(effect.Effect):
         for character in self.characters:
             character.current_coord.column = character.final_coord.column
             character.current_coord.row = min(self.input_height, self.terminal_height - 1)
+            gmode = random.randint(1, 10)
+            if gmode in range(1, 3):
+                character.graphical_mode.bold = True
+            elif gmode in range(3, 5):
+                character.graphical_mode.dim = True
+            elif gmode in range(5, 7):
+                character.graphical_mode.italic = True
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.final_coord.row):
             if character.final_coord.row not in self.group_by_row:
@@ -47,23 +54,9 @@ class RainEffect(effect.Effect):
                     else:
                         break
             self.animate_chars(rate)
-            # tracking completed chars (remove if unnecessary)
-            self.completed_chars.extend(
-                [
-                    animating_char
-                    for animating_char in self.animating_chars
-                    if animating_char.last_coord.column == animating_char.target_coord.column
-                    and animating_char.last_coord.row == animating_char.target_coord.row
-                ]
-            )
-            self.maintain_completed()
-
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating
-                for animating in self.animating_chars
-                if animating.last_coord.column != animating.target_coord.column
-                or animating.last_coord.row != animating.target_coord.row
+                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
 
     def animate_chars(self, rate: float) -> None:
@@ -73,6 +66,9 @@ class RainEffect(effect.Effect):
             rate (float): time to sleep between animation steps
         """
         for animating_char in self.animating_chars:
+            # disable all graphical modes if the character is at the final position
+            if animating_char.current_coord == animating_char.final_coord:
+                animating_char.graphical_mode.disable_all()
             tops.print_character(animating_char, True)
             animating_char.move()
         time.sleep(rate)
