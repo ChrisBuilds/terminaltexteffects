@@ -1,3 +1,5 @@
+"""EffectCharacter class and supporting classes to initialize and manage the state of a single character from the input data."""
+
 from dataclasses import dataclass
 
 
@@ -14,7 +16,7 @@ class Coord:
 
 
 @dataclass
-class GraphicalModes:
+class GraphicalMode:
     """A class for storing terminal graphical modes.
 
     Supported graphical modes:
@@ -26,7 +28,7 @@ class GraphicalModes:
         italic (bool): italic mode
         underline (bool): underline mode
         blink (bool): blink mode
-        inverse (bool): inverse mode
+        reverse (bool): reverse mode
         hidden (bool): hidden mode
         strike (bool): strike mode
     """
@@ -36,16 +38,48 @@ class GraphicalModes:
     italic: bool = False
     underline: bool = False
     blink: bool = False
-    inverse: bool = False
+    reverse: bool = False
     hidden: bool = False
     strike: bool = False
 
+    def disable_all(self) -> None:
+        """Disables all graphical modes."""
+        self.bold = False
+        self.dim = False
+        self.italic = False
+        self.underline = False
+        self.blink = False
+        self.reverse = False
+        self.hidden = False
+        self.strike = False
 
-class EffectCharacter:
-    """A single character from the input data. Contains the symbol and the state of the character.
+
+@dataclass
+class AnimationUnit:
+    """A single animation unit with a symbol and duration specified as a number of steps
+    to show the symbol.
 
     Args:
+        symbol (str): the symbol to show
+        duration (int): the number of steps to show the symbol
+        graphicalmode (GraphicalMode): a GraphicalMode object containing the graphical modes of the character
+    """
+
+    symbol: str
+    duration: int
+    graphicalmode: GraphicalMode = GraphicalMode()
+
+
+class EffectCharacter:
+    """A single character from the input data. Contains the state of the character.
+
+    An EffectCharacter object contains the symbol, animation units, graphical modes, waypoints, and coordinates for a single
+    character from the input data. The EffectCharacter object is used by the Effect class to animate the character.
+
+    Attributes:
         symbol (str): the character symbol.
+        final_symbol (str): the symbol for the character in the input data.
+        animation_units (list[AnimationUnit]): a list of AnimationUnit objects containing the animation units for the character.
         final_coord (Coord): the final coordinate of the character.
         current_coord (Coord): the current coordinate of the character. If different from the final coordinate, the character is moving.
         last_coord (Coord): the last coordinate of the character. Used to clear the last position of the character.
@@ -62,6 +96,10 @@ class EffectCharacter:
             final_row (int): the final row position of the character.
         """
         self.symbol: str = symbol
+        "The current symbol for the character, determined by the animation units."
+        self.final_symbol: str = symbol
+        "The symbol for the character in the input data."
+        self.animation_units: list[AnimationUnit] = []
         self.final_coord: Coord = Coord(final_column, final_row)
         "The coordinate of the character in the input data."
         self.current_coord: Coord = Coord(final_column, final_row)
@@ -72,7 +110,7 @@ class EffectCharacter:
         "The target coordinate of the character. Used to determine the next coordinate to move to."
         self.waypoints: list[Coord] = []
         "A list of coordinates to move to. Used to determine the next target coordinate to move to."
-        self.graphical_modes: GraphicalModes = GraphicalModes()
+        self.graphical_mode: GraphicalMode = GraphicalMode()
         # move_delta is the floating point distance to move each step
         self.move_delta: float = 0
         self.row_delta: float = 0
@@ -123,6 +161,18 @@ class EffectCharacter:
             self.tweened_row -= self.row_delta
             self.current_coord.row = int(self.tweened_row)
 
+    def step_animation(self) -> None:
+        """Steps the animation by one unit. Removes the animation unit if the duration is 0."""
+        if self.animation_units:
+            if self.animation_units[0].duration > 0:
+                self.animation_units[0].duration -= 1
+            else:
+                self.animation_units.pop(0)
+        if self.animation_units:
+            self.symbol = self.animation_units[0].symbol
+        else:
+            self.symbol = self.final_symbol
+
     def animation_completed(self) -> bool:
-        """Returns True if the character has reached its final position."""
-        return self.last_coord == self.final_coord
+        """Returns True if the character has reached its final position and has no remaining animation units."""
+        return self.last_coord == self.final_coord and not self.animation_units
