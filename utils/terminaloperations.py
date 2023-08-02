@@ -1,5 +1,5 @@
 """This module contains functions for terminal operations."""
-from utils import ansicodes
+from utils import ansicodes, colorterm
 from effects.effect_char import EffectCharacter
 import shutil
 import sys
@@ -39,24 +39,26 @@ def print_character(character: EffectCharacter, clear_last: bool = False) -> Non
         sys.stdout.flush()
 
     formatted_symbol = ""
-    if character.graphical_mode.bold:
+    if character.graphical_effect.bold:
         formatted_symbol += ansicodes.APPLY_BOLD()
-    if character.graphical_mode.dim:
+    if character.graphical_effect.dim:
         formatted_symbol += ansicodes.APPLY_DIM()
-    if character.graphical_mode.italic:
+    if character.graphical_effect.italic:
         formatted_symbol += ansicodes.APPLY_ITALIC()
-    if character.graphical_mode.underline:
+    if character.graphical_effect.underline:
         formatted_symbol += ansicodes.APPLY_UNDERLINE()
-    if character.graphical_mode.blink:
+    if character.graphical_effect.blink:
         formatted_symbol += ansicodes.APPLY_BLINK()
-    if character.graphical_mode.reverse:
+    if character.graphical_effect.reverse:
         formatted_symbol += ansicodes.APPLY_REVERSE()
-    if character.graphical_mode.hidden:
+    if character.graphical_effect.hidden:
         formatted_symbol += ansicodes.APPLY_HIDDEN()
-    if character.graphical_mode.strike:
+    if character.graphical_effect.strike:
         formatted_symbol += ansicodes.APPLY_STRIKETHROUGH()
+    if character.graphical_effect.color:
+        formatted_symbol += colorterm.fg(character.graphical_effect.color)
 
-    formatted_symbol = f"{formatted_symbol}{character.symbol}{ansicodes.RESET_ALL()}"
+    formatted_symbol = f"{formatted_symbol}{character.symbol}{ansicodes.RESET_ALL() if formatted_symbol else ''}"
     move_and_print(formatted_symbol, character.current_coord.row, character.current_coord.column)
     if clear_last and character.last_coord != character.current_coord:
         move_and_print(" ", character.last_coord.row, character.last_coord.column)
