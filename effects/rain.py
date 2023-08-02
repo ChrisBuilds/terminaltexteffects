@@ -22,11 +22,11 @@ class RainEffect(effect.Effect):
             character.current_coord.row = min(self.input_height, self.terminal_height - 1)
             gmode = random.randint(1, 10)
             if gmode in range(1, 3):
-                character.graphical_mode.bold = True
+                character.graphical_effect.bold = True
             elif gmode in range(3, 5):
-                character.graphical_mode.dim = True
+                character.graphical_effect.dim = True
             elif gmode in range(5, 7):
-                character.graphical_mode.italic = True
+                character.graphical_effect.italic = True
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.final_coord.row):
             if character.final_coord.row not in self.group_by_row:
@@ -68,7 +68,7 @@ class RainEffect(effect.Effect):
         for animating_char in self.animating_chars:
             # disable all graphical modes if the character is at the final position
             if animating_char.current_coord == animating_char.final_coord:
-                animating_char.graphical_mode.disable_all()
+                animating_char.graphical_effect.disable_modes()
             tops.print_character(animating_char, True)
             animating_char.move()
         time.sleep(rate)
