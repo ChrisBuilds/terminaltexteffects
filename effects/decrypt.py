@@ -4,7 +4,8 @@ import utils.terminaloperations as tops
 from effects import effect, effect_char
 from dataclasses import dataclass
 
-COLOR = 40
+CIPHERTEXT_COLOR = 40
+PLAINTEXT_COLOR = 178
 
 
 @dataclass
@@ -37,7 +38,7 @@ class DecryptEffect(effect.Effect):
 
     def make_decrypting_animation_units(self) -> list[effect_char.AnimationUnit]:
         animation_units = []
-        graphicaleffect = effect_char.GraphicalEffect(color=COLOR)
+        graphicaleffect = effect_char.GraphicalEffect(color=CIPHERTEXT_COLOR)
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
             duration = 3
@@ -55,7 +56,7 @@ class DecryptEffect(effect.Effect):
         """Prepares the data for the effect by building the animation for each character."""
 
         for character in self.characters:
-            graphicaleffect = effect_char.GraphicalEffect(color=COLOR)
+            graphicaleffect = effect_char.GraphicalEffect(color=CIPHERTEXT_COLOR)
             character.animation_units.append(effect_char.AnimationUnit(chr(int("2588", 16)), 2, graphicaleffect))
             character.animation_units.append(effect_char.AnimationUnit(chr(int("2593", 16)), 2, graphicaleffect))
             character.animation_units.append(effect_char.AnimationUnit(chr(int("2592", 16)), 2, graphicaleffect))
@@ -70,7 +71,7 @@ class DecryptEffect(effect.Effect):
         for character in self.characters:
             character.animation_units.extend(self.make_decrypting_animation_units())
             character.use_alternate_symbol = False
-            character.final_graphical_effect.color = 0
+            character.final_graphical_effect.color = PLAINTEXT_COLOR
             self.animating_chars.append(character)
 
     def run(self, rate: float = 0) -> None:
