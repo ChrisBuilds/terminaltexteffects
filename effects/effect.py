@@ -1,3 +1,4 @@
+import random
 import utils.terminaloperations as tops
 from utils import utils
 from effects.effect_char import EffectCharacter
@@ -34,3 +35,11 @@ class Effect:
         """Print completed characters in case they've been overwritten."""
         for completed_char in self.completed_chars:
             tops.print_character(completed_char)
+
+    def random_column(self) -> int:
+        """Returns a random column position."""
+        return random.randint(0, self.input_width - 1)
+
+    def random_row(self) -> int:
+        """Returns a random row position."""
+        return random.randint(0, self.output_area_top)
