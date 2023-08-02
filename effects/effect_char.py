@@ -16,7 +16,7 @@ class Coord:
 
 
 @dataclass
-class GraphicalMode:
+class GraphicalEffect:
     """A class for storing terminal graphical modes.
 
     Supported graphical modes:
@@ -41,8 +41,9 @@ class GraphicalMode:
     reverse: bool = False
     hidden: bool = False
     strike: bool = False
+    color: int = 0
 
-    def disable_all(self) -> None:
+    def disable_modes(self) -> None:
         """Disables all graphical modes."""
         self.bold = False
         self.dim = False
@@ -62,12 +63,12 @@ class AnimationUnit:
     Args:
         symbol (str): the symbol to show
         duration (int): the number of steps to show the symbol
-        graphicalmode (GraphicalMode): a GraphicalMode object containing the graphical modes of the character
+        graphicalmode (GraphicalEffect): a GraphicalEffect object containing the graphical modes of the character
     """
 
     symbol: str
     duration: int
-    graphicalmode: GraphicalMode = GraphicalMode()
+    graphicalmode: GraphicalEffect = GraphicalEffect()
 
 
 class EffectCharacter:
@@ -85,7 +86,8 @@ class EffectCharacter:
         last_coord (Coord): the last coordinate of the character. Used to clear the last position of the character.
         target_coord (Coord): the target coordinate of the character. Used to determine the next coordinate to move to.
         waypoints (list[Coord]): a list of coordinates to move to. Used to determine the next target coordinate to move to.
-        graphical_modes: (GraphicalModes): a GraphicalModes object containing the graphical modes of the character."""
+        graphical_modes: (GraphicalEffects): a GraphicalEffects object containing the graphical modes of the character.
+    """
 
     def __init__(self, symbol: str, final_column: int, final_row: int):
         """Initializes the EffectCharacter class.
@@ -99,6 +101,10 @@ class EffectCharacter:
         "The current symbol for the character, determined by the animation units."
         self.final_symbol: str = symbol
         "The symbol for the character in the input data."
+        self.alternate_symbol: str = symbol
+        "An alternate symbol for the character to use when all AnimationUnits have been processed."
+        self.use_alternate_symbol: bool = False
+        "Set this flag if you want to use the alternate symbol"
         self.animation_units: list[AnimationUnit] = []
         self.final_coord: Coord = Coord(final_column, final_row)
         "The coordinate of the character in the input data."
@@ -110,7 +116,8 @@ class EffectCharacter:
         "The target coordinate of the character. Used to determine the next coordinate to move to."
         self.waypoints: list[Coord] = []
         "A list of coordinates to move to. Used to determine the next target coordinate to move to."
-        self.graphical_mode: GraphicalMode = GraphicalMode()
+        self.graphical_effect: GraphicalEffect = GraphicalEffect()
+        self.final_graphical_effect: GraphicalEffect = GraphicalEffect()
         # move_delta is the floating point distance to move each step
         self.move_delta: float = 0
         self.row_delta: float = 0
@@ -170,8 +177,13 @@ class EffectCharacter:
                 self.animation_units.pop(0)
         if self.animation_units:
             self.symbol = self.animation_units[0].symbol
+            self.graphical_effect = self.animation_units[0].graphicalmode
         else:
-            self.symbol = self.final_symbol
+            if self.use_alternate_symbol:
+                self.symbol = self.alternate_symbol
+            else:
+                self.symbol = self.final_symbol
+            self.graphical_effect = self.final_graphical_effect
 
     def animation_completed(self) -> bool:
         """Returns True if the character has reached its final position and has no remaining animation units."""
