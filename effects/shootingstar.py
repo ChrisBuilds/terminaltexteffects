@@ -5,14 +5,14 @@ from effects import effect, effect_char
 
 
 class ShootingStarEffect(effect.Effect):
-    """Effect that ___."""
+    """Effect that display the text as a falling star toward the final coordinate of the character."""
 
     def __init__(self, input_data: str):
         super().__init__(input_data)
         self.group_by_row: dict[int, list[effect_char.EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by ___."""
+        """Prepares the data for the effect by sorting by row and assigning the star symbol."""
 
         for character in self.characters:
             character.symbol = "*"
