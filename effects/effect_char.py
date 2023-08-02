@@ -1,6 +1,6 @@
 """EffectCharacter class and supporting classes to initialize and manage the state of a single character from the input data."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -68,7 +68,7 @@ class AnimationUnit:
 
     symbol: str
     duration: int
-    graphicalmode: GraphicalEffect = GraphicalEffect()
+    graphicalmode: GraphicalEffect = field(default_factory=GraphicalEffect)
 
 
 class EffectCharacter:
