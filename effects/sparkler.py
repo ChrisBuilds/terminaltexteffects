@@ -3,7 +3,7 @@
 import time
 import random
 import utils.terminaloperations as tops
-from effects import effect
+from effects import effect, effect_char
 from enum import Enum, auto
 
 
@@ -50,6 +50,20 @@ class SparklerEffect(effect.Effect):
 
         for character in self.characters:
             character.current_coord.column, character.current_coord.row = sparkler_origin_map[self.sparkler_position]
+            white = effect_char.GraphicalEffect(color=231)
+            yellow = effect_char.GraphicalEffect(color=11)
+            orange = effect_char.GraphicalEffect(color=202)
+            colors = [white, yellow, orange]
+            random.shuffle(colors)
+            character.animation_units.append(
+                effect_char.AnimationUnit(character.symbol, random.randint(20, 35), colors.pop())
+            )
+            character.animation_units.append(
+                effect_char.AnimationUnit(character.symbol, random.randint(20, 35), colors.pop())
+            )
+            character.animation_units.append(
+                effect_char.AnimationUnit(character.symbol, random.randint(20, 35), colors.pop())
+            )
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
 
@@ -78,6 +92,7 @@ class SparklerEffect(effect.Effect):
 
     def animate_chars(self, rate: float) -> None:
         for animating_char in self.animating_chars:
+            animating_char.step_animation()
             tops.print_character(animating_char, clear_last=True)
             animating_char.move()
         time.sleep(rate)
