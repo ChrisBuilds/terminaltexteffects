@@ -68,7 +68,7 @@ class AnimationUnit:
 
     symbol: str
     duration: int
-    graphicalmode: GraphicalEffect = field(default_factory=GraphicalEffect)
+    graphicaleffect: GraphicalEffect = field(default_factory=GraphicalEffect)
 
 
 class EffectCharacter:
@@ -177,7 +177,7 @@ class EffectCharacter:
                 self.animation_units.pop(0)
         if self.animation_units:
             self.symbol = self.animation_units[0].symbol
-            self.graphical_effect = self.animation_units[0].graphicalmode
+            self.graphical_effect = self.animation_units[0].graphicaleffect
         else:
             if self.use_alternate_symbol:
                 self.symbol = self.alternate_symbol
