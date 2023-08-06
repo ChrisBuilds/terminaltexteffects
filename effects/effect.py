@@ -12,6 +12,7 @@ class Effect:
 
         Args:
             input_data (str): string from stdin
+            animation_rate (float, optional): time to sleep between animation steps. Defaults to 0.
         """
         self.input_data = input_data
         self.animation_rate = animation_rate
@@ -46,7 +47,10 @@ class Effect:
         return random.randint(0, self.output_area_top)
 
     def input_by_row(self) -> list[list[EffectCharacter]]:
-        """Returns a list of rows of EffectCharacters. Rows are ordered top to bottom."""
+        """Returns a list of rows of EffectCharacters. Rows are ordered top to bottom.
+        Returns:
+            list[list[EffectCharacter]]: list of rows of EffectCharacters
+        """
         input_by_row: list[list[EffectCharacter]] = []
         for row in range(self.input_height + 1):
             characters_in_row = [character for character in self.characters if character.final_coord.row == row]
@@ -56,7 +60,11 @@ class Effect:
         return input_by_row
 
     def input_by_column(self) -> list[list[EffectCharacter]]:
-        """Returns a list columns of EffectCharacters. Columns are ordered left to right, top to bottom."""
+        """Returns a list columns of EffectCharacters. Columns are ordered left to right, top to bottom.
+
+        Returns:
+            list[list[EffectCharacter]]: list of columns of EffectCharacters
+        """
         input_by_column: list[list[EffectCharacter]] = []
         for column in range(self.input_width + 1):
             characters_in_column = [
