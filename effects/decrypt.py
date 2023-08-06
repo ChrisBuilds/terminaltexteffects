@@ -5,7 +5,7 @@ from effects import effect, effect_char
 from dataclasses import dataclass
 
 CIPHERTEXT_COLOR = 40
-PLAINTEXT_COLOR = 178
+PLAINTEXT_COLOR = 208
 
 
 @dataclass
@@ -21,8 +21,8 @@ class DecryptChars:
 class DecryptEffect(effect.Effect):
     """Effect that shows a movie style text decryption effect."""
 
-    def __init__(self, input_data: str):
-        super().__init__(input_data)
+    def __init__(self, input_data: str, animation_rate: float = 0.003):
+        super().__init__(input_data, animation_rate)
         self.encrypted_symbols: list[str] = []
         self.make_encrypted_symbols()
 
@@ -74,48 +74,40 @@ class DecryptEffect(effect.Effect):
             character.final_graphical_effect.color = PLAINTEXT_COLOR
             self.animating_chars.append(character)
 
-    def run(self, rate: float = 0) -> None:
-        """Runs the effect.
-
-        Args:
-            rate (float, optional): Time to sleep between animation steps. Defaults to 0.
-        """
+    def run(self) -> None:
+        """Runs the effect."""
         self.prep_terminal()
         self.prepare_data_for_type_effect()
-        self.run_type_effect(rate)
+        self.run_type_effect()
         self.prepare_data_for_decrypt_effect()
-        self.run_decryption_effect(rate)
+        self.run_decryption_effect()
 
-    def run_type_effect(self, rate) -> None:
+    def run_type_effect(self) -> None:
         """Runs the typing out the characters effect."""
         while self.pending_chars or self.animating_chars:
             if self.pending_chars:
                 if random.randint(0, 100) <= 75:
                     self.animating_chars.append(self.pending_chars.pop(0))
-            self.animate_chars(rate)
+            self.animate_chars()
 
             # remove completed chars from animating chars
             self.animating_chars = [
                 animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
 
-    def run_decryption_effect(self, rate) -> None:
+    def run_decryption_effect(self) -> None:
         while self.animating_chars:
-            self.animate_chars(rate)
+            self.animate_chars()
 
             self.animating_chars = [
                 animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
 
-    def animate_chars(self, rate: float) -> None:
-        """Animates the characters by calling the tween method and printing the characters to the terminal.
-
-        Args:
-            rate (float): time to sleep between animation steps
-        """
+    def animate_chars(self) -> None:
+        """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
             animating_char.step_animation()
             tops.print_character(animating_char, clear_last=False)
             animating_char.move()
 
-        time.sleep(rate)
+        time.sleep(self.animation_rate)

@@ -6,8 +6,8 @@ from effects import effect
 class ExpandEffect(effect.Effect):
     """Effect that draws the characters expanding from a single point."""
 
-    def __init__(self, input_data: str):
-        super().__init__(input_data)
+    def __init__(self, input_data: str, animation_rate: float = 0.01):
+        super().__init__(input_data, animation_rate)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""
@@ -17,16 +17,12 @@ class ExpandEffect(effect.Effect):
             character.current_coord.row = self.output_area_top // 2
             self.animating_chars.append(character)
 
-    def run(self, rate: float = 0) -> None:
-        """Runs the effect.
-
-        Args:
-            rate (float, optional): Time to sleep between animation steps. Defaults to 0.
-        """
+    def run(self) -> None:
+        """Runs the effect."""
         self.prep_terminal()
         self.prepare_data()
         while self.animating_chars:
-            self.animate_chars(rate)
+            self.animate_chars()
             self.completed_chars.extend(
                 [animating_char for animating_char in self.animating_chars if animating_char.animation_completed()]
             )
@@ -35,8 +31,8 @@ class ExpandEffect(effect.Effect):
                 animating for animating in self.animating_chars if not animating.animation_completed()
             ]
 
-    def animate_chars(self, rate: float) -> None:
+    def animate_chars(self) -> None:
         for animating_char in self.animating_chars:
             tops.print_character(animating_char, clear_last=True)
             animating_char.move()
-        time.sleep(rate)
+        time.sleep(self.animation_rate)

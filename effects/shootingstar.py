@@ -7,8 +7,8 @@ from effects import effect, effect_char
 class ShootingStarEffect(effect.Effect):
     """Effect that display the text as a falling star toward the final coordinate of the character."""
 
-    def __init__(self, input_data: str):
-        super().__init__(input_data)
+    def __init__(self, input_data: str, animation_rate: float = 0.01):
+        super().__init__(input_data, animation_rate)
         self.group_by_row: dict[int, list[effect_char.EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
@@ -24,12 +24,8 @@ class ShootingStarEffect(effect.Effect):
                 self.group_by_row[character.final_coord.row] = []
             self.group_by_row[character.final_coord.row].append(character)
 
-    def run(self, rate: float = 0) -> None:
-        """Runs the effect.
-
-        Args:
-            rate (float, optional): Time to sleep between animation steps. Defaults to 0.
-        """
+    def run(self) -> None:
+        """Runs the effect."""
         self.prep_terminal()
         self.prepare_data()
         self.pending_chars.clear()
@@ -44,7 +40,7 @@ class ShootingStarEffect(effect.Effect):
                         )
                     else:
                         break
-            self.animate_chars(rate)
+            self.animate_chars()
 
             # tracking completed chars (remove if unnecessary)
             self.completed_chars.extend(
@@ -57,12 +53,8 @@ class ShootingStarEffect(effect.Effect):
                 animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
 
-    def animate_chars(self, rate: float) -> None:
-        """Animates the characters by calling the tween method and printing the characters to the terminal.
-
-        Args:
-            rate (float): time to sleep between animation steps
-        """
+    def animate_chars(self) -> None:
+        """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
             tops.print_character(animating_char, clear_last=True)
             animating_char.move()
@@ -70,4 +62,4 @@ class ShootingStarEffect(effect.Effect):
                 animating_char.symbol = animating_char.final_symbol
                 animating_char.graphical_effect = animating_char.final_graphical_effect
 
-        time.sleep(rate)
+        time.sleep(self.animation_rate)

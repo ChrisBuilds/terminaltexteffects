@@ -24,7 +24,12 @@ class SparklerPosition(Enum):
 class SparklerEffect(effect.Effect):
     """Effect that draws the characters spawning at varying rates from a single point."""
 
-    def __init__(self, input_data: str, sparkler_position: SparklerPosition = SparklerPosition.CENTER):
+    def __init__(
+        self,
+        input_data: str,
+        animation_rate: float = 0.01,
+        sparkler_position: SparklerPosition = SparklerPosition.CENTER,
+    ):
         """Effect that draws the characters spawning at varying rates from a single point.
 
         Args:
@@ -67,12 +72,8 @@ class SparklerEffect(effect.Effect):
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
 
-    def run(self, rate: float = 0) -> None:
-        """Runs the effect.
-
-        Args:
-            rate (float, optional): Time to sleep between animation steps. Defaults to 0.
-        """
+    def run(self) -> None:
+        """Runs the effect."""
         self.prep_terminal()
         self.prepare_data()
         while self.pending_chars or self.animating_chars:
@@ -81,7 +82,7 @@ class SparklerEffect(effect.Effect):
                     if self.pending_chars:
                         self.animating_chars.append(self.pending_chars.pop())
 
-            self.animate_chars(rate)
+            self.animate_chars()
             self.completed_chars.extend(
                 [completed_char for completed_char in self.animating_chars if completed_char.animation_completed()]
             )
@@ -90,9 +91,9 @@ class SparklerEffect(effect.Effect):
                 animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
 
-    def animate_chars(self, rate: float) -> None:
+    def animate_chars(self) -> None:
         for animating_char in self.animating_chars:
             animating_char.step_animation()
             tops.print_character(animating_char, clear_last=True)
             animating_char.move()
-        time.sleep(rate)
+        time.sleep(self.animation_rate)
