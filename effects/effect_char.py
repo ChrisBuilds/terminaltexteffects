@@ -110,7 +110,7 @@ class EffectCharacter:
         "The coordinate of the character in the input data."
         self.current_coord: Coord = Coord(final_column, final_row)
         "The current coordinate of the character. If different from the final coordinate, the character is moving."
-        self.last_coord: Coord = Coord(final_column, final_row)
+        self.last_coord: Coord = Coord(-1, -1)
         "The last coordinate of the character. Used to clear the last position of the character."
         self.target_coord: Coord = Coord(final_column, final_row)
         "The target coordinate of the character. Used to determine the next coordinate to move to."
