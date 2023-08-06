@@ -6,8 +6,8 @@ from effects import effect
 class NamedEffect(effect.Effect):
     """Effect that ___."""
 
-    def __init__(self, input_data: str):
-        super().__init__(input_data)
+    def __init__(self, input_data: str, animation_rate: float = 0):
+        super().__init__(input_data, animation_rate)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
@@ -16,16 +16,12 @@ class NamedEffect(effect.Effect):
             pass
             # do something with the data if needed (sort, adjust positions, etc)
 
-    def run(self, rate: float = 0) -> None:
-        """Runs the effect.
-
-        Args:
-            rate (float, optional): Time to sleep between animation steps. Defaults to 0.
-        """
+    def run(self) -> None:
+        """Runs the effect."""
         self.prep_terminal()
         self.prepare_data()
         while self.pending_chars or self.animating_chars:
-            self.animate_chars(rate)
+            self.animate_chars()
 
             # tracking completed chars (remove if unnecessary)
             self.completed_chars.extend(
@@ -38,13 +34,9 @@ class NamedEffect(effect.Effect):
                 animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
 
-    def animate_chars(self, rate: float) -> None:
-        """Animates the characters by calling the tween method and printing the characters to the terminal.
-
-        Args:
-            rate (float): time to sleep between animation steps
-        """
+    def animate_chars(self) -> None:
+        """Animates the characters by calling the move method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
             tops.print_character(animating_char, clear_last=True)
             animating_char.move()
-        time.sleep(rate)
+        time.sleep(self.animation_rate)
