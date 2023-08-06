@@ -46,16 +46,17 @@ class Effect:
         return random.randint(0, self.output_area_top)
 
     def input_by_row(self) -> list[list[EffectCharacter]]:
-        """Returns a list of lists of EffectCharacters, grouped by row."""
+        """Returns a list of rows of EffectCharacters. Rows are ordered top to bottom."""
         input_by_row: list[list[EffectCharacter]] = []
         for row in range(self.input_height + 1):
             characters_in_row = [character for character in self.characters if character.final_coord.row == row]
             if characters_in_row:
                 input_by_row.append(characters_in_row)
+        input_by_row = input_by_row[::-1]
         return input_by_row
 
     def input_by_column(self) -> list[list[EffectCharacter]]:
-        """Returns a list of lists of EffectCharacters, grouped by column. Columns are orders left to right, top to bottom."""
+        """Returns a list columns of EffectCharacters. Columns are ordered left to right, top to bottom."""
         input_by_column: list[list[EffectCharacter]] = []
         for column in range(self.input_width + 1):
             characters_in_column = [
