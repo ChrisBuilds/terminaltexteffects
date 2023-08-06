@@ -7,13 +7,14 @@ from effects.effect_char import EffectCharacter
 class Effect:
     """Generic class for all effects. Derive from this class to create a new effect."""
 
-    def __init__(self, input_data: str):
+    def __init__(self, input_data: str, animation_rate: float = 0):
         """Initializes the Effect class.
 
         Args:
             input_data (str): string from stdin
         """
         self.input_data = input_data
+        self.animation_rate = animation_rate
         self.terminal_width, self.terminal_height = tops.get_terminal_dimensions()
         self.characters = utils.decompose_input(input_data)
         self.characters = [
@@ -43,3 +44,23 @@ class Effect:
     def random_row(self) -> int:
         """Returns a random row position."""
         return random.randint(0, self.output_area_top)
+
+    def input_by_row(self) -> list[list[EffectCharacter]]:
+        """Returns a list of lists of EffectCharacters, grouped by row."""
+        input_by_row: list[list[EffectCharacter]] = []
+        for row in range(self.input_height):
+            characters_in_row = [character for character in self.characters if character.final_coord.row == row]
+            if characters_in_row:
+                input_by_row.append(characters_in_row)
+        return input_by_row
+
+    def input_by_column(self) -> list[list[EffectCharacter]]:
+        """Returns a list of lists of EffectCharacters, grouped by column. Columns are orders left to right, top to bottom."""
+        input_by_column: list[list[EffectCharacter]] = []
+        for column in range(self.input_width + 1):
+            characters_in_column = [
+                character for character in self.characters if character.final_coord.column == column
+            ]
+            if characters_in_column:
+                input_by_column.append(characters_in_column)
+        return input_by_column
