@@ -19,10 +19,10 @@ class Effect:
         self.terminal_width, self.terminal_height = tops.get_terminal_dimensions()
         self.characters = utils.decompose_input(input_data)
         self.characters = [
-            character for character in self.characters if character.final_coord.row < self.terminal_height - 1
+            character for character in self.characters if character.input_coord.row < self.terminal_height - 1
         ]
         self.input_height = len(input_data.splitlines())
-        self.input_width = max([character.final_coord.column for character in self.characters])
+        self.input_width = max([character.input_coord.column for character in self.characters])
         self.output_area_top = min(self.terminal_height - 1, self.input_height)
         "Distance to the top row of the adjusted output area. Top of the terminal if input is too long."
         self.pending_chars: list[EffectCharacter] = []
@@ -53,7 +53,7 @@ class Effect:
         """
         input_by_row: list[list[EffectCharacter]] = []
         for row in range(self.input_height + 1):
-            characters_in_row = [character for character in self.characters if character.final_coord.row == row]
+            characters_in_row = [character for character in self.characters if character.input_coord.row == row]
             if characters_in_row:
                 input_by_row.append(characters_in_row)
         input_by_row = input_by_row[::-1]
@@ -68,7 +68,7 @@ class Effect:
         input_by_column: list[list[EffectCharacter]] = []
         for column in range(self.input_width + 1):
             characters_in_column = [
-                character for character in self.characters if character.final_coord.column == column
+                character for character in self.characters if character.input_coord.column == column
             ]
             if characters_in_column:
                 input_by_column.append(characters_in_column)

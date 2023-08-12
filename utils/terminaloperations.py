@@ -60,8 +60,8 @@ def print_character(character: EffectCharacter, clear_last: bool = False) -> Non
 
     formatted_symbol = f"{formatted_symbol}{character.symbol}{ansicodes.RESET_ALL() if formatted_symbol else ''}"
     move_and_print(formatted_symbol, character.current_coord.row, character.current_coord.column)
-    if clear_last and character.last_coord != character.current_coord:
-        move_and_print(" ", character.last_coord.row, character.last_coord.column)
+    if clear_last and character.previous_coord != character.current_coord:
+        move_and_print(" ", character.previous_coord.row, character.previous_coord.column)
 
 
 def get_piped_input() -> str:

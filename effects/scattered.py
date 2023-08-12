@@ -15,6 +15,7 @@ class ScatteredEffect(effect.Effect):
         for character in self.characters:
             character.current_coord.column = random.randint(1, self.input_width - 1)
             character.current_coord.row = random.randint(1, self.input_height - 1)
+            character.graphical_effect.dim = True
             self.animating_chars.append(character)
 
     def run(self) -> None:
@@ -33,6 +34,8 @@ class ScatteredEffect(effect.Effect):
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:
+            if animating_char.current_coord == animating_char.input_coord:
+                animating_char.graphical_effect.disable_modes()
             tops.print_character(animating_char, clear_last=True)
             animating_char.move()
         time.sleep(self.animation_rate)

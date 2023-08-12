@@ -19,10 +19,10 @@ class ShootingStarEffect(effect.Effect):
             character.graphical_effect.color = random.randint(1, 10)
             character.current_coord = effect_char.Coord(self.random_column(), self.output_area_top)
             self.pending_chars.append(character)
-        for character in sorted(self.pending_chars, key=lambda c: c.final_coord.row):
-            if character.final_coord.row not in self.group_by_row:
-                self.group_by_row[character.final_coord.row] = []
-            self.group_by_row[character.final_coord.row].append(character)
+        for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
+            if character.input_coord.row not in self.group_by_row:
+                self.group_by_row[character.input_coord.row] = []
+            self.group_by_row[character.input_coord.row].append(character)
 
     def run(self) -> None:
         """Runs the effect."""
@@ -59,7 +59,7 @@ class ShootingStarEffect(effect.Effect):
             tops.print_character(animating_char, clear_last=True)
             animating_char.move()
             if animating_char.animation_completed():
-                animating_char.symbol = animating_char.final_symbol
+                animating_char.symbol = animating_char.input_symbol
                 animating_char.graphical_effect = animating_char.final_graphical_effect
 
         time.sleep(self.animation_rate)

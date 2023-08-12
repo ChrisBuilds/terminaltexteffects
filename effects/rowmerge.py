@@ -18,7 +18,7 @@ class RowMergeEffect(effect.Effect):
             if i % 2 == 0:
                 row = row[::-1]
                 for c in row:
-                    c.current_coord.column = 0
+                    c.current_coord.column = 1
             else:
                 for c in row:
                     c.current_coord.column = self.input_width

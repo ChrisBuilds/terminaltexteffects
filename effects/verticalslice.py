@@ -14,17 +14,17 @@ class VerticalSlice(effect.Effect):
         right half to start at the bottom, and creating rows consisting off halves from opposite
         input rows."""
 
-        self.rows = self.input_by_row()
-        lengths = [max([c.final_coord.column for c in row]) for row in self.rows]
+        self.rows = self.input_by_row()[::-1]
+        lengths = [max([c.input_coord.column for c in row]) for row in self.rows]
         mid_point = sum(lengths) // len(lengths) // 2
         self.new_rows = []
         for i, row in enumerate(self.rows):
             new_row = []
-            left_half = [c for c in row if c.final_coord.column <= mid_point]
+            left_half = [c for c in row if c.input_coord.column <= mid_point]
             for c in left_half:
                 c.current_coord.row = self.output_area_top
             opposite_row = self.rows[-(i + 1)]
-            right_half = [c for c in opposite_row if c.final_coord.column > mid_point]
+            right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
             for c in right_half:
                 c.current_coord.row = 1
             new_row.extend(left_half)

@@ -3,8 +3,7 @@
 import time
 import random
 import utils.terminaloperations as tops
-from effects import effect
-from effects.effect_char import EffectCharacter
+from effects import effect, effect_char
 
 
 class RainEffect(effect.Effect):
@@ -12,26 +11,19 @@ class RainEffect(effect.Effect):
 
     def __init__(self, input_data: str, animation_rate: float = 0.01):
         super().__init__(input_data, animation_rate)
-        self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
+        self.group_by_row: dict[int, list[effect_char.EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""
 
         for character in self.characters:
-            character.current_coord.column = character.final_coord.column
+            character.current_coord.column = character.input_coord.column
             character.current_coord.row = min(self.input_height, self.terminal_height - 1)
-            gmode = random.randint(1, 10)
-            if gmode in range(1, 3):
-                character.graphical_effect.bold = True
-            elif gmode in range(3, 5):
-                character.graphical_effect.dim = True
-            elif gmode in range(5, 7):
-                character.graphical_effect.italic = True
             self.pending_chars.append(character)
-        for character in sorted(self.pending_chars, key=lambda c: c.final_coord.row):
-            if character.final_coord.row not in self.group_by_row:
-                self.group_by_row[character.final_coord.row] = []
-            self.group_by_row[character.final_coord.row].append(character)
+        for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
+            if character.input_coord.row not in self.group_by_row:
+                self.group_by_row[character.input_coord.row] = []
+            self.group_by_row[character.input_coord.row].append(character)
 
     def run(self) -> None:
         """Runs the effect."""
@@ -59,8 +51,9 @@ class RainEffect(effect.Effect):
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
             # disable all graphical modes if the character is at the final position
-            if animating_char.current_coord == animating_char.final_coord:
+            if animating_char.current_coord == animating_char.input_coord:
                 animating_char.graphical_effect.disable_modes()
             tops.print_character(animating_char, True)
             animating_char.move()
+            animating_char.step_animation()
         time.sleep(self.animation_rate)

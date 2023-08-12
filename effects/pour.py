@@ -33,17 +33,17 @@ class PouringEffect(effect.Effect):
         self.characters.sort(key=sort_map[self.pour_direction])
         for character in self.characters:
             if self.pour_direction == PourDirection.DOWN:
-                character.current_coord.column = character.final_coord.column
+                character.current_coord.column = character.input_coord.column
                 character.current_coord.row = self.output_area_top
             elif self.pour_direction == PourDirection.UP:
-                character.current_coord.column = character.final_coord.column
+                character.current_coord.column = character.input_coord.column
                 character.current_coord.row = 0
             elif self.pour_direction == PourDirection.LEFT:
                 character.current_coord.column = self.terminal_width - 1
-                character.current_coord.row = character.final_coord.row
+                character.current_coord.row = character.input_coord.row
             elif self.pour_direction == PourDirection.RIGHT:
                 character.current_coord.column = 0
-                character.current_coord.row = character.final_coord.row
+                character.current_coord.row = character.input_coord.row
             self.pending_chars.append(character)
 
     def run(self) -> None:

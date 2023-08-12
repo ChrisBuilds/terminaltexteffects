@@ -17,7 +17,7 @@ class Coord:
 
 @dataclass
 class GraphicalEffect:
-    """A class for storing terminal graphical modes.
+    """A class for storing terminal graphical modes and a color.
 
     Supported graphical modes:
     bold, dim, italic, underline, blink, inverse, hidden, strike
@@ -31,6 +31,7 @@ class GraphicalEffect:
         reverse (bool): reverse mode
         hidden (bool): hidden mode
         strike (bool): strike mode
+        color (int): color code
     """
 
     bold: bool = False
@@ -57,18 +58,22 @@ class GraphicalEffect:
 
 @dataclass
 class AnimationUnit:
-    """A single animation unit with a symbol and duration specified as a number of steps
-    to show the symbol.
+    """An AnimationUnit is a graphicaleffect with a symbol and duration. May be looping.
 
     Args:
         symbol (str): the symbol to show
-        duration (int): the number of steps to show the symbol
-        graphicalmode (GraphicalEffect): a GraphicalEffect object containing the graphical modes of the character
+        duration (int): the number of animation steps to use the AnimationUnit
+        looping (bool): if True, the AnimationUnit will be recycled until the character reaches its final position
+        graphicaleffect (GraphicalEffect): a GraphicalEffect object containing the graphical modes and color of the character
     """
 
     symbol: str
     duration: int
+    looping: bool = False
     graphicaleffect: GraphicalEffect = field(default_factory=GraphicalEffect)
+
+    def __post_init__(self):
+        self.frames_played = 0
 
 
 class EffectCharacter:
@@ -89,30 +94,30 @@ class EffectCharacter:
         graphical_modes: (GraphicalEffects): a GraphicalEffects object containing the graphical modes of the character.
     """
 
-    def __init__(self, symbol: str, final_column: int, final_row: int):
+    def __init__(self, symbol: str, input_column: int, input_row: int):
         """Initializes the EffectCharacter class.
 
         Args:
             symbol (str): the character symbol.
-            final_column (int): the final column position of the character.
-            final_row (int): the final row position of the character.
+            input_column (int): the final column position of the character.
+            input_row (int): the final row position of the character.
         """
         self.symbol: str = symbol
         "The current symbol for the character, determined by the animation units."
-        self.final_symbol: str = symbol
+        self.input_symbol: str = symbol
         "The symbol for the character in the input data."
         self.alternate_symbol: str = symbol
         "An alternate symbol for the character to use when all AnimationUnits have been processed."
         self.use_alternate_symbol: bool = False
         "Set this flag if you want to use the alternate symbol"
         self.animation_units: list[AnimationUnit] = []
-        self.final_coord: Coord = Coord(final_column, final_row)
+        self.input_coord: Coord = Coord(input_column, input_row)
         "The coordinate of the character in the input data."
-        self.current_coord: Coord = Coord(final_column, final_row)
+        self.current_coord: Coord = Coord(input_column, input_row)
         "The current coordinate of the character. If different from the final coordinate, the character is moving."
-        self.last_coord: Coord = Coord(-1, -1)
+        self.previous_coord: Coord = Coord(-1, -1)
         "The last coordinate of the character. Used to clear the last position of the character."
-        self.target_coord: Coord = Coord(final_column, final_row)
+        self.target_coord: Coord = Coord(input_column, input_row)
         "The target coordinate of the character. Used to determine the next coordinate to move to."
         self.waypoints: list[Coord] = []
         "A list of coordinates to move to. Used to determine the next target coordinate to move to."
@@ -128,7 +133,7 @@ class EffectCharacter:
 
     def move(self) -> None:
         """Moves the character one step closer to the target position."""
-        self.last_coord.column, self.last_coord.row = self.current_coord.column, self.current_coord.row
+        self.previous_coord.column, self.previous_coord.row = self.current_coord.column, self.current_coord.row
 
         # if the character has reached the target coordinate, pop the next coordinate from the waypoints list
         # and reset the move_delta for recalculation
@@ -169,22 +174,39 @@ class EffectCharacter:
             self.current_coord.row = int(self.tweened_row)
 
     def step_animation(self) -> None:
-        """Steps the animation by one unit. Removes the animation unit if the duration is 0."""
+        """Steps the animation by one unit. Removes the animation unit if the duration is 0 and not looping."""
         if self.animation_units:
-            if self.animation_units[0].duration > 0:
-                self.animation_units[0].duration -= 1
+            current_animation_unit = self.animation_units[0]
+            # check if current animation unit has been played for the specified duration
+            if current_animation_unit.frames_played < current_animation_unit.duration:
+                current_animation_unit.frames_played += 1
             else:
+                # if it has been played for the duration but is looping, reset duration and add to end of list
+                if current_animation_unit.looping:
+                    current_animation_unit.frames_played = 0
+                    self.animation_units.append(current_animation_unit)
                 self.animation_units.pop(0)
+
         if self.animation_units:
-            self.symbol = self.animation_units[0].symbol
-            self.graphical_effect = self.animation_units[0].graphicaleffect
+            # get the current animation unit again, will be different if the previous unit was popped
+            current_animation_unit = self.animation_units[0]
+            self.symbol = current_animation_unit.symbol
+            self.graphical_effect = current_animation_unit.graphicaleffect
         else:
+            # if there are no more animation units, use the alternate symbol
             if self.use_alternate_symbol:
                 self.symbol = self.alternate_symbol
             else:
-                self.symbol = self.final_symbol
+                # if there are no more animation units and no alternate symbol, use the final symbol
+                self.symbol = self.input_symbol
+            # set the final graphical effect to be applied to the symbol
             self.graphical_effect = self.final_graphical_effect
 
     def animation_completed(self) -> bool:
         """Returns True if the character has reached its final position and has no remaining animation units."""
-        return self.last_coord == self.final_coord and not self.animation_units
+        only_looping = True
+        for animation_unit in self.animation_units:
+            if not animation_unit.looping:
+                only_looping = False
+                break
+        return self.previous_coord == self.input_coord and (not self.animation_units or only_looping)
