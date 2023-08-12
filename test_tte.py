@@ -12,6 +12,7 @@ from effects import (
     rowslide,
     columnslide,
     verticalslice,
+    rowmerge,
 )
 
 
@@ -27,13 +28,13 @@ test_data = """
 89abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567
 9abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345678
     """
-test_rows = """0000000000000000000000000
-1111111111111111111111111
-22222222222222222222222222
-333333333333333333333333333
-444444444444444444444444
-55555555555555555555555
-6666666666666666666666"""
+test_rows = """0000000000000000000000000a
+1111111111111111111111111b
+22222222222222222222222222c
+333333333333333333333333333d
+444444444444444444444444e
+55555555555555555555555f
+6666666666666666666666g"""
 
 
 def test_all(input_data: str) -> None:
@@ -72,13 +73,15 @@ def test_all(input_data: str) -> None:
     verticalslice_effect = verticalslice.VerticalSlice(input_data, 0.02)
     verticalslice_effect.run()
     sleep(1)
+    rowmerge_effect = rowmerge.RowMergeEffect(input_data, animation_rate=0.003)
+    rowmerge_effect.run()
 
 
 def main():
     input_data = tops.get_piped_input()
     if not input_data:
-        input_data = test_rows
-    test_all(input_data)
+        input_data = test_data
+    # test_all(input_data)
     # tte_effect = pour.PouringEffect(input_data, animation_rate=0.004, pour_direction=pour.PourDirection.DOWN)
     # tte_effect = scattered.ScatteredEffect(input_data, animation_rate=0.01)
     # tte_effect = expand.ExpandEffect(input_data, animation_rate=0.01)
@@ -90,7 +93,8 @@ def main():
     # tte_effect = rowslide.RowSlide(input_data, animation_rate=0.003, SlideDirection=rowslide.SlideDirection.LEFT)
     # tte_effect = columnslide.ColumnSlide(input_data, 0.003, columnslide.SlideDirection.DOWN)
     # tte_effect = verticalslice.VerticalSlice(input_data, 0.02)
-    # tte_effect.run()
+    tte_effect = rowmerge.RowMergeEffect(input_data, animation_rate=0.003)
+    tte_effect.run()
 
 
 if __name__ == "__main__":
