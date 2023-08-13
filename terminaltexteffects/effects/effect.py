@@ -1,6 +1,5 @@
 import random
 from dataclasses import dataclass
-from collections import defaultdict
 import terminaltexteffects.utils.terminaloperations as tops
 from terminaltexteffects.utils import utils
 from terminaltexteffects.effects.effect_char import EffectCharacter
