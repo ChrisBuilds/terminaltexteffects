@@ -1,6 +1,6 @@
 import time
-import utils.terminaloperations as tops
-from effects import effect
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import effect
 
 
 class VerticalSlice(effect.Effect):
@@ -22,11 +22,11 @@ class VerticalSlice(effect.Effect):
             new_row = []
             left_half = [c for c in row if c.input_coord.column <= mid_point]
             for c in left_half:
-                c.current_coord.row = self.output_area_top
+                c.current_coord.row = self.output_area.top
             opposite_row = self.rows[-(i + 1)]
             right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
             for c in right_half:
-                c.current_coord.row = 1
+                c.current_coord.row = self.output_area.bottom
             new_row.extend(left_half)
             new_row.extend(right_half)
             self.new_rows.append(new_row)

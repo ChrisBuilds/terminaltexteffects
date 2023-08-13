@@ -1,7 +1,26 @@
 import random
-import utils.terminaloperations as tops
-from utils import utils
-from effects.effect_char import EffectCharacter
+from dataclasses import dataclass
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.utils import utils
+from terminaltexteffects.effects.effect_char import EffectCharacter
+
+
+@dataclass
+class OutputArea:
+    """A class for storing the output area of an effect.
+
+    Args:
+        top (int): top row of the output area
+        right (int): right column of the output area
+        bottom (int): bottom row of the output area. Defaults to 1.
+        left (int): left column of the output area. Defaults to 1.
+
+    """
+
+    top: int
+    right: int
+    bottom: int = 1
+    left: int = 1
 
 
 class Effect:
@@ -15,16 +34,16 @@ class Effect:
             animation_rate (float, optional): time to sleep between animation steps. Defaults to 0.
         """
         self.input_data = input_data
-        self.animation_rate = animation_rate
-        self.terminal_width, self.terminal_height = tops.get_terminal_dimensions()
         self.characters = utils.decompose_input(input_data)
+        self.terminal_width, self.terminal_height = tops.get_terminal_dimensions()
         self.characters = [
             character for character in self.characters if character.input_coord.row < self.terminal_height - 1
         ]
+        self.animation_rate = animation_rate
         self.input_height = len(input_data.splitlines())
         self.input_width = max([character.input_coord.column for character in self.characters])
-        self.output_area_top = min(self.terminal_height - 1, self.input_height)
-        "Distance to the top row of the adjusted output area. Top of the terminal if input is too long."
+        self.output_area = OutputArea(self.input_height, self.input_width)
+
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
         self.completed_chars: list[EffectCharacter] = []
@@ -40,11 +59,11 @@ class Effect:
 
     def random_column(self) -> int:
         """Returns a random column position."""
-        return random.randint(0, self.input_width - 1)
+        return random.randint(1, self.input_width)
 
     def random_row(self) -> int:
         """Returns a random row position."""
-        return random.randint(0, self.output_area_top)
+        return random.randint(1, self.output_area.top)
 
     def input_by_row(self) -> list[list[EffectCharacter]]:
         """Returns a list of rows of EffectCharacters. Rows are ordered top to bottom.

@@ -1,6 +1,6 @@
 import time
-import utils.terminaloperations as tops
-from effects import effect
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import effect
 
 
 class RowMergeEffect(effect.Effect):
@@ -18,10 +18,10 @@ class RowMergeEffect(effect.Effect):
             if i % 2 == 0:
                 row = row[::-1]
                 for c in row:
-                    c.current_coord.column = 1
+                    c.current_coord.column = self.output_area.left
             else:
                 for c in row:
-                    c.current_coord.column = self.input_width
+                    c.current_coord.column = self.output_area.right
             self.rows.append(row)
 
     def run(self) -> None:

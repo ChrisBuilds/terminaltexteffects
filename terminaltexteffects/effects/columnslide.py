@@ -1,6 +1,6 @@
 import time
-import utils.terminaloperations as tops
-from effects import effect, effect_char
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import effect, effect_char
 from enum import Enum, auto
 
 
@@ -36,9 +36,9 @@ class ColumnSlide(effect.Effect):
         for column in self.columns:
             for character in column:
                 if self.slide_direction == SlideDirection.DOWN:
-                    character.current_coord.row = self.output_area_top
+                    character.current_coord.row = self.output_area.top
                 else:
-                    character.current_coord.row = 0
+                    character.current_coord.row = self.output_area.bottom
 
     def run(self) -> None:
         """Runs the effect."""

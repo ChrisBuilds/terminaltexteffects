@@ -1,6 +1,6 @@
 import time
-import utils.terminaloperations as tops
-from effects import effect
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import effect
 
 
 class ExpandEffect(effect.Effect):
@@ -13,8 +13,8 @@ class ExpandEffect(effect.Effect):
         """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""
 
         for character in self.characters:
-            character.current_coord.column = self.input_width // 2
-            character.current_coord.row = self.output_area_top // 2
+            character.current_coord.column = self.output_area.right // 2
+            character.current_coord.row = self.output_area.top // 2
             self.animating_chars.append(character)
 
     def run(self) -> None:

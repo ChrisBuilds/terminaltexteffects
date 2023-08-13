@@ -2,8 +2,8 @@
 
 import time
 import random
-import utils.terminaloperations as tops
-from effects import effect, effect_char
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import effect, effect_char
 
 
 class RainEffect(effect.Effect):

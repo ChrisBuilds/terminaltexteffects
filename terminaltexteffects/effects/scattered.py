@@ -1,6 +1,6 @@
 import time
-import utils.terminaloperations as tops
-from effects import effect
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import effect
 import random
 
 
@@ -13,7 +13,7 @@ class ScatteredEffect(effect.Effect):
     def prepare_data(self) -> None:
         """Prepares the data for the effect by scattering the characters within range of the input width and height."""
         for character in self.characters:
-            character.current_coord.column = random.randint(1, self.input_width - 1)
+            character.current_coord.column = random.randint(1, self.output_area.right - 1)
             character.current_coord.row = random.randint(1, self.input_height - 1)
             character.graphical_effect.dim = True
             self.animating_chars.append(character)

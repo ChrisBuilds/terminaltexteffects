@@ -1,6 +1,6 @@
 import time
-import utils.terminaloperations as tops
-from effects import effect, effect_char
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import effect, effect_char
 from enum import Enum, auto
 
 
@@ -35,7 +35,7 @@ class RowSlide(effect.Effect):
         for row in self.rows:
             for character in row:
                 if self.slide_direction == SlideDirection.LEFT:
-                    character.current_coord.column = self.input_width
+                    character.current_coord.column = self.output_area.right
                 else:
                     character.current_coord.column = 0
 

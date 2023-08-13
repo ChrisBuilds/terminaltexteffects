@@ -1,7 +1,7 @@
 import time
 import random
-import utils.terminaloperations as tops
-from effects import effect, effect_char
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import effect, effect_char
 
 
 class ShootingStarEffect(effect.Effect):
@@ -17,7 +17,7 @@ class ShootingStarEffect(effect.Effect):
         for character in self.characters:
             character.symbol = "*"
             character.graphical_effect.color = random.randint(1, 10)
-            character.current_coord = effect_char.Coord(self.random_column(), self.output_area_top)
+            character.current_coord = effect_char.Coord(self.random_column(), self.output_area.top)
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
             if character.input_coord.row not in self.group_by_row:

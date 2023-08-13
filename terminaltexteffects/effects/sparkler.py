@@ -2,8 +2,8 @@
 
 import time
 import random
-import utils.terminaloperations as tops
-from effects import effect, effect_char
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import effect, effect_char
 from enum import Enum, auto
 
 
@@ -36,21 +36,24 @@ class SparklerEffect(effect.Effect):
             input_data (str): string from stdin
             sparkler_position (SparklerPosition, optional): Position for the sparkler origin. Defaults to SparklerPosition.CENTER.
         """
-        super().__init__(input_data)
+        super().__init__(input_data, animation_rate)
         self.sparkler_position = sparkler_position
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point based on SparklerPosition."""
         sparkler_origin_map = {
-            SparklerPosition.CENTER: (self.input_width // 2, min(self.terminal_height // 2, self.input_height // 2)),
-            SparklerPosition.N: (self.input_width // 2, self.output_area_top),
-            SparklerPosition.NW: (1, self.output_area_top),
-            SparklerPosition.W: (1, min(self.terminal_height // 2, self.input_height // 2)),
-            SparklerPosition.SW: (1, 1),
-            SparklerPosition.S: (self.input_width // 2, 1),
-            SparklerPosition.SE: (self.input_width - 1, 1),
-            SparklerPosition.E: (self.input_width - 1, min(self.terminal_height // 2, self.input_height // 2)),
-            SparklerPosition.NE: (self.input_width - 1, self.output_area_top),
+            SparklerPosition.CENTER: (
+                self.output_area.right // 2,
+                min(self.terminal_height // 2, self.input_height // 2),
+            ),
+            SparklerPosition.N: (self.output_area.right // 2, self.output_area.top),
+            SparklerPosition.NW: (self.output_area.left, self.output_area.top),
+            SparklerPosition.W: (self.output_area.left, min(self.terminal_height // 2, self.input_height // 2)),
+            SparklerPosition.SW: (self.output_area.left, self.output_area.bottom),
+            SparklerPosition.S: (self.output_area.right // 2, self.output_area.bottom),
+            SparklerPosition.SE: (self.output_area.right - 1, self.output_area.bottom),
+            SparklerPosition.E: (self.output_area.right - 1, min(self.terminal_height // 2, self.input_height // 2)),
+            SparklerPosition.NE: (self.output_area.right - 1, self.output_area.top),
         }
 
         for character in self.characters:
@@ -61,13 +64,13 @@ class SparklerEffect(effect.Effect):
             colors = [white, yellow, orange]
             random.shuffle(colors)
             character.animation_units.append(
-                effect_char.AnimationUnit(character.symbol, random.randint(20, 35), colors.pop())
+                effect_char.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
             )
             character.animation_units.append(
-                effect_char.AnimationUnit(character.symbol, random.randint(20, 35), colors.pop())
+                effect_char.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
             )
             character.animation_units.append(
-                effect_char.AnimationUnit(character.symbol, random.randint(20, 35), colors.pop())
+                effect_char.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
             )
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)

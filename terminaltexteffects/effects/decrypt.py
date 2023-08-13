@@ -1,7 +1,7 @@
 import time
 import random
-import utils.terminaloperations as tops
-from effects import effect, effect_char
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import effect, effect_char
 from dataclasses import dataclass
 
 CIPHERTEXT_COLOR = 40
@@ -42,14 +42,14 @@ class DecryptEffect(effect.Effect):
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
             duration = 3
-            animation_units.append(effect_char.AnimationUnit(symbol, duration, graphicaleffect))
+            animation_units.append(effect_char.AnimationUnit(symbol, duration, False, graphicaleffect))
         for n in range(random.randint(1, 15)):  # 1-15 longer duration units
             symbol = random.choice(self.encrypted_symbols)
             if random.randint(0, 100) <= 30:  # 30% chance of extra long duration
                 duration = random.randrange(75, 225)  # wide long duration range reduces 'waves' in the animation
             else:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
-            animation_units.append(effect_char.AnimationUnit(symbol, duration, graphicaleffect))
+            animation_units.append(effect_char.AnimationUnit(symbol, duration, False, graphicaleffect))
         return animation_units
 
     def prepare_data_for_type_effect(self) -> None:
@@ -57,10 +57,10 @@ class DecryptEffect(effect.Effect):
 
         for character in self.characters:
             graphicaleffect = effect_char.GraphicalEffect(color=CIPHERTEXT_COLOR)
-            character.animation_units.append(effect_char.AnimationUnit(chr(int("2588", 16)), 2, graphicaleffect))
-            character.animation_units.append(effect_char.AnimationUnit(chr(int("2593", 16)), 2, graphicaleffect))
-            character.animation_units.append(effect_char.AnimationUnit(chr(int("2592", 16)), 2, graphicaleffect))
-            character.animation_units.append(effect_char.AnimationUnit(chr(int("2591", 16)), 2, graphicaleffect))
+            character.animation_units.append(effect_char.AnimationUnit(chr(int("2588", 16)), 2, False, graphicaleffect))
+            character.animation_units.append(effect_char.AnimationUnit(chr(int("2593", 16)), 2, False, graphicaleffect))
+            character.animation_units.append(effect_char.AnimationUnit(chr(int("2592", 16)), 2, False, graphicaleffect))
+            character.animation_units.append(effect_char.AnimationUnit(chr(int("2591", 16)), 2, False, graphicaleffect))
             character.final_graphical_effect = graphicaleffect
             character.alternate_symbol = random.choice(self.encrypted_symbols)
             character.use_alternate_symbol = True

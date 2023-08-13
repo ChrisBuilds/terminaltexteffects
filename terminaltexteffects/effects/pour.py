@@ -1,8 +1,8 @@
 """Effect that pours the characters into position from the top, bottom, left, or right."""
 
 import time
-import utils.terminaloperations as tops
-from effects import effect
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import effect
 from enum import Enum, auto
 
 
@@ -25,24 +25,24 @@ class PouringEffect(effect.Effect):
     def prepare_data(self) -> None:
         """Prepares the data for the effect by sorting the characters by the pour direction."""
         sort_map = {
-            PourDirection.DOWN: lambda character: character.final_coord.row,
-            PourDirection.UP: lambda character: -character.final_coord.row,
-            PourDirection.LEFT: lambda character: character.final_coord.column,
-            PourDirection.RIGHT: lambda character: -character.final_coord.column,
+            PourDirection.DOWN: lambda character: character.input_coord.row,
+            PourDirection.UP: lambda character: -character.input_coord.row,
+            PourDirection.LEFT: lambda character: character.input_coord.column,
+            PourDirection.RIGHT: lambda character: -character.input_coord.column,
         }
         self.characters.sort(key=sort_map[self.pour_direction])
         for character in self.characters:
             if self.pour_direction == PourDirection.DOWN:
                 character.current_coord.column = character.input_coord.column
-                character.current_coord.row = self.output_area_top
+                character.current_coord.row = self.output_area.top
             elif self.pour_direction == PourDirection.UP:
                 character.current_coord.column = character.input_coord.column
-                character.current_coord.row = 0
+                character.current_coord.row = self.output_area.bottom
             elif self.pour_direction == PourDirection.LEFT:
-                character.current_coord.column = self.terminal_width - 1
+                character.current_coord.column = self.output_area.right
                 character.current_coord.row = character.input_coord.row
             elif self.pour_direction == PourDirection.RIGHT:
-                character.current_coord.column = 0
+                character.current_coord.column = self.output_area.left
                 character.current_coord.row = character.input_coord.row
             self.pending_chars.append(character)
 

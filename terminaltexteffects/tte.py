@@ -1,5 +1,5 @@
-import utils.terminaloperations as tops
-from effects import (
+import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.effects import (
     expand,
     pour,
     random_sequence,

@@ -1,4 +1,4 @@
-from effects.effect_char import EffectCharacter
+from terminaltexteffects.effects.effect_char import EffectCharacter
 
 
 def decompose_input(input_data: str) -> list[EffectCharacter]:
