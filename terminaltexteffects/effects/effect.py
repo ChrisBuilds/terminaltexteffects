@@ -70,13 +70,13 @@ class Effect:
         Returns:
             list[list[EffectCharacter]]: list of rows of EffectCharacters
         """
-        input_by_row: list[list[EffectCharacter]] = []
-        for row in range(self.input_height + 1):
-            characters_in_row = [character for character in self.characters if character.input_coord.row == row]
+        rows: list[list[EffectCharacter]] = []
+        for row_index in range(self.input_height + 1):
+            characters_in_row = [character for character in self.characters if character.input_coord.row == row_index]
             if characters_in_row:
-                input_by_row.append(characters_in_row)
-        input_by_row = input_by_row[::-1]
-        return input_by_row
+                rows.append(characters_in_row)
+        rows = rows[::-1]
+        return rows
 
     def input_by_column(self) -> list[list[EffectCharacter]]:
         """Returns a list columns of EffectCharacters. Columns are ordered left to right, top to bottom.
@@ -84,11 +84,11 @@ class Effect:
         Returns:
             list[list[EffectCharacter]]: list of columns of EffectCharacters
         """
-        input_by_column: list[list[EffectCharacter]] = []
-        for column in range(self.input_width + 1):
+        columns: list[list[EffectCharacter]] = []
+        for column_index in range(self.input_width + 1):
             characters_in_column = [
-                character for character in self.characters if character.input_coord.column == column
+                character for character in self.characters if character.input_coord.column == column_index
             ]
             if characters_in_column:
-                input_by_column.append(characters_in_column)
-        return input_by_column
+                columns.append(characters_in_column)
+        return columns
