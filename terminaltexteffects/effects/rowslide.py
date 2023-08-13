@@ -31,24 +31,33 @@ class RowSlide(effect.Effect):
         coordinate."""
 
         self.rows = self.input_by_row()
-        self.rows.reverse()
-        for row in self.rows:
+        for row in self.rows.values():
             for character in row:
                 if self.slide_direction == SlideDirection.LEFT:
                     character.current_coord.column = self.output_area.right
                 else:
                     character.current_coord.column = 0
 
+    def get_next_row(self) -> list[effect_char.EffectCharacter]:
+        """Gets the next row of characters to animate.
+
+        Returns:
+            list[effect_char.EffectCharacter]: The next row of characters to animate.
+        """
+        next_row = self.rows[min(self.rows.keys())]
+        del self.rows[min(self.rows.keys())]
+        return next_row
+
     def run(self) -> None:
         """Runs the effect."""
         self.prep_terminal()
         self.prepare_data()
         active_rows: list[list[effect_char.EffectCharacter]] = []
-        active_rows.append(self.rows.pop(0))
+        active_rows.append(self.get_next_row())
         row_delay_countdown = self.row_delay_distance
         while active_rows or self.animating_chars:
             if row_delay_countdown == 0 and self.rows:
-                active_rows.append(self.rows.pop(0))
+                active_rows.append(self.get_next_row())
                 row_delay_countdown = self.row_delay_distance
             else:
                 if self.rows:

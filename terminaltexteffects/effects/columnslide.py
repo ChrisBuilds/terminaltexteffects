@@ -32,24 +32,35 @@ class ColumnSlide(effect.Effect):
 
         self.columns = self.input_by_column()
         if self.slide_direction == SlideDirection.DOWN:
-            self.columns = [column[::-1] for column in self.columns]
-        for column in self.columns:
+            for column_list in self.columns.values():
+                column_list.reverse()
+        for column in self.columns.values():
             for character in column:
                 if self.slide_direction == SlideDirection.DOWN:
                     character.current_coord.row = self.output_area.top
                 else:
                     character.current_coord.row = self.output_area.bottom
 
+    def get_next_column(self) -> list[effect_char.EffectCharacter]:
+        """Gets the next column of characters to animate.
+
+        Returns:
+            list[effect_char.EffectCharacter]: The next column of characters to animate.
+        """
+        next_column = self.columns[min(self.columns.keys())]
+        del self.columns[min(self.columns.keys())]
+        return next_column
+
     def run(self) -> None:
         """Runs the effect."""
         self.prep_terminal()
         self.prepare_data()
         active_columns: list[list[effect_char.EffectCharacter]] = []
-        active_columns.append(self.columns.pop(0))
+        active_columns.append(self.get_next_column())
         column_delay_countdown = self.column_delay_distance
         while active_columns or self.animating_chars or self.columns:
             if column_delay_countdown == 0 and self.columns:
-                active_columns.append(self.columns.pop(0))
+                active_columns.append(self.get_next_column())
                 column_delay_countdown = self.column_delay_distance
             else:
                 if self.columns:

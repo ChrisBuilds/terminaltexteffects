@@ -14,7 +14,7 @@ class RowMergeEffect(effect.Effect):
         side of the terminal and reverse the order."""
 
         self.rows = []
-        for i, row in enumerate(self.input_by_row()):
+        for i, row in self.input_by_row().items():
             if i % 2 == 0:
                 row = row[::-1]
                 for c in row:

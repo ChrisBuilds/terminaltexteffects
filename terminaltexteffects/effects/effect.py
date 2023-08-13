@@ -1,5 +1,6 @@
 import random
 from dataclasses import dataclass
+from collections import defaultdict
 import terminaltexteffects.utils.terminaloperations as tops
 from terminaltexteffects.utils import utils
 from terminaltexteffects.effects.effect_char import EffectCharacter
@@ -65,30 +66,29 @@ class Effect:
         """Returns a random row position."""
         return random.randint(1, self.output_area.top)
 
-    def input_by_row(self) -> list[list[EffectCharacter]]:
-        """Returns a list of rows of EffectCharacters. Rows are ordered top to bottom.
+    def input_by_row(self) -> dict[int, list[EffectCharacter]]:
+        """Returns a dict of rows of EffectCharacters where the key is the row index.
         Returns:
-            list[list[EffectCharacter]]: list of rows of EffectCharacters
+            dict[int,list[EffectCharacter]]: dict of rows of EffectCharacters
         """
-        rows: list[list[EffectCharacter]] = []
+        rows: dict[int, list[EffectCharacter]] = dict()
         for row_index in range(self.input_height + 1):
             characters_in_row = [character for character in self.characters if character.input_coord.row == row_index]
             if characters_in_row:
-                rows.append(characters_in_row)
-        rows = rows[::-1]
+                rows[row_index] = characters_in_row
         return rows
 
-    def input_by_column(self) -> list[list[EffectCharacter]]:
-        """Returns a list columns of EffectCharacters. Columns are ordered left to right, top to bottom.
+    def input_by_column(self) -> dict[int, list[EffectCharacter]]:
+        """Returns a dict columns of EffectCharacters where the key is the column index.
 
         Returns:
-            list[list[EffectCharacter]]: list of columns of EffectCharacters
+            dict[int,list[EffectCharacter]]: dict of columns of EffectCharacters
         """
-        columns: list[list[EffectCharacter]] = []
+        columns: dict[int, list[EffectCharacter]] = dict()
         for column_index in range(self.input_width + 1):
             characters_in_column = [
                 character for character in self.characters if character.input_coord.column == column_index
             ]
             if characters_in_column:
-                columns.append(characters_in_column)
+                columns[column_index] = characters_in_column
         return columns
