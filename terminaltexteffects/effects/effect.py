@@ -1,7 +1,6 @@
 import random
 from dataclasses import dataclass
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.utils import utils
 from terminaltexteffects.effects.effect_char import EffectCharacter
 
 
@@ -34,7 +33,7 @@ class Effect:
             animation_rate (float, optional): time to sleep between animation steps. Defaults to 0.
         """
         self.input_data = input_data
-        self.characters = utils.decompose_input(input_data)
+        self.characters = tops.decompose_input(input_data)
         self.terminal_width, self.terminal_height = tops.get_terminal_dimensions()
         self.characters = [
             character for character in self.characters if character.input_coord.row < self.terminal_height - 1
