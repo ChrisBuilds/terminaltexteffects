@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "terminaltexteffects"
+version = "0.0.1"
+
+[project.scripts]
+tte = "terminaltexteffects.__main__:main"
