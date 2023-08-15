@@ -161,3 +161,4 @@ cython_debug/
 notes.txt
 terminaltexteffects/test_tte.py
 .vscode/settings.json
+.vscode/launch.json

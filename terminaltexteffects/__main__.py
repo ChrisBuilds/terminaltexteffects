@@ -1,13 +1,14 @@
 import importlib
+import terminaltexteffects.effects
 import pkgutil
 import terminaltexteffects.utils.terminaloperations as tops
 
-discovered_plugins = {
+discovered_effects = {
     name: importlib.import_module(name)
-    for finder, name, ispkg in pkgutil.iter_modules(["./effects"])
-    if name.startswith("effect_")
+    for finder, name, ispkg in pkgutil.iter_modules(
+        terminaltexteffects.effects.__path__, terminaltexteffects.effects.__name__ + "."
+    )
 }
-print(discovered_plugins)
 
 
 def main():
