@@ -1,9 +1,9 @@
 import time
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.effects import effect
+from terminaltexteffects import base_effect
 
 
-class RowMergeEffect(effect.Effect):
+class RowMergeEffect(base_effect.Effect):
     """Effect that merges rows."""
 
     def __init__(self, input_data: str, animation_rate: float = 0.03):

@@ -1,7 +1,7 @@
 import random
 from dataclasses import dataclass
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.effects.effect_char import EffectCharacter
+from terminaltexteffects.base_character import EffectCharacter
 
 
 @dataclass

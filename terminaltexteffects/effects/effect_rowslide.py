@@ -1,6 +1,6 @@
 import time
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.effects import effect, effect_char
+from terminaltexteffects import base_effect, base_character
 from enum import Enum, auto
 
 
@@ -9,7 +9,7 @@ class SlideDirection(Enum):
     RIGHT = auto()
 
 
-class RowSlide(effect.Effect):
+class RowSlide(base_effect.Effect):
     """Effect that slides each row into place."""
 
     def __init__(
@@ -38,7 +38,7 @@ class RowSlide(effect.Effect):
                 else:
                     character.current_coord.column = 0
 
-    def get_next_row(self) -> list[effect_char.EffectCharacter]:
+    def get_next_row(self) -> list[base_character.EffectCharacter]:
         """Gets the next row of characters to animate.
 
         Returns:
@@ -52,7 +52,7 @@ class RowSlide(effect.Effect):
         """Runs the effect."""
         self.prep_terminal()
         self.prepare_data()
-        active_rows: list[list[effect_char.EffectCharacter]] = []
+        active_rows: list[list[base_character.EffectCharacter]] = []
         active_rows.append(self.get_next_row())
         row_delay_countdown = self.row_delay_distance
         while active_rows or self.animating_chars:

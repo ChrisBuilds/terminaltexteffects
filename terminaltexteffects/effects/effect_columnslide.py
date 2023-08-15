@@ -1,6 +1,6 @@
 import time
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.effects import effect, effect_char
+from terminaltexteffects import base_effect, base_character
 from enum import Enum, auto
 
 
@@ -9,7 +9,7 @@ class SlideDirection(Enum):
     DOWN = auto()
 
 
-class ColumnSlide(effect.Effect):
+class ColumnSlide(base_effect.Effect):
     """Effect that slides each column into place."""
 
     def __init__(
@@ -41,11 +41,11 @@ class ColumnSlide(effect.Effect):
                 else:
                     character.current_coord.row = self.output_area.bottom
 
-    def get_next_column(self) -> list[effect_char.EffectCharacter]:
+    def get_next_column(self) -> list[base_character.EffectCharacter]:
         """Gets the next column of characters to animate.
 
         Returns:
-            list[effect_char.EffectCharacter]: The next column of characters to animate.
+            list[character.EffectCharacter]: The next column of characters to animate.
         """
         next_column = self.columns[min(self.columns.keys())]
         del self.columns[min(self.columns.keys())]
@@ -55,7 +55,7 @@ class ColumnSlide(effect.Effect):
         """Runs the effect."""
         self.prep_terminal()
         self.prepare_data()
-        active_columns: list[list[effect_char.EffectCharacter]] = []
+        active_columns: list[list[base_character.EffectCharacter]] = []
         active_columns.append(self.get_next_column())
         column_delay_countdown = self.column_delay_distance
         while active_columns or self.animating_chars or self.columns:

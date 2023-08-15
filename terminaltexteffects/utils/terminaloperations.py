@@ -1,6 +1,6 @@
 """This module contains functions for terminal operations."""
 from terminaltexteffects.utils import ansicodes, colorterm
-from terminaltexteffects.effects.effect_char import EffectCharacter
+from terminaltexteffects.base_character import EffectCharacter
 import shutil
 import sys
 

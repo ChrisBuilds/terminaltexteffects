@@ -1,15 +1,15 @@
 import time
 import random
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.effects import effect, effect_char
+from terminaltexteffects import base_effect, base_character
 
 
-class ShootingStarEffect(effect.Effect):
+class ShootingStarEffect(base_effect.Effect):
     """Effect that display the text as a falling star toward the final coordinate of the character."""
 
     def __init__(self, input_data: str, animation_rate: float = 0.01):
         super().__init__(input_data, animation_rate)
-        self.group_by_row: dict[int, list[effect_char.EffectCharacter | None]] = {}
+        self.group_by_row: dict[int, list[base_character.EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by sorting by row and assigning the star symbol."""
@@ -17,7 +17,7 @@ class ShootingStarEffect(effect.Effect):
         for character in self.characters:
             character.symbol = "*"
             character.graphical_effect.color = random.randint(1, 10)
-            character.current_coord = effect_char.Coord(self.random_column(), self.output_area.top)
+            character.current_coord = base_character.Coord(self.random_column(), self.output_area.top)
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
             if character.input_coord.row not in self.group_by_row:

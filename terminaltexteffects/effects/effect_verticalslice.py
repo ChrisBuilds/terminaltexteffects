@@ -1,9 +1,9 @@
 import time
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.effects import effect
+from terminaltexteffects import base_effect
 
 
-class VerticalSlice(effect.Effect):
+class VerticalSlice(base_effect.Effect):
     """Effect that slices the input in half vertically and slides it into place from opposite directions."""
 
     def __init__(self, input_data: str, animation_rate: float = 0.02):

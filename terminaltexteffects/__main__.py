@@ -1,18 +1,13 @@
+import importlib
+import pkgutil
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.effects import (
-    expand,
-    pour,
-    random_sequence,
-    scattered,
-    sparkler,
-    rain,
-    decrypt,
-    shootingstar,
-    rowslide,
-    columnslide,
-    verticalslice,
-    rowmerge,
-)
+
+discovered_plugins = {
+    name: importlib.import_module(name)
+    for finder, name, ispkg in pkgutil.iter_modules(["./effects"])
+    if name.startswith("effect_")
+}
+print(discovered_plugins)
 
 
 def main():
@@ -20,8 +15,7 @@ def main():
     if not input_data:
         print("NO INPUT.")
     else:
-        effect = rowmerge.RowMergeEffect(input_data, animation_rate=0.01)
-        effect.run()
+        pass
 
 
 if __name__ == "__main__":

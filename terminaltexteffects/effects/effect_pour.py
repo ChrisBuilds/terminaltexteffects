@@ -2,7 +2,7 @@
 
 import time
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.effects import effect
+from terminaltexteffects import base_effect
 from enum import Enum, auto
 
 
@@ -13,7 +13,7 @@ class PourDirection(Enum):
     RIGHT = auto()
 
 
-class PouringEffect(effect.Effect):
+class PouringEffect(base_effect.Effect):
     """Effect that pours the characters into position from the top, bottom, left, or right."""
 
     def __init__(

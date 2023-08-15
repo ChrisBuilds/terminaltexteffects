@@ -1,9 +1,9 @@
 import time
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.effects import effect
+from terminaltexteffects import base_effect, base_character
 
 
-class NamedEffect(effect.Effect):
+class NamedEffect(base_effect.Effect):
     """Effect that ___."""
 
     def __init__(self, input_data: str, animation_rate: float = 0):

@@ -3,15 +3,15 @@
 import time
 import random
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.effects import effect, effect_char
+from terminaltexteffects import base_effect, base_character
 
 
-class RainEffect(effect.Effect):
+class RainEffect(base_effect.Effect):
     """Creates a rain effect where characters fall from the top of the terminal."""
 
     def __init__(self, input_data: str, animation_rate: float = 0.01):
         super().__init__(input_data, animation_rate)
-        self.group_by_row: dict[int, list[effect_char.EffectCharacter | None]] = {}
+        self.group_by_row: dict[int, list[base_character.EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""

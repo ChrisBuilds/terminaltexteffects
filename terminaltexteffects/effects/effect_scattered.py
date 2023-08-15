@@ -1,10 +1,10 @@
 import time
 import terminaltexteffects.utils.terminaloperations as tops
-from terminaltexteffects.effects import effect
+from terminaltexteffects import base_effect
 import random
 
 
-class ScatteredEffect(effect.Effect):
+class ScatteredEffect(base_effect.Effect):
     """Effect that draws the characters into position from random starting locations."""
 
     def __init__(self, input_data: str, animation_rate: float = 0.01):
