@@ -18,9 +18,10 @@ from terminaltexteffects.effects import (
 def main():
     input_data = tops.get_piped_input()
     if not input_data:
-        input_data = "NO INPUT."
-    effect = rowmerge.RowMergeEffect(input_data, animation_rate=0.01)
-    effect.run()
+        print("NO INPUT.")
+    else:
+        effect = rowmerge.RowMergeEffect(input_data, animation_rate=0.01)
+        effect.run()
 
 
 if __name__ == "__main__":
