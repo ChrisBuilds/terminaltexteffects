@@ -11,14 +11,16 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     Args:
         subparser (argparse._SubParsersAction): subparser to add arguments to
     """
-    effect_parser = subparsers.add_parser("effect_name", help="effect_description")
+    effect_parser = subparsers.add_parser(
+        "effect_name", help="effect_description", description="effect_description", epilog="Example: effect_example"
+    )
     effect_parser.set_defaults(effect_class=NamedEffect)
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
         type=float,
         default=0.01,
-        help="Time to sleep between animation steps. Defaults to 0.01 seconds.",
+        help="Time between animation steps. Defaults to 0.01 seconds.",
     )
     effect_parser.add_argument(
         "--color-description",
