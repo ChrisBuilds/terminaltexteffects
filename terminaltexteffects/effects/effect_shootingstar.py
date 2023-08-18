@@ -1,14 +1,38 @@
 import time
 import random
+import argparse
+import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminaloperations as tops
 from terminaltexteffects import base_effect, base_character
+
+
+def add_arguments(subparsers: argparse._SubParsersAction) -> None:
+    """Adds arguments to the subparser.
+
+    Args:
+        subparser (argparse._SubParsersAction): subparser to add arguments to
+    """
+    effect_parser = subparsers.add_parser(
+        "shootingstar",
+        help="Displays the text as a falling star toward the final coordinate of the character.",
+        description="shootingstar | Displays the text as a falling star toward the final coordinate of the character.",
+        epilog="Example: terminaltexteffects shootingstar -a 0.01",
+    )
+    effect_parser.set_defaults(effect_class=ShootingStarEffect)
+    effect_parser.add_argument(
+        "-a",
+        "--animation-rate",
+        type=float,
+        default=0.01,
+        help="Time between animation steps. Defaults to 0.01 seconds.",
+    )
 
 
 class ShootingStarEffect(base_effect.Effect):
     """Effect that display the text as a falling star toward the final coordinate of the character."""
 
-    def __init__(self, input_data: str, animation_rate: float = 0.01):
-        super().__init__(input_data, animation_rate)
+    def __init__(self, input_data: str, args: argparse.Namespace):
+        super().__init__(input_data, args.animation_rate)
         self.group_by_row: dict[int, list[base_character.EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:

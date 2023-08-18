@@ -1,11 +1,46 @@
 import time
 import random
+import argparse
+import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminaloperations as tops
 from terminaltexteffects import base_effect, base_character
 from dataclasses import dataclass
 
-CIPHERTEXT_COLOR = 40
-PLAINTEXT_COLOR = 208
+
+def add_arguments(subparsers: argparse._SubParsersAction) -> None:
+    """Adds arguments to the subparser.
+
+    Args:
+        subparser (argparse._SubParsersAction): subparser to add arguments to
+    """
+    effect_parser = subparsers.add_parser(
+        "decrypt",
+        help="Display a movie style decryption effect.",
+        description="decrypt | Movie style decryption effect.",
+        epilog="Example: terminaltexteffects decrypt -a 0.003 --cipher-text-color 40 --plain-text-color 208",
+    )
+    effect_parser.set_defaults(effect_class=DecryptEffect)
+    effect_parser.add_argument(
+        "-a",
+        "--animation-rate",
+        type=float,
+        default=0.003,
+        help="Time to sleep between animation steps. Defaults to 0.003 seconds.",
+    )
+    effect_parser.add_argument(
+        "--ciphertext-color",
+        type=argtypes.color_range,
+        default=40,
+        metavar="[0-255]",
+        help="Xterm color code for the ciphertext. Defaults to 40",
+    )
+    effect_parser.add_argument(
+        "--plaintext-color",
+        type=argtypes.color_range,
+        default=208,
+        metavar="[0-255]",
+        help="Xterm color code for the plaintext. Defaults to 208.",
+    )
 
 
 @dataclass
@@ -21,8 +56,10 @@ class DecryptChars:
 class DecryptEffect(base_effect.Effect):
     """Effect that shows a movie style text decryption effect."""
 
-    def __init__(self, input_data: str, animation_rate: float = 0.003):
-        super().__init__(input_data, animation_rate)
+    def __init__(self, input_data: str, args: argparse.Namespace):
+        super().__init__(input_data, args.animation_rate)
+        self.ciphertext_color = args.ciphertext_color
+        self.plaintext_color = args.plaintext_color
         self.encrypted_symbols: list[str] = []
         self.make_encrypted_symbols()
 
@@ -38,7 +75,7 @@ class DecryptEffect(base_effect.Effect):
 
     def make_decrypting_animation_units(self) -> list[base_character.AnimationUnit]:
         animation_units = []
-        graphicaleffect = base_character.GraphicalEffect(color=CIPHERTEXT_COLOR)
+        graphicaleffect = base_character.GraphicalEffect(color=self.ciphertext_color)
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
             duration = 3
@@ -56,7 +93,7 @@ class DecryptEffect(base_effect.Effect):
         """Prepares the data for the effect by building the animation for each character."""
 
         for character in self.characters:
-            graphicaleffect = base_character.GraphicalEffect(color=CIPHERTEXT_COLOR)
+            graphicaleffect = base_character.GraphicalEffect(color=self.ciphertext_color)
             character.animation_units.append(
                 base_character.AnimationUnit(chr(int("2588", 16)), 2, False, graphicaleffect)
             )
@@ -79,7 +116,7 @@ class DecryptEffect(base_effect.Effect):
         for character in self.characters:
             character.animation_units.extend(self.make_decrypting_animation_units())
             character.use_alternate_symbol = False
-            character.final_graphical_effect.color = PLAINTEXT_COLOR
+            character.final_graphical_effect.color = self.plaintext_color
             self.animating_chars.append(character)
 
     def run(self) -> None:

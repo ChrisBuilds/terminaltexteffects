@@ -2,15 +2,39 @@
 
 import time
 import random
+import argparse
+import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminaloperations as tops
 from terminaltexteffects import base_effect, base_character
 
 
-class RainEffect(base_effect.Effect):
-    """Creates a rain effect where characters fall from the top of the terminal."""
+def add_arguments(subparsers: argparse._SubParsersAction) -> None:
+    """Adds arguments to the subparser.
 
-    def __init__(self, input_data: str, animation_rate: float = 0.01):
-        super().__init__(input_data, animation_rate)
+    Args:
+        subparser (argparse._SubParsersAction): subparser to add arguments to
+    """
+    effect_parser = subparsers.add_parser(
+        "rain",
+        help="Rain characters from the top of the output area.",
+        description="rain | Rain characters from the top of the output area.",
+        epilog="Example: terminaltexteffects rain -a 0.004 --rain-color 40",
+    )
+    effect_parser.set_defaults(effect_class=RainEffect)
+    effect_parser.add_argument(
+        "-a",
+        "--animation-rate",
+        type=float,
+        default=0.01,
+        help="Time between animation steps. Defaults to 0.01 seconds.",
+    )
+
+
+class RainEffect(base_effect.Effect):
+    """Creates a rain effect where characters fall from the top of the output area."""
+
+    def __init__(self, input_data: str, args: argparse.Namespace):
+        super().__init__(input_data, args.animation_rate)
         self.group_by_row: dict[int, list[base_character.EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:

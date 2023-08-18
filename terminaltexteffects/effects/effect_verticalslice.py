@@ -1,13 +1,37 @@
 import time
+import argparse
+import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminaloperations as tops
 from terminaltexteffects import base_effect
+
+
+def add_arguments(subparsers: argparse._SubParsersAction) -> None:
+    """Adds arguments to the subparser.
+
+    Args:
+        subparser (argparse._SubParsersAction): subparser to add arguments to
+    """
+    effect_parser = subparsers.add_parser(
+        "verticalslice",
+        help="Slices the input in half vertically and slides it into place from opposite directions.",
+        description="verticalslice | Slices the input in half vertically and slides it into place from opposite directions.",
+        epilog="Example: terminaltexteffects verticalslice -a 0.02",
+    )
+    effect_parser.set_defaults(effect_class=VerticalSlice)
+    effect_parser.add_argument(
+        "-a",
+        "--animation-rate",
+        type=float,
+        default=0.02,
+        help="Time between animation steps. Defaults to 0.02 seconds.",
+    )
 
 
 class VerticalSlice(base_effect.Effect):
     """Effect that slices the input in half vertically and slides it into place from opposite directions."""
 
-    def __init__(self, input_data: str, animation_rate: float = 0.02):
-        super().__init__(input_data, animation_rate)
+    def __init__(self, input_data: str, args: argparse.Namespace):
+        super().__init__(input_data, args.animation_rate)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting the left half to start at the top and the

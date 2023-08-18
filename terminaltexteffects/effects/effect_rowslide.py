@@ -1,7 +1,37 @@
 import time
+import argparse
+import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminaloperations as tops
 from terminaltexteffects import base_effect, base_character
 from enum import Enum, auto
+
+
+def add_arguments(subparsers: argparse._SubParsersAction) -> None:
+    """Adds arguments to the subparser.
+
+    Args:
+        subparser (argparse._SubParsersAction): subparser to add arguments to
+    """
+    effect_parser = subparsers.add_parser(
+        "rowslide",
+        help="Slides each row into place.",
+        description="rowslide | Slides each row into place.",
+        epilog="Example: terminaltexteffects rowslide -a 0.003 --slide-direction left",
+    )
+    effect_parser.set_defaults(effect_class=RowSlide)
+    effect_parser.add_argument(
+        "-a",
+        "--animation-rate",
+        type=float,
+        default=0.03,
+        help="Time between animation steps. Defaults to 0.03 seconds.",
+    )
+    effect_parser.add_argument(
+        "--slide-direction",
+        default="left",
+        choices=["left", "right"],
+        help="Direction the text will slide. Defaults to left.",
+    )
 
 
 class SlideDirection(Enum):
@@ -12,19 +42,19 @@ class SlideDirection(Enum):
 class RowSlide(base_effect.Effect):
     """Effect that slides each row into place."""
 
-    def __init__(
-        self, input_data: str, animation_rate: float = 0.003, SlideDirection: SlideDirection = SlideDirection.LEFT
-    ):
+    def __init__(self, input_data: str, args: argparse.Namespace):
         """Effect that slides each row into place.
 
         Args:
             input_data (str): string from stdin
-            SlideDirection (SlideDirection, optional): Direction rows will slide. Defaults to SlideDirection.LEFT.
-            animation_rate (float, optional): Delay between animation steps. Defaults to 0.001.
+            args (argparse.Namespace): arguments from argparse
         """
-        super().__init__(input_data, animation_rate)
+        super().__init__(input_data, args.animation_rate)
         self.row_delay_distance: int = 8  # number of characters to wait before adding a new row
-        self.slide_direction = SlideDirection
+        if args.slide_direction == "left":
+            self.slide_direction = SlideDirection.LEFT
+        else:
+            self.slide_direction = SlideDirection.RIGHT
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by grouping the characters by row and setting the starting

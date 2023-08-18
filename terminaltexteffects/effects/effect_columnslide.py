@@ -1,7 +1,37 @@
 import time
+import argparse
+import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminaloperations as tops
 from terminaltexteffects import base_effect, base_character
 from enum import Enum, auto
+
+
+def add_arguments(subparsers: argparse._SubParsersAction) -> None:
+    """Adds arguments to the subparser.
+
+    Args:
+        subparser (argparse._SubParsersAction): subparser to add arguments to
+    """
+    effect_parser = subparsers.add_parser(
+        "columnslide",
+        help="Slides each column into place.",
+        description="columnslide | Slides each column into place.",
+        epilog="Example: terminaltexteffects columnslide -a 0.003 --slide-direction up",
+    )
+    effect_parser.set_defaults(effect_class=ColumnSlide)
+    effect_parser.add_argument(
+        "-a",
+        "--animation-rate",
+        type=float,
+        default=0.003,
+        help="Time to sleep between animation steps. Defaults to 0.003 seconds.",
+    )
+    effect_parser.add_argument(
+        "--slide-direction",
+        default="down",
+        choices=["up", "down"],
+        help="Direction the text will slide. Defaults to down.",
+    )
 
 
 class SlideDirection(Enum):
@@ -12,19 +42,19 @@ class SlideDirection(Enum):
 class ColumnSlide(base_effect.Effect):
     """Effect that slides each column into place."""
 
-    def __init__(
-        self, input_data: str, animation_rate: float = 0.003, SlideDirection: SlideDirection = SlideDirection.DOWN
-    ):
+    def __init__(self, input_data: str, args: argparse.Namespace):
         """Effect that slides each column into place.
 
         Args:
             input_data (str): string from stdin
-            SlideDirection (SlideDirection, optional): Direction columns will slide. Defaults to SlideDirection.DOWN.
-            animation_rate (float, optional): Delay between animation steps. Defaults to 0.001.
+            args (argparse.Namespace): arguments from argparse
         """
-        super().__init__(input_data, animation_rate)
+        super().__init__(input_data, args.animation_rate)
         self.column_delay_distance: int = 2  # number of characters to wait before adding a new row
-        self.slide_direction = SlideDirection
+        if args.slide_direction == "down":
+            self.slide_direction = SlideDirection.DOWN
+        else:
+            self.slide_direction = SlideDirection.UP
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by grouping the characters by column and setting the starting
