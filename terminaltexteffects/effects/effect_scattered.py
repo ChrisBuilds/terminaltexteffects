@@ -38,7 +38,7 @@ class ScatteredEffect(base_effect.Effect):
         """Prepares the data for the effect by scattering the characters within range of the input width and height."""
         for character in self.characters:
             character.current_coord.column = random.randint(1, self.output_area.right - 1)
-            character.current_coord.row = random.randint(1, self.input_height - 1)
+            character.current_coord.row = random.randint(1, self.output_area.top - 1)
             character.graphical_effect.dim = True
             self.animating_chars.append(character)
 
