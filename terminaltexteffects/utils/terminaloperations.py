@@ -77,7 +77,7 @@ def get_piped_input() -> str:
         return ""
 
 
-def decompose_input(input_data: str) -> list[EffectCharacter]:
+def decompose_input(input_data: str, terminal_width: int) -> list[EffectCharacter]:
     """Decomposes the output into a list of Character objects containing the symbol and its row/column coordinates
     relative to the input display location.
 
@@ -90,11 +90,18 @@ def decompose_input(input_data: str) -> list[EffectCharacter]:
     Returns:
         list[Character]: list of EffectCharacter objects
     """
-    output_lines = input_data.splitlines()
-    input_height = len(output_lines)
-    output_characters = []
-    for row, line in enumerate(output_lines):
+    wrapped_lines = []
+    input_lines = input_data.splitlines()
+    for line in input_lines:
+        while len(line) > terminal_width:
+            wrapped_lines.append(line[:terminal_width])
+            line = line[terminal_width:]
+        if line:
+            wrapped_lines.append(line)
+    input_height = len(wrapped_lines)
+    input_characters = []
+    for row, line in enumerate(wrapped_lines):
         for column, symbol in enumerate(line):
             if symbol != " ":
-                output_characters.append(EffectCharacter(symbol, column + 1, input_height - row))
-    return output_characters
+                input_characters.append(EffectCharacter(symbol, column + 1, input_height - row))
+    return input_characters
