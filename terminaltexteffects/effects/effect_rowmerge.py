@@ -22,7 +22,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "-a",
         "--animation-rate",
         type=float,
-        default=0.03,
+        default=0.01,
         help="Time to sleep between animation steps. Defaults to 0.03 seconds.",
     )
 
