@@ -42,7 +42,7 @@ class RainEffect(base_effect.Effect):
 
         for character in self.characters:
             character.current_coord.column = character.input_coord.column
-            character.current_coord.row = min(self.input_height, self.terminal_height - 1)
+            character.current_coord.row = self.output_area.top
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
             if character.input_coord.row not in self.group_by_row:

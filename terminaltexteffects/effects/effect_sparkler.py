@@ -83,15 +83,15 @@ class SparklerEffect(base_effect.Effect):
         sparkler_origin_map = {
             SparklerPosition.CENTER: (
                 self.output_area.right // 2,
-                min(self.terminal_height // 2, self.input_height // 2),
+                self.output_area.top // 2,
             ),
             SparklerPosition.N: (self.output_area.right // 2, self.output_area.top),
             SparklerPosition.NW: (self.output_area.left, self.output_area.top),
-            SparklerPosition.W: (self.output_area.left, min(self.terminal_height // 2, self.input_height // 2)),
+            SparklerPosition.W: (self.output_area.left, self.output_area.top // 2),
             SparklerPosition.SW: (self.output_area.left, self.output_area.bottom),
             SparklerPosition.S: (self.output_area.right // 2, self.output_area.bottom),
             SparklerPosition.SE: (self.output_area.right - 1, self.output_area.bottom),
-            SparklerPosition.E: (self.output_area.right - 1, min(self.terminal_height // 2, self.input_height // 2)),
+            SparklerPosition.E: (self.output_area.right - 1, self.output_area.top // 2),
             SparklerPosition.NE: (self.output_area.right - 1, self.output_area.top),
         }
 
