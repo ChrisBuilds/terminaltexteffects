@@ -33,15 +33,15 @@ class Effect:
             animation_rate (float, optional): time to sleep between animation steps. Defaults to 0.
         """
         self.input_data = input_data
-        self.characters = tops.decompose_input(input_data)
         self.terminal_width, self.terminal_height = tops.get_terminal_dimensions()
+        self.characters = tops.decompose_input(input_data, self.terminal_width)
         self.characters = [
             character for character in self.characters if character.input_coord.row < self.terminal_height - 1
         ]
         self.animation_rate = animation_rate
         self.input_height = len(input_data.splitlines())
         self.input_width = max([character.input_coord.column for character in self.characters])
-        self.output_area = OutputArea(self.input_height, self.input_width)
+        self.output_area = OutputArea(min(self.terminal_height, self.input_height), self.input_width)
 
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
