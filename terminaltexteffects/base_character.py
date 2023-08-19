@@ -103,6 +103,8 @@ class EffectCharacter:
             input_column (int): the final column position of the character.
             input_row (int): the final row position of the character.
         """
+        self.is_active: bool = True
+        "Active characters are printed to the terminal."
         self.symbol: str = symbol
         "The current symbol for the character, determined by the animation units."
         self.input_symbol: str = symbol
