@@ -18,8 +18,7 @@ from terminaltexteffects.effects import (
 )
 
 
-test_data = """
-aaaaaaaaaaaaa
+testdata_block = """
 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
 123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0
 23456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01
@@ -32,13 +31,13 @@ aaaaaaaaaaaaa
 9abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345678
     """
 
-test_data_small = """
+testdata_small = """
 012345
 6789ab
 cdefgh
 """
 
-test_rows = """0000000000000000000000000a
+testdata_rows = """0000000000000000000000000a
 1111111111111111111111111b
 22222222222222222222222222c
 333333333333333333333333333d
@@ -46,7 +45,7 @@ test_rows = """0000000000000000000000000a
 55555555555555555555555f
 6666666666666666666666g"""
 
-test_tall = """30
+testdata_tall = """30
 29
 28
 27
@@ -78,7 +77,7 @@ test_tall = """30
 1"""
 
 
-def show_all(input_data: str = test_data) -> None:
+def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_pour.add_arguments(sub)
@@ -176,7 +175,7 @@ def show_all(input_data: str = test_data) -> None:
     rowmerge_effect.run()
 
 
-def test_pour_effect(input_data: str = test_data, animation_rate: int = 0) -> None:
+def test_pour_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     args.pour_direction = effect_pour.PourDirection.DOWN
     terminal = Terminal(input_data)
@@ -184,28 +183,28 @@ def test_pour_effect(input_data: str = test_data, animation_rate: int = 0) -> No
     pour_effect.run()
 
 
-def test_scattered_effect(input_data: str = test_data, animation_rate: int = 0) -> None:
+def test_scattered_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     terminal = Terminal(input_data)
     scattered_effect = effect_scattered.ScatteredEffect(terminal, args)
     scattered_effect.run()
 
 
-def test_expand_effect(input_data: str = test_data, animation_rate: int = 0) -> None:
+def test_expand_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     terminal = Terminal(input_data)
     expand_effect = effect_expand.ExpandEffect(terminal, args)
     expand_effect.run()
 
 
-def test_random_sequence_effect(input_data: str = test_data, animation_rate: int = 0) -> None:
+def test_random_sequence_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     terminal = Terminal(input_data)
     random_sequence_effect = effect_random_sequence.RandomSequence(terminal, args)
     random_sequence_effect.run()
 
 
-def test_sparkler_effect(input_data: str = test_data, animation_rate: int = 0) -> None:
+def test_sparkler_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     args.sparkler_position = effect_sparkler.SparklerPosition.SE
     terminal = Terminal(input_data)
@@ -213,14 +212,14 @@ def test_sparkler_effect(input_data: str = test_data, animation_rate: int = 0) -
     sparkler_effect.run()
 
 
-def test_rain_effect(input_data: str = test_data, animation_rate: int = 0) -> None:
+def test_rain_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     terminal = Terminal(input_data)
     rain_effect = effect_rain.RainEffect(terminal, args)
     rain_effect.run()
 
 
-def test_decrypt_effect(input_data: str = test_data, animation=0) -> None:
+def test_decrypt_effect(input_data: str = testdata_block, animation=0) -> None:
     args = Namespace(animation_rate=animation)
     terminal = Terminal(input_data)
     args.ciphertext_color = 40
@@ -229,14 +228,14 @@ def test_decrypt_effect(input_data: str = test_data, animation=0) -> None:
     decrypt_effect.run()
 
 
-def test_shootingstar_effect(input_data: str = test_data, animation_rate: int = 0) -> None:
+def test_shootingstar_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     terminal = Terminal(input_data)
     shootingstar_effect = effect_shootingstar.ShootingStarEffect(terminal, args)
     shootingstar_effect.run()
 
 
-def test_rowslide_effect(input_data: str = test_data, animation_rate: int = 0) -> None:
+def test_rowslide_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     args.slide_direction = effect_rowslide.SlideDirection.LEFT
     terminal = Terminal(input_data)
@@ -244,7 +243,7 @@ def test_rowslide_effect(input_data: str = test_data, animation_rate: int = 0) -
     rowslide_effect.run()
 
 
-def test_columnslide_effect(input_data: str = test_data, animation_rate: int = 0) -> None:
+def test_columnslide_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     args.slide_direction = effect_columnslide.SlideDirection.DOWN
     terminal = Terminal(input_data)
@@ -252,14 +251,14 @@ def test_columnslide_effect(input_data: str = test_data, animation_rate: int = 0
     columnslide_effect.run()
 
 
-def test_verticalslice_effect(input_data: str = test_data, animation_rate: int = 0) -> None:
+def test_verticalslice_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     terminal = Terminal(input_data)
     verticalslice_effect = effect_verticalslice.VerticalSlice(terminal, args)
     verticalslice_effect.run()
 
 
-def test_rowmerge_effect(input_data: str = test_data, animation_rate: int = 0) -> None:
+def test_rowmerge_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     terminal = Terminal(input_data)
     rowmerge_effect = effect_rowmerge.RowMergeEffect(terminal, args)
@@ -267,8 +266,7 @@ def test_rowmerge_effect(input_data: str = test_data, animation_rate: int = 0) -
 
 
 def main():
-    with open("/home/michael/H/copy_pasta.txt", "r") as f:
-        input_data = f.read()
+    input_data = testdata_block
     show_all(input_data)
 
 
