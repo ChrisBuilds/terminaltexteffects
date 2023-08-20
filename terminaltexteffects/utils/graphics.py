@@ -51,7 +51,7 @@ class AnimationUnit:
     Args:
         symbol (str): the symbol to show
         duration (int): the number of animation steps to use the AnimationUnit
-        is_looping (bool): if True, the AnimationUnit will be recycled until the character reaches its final position
+        is_looping (bool): if True, the AnimationUnit will be recycled when the duration reaches 0
         graphical_effect (GraphicalEffect): a GraphicalEffect object containing the graphical modes and color of the character
     """
 
