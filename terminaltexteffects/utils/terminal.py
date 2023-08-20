@@ -1,5 +1,5 @@
-from terminaltexteffects.utils import ansicodes, colorterm
 from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.utils import ansitools
 import shutil
 import sys
 from dataclasses import dataclass
@@ -104,9 +104,9 @@ class Terminal:
     def print(self):
         self._update_terminal_state()
         for row_index, row in enumerate(self.terminal_state):
-            sys.stdout.write(ansicodes.DEC_SAVE_CURSOR_POSITION())
-            sys.stdout.write(ansicodes.MOVE_CURSOR_UP(row_index + 1))
-            sys.stdout.write(ansicodes.MOVE_CURSOR_TO_COLUMN(1))
+            sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
+            sys.stdout.write(ansitools.MOVE_CURSOR_UP(row_index + 1))
+            sys.stdout.write(ansitools.MOVE_CURSOR_TO_COLUMN(1))
             sys.stdout.write(row)
-            sys.stdout.write(ansicodes.DEC_RESTORE_CURSOR_POSITION())
+            sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
             sys.stdout.flush()
