@@ -61,7 +61,6 @@ class EffectCharacter:
         self.waypoints: list[Coord] = []
         "A list of coordinates to move to. Used to determine the next target coordinate to move to."
         self.graphical_effect: GraphicalEffect = GraphicalEffect()
-        self.final_graphical_effect: GraphicalEffect = GraphicalEffect()
         # move_delta is the floating point distance to move each step
         self.move_delta: float = 0
         self.row_delta: float = 0
