@@ -24,14 +24,19 @@ class OutputArea:
 
 
 class Terminal:
-    def __init__(self):
+    def __init__(self, input_data: str):
+        self.input_data = input_data
         self.width, self.height = self.get_terminal_dimensions()
-        self.input_data = self.get_piped_input()
         self.characters = self.decompose_input()
         self.input_width = max([character.input_coord.column for character in self.characters])
         self.input_height = max([character.input_coord.row for character in self.characters])
-        self.terminal_state = self.update_terminal_state()
         self.output_area = OutputArea(min(self.height, self.input_height), self.input_width)
+        self.characters = [
+            character for character in self.characters if character.input_coord.row <= self.output_area.top
+        ]
+        self.update_terminal_state()
+
+        self.prep_outputarea()
 
     def get_terminal_dimensions(self) -> tuple[int, int]:
         """Returns the terminal dimensions.
@@ -42,7 +47,8 @@ class Terminal:
         terminal_width, terminal_height = shutil.get_terminal_size()
         return terminal_width, terminal_height
 
-    def get_piped_input(self) -> str:
+    @staticmethod
+    def get_piped_input() -> str:
         """Gets the piped input from stdin.
 
         Returns:
@@ -80,56 +86,26 @@ class Terminal:
                     input_characters.append(EffectCharacter(symbol, column + 1, input_height - row))
         return input_characters
 
-    def format_symbol(self, character: EffectCharacter) -> str:
-        """Formats the symbol for printing.
-
-        Args:
-            character (EffectCharacter): the character to format
-
-        Returns:
-            str: the formatted symbol
-        """
-        formatted_symbol = ""
-        if character.graphical_effect.bold:
-            formatted_symbol += ansicodes.APPLY_BOLD()
-        if character.graphical_effect.italic:
-            formatted_symbol += ansicodes.APPLY_ITALIC()
-        if character.graphical_effect.underline:
-            formatted_symbol += ansicodes.APPLY_UNDERLINE()
-        if character.graphical_effect.blink:
-            formatted_symbol += ansicodes.APPLY_BLINK()
-        if character.graphical_effect.reverse:
-            formatted_symbol += ansicodes.APPLY_REVERSE()
-        if character.graphical_effect.hidden:
-            formatted_symbol += ansicodes.APPLY_HIDDEN()
-        if character.graphical_effect.strike:
-            formatted_symbol += ansicodes.APPLY_STRIKETHROUGH()
-        if character.graphical_effect.color:
-            formatted_symbol += colorterm.fg(character.graphical_effect.color)
-
-        formatted_symbol = f"{formatted_symbol}{character.symbol}{ansicodes.RESET_ALL() if formatted_symbol else ''}"
-        return formatted_symbol
-
-    def update_terminal_state(self) -> list[str]:
+    def update_terminal_state(self):
         """Update the internal representation of the terminal state with the current position
         of all active characters.
-
-        Returns:
-            list[str]: the terminal state, as a list of rows
         """
-        characters_strings = [[" " for _ in range(self.width)] for _ in range(self.height)]
+        rows = [[" " for _ in range(self.output_area.right)] for _ in range(self.output_area.top)]
         for character in self.characters:
             if character.is_active:
-                relative_row = (self.output_area.top - 1) - character.current_coord.row
-                characters_strings[relative_row][character.current_coord.column] = self.format_symbol(character)
-        terminal_state = ["".join(row) for row in characters_strings]
-        return terminal_state
+                rows[character.current_coord.row - 1][character.current_coord.column - 1] = character.symbol
+        terminal_state = ["".join(row) for row in rows]
+        self.terminal_state = terminal_state
+
+    def prep_outputarea(self) -> None:
+        """Prepares the terminal for the effect by adding empty lines above."""
+        print("\n" * self.output_area.top)
 
     def print(self):
         self.update_terminal_state()
         for row_index, row in enumerate(self.terminal_state):
             sys.stdout.write(ansicodes.DEC_SAVE_CURSOR_POSITION())
-            sys.stdout.write(ansicodes.MOVE_CURSOR_UP(row_index))
+            sys.stdout.write(ansicodes.MOVE_CURSOR_UP(row_index + 1))
             sys.stdout.write(ansicodes.MOVE_CURSOR_TO_COLUMN(1))
             sys.stdout.write(row)
             sys.stdout.write(ansicodes.DEC_RESTORE_CURSOR_POSITION())
