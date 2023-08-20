@@ -3,7 +3,7 @@
 import time
 import argparse
 import terminaltexteffects.utils.argtypes as argtypes
-import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects import base_effect
 from enum import Enum, auto
 
@@ -46,8 +46,8 @@ class PourDirection(Enum):
 class PourEffect(base_effect.Effect):
     """Effect that pours the characters into position from the top, bottom, left, or right."""
 
-    def __init__(self, input_data: str, args: argparse.Namespace):
-        super().__init__(input_data, args.animation_rate)
+    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+        super().__init__(terminal, args.animation_rate)
         self.pour_direction = {
             "down": PourDirection.DOWN,
             "up": PourDirection.UP,
@@ -63,37 +63,40 @@ class PourEffect(base_effect.Effect):
             PourDirection.LEFT: lambda character: character.input_coord.column,
             PourDirection.RIGHT: lambda character: -character.input_coord.column,
         }
-        self.characters.sort(key=sort_map[self.pour_direction])
-        for character in self.characters:
+        self.terminal.characters.sort(key=sort_map[self.pour_direction])
+        for character in self.terminal.characters:
+            character.is_active = False
             if self.pour_direction == PourDirection.DOWN:
                 character.current_coord.column = character.input_coord.column
-                character.current_coord.row = self.output_area.top
+                character.current_coord.row = self.terminal.output_area.top
             elif self.pour_direction == PourDirection.UP:
                 character.current_coord.column = character.input_coord.column
-                character.current_coord.row = self.output_area.bottom
+                character.current_coord.row = self.terminal.output_area.bottom
             elif self.pour_direction == PourDirection.LEFT:
-                character.current_coord.column = self.output_area.right
+                character.current_coord.column = self.terminal.output_area.right
                 character.current_coord.row = character.input_coord.row
             elif self.pour_direction == PourDirection.RIGHT:
-                character.current_coord.column = self.output_area.left
+                character.current_coord.column = self.terminal.output_area.left
                 character.current_coord.row = character.input_coord.row
             self.pending_chars.append(character)
 
     def run(self) -> None:
         """Runs the effect."""
-        self.prep_terminal()
         self.prepare_data()
+        self.terminal.print()
         while self.pending_chars or self.animating_chars:
             if self.pending_chars:
-                self.animating_chars.append(self.pending_chars.pop(0))
+                next_character = self.pending_chars.pop(0)
+                next_character.is_active = True
+                self.animating_chars.append(next_character)
             self.animate_chars()
             self.animating_chars = [
                 animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
+            self.terminal.print()
+            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the sliding characters."""
         for animating_char in self.animating_chars:
-            tops.print_character(animating_char, clear_last=True)
             animating_char.move()
-        time.sleep(self.animation_rate)

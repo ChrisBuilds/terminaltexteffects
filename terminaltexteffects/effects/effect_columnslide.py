@@ -1,7 +1,7 @@
 import time
 import argparse
 import terminaltexteffects.utils.argtypes as argtypes
-import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects import base_effect, base_character
 from enum import Enum, auto
 
@@ -42,14 +42,14 @@ class SlideDirection(Enum):
 class ColumnSlide(base_effect.Effect):
     """Effect that slides each column into place."""
 
-    def __init__(self, input_data: str, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: argparse.Namespace):
         """Effect that slides each column into place.
 
         Args:
             input_data (str): string from stdin
             args (argparse.Namespace): arguments from argparse
         """
-        super().__init__(input_data, args.animation_rate)
+        super().__init__(terminal, args.animation_rate)
         self.column_delay_distance: int = 2  # number of characters to wait before adding a new row
         if args.slide_direction == "down":
             self.slide_direction = SlideDirection.DOWN
@@ -66,10 +66,11 @@ class ColumnSlide(base_effect.Effect):
                 column_list.reverse()
         for column in self.columns.values():
             for character in column:
+                character.is_active = False
                 if self.slide_direction == SlideDirection.DOWN:
-                    character.current_coord.row = self.output_area.top
+                    character.current_coord.row = self.terminal.output_area.top
                 else:
-                    character.current_coord.row = self.output_area.bottom
+                    character.current_coord.row = self.terminal.output_area.bottom
 
     def get_next_column(self) -> list[base_character.EffectCharacter]:
         """Gets the next column of characters to animate.
@@ -83,11 +84,11 @@ class ColumnSlide(base_effect.Effect):
 
     def run(self) -> None:
         """Runs the effect."""
-        self.prep_terminal()
         self.prepare_data()
         active_columns: list[list[base_character.EffectCharacter]] = []
         active_columns.append(self.get_next_column())
         column_delay_countdown = self.column_delay_distance
+        self.terminal.print()
         while active_columns or self.animating_chars or self.columns:
             if column_delay_countdown == 0 and self.columns:
                 active_columns.append(self.get_next_column())
@@ -97,7 +98,9 @@ class ColumnSlide(base_effect.Effect):
                     column_delay_countdown -= 1
             for column in active_columns:
                 if column:
-                    self.animating_chars.append(column.pop(0))
+                    next_character = column.pop(0)
+                    next_character.is_active = True
+                    self.animating_chars.append(next_character)
             self.animate_chars()
 
             # remove completed chars from animating chars
@@ -105,10 +108,10 @@ class ColumnSlide(base_effect.Effect):
                 animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
             active_columns = [column for column in active_columns if column]
+            self.terminal.print()
+            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
-            tops.print_character(animating_char, clear_last=True)
             animating_char.move()
-        time.sleep(self.animation_rate)

@@ -2,7 +2,7 @@ import time
 import random
 import argparse
 import terminaltexteffects.utils.argtypes as argtypes
-import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects import base_effect, base_character
 from dataclasses import dataclass
 
@@ -24,7 +24,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "-a",
         "--animation-rate",
         type=float,
-        default=0.003,
+        default=0.001,
         help="Time to sleep between animation steps. Defaults to 0.003 seconds.",
     )
     effect_parser.add_argument(
@@ -56,8 +56,8 @@ class DecryptChars:
 class DecryptEffect(base_effect.Effect):
     """Effect that shows a movie style text decryption effect."""
 
-    def __init__(self, input_data: str, args: argparse.Namespace):
-        super().__init__(input_data, args.animation_rate)
+    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+        super().__init__(terminal, args.animation_rate)
         self.ciphertext_color = args.ciphertext_color
         self.plaintext_color = args.plaintext_color
         self.encrypted_symbols: list[str] = []
@@ -92,7 +92,8 @@ class DecryptEffect(base_effect.Effect):
     def prepare_data_for_type_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
 
-        for character in self.characters:
+        for character in self.terminal.characters:
+            character.is_active = False
             graphicaleffect = base_character.GraphicalEffect(color=self.ciphertext_color)
             character.animation_units.append(
                 base_character.AnimationUnit(chr(int("2588", 16)), 2, False, graphicaleffect)
@@ -113,7 +114,7 @@ class DecryptEffect(base_effect.Effect):
 
     def prepare_data_for_decrypt_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
-        for character in self.characters:
+        for character in self.terminal.characters:
             character.animation_units.extend(self.make_decrypting_animation_units())
             character.use_alternate_symbol = False
             character.final_graphical_effect.color = self.plaintext_color
@@ -121,7 +122,6 @@ class DecryptEffect(base_effect.Effect):
 
     def run(self) -> None:
         """Runs the effect."""
-        self.prep_terminal()
         self.prepare_data_for_type_effect()
         self.run_type_effect()
         self.prepare_data_for_decrypt_effect()
@@ -129,16 +129,21 @@ class DecryptEffect(base_effect.Effect):
 
     def run_type_effect(self) -> None:
         """Runs the typing out the characters effect."""
+        self.terminal.print()
         while self.pending_chars or self.animating_chars:
             if self.pending_chars:
                 if random.randint(0, 100) <= 75:
-                    self.animating_chars.append(self.pending_chars.pop(0))
+                    next_character = self.pending_chars.pop(0)
+                    next_character.is_active = True
+                    self.animating_chars.append(next_character)
             self.animate_chars()
 
             # remove completed chars from animating chars
             self.animating_chars = [
                 animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
+            self.terminal.print()
+            time.sleep(self.animation_rate)
 
     def run_decryption_effect(self) -> None:
         while self.animating_chars:
@@ -147,12 +152,11 @@ class DecryptEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
+            self.terminal.print()
+            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
             animating_char.step_animation()
-            tops.print_character(animating_char, clear_last=False)
             animating_char.move()
-
-        time.sleep(self.animation_rate)

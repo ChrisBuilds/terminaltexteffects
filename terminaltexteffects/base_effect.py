@@ -1,68 +1,30 @@
 import random
-from dataclasses import dataclass
-import terminaltexteffects.utils.terminaloperations as tops
+import terminaltexteffects.utils.terminal as terminal
 from terminaltexteffects.base_character import EffectCharacter
-
-
-@dataclass
-class OutputArea:
-    """A class for storing the output area of an effect.
-
-    Args:
-        top (int): top row of the output area
-        right (int): right column of the output area
-        bottom (int): bottom row of the output area. Defaults to 1.
-        left (int): left column of the output area. Defaults to 1.
-
-    """
-
-    top: int
-    right: int
-    bottom: int = 1
-    left: int = 1
 
 
 class Effect:
     """Generic class for all effects. Derive from this class to create a new effect."""
 
-    def __init__(self, input_data: str, animation_rate: float = 0):
+    def __init__(self, terminal: terminal.Terminal, animation_rate: float = 0):
         """Initializes the Effect class.
 
         Args:
-            input_data (str): string from stdin
+            terminal (terminal.Terminal): a Terminal object
             animation_rate (float, optional): time to sleep between animation steps. Defaults to 0.
         """
-        self.input_data = input_data
-        self.terminal_width, self.terminal_height = tops.get_terminal_dimensions()
-        self.characters = tops.decompose_input(input_data, self.terminal_width)
-        self.characters = [
-            character for character in self.characters if character.input_coord.row < self.terminal_height - 1
-        ]
+        self.terminal = terminal
         self.animation_rate = animation_rate
-        self.input_height = len(input_data.splitlines())
-        self.input_width = max([character.input_coord.column for character in self.characters])
-        self.output_area = OutputArea(min(self.terminal_height, self.input_height), self.input_width)
-
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
-        self.completed_chars: list[EffectCharacter] = []
-
-    def prep_terminal(self) -> None:
-        """Prepares the terminal for the effect by adding empty lines above."""
-        print("\n" * self.input_height)
-
-    def maintain_completed(self) -> None:
-        """Print completed characters in case they've been overwritten."""
-        for completed_char in self.completed_chars:
-            tops.print_character(completed_char)
 
     def random_column(self) -> int:
         """Returns a random column position."""
-        return random.randint(1, self.input_width)
+        return random.randint(1, self.terminal.output_area.right)
 
     def random_row(self) -> int:
         """Returns a random row position."""
-        return random.randint(1, self.output_area.top)
+        return random.randint(1, self.terminal.output_area.top)
 
     def input_by_row(self) -> dict[int, list[EffectCharacter]]:
         """Returns a dict of rows of EffectCharacters where the key is the row index.
@@ -70,8 +32,10 @@ class Effect:
             dict[int,list[EffectCharacter]]: dict of rows of EffectCharacters
         """
         rows: dict[int, list[EffectCharacter]] = dict()
-        for row_index in range(self.input_height + 1):
-            characters_in_row = [character for character in self.characters if character.input_coord.row == row_index]
+        for row_index in range(self.terminal.output_area.top + 1):
+            characters_in_row = [
+                character for character in self.terminal.characters if character.input_coord.row == row_index
+            ]
             if characters_in_row:
                 rows[row_index] = characters_in_row
         return rows
@@ -83,9 +47,9 @@ class Effect:
             dict[int,list[EffectCharacter]]: dict of columns of EffectCharacters
         """
         columns: dict[int, list[EffectCharacter]] = dict()
-        for column_index in range(self.input_width + 1):
+        for column_index in range(self.terminal.output_area.right + 1):
             characters_in_column = [
-                character for character in self.characters if character.input_coord.column == column_index
+                character for character in self.terminal.characters if character.input_coord.column == column_index
             ]
             if characters_in_column:
                 columns[column_index] = characters_in_column

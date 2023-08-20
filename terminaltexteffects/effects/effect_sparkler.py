@@ -4,7 +4,7 @@ import time
 import random
 import argparse
 import terminaltexteffects.utils.argtypes as argtypes
-import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects import base_effect, base_character
 from enum import Enum, auto
 
@@ -56,16 +56,16 @@ class SparklerEffect(base_effect.Effect):
 
     def __init__(
         self,
-        input_data: str,
+        terminal: Terminal,
         args: argparse.Namespace,
     ):
         """Effect that draws the characters spawning at varying rates from a single point.
 
         Args:
-            input_data (str): string from stdin
+            terminal (Terminal): terminal to use for the effect
             args (argparse.Namespace): arguments from argparse
         """
-        super().__init__(input_data, args.animation_rate)
+        super().__init__(terminal, args.animation_rate)
         self.sparkler_position = {
             "n": SparklerPosition.N,
             "ne": SparklerPosition.NE,
@@ -82,20 +82,21 @@ class SparklerEffect(base_effect.Effect):
         """Prepares the data for the effect by starting all of the characters from a point based on SparklerPosition."""
         sparkler_origin_map = {
             SparklerPosition.CENTER: (
-                self.output_area.right // 2,
-                self.output_area.top // 2,
+                self.terminal.output_area.right // 2,
+                self.terminal.output_area.top // 2,
             ),
-            SparklerPosition.N: (self.output_area.right // 2, self.output_area.top),
-            SparklerPosition.NW: (self.output_area.left, self.output_area.top),
-            SparklerPosition.W: (self.output_area.left, self.output_area.top // 2),
-            SparklerPosition.SW: (self.output_area.left, self.output_area.bottom),
-            SparklerPosition.S: (self.output_area.right // 2, self.output_area.bottom),
-            SparklerPosition.SE: (self.output_area.right - 1, self.output_area.bottom),
-            SparklerPosition.E: (self.output_area.right - 1, self.output_area.top // 2),
-            SparklerPosition.NE: (self.output_area.right - 1, self.output_area.top),
+            SparklerPosition.N: (self.terminal.output_area.right // 2, self.terminal.output_area.top),
+            SparklerPosition.NW: (self.terminal.output_area.left, self.terminal.output_area.top),
+            SparklerPosition.W: (self.terminal.output_area.left, self.terminal.output_area.top // 2),
+            SparklerPosition.SW: (self.terminal.output_area.left, self.terminal.output_area.bottom),
+            SparklerPosition.S: (self.terminal.output_area.right // 2, self.terminal.output_area.bottom),
+            SparklerPosition.SE: (self.terminal.output_area.right - 1, self.terminal.output_area.bottom),
+            SparklerPosition.E: (self.terminal.output_area.right - 1, self.terminal.output_area.top // 2),
+            SparklerPosition.NE: (self.terminal.output_area.right - 1, self.terminal.output_area.top),
         }
 
-        for character in self.characters:
+        for character in self.terminal.characters:
+            character.is_active = False
             character.current_coord.column, character.current_coord.row = sparkler_origin_map[self.sparkler_position]
             white = base_character.GraphicalEffect(color=231)
             yellow = base_character.GraphicalEffect(color=11)
@@ -116,26 +117,23 @@ class SparklerEffect(base_effect.Effect):
 
     def run(self) -> None:
         """Runs the effect."""
-        self.prep_terminal()
         self.prepare_data()
         while self.pending_chars or self.animating_chars:
             if self.pending_chars:
                 for _ in range(random.randint(1, 5)):
                     if self.pending_chars:
-                        self.animating_chars.append(self.pending_chars.pop())
+                        next_character = self.pending_chars.pop()
+                        next_character.is_active = True
+                        self.animating_chars.append(next_character)
 
             self.animate_chars()
-            self.completed_chars.extend(
-                [completed_char for completed_char in self.animating_chars if completed_char.animation_completed()]
-            )
-            self.maintain_completed()
+            self.terminal.print()
             self.animating_chars = [
                 animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
+            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:
             animating_char.step_animation()
-            tops.print_character(animating_char, clear_last=True)
             animating_char.move()
-        time.sleep(self.animation_rate)
