@@ -5,6 +5,7 @@ import random
 import argparse
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.utils.terminal import Terminal
+from terminaltexteffects.utils import graphics
 from terminaltexteffects import base_effect, base_character
 from enum import Enum, auto
 
@@ -98,19 +99,19 @@ class SparklerEffect(base_effect.Effect):
         for character in self.terminal.characters:
             character.is_active = False
             character.current_coord.column, character.current_coord.row = sparkler_origin_map[self.sparkler_position]
-            white = base_character.GraphicalEffect(color=231)
-            yellow = base_character.GraphicalEffect(color=11)
-            orange = base_character.GraphicalEffect(color=202)
+            white = graphics.GraphicalEffect(color=231)
+            yellow = graphics.GraphicalEffect(color=11)
+            orange = graphics.GraphicalEffect(color=202)
             colors = [white, yellow, orange]
             random.shuffle(colors)
             character.animation_units.append(
-                base_character.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
+                graphics.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
             )
             character.animation_units.append(
-                base_character.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
+                graphics.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
             )
             character.animation_units.append(
-                base_character.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
+                graphics.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
             )
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)

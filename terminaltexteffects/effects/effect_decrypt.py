@@ -4,6 +4,7 @@ import argparse
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects import base_effect, base_character
+from terminaltexteffects.utils import graphics
 from dataclasses import dataclass
 
 
@@ -73,20 +74,21 @@ class DecryptEffect(base_effect.Effect):
         for n in DecryptChars.misc:
             self.encrypted_symbols.append(chr(n))
 
-    def make_decrypting_animation_units(self) -> list[base_character.AnimationUnit]:
+    def make_decrypting_animation_units(self) -> list[graphics.AnimationUnit]:
         animation_units = []
-        graphicaleffect = base_character.GraphicalEffect(color=self.ciphertext_color)
+        graphicaleffect = graphics.GraphicalEffect(color=self.ciphertext_color)
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
             duration = 3
-            animation_units.append(base_character.AnimationUnit(symbol, duration, False, graphicaleffect))
-        for n in range(random.randint(1, 15)):  # 1-15 longer duration units
+            animation_units.append(graphics.AnimationUnit(symbol, duration, False, graphicaleffect))
+        for _ in range(random.randint(1, 15)):  # 1-15 longer duration units
             symbol = random.choice(self.encrypted_symbols)
             if random.randint(0, 100) <= 30:  # 30% chance of extra long duration
                 duration = random.randrange(75, 225)  # wide long duration range reduces 'waves' in the animation
             else:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
-            animation_units.append(base_character.AnimationUnit(symbol, duration, False, graphicaleffect))
+            animation_units.append(graphics.AnimationUnit(symbol, duration, False, graphicaleffect))
+
         return animation_units
 
     def prepare_data_for_type_effect(self) -> None:
@@ -94,30 +96,34 @@ class DecryptEffect(base_effect.Effect):
 
         for character in self.terminal.characters:
             character.is_active = False
-            graphicaleffect = base_character.GraphicalEffect(color=self.ciphertext_color)
-            character.animation_units.append(
-                base_character.AnimationUnit(chr(int("2588", 16)), 2, False, graphicaleffect)
+            typed_graphicaleffect = graphics.GraphicalEffect(color=self.ciphertext_color)
+            typed_animation_unit = graphics.AnimationUnit(
+                random.choice(self.encrypted_symbols), 1, True, typed_graphicaleffect
             )
             character.animation_units.append(
-                base_character.AnimationUnit(chr(int("2593", 16)), 2, False, graphicaleffect)
+                graphics.AnimationUnit(chr(int("2588", 16)), 2, False, typed_graphicaleffect)
             )
             character.animation_units.append(
-                base_character.AnimationUnit(chr(int("2592", 16)), 2, False, graphicaleffect)
+                graphics.AnimationUnit(chr(int("2593", 16)), 2, False, typed_graphicaleffect)
             )
             character.animation_units.append(
-                base_character.AnimationUnit(chr(int("2591", 16)), 2, False, graphicaleffect)
+                graphics.AnimationUnit(chr(int("2592", 16)), 2, False, typed_graphicaleffect)
             )
-            character.final_graphical_effect = graphicaleffect
-            character.alternate_symbol = random.choice(self.encrypted_symbols)
-            character.use_alternate_symbol = True
+            character.animation_units.append(
+                graphics.AnimationUnit(chr(int("2591", 16)), 2, False, typed_graphicaleffect)
+            )
+            character.animation_units.append(typed_animation_unit)
+
             self.pending_chars.append(character)
 
     def prepare_data_for_decrypt_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
         for character in self.terminal.characters:
+            character.animation_units.clear()
             character.animation_units.extend(self.make_decrypting_animation_units())
-            character.use_alternate_symbol = False
-            character.final_graphical_effect.color = self.plaintext_color
+            final_graphicaleffect = graphics.GraphicalEffect(color=self.plaintext_color)
+            final_animation_unit = graphics.AnimationUnit(character.input_symbol, 1, False, final_graphicaleffect)
+            character.animation_units.append(final_animation_unit)
             self.animating_chars.append(character)
 
     def run(self) -> None:
