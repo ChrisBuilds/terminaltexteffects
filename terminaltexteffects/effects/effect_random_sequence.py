@@ -2,7 +2,7 @@ import random
 import time
 import argparse
 import terminaltexteffects.utils.argtypes as argtypes
-import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects import base_effect
 
 
@@ -31,19 +31,24 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
 class RandomSequence(base_effect.Effect):
     """Prints the input data in a random sequence."""
 
-    def __init__(self, input_data: str, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: argparse.Namespace):
         """Initializes the effect.
 
         Args:
-            input_data (str): The input data.
+            terminal (Terminal): Terminal object.
             args (argparse.Namespace): Arguments from argparse.
         """
-        super().__init__(input_data, args.animation_rate)
+        super().__init__(terminal, args.animation_rate)
+
+    def prepare_data(self) -> None:
+        for character in self.terminal.characters:
+            character.is_active = False
 
     def run(self) -> None:
         """Runs the effect."""
-        self.prep_terminal()
-        random.shuffle(self.characters)
-        for character in self.characters:
-            tops.print_character(character)
+        self.prepare_data()
+        random.shuffle(self.terminal.characters)
+        for character in self.terminal.characters:
+            character.is_active = True
+            self.terminal.print()
             time.sleep(self.animation_rate)

@@ -1,7 +1,7 @@
 import time
 import argparse
 import terminaltexteffects.utils.argtypes as argtypes
-import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects import base_effect
 
 
@@ -30,43 +30,46 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
 class RowMergeEffect(base_effect.Effect):
     """Effect that merges rows."""
 
-    def __init__(self, input_data: str, args: argparse.Namespace):
-        super().__init__(input_data, args.animation_rate)
+    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+        super().__init__(terminal, args.animation_rate)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting every other row to start at the opposite
         side of the terminal and reverse the order."""
 
         self.rows = []
-        for i, row in self.input_by_row().items():
-            if i % 2 == 0:
+        for row_index, row in self.input_by_row().items():
+            if row_index % 2 == 0:
                 row = row[::-1]
-                for c in row:
-                    c.current_coord.column = self.output_area.left
+                for character in row:
+                    character.is_active = False
+                    character.current_coord.column = self.terminal.output_area.left
             else:
-                for c in row:
-                    c.current_coord.column = self.output_area.right
+                for character in row:
+                    character.is_active = False
+                    character.current_coord.column = self.terminal.output_area.right
             self.rows.append(row)
 
     def run(self) -> None:
         """Runs the effect."""
-        self.prep_terminal()
         self.prepare_data()
         while self.rows or self.animating_chars:
             self.animate_chars()
             for row in self.rows:
                 if row:
-                    self.animating_chars.append(row.pop(0))
+                    next_character = row.pop(0)
+                    next_character.is_active = True
+                    self.animating_chars.append(next_character)
             self.rows = [row for row in self.rows if row]
 
             # remove completed chars from animating chars
             self.animating_chars = [
                 animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
             ]
+            self.terminal.print()
+            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
-            tops.print_character(animating_char, clear_last=True)
             animating_char.move()
-        time.sleep(self.animation_rate)
