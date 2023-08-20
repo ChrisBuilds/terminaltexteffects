@@ -2,6 +2,7 @@ import time
 import random
 import argparse
 import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.graphics as graphics
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects import base_effect, base_character
 
@@ -40,8 +41,9 @@ class ShootingStarEffect(base_effect.Effect):
 
         for character in self.terminal.characters:
             character.is_active = False
-            character.symbol = "*"
-            character.graphical_effect.color = random.randint(1, 10)
+            star_graphical_effect = graphics.GraphicalEffect(color=random.randint(1, 10))
+            star_animation_unit = graphics.AnimationUnit("*", 1, False, star_graphical_effect)
+            character.animation_units.append(star_animation_unit)
             character.current_coord = base_character.Coord(self.random_column(), self.terminal.output_area.top)
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
@@ -75,7 +77,8 @@ class ShootingStarEffect(base_effect.Effect):
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
+            animating_char.step_animation()
             animating_char.move()
             if animating_char.animation_completed():
                 animating_char.symbol = animating_char.input_symbol
-                animating_char.graphical_effect = animating_char.final_graphical_effect
+                animating_char.graphical_effect = graphics.GraphicalEffect()

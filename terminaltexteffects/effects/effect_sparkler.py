@@ -104,6 +104,7 @@ class SparklerEffect(base_effect.Effect):
             orange = graphics.GraphicalEffect(color=202)
             colors = [white, yellow, orange]
             random.shuffle(colors)
+            final_animation_unit = graphics.AnimationUnit(character.input_symbol, 1, False, graphics.GraphicalEffect())
             character.animation_units.append(
                 graphics.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
             )
@@ -113,6 +114,7 @@ class SparklerEffect(base_effect.Effect):
             character.animation_units.append(
                 graphics.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
             )
+            character.animation_units.append(final_animation_unit)
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
 
