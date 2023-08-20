@@ -124,34 +124,3 @@ def APPLY_STRIKETHROUGH() -> str:
         str: ANSI escape code
     """
     return "\033[9m"
-
-
-def format_symbol(symbol: str, graphical_effect) -> str:
-    """Formats the symbol for printing.
-
-    Args:
-        character (EffectCharacter): the character to format
-
-    Returns:
-        str: the formatted symbol
-    """
-    formatting_string = ""
-    if graphical_effect.bold:
-        formatting_string += APPLY_BOLD()
-    if graphical_effect.italic:
-        formatting_string += APPLY_ITALIC()
-    if graphical_effect.underline:
-        formatting_string += APPLY_UNDERLINE()
-    if graphical_effect.blink:
-        formatting_string += APPLY_BLINK()
-    if graphical_effect.reverse:
-        formatting_string += APPLY_REVERSE()
-    if graphical_effect.hidden:
-        formatting_string += APPLY_HIDDEN()
-    if graphical_effect.strike:
-        formatting_string += APPLY_STRIKETHROUGH()
-    if graphical_effect.color:
-        formatting_string += colorterm.fg(graphical_effect.color)
-
-    formatted_symbol = f"{formatting_string}{symbol}{RESET_ALL() if formatting_string else ''}"
-    return formatted_symbol
