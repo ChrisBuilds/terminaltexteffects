@@ -17,7 +17,7 @@ from terminaltexteffects.effects import (
     effect_rowmerge,
 )
 
-
+testdata_large = "".join([letter * 210 for letter in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"])
 testdata_block = """
 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
 123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0
@@ -77,11 +77,11 @@ testdata_tall = """30
 1"""
 
 
-def show_all(input_data: str = testdata_block) -> None:
+def show_all(input_data: str = testdata_block, animation_rate=0) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_pour.add_arguments(sub)
-    args = parser.parse_args(["pour"])
+    args = parser.parse_args(["pour", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     pour_effect = effect_pour.PourEffect(terminal, args)
     pour_effect.run()
@@ -89,7 +89,7 @@ def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_scattered.add_arguments(sub)
-    args = parser.parse_args(["scattered"])
+    args = parser.parse_args(["scattered", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     scattered_effect = effect_scattered.ScatteredEffect(terminal, args)
     scattered_effect.run()
@@ -97,7 +97,7 @@ def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_expand.add_arguments(sub)
-    args = parser.parse_args(["expand"])
+    args = parser.parse_args(["expand", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     expand_effect = effect_expand.ExpandEffect(terminal, args)
     expand_effect.run()
@@ -105,7 +105,7 @@ def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_random_sequence.add_arguments(sub)
-    args = parser.parse_args(["randomsequence"])
+    args = parser.parse_args(["randomsequence", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     random_sequence_effect = effect_random_sequence.RandomSequence(terminal, args)
     random_sequence_effect.run()
@@ -113,7 +113,7 @@ def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_sparkler.add_arguments(sub)
-    args = parser.parse_args(["sparkler"])
+    args = parser.parse_args(["sparkler", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     sparkler_effect = effect_sparkler.SparklerEffect(terminal, args)
     sparkler_effect.run()
@@ -121,7 +121,7 @@ def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_rain.add_arguments(sub)
-    args = parser.parse_args(["rain"])
+    args = parser.parse_args(["rain", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     rain_effect = effect_rain.RainEffect(terminal, args)
     rain_effect.run()
@@ -129,7 +129,7 @@ def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_decrypt.add_arguments(sub)
-    args = parser.parse_args(["decrypt"])
+    args = parser.parse_args(["decrypt", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     decrypt_effect = effect_decrypt.DecryptEffect(terminal, args)
     decrypt_effect.run()
@@ -137,7 +137,7 @@ def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_shootingstar.add_arguments(sub)
-    args = parser.parse_args(["shootingstar"])
+    args = parser.parse_args(["shootingstar", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     shootingstar_effect = effect_shootingstar.ShootingStarEffect(terminal, args)
     shootingstar_effect.run()
@@ -145,7 +145,7 @@ def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_rowslide.add_arguments(sub)
-    args = parser.parse_args(["rowslide"])
+    args = parser.parse_args(["rowslide", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     rowslide_effect = effect_rowslide.RowSlide(terminal, args)
     rowslide_effect.run()
@@ -153,7 +153,7 @@ def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_columnslide.add_arguments(sub)
-    args = parser.parse_args(["columnslide"])
+    args = parser.parse_args(["columnslide", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     columnslide_effect = effect_columnslide.ColumnSlide(terminal, args)
     columnslide_effect.run()
@@ -161,7 +161,7 @@ def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_verticalslice.add_arguments(sub)
-    args = parser.parse_args(["verticalslice"])
+    args = parser.parse_args(["verticalslice", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     verticalslice_effect = effect_verticalslice.VerticalSlice(terminal, args)
     verticalslice_effect.run()
@@ -169,7 +169,7 @@ def show_all(input_data: str = testdata_block) -> None:
     parser = ArgumentParser()
     sub = parser.add_subparsers()
     effect_rowmerge.add_arguments(sub)
-    args = parser.parse_args(["rowmerge"])
+    args = parser.parse_args(["rowmerge", "-a", str(animation_rate)])
     terminal = Terminal(input_data)
     rowmerge_effect = effect_rowmerge.RowMergeEffect(terminal, args)
     rowmerge_effect.run()
@@ -219,8 +219,8 @@ def test_rain_effect(input_data: str = testdata_block, animation_rate: int = 0) 
     rain_effect.run()
 
 
-def test_decrypt_effect(input_data: str = testdata_block, animation=0) -> None:
-    args = Namespace(animation_rate=animation)
+def test_decrypt_effect(input_data: str = testdata_block, animation_rate=0) -> None:
+    args = Namespace(animation_rate=animation_rate)
     terminal = Terminal(input_data)
     args.ciphertext_color = 40
     args.plaintext_color = 208
@@ -266,7 +266,7 @@ def test_rowmerge_effect(input_data: str = testdata_block, animation_rate: int =
 
 
 def main():
-    input_data = testdata_block
+    input_data = testdata_large
     show_all(input_data)
 
 
