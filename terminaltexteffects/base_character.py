@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from collections import deque
+from terminaltexteffects.utils.graphics import AnimationUnit, GraphicalEffect
 
 
 @dataclass
@@ -14,67 +15,6 @@ class Coord:
 
     column: int
     row: int
-
-
-@dataclass
-class GraphicalEffect:
-    """A class for storing terminal graphical modes and a color.
-
-    Supported graphical modes:
-    bold, dim, italic, underline, blink, inverse, hidden, strike
-
-    Args:
-        bold (bool): bold mode
-        dim (bool): dim mode
-        italic (bool): italic mode
-        underline (bool): underline mode
-        blink (bool): blink mode
-        reverse (bool): reverse mode
-        hidden (bool): hidden mode
-        strike (bool): strike mode
-        color (int): color code
-    """
-
-    bold: bool = False
-    dim: bool = False
-    italic: bool = False
-    underline: bool = False
-    blink: bool = False
-    reverse: bool = False
-    hidden: bool = False
-    strike: bool = False
-    color: int = 0
-
-    def disable_modes(self) -> None:
-        """Disables all graphical modes."""
-        self.bold = False
-        self.dim = False
-        self.italic = False
-        self.underline = False
-        self.blink = False
-        self.reverse = False
-        self.hidden = False
-        self.strike = False
-
-
-@dataclass
-class AnimationUnit:
-    """An AnimationUnit is a graphicaleffect with a symbol and duration. May be looping.
-
-    Args:
-        symbol (str): the symbol to show
-        duration (int): the number of animation steps to use the AnimationUnit
-        is_looping (bool): if True, the AnimationUnit will be recycled until the character reaches its final position
-        graphical_effect (GraphicalEffect): a GraphicalEffect object containing the graphical modes and color of the character
-    """
-
-    symbol: str
-    duration: int
-    is_looping: bool = False
-    graphical_effect: GraphicalEffect = field(default_factory=GraphicalEffect)
-
-    def __post_init__(self):
-        self.frames_played = 0
 
 
 class EffectCharacter:
@@ -109,10 +49,6 @@ class EffectCharacter:
         "The current symbol for the character, determined by the animation units."
         self.input_symbol: str = symbol
         "The symbol for the character in the input data."
-        self.alternate_symbol: str = symbol
-        "An alternate symbol for the character to use when all AnimationUnits have been processed."
-        self.use_alternate_symbol: bool = False
-        "Set this flag if you want to use the alternate symbol"
         self.animation_units: deque[AnimationUnit] = deque()
         self.input_coord: Coord = Coord(input_column, input_row)
         "The coordinate of the character in the input data."
@@ -195,15 +131,6 @@ class EffectCharacter:
             current_unit = self.animation_units[0]
             self.symbol = current_unit.symbol
             self.graphical_effect = current_unit.graphical_effect
-        else:
-            # if there are no more animation units, use the alternate symbol
-            if self.use_alternate_symbol:
-                self.symbol = self.alternate_symbol
-            else:
-                # if there are no more animation units and no alternate symbol, use the final symbol
-                self.symbol = self.input_symbol
-            # set the final graphical effect to be applied to the symbol
-            self.graphical_effect = self.final_graphical_effect
 
     def animation_completed(self) -> bool:
         """Returns True if the character has reached its final position and has no remaining animation units."""
