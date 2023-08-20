@@ -2,7 +2,7 @@ import importlib
 import argparse
 import terminaltexteffects.effects
 import pkgutil
-import terminaltexteffects.utils.terminaloperations as tops
+import terminaltexteffects.utils.terminal as term
 
 
 def main():
@@ -25,12 +25,14 @@ def main():
 
     for effect in discovered_effects:
         effect.add_arguments(subparsers)
+
     args = parser.parse_args()
-    input_data = tops.get_piped_input()
+    input_data = term.Terminal.get_piped_input()
     if not input_data:
         print("NO INPUT.")
     else:
-        effect = args.effect_class(input_data, args)
+        terminal = term.Terminal(input_data)
+        effect = args.effect_class(terminal, args)
         effect.run()
 
 
