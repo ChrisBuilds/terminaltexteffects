@@ -26,19 +26,19 @@ class OutputArea:
 class Terminal:
     def __init__(self, input_data: str):
         self.input_data = input_data
-        self.width, self.height = self.get_terminal_dimensions()
-        self.characters = self.decompose_input()
+        self.width, self.height = self._get_terminal_dimensions()
+        self.characters = self._decompose_input()
         self.input_width = max([character.input_coord.column for character in self.characters])
         self.input_height = max([character.input_coord.row for character in self.characters])
-        self.output_area = OutputArea(min(self.height, self.input_height), self.input_width)
+        self.output_area = OutputArea(min(self.height - 1, self.input_height), self.input_width)
         self.characters = [
             character for character in self.characters if character.input_coord.row <= self.output_area.top
         ]
-        self.update_terminal_state()
+        self._update_terminal_state()
 
-        self.prep_outputarea()
+        self._prep_outputarea()
 
-    def get_terminal_dimensions(self) -> tuple[int, int]:
+    def _get_terminal_dimensions(self) -> tuple[int, int]:
         """Returns the terminal dimensions.
 
         Returns:
@@ -60,7 +60,7 @@ class Terminal:
         else:
             return ""
 
-    def decompose_input(self) -> list[EffectCharacter]:
+    def _decompose_input(self) -> list[EffectCharacter]:
         """Decomposes the output into a list of Character objects containing the symbol and its row/column coordinates
         relative to the input display location.
 
@@ -86,7 +86,7 @@ class Terminal:
                     input_characters.append(EffectCharacter(symbol, column + 1, input_height - row))
         return input_characters
 
-    def update_terminal_state(self):
+    def _update_terminal_state(self):
         """Update the internal representation of the terminal state with the current position
         of all active characters.
         """
@@ -97,12 +97,12 @@ class Terminal:
         terminal_state = ["".join(row) for row in rows]
         self.terminal_state = terminal_state
 
-    def prep_outputarea(self) -> None:
+    def _prep_outputarea(self) -> None:
         """Prepares the terminal for the effect by adding empty lines above."""
         print("\n" * self.output_area.top)
 
     def print(self):
-        self.update_terminal_state()
+        self._update_terminal_state()
         for row_index, row in enumerate(self.terminal_state):
             sys.stdout.write(ansicodes.DEC_SAVE_CURSOR_POSITION())
             sys.stdout.write(ansicodes.MOVE_CURSOR_UP(row_index + 1))
