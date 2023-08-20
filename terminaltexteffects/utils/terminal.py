@@ -1,3 +1,4 @@
+"""A module for managing the terminal state and output."""
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import ansitools
 import shutil
@@ -24,6 +25,8 @@ class OutputArea:
 
 
 class Terminal:
+    """A class for managing the terminal state and output."""
+
     def __init__(self, input_data: str):
         self.input_data = input_data
         self.width, self.height = self._get_terminal_dimensions()
@@ -39,12 +42,16 @@ class Terminal:
         self._prep_outputarea()
 
     def _get_terminal_dimensions(self) -> tuple[int, int]:
-        """Returns the terminal dimensions.
+        """Gets the terminal dimensions.
 
         Returns:
-            tuple[int, int]: width, height
+            tuple[int, int]: terminal width and height
         """
-        terminal_width, terminal_height = shutil.get_terminal_size()
+        try:
+            terminal_width, terminal_height = shutil.get_terminal_size()
+        except OSError:
+            # If the terminal size cannot be determined, return default values
+            return 80, 24
         return terminal_width, terminal_height
 
     @staticmethod
@@ -102,6 +109,7 @@ class Terminal:
         print("\n" * self.output_area.top)
 
     def print(self):
+        """Prints the current terminal state to stdout while preserving the cursor position."""
         self._update_terminal_state()
         for row_index, row in enumerate(self.terminal_state):
             sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
