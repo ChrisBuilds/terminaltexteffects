@@ -5,6 +5,7 @@ import random
 import argparse
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.utils.terminal import Terminal
+from terminaltexteffects.utils import graphics
 from terminaltexteffects import base_effect, base_character
 
 
@@ -40,7 +41,14 @@ class RainEffect(base_effect.Effect):
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""
 
+        raindrop_colors = [39, 45, 51, 21, 14, 15]
+
         for character in self.terminal.characters:
+            raindrop_graphical_effect = graphics.GraphicalEffect(color=random.choice(raindrop_colors))
+            raindrop_animation_unit = graphics.AnimationUnit(
+                character.input_symbol, 1, False, raindrop_graphical_effect
+            )
+            character.animation_units.append(raindrop_animation_unit)
             character.is_active = False
             character.current_coord.column = character.input_coord.column
             character.current_coord.row = self.terminal.output_area.top
@@ -79,3 +87,6 @@ class RainEffect(base_effect.Effect):
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
             animating_char.move()
+            animating_char.step_animation()
+            if animating_char.animation_completed():
+                animating_char.symbol = animating_char.input_symbol
