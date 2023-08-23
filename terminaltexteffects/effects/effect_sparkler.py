@@ -99,22 +99,14 @@ class SparklerEffect(base_effect.Effect):
         for character in self.terminal.characters:
             character.is_active = False
             character.current_coord.column, character.current_coord.row = sparkler_origin_map[self.sparkler_position]
-            white = graphics.GraphicalEffect(color=231)
-            yellow = graphics.GraphicalEffect(color=11)
-            orange = graphics.GraphicalEffect(color=202)
-            colors = [white, yellow, orange]
+            colors = [231, 11, 202]
             random.shuffle(colors)
-            final_animation_unit = graphics.AnimationUnit(character.input_symbol, 1, False, graphics.GraphicalEffect())
-            character.animation_units.append(
-                graphics.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
-            )
-            character.animation_units.append(
-                graphics.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
-            )
-            character.animation_units.append(
-                graphics.AnimationUnit(character.symbol, random.randint(20, 35), False, colors.pop())
-            )
-            character.animation_units.append(final_animation_unit)
+            while colors:
+                character.animator.add_effect_to_scene(
+                    "spark", character.input_symbol, colors.pop(), random.randint(20, 35)
+                )
+            character.animator.add_effect_to_scene("spark")
+            character.animator.active_scene_name = "spark"
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
 
@@ -132,11 +124,14 @@ class SparklerEffect(base_effect.Effect):
             self.animate_chars()
             self.terminal.print()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.animator.is_active_scene_complete()
+                or animating_char.current_coord != animating_char.input_coord
             ]
             time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:
-            animating_char.step_animation()
+            animating_char.animator.step_animation()
             animating_char.move()

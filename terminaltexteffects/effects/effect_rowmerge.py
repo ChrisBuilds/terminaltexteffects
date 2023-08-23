@@ -64,7 +64,7 @@ class RowMergeEffect(base_effect.Effect):
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
             ]
             self.terminal.print()
             time.sleep(self.animation_rate)

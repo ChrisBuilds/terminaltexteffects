@@ -91,7 +91,7 @@ class PourEffect(base_effect.Effect):
                 self.animating_chars.append(next_character)
             self.animate_chars()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
             ]
             self.terminal.print()
             time.sleep(self.animation_rate)

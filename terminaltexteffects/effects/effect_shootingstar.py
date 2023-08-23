@@ -41,9 +41,8 @@ class ShootingStarEffect(base_effect.Effect):
 
         for character in self.terminal.characters:
             character.is_active = False
-            star_graphical_effect = graphics.GraphicalEffect(color=random.randint(1, 10))
-            star_animation_unit = graphics.AnimationUnit("*", 1, False, star_graphical_effect)
-            character.animation_units.append(star_animation_unit)
+            character.animator.add_effect_to_scene("star", "*", random.randint(1, 10), 1)
+            character.animator.active_scene_name = "star"
             character.current_coord = base_character.Coord(self.random_column(), self.terminal.output_area.top)
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
@@ -67,9 +66,10 @@ class ShootingStarEffect(base_effect.Effect):
                     else:
                         break
             self.animate_chars()
-            # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.animator.is_active_scene_complete() or not animating_char.is_movement_complete()
             ]
             self.terminal.print()
             time.sleep(self.animation_rate)
@@ -77,8 +77,7 @@ class ShootingStarEffect(base_effect.Effect):
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
-            animating_char.step_animation()
+            animating_char.animator.step_animation()
             animating_char.move()
-            if animating_char.animation_completed():
+            if animating_char.is_movement_complete():
                 animating_char.symbol = animating_char.input_symbol
-                animating_char.graphical_effect = graphics.GraphicalEffect()

@@ -1,6 +1,6 @@
 import time
 import argparse
-import terminaltexteffects.utils.terminaloperations as tops
+from terminaltexteffects.utils.terminal import Terminal
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects import base_effect, base_character
 
@@ -34,37 +34,36 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
 class NamedEffect(base_effect.Effect):
     """Effect that ___."""
 
-    def __init__(self, input_data: str, args: argparse.Namespace):
-        super().__init__(input_data, args.animation_rate)
+    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+        super().__init__(terminal, args.animation_rate)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
 
-        for character in self.characters:
+        for character in self.terminal.characters:
             pass
             # do something with the data if needed (sort, adjust positions, etc)
 
     def run(self) -> None:
         """Runs the effect."""
-        self.prep_terminal()
         self.prepare_data()
         while self.pending_chars or self.animating_chars:
+            self.terminal.print()
             self.animate_chars()
-
-            # tracking completed chars (remove if unnecessary)
-            self.completed_chars.extend(
-                [animating_char for animating_char in self.animating_chars if animating_char.animation_completed()]
-            )
-            self.maintain_completed()
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.animator.is_active_scene_complete()
+                or animating_char.current_coord != animating_char.input_coord
             ]
+            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and printing the characters to the terminal."""
+        """Animates the characters by calling the move method and step animation."""
         for animating_char in self.animating_chars:
-            tops.print_character(animating_char, clear_last=True)
+            animating_char.animator.step_animation()
             animating_char.move()
-        time.sleep(self.animation_rate)
+            if animating_char.is_movement_complete():
+                animating_char.symbol = animating_char.input_symbol

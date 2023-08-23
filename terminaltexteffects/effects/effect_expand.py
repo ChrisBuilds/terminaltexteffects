@@ -48,7 +48,7 @@ class ExpandEffect(base_effect.Effect):
         while self.animating_chars:
             self.animate_chars()
             self.animating_chars = [
-                animating for animating in self.animating_chars if not animating.animation_completed()
+                animating for animating in self.animating_chars if not animating.is_movement_complete()
             ]
             self.terminal.print()
             time.sleep(self.animation_rate)

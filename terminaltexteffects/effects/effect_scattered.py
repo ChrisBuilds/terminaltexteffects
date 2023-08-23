@@ -39,7 +39,6 @@ class ScatteredEffect(base_effect.Effect):
         for character in self.terminal.characters:
             character.current_coord.column = random.randint(1, self.terminal.output_area.right - 1)
             character.current_coord.row = random.randint(1, self.terminal.output_area.top - 1)
-            character.graphical_effect.dim = True
             character.is_active = True
             self.animating_chars.append(character)
 
@@ -50,13 +49,11 @@ class ScatteredEffect(base_effect.Effect):
         while self.pending_chars or self.animating_chars:
             self.animate_chars()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
             ]
             self.terminal.print()
             time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:
-            if animating_char.current_coord == animating_char.input_coord:
-                animating_char.graphical_effect.disable_modes()
             animating_char.move()

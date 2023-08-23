@@ -70,7 +70,7 @@ class VerticalSlice(base_effect.Effect):
             self.terminal.print()
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
             ]
             time.sleep(self.animation_rate)
 

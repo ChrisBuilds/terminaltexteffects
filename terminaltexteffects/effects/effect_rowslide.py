@@ -107,7 +107,7 @@ class RowSlide(base_effect.Effect):
             time.sleep(self.animation_rate)
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
             ]
             active_rows = [row for row in active_rows if row]
 

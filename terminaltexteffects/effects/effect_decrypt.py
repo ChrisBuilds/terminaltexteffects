@@ -4,7 +4,6 @@ import argparse
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects import base_effect, base_character
-from terminaltexteffects.utils import graphics
 from dataclasses import dataclass
 
 
@@ -74,56 +73,36 @@ class DecryptEffect(base_effect.Effect):
         for n in DecryptChars.misc:
             self.encrypted_symbols.append(chr(n))
 
-    def make_decrypting_animation_units(self) -> list[graphics.AnimationUnit]:
-        animation_units = []
-        graphicaleffect = graphics.GraphicalEffect(color=self.ciphertext_color)
+    def make_decrypting_animation_scene(self, character: base_character.EffectCharacter) -> None:
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
             duration = 3
-            animation_units.append(graphics.AnimationUnit(symbol, duration, False, graphicaleffect))
+            character.animator.add_effect_to_scene("fast_decrypt", symbol, self.ciphertext_color, duration)
         for _ in range(random.randint(1, 15)):  # 1-15 longer duration units
             symbol = random.choice(self.encrypted_symbols)
             if random.randint(0, 100) <= 30:  # 30% chance of extra long duration
                 duration = random.randrange(75, 225)  # wide long duration range reduces 'waves' in the animation
             else:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
-            animation_units.append(graphics.AnimationUnit(symbol, duration, False, graphicaleffect))
-
-        return animation_units
+            character.animator.add_effect_to_scene("slow_decrypt", symbol, self.ciphertext_color, duration)
+        character.animator.add_effect_to_scene("slow_decrypt", character.input_symbol, self.plaintext_color, 1)
 
     def prepare_data_for_type_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
-
         for character in self.terminal.characters:
             character.is_active = False
-            typed_graphicaleffect = graphics.GraphicalEffect(color=self.ciphertext_color)
-            typed_animation_unit = graphics.AnimationUnit(
-                random.choice(self.encrypted_symbols), 1, True, typed_graphicaleffect
+            for block_char in ["2588", "2593", "2592", "2591"]:
+                character.animator.add_effect_to_scene("typing", chr(int(block_char, 16)), self.ciphertext_color, 2)
+            character.animator.add_effect_to_scene(
+                "typing", random.choice(self.encrypted_symbols), self.ciphertext_color, 2
             )
-            character.animation_units.append(
-                graphics.AnimationUnit(chr(int("2588", 16)), 2, False, typed_graphicaleffect)
-            )
-            character.animation_units.append(
-                graphics.AnimationUnit(chr(int("2593", 16)), 2, False, typed_graphicaleffect)
-            )
-            character.animation_units.append(
-                graphics.AnimationUnit(chr(int("2592", 16)), 2, False, typed_graphicaleffect)
-            )
-            character.animation_units.append(
-                graphics.AnimationUnit(chr(int("2591", 16)), 2, False, typed_graphicaleffect)
-            )
-            character.animation_units.append(typed_animation_unit)
-
             self.pending_chars.append(character)
 
     def prepare_data_for_decrypt_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
         for character in self.terminal.characters:
-            character.animation_units.clear()
-            character.animation_units.extend(self.make_decrypting_animation_units())
-            final_graphicaleffect = graphics.GraphicalEffect(color=self.plaintext_color)
-            final_animation_unit = graphics.AnimationUnit(character.input_symbol, 1, False, final_graphicaleffect)
-            character.animation_units.append(final_animation_unit)
+            self.make_decrypting_animation_scene(character)
+            character.animator.active_scene_name = "fast_decrypt"
             self.animating_chars.append(character)
 
     def run(self) -> None:
@@ -141,12 +120,15 @@ class DecryptEffect(base_effect.Effect):
                 if random.randint(0, 100) <= 75:
                     next_character = self.pending_chars.pop(0)
                     next_character.is_active = True
+                    next_character.animator.is_animating = True
+                    next_character.animator.active_scene_name = "typing"
                     self.animating_chars.append(next_character)
             self.animate_chars()
-
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.animator.is_active_scene_complete()
             ]
             self.terminal.print()
             time.sleep(self.animation_rate)
@@ -156,7 +138,9 @@ class DecryptEffect(base_effect.Effect):
             self.animate_chars()
 
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.animator.is_active_scene_complete()
             ]
             self.terminal.print()
             time.sleep(self.animation_rate)
@@ -164,5 +148,10 @@ class DecryptEffect(base_effect.Effect):
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
-            animating_char.step_animation()
+            animating_char.animator.step_animation()
+            if (
+                animating_char.animator.active_scene_name == "fast_decrypt"
+                and animating_char.animator.is_active_scene_complete()
+            ):
+                animating_char.animator.active_scene_name = "slow_decrypt"
             animating_char.move()

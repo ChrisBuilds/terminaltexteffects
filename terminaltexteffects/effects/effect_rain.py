@@ -5,7 +5,6 @@ import random
 import argparse
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics
 from terminaltexteffects import base_effect, base_character
 
 
@@ -41,14 +40,12 @@ class RainEffect(base_effect.Effect):
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""
 
-        raindrop_colors = [39, 45, 51, 21, 14, 15]
+        raindrop_colors = [39, 45, 51, 21, 117, 159]
 
         for character in self.terminal.characters:
-            raindrop_graphical_effect = graphics.GraphicalEffect(color=random.choice(raindrop_colors))
-            raindrop_animation_unit = graphics.AnimationUnit(
-                character.input_symbol, 1, False, raindrop_graphical_effect
-            )
-            character.animation_units.append(raindrop_animation_unit)
+            character.animator.add_effect_to_scene("rain", character.input_symbol, random.choice(raindrop_colors), 1)
+            character.animator.active_scene_name = "rain"
+            character.animator.is_animating = True
             character.is_active = False
             character.current_coord.column = character.input_coord.column
             character.current_coord.row = self.terminal.output_area.top
@@ -78,15 +75,17 @@ class RainEffect(base_effect.Effect):
             self.animate_chars()
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.animator.is_active_scene_complete() or not animating_char.is_movement_complete()
             ]
             self.terminal.print()
             time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the tween method and printing the characters to the terminal."""
+        """Animates the characters by calling the move method and getting the next symbol from the animator."""
         for animating_char in self.animating_chars:
+            animating_char.animator.step_animation()
             animating_char.move()
-            animating_char.step_animation()
-            if animating_char.animation_completed():
+            if animating_char.is_movement_complete():
                 animating_char.symbol = animating_char.input_symbol

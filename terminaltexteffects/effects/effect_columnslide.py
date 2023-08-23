@@ -105,7 +105,7 @@ class ColumnSlide(base_effect.Effect):
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.animation_completed()
+                animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
             ]
             active_columns = [column for column in active_columns if column]
             self.terminal.print()

@@ -267,7 +267,8 @@ def test_rowmerge_effect(input_data: str = testdata_block, animation_rate: int =
 
 def main():
     input_data = testdata_block
-    show_all(input_data, animation_rate=0.007)
+    # show_all(input_data, animation_rate=0.007)
+    show_all(input_data, animation_rate=0.01)
 
 
 if __name__ == "__main__":
