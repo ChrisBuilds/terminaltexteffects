@@ -41,9 +41,12 @@ class RainEffect(base_effect.Effect):
         """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""
 
         raindrop_colors = [39, 45, 51, 21, 117, 159]
+        raindrop_characters = ["o", ".", ",", "*", "|"]
 
         for character in self.terminal.characters:
-            character.animator.add_effect_to_scene("rain", character.input_symbol, random.choice(raindrop_colors), 1)
+            character.animator.add_effect_to_scene(
+                "rain", random.choice(raindrop_characters), random.choice(raindrop_colors), 1
+            )
             character.animator.active_scene_name = "rain"
             character.animator.is_animating = True
             character.is_active = False
