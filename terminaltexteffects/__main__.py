@@ -1,8 +1,8 @@
 import importlib
 import argparse
-import terminaltexteffects.effects
+from terminaltexteffects import effects
 import pkgutil
-import terminaltexteffects.utils.terminal as term
+from terminaltexteffects.utils import terminal as term
 
 
 def main():
@@ -24,9 +24,7 @@ def main():
 
     discovered_effects = [
         importlib.import_module(module.name)
-        for module in pkgutil.iter_modules(
-            terminaltexteffects.effects.__path__, terminaltexteffects.effects.__name__ + "."
-        )
+        for module in pkgutil.iter_modules(effects.__path__, effects.__name__ + ".")
     ]
 
     for effect in discovered_effects:
