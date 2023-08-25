@@ -27,10 +27,10 @@ class OutputArea:
 class Terminal:
     """A class for managing the terminal state and output."""
 
-    def __init__(self, input_data: str):
+    def __init__(self, input_data: str, use_xterm_colors):
         self.input_data = input_data
         self.width, self.height = self._get_terminal_dimensions()
-        self.characters = self._decompose_input()
+        self.characters = self._decompose_input(use_xterm_colors)
         self.input_width = max([character.input_coord.column for character in self.characters])
         self.input_height = max([character.input_coord.row for character in self.characters])
         self.output_area = OutputArea(min(self.height - 1, self.input_height), self.input_width)
@@ -67,12 +67,15 @@ class Terminal:
         else:
             return ""
 
-    def _decompose_input(self) -> list[EffectCharacter]:
+    def _decompose_input(self, use_xterm_colors) -> list[EffectCharacter]:
         """Decomposes the output into a list of Character objects containing the symbol and its row/column coordinates
         relative to the input display location.
 
         Coordinates are relative to the cursor row position at the time of execution. 1,1 is the bottom left corner of the row
         above the cursor.
+
+        Args:
+            use_xterm_colors (bool): whether to convert colors to the closest XTerm-256 color
 
         Returns:
             list[Character]: list of EffectCharacter objects
@@ -90,7 +93,9 @@ class Terminal:
         for row, line in enumerate(wrapped_lines):
             for column, symbol in enumerate(line):
                 if symbol != " ":
-                    input_characters.append(EffectCharacter(symbol, column + 1, input_height - row))
+                    character = EffectCharacter(symbol, column + 1, input_height - row)
+                    character.animator.use_xterm_colors = use_xterm_colors
+                    input_characters.append(character)
         return input_characters
 
     def _update_terminal_state(self):

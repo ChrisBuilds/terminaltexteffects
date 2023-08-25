@@ -9,6 +9,12 @@ def main():
     parser = (argparse.ArgumentParser)(
         prog="terminaltexteffects", description="Apply visual effects to terminal text piped in from stdin."
     )
+    parser.add_argument(
+        "--xterm-colors",
+        action="store_true",
+        help="Convert any colors specified in RBG hex to the closest XTerm-256 color.",
+        default=False,
+    )
     subparsers = parser.add_subparsers(
         title="Effect",
         description="Name of the effect to apply. Use <effect> -h for effect specific help.",
@@ -31,7 +37,7 @@ def main():
     if not input_data:
         print("NO INPUT.")
     else:
-        terminal = term.Terminal(input_data)
+        terminal = term.Terminal(input_data, args.xterm_colors)
         effect = args.effect_class(terminal, args)
         effect.run()
 

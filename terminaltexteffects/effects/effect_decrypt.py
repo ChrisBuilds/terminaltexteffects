@@ -29,17 +29,17 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--ciphertext-color",
-        type=argtypes.color_range,
+        type=argtypes.valid_color,
         default=40,
-        metavar="[0-255]",
-        help="Xterm color code for the ciphertext. Defaults to 40",
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Color for the ciphertext. Defaults to 40",
     )
     effect_parser.add_argument(
         "--plaintext-color",
-        type=argtypes.color_range,
+        type=argtypes.valid_color,
         default=208,
-        metavar="[0-255]",
-        help="Xterm color code for the plaintext. Defaults to 208.",
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Color for the plaintext. Defaults to 208.",
     )
 
 

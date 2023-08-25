@@ -23,11 +23,19 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Time between animation steps. Defaults to 0.01 seconds.",
     )
     effect_parser.add_argument(
-        "--color-description",
-        type=argtypes.color_range,
+        "--color-single",  # make more descriptive
+        type=argtypes.valid_color,
         default=0,
-        metavar="[0-255]",
-        help="Xterm color code for the ___. Defaults to 0",
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Color for the ___. Defaults to 0",
+    )
+    effect_parser.add_argument(
+        "--color-list",  # make more descriptive
+        type=argtypes.valid_color,
+        nargs="*",
+        default=0,
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Up to N colors for the __.",
     )
 
 
@@ -36,6 +44,7 @@ class NamedEffect(base_effect.Effect):
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
         super().__init__(terminal, args.animation_rate)
+        self.args = args
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""

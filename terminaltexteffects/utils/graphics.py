@@ -1,7 +1,6 @@
 import typing
 from dataclasses import dataclass, field
-from terminaltexteffects.utils import ansitools
-from terminaltexteffects.utils import colorterm
+from terminaltexteffects.utils import ansitools, colorterm, hexttoxterm
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
@@ -24,7 +23,7 @@ class GraphicalEffect:
         reverse (bool): reverse mode
         hidden (bool): hidden mode
         strike (bool): strike mode
-        color (int): color code
+        color (int | str): color code
     """
 
     symbol: str
@@ -36,7 +35,7 @@ class GraphicalEffect:
     reverse: bool = False
     hidden: bool = False
     strike: bool = False
-    color: int | None = None
+    color: int | str | None = None
 
     def __post_init__(self):
         self.format_symbol()
@@ -154,18 +153,20 @@ class Animator:
         """
         self.character = character
         self.scenes: dict[str, Scene] = {}
-        self.active_scene_name = ""
-        self.is_animating = True
+        self.active_scene_name: str = ""
+        self.is_animating: bool = True
+        self.use_xterm_colors: bool = False
+        self.xterm_color_map: dict[str, int] = {}
 
     def add_effect_to_scene(
-        self, scene_name: str, symbol: str | None = None, color: int | None = None, duration: int = 1
+        self, scene_name: str, symbol: str | None = None, color: int | str | None = None, duration: int = 1
     ) -> None:
         """Add a graphical effect to a scene. If the scene doesn't exist, it will be created.
 
         Args:
             scene_name (str): Name of the scene to which the effect will be added
             symbol (str): Symbol to display, if None, the character's input symbol will be used
-            color (int): XTerm color code (0-255), if None, no color will be applied
+            color (int | str): XTerm color code (0-255) or hex color code (e.g. ffffff)
             duration (int): Number of animation steps to display the effect, defaults to 1
         """
         if scene_name not in self.scenes:
@@ -173,6 +174,13 @@ class Animator:
             self.scenes[scene_name] = new_scene
         if not symbol:
             symbol = self.character.input_symbol
+        if self.use_xterm_colors and isinstance(color, str):
+            if color in self.xterm_color_map:
+                color = self.xterm_color_map[color]
+            else:
+                xterm_color = hexttoxterm.hex_to_xterm(color)
+                self.xterm_color_map[color] = xterm_color
+                color = xterm_color
         graphicaleffect = GraphicalEffect(symbol, color=color)
         self.scenes[scene_name].add_sequence(graphicaleffect, duration)
 

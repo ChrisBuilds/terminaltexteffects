@@ -1,22 +1,27 @@
 import argparse
 
 
-def color_range(arg: str, min: int = 0, max: int = 255) -> int:
-    """Validates that the given argument is a valid xterm color value.
+def valid_color(color_string) -> int | str:
+    """Validates that the given argument is a valid color value.
 
     Args:
-        arg (str): argument to validate
-        min (int, optional): Minimum color value. Defaults to 0.
-        max (int, optional): Maximum color value. Defaults to 255.
+        color_string (str): argument to validate
 
     Raises:
         argparse.ArgumentTypeError: Color value is not in range.
 
     Returns:
-        int: Valid xterm color value.
+        int | str : validated color value
     """
-    value = int(arg)
-    if min <= value <= max:
-        return value
+    xterm_min = 0
+    xterm_max = 255
+    if len(color_string) == 6:
+        # Check if the hex value is a valid color
+        if not 0 <= int(color_string, 16) <= 16777215:
+            raise argparse.ArgumentTypeError(f"invalid color value: {color_string} is not a valid hex color.")
+        return color_string
     else:
-        raise argparse.ArgumentTypeError(f"Color value has to be between {min} and {max}")
+        # Check if the color is a valid xterm color
+        if not xterm_min <= int(color_string) <= xterm_max:
+            raise argparse.ArgumentTypeError(f"invalid color value: {color_string} is not a valid xterm color (0-255).")
+        return int(color_string)

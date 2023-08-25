@@ -18,7 +18,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "rain",
         help="Rain characters from the top of the output area.",
         description="rain | Rain characters from the top of the output area.",
-        epilog="Example: terminaltexteffects rain -a 0.004 --rain-color 40",
+        epilog="Example: terminaltexteffects rain -a 0.004 --rain-colors 39 45 51 21",
     )
     effect_parser.set_defaults(effect_class=RainEffect)
     effect_parser.add_argument(
@@ -28,24 +28,35 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         default=0.01,
         help="Time between animation steps. Defaults to 0.01 seconds.",
     )
+    effect_parser.add_argument(
+        "--rain-colors",
+        type=argtypes.valid_color,
+        nargs="*",
+        default=0,
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="List of colors for the rain drops. Colors are randomly chosen from the list.",
+    )
 
 
 class RainEffect(base_effect.Effect):
     """Creates a rain effect where characters fall from the top of the output area."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
+        self.args = args
         super().__init__(terminal, args.animation_rate)
         self.group_by_row: dict[int, list[base_character.EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""
-
-        raindrop_colors = [39, 45, 51, 21, 117, 159]
-        raindrop_characters = ["o", ".", ",", "*", "|"]
+        if self.args.rain_colors:
+            rain_colors = self.args.rain_colors
+        else:
+            rain_colors = [39, 45, 51, 21, 117, 159]
+        rain_characters = ["o", ".", ",", "*", "|"]
 
         for character in self.terminal.characters:
             character.animator.add_effect_to_scene(
-                "rain", random.choice(raindrop_characters), random.choice(raindrop_colors), 1
+                "rain", random.choice(rain_characters), random.choice(rain_colors), 1
             )
             character.animator.active_scene_name = "rain"
             character.animator.is_animating = True
