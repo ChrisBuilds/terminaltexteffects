@@ -168,8 +168,10 @@ class Animator:
             scene_name (str): Name of the scene to which the effect will be added
             symbol (str): Symbol to display, if None, the character's input symbol will be used
             color (int | str): XTerm color code (0-255) or hex color code (e.g. ffffff)
-            duration (int): Number of animation steps to display the effect, defaults to 1
+            duration (int): Number of animation steps to display the effect, defaults to 1. Minimum 1.
         """
+        if duration < 1:
+            raise ValueError("duration must be greater than 0")
         if scene_name not in self.scenes:
             new_scene = Scene(scene_name)
             self.scenes[scene_name] = new_scene
