@@ -1,21 +1,22 @@
-from time import sleep
 from argparse import ArgumentParser, Namespace
-from terminaltexteffects.utils.terminal import Terminal
+from time import sleep
+
 from terminaltexteffects import base_character
 from terminaltexteffects.effects import (
+    effect_columnslide,
+    effect_decrypt,
     effect_expand,
     effect_pour,
-    effect_random_sequence,
-    effect_scattered,
-    effect_sparkler,
     effect_rain,
-    effect_decrypt,
-    effect_shootingstar,
-    effect_rowslide,
-    effect_columnslide,
-    effect_verticalslice,
+    effect_random_sequence,
     effect_rowmerge,
+    effect_rowslide,
+    effect_scattered,
+    effect_shootingstar,
+    effect_sparkler,
+    effect_verticalslice,
 )
+from terminaltexteffects.utils.terminal import Terminal
 
 testdata_title3 = r"""
  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄       ▄  ▄▄▄▄▄▄▄▄▄▄▄       ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄ 

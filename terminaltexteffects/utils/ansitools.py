@@ -1,5 +1,3 @@
-from terminaltexteffects.utils import colorterm
-
 """This file contains ANSI escape codes for terminal formatting."""
 
 

@@ -1,10 +1,11 @@
-import time
-import random
 import argparse
+import random
+import time
+
 import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.graphics as graphics
+from terminaltexteffects import base_character, base_effect
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects import base_effect, base_character
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:

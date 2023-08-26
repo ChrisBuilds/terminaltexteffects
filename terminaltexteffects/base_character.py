@@ -1,7 +1,7 @@
 """EffectCharacter class and supporting classes to initialize and manage the state of a single character from the input data."""
 
-from dataclasses import dataclass, field
-from collections import deque
+from dataclasses import dataclass
+
 from terminaltexteffects.utils import graphics
 
 

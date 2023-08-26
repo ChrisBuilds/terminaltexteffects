@@ -1,13 +1,14 @@
 """Effect that draws the characters spawning at varying rates from a single point."""
 
-import time
-import random
 import argparse
-import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics
-from terminaltexteffects import base_effect, base_character
+import random
+import time
 from enum import Enum, auto
+
+import terminaltexteffects.utils.argtypes as argtypes
+from terminaltexteffects import base_character, base_effect
+from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:

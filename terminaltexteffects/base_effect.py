@@ -1,4 +1,5 @@
 import random
+
 import terminaltexteffects.utils.terminal as terminal
 from terminaltexteffects.base_character import EffectCharacter
 

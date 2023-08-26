@@ -1,8 +1,9 @@
 """This module contains functions for terminal operations."""
-from terminaltexteffects.utils import ansicodes, colorterm
-from terminaltexteffects.base_character import EffectCharacter
 import shutil
 import sys
+
+from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.utils import ansicodes, colorterm
 
 
 def get_terminal_dimensions() -> tuple[int, int]:

@@ -1,7 +1,8 @@
-import importlib
 import argparse
-import terminaltexteffects.effects
+import importlib
 import pkgutil
+
+import terminaltexteffects.effects
 import terminaltexteffects.utils.terminal as term
 
 

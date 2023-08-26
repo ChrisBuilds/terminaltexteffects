@@ -1,8 +1,9 @@
-import time
 import argparse
-from terminaltexteffects.utils.terminal import Terminal
+import time
+
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_effect, base_character
+from terminaltexteffects import base_character, base_effect
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:

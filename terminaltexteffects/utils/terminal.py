@@ -1,9 +1,10 @@
 """A module for managing the terminal state and output."""
-from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import ansitools
 import shutil
 import sys
 from dataclasses import dataclass
+
+from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.utils import ansitools
 
 
 @dataclass

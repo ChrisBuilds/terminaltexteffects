@@ -1,5 +1,6 @@
 import typing
 from dataclasses import dataclass, field
+
 from terminaltexteffects.utils import ansitools, colorterm, hexttoxterm
 
 if typing.TYPE_CHECKING:
