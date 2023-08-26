@@ -13,7 +13,7 @@ from terminaltexteffects.effects import (
     effect_rowslide,
     effect_scattered,
     effect_shootingstar,
-    effect_sparkler,
+    effect_spray,
     effect_verticalslice,
 )
 from terminaltexteffects.utils.terminal import Terminal
@@ -146,10 +146,10 @@ def show_all(input_data: str = testdata_block, animation_rate=0) -> None:
     sleep(0.5)
     parser = ArgumentParser()
     sub = parser.add_subparsers()
-    effect_sparkler.add_arguments(sub)
-    args = parser.parse_args(["sparkler", "-a", str(animation_rate)])
+    effect_spray.add_arguments(sub)
+    args = parser.parse_args(["spray", "-a", str(animation_rate)])
     terminal = Terminal(input_data, False)
-    sparkler_effect = effect_sparkler.SparklerEffect(terminal, args)
+    sparkler_effect = effect_spray.SprayEffect(terminal, args)
     sparkler_effect.run()
     sleep(0.5)
     parser = ArgumentParser()
@@ -238,11 +238,11 @@ def test_random_sequence_effect(input_data: str = testdata_block, animation_rate
     random_sequence_effect.run()
 
 
-def test_sparkler_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
+def test_spray_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
-    args.sparkler_position = effect_sparkler.SparklerPosition.SE
+    args.spray_position = effect_spray.SprayPosition.SE
     terminal = Terminal(input_data, False)
-    sparkler_effect = effect_sparkler.SparklerEffect(terminal, args)
+    sparkler_effect = effect_spray.SprayEffect(terminal, args)
     sparkler_effect.run()
 
 
