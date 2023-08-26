@@ -18,12 +18,12 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         subparser (argparse._SubParsersAction): subparser to add arguments to
     """
     effect_parser = subparsers.add_parser(
-        "sparkler",
+        "spray",
         help="Draws the characters spawning at varying rates from a single point.",
-        description="sparkler | Draws the characters spawning at varying rates from a single point.",
-        epilog="Example: terminaltexteffects sparkler -a 0.01 --sparkler-position center",
+        description="spray | Draws the characters spawning at varying rates from a single point.",
+        epilog="Example: terminaltexteffects spray -a 0.01 --spray-position center",
     )
-    effect_parser.set_defaults(effect_class=SparklerEffect)
+    effect_parser.set_defaults(effect_class=SprayEffect)
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
@@ -32,15 +32,15 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Time between animation steps. Defaults to 0.01 seconds.",
     )
     effect_parser.add_argument(
-        "--sparkler-position",
+        "--spray-position",
         default="center",
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"],
-        help="Position for the sparkler origin. Defaults to center.",
+        help="Position for the spray origin. Defaults to center.",
     )
 
 
-class SparklerPosition(Enum):
-    """Position for the sparkler origin."""
+class SprayPosition(Enum):
+    """Position for the spray origin."""
 
     N = auto()
     NE = auto()
@@ -53,7 +53,7 @@ class SparklerPosition(Enum):
     CENTER = auto()
 
 
-class SparklerEffect(base_effect.Effect):
+class SprayEffect(base_effect.Effect):
     """Effect that draws the characters spawning at varying rates from a single point."""
 
     def __init__(
@@ -68,46 +68,46 @@ class SparklerEffect(base_effect.Effect):
             args (argparse.Namespace): arguments from argparse
         """
         super().__init__(terminal, args.animation_rate)
-        self.sparkler_position = {
-            "n": SparklerPosition.N,
-            "ne": SparklerPosition.NE,
-            "e": SparklerPosition.E,
-            "se": SparklerPosition.SE,
-            "s": SparklerPosition.S,
-            "sw": SparklerPosition.SW,
-            "w": SparklerPosition.W,
-            "nw": SparklerPosition.NW,
-            "center": SparklerPosition.CENTER,
-        }.get(args.sparkler_position, SparklerPosition.CENTER)
+        self.spray_position = {
+            "n": SprayPosition.N,
+            "ne": SprayPosition.NE,
+            "e": SprayPosition.E,
+            "se": SprayPosition.SE,
+            "s": SprayPosition.S,
+            "sw": SprayPosition.SW,
+            "w": SprayPosition.W,
+            "nw": SprayPosition.NW,
+            "center": SprayPosition.CENTER,
+        }.get(args.spray_position, SprayPosition.CENTER)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point based on SparklerPosition."""
-        sparkler_origin_map = {
-            SparklerPosition.CENTER: (
+        spray_origin_map = {
+            SprayPosition.CENTER: (
                 self.terminal.output_area.right // 2,
                 self.terminal.output_area.top // 2,
             ),
-            SparklerPosition.N: (self.terminal.output_area.right // 2, self.terminal.output_area.top),
-            SparklerPosition.NW: (self.terminal.output_area.left, self.terminal.output_area.top),
-            SparklerPosition.W: (self.terminal.output_area.left, self.terminal.output_area.top // 2),
-            SparklerPosition.SW: (self.terminal.output_area.left, self.terminal.output_area.bottom),
-            SparklerPosition.S: (self.terminal.output_area.right // 2, self.terminal.output_area.bottom),
-            SparklerPosition.SE: (self.terminal.output_area.right - 1, self.terminal.output_area.bottom),
-            SparklerPosition.E: (self.terminal.output_area.right - 1, self.terminal.output_area.top // 2),
-            SparklerPosition.NE: (self.terminal.output_area.right - 1, self.terminal.output_area.top),
+            SprayPosition.N: (self.terminal.output_area.right // 2, self.terminal.output_area.top),
+            SprayPosition.NW: (self.terminal.output_area.left, self.terminal.output_area.top),
+            SprayPosition.W: (self.terminal.output_area.left, self.terminal.output_area.top // 2),
+            SprayPosition.SW: (self.terminal.output_area.left, self.terminal.output_area.bottom),
+            SprayPosition.S: (self.terminal.output_area.right // 2, self.terminal.output_area.bottom),
+            SprayPosition.SE: (self.terminal.output_area.right - 1, self.terminal.output_area.bottom),
+            SprayPosition.E: (self.terminal.output_area.right - 1, self.terminal.output_area.top // 2),
+            SprayPosition.NE: (self.terminal.output_area.right - 1, self.terminal.output_area.top),
         }
 
         for character in self.terminal.characters:
             character.is_active = False
-            character.current_coord.column, character.current_coord.row = sparkler_origin_map[self.sparkler_position]
+            character.current_coord.column, character.current_coord.row = spray_origin_map[self.spray_position]
             colors = [231, 11, 202]
             random.shuffle(colors)
             while colors:
                 character.animator.add_effect_to_scene(
-                    "spark", character.input_symbol, colors.pop(), random.randint(20, 35)
+                    "droplet", character.input_symbol, colors.pop(), random.randint(20, 35)
                 )
-            character.animator.add_effect_to_scene("spark")
-            character.animator.active_scene_name = "spark"
+            character.animator.add_effect_to_scene("droplet")
+            character.animator.active_scene_name = "droplet"
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
 
