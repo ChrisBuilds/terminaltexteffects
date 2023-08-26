@@ -109,6 +109,7 @@ class DecryptEffect(base_effect.Effect):
         for character in self.terminal.characters:
             self.make_decrypting_animation_scene(character)
             character.animator.active_scene_name = "fast_decrypt"
+            character.animator.scene_order = ["fast_decrypt", "slow_decrypt", "discovered"]
             self.animating_chars.append(character)
 
     def run(self) -> None:
@@ -155,14 +156,3 @@ class DecryptEffect(base_effect.Effect):
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
             animating_char.animator.step_animation()
-            if (
-                animating_char.animator.active_scene_name == "fast_decrypt"
-                and animating_char.animator.is_active_scene_complete()
-            ):
-                animating_char.animator.active_scene_name = "slow_decrypt"
-            elif (
-                animating_char.animator.active_scene_name == "slow_decrypt"
-                and animating_char.animator.is_active_scene_complete()
-            ):
-                animating_char.animator.active_scene_name = "discovered"
-            animating_char.move()

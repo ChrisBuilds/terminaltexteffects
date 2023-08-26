@@ -154,6 +154,7 @@ class Animator:
         """
         self.character = character
         self.scenes: dict[str, Scene] = {}
+        self.scene_order: list[str] = []
         self.active_scene_name: str = ""
         self.is_animating: bool = True
         self.use_xterm_colors: bool = False
@@ -204,9 +205,14 @@ class Animator:
             return False
 
     def step_animation(self) -> None:
-        """Apply the next symbol in the scene to the character."""
+        """Apply the next symbol in the scene to the character. If a scene order exists, the next scene
+        will be activated when the current scene is complete."""
         if self.active_scene_name and self.scenes[self.active_scene_name].sequences:
             self.character.symbol = self.scenes[self.active_scene_name].get_next_symbol()
+            if self.is_active_scene_complete() and self.active_scene_name in self.scene_order:
+                self.scene_order.remove(self.active_scene_name)
+                if self.scene_order:
+                    self.active_scene_name = self.scene_order[0]
 
     def reset_scene(self, scene_name: str) -> None:
         """Resets the Scene.
