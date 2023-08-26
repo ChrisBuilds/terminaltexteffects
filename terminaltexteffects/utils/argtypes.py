@@ -27,11 +27,11 @@ def valid_color(color_string) -> int | str:
         return int(color_string)
 
 
-def valid_duration(duration_string) -> int:
+def valid_duration(duration_arg: str) -> int:
     """Validates that the given argument is a valid duration value.
 
     Args:
-        duration_string (str): argument to validate
+        duration_arg (str): argument to validate
 
     Raises:
         argparse.ArgumentTypeError: Duration value is not in range.
@@ -41,8 +41,8 @@ def valid_duration(duration_string) -> int:
     """
     duration_min = 1
     duration_max = 1000
-    if not duration_min <= int(duration_string) <= duration_max:
+    if not duration_min <= int(duration_arg) <= duration_max:
         raise argparse.ArgumentTypeError(
-            f"invalid duration value: {duration_string} is not a valid duration. Duration must be > 0."
+            f"invalid duration value: {duration_arg} is not a valid duration. Duration must be > 0."
         )
-    return int(duration_string)
+    return int(duration_arg)
