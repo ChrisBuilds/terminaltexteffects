@@ -195,6 +195,8 @@ class Animator:
         Returns:
             bool: True if complete, False otherwise
         """
+        if not self.active_scene_name:
+            return True
         if (
             not self.scenes[self.active_scene_name].sequences
             or self.scenes[self.active_scene_name].is_looping
@@ -250,6 +252,11 @@ def gradient(start_color: str | int, end_color: str | int, steps: int) -> list[s
         red = start_color_ints[0] + (red_delta * i)
         green = start_color_ints[1] + (green_delta * i)
         blue = start_color_ints[2] + (blue_delta * i)
+
+        red = max(0, min(red, 255))
+        green = max(0, min(green, 255))
+        blue = max(0, min(blue, 255))
+
         gradient_colors.append(f"{red:02x}{green:02x}{blue:02x}")
     gradient_colors.append(end_color)
     return gradient_colors
