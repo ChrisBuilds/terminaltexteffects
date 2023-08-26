@@ -39,6 +39,13 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Up to N colors for the __.",
     )
+    effect_parser.add_argument(
+        "--final-color",
+        type=argtypes.valid_color,
+        default="ffffff",
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Color for the final character. Defaults to white.",
+    )
 
 
 class NamedEffect(base_effect.Effect):
