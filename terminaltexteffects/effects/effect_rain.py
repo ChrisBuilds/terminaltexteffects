@@ -5,6 +5,7 @@ import random
 import time
 
 import terminaltexteffects.utils.argtypes as argtypes
+from terminaltexteffects.utils import graphics
 from terminaltexteffects import base_character, base_effect
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -37,6 +38,13 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="List of colors for the rain drops. Colors are randomly chosen from the list.",
     )
+    effect_parser.add_argument(
+        "--final-color",
+        type=argtypes.valid_color,
+        default="ffffff",
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Color for the final character. Defaults to white.",
+    )
 
 
 class RainEffect(base_effect.Effect):
@@ -56,9 +64,11 @@ class RainEffect(base_effect.Effect):
         rain_characters = ["o", ".", ",", "*", "|"]
 
         for character in self.terminal.characters:
-            character.animator.add_effect_to_scene(
-                "rain", random.choice(rain_characters), random.choice(rain_colors), 1
-            )
+            raindrop_color = random.choice(rain_colors)
+            character.animator.add_effect_to_scene("rain", random.choice(rain_characters), raindrop_color, 1)
+            raindrop_gradient = graphics.gradient(raindrop_color, self.args.final_color, 7)
+            for color in raindrop_gradient:
+                character.animator.add_effect_to_scene("fade", character.input_symbol, color, 5)
             character.animator.active_scene_name = "rain"
             character.animator.is_animating = True
             character.is_active = False
@@ -103,4 +113,4 @@ class RainEffect(base_effect.Effect):
             animating_char.animator.step_animation()
             animating_char.move()
             if animating_char.is_movement_complete():
-                animating_char.symbol = animating_char.input_symbol
+                animating_char.animator.active_scene_name = "fade"
