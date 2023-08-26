@@ -32,10 +32,25 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Time between animation steps. Defaults to 0.01 seconds.",
     )
     effect_parser.add_argument(
+        "--spray-colors",
+        type=argtypes.valid_color,
+        nargs="*",
+        default=0,
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="List of colors for the character spray. Colors are randomly chosen from the list.",
+    )
+    effect_parser.add_argument(
+        "--final-color",
+        type=argtypes.valid_color,
+        default="ffffff",
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Color for the final character. Defaults to white.",
+    )
+    effect_parser.add_argument(
         "--spray-position",
-        default="center",
+        default="e",
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"],
-        help="Position for the spray origin. Defaults to center.",
+        help="Position for the spray origin. Defaults to east.",
     )
 
 
@@ -78,7 +93,9 @@ class SprayEffect(base_effect.Effect):
             "w": SprayPosition.W,
             "nw": SprayPosition.NW,
             "center": SprayPosition.CENTER,
-        }.get(args.spray_position, SprayPosition.CENTER)
+        }.get(args.spray_position, SprayPosition.E)
+        self.spray_colors = args.spray_colors
+        self.final_color = args.final_color
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point based on SparklerPosition."""
@@ -100,14 +117,12 @@ class SprayEffect(base_effect.Effect):
         for character in self.terminal.characters:
             character.is_active = False
             character.current_coord.column, character.current_coord.row = spray_origin_map[self.spray_position]
-            colors = [231, 11, 202]
-            random.shuffle(colors)
-            while colors:
-                character.animator.add_effect_to_scene(
-                    "droplet", character.input_symbol, colors.pop(), random.randint(20, 35)
-                )
-            character.animator.add_effect_to_scene("droplet")
-            character.animator.active_scene_name = "droplet"
+            if self.spray_colors:
+                spray_color = random.choice(self.spray_colors)
+                spray_gradient = graphics.gradient(spray_color, self.final_color, 7)
+                for color in spray_gradient:
+                    character.animator.add_effect_to_scene("droplet", character.input_symbol, color, 10)
+                character.animator.active_scene_name = "droplet"
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
 
