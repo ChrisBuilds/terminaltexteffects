@@ -241,6 +241,8 @@ def test_random_sequence_effect(input_data: str = testdata_block, animation_rate
 def test_spray_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate)
     args.spray_position = effect_spray.SprayPosition.SE
+    args.spray_colors = ["fe0345", "03faf0", "34a00f"]
+    args.final_color = "ff0000"
     terminal = Terminal(input_data, False)
     sparkler_effect = effect_spray.SprayEffect(terminal, args)
     sparkler_effect.run()
@@ -301,7 +303,7 @@ def test_rowmerge_effect(input_data: str = testdata_block, animation_rate: int =
 
 def main():
     input_data = testdata_title3
-    show_all(input_data, animation_rate=0.01)
+    test_spray_effect(input_data, animation_rate=0.01)
 
 
 if __name__ == "__main__":
