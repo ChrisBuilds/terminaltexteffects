@@ -4,6 +4,7 @@ import argparse
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects import base_effect, base_character
+from terminaltexteffects.utils import graphics
 from dataclasses import dataclass
 
 
@@ -37,7 +38,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "--plaintext-color",
         type=argtypes.valid_color,
-        default=208,
+        default="ffb007",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the plaintext. Defaults to 208.",
     )
@@ -60,6 +61,7 @@ class DecryptEffect(base_effect.Effect):
         super().__init__(terminal, args.animation_rate)
         self.ciphertext_color = args.ciphertext_color
         self.plaintext_color = args.plaintext_color
+        self.character_discovered_gradient = graphics.gradient("ffffff", self.plaintext_color, 5)
         self.encrypted_symbols: list[str] = []
         self.make_encrypted_symbols()
 
@@ -85,14 +87,17 @@ class DecryptEffect(base_effect.Effect):
             else:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
             character.animator.add_effect_to_scene("slow_decrypt", symbol, self.ciphertext_color, duration)
-        character.animator.add_effect_to_scene("slow_decrypt", character.input_symbol, self.plaintext_color, 1)
+        for color in self.character_discovered_gradient:
+            character.animator.add_effect_to_scene("discovered", character.input_symbol, color, 20)
+
+        character.animator.add_effect_to_scene("discovered", character.input_symbol, self.plaintext_color, 1)
 
     def prepare_data_for_type_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
         for character in self.terminal.characters:
             character.is_active = False
-            for block_char in ["2588", "2593", "2592", "2591"]:
-                character.animator.add_effect_to_scene("typing", chr(int(block_char, 16)), self.ciphertext_color, 2)
+            for block_char in ["▉", "▓", "▒", "░"]:
+                character.animator.add_effect_to_scene("typing", block_char, self.ciphertext_color, 2)
             character.animator.add_effect_to_scene(
                 "typing", random.choice(self.encrypted_symbols), self.ciphertext_color, 2
             )
@@ -154,4 +159,9 @@ class DecryptEffect(base_effect.Effect):
                 and animating_char.animator.is_active_scene_complete()
             ):
                 animating_char.animator.active_scene_name = "slow_decrypt"
+            elif (
+                animating_char.animator.active_scene_name == "slow_decrypt"
+                and animating_char.animator.is_active_scene_complete()
+            ):
+                animating_char.animator.active_scene_name = "discovered"
             animating_char.move()

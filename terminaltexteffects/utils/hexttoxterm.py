@@ -293,3 +293,15 @@ def hex_to_xterm(hex_color: str) -> int:
         key=lambda x_diff: x_diff[1],
     )[0][0]
     return closest
+
+
+def xterm_to_hex(xterm_color: int) -> str:
+    """Convert XTerm-256 color code to RGB Hex color code.
+
+    Args:
+        xterm_color (int): (0-255) XTerm-256 color code
+
+    Returns:
+        int: RGB Hex color code
+    """
+    return xterm_to_hex_map[xterm_color].strip("#")

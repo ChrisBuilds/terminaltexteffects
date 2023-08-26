@@ -4,6 +4,23 @@
 RESET = "\x1b[0m"
 
 
+def _hex_to_int(hex_color: str) -> list[int]:
+    """
+    Convert a hex color string into a list of ints.
+
+    Parameters
+    ----------
+    hex_color : str : Hex color string. '#' is optional.
+
+    Returns
+    -------
+    List[int] : [RED, GREEN, BLUE] list of color integers
+    """
+    hex_color = hex_color.strip("#")
+    ints = [int(hex_color[i : i + 2], 16) for i in range(0, 6, 2)]
+    return ints
+
+
 def _color(color_code: str | int, location: int) -> str:
     """
     Returns an ANSI escape sequence to color the foreground/background of text following the returned sequence.
@@ -17,24 +34,8 @@ def _color(color_code: str | int, location: int) -> str:
     str
     """
 
-    def hex_to_int(hex_color: str) -> list[int]:
-        """
-        Convert a hex color string into a list of ints.
-
-        Parameters
-        ----------
-        hex_color : str : Hex color string. '#' is optional.
-
-        Returns
-        -------
-        List[int] : [RED, GREEN, BLUE] list of color integers
-        """
-        hex_color = hex_color.strip("#")
-        ints = [int(hex_color[i : i + 2], 16) for i in range(0, 6, 2)]
-        return ints
-
     if isinstance(color_code, str):
-        color_ints = hex_to_int(color_code)
+        color_ints = _hex_to_int(color_code)
         sequence = f"\x1b[{location};2;{color_ints[0]};{color_ints[1]};{color_ints[2]}m"
     elif isinstance(color_code, int):
         if color_code not in range(0, 256):

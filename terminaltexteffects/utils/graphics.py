@@ -213,3 +213,34 @@ class Animator:
         """
         if scene_name in self.scenes:
             self.scenes[scene_name].reset_scene()
+
+
+def gradient(start_color: str | int, end_color: str | int, steps: int) -> list[str]:
+    """Calculate a gradient of colors between two colors using linear interpolation.
+
+    Args:
+        start_color (str|int): RGB hex color string or XTerm-256 color code
+        end_color (str|int): RGB hex color string or XTerm-256 color code
+        steps (int): Number of intermediate colors to calculate
+
+    Returns:
+        list[str]: List (length=steps + 2) of RGB hex color strings
+    """
+    if isinstance(start_color, int):
+        start_color = hexttoxterm.xterm_to_hex(start_color)
+    if isinstance(end_color, int):
+        end_color = hexttoxterm.xterm_to_hex(end_color)
+    start_color_ints = colorterm._hex_to_int(start_color)
+    end_color_ints = colorterm._hex_to_int(end_color)
+    gradient_colors = []
+    gradient_colors.append(start_color)
+    red_delta = (end_color_ints[0] - start_color_ints[0]) // steps
+    green_delta = (end_color_ints[1] - start_color_ints[1]) // steps
+    blue_delta = (end_color_ints[2] - start_color_ints[2]) // steps
+    for i in range(steps):
+        red = start_color_ints[0] + (red_delta * i)
+        green = start_color_ints[1] + (green_delta * i)
+        blue = start_color_ints[2] + (blue_delta * i)
+        gradient_colors.append(f"{red:02x}{green:02x}{blue:02x}")
+    gradient_colors.append(end_color)
+    return gradient_colors
