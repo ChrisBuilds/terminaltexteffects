@@ -117,7 +117,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_pour.add_arguments(sub)
     args = parser.parse_args(["pour"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     pour_effect = effect_pour.PourEffect(terminal, args)
     pour_effect.run()
     sleep(0.5)
@@ -125,7 +125,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_scattered.add_arguments(sub)
     args = parser.parse_args(["scattered"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     scattered_effect = effect_scattered.ScatteredEffect(terminal, args)
     scattered_effect.run()
     sleep(0.5)
@@ -133,7 +133,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_expand.add_arguments(sub)
     args = parser.parse_args(["expand"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     expand_effect = effect_expand.ExpandEffect(terminal, args)
     expand_effect.run()
     sleep(0.5)
@@ -141,7 +141,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_random_sequence.add_arguments(sub)
     args = parser.parse_args(["randomsequence"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     random_sequence_effect = effect_random_sequence.RandomSequence(terminal, args)
     random_sequence_effect.run()
     sleep(0.5)
@@ -149,7 +149,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_spray.add_arguments(sub)
     args = parser.parse_args(["spray"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     sparkler_effect = effect_spray.SprayEffect(terminal, args)
     sparkler_effect.run()
     sleep(0.5)
@@ -157,7 +157,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_rain.add_arguments(sub)
     args = parser.parse_args(["rain"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     rain_effect = effect_rain.RainEffect(terminal, args)
     rain_effect.run()
     sleep(0.5)
@@ -165,7 +165,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_decrypt.add_arguments(sub)
     args = parser.parse_args(["decrypt"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     decrypt_effect = effect_decrypt.DecryptEffect(terminal, args)
     decrypt_effect.run()
     sleep(0.5)
@@ -173,7 +173,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_shootingstar.add_arguments(sub)
     args = parser.parse_args(["shootingstar"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     shootingstar_effect = effect_shootingstar.ShootingStarEffect(terminal, args)
     shootingstar_effect.run()
     sleep(0.5)
@@ -181,7 +181,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_rowslide.add_arguments(sub)
     args = parser.parse_args(["rowslide"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     rowslide_effect = effect_rowslide.RowSlide(terminal, args)
     rowslide_effect.run()
     sleep(0.5)
@@ -189,7 +189,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_columnslide.add_arguments(sub)
     args = parser.parse_args(["columnslide"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     columnslide_effect = effect_columnslide.ColumnSlide(terminal, args)
     columnslide_effect.run()
     sleep(0.5)
@@ -197,7 +197,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_verticalslice.add_arguments(sub)
     args = parser.parse_args(["verticalslice"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     verticalslice_effect = effect_verticalslice.VerticalSlice(terminal, args)
     verticalslice_effect.run()
     sleep(0.5)
@@ -205,7 +205,7 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_rowmerge.add_arguments(sub)
     args = parser.parse_args(["rowmerge"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     rowmerge_effect = effect_rowmerge.RowMergeEffect(terminal, args)
     rowmerge_effect.run()
     sleep(0.5)
@@ -213,49 +213,49 @@ def show_all(input_data: str = testdata_block) -> None:
     sub = parser.add_subparsers()
     effect_burn.add_arguments(sub)
     args = parser.parse_args(["burn"])
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, args.animation_rate)
     burn_effect = effect_burn.BurnEffect(terminal, args)
     burn_effect.run()
 
 
 def test_pour_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
-    args = Namespace(animation_rate=animation_rate)
+    args = Namespace()
     args.pour_direction = effect_pour.PourDirection.DOWN
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, animation_rate)
     pour_effect = effect_pour.PourEffect(terminal, args)
     pour_effect.run()
 
 
 def test_scattered_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
-    args = Namespace(animation_rate=animation_rate)
-    terminal = Terminal(input_data, False)
+    args = Namespace()
+    terminal = Terminal(input_data, False, animation_rate)
     scattered_effect = effect_scattered.ScatteredEffect(terminal, args)
     scattered_effect.run()
 
 
 def test_expand_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
-    args = Namespace(animation_rate=animation_rate)
-    terminal = Terminal(input_data, False)
+    args = Namespace()
+    terminal = Terminal(input_data, False, animation_rate)
     expand_effect = effect_expand.ExpandEffect(terminal, args)
     expand_effect.run()
 
 
 def test_random_sequence_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
-    args = Namespace(animation_rate=animation_rate)
+    args = Namespace()
     args.fade_startcolor = "000000"
     args.fade_endcolor = "ffffff"
     args.fade_duration = 5
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, animation_rate)
     random_sequence_effect = effect_random_sequence.RandomSequence(terminal, args)
     random_sequence_effect.run()
 
 
 def test_spray_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
-    args = Namespace(animation_rate=animation_rate)
+    args = Namespace()
     args.spray_position = effect_spray.SprayPosition.SE
     args.spray_colors = ["fe0345", "03faf0", "34a00f"]
     args.final_color = "ff0000"
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, animation_rate)
     sparkler_effect = effect_spray.SprayEffect(terminal, args)
     sparkler_effect.run()
 
@@ -263,14 +263,14 @@ def test_spray_effect(input_data: str = testdata_block, animation_rate: int = 0)
 def test_rain_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
     args = Namespace(animation_rate=animation_rate, rain_colors=[])
     args.final_color = "ffffff"
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, animation_rate)
     rain_effect = effect_rain.RainEffect(terminal, args)
     rain_effect.run()
 
 
 def test_decrypt_effect(input_data: str = testdata_block, animation_rate=0) -> None:
-    args = Namespace(animation_rate=animation_rate)
-    terminal = Terminal(input_data, False)
+    args = Namespace()
+    terminal = Terminal(input_data, False, animation_rate)
     args.ciphertext_color = 40
     args.plaintext_color = 208
     decrypt_effect = effect_decrypt.DecryptEffect(terminal, args)
@@ -278,48 +278,48 @@ def test_decrypt_effect(input_data: str = testdata_block, animation_rate=0) -> N
 
 
 def test_shootingstar_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
-    args = Namespace(animation_rate=animation_rate)
-    terminal = Terminal(input_data, False)
+    args = Namespace()
+    terminal = Terminal(input_data, False, animation_rate)
     shootingstar_effect = effect_shootingstar.ShootingStarEffect(terminal, args)
     shootingstar_effect.run()
 
 
 def test_rowslide_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
-    args = Namespace(animation_rate=animation_rate)
+    args = Namespace()
     args.slide_direction = effect_rowslide.SlideDirection.LEFT
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, animation_rate)
     rowslide_effect = effect_rowslide.RowSlide(terminal, args)
     rowslide_effect.run()
 
 
 def test_columnslide_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
-    args = Namespace(animation_rate=animation_rate)
+    args = Namespace()
     args.slide_direction = effect_columnslide.SlideDirection.DOWN
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, animation_rate)
     columnslide_effect = effect_columnslide.ColumnSlide(terminal, args)
     columnslide_effect.run()
 
 
 def test_verticalslice_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
-    args = Namespace(animation_rate=animation_rate)
-    terminal = Terminal(input_data, False)
+    args = Namespace()
+    terminal = Terminal(input_data, False, animation_rate)
     verticalslice_effect = effect_verticalslice.VerticalSlice(terminal, args)
     verticalslice_effect.run()
 
 
 def test_rowmerge_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
-    args = Namespace(animation_rate=animation_rate)
-    terminal = Terminal(input_data, False)
+    args = Namespace()
+    terminal = Terminal(input_data, False, animation_rate)
     rowmerge_effect = effect_rowmerge.RowMergeEffect(terminal, args)
     rowmerge_effect.run()
 
 
 def test_burn_effect(input_data: str = testdata_block, animation_rate: int = 0) -> None:
-    args = Namespace(animation_rate=animation_rate)
+    args = Namespace()
     args.flame_color = "848484"
     args.burned_color = "ff9600"
     args.final_color = "ffffff"
-    terminal = Terminal(input_data, False)
+    terminal = Terminal(input_data, False, animation_rate)
     burn_effect = effect_burn.BurnEffect(terminal, args)
     burn_effect.run()
 
