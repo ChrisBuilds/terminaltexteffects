@@ -38,7 +38,7 @@ def main():
     if not input_data:
         print("NO INPUT.")
     else:
-        terminal = term.Terminal(input_data, args.xterm_colors)
+        terminal = term.Terminal(input_data, args.xterm_colors, args.animation_rate)
         effect = args.effect_class(terminal, args)
         effect.run()
 

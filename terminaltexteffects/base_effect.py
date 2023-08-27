@@ -7,15 +7,13 @@ from terminaltexteffects.base_character import EffectCharacter
 class Effect:
     """Generic class for all effects. Derive from this class to create a new effect."""
 
-    def __init__(self, terminal: terminal.Terminal, animation_rate: float = 0):
+    def __init__(self, terminal: terminal.Terminal):
         """Initializes the Effect class.
 
         Args:
             terminal (terminal.Terminal): a Terminal object
-            animation_rate (float, optional): time to sleep between animation steps. Defaults to 0.
         """
         self.terminal = terminal
-        self.animation_rate = animation_rate
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
 

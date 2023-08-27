@@ -1,5 +1,4 @@
 import argparse
-import time
 from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
@@ -50,7 +49,7 @@ class ColumnSlide(base_effect.Effect):
             input_data (str): string from stdin
             args (argparse.Namespace): arguments from argparse
         """
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
         self.column_delay_distance: int = 2  # number of characters to wait before adding a new row
         if args.slide_direction == "down":
             self.slide_direction = SlideDirection.DOWN
@@ -110,7 +109,6 @@ class ColumnSlide(base_effect.Effect):
             ]
             active_columns = [column for column in active_columns if column]
             self.terminal.print()
-            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""

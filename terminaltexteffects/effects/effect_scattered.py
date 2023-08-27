@@ -1,6 +1,5 @@
 import argparse
 import random
-import time
 
 import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminal as terminal
@@ -33,7 +32,7 @@ class ScatteredEffect(base_effect.Effect):
     """Effect that moves the characters into position from random starting locations."""
 
     def __init__(self, terminal: terminal.Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by scattering the characters within range of the input width and height."""
@@ -53,7 +52,6 @@ class ScatteredEffect(base_effect.Effect):
                 animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
             ]
             self.terminal.print()
-            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:

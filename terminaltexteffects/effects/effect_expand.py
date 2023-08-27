@@ -1,5 +1,4 @@
 import argparse
-import time
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects import base_effect
@@ -32,7 +31,7 @@ class ExpandEffect(base_effect.Effect):
     """Effect that draws the characters expanding from a single point."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""
@@ -52,7 +51,6 @@ class ExpandEffect(base_effect.Effect):
                 animating for animating in self.animating_chars if not animating.is_movement_complete()
             ]
             self.terminal.print()
-            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:

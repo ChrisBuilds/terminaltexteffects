@@ -1,6 +1,5 @@
 import argparse
 import random
-import time
 
 import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.graphics as graphics
@@ -34,7 +33,7 @@ class ShootingStarEffect(base_effect.Effect):
     """Effect that display the text as a falling star toward the final coordinate of the character."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
         self.group_by_row: dict[int, list[base_character.EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
@@ -73,7 +72,6 @@ class ShootingStarEffect(base_effect.Effect):
                 if not animating_char.animator.is_active_scene_complete() or not animating_char.is_movement_complete()
             ]
             self.terminal.print()
-            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""

@@ -2,7 +2,6 @@
 
 import argparse
 import random
-import time
 from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
@@ -82,7 +81,7 @@ class SprayEffect(base_effect.Effect):
             terminal (Terminal): terminal to use for the effect
             args (argparse.Namespace): arguments from argparse
         """
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
         self.spray_position = {
             "n": SprayPosition.N,
             "ne": SprayPosition.NE,
@@ -145,7 +144,6 @@ class SprayEffect(base_effect.Effect):
                 if not animating_char.animator.is_active_scene_complete()
                 or animating_char.current_coord != animating_char.input_coord
             ]
-            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:

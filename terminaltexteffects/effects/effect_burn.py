@@ -1,5 +1,4 @@
 import argparse
-import time
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
@@ -15,7 +14,10 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         subparser (argparse._SubParsersAction): subparser to add arguments to
     """
     effect_parser = subparsers.add_parser(
-        "burn", help="effect_description", description="effect_description", epilog="Example: effect_example"
+        "burn",
+        help="Burns vertically in the output area.",
+        description="burn | Burn the output area.",
+        epilog="Example: terminaltexteffects burn -a 0.003 --flame-color ff9600 --burned-color 848484",
     )
     effect_parser.set_defaults(effect_class=BurnEffect)
     effect_parser.add_argument(
@@ -23,7 +25,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--animation-rate",
         type=float,
         default=0.003,
-        help="Time between animation steps. Defaults to 0.01 seconds.",
+        help="Time between animation steps. Defaults to 0.03 seconds.",
     )
     effect_parser.add_argument(
         "--burned-color",
@@ -51,7 +53,7 @@ class BurnEffect(base_effect.Effect):
     """Effect that ___."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
         self.args = args
 
     def prepare_data(self) -> None:
@@ -68,8 +70,8 @@ class BurnEffect(base_effect.Effect):
         fire_gradient = graphics.gradient("ffffff", self.args.flame_color, 12)
         burned_gradient = graphics.gradient(self.args.flame_color, self.args.burned_color, 7)
         groups = self.input_by_column()
-        for k, v in groups.items():
-            v.reverse()
+        for column in groups.values():
+            column.reverse()
 
         def groups_remaining(rows) -> bool:
             return any(row for row in rows.values())
@@ -118,7 +120,6 @@ class BurnEffect(base_effect.Effect):
                 or animating_char.current_coord != animating_char.input_coord
             ]
             self.terminal.print()
-            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation."""

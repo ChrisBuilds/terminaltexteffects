@@ -1,5 +1,4 @@
 import argparse
-import time
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects import base_effect
@@ -32,7 +31,7 @@ class VerticalSlice(base_effect.Effect):
     """Effect that slices the input in half vertically and slides it into place from opposite directions."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting the left half to start at the top and the
@@ -73,7 +72,6 @@ class VerticalSlice(base_effect.Effect):
             self.animating_chars = [
                 animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
             ]
-            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and printing the characters to the terminal."""

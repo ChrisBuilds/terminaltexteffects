@@ -1,6 +1,7 @@
 """A module for managing the terminal state and output."""
 import shutil
 import sys
+import time
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter
@@ -28,7 +29,7 @@ class OutputArea:
 class Terminal:
     """A class for managing the terminal state and output."""
 
-    def __init__(self, input_data: str, use_xterm_colors):
+    def __init__(self, input_data: str, use_xterm_colors: bool, animation_rate: float):
         self.input_data = input_data
         self.width, self.height = self._get_terminal_dimensions()
         self.characters = self._decompose_input(use_xterm_colors)
@@ -38,6 +39,8 @@ class Terminal:
         self.characters = [
             character for character in self.characters if character.input_coord.row <= self.output_area.top
         ]
+        self.animation_rate = animation_rate
+        self.last_time_printed = time.time()
         self._update_terminal_state()
 
         self._prep_outputarea()
@@ -117,6 +120,9 @@ class Terminal:
     def print(self):
         """Prints the current terminal state to stdout while preserving the cursor position."""
         self._update_terminal_state()
+        time_since_last_print = time.time() - self.last_time_printed
+        if time_since_last_print < self.animation_rate:
+            time.sleep(self.animation_rate - time_since_last_print)
         for row_index, row in enumerate(self.terminal_state):
             sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
             sys.stdout.write(ansitools.MOVE_CURSOR_UP(row_index + 1))
@@ -124,3 +130,4 @@ class Terminal:
             sys.stdout.write(row)
             sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
             sys.stdout.flush()
+        self.last_time_printed = time.time()

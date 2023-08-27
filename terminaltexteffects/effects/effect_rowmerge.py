@@ -1,5 +1,4 @@
 import argparse
-import time
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects import base_effect
@@ -16,7 +15,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "rowmerge",
         help="Merges rows of characters.",
         description="rowmerge | Merges rows of characters.",
-        epilog="Example: terminaltexteffects rowmerge -a 0.03",
+        epilog="Example: terminaltexteffects rowmerge -a 0.01",
     )
     effect_parser.set_defaults(effect_class=RowMergeEffect)
     effect_parser.add_argument(
@@ -24,7 +23,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--animation-rate",
         type=float,
         default=0.01,
-        help="Time to sleep between animation steps. Defaults to 0.03 seconds.",
+        help="Time to sleep between animation steps. Defaults to 0.01 seconds.",
     )
 
 
@@ -32,7 +31,7 @@ class RowMergeEffect(base_effect.Effect):
     """Effect that merges rows."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting every other row to start at the opposite
@@ -68,7 +67,6 @@ class RowMergeEffect(base_effect.Effect):
                 animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
             ]
             self.terminal.print()
-            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and printing the characters to the terminal."""

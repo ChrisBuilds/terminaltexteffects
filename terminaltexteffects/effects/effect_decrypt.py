@@ -1,6 +1,5 @@
 import argparse
 import random
-import time
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
@@ -59,7 +58,7 @@ class DecryptEffect(base_effect.Effect):
     """Effect that shows a movie style text decryption effect."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
         self.ciphertext_color = args.ciphertext_color
         self.plaintext_color = args.plaintext_color
         self.character_discovered_gradient = graphics.gradient("ffffff", self.plaintext_color, 5)
@@ -138,7 +137,6 @@ class DecryptEffect(base_effect.Effect):
                 if not animating_char.animator.is_active_scene_complete()
             ]
             self.terminal.print()
-            time.sleep(self.animation_rate)
 
     def run_decryption_effect(self) -> None:
         while self.animating_chars:
@@ -150,7 +148,6 @@ class DecryptEffect(base_effect.Effect):
                 if not animating_char.animator.is_active_scene_complete()
             ]
             self.terminal.print()
-            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""

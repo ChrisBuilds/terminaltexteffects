@@ -1,5 +1,4 @@
 import argparse
-import time
 from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
@@ -50,7 +49,7 @@ class RowSlide(base_effect.Effect):
             terminal (Terminal): terminal to use for the effect
             args (argparse.Namespace): arguments from argparse
         """
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
         self.row_delay_distance: int = 8  # number of characters to wait before adding a new row
         if args.slide_direction == "left":
             self.slide_direction = SlideDirection.LEFT
@@ -105,8 +104,6 @@ class RowSlide(base_effect.Effect):
                         self.animating_chars.append(next_character)
             self.animate_chars()
             self.terminal.print()
-            time.sleep(self.animation_rate)
-            # remove completed chars from animating chars
             self.animating_chars = [
                 animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
             ]

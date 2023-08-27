@@ -1,7 +1,6 @@
 """Effect that pours the characters into position from the top, bottom, left, or right."""
 
 import argparse
-import time
 from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
@@ -48,7 +47,7 @@ class PourEffect(base_effect.Effect):
     """Effect that pours the characters into position from the top, bottom, left, or right."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
         self.pour_direction = {
             "down": PourDirection.DOWN,
             "up": PourDirection.UP,
@@ -95,7 +94,6 @@ class PourEffect(base_effect.Effect):
                 animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
             ]
             self.terminal.print()
-            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the sliding characters."""
