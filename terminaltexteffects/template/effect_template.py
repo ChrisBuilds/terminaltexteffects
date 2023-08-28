@@ -52,7 +52,7 @@ class NamedEffect(base_effect.Effect):
     """Effect that ___."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args.animation_rate)
+        super().__init__(terminal)
         self.args = args
 
     def prepare_data(self) -> None:
@@ -76,7 +76,6 @@ class NamedEffect(base_effect.Effect):
                 if not animating_char.animator.is_active_scene_complete()
                 or animating_char.current_coord != animating_char.input_coord
             ]
-            time.sleep(self.animation_rate)
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation."""
