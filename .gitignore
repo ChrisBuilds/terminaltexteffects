@@ -163,3 +163,4 @@ terminaltexteffects/test_tte.py
 .vscode/settings.json
 .vscode/launch.json
 */*.stats
+*.prof
