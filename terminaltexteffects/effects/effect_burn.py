@@ -17,7 +17,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "burn",
         help="Burns vertically in the output area.",
         description="burn | Burn the output area.",
-        epilog="Example: terminaltexteffects burn -a 0.003 --flame-color ff9600 --burned-color 848484",
+        epilog="Example: terminaltexteffects burn -a 0.003 --flame-color ff9600 --burned-color 252525",
     )
     effect_parser.set_defaults(effect_class=BurnEffect)
     effect_parser.add_argument(
@@ -30,9 +30,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "--burned-color",
         type=argtypes.valid_color,
-        default="848484",
+        default="252525",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color faded toward as blocks burn. Defaults to 0",
+        help="Color faded toward as blocks burn. Defaults to 252525",
     )
     effect_parser.add_argument(
         "--flame-color",
@@ -50,14 +50,14 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
 
 
 class BurnEffect(base_effect.Effect):
-    """Effect that ___."""
+    """Effect that burns up the screen."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
         super().__init__(terminal)
         self.args = args
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by ___."""
+        """Prepares the data for the effect by building the burn animation and organizing the data into columns."""
         vertical_build_order = [
             ".",
             "▖",
@@ -93,11 +93,9 @@ class BurnEffect(base_effect.Effect):
                     next_char.animator.add_effect_to_scene("construct", block, color, duration=30)
                 g_start += 2
 
-            if self.args.final_color:
-                color = self.args.final_color
-            else:
-                color = None
-            next_char.animator.add_effect_to_scene("construct", next_char.input_symbol, color, duration=1)
+            next_char.animator.add_effect_to_scene(
+                "construct", next_char.input_symbol, self.args.final_color, duration=1
+            )
             next_char.animator.active_scene_name = "construct"
             self.pending_chars.append(next_char)
 
@@ -112,7 +110,6 @@ class BurnEffect(base_effect.Effect):
 
             self.animate_chars()
 
-            # remove completed chars from animating chars
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
