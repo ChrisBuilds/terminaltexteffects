@@ -123,11 +123,11 @@ class Terminal:
         time_since_last_print = time.time() - self.last_time_printed
         if time_since_last_print < self.animation_rate:
             time.sleep(self.animation_rate - time_since_last_print)
-        for row_index, row in enumerate(self.terminal_state):
-            sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
-            sys.stdout.write(ansitools.MOVE_CURSOR_UP(row_index + 1))
-            sys.stdout.write(ansitools.MOVE_CURSOR_TO_COLUMN(1))
-            sys.stdout.write(row)
-            sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
-            sys.stdout.flush()
+        output = "\n".join(self.terminal_state[::-1])
+        sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
+        sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.output_area.top))
+        sys.stdout.write(ansitools.MOVE_CURSOR_TO_COLUMN(1))
+        sys.stdout.write(output)
+        sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
+        sys.stdout.flush()
         self.last_time_printed = time.time()
