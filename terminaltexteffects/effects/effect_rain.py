@@ -19,7 +19,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "rain",
         help="Rain characters from the top of the output area.",
         description="rain | Rain characters from the top of the output area.",
-        epilog="Example: terminaltexteffects rain -a 0.004 --rain-colors 39 45 51 21",
+        epilog="Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21",
     )
     effect_parser.set_defaults(effect_class=RainEffect)
     effect_parser.add_argument(
