@@ -108,6 +108,7 @@ def test_rowslide_effect(input_data: str = BLOCK, animation_rate: int = 0) -> No
 def test_columnslide_effect(input_data: str = BLOCK, animation_rate: int = 0) -> None:
     args = Namespace()
     args.slide_direction = effect_columnslide.SlideDirection.DOWN
+    args.column_gap = 5
     terminal = Terminal(input_data, False, animation_rate)
     columnslide_effect = effect_columnslide.ColumnSlide(terminal, args)
     columnslide_effect.run()

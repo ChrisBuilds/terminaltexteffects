@@ -26,6 +26,12 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Time to sleep between animation steps. Defaults to 0.003 seconds.",
     )
     effect_parser.add_argument(
+        "--column-gap",
+        default=5,
+        type=int,
+        help="Number of characters to wait before adding a new column. Defaults to 5.",
+    )
+    effect_parser.add_argument(
         "--slide-direction",
         default="down",
         choices=["up", "down"],
@@ -49,7 +55,7 @@ class ColumnSlide(base_effect.Effect):
             args (argparse.Namespace): arguments from argparse
         """
         super().__init__(terminal)
-        self.column_delay_distance: int = 2  # number of characters to wait before adding a new row
+        self.column_gap: int = args.column_gap
         if args.slide_direction == "down":
             self.slide_direction = SlideDirection.DOWN
         else:
@@ -86,12 +92,12 @@ class ColumnSlide(base_effect.Effect):
         self.prepare_data()
         active_columns: list[list[base_character.EffectCharacter]] = []
         active_columns.append(self.get_next_column())
-        column_delay_countdown = self.column_delay_distance
+        column_delay_countdown = self.column_gap
         self.terminal.print()
         while active_columns or self.animating_chars or self.columns:
             if column_delay_countdown == 0 and self.columns:
                 active_columns.append(self.get_next_column())
-                column_delay_countdown = self.column_delay_distance
+                column_delay_countdown = self.column_gap
             else:
                 if self.columns:
                     column_delay_countdown -= 1
