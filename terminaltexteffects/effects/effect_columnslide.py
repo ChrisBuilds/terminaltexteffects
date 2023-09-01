@@ -1,7 +1,6 @@
 import argparse
 from enum import Enum, auto
 
-import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects import base_character, base_effect
 from terminaltexteffects.utils.terminal import Terminal
 
