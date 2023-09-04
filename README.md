@@ -1,7 +1,7 @@
 <br/>
 <p align="center">
   <a href="https://github.com/ChrisBuilds/terminaltexteffects">
-    <img src="https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/fa5b79d6-5366-409a-97e3-810e45d1d620" alt="Logo" width="80" height="80">
+    <img src="https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/66388e57-e95e-4619-b804-1d8d7ebd124f" alt="TTE" width="80" height="80">
   </a>
 
   <h3 align="center">Terminal Text Effects</h3>
@@ -22,7 +22,7 @@
 * [Installation](#installation)
 * [Usage](#usage)
 * [Options](#options)
-* [Examples] (#examples)
+* [Examples](#examples)
 * [License](#license)
 
 
@@ -53,6 +53,8 @@ TerminalTextEffects is written in Python and does not require any 3rd party modu
 OR
 
 ``` cat your_text | python -m terminaltexteffects <effect> [options]```
+
+All effects support adjustable animation speed using the ```-a``` option
 
 ## Options
 ```
