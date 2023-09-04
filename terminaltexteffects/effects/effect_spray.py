@@ -120,7 +120,7 @@ class SprayEffect(base_effect.Effect):
                 spray_color = random.choice(self.spray_colors)
                 spray_gradient = graphics.gradient(spray_color, self.final_color, 7)
                 for color in spray_gradient:
-                    character.animator.add_effect_to_scene("droplet", character.input_symbol, color, 10)
+                    character.animator.add_effect_to_scene("droplet", character.input_symbol, color, 40)
                 character.animator.active_scene_name = "droplet"
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
