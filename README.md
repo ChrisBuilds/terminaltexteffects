@@ -17,7 +17,7 @@
 
 ## Table Of Contents
 
-* [About the Project](#about-the-project)
+* [About](#tte)
 * [Built With](#built-with)
 * [Installation](#installation)
 * [Usage](#usage)
@@ -26,7 +26,7 @@
 * [License](#license)
 
 
-## About The Project
+## TTE
 
 ![tte_terminal_header](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/8adae577-4e81-4f38-946a-f7f3e65c85c8)
 
