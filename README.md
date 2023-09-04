@@ -13,7 +13,7 @@
   </p>
 </p>
 
-![License](https://img.shields.io/github/license/ChrisBuilds/terminaltexteffects) 
+![PyPI - Version](https://img.shields.io/pypi/v/terminaltexteffects?style=flat&color=green) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/terminaltexteffects) ![License](https://img.shields.io/github/license/ChrisBuilds/terminaltexteffects) 
 
 ## Table Of Contents
 
