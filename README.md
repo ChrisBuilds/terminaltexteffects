@@ -49,7 +49,9 @@ TerminalTextEffects is written in Python and does not require any 3rd party modu
 
 ## Usage
 ```cat your_text | tte <effect> [options]```
+
 OR
+
 ``` cat you_text | python -m terminaltexteffects <effect> [options]```
 
 ## Options
