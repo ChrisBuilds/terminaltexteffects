@@ -165,3 +165,4 @@ terminaltexteffects/test_tte.py
 */*.stats
 *.prof
 testinput/*
+github_resources/*
