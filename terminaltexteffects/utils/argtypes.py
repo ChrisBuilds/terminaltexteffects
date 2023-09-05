@@ -39,10 +39,8 @@ def valid_duration(duration_arg: str) -> int:
     Returns:
         int: validated duration value
     """
-    duration_min = 1
-    duration_max = 1000
-    if not duration_min <= int(duration_arg) <= duration_max:
+    if int(duration_arg) < 1:
         raise argparse.ArgumentTypeError(
-            f"invalid duration value: {duration_arg} is not a valid duration. Duration must be > 0."
+            f"invalid duration value: {duration_arg} is not a valid duration. Duration must be int >= 1."
         )
     return int(duration_arg)
