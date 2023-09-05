@@ -8,12 +8,20 @@ import terminaltexteffects.utils.terminal as term
 
 def main():
     parser = (argparse.ArgumentParser)(
-        prog="terminaltexteffects", description="Apply visual effects to terminal text piped in from stdin."
+        prog="terminaltexteffects",
+        description="Apply visual effects to terminal text piped in from stdin.",
+        epilog="Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciphertext-color 00ff00 --plaintext-color ff0000 --final-color 0000ff",
     )
     parser.add_argument(
         "--xterm-colors",
         action="store_true",
         help="Convert any colors specified in RBG hex to the closest XTerm-256 color.",
+        default=False,
+    )
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Disable all colors in the effect.",
         default=False,
     )
     subparsers = parser.add_subparsers(
@@ -38,7 +46,7 @@ def main():
     if not input_data:
         print("NO INPUT.")
     else:
-        terminal = term.Terminal(input_data, args.xterm_colors, args.animation_rate)
+        terminal = term.Terminal(input_data, args)
         effect = args.effect_class(terminal, args)
         effect.run()
 
