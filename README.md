@@ -18,7 +18,7 @@
 ## Table Of Contents
 
 * [About](#tte)
-* [Built With](#built-with)
+* [Requirements](#requirements)
 * [Installation](#installation)
 * [Usage](#usage)
 * [Options](#options)
@@ -38,11 +38,11 @@ TerminalTextEffects is a collection of visual effects that run inline in the ter
 - Character Motion
 - UTF8 Character Set
 
-## Built With
+## Requirements
 
 TerminalTextEffects is written in Python and does not require any 3rd party modules. Terminal interactions use standard ANSI terminal sequences and should work in most modern terminals. 
 
-### Installation
+## Installation
 
 
 ```pip install terminaltexteffects```
