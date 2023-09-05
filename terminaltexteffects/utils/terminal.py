@@ -2,6 +2,7 @@
 import shutil
 import sys
 import time
+import argparse
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter
@@ -29,17 +30,17 @@ class OutputArea:
 class Terminal:
     """A class for managing the terminal state and output."""
 
-    def __init__(self, input_data: str, use_xterm_colors: bool, animation_rate: float):
+    def __init__(self, input_data: str, args: argparse.Namespace):
         self.input_data = input_data
         self.width, self.height = self._get_terminal_dimensions()
-        self.characters = self._decompose_input(use_xterm_colors)
+        self.characters = self._decompose_input(args.xterm_colors, args.no_color)
         self.input_width = max([character.input_coord.column for character in self.characters])
         self.input_height = max([character.input_coord.row for character in self.characters])
         self.output_area = OutputArea(min(self.height - 1, self.input_height), self.input_width)
         self.characters = [
             character for character in self.characters if character.input_coord.row <= self.output_area.top
         ]
-        self.animation_rate = animation_rate
+        self.animation_rate = args.animation_rate
         self.last_time_printed = time.time()
         self._update_terminal_state()
 
@@ -71,7 +72,7 @@ class Terminal:
         else:
             return ""
 
-    def _decompose_input(self, use_xterm_colors) -> list[EffectCharacter]:
+    def _decompose_input(self, use_xterm_colors: bool, no_color: bool) -> list[EffectCharacter]:
         """Decomposes the output into a list of Character objects containing the symbol and its row/column coordinates
         relative to the input display location.
 
@@ -99,6 +100,7 @@ class Terminal:
                 if symbol != " ":
                     character = EffectCharacter(symbol, column + 1, input_height - row)
                     character.animator.use_xterm_colors = use_xterm_colors
+                    character.animator.no_color = no_color
                     input_characters.append(character)
         return input_characters
 

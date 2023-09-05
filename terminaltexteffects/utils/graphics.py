@@ -158,6 +158,7 @@ class Animator:
         self.active_scene_name: str = ""
         self.is_animating: bool = True
         self.use_xterm_colors: bool = False
+        self.no_color: bool = False
         self.xterm_color_map: dict[str, int] = {}
 
     def add_effect_to_scene(
@@ -178,13 +179,16 @@ class Animator:
             self.scenes[scene_name] = new_scene
         if not symbol:
             symbol = self.character.input_symbol
-        if self.use_xterm_colors and isinstance(color, str):
-            if color in self.xterm_color_map:
-                color = self.xterm_color_map[color]
-            else:
-                xterm_color = hexttoxterm.hex_to_xterm(color)
-                self.xterm_color_map[color] = xterm_color
-                color = xterm_color
+        if not self.no_color:
+            if self.use_xterm_colors and isinstance(color, str):
+                if color in self.xterm_color_map:
+                    color = self.xterm_color_map[color]
+                else:
+                    xterm_color = hexttoxterm.hex_to_xterm(color)
+                    self.xterm_color_map[color] = xterm_color
+                    color = xterm_color
+        else:
+            color = None
         graphicaleffect = GraphicalEffect(symbol, color=color)
         self.scenes[scene_name].add_sequence(graphicaleffect, duration)
 
