@@ -54,7 +54,9 @@ OR
 
 ``` cat your_text | python -m terminaltexteffects <effect> [options]```
 
-All effects support adjustable animation speed using the ```-a``` option
+* All effects support adjustable animation speed using the ```-a``` option.
+* Use ```<effect> -h``` to view options for a specific effect, such as color or movement direction.
+  * Ex: ```tte decrypt -h```
 
 ## Options
 ```
