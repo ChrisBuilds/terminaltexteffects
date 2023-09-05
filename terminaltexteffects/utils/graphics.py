@@ -1,7 +1,7 @@
 import typing
 from dataclasses import dataclass, field
 
-from terminaltexteffects.utils import ansitools, colorterm, hexttoxterm
+from terminaltexteffects.utils import ansitools, colorterm, hexterm
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
@@ -184,7 +184,7 @@ class Animator:
                 if color in self.xterm_color_map:
                     color = self.xterm_color_map[color]
                 else:
-                    xterm_color = hexttoxterm.hex_to_xterm(color)
+                    xterm_color = hexterm.hex_to_xterm(color)
                     self.xterm_color_map[color] = xterm_color
                     color = xterm_color
         else:
@@ -242,9 +242,9 @@ def gradient(start_color: str | int, end_color: str | int, steps: int) -> list[s
         list[str]: List (length=steps + 2) of RGB hex color strings
     """
     if isinstance(start_color, int):
-        start_color = hexttoxterm.xterm_to_hex(start_color)
+        start_color = hexterm.xterm_to_hex(start_color)
     if isinstance(end_color, int):
-        end_color = hexttoxterm.xterm_to_hex(end_color)
+        end_color = hexterm.xterm_to_hex(end_color)
     start_color_ints = colorterm._hex_to_int(start_color)
     end_color_ints = colorterm._hex_to_int(end_color)
     gradient_colors = []
