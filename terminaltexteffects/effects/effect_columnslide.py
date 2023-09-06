@@ -84,8 +84,7 @@ class ColumnSlide(base_effect.Effect):
         Returns:
             list[character.EffectCharacter]: The next column of characters to animate.
         """
-        next_column = self.columns[min(self.columns.keys())]
-        del self.columns[min(self.columns.keys())]
+        next_column = self.columns.pop(min(self.columns.keys()))
         return next_column
 
     def run(self) -> None:
@@ -96,7 +95,7 @@ class ColumnSlide(base_effect.Effect):
         column_delay_countdown = self.column_gap
         self.terminal.print()
         while active_columns or self.animating_chars or self.columns:
-            if column_delay_countdown == 0 and self.columns:
+            if (column_delay_countdown == 0 and self.columns) or (self.columns and not active_columns):
                 active_columns.append(self.get_next_column())
                 column_delay_countdown = self.column_gap
             else:
