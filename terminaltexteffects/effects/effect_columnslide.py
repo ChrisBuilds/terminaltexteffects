@@ -30,7 +30,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--column-gap",
         default=5,
         type=argtypes.valid_gap,
-        help="Number of characters to wait before adding a new column. Defaults to 5.",
+        help="Number of characters to wait before adding a new column. Defaults to 5. Min 1.",
     )
     effect_parser.add_argument(
         "--slide-direction",
