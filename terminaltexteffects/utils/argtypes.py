@@ -44,3 +44,39 @@ def valid_duration(duration_arg: str) -> int:
             f"invalid duration value: {duration_arg} is not a valid duration. Duration must be int >= 1."
         )
     return int(duration_arg)
+
+
+def valid_gap(gap_arg: str) -> int:
+    """Validates that the given argument is a valid gap value.
+
+    Args:
+        gap_arg (str): argument to validate
+
+    Raises:
+        argparse.ArgumentTypeError: Gap value is not in range.
+
+    Returns:
+        int: validated gap value
+    """
+    if int(gap_arg) < 0:
+        raise argparse.ArgumentTypeError(f"invalid gap value: {gap_arg} is not a valid gap. Gap must be int >= 0.")
+    return int(gap_arg)
+
+
+def valid_animationrate(animationrate_arg: str) -> float:
+    """Validates that the given argument is a valid animationrate value.
+
+    Args:
+        animationrate_arg (str): argument to validate
+
+    Raises:
+        argparse.ArgumentTypeError: Animationrate value is not in range.
+
+    Returns:
+        float: validated animationrate value
+    """
+    if float(animationrate_arg) < 0:
+        raise argparse.ArgumentTypeError(
+            f"invalid animationrate value: {animationrate_arg} is not a valid animationrate. Animationrate must be float >= 0."
+        )
+    return float(animationrate_arg)

@@ -4,7 +4,7 @@ import random
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects import base_character, base_effect
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import graphics, argtypes
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -23,7 +23,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=float,
+        type=argtypes.valid_animationrate,
         default=0.003,
         help="Time between animation steps. Defaults to 0.03 seconds.",
     )
