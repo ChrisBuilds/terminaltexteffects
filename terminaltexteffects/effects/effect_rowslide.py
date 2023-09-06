@@ -50,7 +50,7 @@ class RowSlide(base_effect.Effect):
             args (argparse.Namespace): arguments from argparse
         """
         super().__init__(terminal)
-        self.row_delay_distance: int = 8  # number of characters to wait before adding a new row
+        self.row_delay_distance: int = 10000  # number of characters to wait before adding a new row
         if args.slide_direction == "left":
             self.slide_direction = SlideDirection.LEFT
         else:
@@ -75,8 +75,7 @@ class RowSlide(base_effect.Effect):
         Returns:
             list[effect_char.EffectCharacter]: The next row of characters to animate.
         """
-        next_row = self.rows[min(self.rows.keys())]
-        del self.rows[min(self.rows.keys())]
+        next_row = self.rows.pop(min(self.rows.keys()))
         return next_row
 
     def run(self) -> None:
@@ -86,7 +85,7 @@ class RowSlide(base_effect.Effect):
         active_rows.append(self.get_next_row())
         row_delay_countdown = self.row_delay_distance
         while active_rows or self.animating_chars:
-            if row_delay_countdown == 0 and self.rows:
+            if (row_delay_countdown == 0 and self.rows) or (not active_rows and self.rows):
                 active_rows.append(self.get_next_row())
                 row_delay_countdown = self.row_delay_distance
             else:
