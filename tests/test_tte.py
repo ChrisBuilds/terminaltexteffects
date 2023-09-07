@@ -109,6 +109,7 @@ def test_shootingstar_effect(input_data: str = BLOCK) -> None:
 def test_rowslide_effect(input_data: str = BLOCK) -> None:
     args = make_args()
     args.slide_direction = effect_rowslide.SlideDirection.LEFT
+    args.row_gap = 5
     terminal = Terminal(input_data, args)
     rowslide_effect = effect_rowslide.RowSlide(terminal, args)
     rowslide_effect.run()
