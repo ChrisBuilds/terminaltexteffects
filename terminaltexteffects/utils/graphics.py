@@ -229,6 +229,18 @@ class Animator:
         if scene_name in self.scenes:
             self.scenes[scene_name].reset_scene()
 
+    def set_active_scene(self, scene_name: str) -> None:
+        """Sets the active scene.
+
+        Args:
+            scene_name (str): the name of the Scene to set as active
+        """
+        if scene_name in self.scenes:
+            self.active_scene_name = scene_name
+            self.step_animation()
+        else:
+            raise ValueError(f"Scene {scene_name} does not exist")
+
 
 def gradient(start_color: str | int, end_color: str | int, steps: int) -> list[str]:
     """Calculate a gradient of colors between two colors using linear interpolation.
