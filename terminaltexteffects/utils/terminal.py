@@ -91,8 +91,7 @@ class Terminal:
             while len(line) > self.width:
                 wrapped_lines.append(line[: self.width])
                 line = line[self.width :]
-            if line:
-                wrapped_lines.append(line)
+            wrapped_lines.append(line)
         input_height = len(wrapped_lines)
         input_characters = []
         for row, line in enumerate(wrapped_lines):
