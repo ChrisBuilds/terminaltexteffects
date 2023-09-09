@@ -61,6 +61,9 @@ class EffectCharacter:
         "The target coordinate of the character. Used to determine the next coordinate to move to."
         self.waypoints: list[Coord] = []
         "A list of coordinates to move to. Used to determine the next target coordinate to move to."
+        self.max_speed: float = 1.0
+        self.speed: float = 1.0
+        self.acceleration: float = 0.0
         # move_delta is the floating point distance to move each step
         self.move_delta: float = 0
         self.row_delta: float = 0
@@ -70,8 +73,9 @@ class EffectCharacter:
         self.tweened_row: float = 0
 
     def move(self) -> None:
-        """Moves the character one step closer to the target position."""
+        """Moves the character one step closer to the target position based on speed and acceleration."""
         self.previous_coord.column, self.previous_coord.row = self.current_coord.column, self.current_coord.row
+        self.speed = min(self.speed + self.acceleration, self.max_speed)
 
         # if the character has reached the target coordinate, pop the next coordinate from the waypoints list
         # and reset the move_delta for recalculation
@@ -97,18 +101,23 @@ class EffectCharacter:
                 self.column_delta = 1
             else:
                 self.column_delta = self.row_delta = 1
+        # if the speed is high enough to jump over the target coordinate, set the current coordinate to the target coordinate
+        if abs(self.current_coord.column - self.target_coord.column) < self.column_delta * self.speed:
+            self.current_coord.column = self.target_coord.column
+        if abs(self.current_coord.row - self.target_coord.row) < self.row_delta * self.speed:
+            self.current_coord.row = self.target_coord.row
         # adjust the column and row positions by the calculated delta, round down to int
         if self.current_coord.column < self.target_coord.column:
-            self.tweened_column += self.column_delta
+            self.tweened_column += self.column_delta * self.speed
             self.current_coord.column = int(self.tweened_column)
         elif self.current_coord.column > self.target_coord.column:
-            self.tweened_column -= self.column_delta
+            self.tweened_column -= self.column_delta * self.speed
             self.current_coord.column = int(self.tweened_column)
         if self.current_coord.row < self.target_coord.row:
-            self.tweened_row += self.row_delta
+            self.tweened_row += self.row_delta * self.speed
             self.current_coord.row = int(self.tweened_row)
         elif self.current_coord.row > self.target_coord.row:
-            self.tweened_row -= self.row_delta
+            self.tweened_row -= self.row_delta * self.speed
             self.current_coord.row = int(self.tweened_row)
 
     def is_movement_complete(self) -> bool:

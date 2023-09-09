@@ -114,6 +114,9 @@ class SprayEffect(base_effect.Effect):
         }
 
         for character in self.terminal.characters:
+            character.speed = 0
+            character.max_speed = random.randint(1, 4)
+            character.acceleration = random.uniform(0.005, 0.08)
             character.is_active = False
             character.current_coord.column, character.current_coord.row = spray_origin_map[self.spray_position]
             if self.spray_colors:
