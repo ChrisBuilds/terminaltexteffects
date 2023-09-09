@@ -35,7 +35,7 @@ TerminalTextEffects is a collection of visual effects that run inline in the ter
 - XTerm 256 Color
 - RGB Hex Triplet Color
 - Color Gradients
-- Character Motion
+- Character Motion (Waypoints, Speed, Acceleration)
 - UTF8 Character Set
 
 ## Requirements
