@@ -17,6 +17,36 @@ class Coord:
     row: int
 
 
+@dataclass
+class Speed:
+    """A class to manage the speed of a character.
+
+    Args:
+        minimum (float): minimum speed. Defaults to 0.001.
+        maximum (float): maximum speed. Defaults to 5.
+        current (float): current speed. Defaults to 1.
+        acceleration (float): acceleration. Defaults to 0.
+    """
+
+    minimum: float = 0.001
+    maximum: float = 5
+    current: float = 1
+    acceleration: float = 0
+    origin_coord: Coord | None = None
+    target_coord: Coord | None = None
+
+    def accelerate(self) -> float:
+        """Calculates the next speed based on the current speed and acceleration.
+
+        Returns:
+            float: speed
+        """
+        self.current = max(self.minimum, min(self.current + self.acceleration, self.maximum))
+
+    def slow_on_approach(self) -> float:
+        """Calculates the acceleration as a function of distance remaining to the target."""
+
+
 class EffectCharacter:
     """A single character from the input data. Contains the state of the character.
 
@@ -55,15 +85,15 @@ class EffectCharacter:
         "The coordinate of the character in the input data."
         self.current_coord: Coord = Coord(input_column, input_row)
         "The current coordinate of the character. If different from the final coordinate, the character is moving."
+        self.origin: Coord = Coord(input_column, input_row)
+        "The origin coordinate is the explicitly set coordinate, or waypoint, of the character. Used for relative speed calculations."
         self.previous_coord: Coord = Coord(-1, -1)
         "The last coordinate of the character. Used to clear the last position of the character."
         self.target_coord: Coord = Coord(input_column, input_row)
         "The target coordinate of the character. Used to determine the next coordinate to move to."
         self.waypoints: list[Coord] = []
         "A list of coordinates to move to. Used to determine the next target coordinate to move to."
-        self.max_speed: float = 1.0
-        self.speed: float = 1.0
-        self.acceleration: float = 0.0
+        self.speed = Speed()
         # move_delta is the floating point distance to move each step
         self.move_delta: float = 0
         self.row_delta: float = 0
@@ -75,12 +105,16 @@ class EffectCharacter:
     def move(self) -> None:
         """Moves the character one step closer to the target position based on speed and acceleration."""
         self.previous_coord.column, self.previous_coord.row = self.current_coord.column, self.current_coord.row
-        self.speed = min(self.speed + self.acceleration, self.max_speed)
+        # set the origin coordinate to the current coordinate if the origin has not been otherwise set
+        if self.origin.column == self.input_coord.column and self.origin.row == self.input_coord.row:
+            self.origin.column, self.origin.row = self.current_coord.column, self.current_coord.row
+        self.speed.accelerate()
 
         # if the character has reached the target coordinate, pop the next coordinate from the waypoints list
         # and reset the move_delta for recalculation
         if self.current_coord == self.target_coord and self.waypoints:
             self.target_coord = self.waypoints.pop(0)
+            self.origin.column, self.origin.row = self.current_coord.column, self.current_coord.row
             self.move_delta = 0
 
         column_distance = abs(self.current_coord.column - self.target_coord.column)
@@ -102,22 +136,22 @@ class EffectCharacter:
             else:
                 self.column_delta = self.row_delta = 1
         # if the speed is high enough to jump over the target coordinate, set the current coordinate to the target coordinate
-        if abs(self.current_coord.column - self.target_coord.column) < self.column_delta * self.speed:
+        if abs(self.current_coord.column - self.target_coord.column) < self.column_delta * self.speed.current:
             self.current_coord.column = self.target_coord.column
-        if abs(self.current_coord.row - self.target_coord.row) < self.row_delta * self.speed:
+        if abs(self.current_coord.row - self.target_coord.row) < self.row_delta * self.speed.current:
             self.current_coord.row = self.target_coord.row
         # adjust the column and row positions by the calculated delta, round down to int
         if self.current_coord.column < self.target_coord.column:
-            self.tweened_column += self.column_delta * self.speed
+            self.tweened_column += self.column_delta * self.speed.current
             self.current_coord.column = int(self.tweened_column)
         elif self.current_coord.column > self.target_coord.column:
-            self.tweened_column -= self.column_delta * self.speed
+            self.tweened_column -= self.column_delta * self.speed.current
             self.current_coord.column = int(self.tweened_column)
         if self.current_coord.row < self.target_coord.row:
-            self.tweened_row += self.row_delta * self.speed
+            self.tweened_row += self.row_delta * self.speed.current
             self.current_coord.row = int(self.tweened_row)
         elif self.current_coord.row > self.target_coord.row:
-            self.tweened_row -= self.row_delta * self.speed
+            self.tweened_row -= self.row_delta * self.speed.current
             self.current_coord.row = int(self.tweened_row)
 
     def is_movement_complete(self) -> bool:
