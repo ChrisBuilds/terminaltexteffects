@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import graphics, motion
 
 
 @dataclass
@@ -81,6 +81,7 @@ class EffectCharacter:
         self.input_symbol: str = symbol
         "The symbol for the character in the input data."
         self.animator: graphics.Animator = graphics.Animator(self)
+        self.motion: motion.Motion = motion.Motion(self)
         self.input_coord: Coord = Coord(input_column, input_row)
         "The coordinate of the character in the input data."
         self.current_coord: Coord = Coord(input_column, input_row)
@@ -104,55 +105,7 @@ class EffectCharacter:
 
     def move(self) -> None:
         """Moves the character one step closer to the target position based on speed and acceleration."""
-        self.previous_coord.column, self.previous_coord.row = self.current_coord.column, self.current_coord.row
-        # set the origin coordinate to the current coordinate if the origin has not been otherwise set
-        if self.origin.column == self.input_coord.column and self.origin.row == self.input_coord.row:
-            self.origin.column, self.origin.row = self.current_coord.column, self.current_coord.row
-        self.speed.accelerate()
-
-        # if the character has reached the target coordinate, pop the next coordinate from the waypoints list
-        # and reset the move_delta for recalculation
-        if self.current_coord == self.target_coord and self.waypoints:
-            self.target_coord = self.waypoints.pop(0)
-            self.origin.column, self.origin.row = self.current_coord.column, self.current_coord.row
-            self.move_delta = 0
-
-        column_distance = abs(self.current_coord.column - self.target_coord.column)
-        row_distance = abs(self.current_coord.row - self.target_coord.row)
-        # on first call, calculate the column and row movement distance to approximate an angled line
-        if not self.move_delta:
-            self.tweened_column = self.current_coord.column
-            self.tweened_row = self.current_coord.row
-            self.move_delta = min(column_distance, row_distance) / max(column_distance, row_distance, 1)
-            if self.move_delta == 0:
-                self.move_delta = 1
-
-            if column_distance < row_distance:
-                self.column_delta = self.move_delta
-                self.row_delta = 1
-            elif row_distance < column_distance:
-                self.row_delta = self.move_delta
-                self.column_delta = 1
-            else:
-                self.column_delta = self.row_delta = 1
-        # if the speed is high enough to jump over the target coordinate, set the current coordinate to the target coordinate
-        if abs(self.current_coord.column - self.target_coord.column) < self.column_delta * self.speed.current:
-            self.current_coord.column = self.target_coord.column
-        if abs(self.current_coord.row - self.target_coord.row) < self.row_delta * self.speed.current:
-            self.current_coord.row = self.target_coord.row
-        # adjust the column and row positions by the calculated delta, round down to int
-        if self.current_coord.column < self.target_coord.column:
-            self.tweened_column += self.column_delta * self.speed.current
-            self.current_coord.column = int(self.tweened_column)
-        elif self.current_coord.column > self.target_coord.column:
-            self.tweened_column -= self.column_delta * self.speed.current
-            self.current_coord.column = int(self.tweened_column)
-        if self.current_coord.row < self.target_coord.row:
-            self.tweened_row += self.row_delta * self.speed.current
-            self.current_coord.row = int(self.tweened_row)
-        elif self.current_coord.row > self.target_coord.row:
-            self.tweened_row -= self.row_delta * self.speed.current
-            self.current_coord.row = int(self.tweened_row)
+        self.motion.move()
 
     def is_movement_complete(self) -> bool:
         """Returns whether the character has reached the final coordinate.
