@@ -97,7 +97,7 @@ class Terminal:
         for row, line in enumerate(wrapped_lines):
             for column, symbol in enumerate(line):
                 if symbol != " ":
-                    character = EffectCharacter(symbol, column + 1, input_height - row)
+                    character = EffectCharacter(symbol, column + 1, input_height - row, self)
                     character.animator.use_xterm_colors = use_xterm_colors
                     character.animator.no_color = no_color
                     input_characters.append(character)
@@ -110,7 +110,13 @@ class Terminal:
         rows = [[" " for _ in range(self.output_area.right)] for _ in range(self.output_area.top)]
         for character in self.characters:
             if character.is_active:
-                rows[character.current_coord.row - 1][character.current_coord.column - 1] = character.symbol
+                try:
+                    rows[character.motion.current_coord.row - 1][
+                        character.motion.current_coord.column - 1
+                    ] = character.symbol
+                except IndexError:
+                    # ignore characters that are outside the output area
+                    pass
         terminal_state = ["".join(row) for row in rows]
         self.terminal_state = terminal_state
 
