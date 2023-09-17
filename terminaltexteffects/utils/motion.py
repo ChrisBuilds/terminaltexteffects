@@ -218,6 +218,8 @@ class Motion:
             self.current_waypoint.coord.row,
         )
         self.inter_waypoint_current_step = 0
+        if self.speed > self.inter_waypoint_distance:
+            self.speed = max(self.inter_waypoint_distance, 1)
         self.inter_waypoint_max_steps = round(self.inter_waypoint_distance / self.speed)
 
     def move(self) -> None:
