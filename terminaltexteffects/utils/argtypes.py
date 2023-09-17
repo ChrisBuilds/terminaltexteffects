@@ -80,3 +80,22 @@ def valid_animationrate(animationrate_arg: str) -> float:
             f"invalid animationrate value: {animationrate_arg} is not a valid animationrate. Animationrate must be float >= 0."
         )
     return float(animationrate_arg)
+
+
+def valid_speed(speed_arg: str) -> float:
+    """Validates that the given argument is a valid speed value.
+
+    Args:
+        speed_arg (str): argument to validate
+
+    Raises:
+        argparse.ArgumentTypeError: Speed value is not in range.
+
+    Returns:
+        float: validated speed value
+    """
+    if float(speed_arg) <= 0:
+        raise argparse.ArgumentTypeError(
+            f"invalid speed value: {speed_arg} is not a valid speed. Speed must be float > 0."
+        )
+    return float(speed_arg)
