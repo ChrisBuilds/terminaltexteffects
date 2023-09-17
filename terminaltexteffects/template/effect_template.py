@@ -45,6 +45,13 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final character. Defaults to white.",
     )
+    effect_parser.add_argument(
+        "--movement-speed",
+        type=argtypes.valid_speed,
+        default=1,
+        metavar="(float > 0)",
+        help="Speed of the ___. Defaults to 1. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
 
 
 class NamedEffect(base_effect.Effect):
@@ -72,14 +79,13 @@ class NamedEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete()
-                or animating_char.current_coord != animating_char.input_coord
+                if not animating_char.animator.is_active_scene_complete() or animating_char.motion.movement_complete()
             ]
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation."""
         for animating_char in self.animating_chars:
             animating_char.animator.step_animation()
-            animating_char.move()
-            if animating_char.is_movement_complete():
+            animating_char.motion.move()
+            if animating_char.motion.movement_complete():
                 animating_char.symbol = animating_char.input_symbol
