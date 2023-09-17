@@ -57,7 +57,7 @@ class DecryptEffect(base_effect.Effect):
     """Effect that shows a movie style text decryption effect."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal)
+        super().__init__(terminal, args)
         self.ciphertext_color = args.ciphertext_color
         self.plaintext_color = args.plaintext_color
         self.character_discovered_gradient = graphics.gradient("ffffff", self.plaintext_color, 5)

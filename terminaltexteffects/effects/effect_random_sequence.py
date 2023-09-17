@@ -59,8 +59,7 @@ class RandomSequence(base_effect.Effect):
             terminal (Terminal): Terminal object.
             args (argparse.Namespace): Arguments from argparse.
         """
-        super().__init__(terminal)
-        self.args = args
+        super().__init__(terminal, args)
         self.fade_in = graphics.gradient(args.fade_startcolor, args.fade_endcolor, 10)
 
     def prepare_data(self) -> None:

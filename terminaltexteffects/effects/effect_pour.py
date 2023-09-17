@@ -34,6 +34,13 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         choices=["up", "down", "left", "right"],
         help="Direction the text will pour. Defaults to down.",
     )
+    effect_parser.add_argument(
+        "--movement-speed",
+        type=argtypes.valid_speed,
+        default=0.2,
+        metavar="(float > 0)",
+        help="Movement speed of the characters. Defaults to 0.2. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
 
 
 class PourDirection(Enum):
@@ -47,7 +54,7 @@ class PourEffect(base_effect.Effect):
     """Effect that pours the characters into position from the top, bottom, left, or right."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal)
+        super().__init__(terminal, args)
         self.pour_direction = {
             "down": PourDirection.DOWN,
             "up": PourDirection.UP,
@@ -77,7 +84,7 @@ class PourEffect(base_effect.Effect):
             character.motion.new_waypoint(
                 character.input_coord.column,
                 character.input_coord.row,
-                speed=0.2,
+                speed=self.args.movement_speed,
                 ease=character.motion.ease.IN_SINE,
             )
             self.pending_chars.append(character)

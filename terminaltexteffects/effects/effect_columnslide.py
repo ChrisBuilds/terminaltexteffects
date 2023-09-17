@@ -38,6 +38,13 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         choices=["up", "down"],
         help="Direction the text will slide. Defaults to down.",
     )
+    effect_parser.add_argument(
+        "--movement-speed",
+        type=argtypes.valid_speed,
+        default=0.5,
+        metavar="(float > 0)",
+        help="Character movement speed. Defaults to 0.5. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
 
 
 class SlideDirection(Enum):
@@ -55,7 +62,7 @@ class ColumnSlide(base_effect.Effect):
             input_data (str): string from stdin
             args (argparse.Namespace): arguments from argparse
         """
-        super().__init__(terminal)
+        super().__init__(terminal, args)
         self.column_gap: int = args.column_gap
         if args.slide_direction == "down":
             self.slide_direction = SlideDirection.DOWN
@@ -80,7 +87,7 @@ class ColumnSlide(base_effect.Effect):
                 character.motion.new_waypoint(
                     character.input_coord.column,
                     character.input_coord.row,
-                    speed=0.5,
+                    speed=self.args.movement_speed,
                     ease=character.motion.ease.IN_EXPO,
                 )
 

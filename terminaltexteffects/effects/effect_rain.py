@@ -44,14 +44,20 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final character. Defaults to white.",
     )
+    effect_parser.add_argument(
+        "--movement-speed",
+        type=argtypes.valid_speed,
+        default=0.5,
+        metavar="(float > 0)",
+        help="Falling speed of the rain drops. Defaults to 0.5. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
 
 
 class RainEffect(base_effect.Effect):
     """Creates a rain effect where characters fall from the top of the output area."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        self.args = args
-        super().__init__(terminal)
+        super().__init__(terminal, args)
         self.group_by_row: dict[int, list[base_character.EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
@@ -73,7 +79,10 @@ class RainEffect(base_effect.Effect):
             character.is_active = False
             character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
             character.motion.new_waypoint(
-                character.input_coord.column, character.input_coord.row, speed=0.5, ease=character.motion.ease.IN_QUAD
+                character.input_coord.column,
+                character.input_coord.row,
+                speed=self.args.movement_speed,
+                ease=character.motion.ease.IN_QUAD,
             )
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):

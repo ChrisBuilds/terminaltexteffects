@@ -53,8 +53,7 @@ class BurnEffect(base_effect.Effect):
     """Effect that burns up the screen."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal)
-        self.args = args
+        super().__init__(terminal, args)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by building the burn animation and organizing the data into columns."""

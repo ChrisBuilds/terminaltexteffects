@@ -26,13 +26,20 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         default=0.01,
         help="Time between animation steps. Defaults to 0.01 seconds.",
     )
+    effect_parser.add_argument(
+        "--movement-speed",
+        type=argtypes.valid_speed,
+        default=0.5,
+        metavar="(float > 0)",
+        help="Movement speed of the characters. Defaults to 0.5. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
 
 
 class ScatteredEffect(base_effect.Effect):
     """Effect that moves the characters into position from random starting locations."""
 
     def __init__(self, terminal: terminal.Terminal, args: argparse.Namespace):
-        super().__init__(terminal)
+        super().__init__(terminal, args)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by scattering the characters within range of the input width and height."""
@@ -44,7 +51,7 @@ class ScatteredEffect(base_effect.Effect):
             character.motion.new_waypoint(
                 character.input_coord.column,
                 character.input_coord.row,
-                speed=0.5,
+                speed=self.args.movement_speed,
                 ease=character.motion.ease.IN_OUT_QUART,
             )
             character.is_active = True
