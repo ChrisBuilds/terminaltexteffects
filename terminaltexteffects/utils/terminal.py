@@ -111,6 +111,9 @@ class Terminal:
         for character in self.characters:
             if character.is_active:
                 try:
+                    # do not allow characters to wrap around the terminal via negative coordinates
+                    if character.motion.current_coord.row <= 0 or character.motion.current_coord.column <= 0:
+                        continue
                     rows[character.motion.current_coord.row - 1][
                         character.motion.current_coord.column - 1
                     ] = character.symbol
