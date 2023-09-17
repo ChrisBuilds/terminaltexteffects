@@ -1,4 +1,4 @@
-import typing, scipy.interpolate, math
+import typing, math
 from dataclasses import dataclass
 from enum import Enum, auto
 from terminaltexteffects.utils.easing import Easing
