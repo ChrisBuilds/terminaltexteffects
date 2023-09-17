@@ -1,5 +1,4 @@
-import random
-
+import random, argparse
 import terminaltexteffects.utils.terminal as terminal
 from terminaltexteffects.base_character import EffectCharacter
 
@@ -7,13 +6,14 @@ from terminaltexteffects.base_character import EffectCharacter
 class Effect:
     """Generic class for all effects. Derive from this class to create a new effect."""
 
-    def __init__(self, terminal: terminal.Terminal):
+    def __init__(self, terminal: terminal.Terminal, args: argparse.Namespace):
         """Initializes the Effect class.
 
         Args:
             terminal (terminal.Terminal): a Terminal object
         """
         self.terminal = terminal
+        self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
 
