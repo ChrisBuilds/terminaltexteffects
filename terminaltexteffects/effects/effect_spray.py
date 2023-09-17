@@ -6,7 +6,7 @@ from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects import base_character, base_effect
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import graphics, motion
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -115,7 +115,13 @@ class SprayEffect(base_effect.Effect):
 
         for character in self.terminal.characters:
             character.is_active = False
-            character.current_coord.column, character.current_coord.row = spray_origin_map[self.spray_position]
+            character.motion.set_coordinate(*spray_origin_map[self.spray_position])
+            character.motion.new_waypoint(
+                character.input_coord.column,
+                character.input_coord.row,
+                speed=0.7,
+                ease=character.motion.ease.OUT_EXPO,
+            )
             if self.spray_colors:
                 spray_color = random.choice(self.spray_colors)
                 spray_gradient = graphics.gradient(spray_color, self.final_color, 7)
@@ -142,10 +148,10 @@ class SprayEffect(base_effect.Effect):
                 animating_char
                 for animating_char in self.animating_chars
                 if not animating_char.animator.is_active_scene_complete()
-                or animating_char.current_coord != animating_char.input_coord
+                or animating_char.motion.current_coord != animating_char.input_coord
             ]
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:
             animating_char.animator.step_animation()
-            animating_char.move()
+            animating_char.motion.move()

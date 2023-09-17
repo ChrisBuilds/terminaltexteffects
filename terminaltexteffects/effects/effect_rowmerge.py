@@ -43,11 +43,23 @@ class RowMergeEffect(base_effect.Effect):
                 row = row[::-1]
                 for character in row:
                     character.is_active = False
-                    character.current_coord.column = self.terminal.output_area.left
+                    character.motion.set_coordinate(self.terminal.output_area.left, character.input_coord.row)
+                    character.motion.new_waypoint(
+                        character.input_coord.column,
+                        character.input_coord.row,
+                        speed=0.5,
+                        ease=character.motion.ease.IN_OUT_QUART,
+                    )
             else:
                 for character in row:
                     character.is_active = False
-                    character.current_coord.column = self.terminal.output_area.right
+                    character.motion.set_coordinate(self.terminal.output_area.right, character.input_coord.row)
+                    character.motion.new_waypoint(
+                        character.input_coord.column,
+                        character.input_coord.row,
+                        speed=1,
+                        ease=character.motion.ease.IN_OUT_QUAD,
+                    )
             self.rows.append(row)
 
     def run(self) -> None:
@@ -64,11 +76,13 @@ class RowMergeEffect(base_effect.Effect):
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.motion.movement_complete()
             ]
             self.terminal.print()
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
-            animating_char.move()
+            animating_char.motion.move()

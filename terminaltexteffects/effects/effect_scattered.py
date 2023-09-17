@@ -37,8 +37,16 @@ class ScatteredEffect(base_effect.Effect):
     def prepare_data(self) -> None:
         """Prepares the data for the effect by scattering the characters within range of the input width and height."""
         for character in self.terminal.characters:
-            character.current_coord.column = random.randint(1, self.terminal.output_area.right - 1)
-            character.current_coord.row = random.randint(1, self.terminal.output_area.top - 1)
+            character.motion.set_coordinate(
+                random.randint(1, self.terminal.output_area.right - 1),
+                random.randint(1, self.terminal.output_area.top - 1),
+            )
+            character.motion.new_waypoint(
+                character.input_coord.column,
+                character.input_coord.row,
+                speed=0.5,
+                ease=character.motion.ease.IN_OUT_QUART,
+            )
             character.is_active = True
             self.animating_chars.append(character)
 
@@ -49,10 +57,12 @@ class ScatteredEffect(base_effect.Effect):
         while self.pending_chars or self.animating_chars:
             self.animate_chars()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.motion.movement_complete()
             ]
             self.terminal.print()
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:
-            animating_char.move()
+            animating_char.motion.move()

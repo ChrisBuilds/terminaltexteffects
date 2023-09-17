@@ -67,17 +67,19 @@ class PourEffect(base_effect.Effect):
         for character in self.terminal.characters:
             character.is_active = False
             if self.pour_direction == PourDirection.DOWN:
-                character.current_coord.column = character.input_coord.column
-                character.current_coord.row = self.terminal.output_area.top
+                character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
             elif self.pour_direction == PourDirection.UP:
-                character.current_coord.column = character.input_coord.column
-                character.current_coord.row = self.terminal.output_area.bottom
+                character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.bottom)
             elif self.pour_direction == PourDirection.LEFT:
-                character.current_coord.column = self.terminal.output_area.right
-                character.current_coord.row = character.input_coord.row
+                character.motion.set_coordinate(self.terminal.output_area.right, character.input_coord.row)
             elif self.pour_direction == PourDirection.RIGHT:
-                character.current_coord.column = self.terminal.output_area.left
-                character.current_coord.row = character.input_coord.row
+                character.motion.set_coordinate(self.terminal.output_area.left, character.input_coord.row)
+            character.motion.new_waypoint(
+                character.input_coord.column,
+                character.input_coord.row,
+                speed=0.2,
+                ease=character.motion.ease.IN_SINE,
+            )
             self.pending_chars.append(character)
 
     def run(self) -> None:
@@ -91,11 +93,13 @@ class PourEffect(base_effect.Effect):
                 self.animating_chars.append(next_character)
             self.animate_chars()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.motion.movement_complete()
             ]
             self.terminal.print()
 
     def animate_chars(self) -> None:
         """Animates the sliding characters."""
         for animating_char in self.animating_chars:
-            animating_char.move()
+            animating_char.motion.move()

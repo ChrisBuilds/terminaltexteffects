@@ -43,7 +43,13 @@ class ShootingStarEffect(base_effect.Effect):
             character.is_active = False
             character.animator.add_effect_to_scene("star", "*", random.randint(1, 10), 1)
             character.animator.active_scene_name = "star"
-            character.current_coord = base_character.Coord(self.random_column(), self.terminal.output_area.top)
+            character.motion.set_coordinate(self.random_column(), self.terminal.output_area.top)
+            character.motion.new_waypoint(
+                character.input_coord.column,
+                character.input_coord.row,
+                speed=0.2,
+                ease=character.motion.ease.OUT_BOUNCE,
+            )
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
             if character.input_coord.row not in self.group_by_row:
@@ -69,7 +75,8 @@ class ShootingStarEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete() or not animating_char.is_movement_complete()
+                if not animating_char.animator.is_active_scene_complete()
+                or not animating_char.motion.movement_complete()
             ]
             self.terminal.print()
 
@@ -77,6 +84,6 @@ class ShootingStarEffect(base_effect.Effect):
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
             animating_char.animator.step_animation()
-            animating_char.move()
-            if animating_char.is_movement_complete():
+            animating_char.motion.move()
+            if animating_char.motion.movement_complete():
                 animating_char.symbol = animating_char.input_symbol

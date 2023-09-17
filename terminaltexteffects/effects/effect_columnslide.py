@@ -74,9 +74,15 @@ class ColumnSlide(base_effect.Effect):
             for character in column:
                 character.is_active = False
                 if self.slide_direction == SlideDirection.DOWN:
-                    character.current_coord.row = self.terminal.output_area.top
+                    character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
                 else:
-                    character.current_coord.row = self.terminal.output_area.bottom
+                    character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.bottom)
+                character.motion.new_waypoint(
+                    character.input_coord.column,
+                    character.input_coord.row,
+                    speed=0.5,
+                    ease=character.motion.ease.IN_EXPO,
+                )
 
     def get_next_column(self) -> list[base_character.EffectCharacter]:
         """Gets the next column of characters to animate.
@@ -110,7 +116,9 @@ class ColumnSlide(base_effect.Effect):
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.motion.movement_complete()
             ]
             active_columns = [column for column in active_columns if column]
             self.terminal.print()
@@ -118,4 +126,4 @@ class ColumnSlide(base_effect.Effect):
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
-            animating_char.move()
+            animating_char.motion.move()

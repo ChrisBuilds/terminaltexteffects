@@ -37,8 +37,13 @@ class ExpandEffect(base_effect.Effect):
         """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""
 
         for character in self.terminal.characters:
-            character.current_coord.column = self.terminal.output_area.right // 2
-            character.current_coord.row = self.terminal.output_area.top // 2
+            character.motion.set_coordinate(self.terminal.output_area.right // 2, self.terminal.output_area.top // 2)
+            character.motion.new_waypoint(
+                character.input_coord.column,
+                character.input_coord.row,
+                speed=0.5,
+                ease=character.motion.ease.IN_OUT_QUART,
+            )
             self.animating_chars.append(character)
 
     def run(self) -> None:
@@ -48,10 +53,10 @@ class ExpandEffect(base_effect.Effect):
         while self.animating_chars:
             self.animate_chars()
             self.animating_chars = [
-                animating for animating in self.animating_chars if not animating.is_movement_complete()
+                animating for animating in self.animating_chars if not animating.motion.movement_complete()
             ]
             self.terminal.print()
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:
-            animating_char.move()
+            animating_char.motion.move()

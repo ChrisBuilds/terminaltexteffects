@@ -71,8 +71,10 @@ class RainEffect(base_effect.Effect):
             character.animator.active_scene_name = "rain"
             character.animator.is_animating = True
             character.is_active = False
-            character.current_coord.column = character.input_coord.column
-            character.current_coord.row = self.terminal.output_area.top
+            character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
+            character.motion.new_waypoint(
+                character.input_coord.column, character.input_coord.row, speed=0.5, ease=character.motion.ease.IN_QUAD
+            )
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
             if character.input_coord.row not in self.group_by_row:
@@ -101,7 +103,8 @@ class RainEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete() or not animating_char.is_movement_complete()
+                if not animating_char.animator.is_active_scene_complete()
+                or not animating_char.motion.movement_complete()
             ]
             self.terminal.print()
 
@@ -109,6 +112,6 @@ class RainEffect(base_effect.Effect):
         """Animates the characters by calling the move method and getting the next symbol from the animator."""
         for animating_char in self.animating_chars:
             animating_char.animator.step_animation()
-            animating_char.move()
-            if animating_char.is_movement_complete():
+            animating_char.motion.move()
+            if animating_char.motion.movement_complete():
                 animating_char.animator.active_scene_name = "fade"

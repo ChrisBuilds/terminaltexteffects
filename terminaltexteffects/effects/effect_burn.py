@@ -114,7 +114,6 @@ class BurnEffect(base_effect.Effect):
                 animating_char
                 for animating_char in self.animating_chars
                 if not animating_char.animator.is_active_scene_complete()
-                or animating_char.current_coord != animating_char.input_coord
             ]
             self.terminal.print()
 

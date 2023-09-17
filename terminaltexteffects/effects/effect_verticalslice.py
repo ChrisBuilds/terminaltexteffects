@@ -47,12 +47,24 @@ class VerticalSlice(base_effect.Effect):
             left_half = [character for character in row if character.input_coord.column <= mid_point]
             for character in left_half:
                 character.is_active = False
-                character.current_coord.row = self.terminal.output_area.top
+                character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
+                character.motion.new_waypoint(
+                    character.input_coord.column,
+                    character.input_coord.row,
+                    speed=0.3,
+                    ease=character.motion.ease.IN_OUT_EXPO,
+                )
             opposite_row = self.rows[-(row_index + 1)]
             right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
             for character in right_half:
                 character.is_active = False
-                character.current_coord.row = self.terminal.output_area.bottom
+                character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.bottom)
+                character.motion.new_waypoint(
+                    character.input_coord.column,
+                    character.input_coord.row,
+                    speed=0.3,
+                    ease=character.motion.ease.IN_OUT_EXPO,
+                )
             new_row.extend(left_half)
             new_row.extend(right_half)
             self.new_rows.append(new_row)
@@ -70,10 +82,12 @@ class VerticalSlice(base_effect.Effect):
             self.terminal.print()
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if not animating_char.is_movement_complete()
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.motion.movement_complete()
             ]
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
-            animating_char.move()
+            animating_char.motion.move()
