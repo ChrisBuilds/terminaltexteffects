@@ -20,7 +20,7 @@ class Coord:
 
 
 class Ease(Enum):
-    """Enumeration of easing functions for easing character speed."""
+    """Enumeration of easing functions for easing character movement."""
 
     LINEAR = auto()
     IN_SINE = auto()
@@ -223,7 +223,7 @@ class Motion:
         self.inter_waypoint_max_steps = round(self.inter_waypoint_distance / self.speed)
 
     def move(self) -> None:
-        """Moves the character one step closer to the target position based on speed and acceleration."""
+        """Moves the character one step closer to the target position based on an easing function if present, otherwise linearly."""
         # set initial waypoint on first call to move or get next waypoint if the current waypoint has been reached
         if not self.current_waypoint or (
             self.current_coord == self.current_waypoint.coord
@@ -238,11 +238,11 @@ class Motion:
         )
         if self.inter_waypoint_distance:
             if self.current_waypoint.ease:
-                distance_to_move = self._ease_movement(self.current_waypoint.ease) * self.inter_waypoint_distance
+                easing_factor = self._ease_movement(self.current_waypoint.ease) * self.inter_waypoint_distance
+                distance_to_move = easing_factor * self.inter_waypoint_distance
             else:
-                distance_to_move = (
-                    self.inter_waypoint_current_step / self.inter_waypoint_max_steps
-                ) * self.inter_waypoint_distance
+                linear_factor = self.inter_waypoint_current_step / self.inter_waypoint_max_steps
+                distance_to_move = linear_factor * self.inter_waypoint_distance
             self.current_coord = self._point_at_distance(distance_to_move)
             if self.inter_waypoint_current_step < self.inter_waypoint_max_steps:
                 self.inter_waypoint_current_step += 1
