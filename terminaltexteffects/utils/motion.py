@@ -238,7 +238,7 @@ class Motion:
         )
         if self.inter_waypoint_distance:
             if self.current_waypoint.ease:
-                easing_factor = self._ease_movement(self.current_waypoint.ease) * self.inter_waypoint_distance
+                easing_factor = self._ease_movement(self.current_waypoint.ease)
                 distance_to_move = easing_factor * self.inter_waypoint_distance
             else:
                 linear_factor = self.inter_waypoint_current_step / self.inter_waypoint_max_steps
