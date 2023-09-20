@@ -43,7 +43,7 @@ def main():
 
     args = parser.parse_args()
     input_data = term.Terminal.get_piped_input()
-    if not input_data:
+    if not input_data.strip():
         print("NO INPUT.")
     else:
         terminal = term.Terminal(input_data, args)

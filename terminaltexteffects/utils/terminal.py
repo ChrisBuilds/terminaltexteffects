@@ -86,6 +86,8 @@ class Terminal:
             list[Character]: list of EffectCharacter objects
         """
         wrapped_lines = []
+        if not self.input_data.strip():
+            self.input_data = "No Input."
         input_lines = self.input_data.splitlines()
         for line in input_lines:
             while len(line) > self.width:
