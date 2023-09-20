@@ -1,4 +1,37 @@
 import argparse
+from terminaltexteffects.utils.easing import Ease
+
+EASING_EPILOG = """\
+    Easing
+    ------
+    Note: A prefix must be added to the function name.
+    
+    All easing functions support the following prefixes:
+        IN_  - Ease in
+        OUT_ - Ease out
+        IN_OUT_ - Ease in and out
+        
+    Easing Functions
+    ----------------
+    SINE   - Sine easing
+    QUAD   - Quadratic easing
+    CUBIC  - Cubic easing
+    QUART  - Quartic easing
+    QUINT  - Quintic easing
+    EXPO   - Exponential easing
+    CIRC   - Circular easing
+    BACK   - Back easing
+    ELASTIC - Elastic easing
+    BOUNCE - Bounce easing
+    
+    Visit: https://easings.net/ for visualizations of the easing functions.
+"""
+
+
+class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
+    """Custom formatter for argparse that combines ArgumentDefaultsHelpFormatter and RawDescriptionHelpFormatter."""
+
+    pass
 
 
 def valid_color(color_string) -> int | str:
@@ -99,3 +132,21 @@ def valid_speed(speed_arg: str) -> float:
             f"invalid speed value: {speed_arg} is not a valid speed. Speed must be float > 0."
         )
     return float(speed_arg)
+
+
+def valid_ease(ease_arg: str) -> Ease:
+    """Validates that the given argument is a valid easing function.
+
+    Args:
+        ease_arg (str): argument to validate
+
+    Raises:
+        argparse.ArgumentTypeError: Ease value is not a valid easing function.
+
+    Returns:
+        Ease: validated ease value
+    """
+    try:
+        return Ease[ease_arg.upper()]
+    except KeyError:
+        raise argparse.ArgumentTypeError(f"invalid ease value: {ease_arg} is not a valid ease.")
