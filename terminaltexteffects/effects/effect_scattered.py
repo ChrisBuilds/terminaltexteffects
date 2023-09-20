@@ -53,10 +53,13 @@ class ScatteredEffect(base_effect.Effect):
     def prepare_data(self) -> None:
         """Prepares the data for the effect by scattering the characters within range of the input width and height."""
         for character in self.terminal.characters:
-            character.motion.set_coordinate(
-                random.randint(1, self.terminal.output_area.right - 1),
-                random.randint(1, self.terminal.output_area.top - 1),
-            )
+            if self.terminal.output_area.right < 2 or self.terminal.output_area.top < 2:
+                character.motion.set_coordinate(1, 1)
+            else:
+                character.motion.set_coordinate(
+                    random.randint(1, self.terminal.output_area.right - 1),
+                    random.randint(1, self.terminal.output_area.top - 1),
+                )
             character.motion.new_waypoint(
                 character.input_coord.column,
                 character.input_coord.row,
