@@ -106,7 +106,10 @@ class ColumnSlide(base_effect.Effect):
         Returns:
             list[character.EffectCharacter]: The next column of characters to animate.
         """
-        next_column = self.columns.pop(min(self.columns.keys()))
+        if len(self.columns) % 2:
+            next_column = self.columns.pop(max(self.columns.keys()))
+        else:
+            next_column = self.columns.pop(min(self.columns.keys()))
         return next_column
 
     def run(self) -> None:
