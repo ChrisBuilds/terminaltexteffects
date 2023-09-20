@@ -1,7 +1,7 @@
 import typing, math
 from dataclasses import dataclass
 from enum import Enum, auto
-from terminaltexteffects.utils.easing import Easing
+import terminaltexteffects.utils.easing as easing
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
@@ -19,42 +19,6 @@ class Coord:
     row: int
 
 
-class Ease(Enum):
-    """Enumeration of easing functions for easing character movement."""
-
-    LINEAR = auto()
-    IN_SINE = auto()
-    OUT_SINE = auto()
-    IN_OUT_SINE = auto()
-    IN_QUAD = auto()
-    OUT_QUAD = auto()
-    IN_OUT_QUAD = auto()
-    IN_CUBIC = auto()
-    OUT_CUBIC = auto()
-    IN_OUT_CUBIC = auto()
-    IN_QUART = auto()
-    OUT_QUART = auto()
-    IN_OUT_QUART = auto()
-    IN_QUINT = auto()
-    OUT_QUINT = auto()
-    IN_OUT_QUINT = auto()
-    IN_EXPO = auto()
-    OUT_EXPO = auto()
-    IN_OUT_EXPO = auto()
-    IN_CIRC = auto()
-    OUT_CIRC = auto()
-    IN_OUT_CIRC = auto()
-    IN_BACK = auto()
-    OUT_BACK = auto()
-    IN_OUT_BACK = auto()
-    IN_ELASTIC = auto()
-    OUT_ELASTIC = auto()
-    IN_OUT_ELASTIC = auto()
-    IN_BOUNCE = auto()
-    OUT_BOUNCE = auto()
-    IN_OUT_BOUNCE = auto()
-
-
 @dataclass
 class Waypoint:
     """A coordinate, speed, and easing function.
@@ -66,7 +30,7 @@ class Waypoint:
 
     coord: Coord
     speed: float = 1.0
-    ease: Ease | None = None
+    ease: easing.Ease | None = None
 
 
 class Motion:
@@ -81,14 +45,13 @@ class Motion:
         self.character = character
         self.current_coord: Coord = Coord(character.input_coord.column, character.input_coord.row)
         self.previous_coord: Coord = Coord(-1, -1)
-        self.speed = 1
+        self.speed: float = 1.0
         self.waypoints: list[Waypoint] = []
         self.current_waypoint: Waypoint | None = None
         self.origin_waypoint: Waypoint | None = None
         self.inter_waypoint_distance: float = 0
         self.inter_waypoint_max_steps: int = 0
         self.inter_waypoint_current_step: int = 0
-        self.ease = Ease
 
     def _distance(self, column1: int, row1: int, column2: int, row2: int) -> float:
         """Returns the distance between two coordinates.
@@ -115,7 +78,7 @@ class Motion:
         Returns:
             Coord: Coordinate at the given distance.
         """
-        if not distance:
+        if not distance or not self.origin_waypoint or not self.current_waypoint:
             return self.current_coord
         t = distance / self.inter_waypoint_distance
         next_column, next_row = (
@@ -133,7 +96,7 @@ class Motion:
         """
         self.current_coord = Coord(column, row)
 
-    def new_waypoint(self, column: int, row: int, speed: float = 1, ease: Ease | None = None) -> None:
+    def new_waypoint(self, column: int, row: int, speed: float = 1, ease: easing.Ease | None = None) -> None:
         """Appends a new waypoint to the waypoints list.
 
         Args:
@@ -158,46 +121,46 @@ class Motion:
             return True
         return False
 
-    def _ease_movement(self, easing_func: Ease) -> float:
+    def _ease_movement(self, easing_func: easing.Ease) -> float:
         """Returns the percentage of total distance that should be moved based on the easing function.
 
         Args:
-            easing_func (Ease): The easing function to use.
+            easing_func (easing.Ease): The easing function to use.
 
         Returns:
             float: The percentage of total distance to move.
         """
         easing_function_map = {
-            Ease.IN_SINE: Easing.in_sine,
-            Ease.OUT_SINE: Easing.out_sine,
-            Ease.IN_OUT_SINE: Easing.in_out_sine,
-            Ease.IN_QUAD: Easing.in_quad,
-            Ease.OUT_QUAD: Easing.out_quad,
-            Ease.IN_OUT_QUAD: Easing.in_out_quad,
-            Ease.IN_CUBIC: Easing.in_cubic,
-            Ease.OUT_CUBIC: Easing.out_cubic,
-            Ease.IN_OUT_CUBIC: Easing.in_out_cubic,
-            Ease.IN_QUART: Easing.in_quart,
-            Ease.OUT_QUART: Easing.out_quart,
-            Ease.IN_OUT_QUART: Easing.in_out_quart,
-            Ease.IN_QUINT: Easing.in_quint,
-            Ease.OUT_QUINT: Easing.out_quint,
-            Ease.IN_OUT_QUINT: Easing.in_out_quint,
-            Ease.IN_EXPO: Easing.in_expo,
-            Ease.OUT_EXPO: Easing.out_expo,
-            Ease.IN_OUT_EXPO: Easing.in_out_expo,
-            Ease.IN_CIRC: Easing.in_circ,
-            Ease.OUT_CIRC: Easing.out_circ,
-            Ease.IN_OUT_CIRC: Easing.in_out_circ,
-            Ease.IN_BACK: Easing.in_back,
-            Ease.OUT_BACK: Easing.out_back,
-            Ease.IN_OUT_BACK: Easing.in_out_back,
-            Ease.IN_ELASTIC: Easing.in_elastic,
-            Ease.OUT_ELASTIC: Easing.out_elastic,
-            Ease.IN_OUT_ELASTIC: Easing.in_out_elastic,
-            Ease.IN_BOUNCE: Easing.in_bounce,
-            Ease.OUT_BOUNCE: Easing.out_bounce,
-            Ease.IN_OUT_BOUNCE: Easing.in_out_bounce,
+            easing.Ease.IN_SINE: easing.in_sine,
+            easing.Ease.OUT_SINE: easing.out_sine,
+            easing.Ease.IN_OUT_SINE: easing.in_out_sine,
+            easing.Ease.IN_QUAD: easing.in_quad,
+            easing.Ease.OUT_QUAD: easing.out_quad,
+            easing.Ease.IN_OUT_QUAD: easing.in_out_quad,
+            easing.Ease.IN_CUBIC: easing.in_cubic,
+            easing.Ease.OUT_CUBIC: easing.out_cubic,
+            easing.Ease.IN_OUT_CUBIC: easing.in_out_cubic,
+            easing.Ease.IN_QUART: easing.in_quart,
+            easing.Ease.OUT_QUART: easing.out_quart,
+            easing.Ease.IN_OUT_QUART: easing.in_out_quart,
+            easing.Ease.IN_QUINT: easing.in_quint,
+            easing.Ease.OUT_QUINT: easing.out_quint,
+            easing.Ease.IN_OUT_QUINT: easing.in_out_quint,
+            easing.Ease.IN_EXPO: easing.in_expo,
+            easing.Ease.OUT_EXPO: easing.out_expo,
+            easing.Ease.IN_OUT_EXPO: easing.in_out_expo,
+            easing.Ease.IN_CIRC: easing.in_circ,
+            easing.Ease.OUT_CIRC: easing.out_circ,
+            easing.Ease.IN_OUT_CIRC: easing.in_out_circ,
+            easing.Ease.IN_BACK: easing.in_back,
+            easing.Ease.OUT_BACK: easing.out_back,
+            easing.Ease.IN_OUT_BACK: easing.in_out_back,
+            easing.Ease.IN_ELASTIC: easing.in_elastic,
+            easing.Ease.OUT_ELASTIC: easing.out_elastic,
+            easing.Ease.IN_OUT_ELASTIC: easing.in_out_elastic,
+            easing.Ease.IN_BOUNCE: easing.in_bounce,
+            easing.Ease.OUT_BOUNCE: easing.out_bounce,
+            easing.Ease.IN_OUT_BOUNCE: easing.in_out_bounce,
         }
         elapsed_step_ratio = self.inter_waypoint_current_step / self.inter_waypoint_max_steps
         return easing_function_map[easing_func](elapsed_step_ratio)
@@ -237,7 +200,7 @@ class Motion:
             self.current_coord.row,
         )
         if self.inter_waypoint_distance:
-            if self.current_waypoint.ease:
+            if self.current_waypoint and self.current_waypoint.ease:
                 easing_factor = self._ease_movement(self.current_waypoint.ease)
                 distance_to_move = easing_factor * self.inter_waypoint_distance
             else:
