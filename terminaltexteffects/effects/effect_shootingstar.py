@@ -15,9 +15,12 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     """
     effect_parser = subparsers.add_parser(
         "shootingstar",
+        formatter_class=argtypes.CustomFormatter,
         help="Displays the text as a falling star toward the final coordinate of the character.",
         description="shootingstar | Displays the text as a falling star toward the final coordinate of the character.",
-        epilog="Example: terminaltexteffects shootingstar -a 0.01",
+        epilog=f"""{argtypes.EASING_EPILOG}
+        
+Example: terminaltexteffects shootingstar -a 0.01""",
     )
     effect_parser.set_defaults(effect_class=ShootingStarEffect)
     effect_parser.add_argument(
@@ -25,14 +28,20 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--animation-rate",
         type=argtypes.valid_animationrate,
         default=0.01,
-        help="Time between animation steps. Defaults to 0.01 seconds.",
+        help="Time between animation steps. ",
     )
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.valid_speed,
-        default=0.2,
+        default=1,
         metavar="(float > 0)",
-        help="Movement speed of the characters. Defaults to 0.2. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
+    effect_parser.add_argument(
+        "--easing",
+        default="OUT_CIRC",
+        type=argtypes.valid_ease,
+        help="Easing function to use for character movement.",
     )
 
 
@@ -55,7 +64,7 @@ class ShootingStarEffect(base_effect.Effect):
                 character.input_coord.column,
                 character.input_coord.row,
                 speed=self.args.movement_speed,
-                ease=character.motion.ease.OUT_BOUNCE,
+                ease=self.args.easing,
             )
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):

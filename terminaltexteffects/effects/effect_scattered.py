@@ -14,9 +14,12 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     """
     effect_parser = subparsers.add_parser(
         "scattered",
+        formatter_class=argtypes.CustomFormatter,
         help="Move the characters into place from random starting locations.",
         description="scattered | Move the characters into place from random starting locations.",
-        epilog="Example: terminaltexteffects scattered -a 0.01",
+        epilog=f"""{argtypes.EASING_EPILOG}
+        
+Example: terminaltexteffects scattered -a 0.01""",
     )
     effect_parser.set_defaults(effect_class=ScatteredEffect)
     effect_parser.add_argument(
@@ -24,14 +27,20 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--animation-rate",
         type=argtypes.valid_animationrate,
         default=0.01,
-        help="Time between animation steps. Defaults to 0.01 seconds.",
+        help="Time between animation steps.",
     )
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.valid_speed,
         default=0.5,
         metavar="(float > 0)",
-        help="Movement speed of the characters. Defaults to 0.5. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
+    effect_parser.add_argument(
+        "--easing",
+        default="IN_OUT_BACK",
+        type=argtypes.valid_ease,
+        help="Easing function to use for character movement.",
     )
 
 
@@ -52,7 +61,7 @@ class ScatteredEffect(base_effect.Effect):
                 character.input_coord.column,
                 character.input_coord.row,
                 speed=self.args.movement_speed,
-                ease=character.motion.ease.IN_OUT_QUART,
+                ease=self.args.easing,
             )
             character.is_active = True
             self.animating_chars.append(character)

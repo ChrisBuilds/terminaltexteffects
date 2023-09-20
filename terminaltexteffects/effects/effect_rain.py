@@ -17,9 +17,12 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     """
     effect_parser = subparsers.add_parser(
         "rain",
+        formatter_class=argtypes.CustomFormatter,
         help="Rain characters from the top of the output area.",
         description="rain | Rain characters from the top of the output area.",
-        epilog="Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21",
+        epilog=f"""{argtypes.EASING_EPILOG}
+        
+Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
     )
     effect_parser.set_defaults(effect_class=RainEffect)
     effect_parser.add_argument(
@@ -27,7 +30,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--animation-rate",
         type=argtypes.valid_animationrate,
         default=0.01,
-        help="Time between animation steps. Defaults to 0.01 seconds.",
+        help="Time, in seconds, between animation steps.",
     )
     effect_parser.add_argument(
         "--rain-colors",
@@ -42,14 +45,20 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         type=argtypes.valid_color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final character. Defaults to white.",
+        help="Color for the final character.",
     )
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.valid_speed,
         default=0.5,
         metavar="(float > 0)",
-        help="Falling speed of the rain drops. Defaults to 0.5. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Falling speed of the rain drops. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
+    effect_parser.add_argument(
+        "--easing",
+        default="IN_QUART",
+        type=argtypes.valid_ease,
+        help="Easing function to use for character movement.",
     )
 
 
@@ -82,7 +91,7 @@ class RainEffect(base_effect.Effect):
                 character.input_coord.column,
                 character.input_coord.row,
                 speed=self.args.movement_speed,
-                ease=character.motion.ease.IN_QUAD,
+                ease=self.args.easing,
             )
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):

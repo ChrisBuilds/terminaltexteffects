@@ -13,9 +13,12 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     """
     effect_parser = subparsers.add_parser(
         "verticalslice",
+        formatter_class=argtypes.CustomFormatter,
         help="Slices the input in half vertically and slides it into place from opposite directions.",
         description="verticalslice | Slices the input in half vertically and slides it into place from opposite directions.",
-        epilog="Example: terminaltexteffects verticalslice -a 0.02",
+        epilog=f"""{argtypes.EASING_EPILOG}
+        
+Example: terminaltexteffects verticalslice -a 0.02""",
     )
     effect_parser.set_defaults(effect_class=VerticalSlice)
     effect_parser.add_argument(
@@ -23,14 +26,20 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--animation-rate",
         type=argtypes.valid_animationrate,
         default=0.02,
-        help="Time between animation steps. Defaults to 0.02 seconds.",
+        help="Time, in seconds, between animation steps.",
     )
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.valid_speed,
-        default=0.3,
+        default=0.5,
         metavar="(float > 0)",
-        help="Movement speed of the characters. Defaults to 0.3. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
+    effect_parser.add_argument(
+        "--easing",
+        default="IN_OUT_EXPO",
+        type=argtypes.valid_ease,
+        help="Easing function to use for character movement.",
     )
 
 
@@ -59,7 +68,7 @@ class VerticalSlice(base_effect.Effect):
                     character.input_coord.column,
                     character.input_coord.row,
                     speed=self.args.movement_speed,
-                    ease=character.motion.ease.IN_OUT_EXPO,
+                    ease=self.args.easing,
                 )
             opposite_row = self.rows[-(row_index + 1)]
             right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
@@ -70,7 +79,7 @@ class VerticalSlice(base_effect.Effect):
                     character.input_coord.column,
                     character.input_coord.row,
                     speed=self.args.movement_speed,
-                    ease=character.motion.ease.IN_OUT_EXPO,
+                    ease=self.args.easing,
                 )
             new_row.extend(left_half)
             new_row.extend(right_half)

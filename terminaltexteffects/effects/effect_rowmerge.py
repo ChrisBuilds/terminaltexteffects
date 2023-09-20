@@ -13,9 +13,12 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     """
     effect_parser = subparsers.add_parser(
         "rowmerge",
+        formatter_class=argtypes.CustomFormatter,
         help="Merges rows of characters.",
         description="rowmerge | Merges rows of characters.",
-        epilog="Example: terminaltexteffects rowmerge -a 0.01",
+        epilog=f"""{argtypes.EASING_EPILOG}        
+        
+Example: terminaltexteffects rowmerge -a 0.01""",
     )
     effect_parser.set_defaults(effect_class=RowMergeEffect)
     effect_parser.add_argument(
@@ -23,14 +26,20 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--animation-rate",
         type=argtypes.valid_animationrate,
         default=0.01,
-        help="Time to sleep between animation steps. Defaults to 0.01 seconds.",
+        help="Time, in seconds, to sleep between animation steps.",
     )
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.valid_speed,
         default=0.5,
         metavar="(float > 0)",
-        help="Movement speed of the characters. Defaults to 0.5. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
+    effect_parser.add_argument(
+        "--easing",
+        default="OUT_BOUNCE",
+        type=argtypes.valid_ease,
+        help="Easing function to use for row movement.",
     )
 
 
@@ -55,7 +64,7 @@ class RowMergeEffect(base_effect.Effect):
                         character.input_coord.column,
                         character.input_coord.row,
                         speed=self.args.movement_speed,
-                        ease=character.motion.ease.IN_OUT_QUART,
+                        ease=self.args.easing,
                     )
             else:
                 for character in row:
@@ -65,7 +74,7 @@ class RowMergeEffect(base_effect.Effect):
                         character.input_coord.column,
                         character.input_coord.row,
                         speed=self.args.movement_speed,
-                        ease=character.motion.ease.IN_OUT_QUART,
+                        ease=self.args.easing,
                     )
             self.rows.append(row)
 

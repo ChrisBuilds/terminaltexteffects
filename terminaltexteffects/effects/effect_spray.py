@@ -20,7 +20,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "spray",
         help="Draws the characters spawning at varying rates from a single point.",
         description="spray | Draws the characters spawning at varying rates from a single point.",
-        epilog="Example: terminaltexteffects spray -a 0.01 --spray-position center",
+        epilog=f"""{argtypes.EASING_EPILOG}
+        
+Example: terminaltexteffects spray -a 0.01 --spray-position center""",
     )
     effect_parser.set_defaults(effect_class=SprayEffect)
     effect_parser.add_argument(
@@ -28,7 +30,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--animation-rate",
         type=argtypes.valid_animationrate,
         default=0.01,
-        help="Time between animation steps. Defaults to 0.01 seconds.",
+        help="Time, in seconds, between animation steps.",
     )
     effect_parser.add_argument(
         "--spray-colors",
@@ -43,20 +45,26 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         type=argtypes.valid_color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final character. Defaults to white.",
+        help="Color for the final character.",
     )
     effect_parser.add_argument(
         "--spray-position",
         default="e",
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"],
-        help="Position for the spray origin. Defaults to east.",
+        help="Position for the spray origin.",
     )
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.valid_speed,
         default=0.7,
         metavar="(float > 0)",
-        help="Movement speed of the characters. Defaults to 0.7. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
+    effect_parser.add_argument(
+        "--easing",
+        default="OUT_EXPO",
+        type=argtypes.valid_ease,
+        help="Easing function to use for character movement.",
     )
 
 
@@ -127,7 +135,7 @@ class SprayEffect(base_effect.Effect):
                 character.input_coord.column,
                 character.input_coord.row,
                 speed=self.args.movement_speed,
-                ease=character.motion.ease.OUT_EXPO,
+                ease=self.args.easing,
             )
             if self.spray_colors:
                 spray_color = random.choice(self.spray_colors)

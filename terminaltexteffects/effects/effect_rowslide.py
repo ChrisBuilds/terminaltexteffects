@@ -14,9 +14,12 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     """
     effect_parser = subparsers.add_parser(
         "rowslide",
+        formatter_class=argtypes.CustomFormatter,
         help="Slides each row into place.",
         description="rowslide | Slides each row into place.",
-        epilog="Example: terminaltexteffects rowslide -a 0.003 --slide-direction left",
+        epilog=f"""{argtypes.EASING_EPILOG}
+        
+Example: terminaltexteffects rowslide -a 0.003 --slide-direction left""",
     )
     effect_parser.set_defaults(effect_class=RowSlide)
     effect_parser.add_argument(
@@ -24,26 +27,32 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--animation-rate",
         type=argtypes.valid_animationrate,
         default=0.01,
-        help="Time between animation steps. Defaults to 0.01 seconds.",
+        help="Time, in seconds, between animation steps.",
     )
     effect_parser.add_argument(
         "--row-gap",
         default=5,
         type=argtypes.valid_gap,
-        help="Number of characters to wait before adding a new row. Defaults to 5. Min 1.",
+        help="Number of characters to wait before adding a new row. Min 1.",
     )
     effect_parser.add_argument(
         "--slide-direction",
         default="left",
         choices=["left", "right"],
-        help="Direction the text will slide. Defaults to left.",
+        help="Direction the text will slide.",
     )
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.valid_speed,
         default=0.8,
         metavar="(float > 0)",
-        help="Movement speed of the characters. Defaults to 0.8. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
+    effect_parser.add_argument(
+        "--easing",
+        default="IN_OUT_QUAD",
+        type=argtypes.valid_ease,
+        help="Easing function to use for row movement.",
     )
 
 
@@ -85,7 +94,7 @@ class RowSlide(base_effect.Effect):
                     character.input_coord.column,
                     character.input_coord.row,
                     speed=self.args.movement_speed,
-                    ease=character.motion.ease.IN_OUT_QUAD,
+                    ease=self.args.easing,
                 )
 
     def get_next_row(self) -> list[base_character.EffectCharacter]:

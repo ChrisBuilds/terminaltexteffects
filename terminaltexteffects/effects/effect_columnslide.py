@@ -14,9 +14,12 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     """
     effect_parser = subparsers.add_parser(
         "columnslide",
+        formatter_class=argtypes.CustomFormatter,
         help="Slides each column into place.",
         description="columnslide | Slides each column into place.",
-        epilog="Example: terminaltexteffects columnslide -a 0.003 --slide-direction up",
+        epilog=f"""{argtypes.EASING_EPILOG}
+            
+Example: terminaltexteffects columnslide -a 0.003 --slide-direction up --easing IN_OUT_SINE --movement-speed 0.2 --column-gap 5""",
     )
     effect_parser.set_defaults(effect_class=ColumnSlide)
     effect_parser.add_argument(
@@ -24,26 +27,32 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--animation-rate",
         type=argtypes.valid_animationrate,
         default=0.003,
-        help="Time to sleep between animation steps. Defaults to 0.003 seconds.",
+        help="Time to sleep, in seconds, between animation steps.",
     )
     effect_parser.add_argument(
         "--column-gap",
         default=5,
         type=argtypes.valid_gap,
-        help="Number of characters to wait before adding a new column. Defaults to 5. Min 1.",
+        help="Number of characters to wait before adding a new column.",
     )
     effect_parser.add_argument(
         "--slide-direction",
         default="down",
         choices=["up", "down"],
-        help="Direction the text will slide. Defaults to down.",
+        help="Direction the text will slide.",
     )
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.valid_speed,
-        default=0.5,
+        default=0.2,
         metavar="(float > 0)",
-        help="Character movement speed. Defaults to 0.5. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Character movement speed. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+    )
+    effect_parser.add_argument(
+        "--easing",
+        default="IN_OUT_SINE",
+        type=argtypes.valid_ease,
+        help="Easing function to use for column movement.",
     )
 
 
@@ -88,7 +97,7 @@ class ColumnSlide(base_effect.Effect):
                     character.input_coord.column,
                     character.input_coord.row,
                     speed=self.args.movement_speed,
-                    ease=character.motion.ease.IN_EXPO,
+                    ease=self.args.easing,
                 )
 
     def get_next_column(self) -> list[base_character.EffectCharacter]:
