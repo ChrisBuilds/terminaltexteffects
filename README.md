@@ -27,8 +27,7 @@
 
 
 ## TTE
-
-![tte_terminal_header_optimized](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/64600218-bdc3-4162-a522-77ca86d901b8)
+![spray_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/b756b01d-f03e-4f29-b3b3-6856ec1fbf6a)
 
 
 TerminalTextEffects is a collection of visual effects that run inline in the terminal. The underlying visual effect framework supports the following:
