@@ -6,6 +6,7 @@
 
 ### Changes
 * Added Easing Functions help output to fireworks effect epilog.
+* Updated spray effect help output.
 ### Bug Fixes
 
 ## 0.2.1
