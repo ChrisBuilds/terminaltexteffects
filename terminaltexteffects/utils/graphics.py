@@ -96,12 +96,12 @@ class Scene:
     """A Scene is a list of Sequences.
 
     Args:
-        name (str): the name of the Scene
+        id (str): the id of the Scene
         sequences (list[Sequence]): a list of Sequence objects
         is_looping (bool): whether the Scene should loop
     """
 
-    name: str
+    id: str
     sequences: list[Sequence] = field(default_factory=list)
     is_looping: bool = False
 
@@ -146,7 +146,7 @@ class Scene:
 
 class Animator:
     def __init__(self, character: "base_character.EffectCharacter"):
-        """Animator handles the animations of a character. It contains a list of Scenes, and the active scene name. GraphicalEffects are
+        """Animator handles the animations of a character. It contains a list of Scenes, and the active scene id. GraphicalEffects are
         added to the Scenes, and the Animator returns the next symbol in the active scene.
 
         Args:
@@ -154,29 +154,27 @@ class Animator:
         """
         self.character = character
         self.scenes: dict[str, Scene] = {}
-        self.scene_order: list[str] = []
-        self.active_scene_name: str = ""
-        self.is_animating: bool = True
+        self.active_scene: Scene = None
         self.use_xterm_colors: bool = False
         self.no_color: bool = False
         self.xterm_color_map: dict[str, int] = {}
 
     def add_effect_to_scene(
-        self, scene_name: str, symbol: str | None = None, color: int | str | None = None, duration: int = 1
+        self, scene_id: str, symbol: str | None = None, color: int | str | None = None, duration: int = 1
     ) -> None:
         """Add a graphical effect to a scene. If the scene doesn't exist, it will be created.
 
         Args:
-            scene_name (str): Name of the scene to which the effect will be added
+            scene_id (str): ID of the scene to which the effect will be added
             symbol (str): Symbol to display, if None, the character's input symbol will be used
             color (int | str): XTerm color code (0-255) or hex color code (e.g. ffffff)
             duration (int): Number of animation steps to display the effect, defaults to 1. Minimum 1.
         """
         if duration < 1:
             raise ValueError("duration must be greater than 0")
-        if scene_name not in self.scenes:
-            new_scene = Scene(scene_name)
-            self.scenes[scene_name] = new_scene
+        if scene_id not in self.scenes:
+            new_scene = Scene(scene_id)
+            self.scenes[scene_id] = new_scene
         if not symbol:
             symbol = self.character.input_symbol
         if not self.no_color:
@@ -190,22 +188,18 @@ class Animator:
         else:
             color = None
         graphicaleffect = GraphicalEffect(symbol, color=color)
-        self.scenes[scene_name].add_sequence(graphicaleffect, duration)
+        self.scenes[scene_id].add_sequence(graphicaleffect, duration)
 
     def is_active_scene_complete(self) -> bool:
-        """Returns whether the active scene is complete. A scene is complete if all sequences have been played,
-        the scene is looping, or the animator is not animating.
+        """Returns whether the active scene is complete. A scene is complete if all sequences have been played.
+        Looping scenes are always complete.
 
         Returns:
             bool: True if complete, False otherwise
         """
-        if not self.active_scene_name:
+        if not self.active_scene:
             return True
-        if (
-            not self.scenes[self.active_scene_name].sequences
-            or self.scenes[self.active_scene_name].is_looping
-            or not self.is_animating
-        ):
+        if not self.active_scene.sequences or self.active_scene.is_looping:
             return True
         else:
             return False
@@ -213,33 +207,33 @@ class Animator:
     def step_animation(self) -> None:
         """Apply the next symbol in the scene to the character. If a scene order exists, the next scene
         will be activated when the current scene is complete."""
-        if self.active_scene_name and self.scenes[self.active_scene_name].sequences:
-            self.character.symbol = self.scenes[self.active_scene_name].get_next_symbol()
-            if self.is_active_scene_complete() and self.active_scene_name in self.scene_order:
-                self.scene_order.remove(self.active_scene_name)
-                if self.scene_order:
-                    self.active_scene_name = self.scene_order[0]
+        if self.active_scene and self.active_scene.sequences:
+            self.character.symbol = self.active_scene.get_next_symbol()
+            if self.is_active_scene_complete():
+                self.character.event_handler.handle_event(
+                    self.character.event_handler.Event.SCENE_COMPLETE, self.active_scene.id
+                )
 
-    def reset_scene(self, scene_name: str) -> None:
+    def reset_scene(self, scene_id: str) -> None:
         """Resets the Scene.
 
         Args:
-            scene_name (str): the name of the Scene to reset
+            scene_name (str): the ID of the Scene to reset
         """
-        if scene_name in self.scenes:
-            self.scenes[scene_name].reset_scene()
+        if scene_id in self.scenes:
+            self.scenes[scene_id].reset_scene()
 
-    def set_active_scene(self, scene_name: str) -> None:
+    def activate_scene(self, scene_id: str) -> None:
         """Sets the active scene.
 
         Args:
-            scene_name (str): the name of the Scene to set as active
+            scene_id (str): the ID of the Scene to set as active
         """
-        if scene_name in self.scenes:
-            self.active_scene_name = scene_name
+        if scene_id in self.scenes:
+            self.active_scene = self.scenes[scene_id]
             self.step_animation()
         else:
-            raise ValueError(f"Scene {scene_name} does not exist")
+            raise ValueError(f"Scene {scene_id} does not exist")
 
 
 def gradient(start_color: str | int, end_color: str | int, steps: int) -> list[str]:

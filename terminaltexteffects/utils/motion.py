@@ -24,10 +24,14 @@ class Waypoint:
     """A coordinate, speed, and easing function.
 
     Args:
+        waypoint_id (str): unique identifier for the waypoint
         coord (Coord): coordinate
         speed (float): character speed at the waypoint
-        ease (Ease): easing function for character movement. Defaults to None.)"""
+        ease (Ease): easing function for character movement. Defaults to None.
+        next_waypoint (Waypoint): next waypoint to move to. Defaults to None.
+    """
 
+    waypoint_id: str
     coord: Coord
     speed: float = 1.0
     ease: easing.Ease | None = None
@@ -46,8 +50,8 @@ class Motion:
         self.current_coord: Coord = Coord(character.input_coord.column, character.input_coord.row)
         self.previous_coord: Coord = Coord(-1, -1)
         self.speed: float = 1.0
-        self.waypoints: list[Waypoint] = []
-        self.current_waypoint: Waypoint | None = None
+        self.waypoints: dict[str, Waypoint] = {}
+        self.active_waypoint: Waypoint | None = None
         self.origin_waypoint: Waypoint | None = None
         self.inter_waypoint_distance: float = 0
         self.inter_waypoint_max_steps: int = 0
@@ -78,14 +82,33 @@ class Motion:
         Returns:
             Coord: Coordinate at the given distance.
         """
-        if not distance or not self.origin_waypoint or not self.current_waypoint:
+        if not distance or not self.origin_waypoint or not self.active_waypoint:
             return self.current_coord
         t = distance / self.inter_waypoint_distance
         next_column, next_row = (
-            ((1 - t) * self.origin_waypoint.coord.column + t * self.current_waypoint.coord.column),
-            ((1 - t) * self.origin_waypoint.coord.row + t * self.current_waypoint.coord.row),
+            ((1 - t) * self.origin_waypoint.coord.column + t * self.active_waypoint.coord.column),
+            ((1 - t) * self.origin_waypoint.coord.row + t * self.active_waypoint.coord.row),
         )
         return Coord(round(next_column), round(next_row))
+
+    def find_points_on_circle(self, origin: tuple[int, int], radius: int, num_points: int) -> Coord:
+        """Finds points on a circle.
+
+        Args:
+            origin (tuple[int, int]): origin of the circle
+            radius (int): radius of the circle
+            num_points (int): number of points to find
+
+        Returns:
+            list (Coord): list of Coord points on the circle
+        """
+        points = []
+        for i in range(num_points):
+            angle = 2 * math.pi * i / num_points
+            x = origin[0] + radius * math.cos(angle)
+            y = origin[1] + radius * math.sin(angle)
+            points.append(Coord(round(x), round(y)))
+        return points
 
     def set_coordinate(self, column: int, row: int) -> None:
         """Sets the current coordinate to the given coordinate.
@@ -96,27 +119,29 @@ class Motion:
         """
         self.current_coord = Coord(column, row)
 
-    def new_waypoint(self, column: int, row: int, speed: float = 1, ease: easing.Ease | None = None) -> None:
-        """Appends a new waypoint to the waypoints list.
+    def new_waypoint(
+        self, waypoint_id: str, column: int, row: int, speed: float = 1, ease: easing.Ease | None = None
+    ) -> None:
+        """Appends a new waypoint to the waypoints dictionary.
 
         Args:
+            waypoint_id (str): unique identifier for the waypoint
             column (int): column
             row (int): row
             speed (float): speed
             ease (Ease| None): easing function for character movement. Defaults to None.
         """
-        self.waypoints.append(Waypoint(Coord(column, row), speed, ease))
+        self.waypoints[waypoint_id] = Waypoint(waypoint_id, Coord(column, row), speed, ease)
 
     def movement_complete(self) -> bool:
         """Returns whether the character has reached the final coordinate.
 
         Returns:
-            bool: True if the character has reached the final coordinate, False otherwise.
+            bool: True if the character has reached the final coordinate and has no active waypoint, False otherwise.
         """
         if (
-            self.current_coord == self.character.input_coord
-            and not self.waypoints
-            and self.inter_waypoint_current_step == self.inter_waypoint_max_steps
+            self.inter_waypoint_current_step == self.inter_waypoint_max_steps
+            and self.current_coord == self.character.input_coord
         ):
             return True
         return False
@@ -165,47 +190,59 @@ class Motion:
         elapsed_step_ratio = self.inter_waypoint_current_step / self.inter_waypoint_max_steps
         return easing_function_map[easing_func](elapsed_step_ratio)
 
-    def _next_waypoint(self) -> None:
-        """Sets the current waypoint to the next waypoint in the waypoints list, if there are no waypoints remaining, create a
-        new waypoint at the character input_coord and set it as the current waypoint."""
-        if not self.waypoints:
-            self.waypoints.append(Waypoint(self.character.input_coord, 1))
-        self.origin_waypoint = Waypoint(Coord(self.current_coord.column, self.current_coord.row), self.speed)
-        self.current_waypoint = self.waypoints.pop(0)
-        self.speed = self.current_waypoint.speed
+    def activate_waypoint(self, waypoint_id: str) -> None:
+        """Sets the current waypoint to the waypoint with the given waypoint_id and sets
+        the speed, distance, and step values for the new waypoint.
 
+        Args:
+            waypoint_id (str): unique identifier for the waypoint
+        """
+        if not self.active_waypoint:
+            self.origin_waypoint = Waypoint("-1", Coord(self.current_coord.column, self.current_coord.row))
+        else:
+            self.origin_waypoint = self.active_waypoint
+        self.active_waypoint = self.waypoints[waypoint_id]
+        self.speed = self.active_waypoint.speed
         self.inter_waypoint_distance = self._distance(
             self.current_coord.column,
             self.current_coord.row,
-            self.current_waypoint.coord.column,
-            self.current_waypoint.coord.row,
+            self.active_waypoint.coord.column,
+            self.active_waypoint.coord.row,
         )
         self.inter_waypoint_current_step = 0
         if self.speed > self.inter_waypoint_distance:
             self.speed = max(self.inter_waypoint_distance, 1)
         self.inter_waypoint_max_steps = round(self.inter_waypoint_distance / self.speed)
 
+    def deactivate_waypoint(self) -> None:
+        """Unsets the current waypoint."""
+        self.active_waypoint = None
+        self.inter_waypoint_distance = 0
+        self.inter_waypoint_max_steps = 0
+        self.inter_waypoint_current_step = 0
+
     def move(self) -> None:
         """Moves the character one step closer to the target position based on an easing function if present, otherwise linearly."""
-        # set initial waypoint on first call to move or get next waypoint if the current waypoint has been reached
-        if not self.current_waypoint or (
-            self.current_coord == self.current_waypoint.coord
-            and self.inter_waypoint_current_step == self.inter_waypoint_max_steps
-        ):
-            self._next_waypoint()
-
         # preserve previous coordinate to allow for clearing the location in the terminal
         self.previous_coord.column, self.previous_coord.row = (
             self.current_coord.column,
             self.current_coord.row,
         )
+        if not self.active_waypoint:
+            return
+        if self.inter_waypoint_current_step < self.inter_waypoint_max_steps:
+            self.inter_waypoint_current_step += 1
+
         if self.inter_waypoint_distance:
-            if self.current_waypoint and self.current_waypoint.ease:
-                easing_factor = self._ease_movement(self.current_waypoint.ease)
+            if self.active_waypoint and self.active_waypoint.ease:
+                easing_factor = self._ease_movement(self.active_waypoint.ease)
                 distance_to_move = easing_factor * self.inter_waypoint_distance
             else:
                 linear_factor = self.inter_waypoint_current_step / self.inter_waypoint_max_steps
                 distance_to_move = linear_factor * self.inter_waypoint_distance
             self.current_coord = self._point_at_distance(distance_to_move)
-            if self.inter_waypoint_current_step < self.inter_waypoint_max_steps:
-                self.inter_waypoint_current_step += 1
+
+        if self.inter_waypoint_current_step == self.inter_waypoint_max_steps:
+            self.character.event_handler.handle_event(
+                self.character.event_handler.Event.WAYPOINT_REACHED, self.active_waypoint.waypoint_id
+            )
