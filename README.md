@@ -31,11 +31,12 @@
 
 
 TerminalTextEffects is a collection of visual effects that run inline in the terminal. The underlying visual effect framework supports the following:
-- XTerm 256 Color
-- RGB Hex Triplet Color
-- Color Gradients
-- Character Motion (Waypoints, Speed, Acceleration)
-- UTF8 Character Set
+* Xterm 256 color and RBG hex color support                 
+* Color gradients                                           
+* Runs inline, preserving terminal state and workflow       
+* Dynamic character movement with motion easing             
+* Dynamic animations with symbol and color changes          
+* Effect customization through command line arguments 
 
 ## Requirements
 
