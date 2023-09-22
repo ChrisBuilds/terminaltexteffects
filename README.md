@@ -117,7 +117,7 @@ Effect:
 ![rowmerge_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/5cd4d5a1-e82d-42ed-b91c-6ac8061cab44)
 
 #### COLUMNSLIDE
-![columnslide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/9dfae157-7b71-47ea-bcb0-75828f2dfe28)
+![columnslide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/f2ecdc42-415d-47d3-889d-8e8993657b8f)
 
 #### RANDOMSEQUENCE
 ![randomsequence_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/8ee83d75-6c22-4c0b-8f96-a12301d7a4eb)
