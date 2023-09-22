@@ -54,6 +54,13 @@ Example: terminaltexteffects spray -a 0.01 --spray-position center""",
         help="Position for the spray origin.",
     )
     effect_parser.add_argument(
+        "--spray-volume",
+        default=5,
+        type=argtypes.positive_int,
+        metavar="(int > 0)",
+        help="Maximum number of characters to spray at a time.",
+    )
+    effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.valid_speed,
         default=0.7,
@@ -129,9 +136,9 @@ class SprayEffect(base_effect.Effect):
         }
 
         for character in self.terminal.characters:
-            character.is_active = False
             character.motion.set_coordinate(*spray_origin_map[self.spray_position])
             character.motion.new_waypoint(
+                "input_coord",
                 character.input_coord.column,
                 character.input_coord.row,
                 speed=self.args.movement_speed,
@@ -142,7 +149,8 @@ class SprayEffect(base_effect.Effect):
                 spray_gradient = graphics.gradient(spray_color, self.final_color, 7)
                 for color in spray_gradient:
                     character.animator.add_effect_to_scene("droplet", character.input_symbol, color, 40)
-                character.animator.active_scene_name = "droplet"
+                character.animator.activate_scene("droplet")
+            character.motion.activate_waypoint("input_coord")
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
 
@@ -151,7 +159,7 @@ class SprayEffect(base_effect.Effect):
         self.prepare_data()
         while self.pending_chars or self.animating_chars:
             if self.pending_chars:
-                for _ in range(random.randint(1, 5)):
+                for _ in range(random.randint(1, self.args.spray_volume)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop()
                         next_character.is_active = True
@@ -163,7 +171,7 @@ class SprayEffect(base_effect.Effect):
                 animating_char
                 for animating_char in self.animating_chars
                 if not animating_char.animator.is_active_scene_complete()
-                or animating_char.motion.current_coord != animating_char.input_coord
+                or not animating_char.motion.movement_complete()
             ]
 
     def animate_chars(self) -> None:

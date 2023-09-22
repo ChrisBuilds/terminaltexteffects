@@ -62,25 +62,27 @@ class VerticalSlice(base_effect.Effect):
             new_row = []
             left_half = [character for character in row if character.input_coord.column <= mid_point]
             for character in left_half:
-                character.is_active = False
                 character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
                 character.motion.new_waypoint(
+                    "input_coord",
                     character.input_coord.column,
                     character.input_coord.row,
                     speed=self.args.movement_speed,
                     ease=self.args.easing,
                 )
+                character.motion.activate_waypoint("input_coord")
             opposite_row = self.rows[-(row_index + 1)]
             right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
             for character in right_half:
-                character.is_active = False
                 character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.bottom)
                 character.motion.new_waypoint(
+                    "input_coord",
                     character.input_coord.column,
                     character.input_coord.row,
                     speed=self.args.movement_speed,
                     ease=self.args.easing,
                 )
+                character.motion.activate_waypoint("input_coord")
             new_row.extend(left_half)
             new_row.extend(right_half)
             self.new_rows.append(new_row)

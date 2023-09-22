@@ -74,7 +74,7 @@ class DecryptEffect(base_effect.Effect):
         for n in DecryptChars.misc:
             self.encrypted_symbols.append(chr(n))
 
-    def make_decrypting_animation_scene(self, character: base_character.EffectCharacter) -> None:
+    def make_decrypting_animation_scenes(self, character: base_character.EffectCharacter) -> None:
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
             duration = 3
@@ -94,7 +94,6 @@ class DecryptEffect(base_effect.Effect):
     def prepare_data_for_type_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
         for character in self.terminal.characters:
-            character.is_active = False
             for block_char in ["▉", "▓", "▒", "░"]:
                 character.animator.add_effect_to_scene("typing", block_char, self.ciphertext_color, 2)
             character.animator.add_effect_to_scene(
@@ -105,9 +104,20 @@ class DecryptEffect(base_effect.Effect):
     def prepare_data_for_decrypt_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
         for character in self.terminal.characters:
-            self.make_decrypting_animation_scene(character)
-            character.animator.active_scene_name = "fast_decrypt"
-            character.animator.scene_order = ["fast_decrypt", "slow_decrypt", "discovered"]
+            self.make_decrypting_animation_scenes(character)
+            character.event_handler.register_event(
+                character.event_handler.Event.SCENE_COMPLETE,
+                "fast_decrypt",
+                character.event_handler.Action.ACTIVATE_SCENE,
+                "slow_decrypt",
+            )
+            character.event_handler.register_event(
+                character.event_handler.Event.SCENE_COMPLETE,
+                "slow_decrypt",
+                character.event_handler.Action.ACTIVATE_SCENE,
+                "discovered",
+            )
+            character.animator.activate_scene("fast_decrypt")
             self.animating_chars.append(character)
 
     def run(self) -> None:
@@ -125,8 +135,7 @@ class DecryptEffect(base_effect.Effect):
                 if random.randint(0, 100) <= 75:
                     next_character = self.pending_chars.pop(0)
                     next_character.is_active = True
-                    next_character.animator.is_animating = True
-                    next_character.animator.active_scene_name = "typing"
+                    next_character.animator.activate_scene("typing")
                     self.animating_chars.append(next_character)
             self.animate_chars()
             # remove completed chars from animating chars
@@ -140,7 +149,6 @@ class DecryptEffect(base_effect.Effect):
     def run_decryption_effect(self) -> None:
         while self.animating_chars:
             self.animate_chars()
-
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars

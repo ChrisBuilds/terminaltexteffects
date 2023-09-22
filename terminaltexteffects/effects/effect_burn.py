@@ -95,7 +95,7 @@ class BurnEffect(base_effect.Effect):
             next_char.animator.add_effect_to_scene(
                 "construct", next_char.input_symbol, self.args.final_color, duration=1
             )
-            next_char.animator.active_scene_name = "construct"
+            next_char.animator.activate_scene("construct")
             self.pending_chars.append(next_char)
 
     def run(self) -> None:

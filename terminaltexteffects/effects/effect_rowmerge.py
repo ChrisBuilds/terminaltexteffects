@@ -37,7 +37,7 @@ Example: terminaltexteffects rowmerge -a 0.01""",
     )
     effect_parser.add_argument(
         "--easing",
-        default="OUT_BOUNCE",
+        default="OUT_QUAD",
         type=argtypes.valid_ease,
         help="Easing function to use for row movement.",
     )
@@ -57,25 +57,20 @@ class RowMergeEffect(base_effect.Effect):
         for row_index, row in self.input_by_row().items():
             if row_index % 2 == 0:
                 row = row[::-1]
-                for character in row:
-                    character.is_active = False
-                    character.motion.set_coordinate(self.terminal.output_area.left, character.input_coord.row)
-                    character.motion.new_waypoint(
-                        character.input_coord.column,
-                        character.input_coord.row,
-                        speed=self.args.movement_speed,
-                        ease=self.args.easing,
-                    )
+                column = self.terminal.output_area.left
             else:
-                for character in row:
-                    character.is_active = False
-                    character.motion.set_coordinate(self.terminal.output_area.right, character.input_coord.row)
-                    character.motion.new_waypoint(
-                        character.input_coord.column,
-                        character.input_coord.row,
-                        speed=self.args.movement_speed,
-                        ease=self.args.easing,
-                    )
+                column = self.terminal.output_area.right
+            for character in row:
+                character.is_active = False
+                character.motion.set_coordinate(column, character.input_coord.row)
+                character.motion.new_waypoint(
+                    "input_coord",
+                    character.input_coord.column,
+                    character.input_coord.row,
+                    speed=self.args.movement_speed,
+                    ease=self.args.easing,
+                )
+                character.motion.activate_waypoint("input_coord")
             self.rows.append(row)
 
     def run(self) -> None:

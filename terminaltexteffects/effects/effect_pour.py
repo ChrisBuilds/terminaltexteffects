@@ -91,11 +91,13 @@ class PourEffect(base_effect.Effect):
             elif self.pour_direction == PourDirection.RIGHT:
                 character.motion.set_coordinate(self.terminal.output_area.left, character.input_coord.row)
             character.motion.new_waypoint(
+                "input_coord",
                 character.input_coord.column,
                 character.input_coord.row,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )
+            character.motion.activate_waypoint("input_coord")
             self.pending_chars.append(character)
 
     def run(self) -> None:

@@ -58,13 +58,22 @@ class ShootingStarEffect(base_effect.Effect):
         for character in self.terminal.characters:
             character.is_active = False
             character.animator.add_effect_to_scene("star", "*", random.randint(1, 10), 1)
-            character.animator.active_scene_name = "star"
+            character.animator.add_effect_to_scene("final", character.input_symbol, duration=1)
             character.motion.set_coordinate(self.random_column(), self.terminal.output_area.top)
             character.motion.new_waypoint(
+                "input_coord",
                 character.input_coord.column,
                 character.input_coord.row,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
+            )
+            character.motion.activate_waypoint("input_coord")
+            character.animator.activate_scene("star")
+            character.event_handler.register_event(
+                character.event_handler.Event.WAYPOINT_REACHED,
+                "input_coord",
+                character.event_handler.Action.ACTIVATE_SCENE,
+                "final",
             )
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
@@ -101,5 +110,3 @@ class ShootingStarEffect(base_effect.Effect):
         for animating_char in self.animating_chars:
             animating_char.animator.step_animation()
             animating_char.motion.move()
-            if animating_char.motion.movement_complete():
-                animating_char.symbol = animating_char.input_symbol

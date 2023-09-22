@@ -85,17 +85,18 @@ class RowSlide(base_effect.Effect):
         self.rows = self.input_by_row()
         for row in self.rows.values():
             for character in row:
-                character.is_active = False
                 if self.slide_direction == SlideDirection.LEFT:
                     character.motion.set_coordinate(self.terminal.output_area.right, character.input_coord.row)
                 else:
                     character.motion.set_coordinate(0, character.input_coord.row)
                 character.motion.new_waypoint(
+                    "input_coord",
                     character.input_coord.column,
                     character.input_coord.row,
                     speed=self.args.movement_speed,
                     ease=self.args.easing,
                 )
+                character.motion.activate_waypoint("input_coord")
 
     def get_next_row(self) -> list[base_character.EffectCharacter]:
         """Gets the next row of characters to animate.

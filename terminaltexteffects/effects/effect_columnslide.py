@@ -15,8 +15,8 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser = subparsers.add_parser(
         "columnslide",
         formatter_class=argtypes.CustomFormatter,
-        help="Slides each column into place.",
-        description="columnslide | Slides each column into place.",
+        help="Slides each column into place from the outside to the middle.",
+        description="columnslide | Slides each column into place from the outside to the middle.",
         epilog=f"""{argtypes.EASING_EPILOG}
             
 Example: terminaltexteffects columnslide -a 0.003 --slide-direction up --easing IN_OUT_SINE --movement-speed 0.2 --column-gap 5""",
@@ -94,11 +94,13 @@ class ColumnSlide(base_effect.Effect):
                 else:
                     character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.bottom)
                 character.motion.new_waypoint(
+                    "input_coord",
                     character.input_coord.column,
                     character.input_coord.row,
                     speed=self.args.movement_speed,
                     ease=self.args.easing,
                 )
+                character.motion.activate_waypoint("input_coord")
 
     def get_next_column(self) -> list[base_character.EffectCharacter]:
         """Gets the next column of characters to animate.

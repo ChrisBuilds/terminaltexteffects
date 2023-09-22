@@ -83,16 +83,22 @@ class RainEffect(base_effect.Effect):
             raindrop_gradient = graphics.gradient(raindrop_color, self.args.final_color, 7)
             for color in raindrop_gradient:
                 character.animator.add_effect_to_scene("fade", character.input_symbol, color, 5)
-            character.animator.active_scene_name = "rain"
-            character.animator.is_animating = True
-            character.is_active = False
+            character.animator.activate_scene("rain")
             character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
             character.motion.new_waypoint(
+                "input_coord",
                 character.input_coord.column,
                 character.input_coord.row,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )
+            character.event_handler.register_event(
+                character.event_handler.Event.WAYPOINT_REACHED,
+                "input_coord",
+                character.event_handler.Action.ACTIVATE_SCENE,
+                "fade",
+            )
+            character.motion.activate_waypoint("input_coord")
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
             if character.input_coord.row not in self.group_by_row:
@@ -131,5 +137,3 @@ class RainEffect(base_effect.Effect):
         for animating_char in self.animating_chars:
             animating_char.animator.step_animation()
             animating_char.motion.move()
-            if animating_char.motion.movement_complete():
-                animating_char.animator.active_scene_name = "fade"

@@ -67,7 +67,7 @@ class RandomSequence(base_effect.Effect):
             character.is_active = False
             for color in self.fade_in:
                 character.animator.add_effect_to_scene("fade", character.input_symbol, color, self.args.fade_duration)
-            character.animator.active_scene_name = "fade"
+            character.animator.activate_scene("fade")
             self.pending_chars.append(character)
 
     def run(self) -> None:
