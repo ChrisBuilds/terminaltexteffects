@@ -10,7 +10,7 @@ def in_sine(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     return 1 - math.cos((step_ratio * math.pi) / 2)
 
@@ -23,7 +23,7 @@ def out_sine(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     return math.sin((step_ratio * math.pi) / 2)
 
@@ -36,7 +36,7 @@ def in_out_sine(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
 
     return -(math.cos(math.pi * step_ratio) - 1) / 2
@@ -50,7 +50,7 @@ def in_quad(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
 
     return step_ratio**2
@@ -64,7 +64,7 @@ def out_quad(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
 
     """
     return 1 - (1 - step_ratio) * (1 - step_ratio)
@@ -78,7 +78,7 @@ def in_out_quad(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
 
     """
     if step_ratio < 0.5:
@@ -95,7 +95,7 @@ def in_cubic(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     return step_ratio**3
 
@@ -108,7 +108,7 @@ def out_cubic(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     return 1 - (1 - step_ratio) ** 3
 
@@ -152,7 +152,7 @@ def out_quart(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     return 1 - (1 - step_ratio) ** 4
 
@@ -165,7 +165,7 @@ def in_out_quart(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     if step_ratio < 0.5:
         return 8 * step_ratio**4
@@ -181,7 +181,7 @@ def in_quint(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     return step_ratio**5
 
@@ -194,7 +194,7 @@ def out_quint(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     return 1 - (1 - step_ratio) ** 5
 
@@ -207,7 +207,7 @@ def in_out_quint(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     if step_ratio < 0.5:
         return 16 * step_ratio**5
@@ -223,7 +223,7 @@ def in_expo(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     if step_ratio == 0:
         return 0
@@ -239,7 +239,7 @@ def out_expo(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     if step_ratio == 1:
         return 1
@@ -255,7 +255,7 @@ def in_out_expo(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     if step_ratio == 0:
         return 0
@@ -275,7 +275,7 @@ def in_circ(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     return 1 - math.sqrt(1 - step_ratio**2)
 
@@ -288,7 +288,7 @@ def out_circ(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     return math.sqrt(1 - (step_ratio - 1) ** 2)
 
@@ -301,7 +301,7 @@ def in_out_circ(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     if step_ratio < 0.5:
         return (1 - math.sqrt(1 - (2 * step_ratio) ** 2)) / 2
@@ -317,7 +317,7 @@ def in_back(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     c1 = 1.70158
     c3 = c1 + 1
@@ -332,7 +332,7 @@ def out_back(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     c1 = 1.70158
     c3 = c1 + 1
@@ -347,7 +347,7 @@ def in_out_back(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     c1 = 1.70158
     c2 = c1 * 1.525
@@ -365,7 +365,7 @@ def in_elastic(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
 
     c4 = (2 * math.pi) / 3
@@ -385,8 +385,7 @@ def out_elastic(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage
-        of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
     """
     c4 = (2 * math.pi) / 3
     if step_ratio == 0:
@@ -405,8 +404,7 @@ def in_out_elastic(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the
-        percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
     """
     c5 = (2 * math.pi) / 4.5
     if step_ratio == 0:
@@ -427,8 +425,7 @@ def in_bounce(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the
-        percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
     """
     return 1 - out_bounce(1 - step_ratio)
 
@@ -441,8 +438,7 @@ def out_bounce(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1
-        representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     n1 = 7.5625
     d1 = 2.75
@@ -464,8 +460,7 @@ def in_out_bounce(step_ratio: float) -> float:
         step_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <=
-        1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
     """
     if step_ratio < 0.5:
         return (1 - out_bounce(1 - 2 * step_ratio)) / 2
