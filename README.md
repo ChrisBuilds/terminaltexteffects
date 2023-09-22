@@ -90,7 +90,7 @@ Effect:
 ![fireworks_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/af5929b0-43e4-4ebd-80ec-32fd0deec7f8)
 
 #### RAIN
-![rain_example](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/bcde39b8-13e7-4bb2-962e-0f1d98b940d7)
+![rain_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed94a21f-503d-46f3-8510-7a1e83b28314)
 
 #### DECRYPT
 ![decrypt_example](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/b3a57c29-065a-4505-a22a-619e6e518fc3)
