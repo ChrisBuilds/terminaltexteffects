@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "terminaltexteffects"
-version = "0.1.0"
+version = "0.2.0"
 description = "A collection of visual effects that can be applied to terminal piped stdin text."
 authors = ["Chris <741258@pm.me>"]
 license = "MIT"
