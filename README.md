@@ -95,14 +95,36 @@ Effect:
 #### DECRYPT
 ![decrypt_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/586224f3-6a03-40ae-bdcf-067a6c96cbb5)
 
-#### BURN
-![burn_example](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/8f0e96bc-5f09-419b-9d91-6edeb50d63c1)
+#### SPRAY
+![spray_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/d39b4caa-7393-4357-8e27-b0ef9dce756b)
 
-#### ROWSLIDE
-![rowslide_example](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ccac83da-743c-4936-93f4-ced68fefaa51)
+#### SCATTERED
+![scattered_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ddcf3c65-a91b-4e42-84fc-0c2508a85be5)
 
 #### EXPAND
-![expand_example](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2753a76f-49a1-48b0-9c0d-aaa0b8ab1a3d)
+![expand_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/9b319e77-d2b7-489e-b59c-c87277ea1285)
+
+#### BURN
+![burn_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ddc8ca36-4157-448b-b10d-573f108361c7)
+
+#### POUR
+![pour_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/d5b827a5-3267-47ad-88c7-6fb0b2dbb478)
+
+#### ROWSLIDE
+![rowslide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/fc62bbe3-d75f-4757-b1ef-c14abff2666b)
+
+#### ROWMERGE
+![rowmerge_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/5cd4d5a1-e82d-42ed-b91c-6ac8061cab44)
+
+#### COLUMNSLIDE
+![columnslide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/9dfae157-7b71-47ea-bcb0-75828f2dfe28)
+
+#### RANDOMSEQUENCE
+![randomsequence_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/8ee83d75-6c22-4c0b-8f96-a12301d7a4eb)
+
+#### VERTICALSLICE
+![verticalslice_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/237e36c5-cb4e-4866-9a33-b7f27a2907dc)
+
 
 ## License
 
