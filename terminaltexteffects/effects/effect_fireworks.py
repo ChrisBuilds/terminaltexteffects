@@ -18,7 +18,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Characters launch and explode like fireworks and fall into place.",
         description="fireworks | Characters explode like fireworks and fall into place.",
-        epilog="Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --final-color 000000 --launch-delay 30 --launch-easing OUT_EXPO --launch-speed 0.2 --explode-easing OUT_QUAD --explode-speed 0.3 --fall-easing IN_SINE --fall-speed 0.6",
+        epilog=f"""{argtypes.EASING_EPILOG}
+        
+Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --final-color 000000 --launch-delay 30 --launch-easing OUT_EXPO --launch-speed 0.2 --explode-easing OUT_QUAD --explode-speed 0.3 --fall-easing IN_SINE --fall-speed 0.6""",
     )
     effect_parser.set_defaults(effect_class=FireworksEffect)
     effect_parser.add_argument(

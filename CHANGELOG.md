@@ -1,9 +1,9 @@
-## Change Log
+# Change Log
 
-### Unreleased
+## Unreleased
 
-#### New Features
+### New Features
 
-#### Changes
+### Changes
 
-#### Bug Fixes
+### Bug Fixes
