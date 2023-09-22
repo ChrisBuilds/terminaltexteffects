@@ -163,6 +163,7 @@ def test_fireworks_effect(input_data: str = BLOCK) -> None:
     args.launch_delay = 30
     args.launch_easing = Ease["OUT_EXPO"]
     args.launch_speed = 0.2
+    args.explode_distance = 10
     args.explode_easing = Ease["OUT_QUAD"]
     args.explode_speed = 0.3
     args.fall_easing = Ease["IN_OUT_CUBIC"]
