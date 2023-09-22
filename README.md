@@ -86,6 +86,9 @@ Effect:
 
 
 ## Examples
+#### Fireworks
+![fireworks_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/af5929b0-43e4-4ebd-80ec-32fd0deec7f8)
+
 #### RAIN
 ![rain_example](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/bcde39b8-13e7-4bb2-962e-0f1d98b940d7)
 
