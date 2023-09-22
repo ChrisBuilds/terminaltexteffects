@@ -150,3 +150,71 @@ def valid_ease(ease_arg: str) -> Ease:
         return Ease[ease_arg.upper()]
     except KeyError:
         raise argparse.ArgumentTypeError(f"invalid ease value: {ease_arg} is not a valid ease.")
+
+
+def positive_int(arg: str) -> int:
+    """Validates that the given argument is a positive integer.
+
+    Args:
+        arg (str): argument to validate
+
+    Returns:
+        int: validated positive integer
+    """
+    if int(arg) > 0:
+        return int(arg)
+    else:
+        raise argparse.ArgumentTypeError(f"invalid value: {arg} is not > 0.")
+
+
+def ge_zero(arg: str) -> int:
+    """Validates that the given argument is an integer greater than or equal to zero.
+    Args:
+        arg (str): argument to validate
+
+    Returns:
+        int: validated integer
+    """
+    if int(arg) >= 0:
+        return int(arg)
+    else:
+        raise argparse.ArgumentTypeError(f"invalid value: {arg} is not >= 0.")
+
+
+def is_ascii_or_utf8(s: str) -> bool:
+    """Tests if the given string is either ASCII or UTF-8.
+
+    Args:
+        s (str): string to test
+
+    Returns:
+        bool: True if the string is either ASCII or UTF-8, False otherwise
+    """
+    try:
+        s.encode("ascii")
+    except UnicodeEncodeError:
+        try:
+            s.encode("utf-8")
+        except UnicodeEncodeError:
+            return False
+        else:
+            return True
+    else:
+        return True
+
+
+def valid_symbol(arg: str) -> str:
+    """Validates that the given argument is a valid symbol.
+
+    Args:
+        arg (str): argument to validate
+
+    Returns:
+        str: validated symbol
+    """
+    if len(arg) == 1 and is_ascii_or_utf8(arg):
+        return arg
+    else:
+        raise argparse.ArgumentTypeError(
+            f"invalid symbol: {arg} is not a valid symbol. Must be a single ASCII/UTF-8 character."
+        )
