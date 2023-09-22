@@ -18,6 +18,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     """
     effect_parser = subparsers.add_parser(
         "spray",
+        formatter_class=argtypes.CustomFormatter,
         help="Draws the characters spawning at varying rates from a single point.",
         description="spray | Draws the characters spawning at varying rates from a single point.",
         epilog=f"""{argtypes.EASING_EPILOG}
