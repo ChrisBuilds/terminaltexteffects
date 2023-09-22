@@ -14,6 +14,7 @@ from terminaltexteffects.effects import (
     effect_spray,
     effect_verticalslice,
     effect_burn,
+    effect_fireworks,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils.easing import Ease
@@ -77,6 +78,7 @@ def test_random_sequence_effect(input_data: str = BLOCK) -> None:
 def test_spray_effect(input_data: str = BLOCK) -> None:
     args = make_args()
     args.spray_position = effect_spray.SprayPosition.SE
+    args.spray_volume = 5
     args.spray_colors = ["fe0345", "03faf0", "34a00f"]
     args.final_color = "ff0000"
     terminal = Terminal(input_data, args)
@@ -149,3 +151,22 @@ def test_burn_effect(input_data: str = BLOCK) -> None:
     terminal = Terminal(input_data, args)
     burn_effect = effect_burn.BurnEffect(terminal, args)
     burn_effect.run()
+
+
+def test_fireworks_effect(input_data: str = BLOCK) -> None:
+    args = make_args()
+    args.firework_colors = ["fe0345", "03faf0", "34a00f"]
+    args.final_color = "ffffff"
+    args.explode_anywhere = False
+    args.firework_symbol = "⯏"
+    args.firework_volume = 8
+    args.launch_delay = 30
+    args.launch_easing = Ease["OUT_EXPO"]
+    args.launch_speed = 0.2
+    args.explode_easing = Ease["OUT_QUAD"]
+    args.explode_speed = 0.3
+    args.fall_easing = Ease["IN_OUT_CUBIC"]
+    args.fall_speed = 0.4
+    terminal = Terminal(input_data, args)
+    fireworks_effect = effect_fireworks.FireworksEffect(terminal, args)
+    fireworks_effect.run()
