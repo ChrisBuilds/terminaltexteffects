@@ -84,6 +84,13 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Firework launch speed. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
     )
     effect_parser.add_argument(
+        "--explode-distance",
+        default=10,
+        type=argtypes.positive_int,
+        metavar="(int > 0)",
+        help="Maximum distance a character can travel as a part of the firework explosion.",
+    )
+    effect_parser.add_argument(
         "--explode-easing",
         default="OUT_QUAD",
         type=argtypes.valid_ease,
@@ -138,7 +145,7 @@ class FireworksEffect(base_effect.Effect):
                 origin_y = random.randrange(min_row, self.terminal.output_area.top + 1)
             point_on_circle = random.choice(
                 character.motion.find_points_on_circle(
-                    (origin_x, origin_y), random.randrange(7, 10), self.args.firework_volume
+                    (origin_x, origin_y), random.randrange(1, self.args.explode_distance), self.args.firework_volume
                 )
             )
             character.motion.set_coordinate(origin_x, self.terminal.output_area.bottom)
