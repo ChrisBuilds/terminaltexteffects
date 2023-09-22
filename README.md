@@ -93,7 +93,7 @@ Effect:
 ![rain_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed94a21f-503d-46f3-8510-7a1e83b28314)
 
 #### DECRYPT
-![decrypt_example](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/b3a57c29-065a-4505-a22a-619e6e518fc3)
+![decrypt_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/586224f3-6a03-40ae-bdcf-067a6c96cbb5)
 
 #### BURN
 ![burn_example](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/8f0e96bc-5f09-419b-9d91-6edeb50d63c1)
