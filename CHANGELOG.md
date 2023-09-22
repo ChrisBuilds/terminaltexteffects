@@ -11,7 +11,7 @@
 ## 0.2.1
 
 ### New Features
-
+* Added explode distance argument to fireworks effect
 ### Changes
 
 ### Bug Fixes
