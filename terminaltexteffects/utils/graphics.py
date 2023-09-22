@@ -1,4 +1,5 @@
 import typing
+import random
 from dataclasses import dataclass, field
 
 from terminaltexteffects.utils import ansitools, colorterm, hexterm
@@ -203,6 +204,14 @@ class Animator:
             return True
         else:
             return False
+
+    def random_color(self) -> str:
+        """Returns a random hex color code.
+
+        Returns:
+            str: hex color code
+        """
+        return hex(random.randint(0, 0xFFFFFF))[2:].zfill(6)
 
     def step_animation(self) -> None:
         """Apply the next symbol in the scene to the character. If a scene order exists, the next scene
