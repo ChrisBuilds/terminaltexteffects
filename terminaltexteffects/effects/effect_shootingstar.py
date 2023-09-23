@@ -14,15 +14,15 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         subparser (argparse._SubParsersAction): subparser to add arguments to
     """
     effect_parser = subparsers.add_parser(
-        "shootingstar",
+        "bouncyballs",
         formatter_class=argtypes.CustomFormatter,
-        help="Displays the text as a falling star toward the final coordinate of the character.",
-        description="shootingstar | Displays the text as a falling star toward the final coordinate of the character.",
+        help="Characters are bouncy balls falling from the top of the output area.",
+        description="bouncyball | Characters are bouncy balls falling from the top of the output area.",
         epilog=f"""{argtypes.EASING_EPILOG}
         
-Example: terminaltexteffects shootingstar -a 0.01""",
+Example: terminaltexteffects bouncyball -a 0.01 --ball-colors 00ff00 ff0000 0000ff --final-color ffffff --ball-delay 15 --movement-speed 0.25 --easing OUT_BOUNCE""",
     )
-    effect_parser.set_defaults(effect_class=ShootingStarEffect)
+    effect_parser.set_defaults(effect_class=BouncyBallsEffect)
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
@@ -31,22 +31,44 @@ Example: terminaltexteffects shootingstar -a 0.01""",
         help="Time between animation steps. ",
     )
     effect_parser.add_argument(
+        "--ball-colors",
+        type=argtypes.valid_color,
+        nargs="*",
+        default=0,
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Space separated list of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random.",
+    )
+    effect_parser.add_argument(
+        "--final-color",
+        type=argtypes.valid_color,
+        default="ffffff",
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Color for the final character.",
+    )
+    effect_parser.add_argument(
+        "--ball-delay",
+        type=argtypes.positive_int,
+        default=15,
+        metavar="(int > 0)",
+        help="Number of animation steps between ball drops, increase to reduce ball drop rate.",
+    ),
+    effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.valid_speed,
-        default=1,
+        default=0.25,
         metavar="(float > 0)",
         help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
     )
     effect_parser.add_argument(
         "--easing",
-        default="OUT_CIRC",
+        default="OUT_BOUNCE",
         type=argtypes.valid_ease,
         help="Easing function to use for character movement.",
     )
 
 
-class ShootingStarEffect(base_effect.Effect):
-    """Effect that display the text as a falling star toward the final coordinate of the character."""
+class BouncyBallsEffect(base_effect.Effect):
+    """Effect that display the text as bouncy balls falling from the top of the output area."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
         super().__init__(terminal, args)
@@ -54,12 +76,18 @@ class ShootingStarEffect(base_effect.Effect):
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by sorting by row and assigning the star symbol."""
-
+        ball_symbols = ("*", "o", "O", "0", ".")
         for character in self.terminal.characters:
             character.is_active = False
-            character.animator.add_effect_to_scene("star", "*", random.randint(1, 10), 1)
-            character.animator.add_effect_to_scene("final", character.input_symbol, duration=1)
-            character.motion.set_coordinate(self.random_column(), self.terminal.output_area.top)
+            if self.args.ball_colors:
+                color = random.choice(self.args.ball_colors)
+            else:
+                color = character.animator.random_color()
+            symbol = random.choice(ball_symbols)
+            character.animator.add_effect_to_scene("ball", symbol, color, 1)
+            for step in graphics.gradient(color, self.args.final_color, 12):
+                character.animator.add_effect_to_scene("final", character.input_symbol, step, duration=10)
+            character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
             character.motion.new_waypoint(
                 "input_coord",
                 character.input_coord.column,
@@ -68,7 +96,7 @@ class ShootingStarEffect(base_effect.Effect):
                 ease=self.args.easing,
             )
             character.motion.activate_waypoint("input_coord")
-            character.animator.activate_scene("star")
+            character.animator.activate_scene("ball")
             character.event_handler.register_event(
                 character.event_handler.Event.WAYPOINT_REACHED,
                 "input_coord",
@@ -85,17 +113,20 @@ class ShootingStarEffect(base_effect.Effect):
         """Runs the effect."""
         self.prepare_data()
         self.pending_chars.clear()
+        ball_delay = 0
         while self.group_by_row or self.animating_chars or self.pending_chars:
             if not self.pending_chars and self.group_by_row:
                 self.pending_chars.extend(self.group_by_row.pop(min(self.group_by_row.keys())))  # type: ignore
-            if self.pending_chars:
-                for _ in range(random.randint(1, 3)):
+            if self.pending_chars and ball_delay == 0:
+                for _ in range(random.randint(1, 5)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
                         next_character.is_active = True
                         self.animating_chars.append(next_character)
                     else:
                         break
+                ball_delay = self.args.ball_delay
+            ball_delay -= 1
             self.animate_chars()
             self.animating_chars = [
                 animating_char
