@@ -13,6 +13,8 @@
 * Added Easing Functions help output to fireworks effect epilog.
 * Updated spray effect help output.
 * Removed shootingstar effect. It was not particularly interesting.
+* Coord type is now hashable and frozen.
+* Waypoints are hashable. Can be compared for equality based on row, col pair.
 
 ### Bug Fixes
 * Fixed animating_chars filter in effect_template to properly remove completed characters.
