@@ -132,8 +132,8 @@ class BouncyBallsEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animation.is_active_scene_complete()
-                or not animating_char.motion.movement_complete()
+                if not animating_char.animation.active_scene_is_complete()
+                or not animating_char.motion.movement_is_complete()
             ]
             self.terminal.print()
 

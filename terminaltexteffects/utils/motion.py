@@ -138,7 +138,7 @@ class Motion:
         """
         self.waypoints[waypoint_id] = Waypoint(waypoint_id, Coord(column, row), speed, ease)
 
-    def movement_complete(self) -> bool:
+    def movement_is_complete(self) -> bool:
         """Returns whether the character has reached the final coordinate.
 
         Returns:

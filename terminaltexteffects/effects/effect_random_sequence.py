@@ -85,7 +85,7 @@ class RandomSequence(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animation.is_active_scene_complete()
+                if not animating_char.animation.active_scene_is_complete()
             ]
 
     def animate_chars(self) -> None:

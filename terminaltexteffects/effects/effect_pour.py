@@ -113,7 +113,7 @@ class PourEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.motion.movement_complete()
+                if not animating_char.motion.movement_is_complete()
             ]
             self.terminal.print()
 

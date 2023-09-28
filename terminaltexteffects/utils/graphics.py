@@ -196,7 +196,7 @@ class Animation:
         graphicaleffect = GraphicalEffect(symbol, color=color)
         self.scenes[scene_id].add_sequence(graphicaleffect, duration)
 
-    def is_active_scene_complete(self) -> bool:
+    def active_scene_is_complete(self) -> bool:
         """Returns whether the active scene is complete. A scene is complete if all sequences have been played.
         Looping scenes are always complete.
 
@@ -223,7 +223,7 @@ class Animation:
         will be activated when the current scene is complete."""
         if self.active_scene and self.active_scene.sequences:
             self.character.symbol = self.active_scene.get_next_symbol()
-            if self.is_active_scene_complete():
+            if self.active_scene_is_complete():
                 self.character.event_handler.handle_event(
                     self.character.event_handler.Event.SCENE_COMPLETE, self.active_scene.id
                 )

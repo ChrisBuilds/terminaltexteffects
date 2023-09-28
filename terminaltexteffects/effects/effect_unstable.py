@@ -141,7 +141,7 @@ class UnstableEffect(base_effect.Effect):
                     animating_char
                     for animating_char in self.animating_chars
                     if not animating_char.motion.current_coord == animating_char.motion.waypoints[waypoint_id].coord
-                    or not animating_char.animation.is_active_scene_complete()
+                    or not animating_char.animation.active_scene_is_complete()
                 ]
             else:
                 self.animating_chars = [
