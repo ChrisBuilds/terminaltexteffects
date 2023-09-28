@@ -90,7 +90,8 @@ class NamedEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete() or animating_char.motion.movement_complete()
+                if not animating_char.animator.is_active_scene_complete()
+                or not animating_char.motion.movement_complete()
             ]
 
     def animate_chars(self) -> None:
@@ -98,5 +99,3 @@ class NamedEffect(base_effect.Effect):
         for animating_char in self.animating_chars:
             animating_char.animator.step_animation()
             animating_char.motion.move()
-            if animating_char.motion.movement_complete():
-                animating_char.symbol = animating_char.input_symbol
