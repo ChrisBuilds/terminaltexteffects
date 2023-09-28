@@ -31,36 +31,36 @@ class EventHandler:
         ACTIVATE_SCENE = auto()
         "Activates an animation scene. The action target is the scene ID."
 
-    def register_event(self, event: Event, caller: str, action: Action, action_target: str) -> None:
+    def register_event(self, event: Event, subject_id: str, action: Action, action_target: str) -> None:
         """Registers an event to be handled by the EventHandler.
 
         Args:
             event (Event): The event to register.
-            caller (str): The ID of the caller.
+            subject_id (str): The subject_id of the event subject (waypoint id/scene id).
             action (Action): The action to take when the event is triggered.
             action_target (str): The ID of the action target.
         """
-        new_event = (event, caller)
+        new_event = (event, subject_id)
         new_action = (action, action_target)
         if new_event not in self.registered_events:
             self.registered_events[new_event] = list()
         self.registered_events[new_event].append(new_action)
 
-    def handle_event(self, event: Event, caller: str) -> None:
+    def handle_event(self, event: Event, subject_id: str) -> None:
         """Handles an event.
 
         Args:
             event (Event): An event to handle. If the event is not registered, nothing happens.
-            caller (str): The ID of the caller.
+            subject_id (str): The subject_id of the event subject (waypoint id/scene id).
         """
         action_map = {
             EventHandler.Action.ACTIVATE_WAYPOINT: self.character.motion.activate_waypoint,
             EventHandler.Action.ACTIVATE_SCENE: self.character.animator.activate_scene,
         }
 
-        if (event, caller) not in self.registered_events:
+        if (event, subject_id) not in self.registered_events:
             return
-        for event_action in self.registered_events[(event, caller)]:
+        for event_action in self.registered_events[(event, subject_id)]:
             action, action_target = event_action
             action_map[action](action_target)
 
@@ -97,3 +97,9 @@ class EffectCharacter:
         self.event_handler: EventHandler = EventHandler(self)
         self.is_active: bool = False
         "Active characters are printed to the terminal."
+
+    def __hash__(self) -> int:
+        return hash(self.input_coord)
+
+    def __eq__(self, other: "EffectCharacter") -> bool:
+        return self.input_coord == other.input_coord
