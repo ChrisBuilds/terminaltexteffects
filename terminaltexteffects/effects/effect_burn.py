@@ -83,19 +83,19 @@ class BurnEffect(base_effect.Effect):
             g_start = 0
             for _, block in enumerate(vertical_build_order[:5]):
                 for color in fire_gradient[g_start : g_start + 3]:
-                    next_char.animator.add_effect_to_scene("construct", block, color, duration=30)
+                    next_char.animation.add_effect_to_scene("construct", block, color, duration=30)
                 g_start += 2
 
             g_start = 0
             for _, block in enumerate(vertical_build_order[4:]):
                 for color in burned_gradient[g_start : g_start + 3]:
-                    next_char.animator.add_effect_to_scene("construct", block, color, duration=30)
+                    next_char.animation.add_effect_to_scene("construct", block, color, duration=30)
                 g_start += 2
 
-            next_char.animator.add_effect_to_scene(
+            next_char.animation.add_effect_to_scene(
                 "construct", next_char.input_symbol, self.args.final_color, duration=1
             )
-            next_char.animator.activate_scene("construct")
+            next_char.animation.activate_scene("construct")
             self.pending_chars.append(next_char)
 
     def run(self) -> None:
@@ -112,11 +112,11 @@ class BurnEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete()
+                if not animating_char.animation.is_active_scene_complete()
             ]
             self.terminal.print()
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation."""
         for animating_char in self.animating_chars:
-            animating_char.animator.step_animation()
+            animating_char.animation.step_animation()

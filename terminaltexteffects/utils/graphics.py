@@ -144,11 +144,16 @@ class Scene:
         self.sequences.extend(self.played_sequences)
         self.played_sequences.clear()
 
+    def __eq__(self, other: "Scene") -> bool:
+        if not isinstance(other, Scene):
+            return NotImplemented
+        return self.id == other.id
 
-class Animator:
+
+class Animation:
     def __init__(self, character: "base_character.EffectCharacter"):
-        """Animator handles the animations of a character. It contains a list of Scenes, and the active scene id. GraphicalEffects are
-        added to the Scenes, and the Animator returns the next symbol in the active scene.
+        """Animation handles the animations of a character. It contains a list of Scenes, and the active scene id. GraphicalEffects are
+        added to the Scenes, and the Animation returns the next symbol in the active scene.
 
         Args:
             character (base_character.EffectCharacter): the EffectCharacter object to animate

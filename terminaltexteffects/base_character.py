@@ -55,7 +55,7 @@ class EventHandler:
         """
         action_map = {
             EventHandler.Action.ACTIVATE_WAYPOINT: self.character.motion.activate_waypoint,
-            EventHandler.Action.ACTIVATE_SCENE: self.character.animator.activate_scene,
+            EventHandler.Action.ACTIVATE_SCENE: self.character.animation.activate_scene,
         }
 
         if (event, subject_id) not in self.registered_events:
@@ -92,7 +92,7 @@ class EffectCharacter:
         self.symbol: str = symbol
         "The current symbol for the character, determined by the animation units."
         self.terminal: Terminal = terminal
-        self.animator: graphics.Animator = graphics.Animator(self)
+        self.animation: graphics.Animation = graphics.Animation(self)
         self.motion: motion.Motion = motion.Motion(self)
         self.event_handler: EventHandler = EventHandler(self)
         self.is_active: bool = False

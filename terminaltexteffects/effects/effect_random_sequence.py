@@ -66,8 +66,8 @@ class RandomSequence(base_effect.Effect):
         for character in self.terminal.characters:
             character.is_active = False
             for color in self.fade_in:
-                character.animator.add_effect_to_scene("fade", character.input_symbol, color, self.args.fade_duration)
-            character.animator.activate_scene("fade")
+                character.animation.add_effect_to_scene("fade", character.input_symbol, color, self.args.fade_duration)
+            character.animation.activate_scene("fade")
             self.pending_chars.append(character)
 
     def run(self) -> None:
@@ -85,10 +85,10 @@ class RandomSequence(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete()
+                if not animating_char.animation.is_active_scene_complete()
             ]
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation."""
         for animating_char in self.animating_chars:
-            animating_char.animator.step_animation()
+            animating_char.animation.step_animation()

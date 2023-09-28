@@ -79,11 +79,11 @@ class RainEffect(base_effect.Effect):
 
         for character in self.terminal.characters:
             raindrop_color = random.choice(rain_colors)
-            character.animator.add_effect_to_scene("rain", random.choice(rain_characters), raindrop_color, 1)
+            character.animation.add_effect_to_scene("rain", random.choice(rain_characters), raindrop_color, 1)
             raindrop_gradient = graphics.gradient(raindrop_color, self.args.final_color, 7)
             for color in raindrop_gradient:
-                character.animator.add_effect_to_scene("fade", character.input_symbol, color, 5)
-            character.animator.activate_scene("rain")
+                character.animation.add_effect_to_scene("fade", character.input_symbol, color, 5)
+            character.animation.activate_scene("rain")
             character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
             character.motion.new_waypoint(
                 "input_coord",
@@ -127,7 +127,7 @@ class RainEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete()
+                if not animating_char.animation.is_active_scene_complete()
                 or not animating_char.motion.movement_complete()
             ]
             self.terminal.print()
@@ -135,5 +135,5 @@ class RainEffect(base_effect.Effect):
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and getting the next symbol from the animator."""
         for animating_char in self.animating_chars:
-            animating_char.animator.step_animation()
+            animating_char.animation.step_animation()
             animating_char.motion.move()

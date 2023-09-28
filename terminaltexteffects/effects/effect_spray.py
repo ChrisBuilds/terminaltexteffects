@@ -149,8 +149,8 @@ class SprayEffect(base_effect.Effect):
                 spray_color = random.choice(self.spray_colors)
                 spray_gradient = graphics.gradient(spray_color, self.final_color, 7)
                 for color in spray_gradient:
-                    character.animator.add_effect_to_scene("droplet", character.input_symbol, color, 40)
-                character.animator.activate_scene("droplet")
+                    character.animation.add_effect_to_scene("droplet", character.input_symbol, color, 40)
+                character.animation.activate_scene("droplet")
             character.motion.activate_waypoint("input_coord")
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
@@ -171,11 +171,11 @@ class SprayEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete()
+                if not animating_char.animation.is_active_scene_complete()
                 or not animating_char.motion.movement_complete()
             ]
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:
-            animating_char.animator.step_animation()
+            animating_char.animation.step_animation()
             animating_char.motion.move()

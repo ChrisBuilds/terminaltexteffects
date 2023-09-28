@@ -120,17 +120,17 @@ class UnstableEffect(base_effect.Effect):
             )
             unstable_gradient = graphics.gradient(self.args.initial_color, self.args.unstable_color, 25)
             for step in unstable_gradient:
-                character.animator.add_effect_to_scene("rumble", character.input_symbol, step, 10)
+                character.animation.add_effect_to_scene("rumble", character.input_symbol, step, 10)
             final_color = graphics.gradient(self.args.unstable_color, self.args.final_color, 12)
             for step in final_color:
-                character.animator.add_effect_to_scene("final", character.input_symbol, step, 5)
-            character.animator.activate_scene("rumble")
+                character.animation.add_effect_to_scene("final", character.input_symbol, step, 5)
+            character.animation.activate_scene("rumble")
             character.is_active = True
 
     def move_all_to_waypoint(self, waypoint_id) -> None:
         for character in self.terminal.characters:
             if waypoint_id == "reassembly":
-                character.animator.activate_scene("final")
+                character.animation.activate_scene("final")
             self.animating_chars.append(character)
             character.motion.activate_waypoint(waypoint_id)
         while self.animating_chars:
@@ -141,7 +141,7 @@ class UnstableEffect(base_effect.Effect):
                     animating_char
                     for animating_char in self.animating_chars
                     if not animating_char.motion.current_coord == animating_char.motion.waypoints[waypoint_id].coord
-                    or not animating_char.animator.is_active_scene_complete()
+                    or not animating_char.animation.is_active_scene_complete()
                 ]
             else:
                 self.animating_chars = [
@@ -163,7 +163,7 @@ class UnstableEffect(base_effect.Effect):
                         character.motion.current_coord.column + column_offset,
                         character.motion.current_coord.row + row_offset,
                     )
-                    character.animator.step_animation()
+                    character.animation.step_animation()
                 self.terminal.print()
                 for character in self.terminal.characters:
                     character.motion.set_coordinate(
@@ -173,7 +173,7 @@ class UnstableEffect(base_effect.Effect):
                 rumble_mod_delay = max(rumble_mod_delay, 1)
             else:
                 for character in self.terminal.characters:
-                    character.animator.step_animation()
+                    character.animation.step_animation()
                 self.terminal.print()
 
             current_rumble_steps += 1
@@ -193,5 +193,5 @@ class UnstableEffect(base_effect.Effect):
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation."""
         for animating_char in self.animating_chars:
-            animating_char.animator.step_animation()
+            animating_char.animation.step_animation()
             animating_char.motion.move()

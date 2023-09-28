@@ -90,12 +90,12 @@ class NamedEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete()
+                if not animating_char.animation.is_active_scene_complete()
                 or not animating_char.motion.movement_complete()
             ]
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation."""
         for animating_char in self.animating_chars:
-            animating_char.animator.step_animation()
+            animating_char.animation.step_animation()
             animating_char.motion.move()

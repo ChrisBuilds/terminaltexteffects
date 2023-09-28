@@ -83,11 +83,11 @@ class BouncyBallsEffect(base_effect.Effect):
             if self.args.ball_colors:
                 color = random.choice(self.args.ball_colors)
             else:
-                color = character.animator.random_color()
+                color = character.animation.random_color()
             symbol = random.choice(ball_symbols)
-            character.animator.add_effect_to_scene("ball", symbol, color, 1)
+            character.animation.add_effect_to_scene("ball", symbol, color, 1)
             for step in graphics.gradient(color, self.args.final_color, 12):
-                character.animator.add_effect_to_scene("final", character.input_symbol, step, duration=10)
+                character.animation.add_effect_to_scene("final", character.input_symbol, step, duration=10)
             character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
             character.motion.new_waypoint(
                 "input_coord",
@@ -97,7 +97,7 @@ class BouncyBallsEffect(base_effect.Effect):
                 ease=self.args.easing,
             )
             character.motion.activate_waypoint("input_coord")
-            character.animator.activate_scene("ball")
+            character.animation.activate_scene("ball")
             character.event_handler.register_event(
                 character.event_handler.Event.WAYPOINT_REACHED,
                 "input_coord",
@@ -132,7 +132,7 @@ class BouncyBallsEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete()
+                if not animating_char.animation.is_active_scene_complete()
                 or not animating_char.motion.movement_complete()
             ]
             self.terminal.print()
@@ -140,5 +140,5 @@ class BouncyBallsEffect(base_effect.Effect):
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
-            animating_char.animator.step_animation()
+            animating_char.animation.step_animation()
             animating_char.motion.move()

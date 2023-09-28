@@ -191,14 +191,14 @@ class FireworksEffect(base_effect.Effect):
             for character in firework_shell:
                 # launch scene
                 for color in self.firework_colors:
-                    character.animator.add_effect_to_scene("launch", self.args.firework_symbol, shell_color, 2)
-                    character.animator.add_effect_to_scene("launch", self.args.firework_symbol, "FFFFFF", 1)
-                    character.animator.scenes["launch"].is_looping = True
+                    character.animation.add_effect_to_scene("launch", self.args.firework_symbol, shell_color, 2)
+                    character.animation.add_effect_to_scene("launch", self.args.firework_symbol, "FFFFFF", 1)
+                    character.animation.scenes["launch"].is_looping = True
                 # bloom scene
                 bloom_gradient = graphics.gradient(shell_color, self.args.final_color, 15)
                 for color in bloom_gradient:
-                    character.animator.add_effect_to_scene("bloom", character.input_symbol, color, 15)
-                character.animator.activate_scene("launch")
+                    character.animation.add_effect_to_scene("bloom", character.input_symbol, color, 15)
+                character.animation.activate_scene("launch")
                 character.event_handler.register_event(
                     character.event_handler.Event.WAYPOINT_REACHED,
                     "apex",
@@ -230,7 +230,7 @@ class FireworksEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete()
+                if not animating_char.animation.is_active_scene_complete()
                 or not animating_char.motion.movement_complete()
             ]
         self.terminal.print()
@@ -238,5 +238,5 @@ class FireworksEffect(base_effect.Effect):
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation."""
         for animating_char in self.animating_chars:
-            animating_char.animator.step_animation()
+            animating_char.animation.step_animation()
             animating_char.motion.move()

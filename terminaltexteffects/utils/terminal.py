@@ -100,8 +100,8 @@ class Terminal:
             for column, symbol in enumerate(line):
                 if symbol != " ":
                     character = EffectCharacter(symbol, column + 1, input_height - row, self)
-                    character.animator.use_xterm_colors = use_xterm_colors
-                    character.animator.no_color = no_color
+                    character.animation.use_xterm_colors = use_xterm_colors
+                    character.animation.no_color = no_color
                     input_characters.append(character)
         return input_characters
 

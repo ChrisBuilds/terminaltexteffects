@@ -78,25 +78,25 @@ class DecryptEffect(base_effect.Effect):
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
             duration = 3
-            character.animator.add_effect_to_scene("fast_decrypt", symbol, self.ciphertext_color, duration)
+            character.animation.add_effect_to_scene("fast_decrypt", symbol, self.ciphertext_color, duration)
         for _ in range(random.randint(1, 15)):  # 1-15 longer duration units
             symbol = random.choice(self.encrypted_symbols)
             if random.randint(0, 100) <= 30:  # 30% chance of extra long duration
                 duration = random.randrange(75, 225)  # wide long duration range reduces 'waves' in the animation
             else:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
-            character.animator.add_effect_to_scene("slow_decrypt", symbol, self.ciphertext_color, duration)
+            character.animation.add_effect_to_scene("slow_decrypt", symbol, self.ciphertext_color, duration)
         for color in self.character_discovered_gradient:
-            character.animator.add_effect_to_scene("discovered", character.input_symbol, color, 20)
+            character.animation.add_effect_to_scene("discovered", character.input_symbol, color, 20)
 
-        character.animator.add_effect_to_scene("discovered", character.input_symbol, self.plaintext_color, 1)
+        character.animation.add_effect_to_scene("discovered", character.input_symbol, self.plaintext_color, 1)
 
     def prepare_data_for_type_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
         for character in self.terminal.characters:
             for block_char in ["▉", "▓", "▒", "░"]:
-                character.animator.add_effect_to_scene("typing", block_char, self.ciphertext_color, 2)
-            character.animator.add_effect_to_scene(
+                character.animation.add_effect_to_scene("typing", block_char, self.ciphertext_color, 2)
+            character.animation.add_effect_to_scene(
                 "typing", random.choice(self.encrypted_symbols), self.ciphertext_color, 2
             )
             self.pending_chars.append(character)
@@ -117,7 +117,7 @@ class DecryptEffect(base_effect.Effect):
                 character.event_handler.Action.ACTIVATE_SCENE,
                 "discovered",
             )
-            character.animator.activate_scene("fast_decrypt")
+            character.animation.activate_scene("fast_decrypt")
             self.animating_chars.append(character)
 
     def run(self) -> None:
@@ -135,14 +135,14 @@ class DecryptEffect(base_effect.Effect):
                 if random.randint(0, 100) <= 75:
                     next_character = self.pending_chars.pop(0)
                     next_character.is_active = True
-                    next_character.animator.activate_scene("typing")
+                    next_character.animation.activate_scene("typing")
                     self.animating_chars.append(next_character)
             self.animate_chars()
             # remove completed chars from animating chars
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete()
+                if not animating_char.animation.is_active_scene_complete()
             ]
             self.terminal.print()
 
@@ -152,11 +152,11 @@ class DecryptEffect(base_effect.Effect):
             self.animating_chars = [
                 animating_char
                 for animating_char in self.animating_chars
-                if not animating_char.animator.is_active_scene_complete()
+                if not animating_char.animation.is_active_scene_complete()
             ]
             self.terminal.print()
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
-            animating_char.animator.step_animation()
+            animating_char.animation.step_animation()
