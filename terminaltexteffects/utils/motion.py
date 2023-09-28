@@ -7,7 +7,7 @@ if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class Coord:
     """A coordinate with row and column values.
 
@@ -224,10 +224,8 @@ class Motion:
     def move(self) -> None:
         """Moves the character one step closer to the target position based on an easing function if present, otherwise linearly."""
         # preserve previous coordinate to allow for clearing the location in the terminal
-        self.previous_coord.column, self.previous_coord.row = (
-            self.current_coord.column,
-            self.current_coord.row,
-        )
+        self.previous_coord = Coord(self.current_coord.column, self.current_coord.row)
+
         if not self.active_waypoint:
             return
         if self.inter_waypoint_current_step < self.inter_waypoint_max_steps:
