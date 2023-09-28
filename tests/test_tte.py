@@ -15,6 +15,7 @@ from terminaltexteffects.effects import (
     effect_verticalslice,
     effect_burn,
     effect_fireworks,
+    effect_unstable,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils.easing import Ease
@@ -52,6 +53,21 @@ def make_args() -> Namespace:
     args.movement_speed = 3
     args.easing = Ease["IN_SINE"]
     return args
+
+
+def test_unstable_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.initial_color = "ffffff"
+        args.unstable_color = "ff9200"
+        args.final_color = "ffffff"
+        args.explosion_ease = Ease["OUT_EXPO"]
+        args.explosion_speed = 0.75
+        args.reassembly_ease = Ease["OUT_EXPO"]
+        args.reassembly_speed = 0.75
+        terminal = Terminal(input_data, args)
+        unstable_effect = effect_unstable.UnstableEffect(terminal, args)
+        unstable_effect.run()
 
 
 def test_pour_effect() -> None:
