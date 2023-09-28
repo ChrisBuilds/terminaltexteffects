@@ -15,6 +15,8 @@
 * Removed shootingstar effect. It was not particularly interesting.
 * Coord type is now hashable and frozen.
 * Waypoints are hashable. Can be compared for equality based on row, col pair.
+* Scenes can be compared for equality based on id.
+* Terminal maintains an input_coord tuple[row, col] -> EffectCharacter map called character_by_input_coord.
 
 ### Bug Fixes
 * Fixed animating_chars filter in effect_template to properly remove completed characters.
