@@ -68,14 +68,15 @@ Example: terminaltexteffects bouncyball -a 0.01 --ball-colors 00ff00 ff0000 0000
 
 
 class BouncyBallsEffect(base_effect.Effect):
-    """Effect that display the text as bouncy balls falling from the top of the output area."""
+    """Effect that displays the text as bouncy balls falling from the top of the output area."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
         super().__init__(terminal, args)
         self.group_by_row: dict[int, list[base_character.EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by sorting by row and assigning the star symbol."""
+        """Prepares the data for the effect by assigning colors and waypoints and
+        organizing the characters by row."""
         ball_symbols = ("*", "o", "O", "0", ".")
         for character in self.terminal.characters:
             character.is_active = False
