@@ -128,6 +128,12 @@ Effect:
 #### VERTICALSLICE
 ![verticalslice_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/237e36c5-cb4e-4866-9a33-b7f27a2907dc)
 
+## In-Development Preview
+Any effects shown below are in development and will be available in the next release.
+
+#### Unstable
+![unstable_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2e4b6e51-2b65-4765-a41c-92542981c77c)
+
 
 ## License
 
