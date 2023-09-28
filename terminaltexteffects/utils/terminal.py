@@ -40,6 +40,9 @@ class Terminal:
         self.characters = [
             character for character in self.characters if character.input_coord.row <= self.output_area.top
         ]
+        self.character_by_input_coord: dict[tuple[int, int], EffectCharacter] = {
+            (character.input_coord.row, character.input_coord.column): character for character in self.characters
+        }
         self.animation_rate = args.animation_rate
         self.last_time_printed = time.time()
         self._update_terminal_state()
