@@ -24,17 +24,22 @@ class Waypoint:
     """A coordinate, speed, and easing function.
 
     Args:
-        waypoint_id (str): unique identifier for the waypoint
+        id (str): unique identifier for the waypoint
         coord (Coord): coordinate
         speed (float): character speed at the waypoint
         ease (Ease): easing function for character movement. Defaults to None.
         next_waypoint (Waypoint): next waypoint to move to. Defaults to None.
     """
 
-    waypoint_id: str
+    id: str
     coord: Coord
     speed: float = 1.0
     ease: easing.Ease | None = None
+
+    def __eq__(self, other: "Waypoint") -> bool:
+        if not isinstance(other, Waypoint):
+            return NotImplemented
+        return self.id == other.id and self.coord == other.coord
 
 
 class Motion:
@@ -242,5 +247,5 @@ class Motion:
 
         if self.inter_waypoint_current_step == self.inter_waypoint_max_steps:
             self.character.event_handler.handle_event(
-                self.character.event_handler.Event.WAYPOINT_REACHED, self.active_waypoint.waypoint_id
+                self.character.event_handler.Event.WAYPOINT_REACHED, self.active_waypoint.id
             )
