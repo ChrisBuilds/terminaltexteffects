@@ -1,9 +1,12 @@
 import argparse
 import importlib
 import pkgutil
+import sys
 
 import terminaltexteffects.effects
 import terminaltexteffects.utils.terminal as term
+import terminaltexteffects.utils.ansitools as ansitools
+import terminaltexteffects.utils.argtypes as argtypes
 
 
 def main():
@@ -22,6 +25,18 @@ def main():
         "--no-color",
         action="store_true",
         help="Disable all colors in the effect.",
+        default=False,
+    )
+    parser.add_argument(
+        "--tab-width",
+        type=argtypes.positive_int,
+        help="Number of spaces to use for a tab character.",
+        default=4,
+    )
+    parser.add_argument(
+        "--no-wrap",
+        action="store_true",
+        help="Disable wrapping of text.",
         default=False,
     )
     subparsers = parser.add_subparsers(
@@ -46,9 +61,14 @@ def main():
     if not input_data.strip():
         print("NO INPUT.")
     else:
-        terminal = term.Terminal(input_data, args)
-        effect = args.effect_class(terminal, args)
-        effect.run()
+        try:
+            terminal = term.Terminal(input_data, args)
+            effect = args.effect_class(terminal, args)
+            effect.run()
+        except Exception as e:
+            raise Exception(f"Error running effect: {e}")
+        finally:
+            sys.stdout.write(ansitools.SHOW_CURSOR())
 
 
 if __name__ == "__main__":
