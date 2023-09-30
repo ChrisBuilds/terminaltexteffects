@@ -42,7 +42,8 @@ t5 = """
 89abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567
 9abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345678
 """
-test_inputs = [t1, t2, t3, t4, t5]
+t6 = """Tabs\tTabs\t\tTabs\t\t\tTabs"""
+test_inputs = [t1, t2, t3, t4, t5, t6]
 
 
 def make_args() -> Namespace:
