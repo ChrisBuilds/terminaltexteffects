@@ -32,13 +32,17 @@ class Terminal:
 
     def __init__(self, input_data: str, args: argparse.Namespace):
         self.input_data = input_data
+        self.args = args
         self.width, self.height = self._get_terminal_dimensions()
         self.characters = self._decompose_input(args.xterm_colors, args.no_color)
         self.input_width = max([character.input_coord.column for character in self.characters])
         self.input_height = max([character.input_coord.row for character in self.characters])
         self.output_area = OutputArea(min(self.height - 1, self.input_height), self.input_width)
         self.characters = [
-            character for character in self.characters if character.input_coord.row <= self.output_area.top
+            character
+            for character in self.characters
+            if character.input_coord.row <= self.output_area.top
+            and character.input_coord.column <= self.output_area.right
         ]
         self.character_by_input_coord: dict[tuple[int, int], EffectCharacter] = {
             (character.input_coord.row, character.input_coord.column): character for character in self.characters
@@ -88,18 +92,24 @@ class Terminal:
         Returns:
             list[Character]: list of EffectCharacter objects
         """
-        wrapped_lines = []
+        # handle whitespace characters
+        self.input_data = self.input_data.replace("\t", " " * self.args.tab_width)
+        formatted_lines = []
         if not self.input_data.strip():
             self.input_data = "No Input."
         input_lines = self.input_data.splitlines()
-        for line in input_lines:
-            while len(line) > self.width:
-                wrapped_lines.append(line[: self.width])
-                line = line[self.width :]
-            wrapped_lines.append(line)
-        input_height = len(wrapped_lines)
+        if not self.args.no_wrap:
+            for line in input_lines:
+                while len(line) > self.width:
+                    formatted_lines.append(line[: self.width])
+                    line = line[self.width :]
+                formatted_lines.append(line)
+        else:
+            for line in input_lines:
+                formatted_lines.append(line[: self.width])
+        input_height = len(formatted_lines)
         input_characters = []
-        for row, line in enumerate(wrapped_lines):
+        for row, line in enumerate(formatted_lines):
             for column, symbol in enumerate(line):
                 if symbol != " ":
                     character = EffectCharacter(symbol, column + 1, input_height - row, self)
@@ -130,6 +140,7 @@ class Terminal:
 
     def _prep_outputarea(self) -> None:
         """Prepares the terminal for the effect by adding empty lines above."""
+        sys.stdout.write(ansitools.HIDE_CURSOR())
         print("\n" * self.output_area.top)
 
     def print(self):
