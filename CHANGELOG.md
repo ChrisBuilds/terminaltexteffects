@@ -14,7 +14,7 @@
 
 * --tab-width argument can be used to specify the number of spaces used in place of tab characters.
 ### Changes
-* Added Easing Functions help output to fireworks effect epilog.
+* Added Easing Functions help output for fireworks effect.
 * Updated spray effect help output.
 * Removed shootingstar effect. It was not particularly interesting.
 * Coord type is now hashable and frozen.
