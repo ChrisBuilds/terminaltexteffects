@@ -19,6 +19,24 @@ def DEC_RESTORE_CURSOR_POSITION() -> str:
     return "\0338"
 
 
+def HIDE_CURSOR() -> str:
+    """Hides the cursor.
+
+    Returns:
+        str: ANSI escape code
+    """
+    return "\033[?25l"
+
+
+def SHOW_CURSOR() -> str:
+    """Shows the cursor.
+
+    Returns:
+        str: ANSI escape code
+    """
+    return "\033[?25h"
+
+
 def MOVE_CURSOR_UP(y: int) -> str:
     """Moves the cursor up y lines.
 
