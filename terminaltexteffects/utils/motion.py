@@ -246,6 +246,8 @@ class Motion:
             self.current_coord = self._point_at_distance(distance_to_move)
 
         if self.inter_waypoint_current_step == self.inter_waypoint_max_steps:
+            waypoint_reached_id = self.active_waypoint.id
+            self.deactivate_waypoint()
             self.character.event_handler.handle_event(
-                self.character.event_handler.Event.WAYPOINT_REACHED, self.active_waypoint.id
+                self.character.event_handler.Event.WAYPOINT_REACHED, waypoint_reached_id
             )
