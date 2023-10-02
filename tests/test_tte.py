@@ -49,7 +49,9 @@ test_inputs = [t1, t2, t3, t4, t5, t6]
 def make_args() -> Namespace:
     args = Namespace()
     args.no_color = False
+    args.no_wrap = False
     args.xterm_colors = False
+    args.tab_width = 4
     args.animation_rate = 0
     args.movement_speed = 3
     args.easing = Ease["IN_SINE"]
