@@ -13,6 +13,7 @@
 * --no-wrap argument prevents line wrapping.
 
 * --tab-width argument can be used to specify the number of spaces used in place of tab characters.
+
 ### Changes
 * Added Easing Functions help output for fireworks effect.
 * Updated spray effect help output.
@@ -25,6 +26,8 @@
 
 ### Bug Fixes
 * Fixed animating_chars filter in effect_template to properly remove completed characters.
+* Initial symbol assignment when activating a scene no longer increases played_frames count.
+* Waypoints and Animations completed are deactivated to prevent repeated event triggering.
 
 ## 0.2.1
 
