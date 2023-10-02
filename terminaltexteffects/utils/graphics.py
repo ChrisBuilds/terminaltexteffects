@@ -118,6 +118,17 @@ class Scene:
         """
         self.sequences.append(Sequence(graphicaleffect, duration))
 
+    def activate(self) -> str:
+        """Activates the Scene.
+
+        Returns:
+            str: the next symbol in the Scene
+        """
+        if self.sequences:
+            return self.sequences[0].symbol
+        else:
+            raise ValueError("Scene has no sequences.")
+
     def get_next_symbol(self) -> str:
         """Returns the next symbol in the Scene.
 
@@ -166,13 +177,17 @@ class Animation:
         self.xterm_color_map: dict[str, int] = {}
 
     def add_effect_to_scene(
-        self, scene_id: str, symbol: str | None = None, color: int | str | None = None, duration: int = 1
+        self,
+        scene_id: str,
+        symbol: str | None | GraphicalEffect = None,
+        color: int | str | None = None,
+        duration: int = 1,
     ) -> None:
         """Add a graphical effect to a scene. If the scene doesn't exist, it will be created.
 
         Args:
             scene_id (str): ID of the scene to which the effect will be added
-            symbol (str): Symbol to display, if None, the character's input symbol will be used
+            symbol (str | GraphicalEffect): Symbol to display, if None, the character's input symbol will be used. If a GraphicalEffect is passed, the color and graphical modes will be used.
             color (int | str): XTerm color code (0-255) or hex color code (e.g. ffffff)
             duration (int): Number of animation steps to display the effect, defaults to 1. Minimum 1.
         """
@@ -193,7 +208,10 @@ class Animation:
                     color = xterm_color
         else:
             color = None
-        graphicaleffect = GraphicalEffect(symbol, color=color)
+        if isinstance(symbol, str):
+            graphicaleffect = GraphicalEffect(symbol, color=color)
+        else:
+            graphicaleffect = symbol
         self.scenes[scene_id].add_sequence(graphicaleffect, duration)
 
     def active_scene_is_complete(self) -> bool:
@@ -224,8 +242,11 @@ class Animation:
         if self.active_scene and self.active_scene.sequences:
             self.character.symbol = self.active_scene.get_next_symbol()
             if self.active_scene_is_complete():
+                self.active_scene.reset_scene()
+                completed_scene_id = self.active_scene.id
+                self.active_scene = None
                 self.character.event_handler.handle_event(
-                    self.character.event_handler.Event.SCENE_COMPLETE, self.active_scene.id
+                    self.character.event_handler.Event.SCENE_COMPLETE, completed_scene_id
                 )
 
     def reset_scene(self, scene_id: str) -> None:
@@ -245,7 +266,7 @@ class Animation:
         """
         if scene_id in self.scenes:
             self.active_scene = self.scenes[scene_id]
-            self.step_animation()
+            self.character.symbol = self.active_scene.activate()
         else:
             raise ValueError(f"Scene {scene_id} does not exist")
 
