@@ -62,6 +62,26 @@ class Motion:
         self.inter_waypoint_max_steps: int = 0
         self.inter_waypoint_current_step: int = 0
 
+    @staticmethod
+    def find_points_on_circle(origin: tuple[int, int], radius: int, num_points: int) -> Coord:
+        """Finds points on a circle.
+
+        Args:
+            origin (tuple[int, int]): origin of the circle
+            radius (int): radius of the circle
+            num_points (int): number of points to find
+
+        Returns:
+            list (Coord): list of Coord points on the circle
+        """
+        points = []
+        for i in range(num_points):
+            angle = 2 * math.pi * i / num_points
+            x = origin[0] + radius * math.cos(angle)
+            y = origin[1] + radius * math.sin(angle)
+            points.append(Coord(round(x), round(y)))
+        return points
+
     def _distance(self, column1: int, row1: int, column2: int, row2: int) -> float:
         """Returns the distance between two coordinates.
 
@@ -95,25 +115,6 @@ class Motion:
             ((1 - t) * self.origin_waypoint.coord.row + t * self.active_waypoint.coord.row),
         )
         return Coord(round(next_column), round(next_row))
-
-    def find_points_on_circle(self, origin: tuple[int, int], radius: int, num_points: int) -> Coord:
-        """Finds points on a circle.
-
-        Args:
-            origin (tuple[int, int]): origin of the circle
-            radius (int): radius of the circle
-            num_points (int): number of points to find
-
-        Returns:
-            list (Coord): list of Coord points on the circle
-        """
-        points = []
-        for i in range(num_points):
-            angle = 2 * math.pi * i / num_points
-            x = origin[0] + radius * math.cos(angle)
-            y = origin[1] + radius * math.sin(angle)
-            points.append(Coord(round(x), round(y)))
-        return points
 
     def set_coordinate(self, column: int, row: int) -> None:
         """Sets the current coordinate to the given coordinate.
