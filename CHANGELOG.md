@@ -10,6 +10,8 @@
 * Unstable effect. Spawn characters jumbled, explode them to the edge of the output area, 
   then reassemble them in the correct layout.
 
+* Bubble effect. Characters are formed into bubbles and fall down the screen before popping.
+
 * --no-wrap argument prevents line wrapping.
 
 * --tab-width argument can be used to specify the number of spaces used in place of tab characters.
@@ -23,11 +25,13 @@
 * Scenes can be compared for equality based on id.
 * Terminal maintains an input_coord tuple[row, col] -> EffectCharacter map called character_by_input_coord.
 * The terminal cursor is now hidden during the effect.
+* The find_points_on_circle method in the motion module is now a static method.
 
 ### Bug Fixes
 * Fixed animating_chars filter in effect_template to properly remove completed characters.
 * Initial symbol assignment when activating a scene no longer increases played_frames count.
 * Waypoints and Animations completed are deactivated to prevent repeated event triggering.
+* Fixed step_animation in graphics module handling of looping animations. It will no longer deactivate the animation.
 
 ## 0.2.1
 
