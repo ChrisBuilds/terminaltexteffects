@@ -242,9 +242,11 @@ class Animation:
         if self.active_scene and self.active_scene.sequences:
             self.character.symbol = self.active_scene.get_next_symbol()
             if self.active_scene_is_complete():
-                self.active_scene.reset_scene()
                 completed_scene_id = self.active_scene.id
-                self.active_scene = None
+                if not self.active_scene.is_looping:
+                    self.active_scene.reset_scene()
+                    self.active_scene = None
+
                 self.character.event_handler.handle_event(
                     self.character.event_handler.Event.SCENE_COMPLETE, completed_scene_id
                 )
