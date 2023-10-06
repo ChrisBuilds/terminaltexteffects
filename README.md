@@ -41,7 +41,9 @@ TerminalTextEffects is a collection of visual effects that run inline in the ter
 
 ## Requirements
 
-TerminalTextEffects is written in Python and does not require any 3rd party modules. Terminal interactions use standard ANSI terminal sequences and should work in most modern terminals. 
+TerminalTextEffects is written in Python and does not require any 3rd party modules. Terminal interactions use standard ANSI terminal sequences and should work in most modern terminals.
+
+Note: Windows Terminal performance is slow for some effects.
 
 ## Installation
 
