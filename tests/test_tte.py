@@ -16,6 +16,7 @@ from terminaltexteffects.effects import (
     effect_burn,
     effect_fireworks,
     effect_unstable,
+    effect_bubbles,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils.easing import Ease
@@ -56,6 +57,18 @@ def make_args() -> Namespace:
     args.movement_speed = 3
     args.easing = Ease["IN_SINE"]
     return args
+
+
+def test_bubbles_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.final_color = "ffffff"
+        args.pop_color = "ff0000"
+        args.bubble_speed = 0.1
+        args.bubble_delay = 1
+        terminal = Terminal(input_data, args)
+        bubbles_effect = effect_bubbles.BubblesEffect(terminal, args)
+        bubbles_effect.run()
 
 
 def test_unstable_effect() -> None:
