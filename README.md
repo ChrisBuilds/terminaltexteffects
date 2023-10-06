@@ -134,6 +134,11 @@ Any effects shown below are in development and will be available in the next rel
 #### Unstable
 ![unstable_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2e4b6e51-2b65-4765-a41c-92542981c77c)
 
+#### Bubbles
+![bubbles_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/e12a6f2a-a8f8-47d8-8d42-8cff621db24e)
+
+#### Bouncyballs
+![bouncyballs_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/bb62112c-a6b7-466f-a7c8-ee66f528616b)
 
 ## License
 
