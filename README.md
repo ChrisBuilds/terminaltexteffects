@@ -23,6 +23,7 @@
 * [Usage](#usage)
 * [Options](#options)
 * [Examples](#examples)
+* [In-Development Preview](#in-development-preview)
 * [License](#license)
 
 
@@ -64,12 +65,17 @@ options:
   -h, --help            show this help message and exit
   --xterm-colors        Convert any colors specified in RBG hex to the closest XTerm-256 color.
   --no-color            Disable all colors in the effect.
+  --tab-width TAB_WIDTH
+                        Number of spaces to use for a tab character.
+  --no-wrap             Disable wrapping of text.
 
 Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
-  {burn,columnslide,decrypt,expand,fireworks,pour,rain,randomsequence,rowmerge,rowslide,scattered,shootingstar,spray,test,verticalslice}
+  {bouncyballs,bubbles,burn,columnslide,decrypt,expand,fireworks,pour,rain,randomsequence,rowmerge,rowslide,scattered,spray,unstable,verticalslice}
                         Available Effects
+    bouncyballs         Characters are bouncy balls falling from the top of the output area.
+    bubbles             Characters are formed into bubbles that float down and pop.
     burn                Burns vertically in the output area.
     columnslide         Slides each column into place from the outside to the middle.
     decrypt             Display a movie style decryption effect.
@@ -81,9 +87,8 @@ Effect:
     rowmerge            Merges rows of characters.
     rowslide            Slides each row into place.
     scattered           Move the characters into place from random starting locations.
-    shootingstar        Displays the text as a falling star toward the final coordinate of the character.
     spray               Draws the characters spawning at varying rates from a single point.
-    test                effect_description
+    unstable            Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.
     verticalslice       Slices the input in half vertically and slides it into place from opposite directions.
 ```
 
