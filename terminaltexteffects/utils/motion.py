@@ -127,7 +127,7 @@ class Motion:
 
     def new_waypoint(
         self, waypoint_id: str, column: int, row: int, speed: float = 1, ease: easing.Ease | None = None
-    ) -> None:
+    ) -> Waypoint:
         """Appends a new waypoint to the waypoints dictionary.
 
         Args:
@@ -136,8 +136,13 @@ class Motion:
             row (int): row
             speed (float): speed
             ease (Ease| None): easing function for character movement. Defaults to None.
+
+        Returns:
+            Waypoint: The new waypoint.
         """
-        self.waypoints[waypoint_id] = Waypoint(waypoint_id, Coord(column, row), speed, ease)
+        new_waypoint = Waypoint(waypoint_id, Coord(column, row), speed, ease)
+        self.waypoints[waypoint_id] = new_waypoint
+        return new_waypoint
 
     def movement_is_complete(self) -> bool:
         """Returns whether the character has reached the final coordinate.
