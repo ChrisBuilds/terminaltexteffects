@@ -118,10 +118,10 @@ class UnstableEffect(base_effect.Effect):
                 speed=0.75,
                 ease=self.args.reassembly_ease,
             )
-            unstable_gradient = graphics.gradient(self.args.initial_color, self.args.unstable_color, 25)
+            unstable_gradient = graphics.Gradient(self.args.initial_color, self.args.unstable_color, 25)
             for step in unstable_gradient:
                 character.animation.add_effect_to_scene("rumble", character.input_symbol, step, 10)
-            final_color = graphics.gradient(self.args.unstable_color, self.args.final_color, 12)
+            final_color = graphics.Gradient(self.args.unstable_color, self.args.final_color, 12)
             for step in final_color:
                 character.animation.add_effect_to_scene("final", character.input_symbol, step, 5)
             character.animation.activate_scene("rumble")

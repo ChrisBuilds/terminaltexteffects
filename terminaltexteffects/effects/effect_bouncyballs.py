@@ -86,7 +86,7 @@ class BouncyBallsEffect(base_effect.Effect):
                 color = character.animation.random_color()
             symbol = random.choice(ball_symbols)
             character.animation.add_effect_to_scene("ball", symbol, color, 1)
-            for step in graphics.gradient(color, self.args.final_color, 12):
+            for step in graphics.Gradient(color, self.args.final_color, 12):
                 character.animation.add_effect_to_scene("final", character.input_symbol, step, duration=10)
             character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
             character.motion.new_waypoint(

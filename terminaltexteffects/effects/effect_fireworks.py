@@ -195,7 +195,7 @@ class FireworksEffect(base_effect.Effect):
                     character.animation.add_effect_to_scene("launch", self.args.firework_symbol, "FFFFFF", 1)
                     character.animation.scenes["launch"].is_looping = True
                 # bloom scene
-                bloom_gradient = graphics.gradient(shell_color, self.args.final_color, 15)
+                bloom_gradient = graphics.Gradient(shell_color, self.args.final_color, 15)
                 for color in bloom_gradient:
                     character.animation.add_effect_to_scene("bloom", character.input_symbol, color, 15)
                 character.animation.activate_scene("launch")

@@ -113,7 +113,7 @@ class Bubble:
             self.anchor_char.motion.activate_waypoint("floor")
 
     def make_gradients(self) -> None:
-        rainbow_gradient = list(self.effect.rainbow_gradient)
+        rainbow_gradient = list(self.effect.rainbow_gradient.colors)
         gradient_offset = 0
         for character in self.characters:
             for step in rainbow_gradient:
@@ -167,20 +167,20 @@ class BubblesEffect(base_effect.Effect):
         blue = "487de7"
         indigo = "4b369d"
         violet = "70369d"
-        red_orange = graphics.gradient(red, orange, 5)
-        orange_yellow = graphics.gradient(orange, yellow, 5)
-        yellow_green = graphics.gradient(yellow, green, 5)
-        green_blue = graphics.gradient(green, blue, 5)
-        blue_indigo = graphics.gradient(blue, indigo, 5)
-        indigo_violet = graphics.gradient(indigo, violet, 5)
-        violet_red = graphics.gradient(violet, red, 5)
+        red_orange = graphics.Gradient(red, orange, 5)
+        orange_yellow = graphics.Gradient(orange, yellow, 5)
+        yellow_green = graphics.Gradient(yellow, green, 5)
+        green_blue = graphics.Gradient(green, blue, 5)
+        blue_indigo = graphics.Gradient(blue, indigo, 5)
+        indigo_violet = graphics.Gradient(indigo, violet, 5)
+        violet_red = graphics.Gradient(violet, red, 5)
         self.rainbow_gradient = (
             red_orange + orange_yellow + yellow_green + green_blue + blue_indigo + indigo_violet + violet_red
         )
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
-        final_gradient = graphics.gradient(self.args.pop_color, self.args.final_color, 10)
+        final_gradient = graphics.Gradient(self.args.pop_color, self.args.final_color, 10)
         for character in self.terminal.characters:
             character.animation.add_effect_to_scene("pop_1", "*", color=self.args.pop_color, duration=25)
             character.animation.add_effect_to_scene("pop_2", "'", color=self.args.pop_color, duration=25)

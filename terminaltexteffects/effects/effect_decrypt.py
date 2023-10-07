@@ -60,7 +60,7 @@ class DecryptEffect(base_effect.Effect):
         super().__init__(terminal, args)
         self.ciphertext_color = args.ciphertext_color
         self.plaintext_color = args.plaintext_color
-        self.character_discovered_gradient = graphics.gradient("ffffff", self.plaintext_color, 5)
+        self.character_discovered_gradient: graphics.Gradient = graphics.Gradient("ffffff", self.plaintext_color, 5)
         self.encrypted_symbols: list[str] = []
         self.make_encrypted_symbols()
 

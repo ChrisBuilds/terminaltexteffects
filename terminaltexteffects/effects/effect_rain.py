@@ -80,7 +80,7 @@ class RainEffect(base_effect.Effect):
         for character in self.terminal.characters:
             raindrop_color = random.choice(rain_colors)
             character.animation.add_effect_to_scene("rain", random.choice(rain_characters), raindrop_color, 1)
-            raindrop_gradient = graphics.gradient(raindrop_color, self.args.final_color, 7)
+            raindrop_gradient = graphics.Gradient(raindrop_color, self.args.final_color, 7)
             for color in raindrop_gradient:
                 character.animation.add_effect_to_scene("fade", character.input_symbol, color, 5)
             character.animation.activate_scene("rain")
