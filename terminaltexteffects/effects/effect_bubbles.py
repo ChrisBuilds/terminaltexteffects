@@ -32,6 +32,18 @@ Example: terminaltexteffects bubbles -a 0.01 --pop-color ff9600 --final-color 25
         help="Time, in seconds, between animation steps.",
     )
     effect_parser.add_argument(
+        "--no-rainbow",
+        action="store_true",
+        help="If set, the bubbles will not be colored with a rainbow gradient.",
+    )
+    effect_parser.add_argument(
+        "--bubble-color",
+        type=argtypes.valid_color,
+        default="ffffff",
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Color for the bubbles. Ignored if --no-rainbow is left as default False.",
+    )
+    effect_parser.add_argument(
         "--pop-color",
         type=argtypes.valid_color,
         default="ffffff",
@@ -52,7 +64,6 @@ Example: terminaltexteffects bubbles -a 0.01 --pop-color ff9600 --final-color 25
         metavar="(float > 0)",
         help="Speed of the floating bubbles. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
     )
-
     effect_parser.add_argument(
         "--bubble-delay",
         type=argtypes.positive_int,
@@ -60,7 +71,6 @@ Example: terminaltexteffects bubbles -a 0.01 --pop-color ff9600 --final-color 25
         metavar="(int > 0)",
         help="Number of animation steps between bubbles.",
     )
-
     effect_parser.add_argument(
         "--easing",
         default="IN_OUT_SINE",
@@ -113,16 +123,21 @@ class Bubble:
             self.anchor_char.motion.activate_waypoint("floor")
 
     def make_gradients(self) -> None:
-        rainbow_gradient = list(self.effect.rainbow_gradient.colors)
-        gradient_offset = 0
-        for character in self.characters:
-            for step in rainbow_gradient:
-                character.animation.add_effect_to_scene("sheen", color=step, duration=5)
-            gradient_offset += 2
-            gradient_offset %= len(rainbow_gradient)
-            rainbow_gradient = rainbow_gradient[gradient_offset:] + rainbow_gradient[:gradient_offset]
-            character.animation.activate_scene("sheen")
-            character.animation.active_scene.is_looping = True
+        if self.effect.args.no_rainbow:
+            for character in self.characters:
+                character.animation.add_effect_to_scene("sheen", color=self.effect.args.bubble_color, duration=1)
+                character.animation.activate_scene("sheen")
+        else:
+            rainbow_gradient = list(self.effect.rainbow_gradient.colors)
+            gradient_offset = 0
+            for character in self.characters:
+                for step in rainbow_gradient:
+                    character.animation.add_effect_to_scene("sheen", color=step, duration=5)
+                gradient_offset += 2
+                gradient_offset %= len(rainbow_gradient)
+                rainbow_gradient = rainbow_gradient[gradient_offset:] + rainbow_gradient[:gradient_offset]
+                character.animation.activate_scene("sheen")
+                character.animation.active_scene.is_looping = True
 
     def pop(self) -> None:
         char: base_character.EffectCharacter
