@@ -26,6 +26,10 @@ class OutputArea:
     bottom: int = 1
     left: int = 1
 
+    def __post_init__(self):
+        self.center_row = max(self.top // 2, 1)
+        self.center_column = max(self.right // 2, 1)
+
 
 class Terminal:
     """A class for managing the terminal state and output."""
