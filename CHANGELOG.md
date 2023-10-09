@@ -12,6 +12,10 @@
 
 * Bubble effect. Characters are formed into bubbles and fall down the screen before popping.
 
+* Middleout effect. Characters start as a single character in the center of the output area. A row or column
+  is expanded in the center of the screen, then the entire output is expanded from this row/column. Expansion
+  from row/column is determined by the --expand-direction argument.
+
 * --no-wrap argument prevents line wrapping.
 
 * --tab-width argument can be used to specify the number of spaces used in place of tab characters.
@@ -26,6 +30,7 @@
 * Terminal maintains an input_coord tuple[row, col] -> EffectCharacter map called character_by_input_coord.
 * The terminal cursor is now hidden during the effect.
 * The find_points_on_circle method in the motion module is now a static method.
+* Terminal.OutputArea has center_row and center_column attributes.
 
 ### Bug Fixes
 * Fixed animating_chars filter in effect_template to properly remove completed characters.
