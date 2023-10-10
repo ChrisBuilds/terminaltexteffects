@@ -1,10 +1,9 @@
 import argparse
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_character, base_effect
-from terminaltexteffects.base_character import EventHandler
+from terminaltexteffects import base_effect
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, easing
+from terminaltexteffects.utils import graphics, argtypes
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:

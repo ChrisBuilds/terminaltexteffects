@@ -5,8 +5,8 @@ import random
 from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_character, base_effect
-from terminaltexteffects.utils import graphics, motion
+from terminaltexteffects import base_effect
+from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.terminal import Terminal
 
 
