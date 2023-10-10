@@ -17,6 +17,7 @@ from terminaltexteffects.effects import (
     effect_fireworks,
     effect_unstable,
     effect_bubbles,
+    effect_middleout,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils.easing import Ease
@@ -57,6 +58,22 @@ def make_args() -> Namespace:
     args.movement_speed = 3
     args.easing = Ease["IN_SINE"]
     return args
+
+
+def test_middleout_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.starting_color = "ffffff"
+        args.center_expand_color = "00ff00"
+        args.full_expand_color = "0000ff"
+        args.expand_direction = "vertical"
+        args.center_movement_speed = 0.35
+        args.full_movement_speed = 0.35
+        args.center_easing = Ease["IN_OUT_SINE"]
+        args.full_easing = Ease["IN_OUT_SINE"]
+        terminal = Terminal(input_data, args)
+        middleout_effect = effect_middleout.MiddleoutEffect(terminal, args)
+        middleout_effect.run()
 
 
 def test_bubbles_effect() -> None:
