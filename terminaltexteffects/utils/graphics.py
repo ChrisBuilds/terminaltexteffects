@@ -193,6 +193,7 @@ class Scene:
     id: str
     sequences: list[Sequence] = field(default_factory=list)
     is_looping: bool = False
+    waypoint_sync_id: str | None = None
 
     def __post_init__(self):
         self.played_sequences = []
@@ -247,6 +248,7 @@ class Scene:
         Returns:
             str: the next symbol in the Scene
         """
+
         current_sequence = self.sequences[0]
         next_symbol = current_sequence.symbol
         current_sequence.frames_played += 1
@@ -335,10 +337,15 @@ class Animation:
         """
         if not self.active_scene:
             return True
-        if not self.active_scene.sequences or self.active_scene.is_looping:
+        elif not self.active_scene.sequences or self.active_scene.is_looping:
             return True
-        else:
-            return False
+        elif self.active_scene.waypoint_sync_id is not None:
+            if (
+                self.character.motion.active_waypoint is None
+                or self.character.motion.active_waypoint.id != self.active_scene.waypoint_sync_id
+            ):
+                return True
+        return False
 
     def random_color(self) -> str:
         """Returns a random hex color code.
@@ -352,7 +359,28 @@ class Animation:
         """Apply the next symbol in the scene to the character. If a scene order exists, the next scene
         will be activated when the current scene is complete."""
         if self.active_scene and self.active_scene.sequences:
-            self.character.symbol = self.active_scene.get_next_symbol()
+            # if the active scene is synced to the active waypoint, calculate the sequence index based on the
+            # current waypoint progress
+            if self.active_scene.waypoint_sync_id is not None:
+                if (
+                    self.character.motion.active_waypoint
+                    and self.character.motion.active_waypoint.id == self.active_scene.waypoint_sync_id
+                ):
+                    sequence_index = round(
+                        len(self.active_scene.sequences)
+                        * (
+                            max(self.character.motion.inter_waypoint_current_step, 1)
+                            / max(self.character.motion.inter_waypoint_max_steps, 1)
+                        )
+                    )
+                    try:
+                        self.character.symbol = self.active_scene.sequences[sequence_index].symbol
+                    except IndexError:
+                        self.character.symbol = self.active_scene.sequences[-1].symbol
+                else:  # when the active waypoint has been deactivated or changed, use the final symbol in the scene
+                    self.character.symbol = self.active_scene.sequences[-1].symbol
+            else:
+                self.character.symbol = self.active_scene.get_next_symbol()
             if self.active_scene_is_complete():
                 completed_scene_id = self.active_scene.id
                 if not self.active_scene.is_looping:
@@ -381,5 +409,15 @@ class Animation:
         if scene_id in self.scenes:
             self.active_scene = self.scenes[scene_id]
             self.character.symbol = self.active_scene.activate()
+            self.character.event_handler.handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, scene_id)
         else:
             raise ValueError(f"Scene {scene_id} does not exist")
+
+    def deactivate_scene(self, scene_id: str) -> None:
+        """Deactivates a scene.
+
+        Args:
+            scene_id (str): the ID of the Scene to deactivate
+        """
+        if self.active_scene.id == scene_id:
+            self.active_scene = None

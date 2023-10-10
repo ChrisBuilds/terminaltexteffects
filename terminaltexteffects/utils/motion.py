@@ -224,13 +224,15 @@ class Motion:
         if self.speed > self.inter_waypoint_distance:
             self.speed = max(self.inter_waypoint_distance, 1)
         self.inter_waypoint_max_steps = round(self.inter_waypoint_distance / self.speed)
+        self.character.event_handler.handle_event(self.character.event_handler.Event.WAYPOINT_ACTIVATED, waypoint_id)
 
-    def deactivate_waypoint(self) -> None:
-        """Unsets the current waypoint."""
-        self.active_waypoint = None
-        self.inter_waypoint_distance = 0
-        self.inter_waypoint_max_steps = 0
-        self.inter_waypoint_current_step = 0
+    def deactivate_waypoint(self, waypoint_id: str) -> None:
+        """Unsets the current waypoint if the waypoint_id matches."""
+        if self.active_waypoint and self.active_waypoint.id == waypoint_id:
+            self.active_waypoint = None
+            self.inter_waypoint_distance = 0
+            self.inter_waypoint_max_steps = 0
+            self.inter_waypoint_current_step = 0
 
     def move(self) -> None:
         """Moves the character one step closer to the target position based on an easing function if present, otherwise linearly."""
@@ -253,7 +255,7 @@ class Motion:
 
         if self.inter_waypoint_current_step == self.inter_waypoint_max_steps:
             waypoint_reached_id = self.active_waypoint.id
-            self.deactivate_waypoint()
+            self.deactivate_waypoint(self.active_waypoint.id)
             self.character.event_handler.handle_event(
                 self.character.event_handler.Event.WAYPOINT_REACHED, waypoint_reached_id
             )
