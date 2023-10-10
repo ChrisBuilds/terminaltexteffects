@@ -66,6 +66,7 @@ def test_bubbles_effect() -> None:
         args.pop_color = "ff0000"
         args.bubble_speed = 0.1
         args.bubble_delay = 1
+        args.no_rainbow = False
         terminal = Terminal(input_data, args)
         bubbles_effect = effect_bubbles.BubblesEffect(terminal, args)
         bubbles_effect.run()
