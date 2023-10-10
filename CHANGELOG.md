@@ -20,6 +20,12 @@
 
 * --tab-width argument can be used to specify the number of spaces used in place of tab characters.
 
+* New Events for WaypointActivated and SceneActivated.
+
+* New Event Actions for DeactivateWaypoint and DeactivateScene.
+
+* Scenes can be synced to Waypoint progress
+
 ### Changes
 * Added Easing Functions help output for fireworks effect.
 * Updated spray effect help output.
