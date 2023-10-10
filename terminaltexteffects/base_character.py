@@ -18,8 +18,12 @@ class EventHandler:
     class Event(Enum):
         """Events that can be registered with the EventHandler."""
 
+        WAYPOINT_ACTIVATED = auto()
+        "A waypoint has been activated."
         WAYPOINT_REACHED = auto()
         "A waypoint has been reached."
+        SCENE_ACTIVATED = auto()
+        "An animation scene has been activated."
         SCENE_COMPLETE = auto()
         "An animation scene has completed."
 
@@ -30,6 +34,10 @@ class EventHandler:
         "Activates a waypoint. The action target is the waypoint ID."
         ACTIVATE_SCENE = auto()
         "Activates an animation scene. The action target is the scene ID."
+        DEACTIVATE_WAYPOINT = auto()
+        "Deactivates a waypoint. The action target is the waypoint ID."
+        DEACTIVATE_SCENE = auto()
+        "Deactivates an animation scene. The action target is the scene ID."
 
     def register_event(self, event: Event, subject_id: str, action: Action, action_target: str) -> None:
         """Registers an event to be handled by the EventHandler.
@@ -56,6 +64,8 @@ class EventHandler:
         action_map = {
             EventHandler.Action.ACTIVATE_WAYPOINT: self.character.motion.activate_waypoint,
             EventHandler.Action.ACTIVATE_SCENE: self.character.animation.activate_scene,
+            EventHandler.Action.DEACTIVATE_WAYPOINT: self.character.motion.deactivate_waypoint,
+            EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
         }
 
         if (event, subject_id) not in self.registered_events:
