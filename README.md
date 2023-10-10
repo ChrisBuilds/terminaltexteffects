@@ -147,6 +147,10 @@ Any effects shown below are in development and will be available in the next rel
 #### Bouncyballs
 ![bouncyballs_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/bb62112c-a6b7-466f-a7c8-ee66f528616b)
 
+#### Middleout
+![middleout_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/84810667-f7ae-44ca-8794-d4d1eb23b0a2)
+
+
 ## License
 
 Distributed under the MIT License. See [LICENSE](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/LICENSE.md) for more information.
