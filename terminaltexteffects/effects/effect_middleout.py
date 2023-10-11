@@ -140,7 +140,7 @@ class MiddleoutEffect(base_effect.Effect):
         self.prepare_data()
         final = False
         while self.pending_chars or self.animating_chars:
-            if all([character.motion.active_waypoint == None for character in self.animating_chars]):
+            if all([character.motion.active_waypoint is None for character in self.animating_chars]):
                 final = True
                 for character in self.animating_chars:
                     character.motion.activate_waypoint("full")
