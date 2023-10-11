@@ -148,7 +148,8 @@ Any effects shown below are in development and will be available in the next rel
 ![bouncyballs_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/bb62112c-a6b7-466f-a7c8-ee66f528616b)
 
 #### Middleout
-![middleout_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/84810667-f7ae-44ca-8794-d4d1eb23b0a2)
+![middleout_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/a69d4164-851e-4668-b2d0-8ee08e2dc5e3)
+
 
 
 ## License
