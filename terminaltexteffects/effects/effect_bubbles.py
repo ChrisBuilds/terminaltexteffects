@@ -72,6 +72,12 @@ Example: terminaltexteffects bubbles -a 0.01 --pop-color ff9600 --final-color 25
         help="Number of animation steps between bubbles.",
     )
     effect_parser.add_argument(
+        "--pop-condition",
+        default="row",
+        choices=["row", "bottom", "anywhere"],
+        help="Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal.",
+    )
+    effect_parser.add_argument(
         "--easing",
         default="IN_OUT_SINE",
         type=argtypes.valid_ease,
@@ -91,7 +97,10 @@ class Bubble:
         self.radius = max(len(self.characters) // 5, 1)
         self.origin = origin
         self.anchor_char = base_character.EffectCharacter(" ", origin.column, origin.row, self.effect.terminal)
-        self.lowest_row = min([char.input_coord.row for char in self.characters])
+        if self.effect.args.pop_condition == "row":
+            self.lowest_row = min([char.input_coord.row for char in self.characters])
+        else:
+            self.lowest_row = self.effect.terminal.output_area.bottom
         self.set_character_coordinates()
         self.landed = False
         self.make_waypoints()
@@ -112,15 +121,14 @@ class Bubble:
             if point.row == self.lowest_row:
                 self.landed = True
 
+        if self.effect.args.pop_condition == "anywhere":
+            if random.random() < 0.002:
+                self.landed = True
+
     def make_waypoints(self):
-        waypoint_row = self.anchor_char.motion.current_coord.row
-        while waypoint_row > self.lowest_row:
-            waypoint_column = random.randint(
-                self.effect.terminal.output_area.left, self.effect.terminal.output_area.right
-            )
-            waypoint_row = self.lowest_row
-            self.anchor_char.motion.new_waypoint("floor", waypoint_column, waypoint_row, self.effect.args.bubble_speed)
-            self.anchor_char.motion.activate_waypoint("floor")
+        waypoint_column = random.randint(self.effect.terminal.output_area.left, self.effect.terminal.output_area.right)
+        self.anchor_char.motion.new_waypoint("floor", waypoint_column, self.lowest_row, self.effect.args.bubble_speed)
+        self.anchor_char.motion.activate_waypoint("floor")
 
     def make_gradients(self) -> None:
         if self.effect.args.no_rainbow:
@@ -150,7 +158,7 @@ class Bubble:
                 len(self.characters),
             ),
         ):
-            char.motion.new_waypoint("pop_out", point.column, point.row, 0.2, ease=easing.Ease["OUT_EXPO"])
+            char.motion.new_waypoint("pop_out", point.column, point.row, 0.2, ease=easing.Ease["OUT_EXPO"], layer=1)
             char.event_handler.register_event(
                 EventHandler.Event.WAYPOINT_REACHED, "pop_out", EventHandler.Action.ACTIVATE_WAYPOINT, "final"
             )
@@ -197,6 +205,7 @@ class BubblesEffect(base_effect.Effect):
         """Prepares the data for the effect by ___."""
         final_gradient = graphics.Gradient(self.args.pop_color, self.args.final_color, 10)
         for character in self.terminal.characters:
+            character.motion.layer = 1
             character.animation.add_effect_to_scene("pop_1", "*", color=self.args.pop_color, duration=25)
             character.animation.add_effect_to_scene("pop_2", "'", color=self.args.pop_color, duration=25)
             for step in final_gradient:
@@ -208,7 +217,12 @@ class BubblesEffect(base_effect.Effect):
                 EventHandler.Event.SCENE_COMPLETE, "pop_2", EventHandler.Action.ACTIVATE_SCENE, "final"
             )
             character.motion.new_waypoint(
-                "final", character.input_coord.column, character.input_coord.row, 0.3, ease=easing.Ease["IN_OUT_EXPO"]
+                "final",
+                character.input_coord.column,
+                character.input_coord.row,
+                0.3,
+                ease=easing.Ease["IN_OUT_EXPO"],
+                layer=1,
             )
 
         unbubbled_chars = []
