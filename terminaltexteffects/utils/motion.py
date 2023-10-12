@@ -35,6 +35,7 @@ class Waypoint:
     coord: Coord
     speed: float = 1.0
     ease: easing.Ease | None = None
+    layer: int = 0
 
     def __eq__(self, other: "Waypoint") -> bool:
         if not isinstance(other, Waypoint):
@@ -61,6 +62,7 @@ class Motion:
         self.inter_waypoint_distance: float = 0
         self.inter_waypoint_max_steps: int = 0
         self.inter_waypoint_current_step: int = 0
+        self.layer = 0
 
     @staticmethod
     def find_points_on_circle(origin: tuple[int, int], radius: int, num_points: int) -> Coord:
@@ -126,7 +128,7 @@ class Motion:
         self.current_coord = Coord(column, row)
 
     def new_waypoint(
-        self, waypoint_id: str, column: int, row: int, speed: float = 1, ease: easing.Ease | None = None
+        self, waypoint_id: str, column: int, row: int, speed: float = 1, ease: easing.Ease | None = None, layer: int = 0
     ) -> Waypoint:
         """Appends a new waypoint to the waypoints dictionary.
 
@@ -140,7 +142,7 @@ class Motion:
         Returns:
             Waypoint: The new waypoint.
         """
-        new_waypoint = Waypoint(waypoint_id, Coord(column, row), speed, ease)
+        new_waypoint = Waypoint(waypoint_id, Coord(column, row), speed, ease, layer)
         self.waypoints[waypoint_id] = new_waypoint
         return new_waypoint
 
@@ -213,6 +215,7 @@ class Motion:
         else:
             self.origin_waypoint = self.active_waypoint
         self.active_waypoint = self.waypoints[waypoint_id]
+        self.layer = self.active_waypoint.layer
         self.speed = self.active_waypoint.speed
         self.inter_waypoint_distance = self._distance(
             self.current_coord.column,
@@ -230,6 +233,7 @@ class Motion:
         """Unsets the current waypoint if the waypoint_id matches."""
         if self.active_waypoint and self.active_waypoint.id == waypoint_id:
             self.active_waypoint = None
+            self.layer = 0
             self.inter_waypoint_distance = 0
             self.inter_waypoint_max_steps = 0
             self.inter_waypoint_current_step = 0
