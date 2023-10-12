@@ -7,7 +7,7 @@
   settling into position. A gradient is used to transition to the final color after the
   ball has landed. Random colors are used for balls unless specified.
 
-* Unstable effect. Spawn characters jumbled, explode them to the edge of the output area, 
+* Unstable effect. Spawn characters jumbled, explode to the edge of the output area, 
   then reassemble them in the correct layout.
 
 * Bubble effect. Characters are formed into bubbles and fall down the screen before popping.
@@ -18,13 +18,17 @@
 
 * --no-wrap argument prevents line wrapping.
 
-* --tab-width argument can be used to specify the number of spaces used in place of tab characters.
+* --tab-width argument can be used to specify the number of spaces used in place of tab characters. Defaults to 4.
 
 * New Events for WaypointActivated and SceneActivated.
 
 * New Event Actions for DeactivateWaypoint and DeactivateScene.
 
-* Scenes can be synced to Waypoint progress
+* Scenes can be synced to Waypoint progress. The scene will progress in-line with the character's steps towards
+  the waypoint.
+
+* Waypoints now have a layer attribute. Characters are drawin in ascending layer order. While a character has 
+  a waypoint active, that waypoint's layer is used. Otherwise, the character is drawn in layer 0.
 
 ### Changes
 * Added Easing Functions help output for fireworks effect.
@@ -37,6 +41,7 @@
 * The terminal cursor is now hidden during the effect.
 * The find_points_on_circle method in the motion module is now a static method.
 * Terminal.OutputArea has center_row and center_column attributes.
+* Added layers to effects.
 
 ### Bug Fixes
 * Fixed animating_chars filter in effect_template to properly remove completed characters.
