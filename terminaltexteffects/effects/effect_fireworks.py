@@ -152,7 +152,7 @@ class FireworksEffect(base_effect.Effect):
             )
             character.motion.set_coordinate(origin_x, self.terminal.output_area.bottom)
             character.motion.new_waypoint(
-                "apex", origin_x, origin_y, speed=self.args.launch_speed, ease=self.args.launch_easing
+                "apex", origin_x, origin_y, speed=self.args.launch_speed, ease=self.args.launch_easing, layer=2
             )
             character.motion.new_waypoint(
                 "explode",
@@ -160,6 +160,7 @@ class FireworksEffect(base_effect.Effect):
                 point_on_circle.row,
                 speed=self.args.explode_speed,
                 ease=self.args.explode_easing,
+                layer=2,
             )
             character.motion.new_waypoint(
                 "input_coord",
@@ -167,6 +168,7 @@ class FireworksEffect(base_effect.Effect):
                 character.input_coord.row,
                 speed=self.args.fall_speed,
                 ease=self.args.fall_easing,
+                layer=1,
             )
             character.motion.activate_waypoint("apex")
             character.event_handler.register_event(
