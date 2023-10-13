@@ -60,6 +60,7 @@ class ExpandEffect(base_effect.Effect):
                 character.input_coord.row,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
+                layer=1,
             )
             character.is_active = True
             character.motion.activate_waypoint("input_coord")

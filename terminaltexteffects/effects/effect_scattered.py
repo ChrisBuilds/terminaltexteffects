@@ -66,6 +66,7 @@ class ScatteredEffect(base_effect.Effect):
                 character.input_coord.row,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
+                layer=1,
             )
             character.motion.activate_waypoint("input_coord")
             character.is_active = True
