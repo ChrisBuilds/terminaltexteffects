@@ -125,7 +125,7 @@ class EffectCharacter:
         is_active (bool): Whether the character is currently active and should be printed to the terminal.
     """
 
-    def __init__(self, symbol: str, input_column: int, input_row: int, terminal: "Terminal"):
+    def __init__(self, symbol: str, input_column: int, input_row: int):
         """Initializes the instance with the input values and the Terminal object.
 
         Args:
@@ -137,7 +137,6 @@ class EffectCharacter:
         self.input_symbol: str = symbol
         self.input_coord: motion.Coord = motion.Coord(input_column, input_row)
         self.symbol: str = symbol
-        self.terminal: Terminal = terminal
         self.animation: graphics.Animation = graphics.Animation(self)
         self.motion: motion.Motion = motion.Motion(self)
         self.event_handler: EventHandler = EventHandler(self)

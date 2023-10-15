@@ -117,7 +117,7 @@ class Terminal:
         for row, line in enumerate(formatted_lines):
             for column, symbol in enumerate(line):
                 if symbol != " ":
-                    character = EffectCharacter(symbol, column + 1, input_height - row, self)
+                    character = EffectCharacter(symbol, column + 1, input_height - row)
                     character.animation.use_xterm_colors = use_xterm_colors
                     character.animation.no_color = no_color
                     input_characters.append(character)

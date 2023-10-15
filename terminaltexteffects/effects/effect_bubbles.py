@@ -96,7 +96,7 @@ class Bubble:
         self.characters = characters
         self.radius = max(len(self.characters) // 5, 1)
         self.origin = origin
-        self.anchor_char = EffectCharacter(" ", origin.column, origin.row, self.effect.terminal)
+        self.anchor_char = EffectCharacter(" ", origin.column, origin.row)
         if self.effect.args.pop_condition == "row":
             self.lowest_row = min([char.input_coord.row for char in self.characters])
         else:
