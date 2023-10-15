@@ -47,21 +47,21 @@ Example: terminaltexteffects errorcorrect -a 0.01 --error-pairs 12 --swap-delay 
         help="Number of animation steps between swaps.",
     )
     effect_parser.add_argument(
-        "--error-color",  # make more descriptive
+        "--error-color",
         type=argtypes.valid_color,
         default="e74c3c",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters that are in the wrong position.",
     )
     effect_parser.add_argument(
-        "--correct-color",  # make more descriptive
+        "--correct-color",
         type=argtypes.valid_color,
         default="45bf55",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters once corrected, this is a gradient from error-color and fades to final-color.",
     )
     effect_parser.add_argument(
-        "--final-color",  # make more descriptive
+        "--final-color",
         type=argtypes.valid_color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
