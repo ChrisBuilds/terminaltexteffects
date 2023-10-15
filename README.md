@@ -150,6 +150,9 @@ Any effects shown below are in development and will be available in the next rel
 #### Middleout
 ![middleout_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/a69d4164-851e-4668-b2d0-8ee08e2dc5e3)
 
+#### Errorcorrect
+![errorcorrect_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/7e63d3f0-6e7f-4145-9886-fd54633896be)
+
 
 
 ## License
