@@ -5,9 +5,6 @@ import typing
 from enum import Enum, auto
 from terminaltexteffects.utils import graphics, motion
 
-if typing.TYPE_CHECKING:
-    from terminaltexteffects.utils.terminal import Terminal
-
 
 class EventHandler:
     """Register and handle events related to a character.
@@ -118,7 +115,6 @@ class EffectCharacter:
         input_symbol (str): The symbol for the character in the input data.
         input_coord (motion.Coord): The coordinate of the character in the input data.
         symbol (str): The current symbol for the character, determined by the animation units.
-        terminal (Terminal): The terminal object where the character will be printed.
         animation (graphics.Animation): The animation object that controls the character's appearance.
         motion (motion.Motion): The motion object that controls the character's movement.
         event_handler (EventHandler): The event handler object that handles events related to the character.
@@ -132,7 +128,6 @@ class EffectCharacter:
             symbol (str): The symbol for the character in the input data.
             input_column (int): The column of the character in the input data.
             input_row (int): The row of the character in the input data.
-            terminal (Terminal): The terminal object where the character will be printed.
         """
         self.input_symbol: str = symbol
         self.input_coord: motion.Coord = motion.Coord(input_column, input_row)
