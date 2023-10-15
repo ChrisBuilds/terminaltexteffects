@@ -16,6 +16,9 @@
   is expanded in the center of the screen, then the entire output is expanded from this row/column. Expansion
   from row/column is determined by the --expand-direction argument.
 
+* Errorcorrect effect. Some characters spawn with their location swapped with another character. The characters
+  then move, in pairs, to their correct location following an animation.
+
 * --no-wrap argument prevents line wrapping.
 
 * --tab-width argument can be used to specify the number of spaces used in place of tab characters. Defaults to 4.
