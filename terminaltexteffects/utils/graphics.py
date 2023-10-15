@@ -27,7 +27,7 @@ class Gradient:
     end_color: str | int
     steps: int
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.colors: list[str] = self._generate()
         self.index: int = 0
 
@@ -48,7 +48,7 @@ class Gradient:
         # Convert end_color to a list of RGB values
         end_color_ints = colorterm._hex_to_int(self.end_color)
         # Initialize an empty list to store the gradient colors
-        gradient_colors = []
+        gradient_colors: list[str] = []
         # Add the start color to the gradient colors list
         gradient_colors.append(self.start_color)
         # Calculate the color deltas for each RGB value
@@ -73,7 +73,7 @@ class Gradient:
         # Return the list of gradient colors
         return gradient_colors
 
-    def __iter__(self):
+    def __iter__(self) -> "Gradient":
         self.index = 0
         return self
 
@@ -85,7 +85,7 @@ class Gradient:
         else:
             raise StopIteration
 
-    def __add__(self, other: "Gradient"):
+    def __add__(self, other: "Gradient") -> "Gradient":
         if not isinstance(other, Gradient):
             return NotImplemented
         new_gradient = Gradient("ffffff", "ffffff", 1)
@@ -269,7 +269,7 @@ class Scene:
         self.sequences.extend(self.played_sequences)
         self.played_sequences.clear()
 
-    def __eq__(self, other: "Scene") -> bool:
+    def __eq__(self, other: typing.Any) -> bool:
         if not isinstance(other, Scene):
             return NotImplemented
         return self.id == other.id
@@ -296,7 +296,7 @@ class Animation:
         symbol: str | None | GraphicalEffect = None,
         color: int | str | None = None,
         duration: int = 1,
-    ) -> None:
+    ) -> "Scene":
         """Add a graphical effect to a scene. If the scene doesn't exist, it will be created.
 
         Args:
@@ -327,6 +327,7 @@ class Animation:
         else:
             graphicaleffect = symbol
         self.scenes[scene_id].add_sequence(graphicaleffect, duration)
+        return self.scenes[scene_id]
 
     def active_scene_is_complete(self) -> bool:
         """Returns whether the active scene is complete. A scene is complete if all sequences have been played.
@@ -419,5 +420,5 @@ class Animation:
         Args:
             scene_id (str): the ID of the Scene to deactivate
         """
-        if self.active_scene.id == scene_id:
+        if self.active_scene and self.active_scene.id == scene_id:
             self.active_scene = None
