@@ -3,7 +3,7 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminal as terminal
-from terminaltexteffects import base_effect
+from terminaltexteffects.base_character import EffectCharacter
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -44,11 +44,14 @@ Example: terminaltexteffects scattered -a 0.01""",
     )
 
 
-class ScatteredEffect(base_effect.Effect):
+class ScatteredEffect:
     """Effect that moves the characters into position from random starting locations."""
 
     def __init__(self, terminal: terminal.Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by scattering the characters within range of the input width and height."""

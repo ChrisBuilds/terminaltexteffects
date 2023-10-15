@@ -37,7 +37,7 @@ class Waypoint:
     ease: easing.Ease | None = None
     layer: int = 0
 
-    def __eq__(self, other: "Waypoint") -> bool:
+    def __eq__(self, other: typing.Any) -> bool:
         if not isinstance(other, Waypoint):
             return NotImplemented
         return self.id == other.id and self.coord == other.coord
@@ -65,7 +65,7 @@ class Motion:
         self.layer = 0
 
     @staticmethod
-    def find_points_on_circle(origin: tuple[int, int], radius: int, num_points: int) -> Coord:
+    def find_points_on_circle(origin: tuple[int, int], radius: int, num_points: int) -> list[Coord]:
         """Finds points on a circle.
 
         Args:

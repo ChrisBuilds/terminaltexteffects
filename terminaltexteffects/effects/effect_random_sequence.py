@@ -2,7 +2,7 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import graphics
 
@@ -49,7 +49,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
 
 
-class RandomSequence(base_effect.Effect):
+class RandomSequence:
     """Prints the input data in a random sequence."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
@@ -59,7 +59,10 @@ class RandomSequence(base_effect.Effect):
             terminal (Terminal): Terminal object.
             args (argparse.Namespace): Arguments from argparse.
         """
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
         self.fade_in = graphics.Gradient(args.fade_startcolor, args.fade_endcolor, 10)
 
     def prepare_data(self) -> None:

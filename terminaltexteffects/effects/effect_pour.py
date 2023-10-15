@@ -4,7 +4,7 @@ import argparse
 from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -59,11 +59,14 @@ class PourDirection(Enum):
     RIGHT = auto()
 
 
-class PourEffect(base_effect.Effect):
+class PourEffect:
     """Effect that pours the characters into position from the top, bottom, left, or right."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
         self.pour_direction = {
             "down": PourDirection.DOWN,
             "up": PourDirection.UP,

@@ -2,7 +2,7 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_character, base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import graphics, argtypes
 
@@ -120,19 +120,22 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     )
 
 
-class FireworksEffect(base_effect.Effect):
+class FireworksEffect:
     """Effect that launches characters up the screen where they explode like fireworks and fall into place."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
-        self.shells: list[list[base_character.EffectCharacter]] = []
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
+        self.shells: list[list[EffectCharacter]] = []
         if self.args.firework_colors:
             self.firework_colors = self.args.firework_colors
         else:
             self.firework_colors = ["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"]
 
     def prepare_waypoints(self) -> None:
-        firework_shell = []
+        firework_shell: list[EffectCharacter] = []
         origin_x = random.randrange(0, self.terminal.output_area.right)
         origin_y = random.randrange(0, self.terminal.output_area.top)
         for character in self.terminal.characters:

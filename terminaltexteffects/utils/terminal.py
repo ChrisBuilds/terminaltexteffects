@@ -1,4 +1,5 @@
 """A module for managing the terminal state and output."""
+import random
 import shutil
 import sys
 import time
@@ -146,6 +147,48 @@ class Terminal:
         """Prepares the terminal for the effect by adding empty lines above."""
         sys.stdout.write(ansitools.HIDE_CURSOR())
         print("\n" * self.output_area.top)
+
+    def random_column(self) -> int:
+        """Get a random column position within the range of the output area.
+
+        Returns:
+            int: a random column position (1 <= x <= output_area.right)"""
+        return random.randint(1, self.output_area.right)
+
+    def random_row(self) -> int:
+        """Get a random row position within the range of the output area.
+
+        Returns:
+            int: a random row position (1 <= x <= terminal.output_area.top)"""
+        return random.randint(1, self.output_area.top)
+
+    def input_by_row(self) -> dict[int, list[EffectCharacter]]:
+        """Get a dict of rows of EffectCharacters where the key is the row index.
+
+        Returns:
+            dict[int,list[EffectCharacter]]: dict of rows of EffectCharacters where the key is the row index.
+        """
+        rows: dict[int, list[EffectCharacter]] = dict()
+        for row_index in range(self.output_area.top + 1):
+            characters_in_row = [character for character in self.characters if character.input_coord.row == row_index]
+            if characters_in_row:
+                rows[row_index] = characters_in_row
+        return rows
+
+    def input_by_column(self) -> dict[int, list[EffectCharacter]]:
+        """Get a dict columns of EffectCharacters where the key is the column index.
+
+        Returns:
+            dict[int,list[EffectCharacter]]: dict of columns of EffectCharacters where the key is the column index.
+        """
+        columns: dict[int, list[EffectCharacter]] = dict()
+        for column_index in range(self.output_area.right + 1):
+            characters_in_column = [
+                character for character in self.characters if character.input_coord.column == column_index
+            ]
+            if characters_in_column:
+                columns[column_index] = characters_in_column
+        return columns
 
     def print(self):
         """Prints the current terminal state to stdout while preserving the cursor position."""

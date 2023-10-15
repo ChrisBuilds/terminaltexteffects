@@ -2,7 +2,7 @@ import argparse
 import random
 from dataclasses import dataclass
 
-from terminaltexteffects import base_character, base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import graphics, argtypes
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -53,11 +53,14 @@ class DecryptChars:
     misc = list(range(174, 452))
 
 
-class DecryptEffect(base_effect.Effect):
+class DecryptEffect:
     """Effect that shows a movie style text decryption effect."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
         self.ciphertext_color = args.ciphertext_color
         self.plaintext_color = args.plaintext_color
         self.character_discovered_gradient: graphics.Gradient = graphics.Gradient("ffffff", self.plaintext_color, 5)
@@ -74,7 +77,7 @@ class DecryptEffect(base_effect.Effect):
         for n in DecryptChars.misc:
             self.encrypted_symbols.append(chr(n))
 
-    def make_decrypting_animation_scenes(self, character: base_character.EffectCharacter) -> None:
+    def make_decrypting_animation_scenes(self, character: EffectCharacter) -> None:
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
             duration = 3

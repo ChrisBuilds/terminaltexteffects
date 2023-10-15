@@ -5,7 +5,7 @@ import random
 from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -90,7 +90,7 @@ class SprayPosition(Enum):
     CENTER = auto()
 
 
-class SprayEffect(base_effect.Effect):
+class SprayEffect:
     """Effect that draws the characters spawning at varying rates from a single point."""
 
     def __init__(
@@ -104,7 +104,10 @@ class SprayEffect(base_effect.Effect):
             terminal (Terminal): terminal to use for the effect
             args (argparse.Namespace): arguments from argparse
         """
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
         self.spray_position = {
             "n": SprayPosition.N,
             "ne": SprayPosition.NE,

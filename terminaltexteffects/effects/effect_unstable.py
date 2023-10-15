@@ -2,9 +2,9 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_character, base_effect
+from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils import graphics, argtypes, motion
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -79,13 +79,16 @@ Example: terminaltexteffects unstable -a 0.01 --initial-color ffffff --unstable-
     )
 
 
-class UnstableEffect(base_effect.Effect):
+class UnstableEffect:
     """Effect that spawns characters jumbled, explodes them to the edge of the output area,
     then reassembles them in the correct layout."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
-        self.jumbled_coords: dict[base_character.EffectCharacter, base_character.motion.Coord] = dict()
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
+        self.jumbled_coords: dict[EffectCharacter, motion.Coord] = dict()
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by jumbling the character positions and

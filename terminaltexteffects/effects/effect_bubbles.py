@@ -2,7 +2,7 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_character, base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.base_character import EventHandler
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import graphics, argtypes, motion, easing
@@ -89,14 +89,14 @@ class Bubble:
     def __init__(
         self,
         effect: "BubblesEffect",
-        origin: base_character.motion.Coord,
-        characters: list[base_character.EffectCharacter],
+        origin: motion.Coord,
+        characters: list[EffectCharacter],
     ):
         self.effect = effect
         self.characters = characters
         self.radius = max(len(self.characters) // 5, 1)
         self.origin = origin
-        self.anchor_char = base_character.EffectCharacter(" ", origin.column, origin.row, self.effect.terminal)
+        self.anchor_char = EffectCharacter(" ", origin.column, origin.row, self.effect.terminal)
         if self.effect.args.pop_condition == "row":
             self.lowest_row = min([char.input_coord.row for char in self.characters])
         else:
@@ -107,16 +107,12 @@ class Bubble:
         self.make_gradients()
 
     def set_character_coordinates(self) -> None:
-        char: base_character.EffectCharacter
-        point: base_character.motion.Coord
-        for char, point in zip(
-            self.characters,
-            self.anchor_char.motion.find_points_on_circle(
+        for i, char in enumerate(self.characters):
+            point = self.anchor_char.motion.find_points_on_circle(
                 (self.anchor_char.motion.current_coord.column, self.anchor_char.motion.current_coord.row),
                 self.radius,
                 len(self.characters),
-            ),
-        ):
+            )[i]
             char.motion.set_coordinate(point.column, point.row)
             if point.row == self.lowest_row:
                 self.landed = True
@@ -145,11 +141,12 @@ class Bubble:
                 gradient_offset %= len(rainbow_gradient)
                 rainbow_gradient = rainbow_gradient[gradient_offset:] + rainbow_gradient[:gradient_offset]
                 character.animation.activate_scene("sheen")
-                character.animation.active_scene.is_looping = True
+                if character.animation.active_scene:
+                    character.animation.active_scene.is_looping = True
 
     def pop(self) -> None:
-        char: base_character.EffectCharacter
-        point: base_character.motion.Coord
+        char: EffectCharacter
+        point: motion.Coord
         for char, point in zip(
             self.characters,
             self.anchor_char.motion.find_points_on_circle(
@@ -177,11 +174,14 @@ class Bubble:
             character.animation.step_animation()
 
 
-class BubblesEffect(base_effect.Effect):
+class BubblesEffect:
     """Effect that ___."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
         self.bubbles: list[Bubble] = []
         red = "e81416"
         orange = "ffa500"
@@ -226,7 +226,7 @@ class BubblesEffect(base_effect.Effect):
             )
 
         unbubbled_chars = []
-        for _, char_list in self.input_by_row().items():
+        for _, char_list in self.terminal.input_by_row().items():
             unbubbled_chars.extend(char_list)
         self.bubbles = []
         while unbubbled_chars:

@@ -1,7 +1,7 @@
 import argparse
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -43,18 +43,21 @@ Example: terminaltexteffects verticalslice -a 0.02""",
     )
 
 
-class VerticalSlice(base_effect.Effect):
+class VerticalSlice:
     """Effect that slices the input in half vertically and slides it into place from opposite directions."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting the left half to start at the top and the
         right half to start at the bottom, and creating rows consisting off halves from opposite
         input rows."""
 
-        self.rows = list(self.input_by_row().values())
+        self.rows = list(self.terminal.input_by_row().values())
         lengths = [max([c.input_coord.column for c in row]) for row in self.rows]
         mid_point = sum(lengths) // len(lengths) // 2
         self.new_rows = []

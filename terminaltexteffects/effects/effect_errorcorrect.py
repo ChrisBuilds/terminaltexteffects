@@ -2,7 +2,7 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_character, base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.base_character import EventHandler
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import graphics, argtypes
@@ -76,12 +76,15 @@ Example: terminaltexteffects errorcorrect -a 0.01 --error-pairs 12 --swap-delay 
     )
 
 
-class ErrorCorrectEffect(base_effect.Effect):
+class ErrorCorrectEffect:
     """Effect that swaps characters from an incorrect initial position to the correct position."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
-        self.swapped: list[tuple[base_character.EffectCharacter, base_character.EffectCharacter]] = []
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
+        self.swapped: list[tuple[EffectCharacter, EffectCharacter]] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by swapping positions and generating animations and waypoints."""
@@ -89,7 +92,7 @@ class ErrorCorrectEffect(base_effect.Effect):
             character.animation.add_effect_to_scene("spawn", character.input_symbol, self.args.final_color, 1)
             character.animation.activate_scene("spawn")
             character.is_active = True
-        all_characters: list[base_character.EffectCharacter] = list(self.terminal.characters)
+        all_characters: list[EffectCharacter] = list(self.terminal.characters)
         correcting_gradient = graphics.Gradient(self.args.error_color, self.args.correct_color, 10)
         final_gradient = graphics.Gradient(self.args.correct_color, self.args.final_color, 10)
         block_symbol = "▓"

@@ -2,7 +2,7 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import graphics, argtypes
 
@@ -49,11 +49,14 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
 
 
-class BurnEffect(base_effect.Effect):
+class BurnEffect:
     """Effect that burns up the screen."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by building the burn animation and organizing the data into columns."""
@@ -68,7 +71,7 @@ class BurnEffect(base_effect.Effect):
         ]
         fire_gradient = graphics.Gradient("ffffff", self.args.flame_color, 12)
         burned_gradient = graphics.Gradient(self.args.flame_color, self.args.burned_color, 7)
-        groups = self.input_by_column()
+        groups = self.terminal.input_by_column()
         for column in groups.values():
             column.reverse()
 

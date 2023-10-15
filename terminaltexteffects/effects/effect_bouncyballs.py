@@ -3,7 +3,7 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.graphics as graphics
-from terminaltexteffects import base_character, base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -67,12 +67,15 @@ Example: terminaltexteffects bouncyball -a 0.01 --ball-colors 00ff00 ff0000 0000
     )
 
 
-class BouncyBallsEffect(base_effect.Effect):
+class BouncyBallsEffect:
     """Effect that displays the text as bouncy balls falling from the top of the output area."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
-        self.group_by_row: dict[int, list[base_character.EffectCharacter | None]] = {}
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
+        self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by assigning colors and waypoints and

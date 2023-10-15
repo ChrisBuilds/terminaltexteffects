@@ -1,7 +1,7 @@
 import argparse
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -43,11 +43,14 @@ Example: terminaltexteffects expand -a 0.01""",
     )
 
 
-class ExpandEffect(base_effect.Effect):
+class ExpandEffect:
     """Effect that draws the characters expanding from a single point."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""

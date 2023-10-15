@@ -1,7 +1,7 @@
 import argparse
 from enum import Enum, auto
 
-from terminaltexteffects import base_character, base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import argtypes
 
@@ -61,7 +61,7 @@ class SlideDirection(Enum):
     DOWN = auto()
 
 
-class ColumnSlide(base_effect.Effect):
+class ColumnSlide:
     """Effect that slides each column into place."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
@@ -71,7 +71,10 @@ class ColumnSlide(base_effect.Effect):
             input_data (str): string from stdin
             args (argparse.Namespace): arguments from argparse
         """
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
         self.column_gap: int = args.column_gap
         if args.slide_direction == "down":
             self.slide_direction = SlideDirection.DOWN
@@ -82,7 +85,7 @@ class ColumnSlide(base_effect.Effect):
         """Prepares the data for the effect by grouping the characters by column and setting the starting
         coordinate."""
 
-        self.columns = self.input_by_column()
+        self.columns = self.terminal.input_by_column()
         if self.slide_direction == SlideDirection.DOWN:
             for column_list in self.columns.values():
                 column_list.reverse()
@@ -102,7 +105,7 @@ class ColumnSlide(base_effect.Effect):
                 )
                 character.motion.activate_waypoint("input_coord")
 
-    def get_next_column(self) -> list[base_character.EffectCharacter]:
+    def get_next_column(self) -> list[EffectCharacter]:
         """Gets the next column of characters to animate.
 
         Returns:
@@ -117,7 +120,7 @@ class ColumnSlide(base_effect.Effect):
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
-        active_columns: list[list[base_character.EffectCharacter]] = []
+        active_columns: list[list[EffectCharacter]] = []
         active_columns.append(self.get_next_column())
         column_delay_countdown = self.column_gap
         self.terminal.print()

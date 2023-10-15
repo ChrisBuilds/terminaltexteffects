@@ -2,7 +2,7 @@ import argparse
 from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_character, base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -61,7 +61,7 @@ class SlideDirection(Enum):
     RIGHT = auto()
 
 
-class RowSlide(base_effect.Effect):
+class RowSlide:
     """Effect that slides each row into place."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
@@ -71,7 +71,10 @@ class RowSlide(base_effect.Effect):
             terminal (Terminal): terminal to use for the effect
             args (argparse.Namespace): arguments from argparse
         """
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
         self.row_gap: int = args.row_gap
         if args.slide_direction == "left":
             self.slide_direction = SlideDirection.LEFT
@@ -82,7 +85,7 @@ class RowSlide(base_effect.Effect):
         """Prepares the data for the effect by grouping the characters by row and setting the starting
         coordinate."""
 
-        self.rows = self.input_by_row()
+        self.rows = self.terminal.input_by_row()
         for row in self.rows.values():
             for character in row:
                 if self.slide_direction == SlideDirection.LEFT:
@@ -98,7 +101,7 @@ class RowSlide(base_effect.Effect):
                 )
                 character.motion.activate_waypoint("input_coord")
 
-    def get_next_row(self) -> list[base_character.EffectCharacter]:
+    def get_next_row(self) -> list[EffectCharacter]:
         """Gets the next row of characters to animate.
 
         Returns:
@@ -110,7 +113,7 @@ class RowSlide(base_effect.Effect):
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
-        active_rows: list[list[base_character.EffectCharacter]] = []
+        active_rows: list[list[EffectCharacter]] = []
         active_rows.append(self.get_next_row())
         row_delay_countdown = self.row_gap
         while active_rows or self.animating_chars:

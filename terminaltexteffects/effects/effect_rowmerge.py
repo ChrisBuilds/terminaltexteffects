@@ -1,7 +1,7 @@
 import argparse
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -43,18 +43,21 @@ Example: terminaltexteffects rowmerge -a 0.01""",
     )
 
 
-class RowMergeEffect(base_effect.Effect):
+class RowMergeEffect:
     """Effect that merges rows."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting every other row to start at the opposite
         side of the terminal and reverse the order."""
 
         self.rows = []
-        for row_index, row in self.input_by_row().items():
+        for row_index, row in self.terminal.input_by_row().items():
             if row_index % 2 == 0:
                 row = row[::-1]
                 column = self.terminal.output_area.left

@@ -1,7 +1,7 @@
 import argparse
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects import base_effect
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import graphics, argtypes
 
@@ -86,11 +86,14 @@ Example: terminaltexteffects middleout -a 0.01 --expand-direction horizontal --c
     )
 
 
-class MiddleoutEffect(base_effect.Effect):
-    """Effect that ___."""
+class MiddleoutEffect:
+    """Effect that expands a single row and column followed by the rest of the output area."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
-        super().__init__(terminal, args)
+        self.terminal = terminal
+        self.args = args
+        self.pending_chars: list[EffectCharacter] = []
+        self.animating_chars: list[EffectCharacter] = []
         self.center_gradient = graphics.Gradient(self.args.starting_color, self.args.center_expand_color, 10)
         self.full_gradient = graphics.Gradient(self.args.center_expand_color, self.args.full_expand_color, 10)
 
