@@ -18,6 +18,7 @@ from terminaltexteffects.effects import (
     effect_unstable,
     effect_bubbles,
     effect_middleout,
+    effect_errorcorrect,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils.easing import Ease
@@ -60,6 +61,20 @@ def make_args() -> Namespace:
     return args
 
 
+def test_errorcorrect_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.error_pairs = 12
+        args.swap_delay = 70
+        args.error_color = "e74c3c"
+        args.correct_color = "45bf55"
+        args.final_color = "ffffff"
+        args.movement_speed = 0.5
+        terminal = Terminal(input_data, args)
+        errorcorrect_effect = effect_errorcorrect.ErrorCorrectEffect(terminal, args)
+        errorcorrect_effect.run()
+
+
 def test_middleout_effect() -> None:
     for input_data in test_inputs:
         args = make_args()
@@ -83,6 +98,7 @@ def test_bubbles_effect() -> None:
         args.pop_color = "ff0000"
         args.bubble_speed = 0.1
         args.bubble_delay = 1
+        args.pop_condition = "row"
         args.no_rainbow = False
         terminal = Terminal(input_data, args)
         bubbles_effect = effect_bubbles.BubblesEffect(terminal, args)
