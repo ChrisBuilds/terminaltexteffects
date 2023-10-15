@@ -74,15 +74,18 @@ options:
 Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
-  {bouncyballs,bubbles,burn,columnslide,decrypt,expand,fireworks,pour,rain,randomsequence,rowmerge,rowslide,scattered,spray,unstable,verticalslice}
+  {bouncyballs,bubbles,burn,columnslide,decrypt,errorcorrect,expand,fireworks,middleout,pour,rain,randomsequence,rowmerge,rowslide,scattered,spray,unstable,verticalslice}
                         Available Effects
     bouncyballs         Characters are bouncy balls falling from the top of the output area.
     bubbles             Characters are formed into bubbles that float down and pop.
     burn                Burns vertically in the output area.
     columnslide         Slides each column into place from the outside to the middle.
     decrypt             Display a movie style decryption effect.
+    errorcorrect        Some characters start in the wrong position and are corrected in sequence.
     expand              Expands the text from a single point.
     fireworks           Characters launch and explode like fireworks and fall into place.
+    middleout           Text expands in a single row or column in the middle of the output area then
+                        out.
     pour                Pours the characters into position from the given direction.
     rain                Rain characters from the top of the output area.
     randomsequence      Prints the input data in a random sequence.
@@ -90,8 +93,13 @@ Effect:
     rowslide            Slides each row into place.
     scattered           Move the characters into place from random starting locations.
     spray               Draws the characters spawning at varying rates from a single point.
-    unstable            Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.
-    verticalslice       Slices the input in half vertically and slides it into place from opposite directions.
+    unstable            Spawn characters jumbled, explode them to the edge of the output area, then
+                        reassemble them in the correct layout.
+    verticalslice       Slices the input in half vertically and slides it into place from opposite
+                        directions.
+
+Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciphertext-color 00ff00
+--plaintext-color ff0000 --final-color 0000ff
 ```
 
 
@@ -135,9 +143,6 @@ Effect:
 #### VERTICALSLICE
 ![verticalslice_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/237e36c5-cb4e-4866-9a33-b7f27a2907dc)
 
-## In-Development Preview
-Any effects shown below are in development and will be available in the next release.
-
 #### Unstable
 ![unstable_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2e4b6e51-2b65-4765-a41c-92542981c77c)
 
@@ -153,6 +158,8 @@ Any effects shown below are in development and will be available in the next rel
 #### Errorcorrect
 ![errorcorrect_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/7e63d3f0-6e7f-4145-9886-fd54633896be)
 
+## In-Development Preview
+Any effects shown below are in development and will be available in the next release.
 
 
 ## License
