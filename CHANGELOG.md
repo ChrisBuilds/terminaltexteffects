@@ -3,6 +3,14 @@
 ## Unreleased
 
 ### New Features
+
+### Changes
+
+### Bug Fixes
+
+## 0.3.1
+
+### New Features
 * Bouncyballs effect. Balls drop from the top of the output area and bounce before
   settling into position. A gradient is used to transition to the final color after the
   ball has landed. Random colors are used for balls unless specified.
