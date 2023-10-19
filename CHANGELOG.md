@@ -5,6 +5,11 @@
 ### New Features
 
 ### Changes
+ * Animation and Motion have been refactored to use direct Scene and Waypoint object references instead of string IDs.
+ * base_character.EventHandler uses Scene and Waypoint objects instead of string IDs.
+ * graphics.GraphicalEffect renamed to CharacterVisual
+ * graphics.Sequence renamed to Frame
+ * Animation methods for created Scenes and adding frames to scenes have been refactored to return Scene objects and expose terminal modes, respectively.
 
 ### Bug Fixes
 
