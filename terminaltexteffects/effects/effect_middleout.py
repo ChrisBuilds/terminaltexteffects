@@ -103,14 +103,6 @@ class MiddleoutEffect:
             character.motion.set_coordinate(
                 self.terminal.output_area.center_column, self.terminal.output_area.center_row
             )
-            # setup scenes
-            for step in self.center_gradient:
-                character.animation.add_effect_to_scene("center", character.input_symbol, step, 2)
-            for step in self.full_gradient:
-                character.animation.add_effect_to_scene("full", character.input_symbol, step, 2)
-            character.animation.scenes["full"].waypoint_sync_id = "full"
-            character.animation.activate_scene("center")
-
             # setup waypoints
             if self.args.expand_direction == "vertical":
                 column = character.input_coord.column
@@ -118,23 +110,34 @@ class MiddleoutEffect:
             else:
                 column = self.terminal.output_area.center_column
                 row = character.input_coord.row
-            character.motion.new_waypoint(
+            center_waypoint = character.motion.new_waypoint(
                 "center",
                 column,
                 row,
                 speed=self.args.center_movement_speed,
                 ease=self.args.center_easing,
             )
-            character.motion.new_waypoint(
+            full_waypoint = character.motion.new_waypoint(
                 "full",
                 character.input_coord.column,
                 character.input_coord.row,
                 speed=self.args.full_movement_speed,
                 ease=self.args.full_easing,
             )
+
+            # setup scenes
+            center_scene = character.animation.new_scene("center")
+            full_scene = character.animation.new_scene("full")
+            for step in self.center_gradient:
+                center_scene.add_frame(character.input_symbol, step, 2)
+            for step in self.full_gradient:
+                full_scene.add_frame(character.input_symbol, step, 2)
+            full_scene.sync_waypoint = full_waypoint
+            character.animation.activate_scene(center_scene)
+
             # initialize character state
-            character.motion.activate_waypoint("center")
-            character.animation.activate_scene("center")
+            character.motion.activate_waypoint(center_waypoint)
+            character.animation.activate_scene(center_scene)
             character.is_active = True
             self.animating_chars.append(character)
 
@@ -146,8 +149,8 @@ class MiddleoutEffect:
             if all([character.motion.active_waypoint is None for character in self.animating_chars]):
                 final = True
                 for character in self.animating_chars:
-                    character.motion.activate_waypoint("full")
-                    character.animation.activate_scene("full")
+                    character.motion.activate_waypoint(character.motion.waypoints["full"])
+                    character.animation.activate_scene(character.animation.scenes["full"])
             self.terminal.print()
             self.animate_chars()
             if final:

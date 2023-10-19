@@ -68,9 +68,10 @@ class RandomSequence:
     def prepare_data(self) -> None:
         for character in self.terminal.characters:
             character.is_active = False
+            fade_scn = character.animation.new_scene("fade")
             for color in self.fade_in:
-                character.animation.add_effect_to_scene("fade", character.input_symbol, color, self.args.fade_duration)
-            character.animation.activate_scene("fade")
+                fade_scn.add_frame(character.input_symbol, color, self.args.fade_duration)
+            character.animation.activate_scene(fade_scn)
             self.pending_chars.append(character)
 
     def run(self) -> None:

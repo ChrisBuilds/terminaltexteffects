@@ -63,7 +63,7 @@ class ScatteredEffect:
                     random.randint(1, self.terminal.output_area.right - 1),
                     random.randint(1, self.terminal.output_area.top - 1),
                 )
-            character.motion.new_waypoint(
+            input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
                 character.input_coord.column,
                 character.input_coord.row,
@@ -71,7 +71,7 @@ class ScatteredEffect:
                 ease=self.args.easing,
                 layer=1,
             )
-            character.motion.activate_waypoint("input_coord")
+            character.motion.activate_waypoint(input_coord_wpt)
             character.is_active = True
             self.animating_chars.append(character)
 

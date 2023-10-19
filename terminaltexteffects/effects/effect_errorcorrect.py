@@ -2,8 +2,7 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.base_character import EventHandler
+from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import graphics, argtypes
 
@@ -89,8 +88,9 @@ class ErrorCorrectEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by swapping positions and generating animations and waypoints."""
         for character in self.terminal.characters:
-            character.animation.add_effect_to_scene("spawn", character.input_symbol, self.args.final_color, 1)
-            character.animation.activate_scene("spawn")
+            spawn_scene = character.animation.new_scene("spawn")
+            spawn_scene.add_frame(character.input_symbol, self.args.final_color, 1)
+            character.animation.activate_scene(spawn_scene)
             character.is_active = True
         all_characters: list[EffectCharacter] = list(self.terminal.characters)
         correcting_gradient = graphics.Gradient(self.args.error_color, self.args.correct_color, 10)
@@ -104,7 +104,7 @@ class ErrorCorrectEffect:
             char1 = all_characters.pop(random.randrange(len(all_characters)))
             char2 = all_characters.pop(random.randrange(len(all_characters)))
             char1.motion.set_coordinate(char2.input_coord.column, char2.input_coord.row)
-            char1.motion.new_waypoint(
+            char1_input_coord_waypoint = char1.motion.new_waypoint(
                 "input_coord",
                 char1.input_coord.column,
                 char1.input_coord.row,
@@ -112,7 +112,7 @@ class ErrorCorrectEffect:
                 layer=1,
             )
             char2.motion.set_coordinate(char1.input_coord.column, char1.input_coord.row)
-            char2.motion.new_waypoint(
+            char2_input_coord_waypoint = char2.motion.new_waypoint(
                 "input_coord",
                 char2.input_coord.column,
                 char2.input_coord.row,
@@ -121,40 +121,55 @@ class ErrorCorrectEffect:
             )
             self.swapped.append((char1, char2))
             for character in (char1, char2):
+                circles_start_scene = character.animation.new_scene("circles_start")
+                circles_end_scene = character.animation.new_scene("circles_end")
                 for block in block_wipe_start:
-                    character.animation.add_effect_to_scene("circles_start", block, self.args.error_color, 3)
+                    circles_start_scene.add_frame(block, self.args.error_color, 3)
                 for block in block_wipe_end:
-                    character.animation.add_effect_to_scene("circles_end", block, self.args.correct_color, 3)
-                character.animation.add_effect_to_scene("initial", character.input_symbol, self.args.error_color, 1)
-                character.animation.activate_scene("initial")
+                    circles_end_scene.add_frame(block, self.args.correct_color, 3)
+                initial_scene = character.animation.new_scene("initial")
+                initial_scene.add_frame(character.input_symbol, self.args.error_color, 1)
+                character.animation.activate_scene(initial_scene)
+                error_scene = character.animation.new_scene("error")
                 for _ in range(10):
-                    character.animation.add_effect_to_scene("error", block_symbol, self.args.error_color, 3)
-                    character.animation.add_effect_to_scene("error", character.input_symbol, "ffffff", 3)
+                    error_scene.add_frame(block_symbol, self.args.error_color, 3)
+                    error_scene.add_frame(character.input_symbol, "ffffff", 3)
+                correcting_scene = character.animation.new_scene("correcting")
                 for step in correcting_gradient:
-                    character.animation.add_effect_to_scene("correcting", "█", step, 3)
-                character.animation.scenes["correcting"].waypoint_sync_id = "input_coord"
+                    correcting_scene.add_frame("█", step, 3)
+                correcting_scene.sync_waypoint = character.motion.waypoints["input_coord"]
+                final_scene = character.animation.new_scene("final")
                 for step in final_gradient:
-                    character.animation.add_effect_to_scene("final", character.input_symbol, step, 3)
+                    final_scene.add_frame(character.input_symbol, step, 3)
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
-                    "circles_start",
+                    circles_start_scene,
                     EventHandler.Action.ACTIVATE_WAYPOINT,
-                    "input_coord",
+                    character.motion.waypoints["input_coord"],
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.SCENE_COMPLETE, "error", EventHandler.Action.ACTIVATE_SCENE, "circles_start"
+                    EventHandler.Event.SCENE_COMPLETE,
+                    error_scene,
+                    EventHandler.Action.ACTIVATE_SCENE,
+                    circles_start_scene,
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.SCENE_COMPLETE, "circles_start", EventHandler.Action.ACTIVATE_SCENE, "correcting"
+                    EventHandler.Event.SCENE_COMPLETE,
+                    circles_start_scene,
+                    EventHandler.Action.ACTIVATE_SCENE,
+                    correcting_scene,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.WAYPOINT_REACHED,
-                    "input_coord",
+                    character.motion.waypoints["input_coord"],
                     EventHandler.Action.ACTIVATE_SCENE,
-                    "circles_end",
+                    circles_end_scene,
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.SCENE_COMPLETE, "circles_end", EventHandler.Action.ACTIVATE_SCENE, "final"
+                    EventHandler.Event.SCENE_COMPLETE,
+                    circles_end_scene,
+                    EventHandler.Action.ACTIVATE_SCENE,
+                    final_scene,
                 )
 
     def run(self) -> None:
@@ -165,7 +180,7 @@ class ErrorCorrectEffect:
             if self.swapped:
                 next_pair = self.swapped.pop(0)
                 for char in next_pair:
-                    char.animation.activate_scene("error")
+                    char.animation.activate_scene(char.animation.scenes["error"])
                     self.animating_chars.append(char)
             while swap_delay:
                 self.terminal.print()

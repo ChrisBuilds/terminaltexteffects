@@ -123,24 +123,28 @@ class Bubble:
 
     def make_waypoints(self):
         waypoint_column = random.randint(self.effect.terminal.output_area.left, self.effect.terminal.output_area.right)
-        self.anchor_char.motion.new_waypoint("floor", waypoint_column, self.lowest_row, self.effect.args.bubble_speed)
-        self.anchor_char.motion.activate_waypoint("floor")
+        floor_waypoint = self.anchor_char.motion.new_waypoint(
+            "floor", waypoint_column, self.lowest_row, self.effect.args.bubble_speed
+        )
+        self.anchor_char.motion.activate_waypoint(floor_waypoint)
 
     def make_gradients(self) -> None:
         if self.effect.args.no_rainbow:
             for character in self.characters:
-                character.animation.add_effect_to_scene("sheen", color=self.effect.args.bubble_color, duration=1)
-                character.animation.activate_scene("sheen")
+                sheen_scene = character.animation.new_scene("sheen")
+                sheen_scene.add_frame(character.input_symbol, color=self.effect.args.bubble_color, duration=1)
+                character.animation.activate_scene(sheen_scene)
         else:
             rainbow_gradient = list(self.effect.rainbow_gradient.colors)
             gradient_offset = 0
             for character in self.characters:
+                sheen_scene = character.animation.new_scene("sheen")
                 for step in rainbow_gradient:
-                    character.animation.add_effect_to_scene("sheen", color=step, duration=5)
+                    sheen_scene.add_frame(character.input_symbol, color=step, duration=5)
                 gradient_offset += 2
                 gradient_offset %= len(rainbow_gradient)
                 rainbow_gradient = rainbow_gradient[gradient_offset:] + rainbow_gradient[:gradient_offset]
-                character.animation.activate_scene("sheen")
+                character.animation.activate_scene(sheen_scene)
                 if character.animation.active_scene:
                     character.animation.active_scene.is_looping = True
 
@@ -155,13 +159,18 @@ class Bubble:
                 len(self.characters),
             ),
         ):
-            char.motion.new_waypoint("pop_out", point.column, point.row, 0.2, ease=easing.Ease["OUT_EXPO"], layer=1)
+            pop_out_waypoint = char.motion.new_waypoint(
+                "pop_out", point.column, point.row, 0.2, ease=easing.Ease["OUT_EXPO"], layer=1
+            )
             char.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED, "pop_out", EventHandler.Action.ACTIVATE_WAYPOINT, "final"
+                EventHandler.Event.WAYPOINT_REACHED,
+                pop_out_waypoint,
+                EventHandler.Action.ACTIVATE_WAYPOINT,
+                char.motion.waypoints["final"],
             )
         for character in self.characters:
-            character.animation.activate_scene("pop_1")
-            character.motion.activate_waypoint("pop_out")
+            character.animation.activate_scene(character.animation.scenes["pop_1"])
+            character.motion.activate_waypoint(character.motion.waypoints["pop_out"])
 
     def activate(self) -> None:
         for char in self.characters:
@@ -206,17 +215,23 @@ class BubblesEffect:
         final_gradient = graphics.Gradient(self.args.pop_color, self.args.final_color, 10)
         for character in self.terminal.characters:
             character.motion.layer = 1
-            character.animation.add_effect_to_scene("pop_1", "*", color=self.args.pop_color, duration=25)
-            character.animation.add_effect_to_scene("pop_2", "'", color=self.args.pop_color, duration=25)
+            pop_1_scene = character.animation.new_scene("pop_1")
+            pop_2_scene = character.animation.new_scene("pop_2")
+            pop_1_scene.add_frame("*", color=self.args.pop_color, duration=25)
+            pop_2_scene.add_frame("'", color=self.args.pop_color, duration=25)
+            final_scene = character.animation.new_scene("final")
             for step in final_gradient:
-                character.animation.add_effect_to_scene("final", color=step, duration=5)
+                final_scene.add_frame(character.input_symbol, color=step, duration=5)
             character.event_handler.register_event(
-                EventHandler.Event.SCENE_COMPLETE, "pop_1", EventHandler.Action.ACTIVATE_SCENE, "pop_2"
+                EventHandler.Event.SCENE_COMPLETE, pop_1_scene, EventHandler.Action.ACTIVATE_SCENE, pop_2_scene
             )
             character.event_handler.register_event(
-                EventHandler.Event.SCENE_COMPLETE, "pop_2", EventHandler.Action.ACTIVATE_SCENE, "final"
+                EventHandler.Event.SCENE_COMPLETE,
+                pop_2_scene,
+                EventHandler.Action.ACTIVATE_SCENE,
+                final_scene,
             )
-            character.motion.new_waypoint(
+            final_waypoint = character.motion.new_waypoint(
                 "final",
                 character.input_coord.column,
                 character.input_coord.row,

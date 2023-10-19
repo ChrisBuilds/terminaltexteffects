@@ -82,13 +82,15 @@ class RainEffect:
 
         for character in self.terminal.characters:
             raindrop_color = random.choice(rain_colors)
-            character.animation.add_effect_to_scene("rain", random.choice(rain_characters), raindrop_color, 1)
+            rain_scn = character.animation.new_scene("rain")
+            rain_scn.add_frame(random.choice(rain_characters), raindrop_color, 1)
             raindrop_gradient = graphics.Gradient(raindrop_color, self.args.final_color, 7)
+            fade_scn = character.animation.new_scene("fade")
             for color in raindrop_gradient:
-                character.animation.add_effect_to_scene("fade", character.input_symbol, color, 5)
-            character.animation.activate_scene("rain")
+                fade_scn.add_frame(character.input_symbol, color, 5)
+            character.animation.activate_scene(rain_scn)
             character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
-            character.motion.new_waypoint(
+            input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
                 character.input_coord.column,
                 character.input_coord.row,
@@ -97,11 +99,11 @@ class RainEffect:
             )
             character.event_handler.register_event(
                 character.event_handler.Event.WAYPOINT_REACHED,
-                "input_coord",
+                input_coord_wpt,
                 character.event_handler.Action.ACTIVATE_SCENE,
-                "fade",
+                fade_scn,
             )
-            character.motion.activate_waypoint("input_coord")
+            character.motion.activate_waypoint(input_coord_wpt)
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
             if character.input_coord.row not in self.group_by_row:

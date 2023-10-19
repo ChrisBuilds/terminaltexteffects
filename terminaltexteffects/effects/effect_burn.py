@@ -82,23 +82,21 @@ class BurnEffect:
             keys = [key for key in groups.keys() if groups[key]]
             next_char = groups[random.choice(keys)].pop(0)
             next_char.is_active = False
-
+            construct_scn = next_char.animation.new_scene("construct")
             g_start = 0
             for _, block in enumerate(vertical_build_order[:5]):
                 for color in fire_gradient.colors[g_start : g_start + 3]:
-                    next_char.animation.add_effect_to_scene("construct", block, color, duration=30)
+                    construct_scn.add_frame(block, color, duration=30)
                 g_start += 2
 
             g_start = 0
             for _, block in enumerate(vertical_build_order[4:]):
                 for color in burned_gradient.colors[g_start : g_start + 3]:
-                    next_char.animation.add_effect_to_scene("construct", block, color, duration=30)
+                    construct_scn.add_frame(block, color, duration=30)
                 g_start += 2
 
-            next_char.animation.add_effect_to_scene(
-                "construct", next_char.input_symbol, self.args.final_color, duration=1
-            )
-            next_char.animation.activate_scene("construct")
+            construct_scn.add_frame(next_char.input_symbol, self.args.final_color, duration=1)
+            next_char.animation.activate_scene(construct_scn)
             self.pending_chars.append(next_char)
 
     def run(self) -> None:

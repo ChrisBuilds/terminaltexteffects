@@ -154,10 +154,10 @@ class FireworksEffect:
                 )
             )
             character.motion.set_coordinate(origin_x, self.terminal.output_area.bottom)
-            character.motion.new_waypoint(
+            apex_wpt = character.motion.new_waypoint(
                 "apex", origin_x, origin_y, speed=self.args.launch_speed, ease=self.args.launch_easing, layer=2
             )
-            character.motion.new_waypoint(
+            explode_wpt = character.motion.new_waypoint(
                 "explode",
                 point_on_circle.column,
                 point_on_circle.row,
@@ -165,7 +165,7 @@ class FireworksEffect:
                 ease=self.args.explode_easing,
                 layer=2,
             )
-            character.motion.new_waypoint(
+            input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
                 character.input_coord.column,
                 character.input_coord.row,
@@ -173,18 +173,18 @@ class FireworksEffect:
                 ease=self.args.fall_easing,
                 layer=1,
             )
-            character.motion.activate_waypoint("apex")
+            character.motion.activate_waypoint(apex_wpt)
             character.event_handler.register_event(
                 character.event_handler.Event.WAYPOINT_REACHED,
-                "apex",
+                apex_wpt,
                 character.event_handler.Action.ACTIVATE_WAYPOINT,
-                "explode",
+                explode_wpt,
             )
             character.event_handler.register_event(
                 character.event_handler.Event.WAYPOINT_REACHED,
-                "explode",
+                explode_wpt,
                 character.event_handler.Action.ACTIVATE_WAYPOINT,
-                "input_coord",
+                input_coord_wpt,
             )
             firework_shell.append(character)
         if firework_shell:
@@ -195,20 +195,22 @@ class FireworksEffect:
             shell_color = random.choice(self.firework_colors)
             for character in firework_shell:
                 # launch scene
+                launch_scn = character.animation.new_scene("launch")
                 for color in self.firework_colors:
-                    character.animation.add_effect_to_scene("launch", self.args.firework_symbol, shell_color, 2)
-                    character.animation.add_effect_to_scene("launch", self.args.firework_symbol, "FFFFFF", 1)
-                    character.animation.scenes["launch"].is_looping = True
+                    launch_scn.add_frame(self.args.firework_symbol, shell_color, 2)
+                    launch_scn.add_frame(self.args.firework_symbol, "FFFFFF", 1)
+                    launch_scn.is_looping = True
                 # bloom scene
+                bloom_scn = character.animation.new_scene("bloom")
                 bloom_gradient = graphics.Gradient(shell_color, self.args.final_color, 15)
                 for color in bloom_gradient:
-                    character.animation.add_effect_to_scene("bloom", character.input_symbol, color, 15)
-                character.animation.activate_scene("launch")
+                    bloom_scn.add_frame(character.input_symbol, color, 15)
+                character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
                     character.event_handler.Event.WAYPOINT_REACHED,
-                    "apex",
+                    character.motion.waypoints["apex"],
                     character.event_handler.Action.ACTIVATE_SCENE,
-                    "bloom",
+                    bloom_scn,
                 )
 
     def prepare_data(self) -> None:

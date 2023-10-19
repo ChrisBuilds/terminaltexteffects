@@ -113,8 +113,10 @@ class UnstableEffect:
             jumbled_coord = character_coords.pop(random.randint(0, len(character_coords) - 1))
             self.jumbled_coords[character] = jumbled_coord
             character.motion.set_coordinate(jumbled_coord.column, jumbled_coord.row)
-            character.motion.new_waypoint("explosion", col, row, speed=0.75, ease=self.args.explosion_ease)
-            character.motion.new_waypoint(
+            explosion_wpt = character.motion.new_waypoint(
+                "explosion", col, row, speed=0.75, ease=self.args.explosion_ease
+            )
+            reassembly_wpt = character.motion.new_waypoint(
                 "reassembly",
                 character.input_coord.column,
                 character.input_coord.row,
@@ -122,20 +124,22 @@ class UnstableEffect:
                 ease=self.args.reassembly_ease,
             )
             unstable_gradient = graphics.Gradient(self.args.initial_color, self.args.unstable_color, 25)
+            rumble_scn = character.animation.new_scene("rumble")
             for step in unstable_gradient:
-                character.animation.add_effect_to_scene("rumble", character.input_symbol, step, 10)
+                rumble_scn.add_frame(character.input_symbol, step, 10)
             final_color = graphics.Gradient(self.args.unstable_color, self.args.final_color, 12)
+            final_scn = character.animation.new_scene("final")
             for step in final_color:
-                character.animation.add_effect_to_scene("final", character.input_symbol, step, 5)
-            character.animation.activate_scene("rumble")
+                final_scn.add_frame(character.input_symbol, step, 5)
+            character.animation.activate_scene(rumble_scn)
             character.is_active = True
 
     def move_all_to_waypoint(self, waypoint_id) -> None:
         for character in self.terminal.characters:
             if waypoint_id == "reassembly":
-                character.animation.activate_scene("final")
+                character.animation.activate_scene(character.animation.scenes["final"])
             self.animating_chars.append(character)
-            character.motion.activate_waypoint(waypoint_id)
+            character.motion.activate_waypoint(character.motion.waypoints[waypoint_id])
         while self.animating_chars:
             self.terminal.print()
             self.animate_chars()

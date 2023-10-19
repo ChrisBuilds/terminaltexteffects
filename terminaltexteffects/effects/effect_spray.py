@@ -141,7 +141,7 @@ class SprayEffect:
 
         for character in self.terminal.characters:
             character.motion.set_coordinate(*spray_origin_map[self.spray_position])
-            character.motion.new_waypoint(
+            input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
                 character.input_coord.column,
                 character.input_coord.row,
@@ -150,12 +150,13 @@ class SprayEffect:
                 layer=1,
             )
             if self.spray_colors:
+                droplet_scn = character.animation.new_scene("droplet")
                 spray_color = random.choice(self.spray_colors)
                 spray_gradient = graphics.Gradient(spray_color, self.final_color, 7)
                 for color in spray_gradient:
-                    character.animation.add_effect_to_scene("droplet", character.input_symbol, color, 40)
-                character.animation.activate_scene("droplet")
-            character.motion.activate_waypoint("input_coord")
+                    droplet_scn.add_frame(character.input_symbol, color, 40)
+                character.animation.activate_scene(droplet_scn)
+            character.motion.activate_waypoint(input_coord_wpt)
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
 

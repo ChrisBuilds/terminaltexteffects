@@ -57,7 +57,7 @@ class ExpandEffect:
 
         for character in self.terminal.characters:
             character.motion.set_coordinate(self.terminal.output_area.right // 2, self.terminal.output_area.top // 2)
-            character.motion.new_waypoint(
+            input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
                 character.input_coord.column,
                 character.input_coord.row,
@@ -66,7 +66,7 @@ class ExpandEffect:
                 layer=1,
             )
             character.is_active = True
-            character.motion.activate_waypoint("input_coord")
+            character.motion.activate_waypoint(input_coord_wpt)
             self.animating_chars.append(character)
 
     def run(self) -> None:

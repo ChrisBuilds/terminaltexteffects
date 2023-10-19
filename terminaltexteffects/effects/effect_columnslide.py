@@ -96,14 +96,14 @@ class ColumnSlide:
                     character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
                 else:
                     character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.bottom)
-                character.motion.new_waypoint(
+                input_coord_wpt = character.motion.new_waypoint(
                     "input_coord",
                     character.input_coord.column,
                     character.input_coord.row,
                     speed=self.args.movement_speed,
                     ease=self.args.easing,
                 )
-                character.motion.activate_waypoint("input_coord")
+                character.motion.activate_waypoint(input_coord_wpt)
 
     def get_next_column(self) -> list[EffectCharacter]:
         """Gets the next column of characters to animate.

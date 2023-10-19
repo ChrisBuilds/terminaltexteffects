@@ -3,7 +3,7 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.graphics as graphics
-from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -88,24 +88,26 @@ class BouncyBallsEffect:
             else:
                 color = character.animation.random_color()
             symbol = random.choice(ball_symbols)
-            character.animation.add_effect_to_scene("ball", symbol, color, 1)
+            ball_scene = character.animation.new_scene("ball")
+            ball_scene.add_frame(symbol, color, 1)
+            final_scene = character.animation.new_scene("final")
             for step in graphics.Gradient(color, self.args.final_color, 12):
-                character.animation.add_effect_to_scene("final", character.input_symbol, step, duration=10)
+                final_scene.add_frame(character.input_symbol, step, duration=10)
             character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
-            character.motion.new_waypoint(
+            input_coord_waypoint = character.motion.new_waypoint(
                 "input_coord",
                 character.input_coord.column,
                 character.input_coord.row,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )
-            character.motion.activate_waypoint("input_coord")
-            character.animation.activate_scene("ball")
+            character.motion.activate_waypoint(input_coord_waypoint)
+            character.animation.activate_scene(ball_scene)
             character.event_handler.register_event(
                 character.event_handler.Event.WAYPOINT_REACHED,
-                "input_coord",
+                input_coord_waypoint,
                 character.event_handler.Action.ACTIVATE_SCENE,
-                "final",
+                final_scene,
             )
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
