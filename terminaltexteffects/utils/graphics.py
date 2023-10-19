@@ -1,8 +1,8 @@
 import typing
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from terminaltexteffects.utils import ansitools, colorterm, hexterm
+from terminaltexteffects.utils import ansitools, colorterm, hexterm, motion
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
@@ -97,8 +97,8 @@ class Gradient:
 
 
 @dataclass
-class GraphicalEffect:
-    """A class for storing terminal graphical modes and a color.
+class CharacterVisual:
+    """A class for storing symbol, color, and terminal graphical modes for the character.
 
     Supported graphical modes:
     bold, dim, italic, underline, blink, inverse, hidden, strike
@@ -165,24 +165,23 @@ class GraphicalEffect:
 
 
 @dataclass
-class Sequence:
-    """An Sequence is a graphicaleffect with a duration.
+class Frame:
+    """A Frame is a CharacterVisual with a duration.
     Args:
-        graphical_effect (GraphicalEffect): a GraphicalEffect object containing the graphical modes and color of the character
-        duration (int): the number of animation steps to use the Sequence
+        character_visual (CharacterVisual): a CharacterVisual object
+        duration (int): the number of animation steps to use the Frame
     """
 
-    graphical_effect: GraphicalEffect
+    character_visual: CharacterVisual
     duration: int
 
     def __post_init__(self):
         self.frames_played = 0
-        self.symbol = self.graphical_effect.symbol
+        self.symbol = self.character_visual.symbol
 
 
-@dataclass
 class Scene:
-    """A Scene is a list of Sequences.
+    """A Scene is a list of Frames.
 
     Args:
         id (str): the id of the Scene
@@ -190,22 +189,68 @@ class Scene:
         is_looping (bool): whether the Scene should loop
     """
 
-    id: str
-    sequences: list[Sequence] = field(default_factory=list)
-    is_looping: bool = False
-    waypoint_sync_id: str | None = None
+    xterm_color_map: dict[str, int] = {}
 
-    def __post_init__(self):
-        self.played_sequences = []
+    def __init__(
+        self,
+        scene_id: int,
+        is_looping: bool = False,
+        sync_waypoint: motion.Waypoint | None = None,
+        no_color: bool = False,
+        use_xterm_colors: bool = False,
+    ):
+        self.scene_id = scene_id
+        self.is_looping = is_looping
+        self.sync_waypoint: motion.Waypoint | None = sync_waypoint
+        self.no_color = no_color
+        self.use_xterm_colors = use_xterm_colors
+        self.frames: list[Frame] = []
+        self.played_frames: list[Frame] = []
 
-    def add_sequence(self, graphicaleffect: GraphicalEffect, duration: int) -> None:
-        """Adds a Sequence to the Scene.
+    def add_frame(
+        self,
+        symbol: str,
+        color: str | int,
+        duration: int,
+        *,
+        BOLD=False,
+        DIM=False,
+        ITALIC=False,
+        UNDERLINE=False,
+        BLINK=False,
+        REVERSE=False,
+        HIDDEN=False,
+        STRIKE=False,
+    ) -> None:
+        """Adds a Frame to the Scene.
 
         Args:
-            graphicaleffect (GraphicalEffect): a GraphicalEffect object containing the graphical modes and color of the character
-            duration (int): the number of animation steps to use the Sequence
+            graphicaleffect (GraphicalEffect): a GraphicalEffect object containing the symbol, graphical modes, and color of the character
+            duration (int): the number of animation steps to display the frame
         """
-        self.sequences.append(Sequence(graphicaleffect, duration))
+        if not self.no_color:
+            if self.use_xterm_colors and isinstance(color, str):
+                if color in self.xterm_color_map:
+                    color = self.xterm_color_map[color]
+                else:
+                    xterm_color = hexterm.hex_to_xterm(color)
+                    self.xterm_color_map[color] = xterm_color
+                    color = xterm_color
+        if duration < 1:
+            raise ValueError("duration must be greater than 0")
+        char_vis = CharacterVisual(
+            symbol,
+            bold=BOLD,
+            dim=DIM,
+            italic=ITALIC,
+            underline=UNDERLINE,
+            blink=BLINK,
+            reverse=REVERSE,
+            hidden=HIDDEN,
+            strike=STRIKE,
+            color=color,
+        )
+        self.frames.append(Frame(char_vis, duration))
 
     def activate(self) -> str:
         """Activates the Scene.
@@ -213,15 +258,15 @@ class Scene:
         Returns:
             str: the next symbol in the Scene
         """
-        if self.sequences:
-            return self.sequences[0].symbol
+        if self.frames:
+            return self.frames[0].symbol
         else:
             raise ValueError("Scene has no sequences.")
 
     def apply_gradient(self, start_color: str | int, end_color: str | int) -> None:
         """
         Applies a gradient effect across the sequences of the scene. The gradient is generated
-        to have the same number of steps as the number of sequences in the scene.
+        to have the same number of steps as the number of frames in the scene.
 
         Parameters
         ----------
@@ -234,13 +279,13 @@ class Scene:
         -------
         None
         """
-        if not self.sequences:
+        if not self.frames:
             return
         else:
-            gradient = Gradient(start_color, end_color, len(self.sequences))
-            for i, sequence in enumerate(self.sequences):
-                sequence.graphical_effect.color = gradient.colors[i]
-                sequence.graphical_effect.format_symbol()
+            gradient = Gradient(start_color, end_color, len(self.frames))
+            for i, frame in enumerate(self.frames):
+                frame.character_visual.color = gradient.colors[i]
+                frame.character_visual.format_symbol()
 
     def get_next_symbol(self) -> str:
         """Returns the next symbol in the Scene.
@@ -249,30 +294,33 @@ class Scene:
             str: the next symbol in the Scene
         """
 
-        current_sequence = self.sequences[0]
+        current_sequence = self.frames[0]
         next_symbol = current_sequence.symbol
         current_sequence.frames_played += 1
         if current_sequence.frames_played == current_sequence.duration:
             current_sequence.frames_played = 0
-            self.played_sequences.append(self.sequences.pop(0))
-            if self.is_looping and not self.sequences:
-                self.sequences.extend(self.played_sequences)
-                self.played_sequences.clear()
+            self.played_frames.append(self.frames.pop(0))
+            if self.is_looping and not self.frames:
+                self.frames.extend(self.played_frames)
+                self.played_frames.clear()
         return next_symbol
 
     def reset_scene(self) -> None:
         """Resets the Scene."""
-        for sequence in self.sequences:
+        for sequence in self.frames:
             sequence.frames_played = 0
-            self.played_sequences.append(sequence)
-        self.sequences.clear()
-        self.sequences.extend(self.played_sequences)
-        self.played_sequences.clear()
+            self.played_frames.append(sequence)
+        self.frames.clear()
+        self.frames.extend(self.played_frames)
+        self.played_frames.clear()
 
-    def __eq__(self, other: typing.Any) -> bool:
+    def __eq__(self, other: typing.Any):
         if not isinstance(other, Scene):
             return NotImplemented
-        return self.id == other.id
+        return self.scene_id == other.scene_id
+
+    def __hash__(self):
+        return hash(self.scene_id)
 
 
 class Animation:
@@ -283,51 +331,29 @@ class Animation:
         Args:
             character (base_character.EffectCharacter): the EffectCharacter object to animate
         """
-        self.character = character
+        self.next_scene_id = 0
         self.scenes: dict[str, Scene] = {}
+        self.character = character
         self.active_scene: Scene | None = None
         self.use_xterm_colors: bool = False
         self.no_color: bool = False
         self.xterm_color_map: dict[str, int] = {}
 
-    def add_effect_to_scene(
-        self,
-        scene_id: str,
-        symbol: str | None | GraphicalEffect = None,
-        color: int | str | None = None,
-        duration: int = 1,
-    ) -> "Scene":
-        """Add a graphical effect to a scene. If the scene doesn't exist, it will be created.
+    def new_scene(self, scene_name: str) -> Scene:
+        """Creates a new Scene and adds it to the Animation.
 
         Args:
-            scene_id (str): ID of the scene to which the effect will be added
-            symbol (str | GraphicalEffect): Symbol to display, if None, the character's input symbol will be used. If a GraphicalEffect is passed, the color and graphical modes will be used.
-            color (int | str): XTerm color code (0-255) or hex color code (e.g. ffffff)
-            duration (int): Number of animation steps to display the effect, defaults to 1. Minimum 1.
+            scene_name (str): Unique name for the scene. Used to reference the scene outside the scope in which is was created.
+
+        Returns:
+            Scene: the new Scene
         """
-        if duration < 1:
-            raise ValueError("duration must be greater than 0")
-        if scene_id not in self.scenes:
-            new_scene = Scene(scene_id)
-            self.scenes[scene_id] = new_scene
-        if not symbol:
-            symbol = self.character.input_symbol
-        if not self.no_color:
-            if self.use_xterm_colors and isinstance(color, str):
-                if color in self.xterm_color_map:
-                    color = self.xterm_color_map[color]
-                else:
-                    xterm_color = hexterm.hex_to_xterm(color)
-                    self.xterm_color_map[color] = xterm_color
-                    color = xterm_color
-        else:
-            color = None
-        if isinstance(symbol, str):
-            graphicaleffect = GraphicalEffect(symbol, color=color)
-        else:
-            graphicaleffect = symbol
-        self.scenes[scene_id].add_sequence(graphicaleffect, duration)
-        return self.scenes[scene_id]
+        new_scene = Scene(self.next_scene_id)
+        self.scenes[scene_name] = new_scene
+        new_scene.no_color = self.no_color
+        new_scene.use_xterm_colors = self.use_xterm_colors
+        self.next_scene_id += 1
+        return new_scene
 
     def active_scene_is_complete(self) -> bool:
         """Returns whether the active scene is complete. A scene is complete if all sequences have been played.
@@ -338,14 +364,12 @@ class Animation:
         """
         if not self.active_scene:
             return True
-        elif not self.active_scene.sequences or self.active_scene.is_looping:
+        elif not self.active_scene.frames or self.active_scene.is_looping:
             return True
-        elif self.active_scene.waypoint_sync_id is not None:
-            if (
-                self.character.motion.active_waypoint is None
-                or self.character.motion.active_waypoint.id != self.active_scene.waypoint_sync_id
-            ):
-                return True
+        elif (
+            self.active_scene.sync_waypoint and self.character.motion.active_waypoint is self.active_scene.sync_waypoint
+        ):
+            return True
         return False
 
     def random_color(self) -> str:
@@ -359,66 +383,56 @@ class Animation:
     def step_animation(self) -> None:
         """Apply the next symbol in the scene to the character. If a scene order exists, the next scene
         will be activated when the current scene is complete."""
-        if self.active_scene and self.active_scene.sequences:
+        if self.active_scene and self.active_scene.frames:
             # if the active scene is synced to the active waypoint, calculate the sequence index based on the
             # current waypoint progress
-            if self.active_scene.waypoint_sync_id is not None:
+            if self.active_scene.sync_waypoint:
                 if (
                     self.character.motion.active_waypoint
-                    and self.character.motion.active_waypoint.id == self.active_scene.waypoint_sync_id
+                    and self.character.motion.active_waypoint is self.active_scene.sync_waypoint
                 ):
                     sequence_index = round(
-                        len(self.active_scene.sequences)
+                        len(self.active_scene.frames)
                         * (
                             max(self.character.motion.inter_waypoint_current_step, 1)
                             / max(self.character.motion.inter_waypoint_max_steps, 1)
                         )
                     )
                     try:
-                        self.character.symbol = self.active_scene.sequences[sequence_index].symbol
+                        self.character.symbol = self.active_scene.frames[sequence_index].symbol
                     except IndexError:
-                        self.character.symbol = self.active_scene.sequences[-1].symbol
-                else:  # when the active waypoint has been deactivated or changed, use the final symbol in the scene
-                    self.character.symbol = self.active_scene.sequences[-1].symbol
+                        self.character.symbol = self.active_scene.frames[-1].symbol
+                else:  # when the active waypoint has been deactivated or changed, use the final symbol in the scene and finish the scene
+                    self.character.symbol = self.active_scene.frames[-1].symbol
+                    self.active_scene.played_frames.extend(self.active_scene.frames)
+                    self.active_scene.frames.clear()
             else:
                 self.character.symbol = self.active_scene.get_next_symbol()
             if self.active_scene_is_complete():
-                completed_scene_id = self.active_scene.id
+                completed_scene = self.active_scene
                 if not self.active_scene.is_looping:
                     self.active_scene.reset_scene()
                     self.active_scene = None
 
                 self.character.event_handler.handle_event(
-                    self.character.event_handler.Event.SCENE_COMPLETE, completed_scene_id
+                    self.character.event_handler.Event.SCENE_COMPLETE, completed_scene
                 )
 
-    def reset_scene(self, scene_id: str) -> None:
-        """Resets the Scene.
-
-        Args:
-            scene_name (str): the ID of the Scene to reset
-        """
-        if scene_id in self.scenes:
-            self.scenes[scene_id].reset_scene()
-
-    def activate_scene(self, scene_id: str) -> None:
+    def activate_scene(self, scene: Scene) -> None:
         """Sets the active scene.
 
         Args:
             scene_id (str): the ID of the Scene to set as active
         """
-        if scene_id in self.scenes:
-            self.active_scene = self.scenes[scene_id]
-            self.character.symbol = self.active_scene.activate()
-            self.character.event_handler.handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, scene_id)
-        else:
-            raise ValueError(f"Scene {scene_id} does not exist")
+        self.active_scene = scene
+        self.character.symbol = self.active_scene.activate()
+        self.character.event_handler.handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, scene)
 
-    def deactivate_scene(self, scene_id: str) -> None:
+    def deactivate_scene(self, scene: Scene) -> None:
         """Deactivates a scene.
 
         Args:
             scene_id (str): the ID of the Scene to deactivate
         """
-        if self.active_scene and self.active_scene.id == scene_id:
+        if self.active_scene is scene:
             self.active_scene = None
