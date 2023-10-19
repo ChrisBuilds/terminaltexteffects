@@ -27,7 +27,10 @@ class EventHandler:
             character (EffectCharacter): The character that the EventHandler is handling events for.
         """
         self.character = character
-        self.registered_events: dict[tuple[EventHandler.Event, str], list[tuple[EventHandler.Action, str]]] = {}
+        self.registered_events: dict[
+            tuple[EventHandler.Event, graphics.Scene | motion.Waypoint],
+            list[tuple[EventHandler.Action, graphics.Scene | motion.Waypoint]],
+        ] = {}
 
     class Event(Enum):
         """An Event that can be registered with the EventHandler.
@@ -65,7 +68,13 @@ class EventHandler:
         DEACTIVATE_WAYPOINT = auto()
         DEACTIVATE_SCENE = auto()
 
-    def register_event(self, event: Event, subject_id: str, action: Action, action_target: str) -> None:
+    def register_event(
+        self,
+        event: Event,
+        caller: graphics.Scene | motion.Waypoint,
+        action: Action,
+        target: graphics.Scene | motion.Waypoint,
+    ) -> None:
         """Registers an event to be handled by the EventHandler.
 
         Examples:
@@ -77,13 +86,13 @@ class EventHandler:
             action (Action): The action to take when the event is triggered.
             action_target (str): The ID of the action target.
         """
-        new_event = (event, subject_id)
-        new_action = (action, action_target)
+        new_event = (event, caller)
+        new_action = (action, target)
         if new_event not in self.registered_events:
             self.registered_events[new_event] = list()
         self.registered_events[new_event].append(new_action)
 
-    def handle_event(self, event: Event, subject_id: str) -> None:
+    def handle_event(self, event: Event, caller: graphics.Scene | motion.Waypoint) -> None:
         """Handles an event by taking the specified action.
 
         Examples:
@@ -100,11 +109,11 @@ class EventHandler:
             EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
         }
 
-        if (event, subject_id) not in self.registered_events:
+        if (event, caller) not in self.registered_events:
             return
-        for event_action in self.registered_events[(event, subject_id)]:
-            action, action_target = event_action
-            action_map[action](action_target)
+        for event_action in self.registered_events[(event, caller)]:
+            action, target = event_action
+            action_map[action](target)  # type: ignore
 
 
 class EffectCharacter:
