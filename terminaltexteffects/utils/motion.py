@@ -1,6 +1,5 @@
 import typing, math
 from dataclasses import dataclass
-from enum import Enum, auto
 import terminaltexteffects.utils.easing as easing
 
 if typing.TYPE_CHECKING:
@@ -24,11 +23,10 @@ class Waypoint:
     """A coordinate, speed, and easing function.
 
     Args:
-        id (str): unique identifier for the waypoint
+        waypoint_id (str): unique identifier for the waypoint
         coord (Coord): coordinate
         speed (float): character speed at the waypoint
         ease (Ease): easing function for character movement. Defaults to None.
-        next_waypoint (Waypoint): next waypoint to move to. Defaults to None.
     """
 
     waypoint_id: int
@@ -48,12 +46,10 @@ class Waypoint:
 
 class Motion:
     def __init__(self, character: "base_character.EffectCharacter"):
-        """Motion class for managing the movement of a character. Waypoints store target coordinates, speeds, and easing functions. The character
-        is moved from one waypoint to the next until all waypoints have been reached. If no waypoints remain and character is not at the
-        input coordinate, a new waypoint for the input coodinate is added and the character is moved to the new waypoint.
+        """Motion class for managing the movement of a character.
 
         Args:
-            character (base_character.EffectCharacter): The character to move.
+            character (base_character.EffectCharacter): The EffectCharacter to move.
         """
         self.next_waypoint_id = 0
         self.waypoints: dict[str, Waypoint] = {}
@@ -140,7 +136,7 @@ class Motion:
         ease: easing.Ease | None = None,
         layer: int = 0,
     ) -> Waypoint:
-        """Appends a new waypoint to the waypoints dictionary.
+        """Creates a new Waypoint and appends adds it to the waypoints dictionary with the waypoint_name as key.
 
         Args:
             waypoint_name (str): unique identifier for the waypoint
@@ -148,6 +144,7 @@ class Motion:
             row (int): row
             speed (float): speed
             ease (Ease| None): easing function for character movement. Defaults to None.
+            layer (int): layer to use when drawing the character. Higher layers are drawn over lower layers. Defaults to 0.
 
         Returns:
             Waypoint: The new waypoint.
@@ -158,10 +155,10 @@ class Motion:
         return new_waypoint
 
     def movement_is_complete(self) -> bool:
-        """Returns whether the character has reached the final coordinate.
+        """Returns whether the character has reached the final coordinate and moved the requisite number of steps.
 
         Returns:
-            bool: True if the character has reached the final coordinate and has no active waypoint, False otherwise.
+            bool: True if the character has reached the final coordinate and has taken the maximum number of steps, False otherwise.
         """
         if (
             self.inter_waypoint_current_step == self.inter_waypoint_max_steps
@@ -215,11 +212,11 @@ class Motion:
         return easing_function_map[easing_func](elapsed_step_ratio)
 
     def activate_waypoint(self, waypoint: Waypoint) -> None:
-        """Sets the current waypoint to the waypoint with the given waypoint_id and sets
-        the speed, distance, and step values for the new waypoint.
+        """Sets the current waypoint to Waypoint and sets the speed, distance, and step values for the new waypoint. A
+        WAYPOINT_ACTIVATED event is triggered.
 
         Args:
-            waypoint_id (str): unique identifier for the waypoint
+            waypoint (Waypoint): the Waypoint to activate
         """
         if not self.active_waypoint:
             self.origin_waypoint = Waypoint(-1, Coord(self.current_coord.column, self.current_coord.row))
@@ -241,7 +238,11 @@ class Motion:
         self.character.event_handler.handle_event(self.character.event_handler.Event.WAYPOINT_ACTIVATED, waypoint)
 
     def deactivate_waypoint(self, waypoint: Waypoint) -> None:
-        """Unsets the current waypoint if the waypoint_id matches."""
+        """Unsets the current waypoint if the current waypoint is waypoint.
+
+        Args:
+            waypoint (Waypoint): the Waypoint to deactivate
+        """
         if self.active_waypoint and self.active_waypoint is waypoint:
             self.active_waypoint = None
             self.layer = 0
