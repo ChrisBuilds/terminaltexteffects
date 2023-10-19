@@ -1,3 +1,5 @@
+"""Classes for storing and manipulating character graphics."""
+
 import typing
 import random
 from dataclasses import dataclass
@@ -11,7 +13,8 @@ if typing.TYPE_CHECKING:
 @dataclass
 class Gradient:
     """A Gradient is a list of RGB hex color strings transitioning from one color to another. The gradient color
-    list is calculated using linear interpolation based on the provided start and end colors and the number of steps.
+    list is calculated using linear interpolation based on the provided start and end colors and the number of steps. Gradients
+    can be interated over to get the next color in the gradient color list.
 
     Args:
         start_color (str|int): RGB hex color string or XTerm-256 color code
@@ -184,9 +187,11 @@ class Scene:
     """A Scene is a list of Frames.
 
     Args:
-        id (str): the id of the Scene
-        sequences (list[Sequence]): a list of Sequence objects
+        scene_id (int): unique ID for the Scene, automatically generated when using Animation.new_scene()
         is_looping (bool): whether the Scene should loop
+        sync_waypoint (Waypoint): a Waypoint to sync the Scene to
+        no_color (bool): whether to disable color
+        use_xterm_colors (bool): whether to use XTerm-256 colors
     """
 
     xterm_color_map: dict[str, int] = {}
@@ -225,8 +230,17 @@ class Scene:
         """Adds a Frame to the Scene.
 
         Args:
-            graphicaleffect (GraphicalEffect): a GraphicalEffect object containing the symbol, graphical modes, and color of the character
-            duration (int): the number of animation steps to display the frame
+            symbol (str): the symbol to show
+            color (str | int): color code
+            duration (int): the number of animation steps to use the Frame
+            BOLD (bool): bold mode
+            DIM (bool): dim mode
+            ITALIC (bool): italic mode
+            UNDERLINE (bool): underline mode
+            BLINK (bool): blink mode
+            REVERSE (bool): reverse mode
+            HIDDEN (bool): hidden mode
+            STRIKE (bool): strike mode
         """
         if not self.no_color:
             if self.use_xterm_colors and isinstance(color, str):
@@ -265,7 +279,7 @@ class Scene:
 
     def apply_gradient(self, start_color: str | int, end_color: str | int) -> None:
         """
-        Applies a gradient effect across the sequences of the scene. The gradient is generated
+        Applies a gradient effect across the frames of the scene. The gradient is generated
         to have the same number of steps as the number of frames in the scene.
 
         Parameters
@@ -325,8 +339,8 @@ class Scene:
 
 class Animation:
     def __init__(self, character: "base_character.EffectCharacter"):
-        """Animation handles the animations of a character. It contains a list of Scenes, and the active scene id. GraphicalEffects are
-        added to the Scenes, and the Animation returns the next symbol in the active scene.
+        """Animation handles the animations of a character. It contains a scene_name -> Scene mapping and the active Scene. Calls to step_animation()
+        progress the Scene and apply the next symbol to the character.
 
         Args:
             character (base_character.EffectCharacter): the EffectCharacter object to animate
@@ -366,10 +380,7 @@ class Animation:
             return True
         elif not self.active_scene.frames or self.active_scene.is_looping:
             return True
-        elif (
-            self.active_scene.sync_waypoint and self.character.motion.active_waypoint is self.active_scene.sync_waypoint
-        ):
-            return True
+
         return False
 
     def random_color(self) -> str:
@@ -422,7 +433,7 @@ class Animation:
         """Sets the active scene.
 
         Args:
-            scene_id (str): the ID of the Scene to set as active
+            scene (Scene): the Scene to set as active
         """
         self.active_scene = scene
         self.character.symbol = self.active_scene.activate()
@@ -432,7 +443,7 @@ class Animation:
         """Deactivates a scene.
 
         Args:
-            scene_id (str): the ID of the Scene to deactivate
+            scene (Scene): the Scene to deactivate
         """
         if self.active_scene is scene:
             self.active_scene = None
