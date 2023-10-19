@@ -31,7 +31,7 @@ class Waypoint:
         next_waypoint (Waypoint): next waypoint to move to. Defaults to None.
     """
 
-    id: str
+    waypoint_id: int
     coord: Coord
     speed: float = 1.0
     ease: easing.Ease | None = None
@@ -40,7 +40,10 @@ class Waypoint:
     def __eq__(self, other: typing.Any) -> bool:
         if not isinstance(other, Waypoint):
             return NotImplemented
-        return self.id == other.id and self.coord == other.coord
+        return self.coord == other.coord
+
+    def __hash__(self):
+        return hash(self.waypoint_id)
 
 
 class Motion:
@@ -52,11 +55,12 @@ class Motion:
         Args:
             character (base_character.EffectCharacter): The character to move.
         """
+        self.next_waypoint_id = 0
+        self.waypoints: dict[str, Waypoint] = {}
         self.character = character
         self.current_coord: Coord = Coord(character.input_coord.column, character.input_coord.row)
         self.previous_coord: Coord = Coord(-1, -1)
         self.speed: float = 1.0
-        self.waypoints: dict[str, Waypoint] = {}
         self.active_waypoint: Waypoint | None = None
         self.origin_waypoint: Waypoint | None = None
         self.inter_waypoint_distance: float = 0
@@ -128,12 +132,18 @@ class Motion:
         self.current_coord = Coord(column, row)
 
     def new_waypoint(
-        self, waypoint_id: str, column: int, row: int, speed: float = 1, ease: easing.Ease | None = None, layer: int = 0
+        self,
+        waypoint_name: str,
+        column: int,
+        row: int,
+        speed: float = 1,
+        ease: easing.Ease | None = None,
+        layer: int = 0,
     ) -> Waypoint:
         """Appends a new waypoint to the waypoints dictionary.
 
         Args:
-            waypoint_id (str): unique identifier for the waypoint
+            waypoint_name (str): unique identifier for the waypoint
             column (int): column
             row (int): row
             speed (float): speed
@@ -142,8 +152,9 @@ class Motion:
         Returns:
             Waypoint: The new waypoint.
         """
-        new_waypoint = Waypoint(waypoint_id, Coord(column, row), speed, ease, layer)
-        self.waypoints[waypoint_id] = new_waypoint
+        new_waypoint = Waypoint(self.next_waypoint_id, Coord(column, row), speed, ease, layer)
+        self.next_waypoint_id += 1
+        self.waypoints[waypoint_name] = new_waypoint
         return new_waypoint
 
     def movement_is_complete(self) -> bool:
@@ -203,7 +214,7 @@ class Motion:
         elapsed_step_ratio = self.inter_waypoint_current_step / self.inter_waypoint_max_steps
         return easing_function_map[easing_func](elapsed_step_ratio)
 
-    def activate_waypoint(self, waypoint_id: str) -> None:
+    def activate_waypoint(self, waypoint: Waypoint) -> None:
         """Sets the current waypoint to the waypoint with the given waypoint_id and sets
         the speed, distance, and step values for the new waypoint.
 
@@ -211,10 +222,10 @@ class Motion:
             waypoint_id (str): unique identifier for the waypoint
         """
         if not self.active_waypoint:
-            self.origin_waypoint = Waypoint("-1", Coord(self.current_coord.column, self.current_coord.row))
+            self.origin_waypoint = Waypoint(-1, Coord(self.current_coord.column, self.current_coord.row))
         else:
             self.origin_waypoint = self.active_waypoint
-        self.active_waypoint = self.waypoints[waypoint_id]
+        self.active_waypoint = waypoint
         self.layer = self.active_waypoint.layer
         self.speed = self.active_waypoint.speed
         self.inter_waypoint_distance = self._distance(
@@ -227,11 +238,11 @@ class Motion:
         if self.speed > self.inter_waypoint_distance:
             self.speed = max(self.inter_waypoint_distance, 1)
         self.inter_waypoint_max_steps = round(self.inter_waypoint_distance / self.speed)
-        self.character.event_handler.handle_event(self.character.event_handler.Event.WAYPOINT_ACTIVATED, waypoint_id)
+        self.character.event_handler.handle_event(self.character.event_handler.Event.WAYPOINT_ACTIVATED, waypoint)
 
-    def deactivate_waypoint(self, waypoint_id: str) -> None:
+    def deactivate_waypoint(self, waypoint: Waypoint) -> None:
         """Unsets the current waypoint if the waypoint_id matches."""
-        if self.active_waypoint and self.active_waypoint.id == waypoint_id:
+        if self.active_waypoint and self.active_waypoint is waypoint:
             self.active_waypoint = None
             self.layer = 0
             self.inter_waypoint_distance = 0
@@ -258,8 +269,8 @@ class Motion:
             self.current_coord = self._point_at_distance(distance_to_move)
 
         if self.inter_waypoint_current_step == self.inter_waypoint_max_steps:
-            waypoint_reached_id = self.active_waypoint.id
-            self.deactivate_waypoint(self.active_waypoint.id)
+            waypoint_reached = self.active_waypoint
+            self.deactivate_waypoint(self.active_waypoint)
             self.character.event_handler.handle_event(
-                self.character.event_handler.Event.WAYPOINT_REACHED, waypoint_reached_id
+                self.character.event_handler.Event.WAYPOINT_REACHED, waypoint_reached
             )
