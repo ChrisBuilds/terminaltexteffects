@@ -124,7 +124,7 @@ class Bubble:
     def make_waypoints(self):
         waypoint_column = random.randint(self.effect.terminal.output_area.left, self.effect.terminal.output_area.right)
         floor_waypoint = self.anchor_char.motion.new_waypoint(
-            "floor", waypoint_column, self.lowest_row, self.effect.args.bubble_speed
+            "floor", waypoint_column, self.lowest_row, speed=self.effect.args.bubble_speed
         )
         self.anchor_char.motion.activate_waypoint(floor_waypoint)
 
@@ -160,7 +160,7 @@ class Bubble:
             ),
         ):
             pop_out_waypoint = char.motion.new_waypoint(
-                "pop_out", point.column, point.row, 0.2, ease=easing.Ease["OUT_EXPO"], layer=1
+                "pop_out", point.column, point.row, speed=0.2, ease=easing.Ease["OUT_EXPO"], layer=1
             )
             char.event_handler.register_event(
                 EventHandler.Event.WAYPOINT_REACHED,
@@ -235,7 +235,7 @@ class BubblesEffect:
                 "final",
                 character.input_coord.column,
                 character.input_coord.row,
-                0.3,
+                speed=0.3,
                 ease=easing.Ease["IN_OUT_EXPO"],
                 layer=1,
             )

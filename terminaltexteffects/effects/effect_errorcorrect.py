@@ -108,7 +108,7 @@ class ErrorCorrectEffect:
                 "input_coord",
                 char1.input_coord.column,
                 char1.input_coord.row,
-                self.args.movement_speed,
+                speed=self.args.movement_speed,
                 layer=1,
             )
             char2.motion.set_coordinate(char1.input_coord.column, char1.input_coord.row)
@@ -116,7 +116,7 @@ class ErrorCorrectEffect:
                 "input_coord",
                 char2.input_coord.column,
                 char2.input_coord.row,
-                self.args.movement_speed,
+                speed=self.args.movement_speed,
                 layer=1,
             )
             self.swapped.append((char1, char2))
