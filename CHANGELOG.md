@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### New Features
+ * Animations support easing functions. Easing functions are applied to Scenes using Scene.ease = easing_function.
 
 ### Changes
  * Animation and Motion have been refactored to use direct Scene and Waypoint object references instead of string IDs.
