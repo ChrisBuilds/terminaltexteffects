@@ -132,6 +132,7 @@ class Motion:
         waypoint_name: str,
         column: int,
         row: int,
+        *,
         speed: float = 1,
         ease: easing.Ease | None = None,
         layer: int = 0,
