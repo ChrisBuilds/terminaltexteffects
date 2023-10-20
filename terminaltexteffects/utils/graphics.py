@@ -4,7 +4,7 @@ import typing
 import random
 from dataclasses import dataclass
 
-from terminaltexteffects.utils import ansitools, colorterm, hexterm, motion
+from terminaltexteffects.utils import ansitools, colorterm, hexterm, motion, easing
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
@@ -201,31 +201,36 @@ class Scene:
         scene_id: int,
         is_looping: bool = False,
         sync_waypoint: motion.Waypoint | None = None,
+        ease: easing.Ease | None = None,
         no_color: bool = False,
         use_xterm_colors: bool = False,
     ):
         self.scene_id = scene_id
         self.is_looping = is_looping
         self.sync_waypoint: motion.Waypoint | None = sync_waypoint
+        self.ease: easing.Ease | None = ease
         self.no_color = no_color
         self.use_xterm_colors = use_xterm_colors
         self.frames: list[Frame] = []
         self.played_frames: list[Frame] = []
+        self.frame_index_map: dict[int, Frame] = {}
+        self.easing_total_steps: int = 0
+        self.easing_current_step: int = 0
 
     def add_frame(
         self,
         symbol: str,
-        color: str | int,
         duration: int,
         *,
-        BOLD=False,
-        DIM=False,
-        ITALIC=False,
-        UNDERLINE=False,
-        BLINK=False,
-        REVERSE=False,
-        HIDDEN=False,
-        STRIKE=False,
+        color: str | int | None = None,
+        bold=False,
+        dim=False,
+        italic=False,
+        underline=False,
+        blink=False,
+        reverse=False,
+        hidden=False,
+        strike=False,
     ) -> None:
         """Adds a Frame to the Scene.
 
@@ -242,7 +247,7 @@ class Scene:
             HIDDEN (bool): hidden mode
             STRIKE (bool): strike mode
         """
-        if not self.no_color:
+        if not self.no_color and color is not None:
             if self.use_xterm_colors and isinstance(color, str):
                 if color in self.xterm_color_map:
                     color = self.xterm_color_map[color]
@@ -254,17 +259,21 @@ class Scene:
             raise ValueError("duration must be greater than 0")
         char_vis = CharacterVisual(
             symbol,
-            bold=BOLD,
-            dim=DIM,
-            italic=ITALIC,
-            underline=UNDERLINE,
-            blink=BLINK,
-            reverse=REVERSE,
-            hidden=HIDDEN,
-            strike=STRIKE,
+            bold=bold,
+            dim=dim,
+            italic=italic,
+            underline=underline,
+            blink=blink,
+            reverse=reverse,
+            hidden=hidden,
+            strike=strike,
             color=color,
         )
-        self.frames.append(Frame(char_vis, duration))
+        frame = Frame(char_vis, duration)
+        self.frames.append(frame)
+        for _ in range(frame.duration):
+            self.frame_index_map[self.easing_total_steps] = frame
+            self.easing_total_steps += 1
 
     def activate(self) -> str:
         """Activates the Scene.
@@ -352,6 +361,7 @@ class Animation:
         self.use_xterm_colors: bool = False
         self.no_color: bool = False
         self.xterm_color_map: dict[str, int] = {}
+        self.active_scene_current_step: int = 0
 
     def new_scene(self, scene_name: str) -> Scene:
         """Creates a new Scene and adds it to the Animation.
@@ -391,6 +401,52 @@ class Animation:
         """
         return hex(random.randint(0, 0xFFFFFF))[2:].zfill(6)
 
+    def _ease_animation(self, easing_func: easing.Ease) -> float:
+        """Returns the percentage of total distance that should be moved based on the easing function.
+
+        Args:
+            easing_func (easing.Ease): The easing function to use.
+
+        Returns:
+            float: The percentage of total distance to move.
+        """
+        easing_function_map = {
+            easing.Ease.IN_SINE: easing.in_sine,
+            easing.Ease.OUT_SINE: easing.out_sine,
+            easing.Ease.IN_OUT_SINE: easing.in_out_sine,
+            easing.Ease.IN_QUAD: easing.in_quad,
+            easing.Ease.OUT_QUAD: easing.out_quad,
+            easing.Ease.IN_OUT_QUAD: easing.in_out_quad,
+            easing.Ease.IN_CUBIC: easing.in_cubic,
+            easing.Ease.OUT_CUBIC: easing.out_cubic,
+            easing.Ease.IN_OUT_CUBIC: easing.in_out_cubic,
+            easing.Ease.IN_QUART: easing.in_quart,
+            easing.Ease.OUT_QUART: easing.out_quart,
+            easing.Ease.IN_OUT_QUART: easing.in_out_quart,
+            easing.Ease.IN_QUINT: easing.in_quint,
+            easing.Ease.OUT_QUINT: easing.out_quint,
+            easing.Ease.IN_OUT_QUINT: easing.in_out_quint,
+            easing.Ease.IN_EXPO: easing.in_expo,
+            easing.Ease.OUT_EXPO: easing.out_expo,
+            easing.Ease.IN_OUT_EXPO: easing.in_out_expo,
+            easing.Ease.IN_CIRC: easing.in_circ,
+            easing.Ease.OUT_CIRC: easing.out_circ,
+            easing.Ease.IN_OUT_CIRC: easing.in_out_circ,
+            easing.Ease.IN_BACK: easing.in_back,
+            easing.Ease.OUT_BACK: easing.out_back,
+            easing.Ease.IN_OUT_BACK: easing.in_out_back,
+            easing.Ease.IN_ELASTIC: easing.in_elastic,
+            easing.Ease.OUT_ELASTIC: easing.out_elastic,
+            easing.Ease.IN_OUT_ELASTIC: easing.in_out_elastic,
+            easing.Ease.IN_BOUNCE: easing.in_bounce,
+            easing.Ease.OUT_BOUNCE: easing.out_bounce,
+            easing.Ease.IN_OUT_BOUNCE: easing.in_out_bounce,
+        }
+        if self.active_scene is None:
+            return 0
+        elapsed_step_ratio = self.active_scene.easing_current_step / self.active_scene.easing_total_steps
+        return easing_function_map[easing_func](elapsed_step_ratio)
+
     def step_animation(self) -> None:
         """Apply the next symbol in the scene to the character. If a scene order exists, the next scene
         will be activated when the current scene is complete."""
@@ -417,6 +473,17 @@ class Animation:
                     self.character.symbol = self.active_scene.frames[-1].symbol
                     self.active_scene.played_frames.extend(self.active_scene.frames)
                     self.active_scene.frames.clear()
+
+            elif self.active_scene and self.active_scene.ease:
+                easing_factor = self._ease_animation(self.active_scene.ease)
+                frame_index = round(easing_factor * max(self.active_scene.easing_total_steps - 1, 0))
+                frame = self.active_scene.frame_index_map[min(frame_index, self.active_scene.easing_total_steps - 1)]
+                self.character.symbol = frame.symbol
+                self.active_scene.easing_current_step += 1
+                if self.active_scene.easing_current_step == self.active_scene.easing_total_steps:
+                    self.active_scene.played_frames.extend(self.active_scene.frames)
+                    self.active_scene.frames.clear()
+
             else:
                 self.character.symbol = self.active_scene.get_next_symbol()
             if self.active_scene_is_complete():
@@ -436,6 +503,7 @@ class Animation:
             scene (Scene): the Scene to set as active
         """
         self.active_scene = scene
+        self.active_scene_current_step = 0
         self.character.symbol = self.active_scene.activate()
         self.character.event_handler.handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, scene)
 
