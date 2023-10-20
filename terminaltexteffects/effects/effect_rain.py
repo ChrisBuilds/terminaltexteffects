@@ -83,11 +83,11 @@ class RainEffect:
         for character in self.terminal.characters:
             raindrop_color = random.choice(rain_colors)
             rain_scn = character.animation.new_scene("rain")
-            rain_scn.add_frame(random.choice(rain_characters), raindrop_color, 1)
+            rain_scn.add_frame(random.choice(rain_characters), 1, color=raindrop_color)
             raindrop_gradient = graphics.Gradient(raindrop_color, self.args.final_color, 7)
             fade_scn = character.animation.new_scene("fade")
             for color in raindrop_gradient:
-                fade_scn.add_frame(character.input_symbol, color, 5)
+                fade_scn.add_frame(character.input_symbol, 5, color=color)
             character.animation.activate_scene(rain_scn)
             character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
             input_coord_wpt = character.motion.new_waypoint(

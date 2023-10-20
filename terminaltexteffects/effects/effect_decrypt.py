@@ -82,7 +82,7 @@ class DecryptEffect:
         fast_decrypt_scene = character.animation.new_scene("fast_decrypt")
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
-            fast_decrypt_scene.add_frame(symbol, self.ciphertext_color, 3)
+            fast_decrypt_scene.add_frame(symbol, 3, color=self.ciphertext_color)
             duration = 3
         slow_decrypt_scene = character.animation.new_scene("slow_decrypt")
         for _ in range(random.randint(1, 15)):  # 1-15 longer duration units
@@ -91,21 +91,21 @@ class DecryptEffect:
                 duration = random.randrange(75, 225)  # wide long duration range reduces 'waves' in the animation
             else:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
-            slow_decrypt_scene.add_frame(symbol, self.ciphertext_color, duration)
+            slow_decrypt_scene.add_frame(symbol, duration, color=self.ciphertext_color)
         discovered_scene = character.animation.new_scene("discovered")
         for color in self.character_discovered_gradient:
-            discovered_scene.add_frame(character.input_symbol, color, 20)
+            discovered_scene.add_frame(character.input_symbol, 20, color=color)
 
-        discovered_scene.add_frame(character.input_symbol, self.plaintext_color, 1)
+        discovered_scene.add_frame(character.input_symbol, 1, color=self.plaintext_color)
 
     def prepare_data_for_type_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
         for character in self.terminal.characters:
             typing_scene = character.animation.new_scene("typing")
             for block_char in ["▉", "▓", "▒", "░"]:
-                typing_scene.add_frame(block_char, self.ciphertext_color, 2)
+                typing_scene.add_frame(block_char, 2, color=self.ciphertext_color)
 
-            typing_scene.add_frame(random.choice(self.encrypted_symbols), self.ciphertext_color, 2)
+            typing_scene.add_frame(random.choice(self.encrypted_symbols), 2, color=self.ciphertext_color)
             self.pending_chars.append(character)
 
     def prepare_data_for_decrypt_effect(self) -> None:

@@ -197,14 +197,14 @@ class FireworksEffect:
                 # launch scene
                 launch_scn = character.animation.new_scene("launch")
                 for color in self.firework_colors:
-                    launch_scn.add_frame(self.args.firework_symbol, shell_color, 2)
-                    launch_scn.add_frame(self.args.firework_symbol, "FFFFFF", 1)
+                    launch_scn.add_frame(self.args.firework_symbol, 2, color=shell_color)
+                    launch_scn.add_frame(self.args.firework_symbol, 1, color="FFFFFF")
                     launch_scn.is_looping = True
                 # bloom scene
                 bloom_scn = character.animation.new_scene("bloom")
                 bloom_gradient = graphics.Gradient(shell_color, self.args.final_color, 15)
                 for color in bloom_gradient:
-                    bloom_scn.add_frame(character.input_symbol, color, 15)
+                    bloom_scn.add_frame(character.input_symbol, 15, color=color)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
                     character.event_handler.Event.WAYPOINT_REACHED,

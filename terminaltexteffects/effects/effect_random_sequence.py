@@ -70,7 +70,7 @@ class RandomSequence:
             character.is_active = False
             fade_scn = character.animation.new_scene("fade")
             for color in self.fade_in:
-                fade_scn.add_frame(character.input_symbol, color, self.args.fade_duration)
+                fade_scn.add_frame(character.input_symbol, self.args.fade_duration, color=color)
             character.animation.activate_scene(fade_scn)
             self.pending_chars.append(character)
 

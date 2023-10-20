@@ -126,11 +126,11 @@ class UnstableEffect:
             unstable_gradient = graphics.Gradient(self.args.initial_color, self.args.unstable_color, 25)
             rumble_scn = character.animation.new_scene("rumble")
             for step in unstable_gradient:
-                rumble_scn.add_frame(character.input_symbol, step, 10)
+                rumble_scn.add_frame(character.input_symbol, 10, color=step)
             final_color = graphics.Gradient(self.args.unstable_color, self.args.final_color, 12)
             final_scn = character.animation.new_scene("final")
             for step in final_color:
-                final_scn.add_frame(character.input_symbol, step, 5)
+                final_scn.add_frame(character.input_symbol, 5, color=step)
             character.animation.activate_scene(rumble_scn)
             character.is_active = True
 

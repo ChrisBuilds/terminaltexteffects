@@ -86,16 +86,16 @@ class BurnEffect:
             g_start = 0
             for _, block in enumerate(vertical_build_order[:5]):
                 for color in fire_gradient.colors[g_start : g_start + 3]:
-                    construct_scn.add_frame(block, color, duration=30)
+                    construct_scn.add_frame(block, 30, color=color)
                 g_start += 2
 
             g_start = 0
             for _, block in enumerate(vertical_build_order[4:]):
                 for color in burned_gradient.colors[g_start : g_start + 3]:
-                    construct_scn.add_frame(block, color, duration=30)
+                    construct_scn.add_frame(block, 30, color=color)
                 g_start += 2
 
-            construct_scn.add_frame(next_char.input_symbol, self.args.final_color, duration=1)
+            construct_scn.add_frame(next_char.input_symbol, 1, color=self.args.final_color)
             next_char.animation.activate_scene(construct_scn)
             self.pending_chars.append(next_char)
 

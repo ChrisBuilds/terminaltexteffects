@@ -154,7 +154,7 @@ class SprayEffect:
                 spray_color = random.choice(self.spray_colors)
                 spray_gradient = graphics.Gradient(spray_color, self.final_color, 7)
                 for color in spray_gradient:
-                    droplet_scn.add_frame(character.input_symbol, color, 40)
+                    droplet_scn.add_frame(character.input_symbol, 40, color=color)
                 character.animation.activate_scene(droplet_scn)
             character.motion.activate_waypoint(input_coord_wpt)
             self.pending_chars.append(character)

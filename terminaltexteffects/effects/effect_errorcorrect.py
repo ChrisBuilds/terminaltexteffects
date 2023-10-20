@@ -89,7 +89,7 @@ class ErrorCorrectEffect:
         """Prepares the data for the effect by swapping positions and generating animations and waypoints."""
         for character in self.terminal.characters:
             spawn_scene = character.animation.new_scene("spawn")
-            spawn_scene.add_frame(character.input_symbol, self.args.final_color, 1)
+            spawn_scene.add_frame(character.input_symbol, 1, color=self.args.final_color)
             character.animation.activate_scene(spawn_scene)
             character.is_active = True
         all_characters: list[EffectCharacter] = list(self.terminal.characters)
@@ -124,23 +124,23 @@ class ErrorCorrectEffect:
                 circles_start_scene = character.animation.new_scene("circles_start")
                 circles_end_scene = character.animation.new_scene("circles_end")
                 for block in block_wipe_start:
-                    circles_start_scene.add_frame(block, self.args.error_color, 3)
+                    circles_start_scene.add_frame(block, 3, color=self.args.error_color)
                 for block in block_wipe_end:
-                    circles_end_scene.add_frame(block, self.args.correct_color, 3)
+                    circles_end_scene.add_frame(block, 3, color=self.args.correct_color)
                 initial_scene = character.animation.new_scene("initial")
-                initial_scene.add_frame(character.input_symbol, self.args.error_color, 1)
+                initial_scene.add_frame(character.input_symbol, 1, color=self.args.error_color)
                 character.animation.activate_scene(initial_scene)
                 error_scene = character.animation.new_scene("error")
                 for _ in range(10):
-                    error_scene.add_frame(block_symbol, self.args.error_color, 3)
-                    error_scene.add_frame(character.input_symbol, "ffffff", 3)
+                    error_scene.add_frame(block_symbol, 3, color=self.args.error_color)
+                    error_scene.add_frame(character.input_symbol, 3, color="ffffff")
                 correcting_scene = character.animation.new_scene("correcting")
                 for step in correcting_gradient:
-                    correcting_scene.add_frame("█", step, 3)
+                    correcting_scene.add_frame("█", 3, color=step)
                 correcting_scene.sync_waypoint = character.motion.waypoints["input_coord"]
                 final_scene = character.animation.new_scene("final")
                 for step in final_gradient:
-                    final_scene.add_frame(character.input_symbol, step, 3)
+                    final_scene.add_frame(character.input_symbol, 3, color=step)
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
                     circles_start_scene,

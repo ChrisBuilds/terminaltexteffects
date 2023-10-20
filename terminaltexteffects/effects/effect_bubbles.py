@@ -132,7 +132,7 @@ class Bubble:
         if self.effect.args.no_rainbow:
             for character in self.characters:
                 sheen_scene = character.animation.new_scene("sheen")
-                sheen_scene.add_frame(character.input_symbol, color=self.effect.args.bubble_color, duration=1)
+                sheen_scene.add_frame(character.input_symbol, 1, color=self.effect.args.bubble_color)
                 character.animation.activate_scene(sheen_scene)
         else:
             rainbow_gradient = list(self.effect.rainbow_gradient.colors)
@@ -140,7 +140,7 @@ class Bubble:
             for character in self.characters:
                 sheen_scene = character.animation.new_scene("sheen")
                 for step in rainbow_gradient:
-                    sheen_scene.add_frame(character.input_symbol, color=step, duration=5)
+                    sheen_scene.add_frame(character.input_symbol, 5, color=step)
                 gradient_offset += 2
                 gradient_offset %= len(rainbow_gradient)
                 rainbow_gradient = rainbow_gradient[gradient_offset:] + rainbow_gradient[:gradient_offset]
@@ -217,11 +217,11 @@ class BubblesEffect:
             character.motion.layer = 1
             pop_1_scene = character.animation.new_scene("pop_1")
             pop_2_scene = character.animation.new_scene("pop_2")
-            pop_1_scene.add_frame("*", color=self.args.pop_color, duration=25)
-            pop_2_scene.add_frame("'", color=self.args.pop_color, duration=25)
+            pop_1_scene.add_frame("*", 25, color=self.args.pop_color)
+            pop_2_scene.add_frame("'", 25, color=self.args.pop_color)
             final_scene = character.animation.new_scene("final")
             for step in final_gradient:
-                final_scene.add_frame(character.input_symbol, color=step, duration=5)
+                final_scene.add_frame(character.input_symbol, 5, color=step)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, pop_1_scene, EventHandler.Action.ACTIVATE_SCENE, pop_2_scene
             )
