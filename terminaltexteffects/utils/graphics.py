@@ -446,7 +446,8 @@ class Animation:
             elif self.active_scene and self.active_scene.ease:
                 easing_factor = self._ease_animation(self.active_scene.ease)
                 frame_index = round(easing_factor * max(self.active_scene.easing_total_steps - 1, 0))
-                frame = self.active_scene.frame_index_map[min(frame_index, self.active_scene.easing_total_steps - 1)]
+                frame_index = max(min(frame_index, self.active_scene.easing_total_steps - 1), 0)
+                frame = self.active_scene.frame_index_map[frame_index]
                 self.character.symbol = frame.symbol
                 self.active_scene.easing_current_step += 1
                 if self.active_scene.easing_current_step == self.active_scene.easing_total_steps:
