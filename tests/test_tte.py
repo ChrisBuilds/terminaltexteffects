@@ -21,7 +21,7 @@ from terminaltexteffects.effects import (
     effect_errorcorrect,
 )
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils.easing import Ease
+from terminaltexteffects.utils import easing
 
 t1 = ""
 t2 = "a"
@@ -57,7 +57,7 @@ def make_args() -> Namespace:
     args.tab_width = 4
     args.animation_rate = 0
     args.movement_speed = 3
-    args.easing = Ease["IN_SINE"]
+    args.easing = easing.in_sine
     return args
 
 
@@ -84,8 +84,8 @@ def test_middleout_effect() -> None:
         args.expand_direction = "vertical"
         args.center_movement_speed = 0.35
         args.full_movement_speed = 0.35
-        args.center_easing = Ease["IN_OUT_SINE"]
-        args.full_easing = Ease["IN_OUT_SINE"]
+        args.center_easing = easing.in_out_sine
+        args.full_easing = easing.in_out_sine
         terminal = Terminal(input_data, args)
         middleout_effect = effect_middleout.MiddleoutEffect(terminal, args)
         middleout_effect.run()
@@ -111,9 +111,9 @@ def test_unstable_effect() -> None:
         args.initial_color = "ffffff"
         args.unstable_color = "ff9200"
         args.final_color = "ffffff"
-        args.explosion_ease = Ease["OUT_EXPO"]
+        args.explosion_ease = easing.out_expo
         args.explosion_speed = 0.75
-        args.reassembly_ease = Ease["OUT_EXPO"]
+        args.reassembly_ease = easing.out_expo
         args.reassembly_speed = 0.75
         terminal = Terminal(input_data, args)
         unstable_effect = effect_unstable.UnstableEffect(terminal, args)
@@ -255,12 +255,12 @@ def test_fireworks_effect() -> None:
         args.firework_symbol = "⯏"
         args.firework_volume = 8
         args.launch_delay = 30
-        args.launch_easing = Ease["OUT_EXPO"]
+        args.launch_easing = easing.out_expo
         args.launch_speed = 0.2
         args.explode_distance = 10
-        args.explode_easing = Ease["OUT_QUAD"]
+        args.explode_easing = easing.out_quad
         args.explode_speed = 0.3
-        args.fall_easing = Ease["IN_OUT_CUBIC"]
+        args.fall_easing = easing.in_out_cubic
         args.fall_speed = 0.4
         terminal = Terminal(input_data, args)
         fireworks_effect = effect_fireworks.FireworksEffect(terminal, args)

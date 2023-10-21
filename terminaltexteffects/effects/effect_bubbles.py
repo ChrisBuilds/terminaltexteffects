@@ -160,7 +160,7 @@ class Bubble:
             ),
         ):
             pop_out_waypoint = char.motion.new_waypoint(
-                "pop_out", point.column, point.row, speed=0.2, ease=easing.Ease["OUT_EXPO"], layer=1
+                "pop_out", point.column, point.row, speed=0.2, ease=easing.out_expo, layer=1
             )
             char.event_handler.register_event(
                 EventHandler.Event.WAYPOINT_REACHED,
@@ -236,7 +236,7 @@ class BubblesEffect:
                 character.input_coord.column,
                 character.input_coord.row,
                 speed=0.3,
-                ease=easing.Ease["IN_OUT_EXPO"],
+                ease=easing.in_out_expo,
                 layer=1,
             )
 
