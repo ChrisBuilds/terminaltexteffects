@@ -1,5 +1,6 @@
 import argparse
-from terminaltexteffects.utils.easing import Ease
+import typing
+from terminaltexteffects.utils import easing
 
 EASING_EPILOG = """\
     Easing
@@ -134,7 +135,7 @@ def valid_speed(speed_arg: str) -> float:
     return float(speed_arg)
 
 
-def valid_ease(ease_arg: str) -> Ease:
+def valid_ease(ease_arg: str) -> typing.Callable:
     """Validates that the given argument is a valid easing function.
 
     Args:
@@ -146,10 +147,43 @@ def valid_ease(ease_arg: str) -> Ease:
     Returns:
         Ease: validated ease value
     """
+    easing_func_map = {
+        "in_sine": easing.in_sine,
+        "out_sine": easing.out_sine,
+        "in_out_sine": easing.in_out_sine,
+        "in_quad": easing.in_quad,
+        "out_quad": easing.out_quad,
+        "in_out_quad": easing.in_out_quad,
+        "in_cubic": easing.in_cubic,
+        "out_cubic": easing.out_cubic,
+        "in_out_cubic": easing.in_out_cubic,
+        "in_quart": easing.in_quart,
+        "out_quart": easing.out_quart,
+        "in_out_quart": easing.in_out_quart,
+        "in_quint": easing.in_quint,
+        "out_quint": easing.out_quint,
+        "in_out_quint": easing.in_out_quint,
+        "in_expo": easing.in_expo,
+        "out_expo": easing.out_expo,
+        "in_out_expo": easing.in_out_expo,
+        "in_circ": easing.in_circ,
+        "out_circ": easing.out_circ,
+        "in_out_circ": easing.in_out_circ,
+        "in_back": easing.in_back,
+        "out_back": easing.out_back,
+        "in_out_back": easing.in_out_back,
+        "in_elastic": easing.in_elastic,
+        "out_elastic": easing.out_elastic,
+        "in_out_elastic": easing.in_out_elastic,
+        "in_bounce": easing.in_bounce,
+        "out_bounce": easing.out_bounce,
+        "in_out_bounce": easing.in_out_bounce,
+    }
+
     try:
-        return Ease[ease_arg.upper()]
+        return easing_func_map[ease_arg.lower()]
     except KeyError:
-        raise argparse.ArgumentTypeError(f"invalid ease value: {ease_arg} is not a valid ease.")
+        raise argparse.ArgumentTypeError(f"invalid ease value: '{ease_arg}' is not a valid ease.")
 
 
 def positive_int(arg: str) -> int:

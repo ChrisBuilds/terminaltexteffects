@@ -26,13 +26,13 @@ class Waypoint:
         waypoint_id (str): unique identifier for the waypoint
         coord (Coord): coordinate
         speed (float): character speed at the waypoint
-        ease (Ease): easing function for character movement. Defaults to None.
+        ease (Callable): easing function for character movement. Defaults to None.
     """
 
     waypoint_id: int
     coord: Coord
     speed: float = 1.0
-    ease: easing.Ease | None = None
+    ease: typing.Callable | None = None
     layer: int = 0
 
     def __eq__(self, other: typing.Any) -> bool:
@@ -134,7 +134,7 @@ class Motion:
         row: int,
         *,
         speed: float = 1,
-        ease: easing.Ease | None = None,
+        ease: typing.Callable | None = None,
         layer: int = 0,
     ) -> Waypoint:
         """Creates a new Waypoint and appends adds it to the waypoints dictionary with the waypoint_name as key.
@@ -144,7 +144,7 @@ class Motion:
             column (int): column
             row (int): row
             speed (float): speed
-            ease (Ease| None): easing function for character movement. Defaults to None.
+            ease (Callable | None): easing function for character movement. Defaults to None.
             layer (int): layer to use when drawing the character. Higher layers are drawn over lower layers. Defaults to 0.
 
         Returns:
@@ -168,49 +168,18 @@ class Motion:
             return True
         return False
 
-    def _ease_movement(self, easing_func: easing.Ease) -> float:
+    def _ease_movement(self, easing_func: typing.Callable) -> float:
         """Returns the percentage of total distance that should be moved based on the easing function.
 
         Args:
-            easing_func (easing.Ease): The easing function to use.
+            easing_func (Callable): The easing function to use.
 
         Returns:
             float: The percentage of total distance to move.
         """
-        easing_function_map = {
-            easing.Ease.IN_SINE: easing.in_sine,
-            easing.Ease.OUT_SINE: easing.out_sine,
-            easing.Ease.IN_OUT_SINE: easing.in_out_sine,
-            easing.Ease.IN_QUAD: easing.in_quad,
-            easing.Ease.OUT_QUAD: easing.out_quad,
-            easing.Ease.IN_OUT_QUAD: easing.in_out_quad,
-            easing.Ease.IN_CUBIC: easing.in_cubic,
-            easing.Ease.OUT_CUBIC: easing.out_cubic,
-            easing.Ease.IN_OUT_CUBIC: easing.in_out_cubic,
-            easing.Ease.IN_QUART: easing.in_quart,
-            easing.Ease.OUT_QUART: easing.out_quart,
-            easing.Ease.IN_OUT_QUART: easing.in_out_quart,
-            easing.Ease.IN_QUINT: easing.in_quint,
-            easing.Ease.OUT_QUINT: easing.out_quint,
-            easing.Ease.IN_OUT_QUINT: easing.in_out_quint,
-            easing.Ease.IN_EXPO: easing.in_expo,
-            easing.Ease.OUT_EXPO: easing.out_expo,
-            easing.Ease.IN_OUT_EXPO: easing.in_out_expo,
-            easing.Ease.IN_CIRC: easing.in_circ,
-            easing.Ease.OUT_CIRC: easing.out_circ,
-            easing.Ease.IN_OUT_CIRC: easing.in_out_circ,
-            easing.Ease.IN_BACK: easing.in_back,
-            easing.Ease.OUT_BACK: easing.out_back,
-            easing.Ease.IN_OUT_BACK: easing.in_out_back,
-            easing.Ease.IN_ELASTIC: easing.in_elastic,
-            easing.Ease.OUT_ELASTIC: easing.out_elastic,
-            easing.Ease.IN_OUT_ELASTIC: easing.in_out_elastic,
-            easing.Ease.IN_BOUNCE: easing.in_bounce,
-            easing.Ease.OUT_BOUNCE: easing.out_bounce,
-            easing.Ease.IN_OUT_BOUNCE: easing.in_out_bounce,
-        }
+
         elapsed_step_ratio = self.inter_waypoint_current_step / self.inter_waypoint_max_steps
-        return easing_function_map[easing_func](elapsed_step_ratio)
+        return easing_func(elapsed_step_ratio)
 
     def activate_waypoint(self, waypoint: Waypoint) -> None:
         """Sets the current waypoint to Waypoint and sets the speed, distance, and step values for the new waypoint. A

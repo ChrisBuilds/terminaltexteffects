@@ -1,5 +1,4 @@
 import math
-from enum import Enum, auto
 
 
 def in_sine(step_ratio: float) -> float:
@@ -466,39 +465,3 @@ def in_out_bounce(step_ratio: float) -> float:
         return (1 - out_bounce(1 - 2 * step_ratio)) / 2
     else:
         return (1 + out_bounce(2 * step_ratio - 1)) / 2
-
-
-class Ease(Enum):
-    """Enumeration of easing functions for easing character movement."""
-
-    LINEAR = auto()
-    IN_SINE = auto()
-    OUT_SINE = auto()
-    IN_OUT_SINE = auto()
-    IN_QUAD = auto()
-    OUT_QUAD = auto()
-    IN_OUT_QUAD = auto()
-    IN_CUBIC = auto()
-    OUT_CUBIC = auto()
-    IN_OUT_CUBIC = auto()
-    IN_QUART = auto()
-    OUT_QUART = auto()
-    IN_OUT_QUART = auto()
-    IN_QUINT = auto()
-    OUT_QUINT = auto()
-    IN_OUT_QUINT = auto()
-    IN_EXPO = auto()
-    OUT_EXPO = auto()
-    IN_OUT_EXPO = auto()
-    IN_CIRC = auto()
-    OUT_CIRC = auto()
-    IN_OUT_CIRC = auto()
-    IN_BACK = auto()
-    OUT_BACK = auto()
-    IN_OUT_BACK = auto()
-    IN_ELASTIC = auto()
-    OUT_ELASTIC = auto()
-    IN_OUT_ELASTIC = auto()
-    IN_BOUNCE = auto()
-    OUT_BOUNCE = auto()
-    IN_OUT_BOUNCE = auto()

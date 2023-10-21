@@ -201,7 +201,7 @@ class Scene:
         scene_id: int,
         is_looping: bool = False,
         sync_waypoint: motion.Waypoint | None = None,
-        ease: easing.Ease | None = None,
+        ease: typing.Callable | None = None,
         no_color: bool = False,
         use_xterm_colors: bool = False,
     ):
@@ -401,51 +401,20 @@ class Animation:
         """
         return hex(random.randint(0, 0xFFFFFF))[2:].zfill(6)
 
-    def _ease_animation(self, easing_func: easing.Ease) -> float:
+    def _ease_animation(self, easing_func: typing.Callable) -> float:
         """Returns the percentage of total distance that should be moved based on the easing function.
 
         Args:
-            easing_func (easing.Ease): The easing function to use.
+            easing_func (Callable): The easing function to use.
 
         Returns:
             float: The percentage of total distance to move.
         """
-        easing_function_map = {
-            easing.Ease.IN_SINE: easing.in_sine,
-            easing.Ease.OUT_SINE: easing.out_sine,
-            easing.Ease.IN_OUT_SINE: easing.in_out_sine,
-            easing.Ease.IN_QUAD: easing.in_quad,
-            easing.Ease.OUT_QUAD: easing.out_quad,
-            easing.Ease.IN_OUT_QUAD: easing.in_out_quad,
-            easing.Ease.IN_CUBIC: easing.in_cubic,
-            easing.Ease.OUT_CUBIC: easing.out_cubic,
-            easing.Ease.IN_OUT_CUBIC: easing.in_out_cubic,
-            easing.Ease.IN_QUART: easing.in_quart,
-            easing.Ease.OUT_QUART: easing.out_quart,
-            easing.Ease.IN_OUT_QUART: easing.in_out_quart,
-            easing.Ease.IN_QUINT: easing.in_quint,
-            easing.Ease.OUT_QUINT: easing.out_quint,
-            easing.Ease.IN_OUT_QUINT: easing.in_out_quint,
-            easing.Ease.IN_EXPO: easing.in_expo,
-            easing.Ease.OUT_EXPO: easing.out_expo,
-            easing.Ease.IN_OUT_EXPO: easing.in_out_expo,
-            easing.Ease.IN_CIRC: easing.in_circ,
-            easing.Ease.OUT_CIRC: easing.out_circ,
-            easing.Ease.IN_OUT_CIRC: easing.in_out_circ,
-            easing.Ease.IN_BACK: easing.in_back,
-            easing.Ease.OUT_BACK: easing.out_back,
-            easing.Ease.IN_OUT_BACK: easing.in_out_back,
-            easing.Ease.IN_ELASTIC: easing.in_elastic,
-            easing.Ease.OUT_ELASTIC: easing.out_elastic,
-            easing.Ease.IN_OUT_ELASTIC: easing.in_out_elastic,
-            easing.Ease.IN_BOUNCE: easing.in_bounce,
-            easing.Ease.OUT_BOUNCE: easing.out_bounce,
-            easing.Ease.IN_OUT_BOUNCE: easing.in_out_bounce,
-        }
+
         if self.active_scene is None:
             return 0
         elapsed_step_ratio = self.active_scene.easing_current_step / self.active_scene.easing_total_steps
-        return easing_function_map[easing_func](elapsed_step_ratio)
+        return easing_func(elapsed_step_ratio)
 
     def step_animation(self) -> None:
         """Apply the next symbol in the scene to the character. If a scene order exists, the next scene
