@@ -162,6 +162,10 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 ## In-Development Preview
 Any effects shown below are in development and will be available in the next release.
 
+#### Cycle
+![cycle_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/cc067825-b024-44f1-b448-cc87753cab4b)
+
+
 ## Recent Changes
 
 ## 0.3.1
