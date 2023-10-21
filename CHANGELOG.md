@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### New Features
+ * Cycle effect. Characters cycle through a list of symbols before landing on the correct symbol.
  * Animations support easing functions. Easing functions are applied to Scenes using Scene.ease = easing_function.
 
 ### Changes
@@ -11,6 +12,7 @@
  * graphics.GraphicalEffect renamed to CharacterVisual
  * graphics.Sequence renamed to Frame
  * Animation methods for created Scenes and adding frames to scenes have been refactored to return Scene objects and expose terminal modes, respectively.
+ * Easing function api has been simplified. Easing function callables are used directly rather than Enums and function maps.
 
 ### Bug Fixes
 
