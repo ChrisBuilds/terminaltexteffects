@@ -52,14 +52,12 @@ class Gradient:
         end_color_ints = colorterm._hex_to_int(self.end_color)
         # Initialize an empty list to store the gradient colors
         gradient_colors: list[str] = []
-        # Add the start color to the gradient colors list
-        gradient_colors.append(self.start_color)
         # Calculate the color deltas for each RGB value
         red_delta = (end_color_ints[0] - start_color_ints[0]) // self.steps
         green_delta = (end_color_ints[1] - start_color_ints[1]) // self.steps
         blue_delta = (end_color_ints[2] - start_color_ints[2]) // self.steps
         # Calculate the intermediate colors and add them to the gradient colors list
-        for i in range(self.steps):
+        for i in range(max(self.steps - 1, 0)):
             red = start_color_ints[0] + (red_delta * i)
             green = start_color_ints[1] + (green_delta * i)
             blue = start_color_ints[2] + (blue_delta * i)
