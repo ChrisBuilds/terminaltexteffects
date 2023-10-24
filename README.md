@@ -37,7 +37,7 @@ TerminalTextEffects is a collection of visual effects that run inline in the ter
 * Color gradients                                           
 * Runs inline, preserving terminal state and workflow       
 * Dynamic character movement with motion easing             
-* Dynamic animations with symbol and color changes          
+* Dynamic animations with symbol and color changes and animation easing          
 * Effect customization through command line arguments 
 
 ## Requirements
