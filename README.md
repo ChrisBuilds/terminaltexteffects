@@ -177,7 +177,7 @@ Any effects shown below are in development and will be available in the next rel
   ball has landed. Random colors are used for balls unless specified.
 
 * Unstable effect. Spawn characters jumbled, explode to the edge of the output area, 
-  then reassemble them in the correct layout.
+  then reassemble in the correct layout.
 
 * Bubble effect. Characters are formed into bubbles and fall down the screen before popping.
 
