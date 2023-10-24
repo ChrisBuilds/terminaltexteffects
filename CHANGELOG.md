@@ -15,6 +15,7 @@
  * Easing function api has been simplified. Easing function callables are used directly rather than Enums and function maps.
 
 ### Bug Fixes
+ * Fixed Gradient creating two more steps than specified.
 
 ## 0.3.1
 
