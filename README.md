@@ -29,7 +29,7 @@
 
 
 ## TTE
-![spray_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/b756b01d-f03e-4f29-b3b3-6856ec1fbf6a)
+![unstable_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2e4b6e51-2b65-4765-a41c-92542981c77c)
 
 
 TerminalTextEffects is a collection of visual effects that run inline in the terminal. The underlying visual effect framework supports the following:
@@ -108,40 +108,40 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 #### Fireworks
 ![fireworks_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/af5929b0-43e4-4ebd-80ec-32fd0deec7f8)
 
-#### RAIN
+#### Rain
 ![rain_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed94a21f-503d-46f3-8510-7a1e83b28314)
 
-#### DECRYPT
+#### Decrypt
 ![decrypt_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/586224f3-6a03-40ae-bdcf-067a6c96cbb5)
 
-#### SPRAY
+#### Spray
 ![spray_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/d39b4caa-7393-4357-8e27-b0ef9dce756b)
 
-#### SCATTERED
+#### Scattered
 ![scattered_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ddcf3c65-a91b-4e42-84fc-0c2508a85be5)
 
-#### EXPAND
+#### Expand
 ![expand_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/9b319e77-d2b7-489e-b59c-c87277ea1285)
 
-#### BURN
+#### Burn
 ![burn_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ddc8ca36-4157-448b-b10d-573f108361c7)
 
-#### POUR
+#### Pour
 ![pour_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/d5b827a5-3267-47ad-88c7-6fb0b2dbb478)
 
-#### ROWSLIDE
+#### Rowslide
 ![rowslide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/fc62bbe3-d75f-4757-b1ef-c14abff2666b)
 
-#### ROWMERGE
+#### Rowmerge
 ![rowmerge_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/5cd4d5a1-e82d-42ed-b91c-6ac8061cab44)
 
-#### COLUMNSLIDE
+#### Columnslide
 ![columnslide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/f2ecdc42-415d-47d3-889d-8e8993657b8f)
 
-#### RANDOMSEQUENCE
+#### Randomsequence
 ![randomsequence_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/8ee83d75-6c22-4c0b-8f96-a12301d7a4eb)
 
-#### VERTICALSLICE
+#### Verticalslice
 ![verticalslice_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/237e36c5-cb4e-4866-9a33-b7f27a2907dc)
 
 #### Unstable
