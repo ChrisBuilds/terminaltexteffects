@@ -3,7 +3,7 @@ import argparse
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes, easing
+from terminaltexteffects.utils import graphics, argtypes
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -19,7 +19,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="Waves travel across the terminal leaving behind the characters.",
         epilog=f"""{argtypes.EASING_EPILOG}
 
-Example: effect_example""",
+Example: terminaltexteffects waves -a 0.01 --wave-deep-color 4651e3 --wave-shallow-color 57FB92 --final-color 80F7E6 --wave-count 6 --wave-easing IN_OUT_SINE""",
     )
     effect_parser.set_defaults(effect_class=WavesEffect)
     effect_parser.add_argument(
