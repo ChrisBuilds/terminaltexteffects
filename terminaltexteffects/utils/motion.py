@@ -62,14 +62,13 @@ class Motion:
         self.inter_waypoint_distance: float = 0
         self.inter_waypoint_max_steps: int = 0
         self.inter_waypoint_current_step: int = 0
-        self.layer = 0
 
     @staticmethod
     def find_points_on_circle(origin: tuple[int, int], radius: int, num_points: int) -> list[Coord]:
         """Finds points on a circle.
 
         Args:
-            origin (tuple[int, int]): origin of the circle
+            origin (tuple[int, int]): (column, row) origin of the circle
             radius (int): radius of the circle
             num_points (int): number of points to find
 
@@ -135,7 +134,6 @@ class Motion:
         *,
         speed: float = 1,
         ease: typing.Callable | None = None,
-        layer: int = 0,
     ) -> Waypoint:
         """Creates a new Waypoint and appends adds it to the waypoints dictionary with the waypoint_name as key.
 
@@ -145,12 +143,11 @@ class Motion:
             row (int): row
             speed (float): speed
             ease (Callable | None): easing function for character movement. Defaults to None.
-            layer (int): layer to use when drawing the character. Higher layers are drawn over lower layers. Defaults to 0.
 
         Returns:
             Waypoint: The new waypoint.
         """
-        new_waypoint = Waypoint(self.next_waypoint_id, Coord(column, row), speed, ease, layer)
+        new_waypoint = Waypoint(self.next_waypoint_id, Coord(column, row), speed, ease)
         self.next_waypoint_id += 1
         self.waypoints[waypoint_name] = new_waypoint
         return new_waypoint
@@ -161,10 +158,7 @@ class Motion:
         Returns:
             bool: True if the character has reached the final coordinate and has taken the maximum number of steps, False otherwise.
         """
-        if (
-            self.inter_waypoint_current_step == self.inter_waypoint_max_steps
-            and self.current_coord == self.character.input_coord
-        ):
+        if self.inter_waypoint_current_step == self.inter_waypoint_max_steps:
             return True
         return False
 
@@ -193,7 +187,6 @@ class Motion:
         else:
             self.origin_waypoint = self.active_waypoint
         self.active_waypoint = waypoint
-        self.layer = self.active_waypoint.layer
         self.speed = self.active_waypoint.speed
         self.inter_waypoint_distance = self._distance(
             self.current_coord.column,
@@ -215,7 +208,6 @@ class Motion:
         """
         if self.active_waypoint and self.active_waypoint is waypoint:
             self.active_waypoint = None
-            self.layer = 0
             self.inter_waypoint_distance = 0
             self.inter_waypoint_max_steps = 0
             self.inter_waypoint_current_step = 0

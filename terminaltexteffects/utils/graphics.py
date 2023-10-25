@@ -361,7 +361,14 @@ class Animation:
         self.xterm_color_map: dict[str, int] = {}
         self.active_scene_current_step: int = 0
 
-    def new_scene(self, scene_name: str) -> Scene:
+    def new_scene(
+        self,
+        scene_name: str,
+        *,
+        is_looping: bool = False,
+        sync_waypoint: motion.Waypoint | None = None,
+        ease: typing.Callable | None = None,
+    ) -> Scene:
         """Creates a new Scene and adds it to the Animation.
 
         Args:

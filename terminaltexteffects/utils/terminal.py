@@ -128,7 +128,7 @@ class Terminal:
         of all active characters.
         """
         rows = [[" " for _ in range(self.output_area.right)] for _ in range(self.output_area.top)]
-        for character in sorted(self.characters, key=lambda c: c.motion.layer):
+        for character in sorted(self.characters, key=lambda c: c.layer):
             if character.is_active:
                 try:
                     # do not allow characters to wrap around the terminal via negative coordinates

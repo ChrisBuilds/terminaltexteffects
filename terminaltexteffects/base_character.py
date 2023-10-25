@@ -18,6 +18,7 @@ class EventHandler:
         registered_events (dict[tuple[Event, str], list[tuple[Action, str]]]): A dictionary of registered events.
             The key is a tuple of the event and the subject_id (waypoint id/scene id).
             The value is a list of tuples of the action and the action target (waypoint id/scene id).
+        layer (int): The layer of the character. The layer determines the order in which characters are printed.
     """
 
     def __init__(self, character: "EffectCharacter"):
@@ -27,9 +28,10 @@ class EventHandler:
             character (EffectCharacter): The character that the EventHandler is handling events for.
         """
         self.character = character
+        self.layer: int = 0
         self.registered_events: dict[
             tuple[EventHandler.Event, graphics.Scene | motion.Waypoint],
-            list[tuple[EventHandler.Action, graphics.Scene | motion.Waypoint]],
+            list[tuple[EventHandler.Action, graphics.Scene | motion.Waypoint | int]],
         ] = {}
 
     class Event(Enum):
@@ -61,19 +63,21 @@ class EventHandler:
             ACTIVATE_SCENE (Action): Activates an animation scene. The action target is the scene ID.
             DEACTIVATE_WAYPOINT (Action): Deactivates a waypoint. The action target is the waypoint ID.
             DEACTIVATE_SCENE (Action): Deactivates an animation scene. The action target is the scene ID.
+            SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
         """
 
         ACTIVATE_WAYPOINT = auto()
         ACTIVATE_SCENE = auto()
         DEACTIVATE_WAYPOINT = auto()
         DEACTIVATE_SCENE = auto()
+        SET_LAYER = auto()
 
     def register_event(
         self,
         event: Event,
         caller: graphics.Scene | motion.Waypoint,
         action: Action,
-        target: graphics.Scene | motion.Waypoint,
+        target: graphics.Scene | motion.Waypoint | int,
     ) -> None:
         """Registers an event to be handled by the EventHandler.
 
@@ -107,6 +111,7 @@ class EventHandler:
             EventHandler.Action.ACTIVATE_SCENE: self.character.animation.activate_scene,
             EventHandler.Action.DEACTIVATE_WAYPOINT: self.character.motion.deactivate_waypoint,
             EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
+            EventHandler.Action.SET_LAYER: lambda layer: setattr(self.character, "layer", layer),
         }
 
         if (event, caller) not in self.registered_events:
@@ -145,6 +150,7 @@ class EffectCharacter:
         self.motion: motion.Motion = motion.Motion(self)
         self.event_handler: EventHandler = EventHandler(self)
         self.is_active: bool = False
+        self.layer: int = 0
 
     def __hash__(self) -> int:
         return hash(self.input_coord)
