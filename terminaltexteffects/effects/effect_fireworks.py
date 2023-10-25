@@ -2,7 +2,7 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import graphics, argtypes
 
@@ -155,7 +155,11 @@ class FireworksEffect:
             )
             character.motion.set_coordinate(origin_x, self.terminal.output_area.bottom)
             apex_wpt = character.motion.new_waypoint(
-                "apex", origin_x, origin_y, speed=self.args.launch_speed, ease=self.args.launch_easing, layer=2
+                "apex",
+                origin_x,
+                origin_y,
+                speed=self.args.launch_speed,
+                ease=self.args.launch_easing,
             )
             explode_wpt = character.motion.new_waypoint(
                 "explode",
@@ -163,7 +167,6 @@ class FireworksEffect:
                 point_on_circle.row,
                 speed=self.args.explode_speed,
                 ease=self.args.explode_easing,
-                layer=2,
             )
             input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
@@ -171,21 +174,30 @@ class FireworksEffect:
                 character.input_coord.row,
                 speed=self.args.fall_speed,
                 ease=self.args.fall_easing,
-                layer=1,
             )
-            character.motion.activate_waypoint(apex_wpt)
             character.event_handler.register_event(
-                character.event_handler.Event.WAYPOINT_REACHED,
+                EventHandler.Event.WAYPOINT_ACTIVATED, apex_wpt, EventHandler.Action.SET_LAYER, 2
+            )
+            character.event_handler.register_event(
+                EventHandler.Event.WAYPOINT_ACTIVATED, input_coord_wpt, EventHandler.Action.SET_LAYER, 1
+            )
+            character.event_handler.register_event(
+                EventHandler.Event.WAYPOINT_REACHED, input_coord_wpt, EventHandler.Action.SET_LAYER, 0
+            )
+            character.event_handler.register_event(
+                EventHandler.Event.WAYPOINT_REACHED,
                 apex_wpt,
-                character.event_handler.Action.ACTIVATE_WAYPOINT,
+                EventHandler.Action.ACTIVATE_WAYPOINT,
                 explode_wpt,
             )
             character.event_handler.register_event(
-                character.event_handler.Event.WAYPOINT_REACHED,
+                EventHandler.Event.WAYPOINT_REACHED,
                 explode_wpt,
-                character.event_handler.Action.ACTIVATE_WAYPOINT,
+                EventHandler.Action.ACTIVATE_WAYPOINT,
                 input_coord_wpt,
             )
+            character.motion.activate_waypoint(apex_wpt)
+
             firework_shell.append(character)
         if firework_shell:
             self.shells.append(firework_shell)
@@ -207,9 +219,9 @@ class FireworksEffect:
                     bloom_scn.add_frame(character.input_symbol, 15, color=color)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
-                    character.event_handler.Event.WAYPOINT_REACHED,
+                    EventHandler.Event.WAYPOINT_REACHED,
                     character.motion.waypoints["apex"],
-                    character.event_handler.Action.ACTIVATE_SCENE,
+                    EventHandler.Action.ACTIVATE_SCENE,
                     bloom_scn,
                 )
 

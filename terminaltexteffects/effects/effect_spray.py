@@ -5,7 +5,7 @@ import random
 from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -147,7 +147,12 @@ class SprayEffect:
                 character.input_coord.row,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
-                layer=1,
+            )
+            character.event_handler.register_event(
+                EventHandler.Event.WAYPOINT_ACTIVATED, input_coord_wpt, EventHandler.Action.SET_LAYER, 1
+            )
+            character.event_handler.register_event(
+                EventHandler.Event.WAYPOINT_REACHED, input_coord_wpt, EventHandler.Action.SET_LAYER, 0
             )
             if self.spray_colors:
                 droplet_scn = character.animation.new_scene("droplet")

@@ -109,7 +109,6 @@ class ErrorCorrectEffect:
                 char1.input_coord.column,
                 char1.input_coord.row,
                 speed=self.args.movement_speed,
-                layer=1,
             )
             char2.motion.set_coordinate(char1.input_coord.column, char1.input_coord.row)
             char2_input_coord_waypoint = char2.motion.new_waypoint(
@@ -117,16 +116,15 @@ class ErrorCorrectEffect:
                 char2.input_coord.column,
                 char2.input_coord.row,
                 speed=self.args.movement_speed,
-                layer=1,
             )
             self.swapped.append((char1, char2))
             for character in (char1, char2):
-                circles_start_scene = character.animation.new_scene("circles_start")
-                circles_end_scene = character.animation.new_scene("circles_end")
+                first_block_wipe = character.animation.new_scene("first_block_wipe")
+                last_block_wipe = character.animation.new_scene("last_block_wipe")
                 for block in block_wipe_start:
-                    circles_start_scene.add_frame(block, 3, color=self.args.error_color)
+                    first_block_wipe.add_frame(block, 3, color=self.args.error_color)
                 for block in block_wipe_end:
-                    circles_end_scene.add_frame(block, 3, color=self.args.correct_color)
+                    last_block_wipe.add_frame(block, 3, color=self.args.correct_color)
                 initial_scene = character.animation.new_scene("initial")
                 initial_scene.add_frame(character.input_symbol, 1, color=self.args.error_color)
                 character.animation.activate_scene(initial_scene)
@@ -143,19 +141,31 @@ class ErrorCorrectEffect:
                     final_scene.add_frame(character.input_symbol, 3, color=step)
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
-                    circles_start_scene,
+                    first_block_wipe,
                     EventHandler.Action.ACTIVATE_WAYPOINT,
                     character.motion.waypoints["input_coord"],
+                )
+                character.event_handler.register_event(
+                    EventHandler.Event.WAYPOINT_ACTIVATED,
+                    character.motion.waypoints["input_coord"],
+                    EventHandler.Action.SET_LAYER,
+                    1,
+                )
+                character.event_handler.register_event(
+                    EventHandler.Event.WAYPOINT_REACHED,
+                    character.motion.waypoints["input_coord"],
+                    EventHandler.Action.SET_LAYER,
+                    0,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
                     error_scene,
                     EventHandler.Action.ACTIVATE_SCENE,
-                    circles_start_scene,
+                    first_block_wipe,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
-                    circles_start_scene,
+                    first_block_wipe,
                     EventHandler.Action.ACTIVATE_SCENE,
                     correcting_scene,
                 )
@@ -163,11 +173,11 @@ class ErrorCorrectEffect:
                     EventHandler.Event.WAYPOINT_REACHED,
                     character.motion.waypoints["input_coord"],
                     EventHandler.Action.ACTIVATE_SCENE,
-                    circles_end_scene,
+                    last_block_wipe,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
-                    circles_end_scene,
+                    last_block_wipe,
                     EventHandler.Action.ACTIVATE_SCENE,
                     final_scene,
                 )

@@ -160,7 +160,7 @@ class Bubble:
             ),
         ):
             pop_out_waypoint = char.motion.new_waypoint(
-                "pop_out", point.column, point.row, speed=0.2, ease=easing.out_expo, layer=1
+                "pop_out", point.column, point.row, speed=0.2, ease=easing.out_expo
             )
             char.event_handler.register_event(
                 EventHandler.Event.WAYPOINT_REACHED,
@@ -214,7 +214,7 @@ class BubblesEffect:
         """Prepares the data for the effect by ___."""
         final_gradient = graphics.Gradient(self.args.pop_color, self.args.final_color, 10)
         for character in self.terminal.characters:
-            character.motion.layer = 1
+            character.layer = 1
             pop_1_scene = character.animation.new_scene("pop_1")
             pop_2_scene = character.animation.new_scene("pop_2")
             pop_1_scene.add_frame("*", 25, color=self.args.pop_color)
@@ -237,7 +237,9 @@ class BubblesEffect:
                 character.input_coord.row,
                 speed=0.3,
                 ease=easing.in_out_expo,
-                layer=1,
+            )
+            character.event_handler.register_event(
+                EventHandler.Event.WAYPOINT_REACHED, final_waypoint, EventHandler.Action.SET_LAYER, 0
             )
 
         unbubbled_chars = []

@@ -3,7 +3,7 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminal as terminal
-from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.base_character import EffectCharacter, EventHandler
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -69,7 +69,12 @@ class ScatteredEffect:
                 character.input_coord.row,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
-                layer=1,
+            )
+            character.event_handler.register_event(
+                EventHandler.Event.WAYPOINT_ACTIVATED, input_coord_wpt, EventHandler.Action.SET_LAYER, 1
+            )
+            character.event_handler.register_event(
+                EventHandler.Event.WAYPOINT_REACHED, input_coord_wpt, EventHandler.Action.SET_LAYER, 0
             )
             character.motion.activate_waypoint(input_coord_wpt)
             character.is_active = True
