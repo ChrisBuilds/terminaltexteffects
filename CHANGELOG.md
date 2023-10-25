@@ -4,6 +4,7 @@
 
 ### New Features
  * Cycle effect. Characters cycle through a list of symbols before landing on the correct symbol.
+ * Waves effect. A wave animation is played over the characters. Wave colors and final colors are configurable.
  * Animations support easing functions. Easing functions are applied to Scenes using Scene.ease = easing_function.
 
 ### Changes
@@ -13,6 +14,7 @@
  * graphics.Sequence renamed to Frame
  * Animation methods for created Scenes and adding frames to scenes have been refactored to return Scene objects and expose terminal modes, respectively.
  * Easing function api has been simplified. Easing function callables are used directly rather than Enums and function maps.
+ * Layer is set on the EffectCharacter object instead of the motion object. The layer is modified through the EventHandler to allow finer control over the layer.
 
 ### Bug Fixes
  * Fixed Gradient creating two more steps than specified.
