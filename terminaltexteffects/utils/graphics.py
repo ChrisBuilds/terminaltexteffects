@@ -2,12 +2,25 @@
 
 import typing
 import random
+from enum import Enum, auto
 from dataclasses import dataclass
 
 from terminaltexteffects.utils import ansitools, colorterm, hexterm, motion, easing
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
+
+
+class SyncTo(Enum):
+    """Enum for specifying the type of sync to use for a Scene.
+
+    Attributes:
+        DISTANCE (int): Sync to a Waypoint based on distance from the Waypoint
+        STEP (int): Sync to a Waypoint based on the number of steps taken towards the Waypoint
+    """
+
+    DISTANCE = auto()
+    STEP = auto()
 
 
 @dataclass
@@ -188,6 +201,7 @@ class Scene:
         scene_id (int): unique ID for the Scene, automatically generated when using Animation.new_scene()
         is_looping (bool): whether the Scene should loop
         sync_waypoint (Waypoint): a Waypoint to sync the Scene to
+        sync_to (SyncTo): the type of sync to use
         no_color (bool): whether to disable color
         use_xterm_colors (bool): whether to use XTerm-256 colors
     """
@@ -199,6 +213,7 @@ class Scene:
         scene_id: int,
         is_looping: bool = False,
         sync_waypoint: motion.Waypoint | None = None,
+        sync_to: SyncTo = SyncTo.STEP,
         ease: typing.Callable | None = None,
         no_color: bool = False,
         use_xterm_colors: bool = False,
@@ -206,6 +221,7 @@ class Scene:
         self.scene_id = scene_id
         self.is_looping = is_looping
         self.sync_waypoint: motion.Waypoint | None = sync_waypoint
+        self.sync_to = sync_to
         self.ease: easing.Ease | None = ease
         self.no_color = no_color
         self.use_xterm_colors = use_xterm_colors
@@ -367,6 +383,7 @@ class Animation:
         *,
         is_looping: bool = False,
         sync_waypoint: motion.Waypoint | None = None,
+        sync_to: SyncTo = SyncTo.STEP,
         ease: typing.Callable | None = None,
     ) -> Scene:
         """Creates a new Scene and adds it to the Animation.
@@ -377,7 +394,9 @@ class Animation:
         Returns:
             Scene: the new Scene
         """
-        new_scene = Scene(self.next_scene_id)
+        new_scene = Scene(
+            self.next_scene_id, is_looping=is_looping, sync_waypoint=sync_waypoint, sync_to=sync_to, ease=ease
+        )
         self.scenes[scene_name] = new_scene
         new_scene.no_color = self.no_color
         new_scene.use_xterm_colors = self.use_xterm_colors
@@ -427,18 +446,37 @@ class Animation:
         if self.active_scene and self.active_scene.frames:
             # if the active scene is synced to the active waypoint, calculate the sequence index based on the
             # current waypoint progress
-            if self.active_scene.sync_waypoint:
+            if self.active_scene.sync_waypoint and self.active_scene.sync_to:
                 if (
                     self.character.motion.active_waypoint
                     and self.character.motion.active_waypoint is self.active_scene.sync_waypoint
                 ):
-                    sequence_index = round(
-                        len(self.active_scene.frames)
-                        * (
-                            max(self.character.motion.inter_waypoint_current_step, 1)
-                            / max(self.character.motion.inter_waypoint_max_steps, 1)
+                    if self.active_scene.sync_to == SyncTo.STEP:
+                        sequence_index = round(
+                            (len(self.active_scene.frames) - 1)
+                            * (
+                                max(self.character.motion.inter_waypoint_current_step, 1)
+                                / max(self.character.motion.inter_waypoint_max_steps, 1)
+                            )
                         )
-                    )
+                    elif self.active_scene.sync_to == SyncTo.DISTANCE:
+                        current_distance_to_waypoint = self.character.motion._distance(
+                            self.character.motion.current_coord.column,
+                            self.character.motion.current_coord.row,
+                            self.character.motion.active_waypoint.coord.column,
+                            self.character.motion.active_waypoint.coord.row,
+                        )
+                        sequence_index = round(
+                            (len(self.active_scene.frames) - 1)
+                            * (
+                                max(
+                                    max(self.character.motion.inter_waypoint_distance, 1)
+                                    - max(current_distance_to_waypoint, 1),
+                                    1,
+                                )
+                                / max(self.character.motion.inter_waypoint_distance, 1)
+                            )
+                        )
                     try:
                         self.character.symbol = self.active_scene.frames[sequence_index].symbol
                     except IndexError:
