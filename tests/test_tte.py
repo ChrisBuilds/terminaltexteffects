@@ -1,6 +1,7 @@
 from argparse import Namespace
 
 from terminaltexteffects.effects import (
+    effect_blackhole,
     effect_columnslide,
     effect_decrypt,
     effect_expand,
@@ -89,6 +90,17 @@ def test_middleout_effect() -> None:
         terminal = Terminal(input_data, args)
         middleout_effect = effect_middleout.MiddleoutEffect(terminal, args)
         middleout_effect.run()
+
+
+def test_blackhole_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.star_colors = ["000000"]
+        args.blackhole_color = "ffffff"
+        args.final_color = "ffffff"
+        terminal = Terminal(input_data, args)
+        blackhole_effect = effect_blackhole.BlackholeEffect(terminal, args)
+        blackhole_effect.run()
 
 
 def test_bubbles_effect() -> None:
