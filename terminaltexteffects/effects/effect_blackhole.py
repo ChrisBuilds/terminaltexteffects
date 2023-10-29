@@ -240,7 +240,7 @@ class BlackholeEffect:
         formation_delay = max(100 // len(self.blackhole_chars), 10)
         f_delay = formation_delay
         next_char_consuming_delay = 0
-        max_consume = min(int(0.1 * len(self.terminal.characters)), 15)
+        max_consume = max(min(int(0.1 * len(self.terminal.characters)), 15), 2)
         phase = "forming"
         awaiting_blackhole_chars = list(self.blackhole_chars)
         while self.animating_chars or phase != "complete":
