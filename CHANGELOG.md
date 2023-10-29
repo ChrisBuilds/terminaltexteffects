@@ -15,9 +15,11 @@
  * Animation methods for created Scenes and adding frames to scenes have been refactored to return Scene objects and expose terminal modes, respectively.
  * Easing function api has been simplified. Easing function callables are used directly rather than Enums and function maps.
  * Layer is set on the EffectCharacter object instead of the motion object. The layer is modified through the EventHandler to allow finer control over the layer.
+ * Animations synced to Waypoints can now sync to either the distance progression or the step progression towards the waypoint.
 
 ### Bug Fixes
  * Fixed Gradient creating two more steps than specified.
+ * Fixed waypoint synced animation index out of range error.
 
 ## 0.3.1
 
