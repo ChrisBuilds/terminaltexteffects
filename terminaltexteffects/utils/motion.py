@@ -1,3 +1,4 @@
+import random
 import typing, math
 from dataclasses import dataclass
 import terminaltexteffects.utils.easing as easing
@@ -64,11 +65,11 @@ class Motion:
         self.inter_waypoint_current_step: int = 0
 
     @staticmethod
-    def find_points_on_circle(origin: tuple[int, int], radius: int, num_points: int) -> list[Coord]:
+    def find_coords_on_circle(origin: Coord, radius: int, num_points: int) -> list[Coord]:
         """Finds points on a circle.
 
         Args:
-            origin (tuple[int, int]): (column, row) origin of the circle
+            origin (Coord): origin of the circle
             radius (int): radius of the circle
             num_points (int): number of points to find
 
@@ -78,10 +79,31 @@ class Motion:
         points = []
         for i in range(num_points):
             angle = 2 * math.pi * i / num_points
-            x = origin[0] + radius * math.cos(angle)
-            y = origin[1] + radius * math.sin(angle)
+            x = origin.column + radius * math.cos(angle)
+            y = origin.row + radius * math.sin(angle)
             points.append(Coord(round(x), round(y)))
         return points
+
+    @staticmethod
+    def find_coords_in_circle(origin: Coord, radius: int, num_points: int) -> list[Coord]:
+        """Finds points that fall within a circle with the given origin and radius. Points are
+        chosen randomly from available points.
+
+        Args:
+            origin (Coord): origin of the circle
+            radius (int): radius of the circle
+            num_points (int): number of points to find
+
+        Returns:
+            list[Coord]: list of Coord points in the circle
+        """
+        points: list[Coord] = []
+        selected_points: list[Coord] = []
+        for i in range(1, radius + 1):
+            points.extend(set((Motion.find_coords_on_circle(origin, i, 30))))
+        while points and len(selected_points) < num_points:
+            selected_points.append(points.pop(random.randrange(len(points))))
+        return selected_points
 
     def _distance(self, column1: int, row1: int, column2: int, row2: int) -> float:
         """Returns the distance between two coordinates.
@@ -117,20 +139,18 @@ class Motion:
         )
         return Coord(round(next_column), round(next_row))
 
-    def set_coordinate(self, column: int, row: int) -> None:
+    def set_coordinate(self, coord: Coord) -> None:
         """Sets the current coordinate to the given coordinate.
 
         Args:
-            column (int): column
-            row (int): row
+            coord (Coord): coordinate
         """
-        self.current_coord = Coord(column, row)
+        self.current_coord = coord
 
     def new_waypoint(
         self,
         waypoint_name: str,
-        column: int,
-        row: int,
+        coord: Coord,
         *,
         speed: float = 1,
         ease: typing.Callable | None = None,
@@ -139,15 +159,14 @@ class Motion:
 
         Args:
             waypoint_name (str): unique identifier for the waypoint
-            column (int): column
-            row (int): row
+            coord (Coord): coordinate
             speed (float): speed
             ease (Callable | None): easing function for character movement. Defaults to None.
 
         Returns:
             Waypoint: The new waypoint.
         """
-        new_waypoint = Waypoint(self.next_waypoint_id, Coord(column, row), speed, ease)
+        new_waypoint = Waypoint(self.next_waypoint_id, coord, speed, ease)
         self.next_waypoint_id += 1
         self.waypoints[waypoint_name] = new_waypoint
         return new_waypoint
@@ -158,7 +177,7 @@ class Motion:
         Returns:
             bool: True if the character has reached the final coordinate and has taken the maximum number of steps, False otherwise.
         """
-        if self.inter_waypoint_current_step == self.inter_waypoint_max_steps:
+        if self.active_waypoint is None:
             return True
         return False
 
