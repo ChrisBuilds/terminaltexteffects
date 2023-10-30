@@ -7,7 +7,7 @@ import argparse
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import ansitools
+from terminaltexteffects.utils import ansitools, motion
 
 
 @dataclass
@@ -30,6 +30,7 @@ class OutputArea:
     def __post_init__(self):
         self.center_row = max(self.top // 2, 1)
         self.center_column = max(self.right // 2, 1)
+        self.center = motion.Coord(self.center_column, self.center_row)
 
 
 class Terminal:
@@ -149,18 +150,35 @@ class Terminal:
         print("\n" * self.output_area.top)
 
     def random_column(self) -> int:
-        """Get a random column position within the range of the output area.
+        """Get a random column position. Position is within the output area.
 
         Returns:
             int: a random column position (1 <= x <= output_area.right)"""
         return random.randint(1, self.output_area.right)
 
     def random_row(self) -> int:
-        """Get a random row position within the range of the output area.
+        """Get a random row position. Position is within the output area.
 
         Returns:
             int: a random row position (1 <= x <= terminal.output_area.top)"""
         return random.randint(1, self.output_area.top)
+
+    def random_coord(self, outside_scope=False) -> motion.Coord:
+        """Get a random coordinate. Coordinate is within the output area unless outside_scope is True.
+
+        Args:
+            outside_scope (bool, optional): whether the coordinate should fall outside the output area. Defaults to False.
+
+        Returns:
+            motion.Coord: a random coordinate . Coordinate is within the output area unless outside_scope is True."""
+        if outside_scope is False:
+            random_coord_above = motion.Coord(self.random_column(), self.output_area.top + 1)
+            random_coord_below = motion.Coord(self.random_column(), -1)
+            random_coord_left = motion.Coord(-1, self.random_row())
+            random_coord_right = motion.Coord(self.output_area.right + 1, self.random_row())
+            return random.choice([random_coord_above, random_coord_below, random_coord_left, random_coord_right])
+        else:
+            return motion.Coord(self.random_column(), self.random_row())
 
     def input_by_row(self) -> dict[int, list[EffectCharacter]]:
         """Get a dict of rows of EffectCharacters where the key is the row index.
