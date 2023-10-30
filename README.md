@@ -169,7 +169,8 @@ Any effects shown below are in development and will be available in the next rel
 ![blackhole_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/18d2a13d-09d1-4c3b-9ad0-f937b2b52d6d)
 
 #### Swarm
-![swarm_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/c1124387-1bd6-45d0-af76-a6beae3a3fb9)
+![swarm_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ec93654b-9dc8-4812-be31-cc39dc25d16d)
+
 
 
 ## Recent Changes
