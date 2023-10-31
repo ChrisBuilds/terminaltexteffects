@@ -5,7 +5,12 @@
 ### New Features
  * Cycle effect. Characters cycle through a list of symbols before landing on the correct symbol.
  * Waves effect. A wave animation is played over the characters. Wave colors and final colors are configurable.
+ * Blackhole effect. Characters spawn scattered as a field of stars. A blackhole forms and consumes the stars then explodes the characters across
+   the screen. Characters then 'cool' and ease into position.
  * Animations support easing functions. Easing functions are applied to Scenes using Scene.ease = easing_function.
+ * OutputArea has a center attribute that is the center Coord of the output area.
+ * Terminal has a random_coord() method which returns a random coordinate. Can specify outside the output area.
+
 
 ### Changes
  * Animation and Motion have been refactored to use direct Scene and Waypoint object references instead of string IDs.
@@ -16,6 +21,8 @@
  * Easing function api has been simplified. Easing function callables are used directly rather than Enums and function maps.
  * Layer is set on the EffectCharacter object instead of the motion object. The layer is modified through the EventHandler to allow finer control over the layer.
  * Animations synced to Waypoints can now sync to either the distance progression or the step progression towards the waypoint.
+ * Motion methods which utilize coordinates now use Coord objects rather than tuples.
+ * Motion has methods for finding coordinates on a circle and in a circle.
 
 ### Bug Fixes
  * Fixed Gradient creating two more steps than specified.
