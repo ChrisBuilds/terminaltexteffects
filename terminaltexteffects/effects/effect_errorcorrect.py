@@ -103,18 +103,16 @@ class ErrorCorrectEffect:
                 break
             char1 = all_characters.pop(random.randrange(len(all_characters)))
             char2 = all_characters.pop(random.randrange(len(all_characters)))
-            char1.motion.set_coordinate(char2.input_coord.column, char2.input_coord.row)
+            char1.motion.set_coordinate(char2.input_coord)
             char1_input_coord_waypoint = char1.motion.new_waypoint(
                 "input_coord",
-                char1.input_coord.column,
-                char1.input_coord.row,
+                char1.input_coord,
                 speed=self.args.movement_speed,
             )
-            char2.motion.set_coordinate(char1.input_coord.column, char1.input_coord.row)
+            char2.motion.set_coordinate(char1.input_coord)
             char2_input_coord_waypoint = char2.motion.new_waypoint(
                 "input_coord",
-                char2.input_coord.column,
-                char2.input_coord.row,
+                char2.input_coord,
                 speed=self.args.movement_speed,
             )
             self.swapped.append((char1, char2))

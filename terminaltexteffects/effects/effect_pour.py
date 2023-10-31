@@ -6,6 +6,7 @@ from enum import Enum, auto
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
+from terminaltexteffects.utils import motion
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -86,17 +87,22 @@ class PourEffect:
         for character in self.terminal.characters:
             character.is_active = False
             if self.pour_direction == PourDirection.DOWN:
-                character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
+                character.motion.set_coordinate(
+                    motion.Coord(character.input_coord.column, self.terminal.output_area.top)
+                )
             elif self.pour_direction == PourDirection.UP:
-                character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.bottom)
+                character.motion.set_coordinate(
+                    motion.Coord(character.input_coord.column, self.terminal.output_area.bottom)
+                )
             elif self.pour_direction == PourDirection.LEFT:
-                character.motion.set_coordinate(self.terminal.output_area.right, character.input_coord.row)
+                character.motion.set_coordinate(
+                    motion.Coord(self.terminal.output_area.right, character.input_coord.row)
+                )
             elif self.pour_direction == PourDirection.RIGHT:
-                character.motion.set_coordinate(self.terminal.output_area.left, character.input_coord.row)
+                character.motion.set_coordinate(motion.Coord(self.terminal.output_area.left, character.input_coord.row))
             input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
-                character.input_coord.column,
-                character.input_coord.row,
+                character.input_coord,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )

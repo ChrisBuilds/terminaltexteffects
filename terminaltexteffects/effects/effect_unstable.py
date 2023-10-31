@@ -112,14 +112,13 @@ class UnstableEffect:
                     row = self.terminal.output_area.top
             jumbled_coord = character_coords.pop(random.randint(0, len(character_coords) - 1))
             self.jumbled_coords[character] = jumbled_coord
-            character.motion.set_coordinate(jumbled_coord.column, jumbled_coord.row)
+            character.motion.set_coordinate(jumbled_coord)
             explosion_wpt = character.motion.new_waypoint(
-                "explosion", col, row, speed=0.75, ease=self.args.explosion_ease
+                "explosion", motion.Coord(col, row), speed=0.75, ease=self.args.explosion_ease
             )
             reassembly_wpt = character.motion.new_waypoint(
                 "reassembly",
-                character.input_coord.column,
-                character.input_coord.row,
+                character.input_coord,
                 speed=0.75,
                 ease=self.args.reassembly_ease,
             )
@@ -167,15 +166,15 @@ class UnstableEffect:
                 column_offset = random.choice([-1, 0, 1])
                 for character in self.terminal.characters:
                     character.motion.set_coordinate(
-                        character.motion.current_coord.column + column_offset,
-                        character.motion.current_coord.row + row_offset,
+                        motion.Coord(
+                            character.motion.current_coord.column + column_offset,
+                            character.motion.current_coord.row + row_offset,
+                        )
                     )
                     character.animation.step_animation()
                 self.terminal.print()
                 for character in self.terminal.characters:
-                    character.motion.set_coordinate(
-                        self.jumbled_coords[character].column, self.jumbled_coords[character].row
-                    )
+                    character.motion.set_coordinate(self.jumbled_coords[character])
                 rumble_mod_delay -= 1
                 rumble_mod_delay = max(rumble_mod_delay, 1)
             else:

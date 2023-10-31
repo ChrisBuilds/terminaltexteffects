@@ -1,10 +1,9 @@
 import argparse
 import random
 
-import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils import graphics, argtypes, motion
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -138,6 +137,7 @@ class FireworksEffect:
         firework_shell: list[EffectCharacter] = []
         origin_x = random.randrange(0, self.terminal.output_area.right)
         origin_y = random.randrange(0, self.terminal.output_area.top)
+        origin_coord = motion.Coord(origin_x, origin_y)
         for character in self.terminal.characters:
             if len(firework_shell) == self.args.firework_volume:
                 self.shells.append(firework_shell)
@@ -148,30 +148,28 @@ class FireworksEffect:
                 else:
                     min_row = self.terminal.output_area.bottom
                 origin_y = random.randrange(min_row, self.terminal.output_area.top + 1)
+                origin_coord = motion.Coord(origin_x, origin_y)
             point_on_circle = random.choice(
-                character.motion.find_points_on_circle(
-                    (origin_x, origin_y), random.randrange(1, self.args.explode_distance), self.args.firework_volume
+                character.motion.find_coords_on_circle(
+                    origin_coord, random.randrange(1, self.args.explode_distance), self.args.firework_volume
                 )
             )
-            character.motion.set_coordinate(origin_x, self.terminal.output_area.bottom)
+            character.motion.set_coordinate(motion.Coord(origin_x, self.terminal.output_area.bottom))
             apex_wpt = character.motion.new_waypoint(
                 "apex",
-                origin_x,
-                origin_y,
+                origin_coord,
                 speed=self.args.launch_speed,
                 ease=self.args.launch_easing,
             )
             explode_wpt = character.motion.new_waypoint(
                 "explode",
-                point_on_circle.column,
-                point_on_circle.row,
+                point_on_circle,
                 speed=self.args.explode_speed,
                 ease=self.args.explode_easing,
             )
             input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
-                character.input_coord.column,
-                character.input_coord.row,
+                character.input_coord,
                 speed=self.args.fall_speed,
                 ease=self.args.fall_easing,
             )

@@ -2,7 +2,7 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-import terminaltexteffects.utils.graphics as graphics
+from terminaltexteffects.utils import graphics, motion
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -97,11 +97,10 @@ class BouncyBallsEffect:
                     10,
                     color=step,
                 )
-            character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
+            character.motion.set_coordinate(motion.Coord(character.input_coord.column, self.terminal.output_area.top))
             input_coord_waypoint = character.motion.new_waypoint(
                 "input_coord",
-                character.input_coord.column,
-                character.input_coord.row,
+                character.input_coord,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )

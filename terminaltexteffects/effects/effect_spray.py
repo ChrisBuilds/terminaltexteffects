@@ -6,7 +6,7 @@ from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import graphics, motion
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -125,26 +125,22 @@ class SprayEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point based on SparklerPosition."""
         spray_origin_map = {
-            SprayPosition.CENTER: (
-                self.terminal.output_area.right // 2,
-                self.terminal.output_area.top // 2,
-            ),
-            SprayPosition.N: (self.terminal.output_area.right // 2, self.terminal.output_area.top),
-            SprayPosition.NW: (self.terminal.output_area.left, self.terminal.output_area.top),
-            SprayPosition.W: (self.terminal.output_area.left, self.terminal.output_area.top // 2),
-            SprayPosition.SW: (self.terminal.output_area.left, self.terminal.output_area.bottom),
-            SprayPosition.S: (self.terminal.output_area.right // 2, self.terminal.output_area.bottom),
-            SprayPosition.SE: (self.terminal.output_area.right - 1, self.terminal.output_area.bottom),
-            SprayPosition.E: (self.terminal.output_area.right - 1, self.terminal.output_area.top // 2),
-            SprayPosition.NE: (self.terminal.output_area.right - 1, self.terminal.output_area.top),
+            SprayPosition.CENTER: (self.terminal.output_area.center),
+            SprayPosition.N: motion.Coord(self.terminal.output_area.right // 2, self.terminal.output_area.top),
+            SprayPosition.NW: motion.Coord(self.terminal.output_area.left, self.terminal.output_area.top),
+            SprayPosition.W: motion.Coord(self.terminal.output_area.left, self.terminal.output_area.top // 2),
+            SprayPosition.SW: motion.Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
+            SprayPosition.S: motion.Coord(self.terminal.output_area.right // 2, self.terminal.output_area.bottom),
+            SprayPosition.SE: motion.Coord(self.terminal.output_area.right - 1, self.terminal.output_area.bottom),
+            SprayPosition.E: motion.Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top // 2),
+            SprayPosition.NE: motion.Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top),
         }
 
         for character in self.terminal.characters:
-            character.motion.set_coordinate(*spray_origin_map[self.spray_position])
+            character.motion.set_coordinate(spray_origin_map[self.spray_position])
             input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
-                character.input_coord.column,
-                character.input_coord.row,
+                character.input_coord,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )

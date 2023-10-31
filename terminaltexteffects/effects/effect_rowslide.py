@@ -1,7 +1,7 @@
 import argparse
 from enum import Enum, auto
 
-import terminaltexteffects.utils.argtypes as argtypes
+from terminaltexteffects.utils import argtypes, motion
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -89,13 +89,14 @@ class RowSlide:
         for row in self.rows.values():
             for character in row:
                 if self.slide_direction == SlideDirection.LEFT:
-                    character.motion.set_coordinate(self.terminal.output_area.right, character.input_coord.row)
+                    character.motion.set_coordinate(
+                        motion.Coord(self.terminal.output_area.right, character.input_coord.row)
+                    )
                 else:
-                    character.motion.set_coordinate(0, character.input_coord.row)
+                    character.motion.set_coordinate(motion.Coord(0, character.input_coord.row))
                 input_coord_wpt = character.motion.new_waypoint(
                     "input_coord",
-                    character.input_coord.column,
-                    character.input_coord.row,
+                    character.input_coord,
                     speed=self.args.movement_speed,
                     ease=self.args.easing,
                 )

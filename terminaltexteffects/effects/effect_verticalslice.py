@@ -1,6 +1,6 @@
 import argparse
 
-import terminaltexteffects.utils.argtypes as argtypes
+from terminaltexteffects.utils import argtypes, motion
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -65,11 +65,12 @@ class VerticalSlice:
             new_row = []
             left_half = [character for character in row if character.input_coord.column <= mid_point]
             for character in left_half:
-                character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
+                character.motion.set_coordinate(
+                    motion.Coord(character.input_coord.column, self.terminal.output_area.top)
+                )
                 input_coord_wpt = character.motion.new_waypoint(
                     "input_coord",
-                    character.input_coord.column,
-                    character.input_coord.row,
+                    character.input_coord,
                     speed=self.args.movement_speed,
                     ease=self.args.easing,
                 )
@@ -77,11 +78,12 @@ class VerticalSlice:
             opposite_row = self.rows[-(row_index + 1)]
             right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
             for character in right_half:
-                character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.bottom)
+                character.motion.set_coordinate(
+                    motion.Coord(character.input_coord.column, self.terminal.output_area.bottom)
+                )
                 input_coord_wpt = character.motion.new_waypoint(
                     "input_coord",
-                    character.input_coord.column,
-                    character.input_coord.row,
+                    character.input_coord,
                     speed=self.args.movement_speed,
                     ease=self.args.easing,
                 )

@@ -94,15 +94,12 @@ class BlackholeEffect:
         available_chars = list(self.terminal.characters)
         while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
             self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
-        center_coord = self.terminal.output_area.center_column, self.terminal.output_area.center_row
-        black_hole_ring_positions = motion.Motion.find_points_on_circle(
-            center_coord, self.blackhole_radius, len(self.blackhole_chars)
+        black_hole_ring_positions = motion.Motion.find_coords_on_circle(
+            self.terminal.output_area.center, self.blackhole_radius, len(self.blackhole_chars)
         )
         for character in self.blackhole_chars:
             next_pos = black_hole_ring_positions.pop(0)
-            blackhole_wpt = character.motion.new_waypoint(
-                "blackhole", next_pos.column, next_pos.row, speed=0.5, ease=easing.in_out_sine
-            )
+            blackhole_wpt = character.motion.new_waypoint("blackhole", next_pos, speed=0.5, ease=easing.in_out_sine)
             blackhole_scn = character.animation.new_scene("blackhole")
             blackhole_scn.add_frame("✸", 1, color=self.args.blackhole_color)
             character.event_handler.register_event(
@@ -116,11 +113,10 @@ class BlackholeEffect:
             starting_scn.add_frame(star_symbol, 1, color=star_color)
             character.animation.activate_scene(starting_scn)
             if character not in self.blackhole_chars:
-                character.motion.set_coordinate(self.terminal.random_column(), self.terminal.random_row())
+                character.motion.set_coordinate(self.terminal.random_coord())
                 singluarity_wpt = character.motion.new_waypoint(
                     "singularity",
-                    self.terminal.output_area.center_column,
-                    self.terminal.output_area.center_row,
+                    self.terminal.output_area.center,
                     speed=0.3,
                     ease=easing.in_expo,
                 )
@@ -144,33 +140,28 @@ class BlackholeEffect:
 
     def rotate_blackhole(self) -> None:
         self.blackhole_chars = self.blackhole_chars[2:] + self.blackhole_chars[:2]
-        center_coord = self.terminal.output_area.center_column, self.terminal.output_area.center_row
-        black_hole_ring_positions = motion.Motion.find_points_on_circle(
-            center_coord, self.blackhole_radius, len(self.blackhole_chars)
+        black_hole_ring_positions = motion.Motion.find_coords_on_circle(
+            self.terminal.output_area.center, self.blackhole_radius, len(self.blackhole_chars)
         )
         for character in self.blackhole_chars:
             next_pos = black_hole_ring_positions.pop(0)
-            rotate_wpt = character.motion.new_waypoint("rotate", next_pos.column, next_pos.row, speed=0.1)
+            rotate_wpt = character.motion.new_waypoint("rotate", next_pos, speed=0.1)
             character.motion.activate_waypoint(rotate_wpt)
             if character not in self.animating_chars:
                 self.animating_chars.append(character)
 
     def collapse_blackhole(self) -> None:
-        center_coord = self.terminal.output_area.center_column, self.terminal.output_area.center_row
-        black_hole_ring_positions = motion.Motion.find_points_on_circle(
-            center_coord, self.blackhole_radius + 4, len(self.blackhole_chars)
+        black_hole_ring_positions = motion.Motion.find_coords_on_circle(
+            self.terminal.output_area.center, self.blackhole_radius + 4, len(self.blackhole_chars)
         )
         unstable_symbols = ["◦", "◎", "◉", "●", "◉", "◎", "◦"]
         point_char_made = False
         for character in self.blackhole_chars:
             next_pos = black_hole_ring_positions.pop(0)
-            expand_wpt = character.motion.new_waypoint(
-                "expand", next_pos.column, next_pos.row, speed=0.1, ease=easing.in_expo
-            )
+            expand_wpt = character.motion.new_waypoint("expand", next_pos, speed=0.1, ease=easing.in_expo)
             collapse_wpt = character.motion.new_waypoint(
                 "collapse",
-                self.terminal.output_area.center_column,
-                self.terminal.output_area.center_row,
+                self.terminal.output_area.center,
                 speed=0.3,
                 ease=easing.in_expo,
             )
@@ -196,20 +187,16 @@ class BlackholeEffect:
     def explode_singularity(self) -> None:
         star_colors = ["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c" "049dbf"]
         for character in self.terminal.characters:
-            nearby_coord = motion.Motion.find_points_on_circle(
-                (character.input_coord.column, character.input_coord.row), 4, 5
-            )[random.randrange(0, 5)]
+            nearby_coord = motion.Motion.find_coords_on_circle(character.input_coord, 4, 5)[random.randrange(0, 5)]
             nearby_wpt = character.motion.new_waypoint(
                 "nearby_wpt",
-                nearby_coord.column,
-                nearby_coord.row,
+                nearby_coord,
                 speed=random.randint(2, 3) / 10,
                 ease=easing.out_expo,
             )
             input_wpt = character.motion.new_waypoint(
                 "input_wpt",
-                character.input_coord.column,
-                character.input_coord.row,
+                character.input_coord,
                 speed=random.randint(3, 5) / 100,
                 ease=easing.in_cubic,
             )

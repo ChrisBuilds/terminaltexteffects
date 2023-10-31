@@ -1,6 +1,6 @@
 import argparse
 
-import terminaltexteffects.utils.argtypes as argtypes
+from terminaltexteffects.utils import argtypes, motion
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -65,11 +65,10 @@ class RowMergeEffect:
                 column = self.terminal.output_area.right
             for character in row:
                 character.is_active = False
-                character.motion.set_coordinate(column, character.input_coord.row)
+                character.motion.set_coordinate(motion.Coord(column, character.input_coord.row))
                 input_coord_wpt = character.motion.new_waypoint(
                     "input_coord",
-                    character.input_coord.column,
-                    character.input_coord.row,
+                    character.input_coord,
                     speed=self.args.movement_speed,
                     ease=self.args.easing,
                 )

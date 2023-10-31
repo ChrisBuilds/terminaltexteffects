@@ -4,7 +4,7 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import graphics, motion
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -89,11 +89,10 @@ class RainEffect:
             for color in raindrop_gradient:
                 fade_scn.add_frame(character.input_symbol, 5, color=color)
             character.animation.activate_scene(rain_scn)
-            character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
+            character.motion.set_coordinate(motion.Coord(character.input_coord.column, self.terminal.output_area.top))
             input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
-                character.input_coord.column,
-                character.input_coord.row,
+                character.input_coord,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )

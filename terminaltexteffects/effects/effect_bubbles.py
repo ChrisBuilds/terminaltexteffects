@@ -108,12 +108,12 @@ class Bubble:
 
     def set_character_coordinates(self) -> None:
         for i, char in enumerate(self.characters):
-            point = self.anchor_char.motion.find_points_on_circle(
-                (self.anchor_char.motion.current_coord.column, self.anchor_char.motion.current_coord.row),
+            point = self.anchor_char.motion.find_coords_on_circle(
+                self.anchor_char.motion.current_coord,
                 self.radius,
                 len(self.characters),
             )[i]
-            char.motion.set_coordinate(point.column, point.row)
+            char.motion.set_coordinate(point)
             if point.row == self.lowest_row:
                 self.landed = True
 
@@ -124,7 +124,7 @@ class Bubble:
     def make_waypoints(self):
         waypoint_column = random.randint(self.effect.terminal.output_area.left, self.effect.terminal.output_area.right)
         floor_waypoint = self.anchor_char.motion.new_waypoint(
-            "floor", waypoint_column, self.lowest_row, speed=self.effect.args.bubble_speed
+            "floor", motion.Coord(waypoint_column, self.lowest_row), speed=self.effect.args.bubble_speed
         )
         self.anchor_char.motion.activate_waypoint(floor_waypoint)
 
@@ -153,15 +153,13 @@ class Bubble:
         point: motion.Coord
         for char, point in zip(
             self.characters,
-            self.anchor_char.motion.find_points_on_circle(
-                (self.anchor_char.motion.current_coord.column, self.anchor_char.motion.current_coord.row),
+            self.anchor_char.motion.find_coords_on_circle(
+                self.anchor_char.motion.current_coord,
                 self.radius + 3,
                 len(self.characters),
             ),
         ):
-            pop_out_waypoint = char.motion.new_waypoint(
-                "pop_out", point.column, point.row, speed=0.2, ease=easing.out_expo
-            )
+            pop_out_waypoint = char.motion.new_waypoint("pop_out", point, speed=0.2, ease=easing.out_expo)
             char.event_handler.register_event(
                 EventHandler.Event.WAYPOINT_REACHED,
                 pop_out_waypoint,
@@ -233,8 +231,7 @@ class BubblesEffect:
             )
             final_waypoint = character.motion.new_waypoint(
                 "final",
-                character.input_coord.column,
-                character.input_coord.row,
+                character.input_coord,
                 speed=0.3,
                 ease=easing.in_out_expo,
             )

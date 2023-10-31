@@ -3,7 +3,7 @@ from enum import Enum, auto
 
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import argtypes
+from terminaltexteffects.utils import argtypes, motion
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -93,13 +93,16 @@ class ColumnSlide:
             for character in column:
                 character.is_active = False
                 if self.slide_direction == SlideDirection.DOWN:
-                    character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.top)
+                    character.motion.set_coordinate(
+                        motion.Coord(character.input_coord.column, self.terminal.output_area.top)
+                    )
                 else:
-                    character.motion.set_coordinate(character.input_coord.column, self.terminal.output_area.bottom)
+                    character.motion.set_coordinate(
+                        motion.Coord(character.input_coord.column, self.terminal.output_area.bottom)
+                    )
                 input_coord_wpt = character.motion.new_waypoint(
                     "input_coord",
-                    character.input_coord.column,
-                    character.input_coord.row,
+                    character.input_coord,
                     speed=self.args.movement_speed,
                     ease=self.args.easing,
                 )

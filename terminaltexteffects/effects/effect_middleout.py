@@ -3,7 +3,7 @@ import argparse
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils import graphics, argtypes, motion
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -100,9 +100,7 @@ class MiddleoutEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect."""
         for character in self.terminal.characters:
-            character.motion.set_coordinate(
-                self.terminal.output_area.center_column, self.terminal.output_area.center_row
-            )
+            character.motion.set_coordinate(self.terminal.output_area.center)
             # setup waypoints
             if self.args.expand_direction == "vertical":
                 column = character.input_coord.column
@@ -112,15 +110,13 @@ class MiddleoutEffect:
                 row = character.input_coord.row
             center_waypoint = character.motion.new_waypoint(
                 "center",
-                column,
-                row,
+                motion.Coord(column, row),
                 speed=self.args.center_movement_speed,
                 ease=self.args.center_easing,
             )
             full_waypoint = character.motion.new_waypoint(
                 "full",
-                character.input_coord.column,
-                character.input_coord.row,
+                character.input_coord,
                 speed=self.args.full_movement_speed,
                 ease=self.args.full_easing,
             )

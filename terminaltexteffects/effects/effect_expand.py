@@ -56,11 +56,10 @@ class ExpandEffect:
         """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""
 
         for character in self.terminal.characters:
-            character.motion.set_coordinate(self.terminal.output_area.right // 2, self.terminal.output_area.top // 2)
+            character.motion.set_coordinate(self.terminal.output_area.center)
             input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
-                character.input_coord.column,
-                character.input_coord.row,
+                character.input_coord,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )

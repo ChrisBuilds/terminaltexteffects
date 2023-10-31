@@ -1,6 +1,7 @@
 import argparse
 import random
 
+from terminaltexteffects.utils import motion
 import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminal as terminal
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
@@ -57,16 +58,13 @@ class ScatteredEffect:
         """Prepares the data for the effect by scattering the characters within range of the input width and height."""
         for character in self.terminal.characters:
             if self.terminal.output_area.right < 2 or self.terminal.output_area.top < 2:
-                character.motion.set_coordinate(1, 1)
+                character.motion.set_coordinate(motion.Coord(1, 1))
             else:
-                character.motion.set_coordinate(
-                    random.randint(1, self.terminal.output_area.right - 1),
-                    random.randint(1, self.terminal.output_area.top - 1),
-                )
+                character.motion.set_coordinate(self.terminal.random_coord())
+
             input_coord_wpt = character.motion.new_waypoint(
                 "input_coord",
-                character.input_coord.column,
-                character.input_coord.row,
+                character.input_coord,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )
