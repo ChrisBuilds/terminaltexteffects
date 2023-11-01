@@ -30,7 +30,7 @@ class Waypoint:
         ease (Callable): easing function for character movement. Defaults to None.
     """
 
-    waypoint_id: int
+    waypoint_id: str
     coord: Coord
     speed: float = 1.0
     ease: typing.Callable | None = None
@@ -52,7 +52,6 @@ class Motion:
         Args:
             character (base_character.EffectCharacter): The EffectCharacter to move.
         """
-        self.next_waypoint_id = 0
         self.waypoints: dict[str, Waypoint] = {}
         self.character = character
         self.current_coord: Coord = Coord(character.input_coord.column, character.input_coord.row)
@@ -166,8 +165,7 @@ class Motion:
         Returns:
             Waypoint: The new waypoint.
         """
-        new_waypoint = Waypoint(self.next_waypoint_id, coord, speed, ease)
-        self.next_waypoint_id += 1
+        new_waypoint = Waypoint(waypoint_name, coord, speed, ease)
         self.waypoints[waypoint_name] = new_waypoint
         return new_waypoint
 
@@ -201,10 +199,7 @@ class Motion:
         Args:
             waypoint (Waypoint): the Waypoint to activate
         """
-        if not self.active_waypoint:
-            self.origin_waypoint = Waypoint(-1, Coord(self.current_coord.column, self.current_coord.row))
-        else:
-            self.origin_waypoint = self.active_waypoint
+        self.origin_waypoint = Waypoint("origin", Coord(self.current_coord.column, self.current_coord.row))
         self.active_waypoint = waypoint
         self.speed = self.active_waypoint.speed
         self.inter_waypoint_distance = self._distance(
