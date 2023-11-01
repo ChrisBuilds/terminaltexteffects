@@ -20,6 +20,7 @@ from terminaltexteffects.effects import (
     effect_bubbles,
     effect_middleout,
     effect_errorcorrect,
+    effect_swarm,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -60,6 +61,19 @@ def make_args() -> Namespace:
     args.movement_speed = 3
     args.easing = easing.in_sine
     return args
+
+
+def test_swarm_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.base_color = "ffffff"
+        args.flash_color = "ff0000"
+        args.final_color = "ffffff"
+        args.swarm_size = 5
+        args.swarm_coordination = 80
+        terminal = Terminal(input_data, args)
+        swarm_effect = effect_swarm.SwarmEffect(terminal, args)
+        swarm_effect.run()
 
 
 def test_errorcorrect_effect() -> None:
