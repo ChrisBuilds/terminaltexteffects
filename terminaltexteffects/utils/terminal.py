@@ -171,7 +171,7 @@ class Terminal:
 
         Returns:
             motion.Coord: a random coordinate . Coordinate is within the output area unless outside_scope is True."""
-        if outside_scope is False:
+        if outside_scope is True:
             random_coord_above = motion.Coord(self.random_column(), self.output_area.top + 1)
             random_coord_below = motion.Coord(self.random_column(), -1)
             random_coord_left = motion.Coord(-1, self.random_row())
