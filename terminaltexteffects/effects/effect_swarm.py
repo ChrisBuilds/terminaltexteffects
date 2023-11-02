@@ -64,7 +64,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
 
 
 class SwarmEffect:
-    """Effect that ___."""
+    """Characters behave with swarm characteristics before flying into position."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
         self.terminal = terminal
@@ -86,7 +86,7 @@ class SwarmEffect:
             self.swarms.append(new_swarm)
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by ___."""
+        """Prepares the data for the effect by creating swarms of characters and setting waypoints and animations."""
         self.make_swarms()
         final_gradient = graphics.Gradient(self.args.base_color, self.args.final_color, 10)
         swarm_gradient = graphics.Gradient(self.args.base_color, self.args.flash_color, 7)
