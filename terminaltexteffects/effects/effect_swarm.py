@@ -107,7 +107,9 @@ class SwarmEffect:
                 if area not in swarm_areas:
                     swarm_areas.append(area)
                     swarm_area_coordinate_map[area] = motion.Motion.find_coords_in_circle(
-                        area, min(max(self.swarm_size // 30, 5), 11), self.swarm_size
+                        area,
+                        max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 4, 1),
+                        self.swarm_size,
                     )
 
             for character in swarm:
@@ -133,10 +135,11 @@ class SwarmEffect:
                     character.event_handler.register_event(
                         EventHandler.Event.WAYPOINT_ACTIVATED, origin_wpt, EventHandler.Action.SET_LAYER, 1
                     )
-                    sw_count = 0
-                    while sw_count < 2:
+                    inner_waypoints = 0
+                    total_inner_waypoints = 2
+                    while inner_waypoints < total_inner_waypoints:
                         next_coord = random.choice(swarm_area_coords)
-                        sw_count += 1
+                        inner_waypoints += 1
                         character.motion.new_waypoint(
                             str(len(character.motion.waypoints)),
                             next_coord,
