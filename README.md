@@ -164,9 +164,6 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 #### Errorcorrect
 ![errorcorrect_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/7e63d3f0-6e7f-4145-9886-fd54633896be)
 
-## In-Development Preview
-Any effects shown below are in development and will be available in the next release.
-
 #### Waves
 ![waves_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed057ac5-4cbb-4f8b-a47b-255574614965)
 
@@ -177,6 +174,8 @@ Any effects shown below are in development and will be available in the next rel
 ![swarm_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/133a3e7d-b493-48c3-ace3-3848c89e6e39)
 
 
+## In-Development Preview
+Any effects shown below are in development and will be available in the next release.
 
 
 ## Recent Changes
