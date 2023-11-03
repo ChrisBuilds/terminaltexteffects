@@ -130,13 +130,24 @@ class ErrorCorrectEffect:
                 for _ in range(10):
                     error_scene.add_frame(block_symbol, 3, color=self.args.error_color)
                     error_scene.add_frame(character.input_symbol, 3, color="ffffff")
-                correcting_scene = character.animation.new_scene("correcting")
+                correcting_scene = character.animation.new_scene("correcting", sync=graphics.SyncMetric.DISTANCE)
                 for step in correcting_gradient:
                     correcting_scene.add_frame("█", 3, color=step)
-                correcting_scene.sync_waypoint = character.motion.waypoints["input_coord"]
                 final_scene = character.animation.new_scene("final")
                 for step in final_gradient:
                     final_scene.add_frame(character.input_symbol, 3, color=step)
+                character.event_handler.register_event(
+                    EventHandler.Event.SCENE_COMPLETE,
+                    error_scene,
+                    EventHandler.Action.ACTIVATE_SCENE,
+                    first_block_wipe,
+                )
+                character.event_handler.register_event(
+                    EventHandler.Event.SCENE_COMPLETE,
+                    first_block_wipe,
+                    EventHandler.Action.ACTIVATE_SCENE,
+                    correcting_scene,
+                )
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
                     first_block_wipe,
@@ -155,18 +166,7 @@ class ErrorCorrectEffect:
                     EventHandler.Action.SET_LAYER,
                     0,
                 )
-                character.event_handler.register_event(
-                    EventHandler.Event.SCENE_COMPLETE,
-                    error_scene,
-                    EventHandler.Action.ACTIVATE_SCENE,
-                    first_block_wipe,
-                )
-                character.event_handler.register_event(
-                    EventHandler.Event.SCENE_COMPLETE,
-                    first_block_wipe,
-                    EventHandler.Action.ACTIVATE_SCENE,
-                    correcting_scene,
-                )
+
                 character.event_handler.register_event(
                     EventHandler.Event.WAYPOINT_REACHED,
                     character.motion.waypoints["input_coord"],
