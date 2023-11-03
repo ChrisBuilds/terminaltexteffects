@@ -11,7 +11,7 @@ if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
 
 
-class SyncTo(Enum):
+class SyncMetric(Enum):
     """Enum for specifying the type of sync to use for a Scene.
 
     Attributes:
@@ -198,9 +198,8 @@ class Scene:
     """A Scene is a list of Frames.
 
     Args:
-        scene_id (int): unique ID for the Scene, automatically generated when using Animation.new_scene()
+        scene_id (str): unique ID for the Scene
         is_looping (bool): whether the Scene should loop
-        sync_waypoint (Waypoint): a Waypoint to sync the Scene to
         sync_to (SyncTo): the type of sync to use
         no_color (bool): whether to disable color
         use_xterm_colors (bool): whether to use XTerm-256 colors
@@ -210,18 +209,16 @@ class Scene:
 
     def __init__(
         self,
-        scene_id: int,
+        scene_id: str,
         is_looping: bool = False,
-        sync_waypoint: motion.Waypoint | None = None,
-        sync_to: SyncTo = SyncTo.STEP,
+        sync: SyncMetric | None = None,
         ease: typing.Callable | None = None,
         no_color: bool = False,
         use_xterm_colors: bool = False,
     ):
         self.scene_id = scene_id
         self.is_looping = is_looping
-        self.sync_waypoint: motion.Waypoint | None = sync_waypoint
-        self.sync_to = sync_to
+        self.sync: SyncMetric | None = sync
         self.ease: easing.Ease | None = ease
         self.no_color = no_color
         self.use_xterm_colors = use_xterm_colors
@@ -368,7 +365,6 @@ class Animation:
         Args:
             character (base_character.EffectCharacter): the EffectCharacter object to animate
         """
-        self.next_scene_id = 0
         self.scenes: dict[str, Scene] = {}
         self.character = character
         self.active_scene: Scene | None = None
@@ -382,25 +378,24 @@ class Animation:
         scene_name: str,
         *,
         is_looping: bool = False,
-        sync_waypoint: motion.Waypoint | None = None,
-        sync_to: SyncTo = SyncTo.STEP,
+        sync: SyncMetric | None = None,
         ease: typing.Callable | None = None,
     ) -> Scene:
         """Creates a new Scene and adds it to the Animation.
 
         Args:
             scene_name (str): Unique name for the scene. Used to reference the scene outside the scope in which is was created.
+            is_looping (bool): Whether the scene should loop.
+            sync (SyncMetric): The type of sync to use for the scene.
+            ease (typing.Callable): The easing function to use for the scene.
 
         Returns:
             Scene: the new Scene
         """
-        new_scene = Scene(
-            self.next_scene_id, is_looping=is_looping, sync_waypoint=sync_waypoint, sync_to=sync_to, ease=ease
-        )
+        new_scene = Scene(scene_name, is_looping=is_looping, sync=sync, ease=ease)
         self.scenes[scene_name] = new_scene
         new_scene.no_color = self.no_color
         new_scene.use_xterm_colors = self.use_xterm_colors
-        self.next_scene_id += 1
         return new_scene
 
     def active_scene_is_complete(self) -> bool:
@@ -446,9 +441,9 @@ class Animation:
         if self.active_scene and self.active_scene.frames:
             # if the active scene is synced to movement, calculate the sequence index based on the
             # current waypoint progress
-            if self.active_scene.sync_to:
+            if self.active_scene.sync:
                 if self.character.motion.active_waypoint:
-                    if self.active_scene.sync_to == SyncTo.STEP:
+                    if self.active_scene.sync == SyncMetric.STEP:
                         sequence_index = round(
                             (len(self.active_scene.frames) - 1)
                             * (
@@ -456,7 +451,7 @@ class Animation:
                                 / max(self.character.motion.inter_waypoint_max_steps, 1)
                             )
                         )
-                    elif self.active_scene.sync_to == SyncTo.DISTANCE:
+                    elif self.active_scene.sync == SyncMetric.DISTANCE:
                         current_distance_to_waypoint = self.character.motion._distance(
                             self.character.motion.current_coord.column,
                             self.character.motion.current_coord.row,
