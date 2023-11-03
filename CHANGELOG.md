@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 0.4.0
 
 ### New Features
  * Cycle effect. Characters cycle through a list of symbols before landing on the correct symbol.
