@@ -99,6 +99,7 @@ class SwarmEffect:
             swarm_area_count = random.randint(2, 4)
             # create areas where characters will swarm
             while len(swarm_areas) < swarm_area_count:
+                # get random coord within inner 90% of terminal
                 col = random.randint(round(self.terminal.input_width * 0.1), round(self.terminal.input_width * 0.9) + 1)
                 row = random.randint(
                     round(self.terminal.output_area.top * 0.1), round(self.terminal.output_area.top * 0.9) + 1
@@ -106,15 +107,20 @@ class SwarmEffect:
                 area = motion.Coord(col, row)
                 if area not in swarm_areas:
                     swarm_areas.append(area)
+                    # swarm area radius is a function of the terminal size, approximately 1/4 of the smallest dimension
                     swarm_area_coordinate_map[area] = motion.Motion.find_coords_in_circle(
                         area,
                         max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 4, 1),
                         self.swarm_size,
                     )
 
+            # assign characters waypoints for swarm areas and inner waypoints within the swarm areas
             for character in swarm:
                 swarm_area_count = 0
                 character.motion.set_coordinate(swarm_spawn)
+                flash_scn = character.animation.new_scene("speed", sync_to=graphics.SyncTo.DISTANCE)
+                for step in swarm_gradient_mirror:
+                    flash_scn.add_frame(character.input_symbol, 1, color=step)
                 for _, swarm_area_coords in swarm_area_coordinate_map.items():
                     swarm_area_name = f"{swarm_area_count}_swarm_area"
                     swarm_area_count += 1
@@ -124,16 +130,14 @@ class SwarmEffect:
                         speed=0.25,
                         ease=easing.out_sine,
                     )
-                    speed_scn = character.animation.new_scene(
-                        "speed", sync_waypoint=origin_wpt, sync_to=graphics.SyncTo.DISTANCE
-                    )
-                    for step in swarm_gradient_mirror:
-                        speed_scn.add_frame(character.input_symbol, 1, color=step)
                     character.event_handler.register_event(
-                        EventHandler.Event.WAYPOINT_ACTIVATED, origin_wpt, EventHandler.Action.ACTIVATE_SCENE, speed_scn
+                        EventHandler.Event.WAYPOINT_ACTIVATED, origin_wpt, EventHandler.Action.ACTIVATE_SCENE, flash_scn
                     )
                     character.event_handler.register_event(
                         EventHandler.Event.WAYPOINT_ACTIVATED, origin_wpt, EventHandler.Action.SET_LAYER, 1
+                    )
+                    character.event_handler.register_event(
+                        EventHandler.Event.WAYPOINT_REACHED, origin_wpt, EventHandler.Action.DEACTIVATE_SCENE, flash_scn
                     )
                     inner_waypoints = 0
                     total_inner_waypoints = 2
@@ -146,6 +150,7 @@ class SwarmEffect:
                             speed=0.1,
                             ease=easing.in_out_sine,
                         )
+                # create landing waypoint and scene
                 input_wpt = character.motion.new_waypoint(
                     "input_coord", character.input_coord, speed=0.3, ease=easing.in_out_quad
                 )
@@ -158,14 +163,11 @@ class SwarmEffect:
                 character.event_handler.register_event(
                     EventHandler.Event.WAYPOINT_REACHED, input_wpt, EventHandler.Action.SET_LAYER, 0
                 )
-                speed_scn = character.animation.new_scene(
-                    "speed", sync_waypoint=input_wpt, sync_to=graphics.SyncTo.DISTANCE
-                )
-                for step in swarm_gradient_mirror:
-                    speed_scn.add_frame(character.input_symbol, 1, color=step)
+                # create flash effect when moving between waypoints
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_ACTIVATED, input_wpt, EventHandler.Action.ACTIVATE_SCENE, speed_scn
+                    EventHandler.Event.WAYPOINT_ACTIVATED, input_wpt, EventHandler.Action.ACTIVATE_SCENE, flash_scn
                 )
+                # chain waypoints
                 last_wpt = None
                 for wpt in character.motion.waypoints.values():
                     if last_wpt:
