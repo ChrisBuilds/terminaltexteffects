@@ -118,7 +118,7 @@ class SwarmEffect:
             for character in swarm:
                 swarm_area_count = 0
                 character.motion.set_coordinate(swarm_spawn)
-                flash_scn = character.animation.new_scene("speed", sync_to=graphics.SyncTo.DISTANCE)
+                flash_scn = character.animation.new_scene("speed", sync=graphics.SyncMetric.DISTANCE)
                 for step in swarm_gradient_mirror:
                     flash_scn.add_frame(character.input_symbol, 1, color=step)
                 for _, swarm_area_coords in swarm_area_coordinate_map.items():
