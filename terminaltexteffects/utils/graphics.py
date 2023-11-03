@@ -200,7 +200,7 @@ class Scene:
     Args:
         scene_id (str): unique ID for the Scene
         is_looping (bool): whether the Scene should loop
-        sync_to (SyncTo): the type of sync to use
+        sync (SyncMetric): the sync metric to use
         no_color (bool): whether to disable color
         use_xterm_colors (bool): whether to use XTerm-256 colors
     """
