@@ -7,6 +7,7 @@
  * Waves effect. A wave animation is played over the characters. Wave colors and final colors are configurable.
  * Blackhole effect. Characters spawn scattered as a field of stars. A blackhole forms and consumes the stars then explodes the characters across
    the screen. Characters then 'cool' and ease into position.
+ * Swarm effect. Characters a separated into swarms and fly around the output area before landing in position.
  * Animations support easing functions. Easing functions are applied to Scenes using Scene.ease = easing_function.
  * OutputArea has a center attribute that is the center Coord of the output area.
  * Terminal has a random_coord() method which returns a random coordinate. Can specify outside the output area.
@@ -20,7 +21,8 @@
  * Animation methods for created Scenes and adding frames to scenes have been refactored to return Scene objects and expose terminal modes, respectively.
  * Easing function api has been simplified. Easing function callables are used directly rather than Enums and function maps.
  * Layer is set on the EffectCharacter object instead of the motion object. The layer is modified through the EventHandler to allow finer control over the layer.
- * Animations synced to Waypoints can now sync to either the distance progression or the step progression towards the waypoint.
+ * Animations not longer sync to specific waypoints, rather, they sync to the progress of the character towards the active waypoint.
+ * Animations synced to waypoint progress can now sync to either the distance progression or the step progression.
  * Motion methods which utilize coordinates now use Coord objects rather than tuples.
  * Motion has methods for finding coordinates on a circle and in a circle.
 
