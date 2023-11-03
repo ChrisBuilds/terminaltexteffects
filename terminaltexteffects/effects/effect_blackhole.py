@@ -124,8 +124,7 @@ class BlackholeEffect:
                 for color in gradient_map[star_color]:
                     consumed_scn.add_frame(star_symbol, 1, color=color)
                 consumed_scn.add_frame(" ", 1)
-                consumed_scn.sync_waypoint = singluarity_wpt
-                consumed_scn.sync_to = graphics.SyncTo.DISTANCE
+                consumed_scn.sync = graphics.SyncMetric.DISTANCE
                 character.event_handler.register_event(
                     EventHandler.Event.WAYPOINT_ACTIVATED, singluarity_wpt, EventHandler.Action.SET_LAYER, 2
                 )
