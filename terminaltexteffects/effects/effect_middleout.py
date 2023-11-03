@@ -128,7 +128,6 @@ class MiddleoutEffect:
                 center_scene.add_frame(character.input_symbol, 2, color=step)
             for step in self.full_gradient:
                 full_scene.add_frame(character.input_symbol, 2, color=step)
-            full_scene.sync_waypoint = full_waypoint
             character.animation.activate_scene(center_scene)
 
             # initialize character state
