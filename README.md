@@ -183,7 +183,6 @@ Any effects shown below are in development and will be available in the next rel
 ## 0.4.0
 
 ### New Features
- * Cycle effect. Characters cycle through a list of symbols before landing on the correct symbol.
  * Waves effect. A wave animation is played over the characters. Wave colors and final colors are configurable.
  * Blackhole effect. Characters spawn scattered as a field of stars. A blackhole forms and consumes the stars then explodes the characters across
    the screen. Characters then 'cool' and ease into position.
