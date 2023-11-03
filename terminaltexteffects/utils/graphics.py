@@ -444,13 +444,10 @@ class Animation:
         """Apply the next symbol in the scene to the character. If a scene order exists, the next scene
         will be activated when the current scene is complete."""
         if self.active_scene and self.active_scene.frames:
-            # if the active scene is synced to the active waypoint, calculate the sequence index based on the
+            # if the active scene is synced to movement, calculate the sequence index based on the
             # current waypoint progress
-            if self.active_scene.sync_waypoint and self.active_scene.sync_to:
-                if (
-                    self.character.motion.active_waypoint
-                    and self.character.motion.active_waypoint is self.active_scene.sync_waypoint
-                ):
+            if self.active_scene.sync_to:
+                if self.character.motion.active_waypoint:
                     if self.active_scene.sync_to == SyncTo.STEP:
                         sequence_index = round(
                             (len(self.active_scene.frames) - 1)
@@ -481,7 +478,7 @@ class Animation:
                         self.character.symbol = self.active_scene.frames[sequence_index].symbol
                     except IndexError:
                         self.character.symbol = self.active_scene.frames[-1].symbol
-                else:  # when the active waypoint has been deactivated or changed, use the final symbol in the scene and finish the scene
+                else:  # when the active waypoint has been deactivated, use the final symbol in the scene and finish the scene
                     self.character.symbol = self.active_scene.frames[-1].symbol
                     self.active_scene.played_frames.extend(self.active_scene.frames)
                     self.active_scene.frames.clear()
