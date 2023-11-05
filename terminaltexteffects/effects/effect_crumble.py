@@ -87,7 +87,6 @@ class CrubleEffect:
                 weaken_scn.add_frame(character.input_symbol, 6, color=color_step)
 
             # set up vacuuming stage
-
             bottom_vac_wpt = character.motion.new_waypoint(
                 "bottom_vac",
                 motion.Coord(
@@ -164,49 +163,32 @@ class CrubleEffect:
         self.terminal.print()
         while stage != "complete":
             if stage == "falling":
-                while self.pending_chars or self.animating_chars:
-                    if self.pending_chars:
-                        if fall_delay == 0:
-                            # Determine the size of the next group of falling characters
-                            fall_group_size = random.randint(1, fall_group_maxsize)
-                            # Add the next group of falling characters to the animating characters list
-                            for _ in range(fall_group_size):
-                                if self.pending_chars:
-                                    next_char = self.pending_chars.pop(0)
-                                    next_char.animation.activate_scene(next_char.animation.scenes["weaken"])
-                                    self.animating_chars.append(next_char)
-                            # Reset the fall delay and adjust the fall group size and delay range
-                            fall_delay = random.randint(min_fall_delay, max_fall_delay)
-                            if random.randint(1, 10) > 4:  # 60% chance to modify the fall delay and group size
-                                fall_group_maxsize += 1
-                                min_fall_delay = max(0, min_fall_delay - 1)
-                                max_fall_delay = max(0, max_fall_delay - 1)
-                        else:
-                            fall_delay -= 1
-                    self.terminal.print()
-                    self.animate_chars()
-                    self.animating_chars = [
-                        animating_char
-                        for animating_char in self.animating_chars
-                        if not animating_char.animation.active_scene_is_complete()
-                        or not animating_char.motion.movement_is_complete()
-                    ]
-                    if not self.animating_chars:
-                        stage = "vacuuming"
+                if self.pending_chars:
+                    if fall_delay == 0:
+                        # Determine the size of the next group of falling characters
+                        fall_group_size = random.randint(1, fall_group_maxsize)
+                        # Add the next group of falling characters to the animating characters list
+                        for _ in range(fall_group_size):
+                            if self.pending_chars:
+                                next_char = self.pending_chars.pop(0)
+                                next_char.animation.activate_scene(next_char.animation.scenes["weaken"])
+                                self.animating_chars.append(next_char)
+                        # Reset the fall delay and adjust the fall group size and delay range
+                        fall_delay = random.randint(min_fall_delay, max_fall_delay)
+                        if random.randint(1, 10) > 4:  # 60% chance to modify the fall delay and group size
+                            fall_group_maxsize += 1
+                            min_fall_delay = max(0, min_fall_delay - 1)
+                            max_fall_delay = max(0, max_fall_delay - 1)
+                    else:
+                        fall_delay -= 1
+                if not self.pending_chars and not self.animating_chars:
+                    stage = "vacuuming"
             elif stage == "vacuuming":
                 if not vacuumed:
                     for character in self.terminal.characters:
                         character.motion.activate_waypoint(character.motion.waypoints["bottom_vac"])
                         self.animating_chars.append(character)
                     vacuumed = True
-                self.terminal.print()
-                self.animate_chars()
-                self.animating_chars = [
-                    animating_char
-                    for animating_char in self.animating_chars
-                    if not animating_char.animation.active_scene_is_complete()
-                    or not animating_char.motion.movement_is_complete()
-                ]
                 if not self.animating_chars:
                     stage = "resetting"
 
@@ -216,16 +198,17 @@ class CrubleEffect:
                         character.motion.activate_waypoint(character.motion.waypoints["input"])
                         self.animating_chars.append(character)
                     reset = True
-                self.terminal.print()
-                self.animate_chars()
-                self.animating_chars = [
-                    animating_char
-                    for animating_char in self.animating_chars
-                    if not animating_char.animation.active_scene_is_complete()
-                    or not animating_char.motion.movement_is_complete()
-                ]
                 if not self.animating_chars:
                     stage = "complete"
+
+            self.terminal.print()
+            self.animate_chars()
+            self.animating_chars = [
+                animating_char
+                for animating_char in self.animating_chars
+                if not animating_char.animation.active_scene_is_complete()
+                or not animating_char.motion.movement_is_complete()
+            ]
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
