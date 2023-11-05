@@ -21,6 +21,7 @@ from terminaltexteffects.effects import (
     effect_middleout,
     effect_errorcorrect,
     effect_swarm,
+    effect_crumble,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -61,6 +62,17 @@ def make_args() -> Namespace:
     args.movement_speed = 3
     args.easing = easing.in_sine
     return args
+
+
+def test_crumble_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.initial_color = "0088bb"
+        args.dust_colors = ["dadad1", "766b69", "848789", "747a8a"]
+        args.final_color = "0eeaff"
+        terminal = Terminal(input_data, args)
+        crumble_effect = effect_crumble.CrumbleEffect(terminal, args)
+        crumble_effect.run()
 
 
 def test_swarm_effect() -> None:
