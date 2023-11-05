@@ -1,5 +1,14 @@
 # Change Log
 
+## Unreleased
+
+### New Features
+ * New effect, Crumble. Characters lose color and fall as dust before being vacuumed up and rebuilt.
+
+### Changes
+
+### Bug Fixes
+
 ## 0.4.0
 
 ### New Features
