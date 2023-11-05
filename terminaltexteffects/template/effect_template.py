@@ -30,19 +30,19 @@ Example: effect_example""",
         help="Time, in seconds, between animation steps.",
     )
     effect_parser.add_argument(
-        "--color-single",  # make more descriptive
+        "--color-single",
         type=argtypes.valid_color,
         default=0,
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the ___.",
     )
     effect_parser.add_argument(
-        "--color-list",  # make more descriptive
+        "--color-list",
         type=argtypes.valid_color,
         nargs="*",
         default=0,
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Up to N colors for the __.",
+        help="Space separated, unquoted, list of colors for the ___.",
     )
     effect_parser.add_argument(
         "--final-color",
