@@ -217,7 +217,7 @@ class BlackholeEffect:
             self.animating_chars.append(character)
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by ___."""
+        """Prepares the data for the effect by creating the starfield, blackhole, and consumption scenes/waypoints."""
         self.prepare_blackhole()
 
     def run(self) -> None:
