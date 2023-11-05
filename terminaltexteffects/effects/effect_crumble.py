@@ -22,7 +22,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
 
 Example: terminaltexteffects --effect crumble --animation-rate 0.01 --initial-color 0088bb --dust-colors dadad1 766b69 848789 747a8a --final-color 0088bb""",
     )
-    effect_parser.set_defaults(effect_class=CrubleEffect)
+    effect_parser.set_defaults(effect_class=CrumbleEffect)
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
@@ -54,7 +54,7 @@ Example: terminaltexteffects --effect crumble --animation-rate 0.01 --initial-co
     )
 
 
-class CrubleEffect:
+class CrumbleEffect:
     """Characters crumble into dust before being vacuumed up and rebuilt."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
