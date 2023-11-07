@@ -153,7 +153,7 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 ![unstable_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2e4b6e51-2b65-4765-a41c-92542981c77c)
 
 #### Bubbles
-![bubbles_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/e12a6f2a-a8f8-47d8-8d42-8cff621db24e)
+![bubbles_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/1ae892fb-0525-4308-8e0b-382e7c079cb2)
 
 #### Bouncyballs
 ![bouncyballs_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/bb62112c-a6b7-466f-a7c8-ee66f528616b)
@@ -168,7 +168,7 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 ![waves_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed057ac5-4cbb-4f8b-a47b-255574614965)
 
 #### Blackhole
-![blackhole_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/18d2a13d-09d1-4c3b-9ad0-f937b2b52d6d)
+![blackhole_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/3fd53289-05d8-4094-9e7e-0f174dd619e1)
 
 #### Swarm
 ![swarm_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/133a3e7d-b493-48c3-ace3-3848c89e6e39)
