@@ -86,7 +86,7 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     )
     effect_parser.add_argument(
         "--explode-distance",
-        default=10,
+        default=5,
         type=argtypes.positive_int,
         metavar="(int > 0)",
         help="Maximum distance a character can travel as a part of the firework explosion.",

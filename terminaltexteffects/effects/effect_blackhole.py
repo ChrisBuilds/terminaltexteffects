@@ -63,7 +63,7 @@ class BlackholeEffect:
         self.blackhole_chars: list[EffectCharacter] = []
         self.awaiting_consumption_chars: list[EffectCharacter] = []
         self.blackhole_radius = max(
-            min(round(self.terminal.input_width * 0.4), round(self.terminal.input_height * 0.4)), 4
+            min(round(self.terminal.input_width * 0.3), round(self.terminal.input_height * 0.3)), 3
         )
 
     def prepare_blackhole(self) -> None:
@@ -151,7 +151,7 @@ class BlackholeEffect:
 
     def collapse_blackhole(self) -> None:
         black_hole_ring_positions = motion.Motion.find_coords_on_circle(
-            self.terminal.output_area.center, self.blackhole_radius + 4, len(self.blackhole_chars)
+            self.terminal.output_area.center, self.blackhole_radius + 3, len(self.blackhole_chars)
         )
         unstable_symbols = ["◦", "◎", "◉", "●", "◉", "◎", "◦"]
         point_char_made = False
@@ -186,7 +186,7 @@ class BlackholeEffect:
     def explode_singularity(self) -> None:
         star_colors = ["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c" "049dbf"]
         for character in self.terminal.characters:
-            nearby_coord = motion.Motion.find_coords_on_circle(character.input_coord, 4, 5)[random.randrange(0, 5)]
+            nearby_coord = motion.Motion.find_coords_on_circle(character.input_coord, 3, 5)[random.randrange(0, 5)]
             nearby_wpt = character.motion.new_waypoint(
                 "nearby_wpt",
                 nearby_coord,
