@@ -63,7 +63,7 @@ class BlackholeEffect:
         self.blackhole_chars: list[EffectCharacter] = []
         self.awaiting_consumption_chars: list[EffectCharacter] = []
         self.blackhole_radius = max(
-            min(round(self.terminal.input_width * 0.3), round(self.terminal.input_height * 0.3)), 3
+            min(round(self.terminal.output_area.right * 0.3), round(self.terminal.output_area.top * 0.3)), 3
         )
 
     def prepare_blackhole(self) -> None:
