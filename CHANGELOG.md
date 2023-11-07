@@ -6,10 +6,24 @@
  * New effect, Crumble. Characters lose color and fall as dust before being vacuumed up and rebuilt.
 
 ### Changes
+
+### Bug Fixes
+
+## 0.4.3
+
+### Changes
+ * blackhole radius is based on the output area size, not the input text size.
+
+## 0.4.2
+
+### Changes
  * motion.Motion.find_points_on_circle and motion.Motion.find_points_in_circle now account for the terminal character height/width ratio to
    return points that more closely approximate a circle. All effects which use these functions have been updated to account for this change.
 
-### Bug Fixes
+## 0.4.1
+
+### Changes
+ * Updated documentation
 
 ## 0.4.0
 
@@ -21,7 +35,6 @@
  * Animations support easing functions. Easing functions are applied to Scenes using Scene.ease = easing_function.
  * OutputArea has a center attribute that is the center Coord of the output area.
  * Terminal has a random_coord() method which returns a random coordinate. Can specify outside the output area.
-
 
 ### Changes
  * Animation and Motion have been refactored to use direct Scene and Waypoint object references instead of string IDs.
