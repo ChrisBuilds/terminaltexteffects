@@ -6,6 +6,8 @@
  * New effect, Crumble. Characters lose color and fall as dust before being vacuumed up and rebuilt.
 
 ### Changes
+ * motion.Motion.find_points_on_circle and motion.Motion.find_points_in_circle now account for the terminal character height/width ratio to
+   return points that more closely approximate a circle. All effects which use these functions have been updated to account for this change.
 
 ### Bug Fixes
 
