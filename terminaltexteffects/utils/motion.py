@@ -79,6 +79,9 @@ class Motion:
         for i in range(num_points):
             angle = 2 * math.pi * i / num_points
             x = origin.column + radius * math.cos(angle)
+            # correct for terminal character height/width ratio by doubling the x distance from origin
+            x_diff = x - origin.column
+            x += x_diff
             y = origin.row + radius * math.sin(angle)
             points.append(Coord(round(x), round(y)))
         return points
