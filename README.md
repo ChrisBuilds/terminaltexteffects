@@ -180,6 +180,9 @@ Any effects shown below are in development and will be available in the next rel
 #### Crumble
 ![crumble_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed42fed9-47c8-4caa-ad44-e482366a9c25)
 
+#### Rings
+![rings_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/5388d7db-2cd5-4cc1-810b-6d522a5f38d6)
+
 
 ## Recent Changes
 
