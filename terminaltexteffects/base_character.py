@@ -31,7 +31,7 @@ class EventHandler:
         self.layer: int = 0
         self.registered_events: dict[
             tuple[EventHandler.Event, graphics.Scene | motion.Waypoint],
-            list[tuple[EventHandler.Action, graphics.Scene | motion.Waypoint | int]],
+            list[tuple[EventHandler.Action, graphics.Scene | motion.Waypoint | int | motion.Coord]],
         ] = {}
 
     class Event(Enum):
@@ -65,6 +65,7 @@ class EventHandler:
             DEACTIVATE_SCENE (Action): Deactivates an animation scene. The action target is the scene ID.
             SET_CHARACTER_ACTIVATION_STATE (Action): Sets the activation state of the character. The action target is the activation state (True/False).
             SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
+            SET_COORDINATE (Action): Sets the coordinate of the character. The action target is the coordinate.
         """
 
         ACTIVATE_WAYPOINT = auto()
@@ -73,13 +74,14 @@ class EventHandler:
         DEACTIVATE_SCENE = auto()
         SET_CHARACTER_ACTIVATION_STATE = auto()
         SET_LAYER = auto()
+        SET_COORDINATE = auto()
 
     def register_event(
         self,
         event: Event,
         caller: graphics.Scene | motion.Waypoint,
         action: Action,
-        target: graphics.Scene | motion.Waypoint | int,
+        target: graphics.Scene | motion.Waypoint | int | motion.Coord,
     ) -> None:
         """Registers an event to be handled by the EventHandler.
 
@@ -117,6 +119,7 @@ class EventHandler:
             EventHandler.Action.SET_CHARACTER_ACTIVATION_STATE: lambda state: setattr(
                 self.character, "is_active", state
             ),
+            EventHandler.Action.SET_COORDINATE: lambda coord: setattr(self.character.motion, "current_coord", coord),
         }
 
         if (event, caller) not in self.registered_events:
