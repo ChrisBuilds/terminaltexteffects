@@ -162,7 +162,7 @@ class Ring:
                 ease=easing.in_quart,
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED,
+                EventHandler.Event.WAYPOINT_COMPLETE,
                 condense_wpt,
                 EventHandler.Action.ACTIVATE_WAYPOINT,
                 self.character_last_ring_wpt[character],
@@ -245,7 +245,7 @@ class RingsEffect:
                     disperse_scn.add_frame(character.input_symbol, 2, color=step)
                     self.non_ring_chars.append(character)
                     character.event_handler.register_event(
-                        EventHandler.Event.WAYPOINT_REACHED,
+                        EventHandler.Event.WAYPOINT_COMPLETE,
                         external_wpt,
                         EventHandler.Action.SET_CHARACTER_ACTIVATION_STATE,
                         False,
@@ -287,7 +287,7 @@ class RingsEffect:
                                 "initial", disperse_wpt.coord, speed=1, ease=easing.out_cubic
                             )
                             character.event_handler.register_event(
-                                EventHandler.Event.WAYPOINT_REACHED,
+                                EventHandler.Event.WAYPOINT_COMPLETE,
                                 initial_wpt,
                                 EventHandler.Action.ACTIVATE_WAYPOINT,
                                 disperse_wpt,

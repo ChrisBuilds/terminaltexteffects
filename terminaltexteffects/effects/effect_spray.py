@@ -148,7 +148,7 @@ class SprayEffect:
                 EventHandler.Event.WAYPOINT_ACTIVATED, input_coord_wpt, EventHandler.Action.SET_LAYER, 1
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED, input_coord_wpt, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.WAYPOINT_COMPLETE, input_coord_wpt, EventHandler.Action.SET_LAYER, 0
             )
             if self.spray_colors:
                 droplet_scn = character.animation.new_scene("droplet")

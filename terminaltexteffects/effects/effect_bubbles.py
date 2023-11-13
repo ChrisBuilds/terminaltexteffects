@@ -161,7 +161,7 @@ class Bubble:
         ):
             pop_out_waypoint = char.motion.new_waypoint("pop_out", point, speed=0.2, ease=easing.out_expo)
             char.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED,
+                EventHandler.Event.WAYPOINT_COMPLETE,
                 pop_out_waypoint,
                 EventHandler.Action.ACTIVATE_WAYPOINT,
                 char.motion.waypoints["final"],
@@ -236,7 +236,7 @@ class BubblesEffect:
                 ease=easing.in_out_expo,
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED, final_waypoint, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.WAYPOINT_COMPLETE, final_waypoint, EventHandler.Action.SET_LAYER, 0
             )
 
         unbubbled_chars = []

@@ -165,7 +165,7 @@ class BlackholeEffect:
                 ease=easing.in_expo,
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED, expand_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, collapse_wpt
+                EventHandler.Event.WAYPOINT_COMPLETE, expand_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, collapse_wpt
             )
             if not point_char_made:
                 point_scn = character.animation.new_scene("point")
@@ -173,10 +173,10 @@ class BlackholeEffect:
                     for symbol in unstable_symbols:
                         point_scn.add_frame(symbol, 6, color=random.choice(self.args.star_colors))
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_REACHED, collapse_wpt, EventHandler.Action.ACTIVATE_SCENE, point_scn
+                    EventHandler.Event.WAYPOINT_COMPLETE, collapse_wpt, EventHandler.Action.ACTIVATE_SCENE, point_scn
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_REACHED, collapse_wpt, EventHandler.Action.SET_LAYER, 3
+                    EventHandler.Event.WAYPOINT_COMPLETE, collapse_wpt, EventHandler.Action.SET_LAYER, 3
                 )
                 point_char_made = True
 
@@ -207,10 +207,10 @@ class BlackholeEffect:
             for color in cooling_gradient:
                 cooling_scn.add_frame(character.input_symbol, 20, color=color)
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED, nearby_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, input_wpt
+                EventHandler.Event.WAYPOINT_COMPLETE, nearby_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, input_wpt
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED, nearby_wpt, EventHandler.Action.ACTIVATE_SCENE, cooling_scn
+                EventHandler.Event.WAYPOINT_COMPLETE, nearby_wpt, EventHandler.Action.ACTIVATE_SCENE, cooling_scn
             )
             character.animation.activate_scene(explode_scn)
             character.motion.activate_waypoint(nearby_wpt)

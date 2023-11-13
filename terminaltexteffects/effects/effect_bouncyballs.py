@@ -107,7 +107,7 @@ class BouncyBallsEffect:
             character.motion.activate_waypoint(input_coord_waypoint)
             character.animation.activate_scene(ball_scene)
             character.event_handler.register_event(
-                character.event_handler.Event.WAYPOINT_REACHED,
+                character.event_handler.Event.WAYPOINT_COMPLETE,
                 input_coord_waypoint,
                 character.event_handler.Action.ACTIVATE_SCENE,
                 final_scene,

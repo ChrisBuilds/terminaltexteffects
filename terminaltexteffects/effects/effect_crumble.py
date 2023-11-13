@@ -132,13 +132,16 @@ class CrumbleEffect:
                 EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.ACTIVATE_SCENE, dust_scn
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED, bottom_vac_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, top_vac_wpt
+                EventHandler.Event.WAYPOINT_COMPLETE, bottom_vac_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, top_vac_wpt
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED, top_vac_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, top_wpt
+                EventHandler.Event.WAYPOINT_COMPLETE, top_vac_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, top_wpt
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED, input_wpt, EventHandler.Action.ACTIVATE_SCENE, strengthen_flash_scn
+                EventHandler.Event.WAYPOINT_COMPLETE,
+                input_wpt,
+                EventHandler.Action.ACTIVATE_SCENE,
+                strengthen_flash_scn,
             )
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,

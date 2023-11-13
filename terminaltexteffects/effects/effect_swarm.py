@@ -137,7 +137,10 @@ class SwarmEffect:
                         EventHandler.Event.WAYPOINT_ACTIVATED, origin_wpt, EventHandler.Action.SET_LAYER, 1
                     )
                     character.event_handler.register_event(
-                        EventHandler.Event.WAYPOINT_REACHED, origin_wpt, EventHandler.Action.DEACTIVATE_SCENE, flash_scn
+                        EventHandler.Event.WAYPOINT_COMPLETE,
+                        origin_wpt,
+                        EventHandler.Action.DEACTIVATE_SCENE,
+                        flash_scn,
                     )
                     inner_waypoints = 0
                     total_inner_waypoints = 2
@@ -158,10 +161,10 @@ class SwarmEffect:
                 for step in final_gradient:
                     input_scn.add_frame(character.input_symbol, 3, color=step)
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_REACHED, input_wpt, EventHandler.Action.ACTIVATE_SCENE, input_scn
+                    EventHandler.Event.WAYPOINT_COMPLETE, input_wpt, EventHandler.Action.ACTIVATE_SCENE, input_scn
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_REACHED, input_wpt, EventHandler.Action.SET_LAYER, 0
+                    EventHandler.Event.WAYPOINT_COMPLETE, input_wpt, EventHandler.Action.SET_LAYER, 0
                 )
                 # create flash effect when moving between waypoints
                 character.event_handler.register_event(
@@ -172,7 +175,7 @@ class SwarmEffect:
                 for wpt in character.motion.waypoints.values():
                     if last_wpt:
                         character.event_handler.register_event(
-                            EventHandler.Event.WAYPOINT_REACHED, last_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, wpt
+                            EventHandler.Event.WAYPOINT_COMPLETE, last_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, wpt
                         )
                     last_wpt = wpt
 

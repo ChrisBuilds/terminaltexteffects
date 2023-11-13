@@ -97,7 +97,7 @@ class RainEffect:
                 ease=self.args.easing,
             )
             character.event_handler.register_event(
-                character.event_handler.Event.WAYPOINT_REACHED,
+                character.event_handler.Event.WAYPOINT_COMPLETE,
                 input_coord_wpt,
                 character.event_handler.Action.ACTIVATE_SCENE,
                 fade_scn,

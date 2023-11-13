@@ -161,14 +161,14 @@ class ErrorCorrectEffect:
                     1,
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_REACHED,
+                    EventHandler.Event.WAYPOINT_COMPLETE,
                     character.motion.waypoints["input_coord"],
                     EventHandler.Action.SET_LAYER,
                     0,
                 )
 
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_REACHED,
+                    EventHandler.Event.WAYPOINT_COMPLETE,
                     character.motion.waypoints["input_coord"],
                     EventHandler.Action.ACTIVATE_SCENE,
                     last_block_wipe,

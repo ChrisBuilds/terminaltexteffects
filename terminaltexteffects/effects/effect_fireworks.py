@@ -180,16 +180,16 @@ class FireworksEffect:
                 EventHandler.Event.WAYPOINT_ACTIVATED, input_coord_wpt, EventHandler.Action.SET_LAYER, 1
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED, input_coord_wpt, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.WAYPOINT_COMPLETE, input_coord_wpt, EventHandler.Action.SET_LAYER, 0
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED,
+                EventHandler.Event.WAYPOINT_COMPLETE,
                 apex_wpt,
                 EventHandler.Action.ACTIVATE_WAYPOINT,
                 explode_wpt,
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_REACHED,
+                EventHandler.Event.WAYPOINT_COMPLETE,
                 explode_wpt,
                 EventHandler.Action.ACTIVATE_WAYPOINT,
                 input_coord_wpt,
@@ -217,7 +217,7 @@ class FireworksEffect:
                     bloom_scn.add_frame(character.input_symbol, 15, color=color)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_REACHED,
+                    EventHandler.Event.WAYPOINT_COMPLETE,
                     character.motion.waypoints["apex"],
                     EventHandler.Action.ACTIVATE_SCENE,
                     bloom_scn,
