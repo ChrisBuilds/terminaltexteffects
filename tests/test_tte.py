@@ -22,6 +22,7 @@ from terminaltexteffects.effects import (
     effect_errorcorrect,
     effect_swarm,
     effect_crumble,
+    effect_rings,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -62,6 +63,20 @@ def make_args() -> Namespace:
     args.movement_speed = 3
     args.easing = easing.in_sine
     return args
+
+
+def test_rings_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.ring_colors = ["ff0000", "00ff00", "0000ff"]
+        args.base_color = "ffffff"
+        args.ring_gap = 5
+        args.spin_duration = 10
+        args.disperse_duration = 10
+        args.spin_disperse_cycles = 2
+        terminal = Terminal(input_data, args)
+        rings_effect = effect_rings.RingsEffect(terminal, args)
+        rings_effect.run()
 
 
 def test_crumble_effect() -> None:
