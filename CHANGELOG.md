@@ -4,10 +4,21 @@
 
 ### New Features
  * New effect, Crumble. Characters lose color and fall as dust before being vacuumed up and rebuilt.
+ * New effect, Rings. Characters are dispersed throughout the output area and form into spinning rings.
+ * motion.Motion.chain_waypoints(list[Waypoints]) will automatically register waypoints with the EventHandler to create
+   a chain of waypoints. Looping is supported.
+ * motion.Motion.find_coords_in_rect() will return a list of coordinates within a rectangle. This is faster than using
+   find_coords_in_circle() and should be used when the shape of the search area isn't important.
+ * Terminal.OutputArea.coord_in_output_area() can be used to determine if a Coord is in the output area.
+ * New EventHandler.Action SET_CHARACTER_ACTIVATION_STATE can be used to modify the character activation state based on events.
 
 ### Changes
+ * graphics.Animation.random_color() is now a static method.
+ * motion.Motion.find_coords_in_circle() not generates 7*radius coords in each inner-circle.
 
 ### Bug Fixes
+ * Fixed looping animations when synced to waypoint not resetting properly.
+
 
 ## 0.4.3
 
