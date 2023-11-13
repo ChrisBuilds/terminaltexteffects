@@ -42,13 +42,15 @@ class EventHandler:
 
         Attributes:
             WAYPOINT_ACTIVATED (Event): A waypoint has been activated.
-            WAYPOINT_REACHED (Event): A waypoint has been reached.
+            WAYPOINT_COMPLETE (Event): A waypoint has been reached.
+            WAYPOINT_HOLDING (Event): A waypoint has entered the holding state.
             SCENE_ACTIVATED (Event): An animation scene has been activated.
             SCENE_COMPLETE (Event): An animation scene has completed.
         """
 
         WAYPOINT_ACTIVATED = auto()
-        WAYPOINT_REACHED = auto()
+        WAYPOINT_COMPLETE = auto()
+        WAYPOINT_HOLDING = auto()
         SCENE_ACTIVATED = auto()
         SCENE_COMPLETE = auto()
 
