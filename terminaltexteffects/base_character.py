@@ -63,6 +63,7 @@ class EventHandler:
             ACTIVATE_SCENE (Action): Activates an animation scene. The action target is the scene ID.
             DEACTIVATE_WAYPOINT (Action): Deactivates a waypoint. The action target is the waypoint ID.
             DEACTIVATE_SCENE (Action): Deactivates an animation scene. The action target is the scene ID.
+            SET_CHARACTER_ACTIVATION_STATE (Action): Sets the activation state of the character. The action target is the activation state (True/False).
             SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
         """
 
@@ -70,6 +71,7 @@ class EventHandler:
         ACTIVATE_SCENE = auto()
         DEACTIVATE_WAYPOINT = auto()
         DEACTIVATE_SCENE = auto()
+        SET_CHARACTER_ACTIVATION_STATE = auto()
         SET_LAYER = auto()
 
     def register_event(
@@ -112,6 +114,9 @@ class EventHandler:
             EventHandler.Action.DEACTIVATE_WAYPOINT: self.character.motion.deactivate_waypoint,
             EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
             EventHandler.Action.SET_LAYER: lambda layer: setattr(self.character, "layer", layer),
+            EventHandler.Action.SET_CHARACTER_ACTIVATION_STATE: lambda state: setattr(
+                self.character, "is_active", state
+            ),
         }
 
         if (event, caller) not in self.registered_events:
