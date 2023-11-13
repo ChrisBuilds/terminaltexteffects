@@ -86,7 +86,7 @@ class BouncyBallsEffect:
             if self.args.ball_colors:
                 color = random.choice(self.args.ball_colors)
             else:
-                color = character.animation.random_color()
+                color = graphics.Animation.random_color()
             symbol = random.choice(ball_symbols)
             ball_scene = character.animation.new_scene("ball")
             ball_scene.add_frame(symbol, 1, color=color)
