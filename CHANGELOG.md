@@ -10,12 +10,19 @@
  * motion.Motion.find_coords_in_rect() will return a random selection of coordinates within a rectangular area. This is faster than using
    find_coords_in_circle() and should be used when the shape of the search area isn't important.
  * Terminal.OutputArea.coord_in_output_area() can be used to determine if a Coord is in the output area.
+ * New EventHandler.Event WAYPOINT_HOLDING is triggered when a waypoint enters the holding state.
  * New EventHandler.Action SET_CHARACTER_ACTIVATION_STATE can be used to modify the character activation state based on events.
+ * New EventHandler.Action SET_COORDINATE can be used to set the character's current_coordinate attribute.
+ * Waypoints have a layer attribute that can be used to automatically adjust the character's layer when the waypoint is activated.
+   Has no effect when waypoint.layer is None, defaults to None.
+
 
 ### Changes
  * graphics.Animation.random_color() is now a static method.
  * motion.Motion.find_coords_in_circle() now generates 7*radius coords in each inner-circle.
  * BlackholeEffect uses chain_waypoints() and benefits from better circle support for a much improved blackhole animation.
+ * EventHandler.Event.WAYPOINT_REACHED removed and split into two events, WAYPOINT_HOLDING and WAYPOINT_COMPLETE.
+ * EventHandler.Event.WAYPOINT_COMPLETE is triggered when a waypoint is reached AND holding time reaches 0.
 
 ### Bug Fixes
  * Fixed looping animations when synced to waypoint not resetting properly.
