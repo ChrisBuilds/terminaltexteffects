@@ -168,7 +168,7 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 ![waves_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed057ac5-4cbb-4f8b-a47b-255574614965)
 
 #### Blackhole
-![blackhole_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/3fd53289-05d8-4094-9e7e-0f174dd619e1)
+![blackhole_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/e8c9a3d5-6160-4cdb-9f3b-dc2d8a6a1a7f)
 
 #### Swarm
 ![swarm_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/133a3e7d-b493-48c3-ace3-3848c89e6e39)
