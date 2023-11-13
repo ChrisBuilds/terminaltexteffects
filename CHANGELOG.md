@@ -15,6 +15,7 @@
 ### Changes
  * graphics.Animation.random_color() is now a static method.
  * motion.Motion.find_coords_in_circle() now generates 7*radius coords in each inner-circle.
+ * BlackholeEffect uses chain_waypoints() and benefits from better circle support for a much improved blackhole animation.
 
 ### Bug Fixes
  * Fixed looping animations when synced to waypoint not resetting properly.
