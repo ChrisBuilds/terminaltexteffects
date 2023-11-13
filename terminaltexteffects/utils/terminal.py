@@ -32,6 +32,17 @@ class OutputArea:
         self.center_column = max(self.right // 2, 1)
         self.center = motion.Coord(self.center_column, self.center_row)
 
+    def coord_in_output_area(self, coord: motion.Coord) -> bool:
+        """Checks whether a coordinate is within the output area.
+
+        Args:
+            coord (motion.Coord): coordinate to check
+
+        Returns:
+            bool: whether the coordinate is within the output area
+        """
+        return self.left <= coord.column <= self.right and self.bottom <= coord.row <= self.top
+
 
 class Terminal:
     """A class for managing the terminal state and output."""
