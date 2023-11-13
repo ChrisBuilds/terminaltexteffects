@@ -325,5 +325,6 @@ class Motion:
                 self.character.event_handler.handle_event(
                     self.character.event_handler.Event.WAYPOINT_HOLDING, self.active_waypoint
                 )
+                self.hold_time_remaining -= 1
             else:
                 self.hold_time_remaining -= 1
