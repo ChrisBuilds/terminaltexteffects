@@ -97,14 +97,21 @@ class BlackholeEffect:
         black_hole_ring_positions = motion.Motion.find_coords_on_circle(
             self.terminal.output_area.center, self.blackhole_radius, len(self.blackhole_chars)
         )
-        for character in self.blackhole_chars:
-            next_pos = black_hole_ring_positions.pop(0)
-            blackhole_wpt = character.motion.new_waypoint("blackhole", next_pos, speed=0.5, ease=easing.in_out_sine)
+        for position_index, character in enumerate(self.blackhole_chars):
+            starting_pos = black_hole_ring_positions[position_index]
+            blackhole_wpt = character.motion.new_waypoint("blackhole", starting_pos, speed=0.5, ease=easing.in_out_sine)
             blackhole_scn = character.animation.new_scene("blackhole")
             blackhole_scn.add_frame("✸", 1, color=self.args.blackhole_color)
             character.event_handler.register_event(
                 EventHandler.Event.WAYPOINT_ACTIVATED, blackhole_wpt, EventHandler.Action.SET_LAYER, 1
             )
+            # make rotation waypoints
+            rotation_waypoints = []
+            for coord in black_hole_ring_positions[position_index:] + black_hole_ring_positions[:position_index]:
+                rotation_waypoints.append(
+                    character.motion.new_waypoint(str(len(character.motion.waypoints)), coord, speed=0.2)
+                )
+            character.motion.chain_waypoints(rotation_waypoints, loop=True)
         for character in self.terminal.characters:
             character.is_active = True
             starting_scn = character.animation.new_scene("starting")
@@ -138,16 +145,9 @@ class BlackholeEffect:
         random.shuffle(self.awaiting_consumption_chars)
 
     def rotate_blackhole(self) -> None:
-        self.blackhole_chars = self.blackhole_chars[2:] + self.blackhole_chars[:2]
-        black_hole_ring_positions = motion.Motion.find_coords_on_circle(
-            self.terminal.output_area.center, self.blackhole_radius, len(self.blackhole_chars)
-        )
         for character in self.blackhole_chars:
-            next_pos = black_hole_ring_positions.pop(0)
-            rotate_wpt = character.motion.new_waypoint("rotate", next_pos, speed=0.1)
-            character.motion.activate_waypoint(rotate_wpt)
-            if character not in self.animating_chars:
-                self.animating_chars.append(character)
+            character.motion.activate_waypoint(character.motion.waypoints["1"])
+            self.animating_chars.append(character)
 
     def collapse_blackhole(self) -> None:
         black_hole_ring_positions = motion.Motion.find_coords_on_circle(
@@ -242,6 +242,7 @@ class BlackholeEffect:
                         f_delay -= 1
                 else:
                     if not self.animating_chars:
+                        self.rotate_blackhole()
                         phase = "consuming"
             elif phase == "consuming":
                 if self.awaiting_consumption_chars:
@@ -259,14 +260,12 @@ class BlackholeEffect:
                         next_char_consuming_delay -= 1
 
                 else:
-                    if not self.animating_chars:
+                    if all(character in self.blackhole_chars for character in self.animating_chars):
                         phase = "collapsing"
-                if all([character.motion.active_waypoint is None for character in self.blackhole_chars]):
-                    self.rotate_blackhole()
+
             elif phase == "collapsing":
-                if all([character.motion.active_waypoint is None for character in self.blackhole_chars]):
-                    self.collapse_blackhole()
-                    phase = "exploding"
+                self.collapse_blackhole()
+                phase = "exploding"
             elif phase == "exploding":
                 if all(
                     [
