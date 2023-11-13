@@ -28,13 +28,16 @@ class Waypoint:
         coord (Coord): coordinate
         speed (float): character speed at the waypoint
         ease (Callable): easing function for character movement. Defaults to None.
+        layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
+        hold_time (int): number of steps to hold the character at the waypoint. Defaults to 0.
     """
 
     waypoint_id: str
     coord: Coord
     speed: float = 1.0
     ease: typing.Callable | None = None
-    layer: int = 0
+    layer: int | None = None
+    hold_time: int = 0
 
     def __eq__(self, other: typing.Any) -> bool:
         if not isinstance(other, Waypoint):
@@ -62,6 +65,7 @@ class Motion:
         self.inter_waypoint_distance: float = 0
         self.inter_waypoint_max_steps: int = 0
         self.inter_waypoint_current_step: int = 0
+        self.hold_time_remaining: int = 0
 
     @staticmethod
     def find_coords_on_circle(origin: Coord, radius: int, num_points: int) -> list[Coord]:
@@ -182,6 +186,8 @@ class Motion:
         *,
         speed: float = 1,
         ease: typing.Callable | None = None,
+        layer: int | None = None,
+        hold_time: int = 0,
     ) -> Waypoint:
         """Creates a new Waypoint and appends adds it to the waypoints dictionary with the waypoint_name as key.
 
@@ -190,11 +196,13 @@ class Motion:
             coord (Coord): coordinate
             speed (float): speed
             ease (Callable | None): easing function for character movement. Defaults to None.
+            layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
+            hold_time (int): number of steps to hold the character at the waypoint. Defaults to 0.
 
         Returns:
             Waypoint: The new waypoint.
         """
-        new_waypoint = Waypoint(waypoint_name, coord, speed, ease)
+        new_waypoint = Waypoint(waypoint_name, coord, speed, ease, layer, hold_time)
         self.waypoints[waypoint_name] = new_waypoint
         return new_waypoint
 
@@ -213,14 +221,14 @@ class Motion:
             if i == 0:
                 continue
             self.character.event_handler.register_event(
-                self.character.event_handler.Event.WAYPOINT_REACHED,
+                self.character.event_handler.Event.WAYPOINT_COMPLETE,
                 waypoints[i - 1],
                 self.character.event_handler.Action.ACTIVATE_WAYPOINT,
                 waypoint,
             )
         if loop:
             self.character.event_handler.register_event(
-                self.character.event_handler.Event.WAYPOINT_REACHED,
+                self.character.event_handler.Event.WAYPOINT_COMPLETE,
                 waypoints[-1],
                 self.character.event_handler.Action.ACTIVATE_WAYPOINT,
                 waypoints[0],
@@ -259,6 +267,7 @@ class Motion:
         self.origin_waypoint = Waypoint("origin", Coord(self.current_coord.column, self.current_coord.row))
         self.active_waypoint = waypoint
         self.speed = self.active_waypoint.speed
+        self.hold_time_remaining = self.active_waypoint.hold_time
         self.inter_waypoint_distance = self.distance(
             self.current_coord.column,
             self.current_coord.row,
@@ -269,6 +278,8 @@ class Motion:
         if self.speed > self.inter_waypoint_distance:
             self.speed = max(self.inter_waypoint_distance, 1)
         self.inter_waypoint_max_steps = round(self.inter_waypoint_distance / self.speed)
+        if self.active_waypoint.layer is not None:
+            self.character.layer = self.active_waypoint.layer
         self.character.event_handler.handle_event(self.character.event_handler.Event.WAYPOINT_ACTIVATED, waypoint)
 
     def deactivate_waypoint(self, waypoint: Waypoint) -> None:
@@ -279,6 +290,7 @@ class Motion:
         """
         if self.active_waypoint and self.active_waypoint is waypoint:
             self.active_waypoint = None
+            self.hold_time_remaining = 0
             self.inter_waypoint_distance = 0
             self.inter_waypoint_max_steps = 0
             self.inter_waypoint_current_step = 0
@@ -303,8 +315,15 @@ class Motion:
             self.current_coord = self._point_at_distance(distance_to_move)
 
         if self.inter_waypoint_current_step == self.inter_waypoint_max_steps:
-            waypoint_reached = self.active_waypoint
-            self.deactivate_waypoint(self.active_waypoint)
-            self.character.event_handler.handle_event(
-                self.character.event_handler.Event.WAYPOINT_REACHED, waypoint_reached
-            )
+            if self.hold_time_remaining == 0:
+                waypoint_reached = self.active_waypoint
+                self.deactivate_waypoint(self.active_waypoint)
+                self.character.event_handler.handle_event(
+                    self.character.event_handler.Event.WAYPOINT_COMPLETE, waypoint_reached
+                )
+            elif self.hold_time_remaining == self.active_waypoint.hold_time:
+                self.character.event_handler.handle_event(
+                    self.character.event_handler.Event.WAYPOINT_HOLDING, self.active_waypoint
+                )
+            else:
+                self.hold_time_remaining -= 1
