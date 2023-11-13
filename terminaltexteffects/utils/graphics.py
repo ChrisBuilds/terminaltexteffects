@@ -412,7 +412,8 @@ class Animation:
 
         return False
 
-    def random_color(self) -> str:
+    @staticmethod
+    def random_color() -> str:
         """Returns a random hex color code.
 
         Returns:
@@ -452,7 +453,7 @@ class Animation:
                             )
                         )
                     elif self.active_scene.sync == SyncMetric.DISTANCE:
-                        current_distance_to_waypoint = self.character.motion._distance(
+                        current_distance_to_waypoint = self.character.motion.distance(
                             self.character.motion.current_coord.column,
                             self.character.motion.current_coord.row,
                             self.character.motion.active_waypoint.coord.column,
@@ -486,8 +487,11 @@ class Animation:
                 self.character.symbol = frame.symbol
                 self.active_scene.easing_current_step += 1
                 if self.active_scene.easing_current_step == self.active_scene.easing_total_steps:
-                    self.active_scene.played_frames.extend(self.active_scene.frames)
-                    self.active_scene.frames.clear()
+                    if self.active_scene.is_looping:
+                        self.active_scene.easing_current_step = 0
+                    else:
+                        self.active_scene.played_frames.extend(self.active_scene.frames)
+                        self.active_scene.frames.clear()
 
             else:
                 self.character.symbol = self.active_scene.get_next_symbol()
