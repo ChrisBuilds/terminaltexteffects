@@ -102,12 +102,38 @@ class Motion:
         points: list[Coord] = []
         selected_points: list[Coord] = []
         for i in range(1, radius + 1):
-            points.extend(set((Motion.find_coords_on_circle(origin, i, 30))))
+            points.extend(set((Motion.find_coords_on_circle(origin, i, 7 * radius))))
         while points and len(selected_points) < num_points:
-            selected_points.append(points.pop(random.randrange(len(points))))
+            selected_points.append(random.choice(points))
         return selected_points
 
-    def _distance(self, column1: int, row1: int, column2: int, row2: int) -> float:
+    @staticmethod
+    def find_coords_in_rect(origin: Coord, max_distance: int, num_coords: int) -> list[Coord]:
+        """Find coords that fall within a rectangle with the given origin and max_distance
+        from the origin. Distance is approximate and may be slightly further than max_distance.
+
+        Args:
+            origin (Coord): center of the rectangle
+            max_distance (int): maximum distance from the origin
+            num_coords (int): number of coords to find
+
+        Returns:
+            list[Coord]: list of Coord points in the rectangle
+        """
+        left_boundary = origin.column - max_distance
+        right_boundary = origin.column + max_distance
+        top_boundary = origin.row - max_distance
+        bottom_boundary = origin.row + max_distance
+        coords: list[Coord] = []
+        while len(coords) < num_coords:
+            column = random.randint(left_boundary, right_boundary)
+            row = random.randint(top_boundary, bottom_boundary)
+            if Coord(column, row) not in coords:
+                coords.append(Coord(column, row))
+        return coords
+
+    @staticmethod
+    def distance(column1: int, row1: int, column2: int, row2: int) -> float:
         """Returns the distance between two coordinates.
 
         Args:
@@ -172,6 +198,34 @@ class Motion:
         self.waypoints[waypoint_name] = new_waypoint
         return new_waypoint
 
+    def chain_waypoints(self, waypoints: list[Waypoint], loop=False):
+        """Creates a chain of waypoints by registering activation events for each waypoints such
+        that waypoints[n] activates waypoints[n+1] when reached. If loop is True, waypoints[-1] activates
+        waypoints[0] when reached.
+
+        Args:
+            waypoints (list[Waypoint]): list of waypoints to chain
+            loop (bool, optional): Whether the chain should loop. Defaults to False.
+        """
+        if len(waypoints) < 2:
+            return
+        for i, waypoint in enumerate(waypoints):
+            if i == 0:
+                continue
+            self.character.event_handler.register_event(
+                self.character.event_handler.Event.WAYPOINT_REACHED,
+                waypoints[i - 1],
+                self.character.event_handler.Action.ACTIVATE_WAYPOINT,
+                waypoint,
+            )
+        if loop:
+            self.character.event_handler.register_event(
+                self.character.event_handler.Event.WAYPOINT_REACHED,
+                waypoints[-1],
+                self.character.event_handler.Action.ACTIVATE_WAYPOINT,
+                waypoints[0],
+            )
+
     def movement_is_complete(self) -> bool:
         """Returns whether the character has reached the final coordinate and moved the requisite number of steps.
 
@@ -205,7 +259,7 @@ class Motion:
         self.origin_waypoint = Waypoint("origin", Coord(self.current_coord.column, self.current_coord.row))
         self.active_waypoint = waypoint
         self.speed = self.active_waypoint.speed
-        self.inter_waypoint_distance = self._distance(
+        self.inter_waypoint_distance = self.distance(
             self.current_coord.column,
             self.current_coord.row,
             self.active_waypoint.coord.column,
