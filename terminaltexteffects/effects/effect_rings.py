@@ -159,7 +159,6 @@ class Ring:
                 str(len(character.motion.waypoints)),
                 self.character_last_ring_wpt[character].coord,
                 speed=0.1,
-                ease=easing.in_quart,
             )
             character.event_handler.register_event(
                 EventHandler.Event.WAYPOINT_COMPLETE,
@@ -167,7 +166,7 @@ class Ring:
                 EventHandler.Action.ACTIVATE_WAYPOINT,
                 self.character_last_ring_wpt[character],
             )
-            character.motion.activate_waypoint(self.character_last_ring_wpt[character])
+            character.motion.activate_waypoint(condense_wpt)
             character.animation.activate_scene(character.animation.scenes["gradient"])
 
 
@@ -230,7 +229,7 @@ class RingsEffect:
             if character not in self.ring_chars:
                 color = random.choice(self.args.ring_colors)
                 external_wpt = character.motion.new_waypoint(
-                    "external", self.terminal.random_coord(outside_scope=True), speed=0.7, ease=easing.out_cubic
+                    "external", self.terminal.random_coord(outside_scope=True), speed=0.1, ease=easing.out_cubic
                 )
                 # make disperse gradient
                 color = random.choice(self.args.ring_colors)
