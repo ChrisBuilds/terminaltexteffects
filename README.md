@@ -181,7 +181,10 @@ Any effects shown below are in development and will be available in the next rel
 ![crumble_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed42fed9-47c8-4caa-ad44-e482366a9c25)
 
 #### Rings
-![rings_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/5e2b66b0-6691-4131-9c27-925758aace31)
+![rings_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2d97ba47-bf85-4727-9257-45a5b2a9dddd)
+
+#### VHStape
+![vhstape_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ff11e292-4bfd-4989-ab81-1a624b2c0822)
 
 
 ## Recent Changes
