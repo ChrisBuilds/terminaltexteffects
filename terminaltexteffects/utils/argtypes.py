@@ -216,6 +216,21 @@ def valid_percent_greater_than_zero(arg: str) -> float:
         raise argparse.ArgumentTypeError(f"invalid value: {arg} is not > 0 and <= 100.")
 
 
+def valid_float_between_zero_and_one(arg: str) -> float:
+    """Validates that the given argument is a valid float value between zero and one.
+
+    Args:
+        arg (str): argument to validate
+
+    Returns:
+        float: validated float value
+    """
+    if 0 <= float(arg) <= 1:
+        return float(arg)
+    else:
+        raise argparse.ArgumentTypeError(f"invalid value: {arg} is not >= 0 and <= 1.")
+
+
 def ge_zero(arg: str) -> int:
     """Validates that the given argument is an integer greater than or equal to zero.
     Args:
