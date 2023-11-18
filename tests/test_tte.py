@@ -23,6 +23,7 @@ from terminaltexteffects.effects import (
     effect_swarm,
     effect_crumble,
     effect_rings,
+    effect_vhstape,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -63,6 +64,22 @@ def make_args() -> Namespace:
     args.movement_speed = 3
     args.easing = easing.in_sine
     return args
+
+
+def test_vhstape_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.base_color = "ffffff"
+        args.final_color = "ffffff"
+        args.glitch_line_colors = ["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"]
+        args.glitch_wave_colors = ["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"]
+        args.noise_colors = ["1e1e1f", "3c3b3d", "6d6c70", "a2a1a6", "cbc9cf", "ffffff"]
+        args.glitch_line_chance = 0.005
+        args.noise_chance = 0.004
+        args.total_glitch_time = 200
+        terminal = Terminal(input_data, args)
+        vhstape_effect = effect_vhstape.VHSTapeEffect(terminal, args)
+        vhstape_effect.run()
 
 
 def test_rings_effect() -> None:
