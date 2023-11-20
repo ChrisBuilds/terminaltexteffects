@@ -38,6 +38,7 @@ class Waypoint:
     ease: typing.Callable | None = None
     layer: int | None = None
     hold_time: int = 0
+    bezier_control: Coord | None = None
 
     def __eq__(self, other: typing.Any) -> bool:
         if not isinstance(other, Waypoint):
@@ -137,6 +138,24 @@ class Motion:
         return coords
 
     @staticmethod
+    def find_coord_on_curve(start: Coord, control: Coord, end: Coord, t: float) -> Coord:
+        """Finds points on a quadratic bezier curve with a single control point."""
+        x = (1 - t) ** 2 * start.column + 2 * (1 - t) * t * control.column + t**2 * end.column
+        y = (1 - t) ** 2 * start.row + 2 * (1 - t) * t * control.row + t**2 * end.row
+        return Coord(round(x), round(y))
+
+    @staticmethod
+    def find_length_of_curve(start: Coord, control: Coord, end: Coord) -> float:
+        """Finds the length of a quadratic bezier curve."""
+        length = 0.0
+        prev_coord = start
+        for t in range(1, 10):
+            coord = Motion.find_coord_on_curve(start, control, end, t / 10)
+            length += Motion.distance(prev_coord.column, prev_coord.row, coord.column, coord.row)
+            prev_coord = coord
+        return length
+
+    @staticmethod
     def distance(column1: int, row1: int, column2: int, row2: int) -> float:
         """Returns the distance between two coordinates.
 
@@ -188,6 +207,7 @@ class Motion:
         ease: typing.Callable | None = None,
         layer: int | None = None,
         hold_time: int = 0,
+        bezier_control: Coord | None = None,
     ) -> Waypoint:
         """Creates a new Waypoint and appends adds it to the waypoints dictionary with the waypoint_name as key.
 
@@ -202,7 +222,7 @@ class Motion:
         Returns:
             Waypoint: The new waypoint.
         """
-        new_waypoint = Waypoint(waypoint_name, coord, speed, ease, layer, hold_time)
+        new_waypoint = Waypoint(waypoint_name, coord, speed, ease, layer, hold_time, bezier_control)
         self.waypoints[waypoint_name] = new_waypoint
         return new_waypoint
 
@@ -268,12 +288,17 @@ class Motion:
         self.active_waypoint = waypoint
         self.speed = self.active_waypoint.speed
         self.hold_time_remaining = self.active_waypoint.hold_time
-        self.inter_waypoint_distance = self.distance(
-            self.current_coord.column,
-            self.current_coord.row,
-            self.active_waypoint.coord.column,
-            self.active_waypoint.coord.row,
-        )
+        if waypoint.bezier_control:
+            self.inter_waypoint_distance = self.find_length_of_curve(
+                self.current_coord, waypoint.bezier_control, waypoint.coord
+            )
+        else:
+            self.inter_waypoint_distance = self.distance(
+                self.current_coord.column,
+                self.current_coord.row,
+                self.active_waypoint.coord.column,
+                self.active_waypoint.coord.row,
+            )
         self.inter_waypoint_current_step = 0
         if self.speed > self.inter_waypoint_distance:
             self.speed = max(self.inter_waypoint_distance, 1)
@@ -307,12 +332,19 @@ class Motion:
 
         if self.inter_waypoint_distance:
             if self.active_waypoint and self.active_waypoint.ease:
-                easing_factor = self._ease_movement(self.active_waypoint.ease)
-                distance_to_move = easing_factor * self.inter_waypoint_distance
+                distance_factor = self._ease_movement(self.active_waypoint.ease)
             else:
-                linear_factor = self.inter_waypoint_current_step / self.inter_waypoint_max_steps
-                distance_to_move = linear_factor * self.inter_waypoint_distance
-            self.current_coord = self._point_at_distance(distance_to_move)
+                distance_factor = self.inter_waypoint_current_step / self.inter_waypoint_max_steps
+            if self.active_waypoint.bezier_control:
+                self.current_coord = self.find_coord_on_curve(
+                    self.origin_waypoint.coord,  # type: ignore
+                    self.active_waypoint.bezier_control,
+                    self.active_waypoint.coord,
+                    distance_factor,
+                )
+            else:
+                distance_to_move = distance_factor * self.inter_waypoint_distance
+                self.current_coord = self._point_at_distance(distance_to_move)
 
         if self.inter_waypoint_current_step == self.inter_waypoint_max_steps:
             if self.hold_time_remaining == 0:
