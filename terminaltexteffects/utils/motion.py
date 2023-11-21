@@ -30,6 +30,7 @@ class Waypoint:
         ease (Callable): easing function for character movement. Defaults to None.
         layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
         hold_time (int): number of steps to hold the character at the waypoint. Defaults to 0.
+        bezier_control (Coord | None): coordinate of the control point for a bezier curve. Defaults to None.
     """
 
     waypoint_id: str
@@ -218,6 +219,7 @@ class Motion:
             ease (Callable | None): easing function for character movement. Defaults to None.
             layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
             hold_time (int): number of steps to hold the character at the waypoint. Defaults to 0.
+            bezier_control (Coord | None): coordinate of the control point for a bezier curve. Defaults to None.
 
         Returns:
             Waypoint: The new waypoint.
