@@ -50,6 +50,102 @@ class Waypoint:
         return hash(self.waypoint_id)
 
 
+@dataclass
+class Path:
+    """
+    Represents a path consisting of multiple waypoints for motion.
+
+    Attributes:
+        path_id (str): The unique identifier for the path.
+        waypoints (list[Waypoint]): The list of waypoints in the path.
+        speed (float): The speed of motion along the path. Default is 1.0.
+        loop (bool): Whether the path should loop back to the beginning. Default is False.
+    """
+
+    path_id: str
+    waypoints: list[Waypoint]
+    speed: float = 1.0
+    ease: typing.Callable | None = None
+    loop: bool = False
+
+    def __post_init__(self) -> None:
+        """
+        Initializes the Path object and calculates the total distance and maximum steps.
+        """
+        self.waypoint_index_distance_map: dict[int, float] = {}
+        self.active_waypoint_index: int = 0
+        self.total_distance: float = 0
+        self.max_steps: int = 0
+        if len(self.waypoints) < 2:
+            return
+        for i, waypoint in enumerate(self.waypoints):
+            if i == 0:
+                continue
+            if waypoint.bezier_control:
+                distance_from_previous = Motion.find_length_of_curve(
+                    self.waypoints[i - 1].coord, waypoint.bezier_control, waypoint.coord
+                )
+            else:
+                distance_from_previous = Motion.distance(
+                    self.waypoints[i - 1].coord.column,
+                    self.waypoints[i - 1].coord.row,
+                    waypoint.coord.column,
+                    waypoint.coord.row,
+                )
+            self.total_distance += distance_from_previous
+
+            self.waypoint_index_distance_map[i] = self.total_distance
+        self.max_steps = round(self.total_distance / self.speed)
+
+    def apply_distance_factor(self, distance_factor: float) -> tuple[int, float]:
+        """Applies the distance factor to the path and returns the target waypoint index and adjusted distance factor.
+
+        The target waypoint index is the index of the waypoint that is the next waypoint beyond the distance found
+        by multiplying the distance factor by the total distance of the path. The adjusted distance factor is the
+        distance factor adjusted to account for the distance remaining to move towards the next waypoint.
+
+        Args:
+            distance_factor (float): distance factor
+
+        Returns:
+            tuple[int, float]: (target waypoint index, adjusted distance factor)
+        """
+        distance_to_move = distance_factor * self.total_distance
+        if distance_to_move > self.waypoint_index_distance_map[self.active_waypoint_index]:
+            target_waypoint_index_at_path_position = self.find_waypoint_at_distance(distance_to_move)
+        else:
+            target_waypoint_index_at_path_position = self.active_waypoint_index
+        if target_waypoint_index_at_path_position > 0:  # distance remaining to move towards next waypoint
+            remaining_distance = (
+                distance_to_move - self.waypoint_index_distance_map[target_waypoint_index_at_path_position - 1]
+            )
+            adjusted_distance_factor = remaining_distance / (
+                self.waypoint_index_distance_map[target_waypoint_index_at_path_position]
+                - self.waypoint_index_distance_map[target_waypoint_index_at_path_position - 1]
+            )
+        else:
+            adjusted_distance_factor = distance_to_move / self.waypoint_index_distance_map[0]
+        return target_waypoint_index_at_path_position, adjusted_distance_factor
+
+    def find_waypoint_at_distance(self, distance_to_move: float) -> int:
+        """Finds the target waypoint index at the given distance along the path. Target waypoint will
+        be the next waypoint beyond the distance_to_move.
+
+        Args:
+            distance (float): distance along the path
+
+        Returns:
+            int: index of the target waypoint
+
+        """
+        if not distance_to_move:
+            return self.active_waypoint_index
+        for waypoint_index, distance in self.waypoint_index_distance_map.items():
+            if distance_to_move <= distance:
+                return waypoint_index
+        return len(self.waypoints) - 1
+
+
 class Motion:
     def __init__(self, character: "base_character.EffectCharacter"):
         """Motion class for managing the movement of a character.
@@ -58,15 +154,17 @@ class Motion:
             character (base_character.EffectCharacter): The EffectCharacter to move.
         """
         self.waypoints: dict[str, Waypoint] = {}
+        self.paths: dict[str, Path] = {}
         self.character = character
         self.current_coord: Coord = Coord(character.input_coord.column, character.input_coord.row)
         self.previous_coord: Coord = Coord(-1, -1)
         self.speed: float = 1.0
+        self.active_path: Path | None = None
         self.active_waypoint: Waypoint | None = None
         self.origin_waypoint: Waypoint | None = None
-        self.inter_waypoint_distance: float = 0
-        self.inter_waypoint_max_steps: int = 0
-        self.inter_waypoint_current_step: int = 0
+        self.motion_target_distance: float = 0
+        self.motion_target_max_steps: int = 0
+        self.motion_target_current_step: int = 0
         self.hold_time_remaining: int = 0
 
     @staticmethod
@@ -170,6 +268,13 @@ class Motion:
         return Coord(round(x), round(y))
 
     @staticmethod
+    def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
+        """Finds points on a line."""
+        x = (1 - t) * start.column + t * end.column
+        y = (1 - t) * start.row + t * end.row
+        return Coord(round(x), round(y))
+
+    @staticmethod
     def find_length_of_curve(start: Coord, control: Coord, end: Coord) -> float:
         """Finds the length of a quadratic bezier curve."""
         length = 0.0
@@ -208,7 +313,7 @@ class Motion:
         """
         if not distance or not self.origin_waypoint or not self.active_waypoint:
             return self.current_coord
-        t = distance / self.inter_waypoint_distance
+        t = distance / self.motion_target_distance
         next_column, next_row = (
             ((1 - t) * self.origin_waypoint.coord.column + t * self.active_waypoint.coord.column),
             ((1 - t) * self.origin_waypoint.coord.row + t * self.active_waypoint.coord.row),
@@ -251,6 +356,33 @@ class Motion:
         new_waypoint = Waypoint(waypoint_name, coord, speed, ease, layer, hold_time, bezier_control)
         self.waypoints[waypoint_name] = new_waypoint
         return new_waypoint
+
+    def new_path(
+        self,
+        path_name: str,
+        waypoints: list[Waypoint],
+        *,
+        speed: float = 1,
+        ease: typing.Callable | None = None,
+        loop: bool = False,
+    ) -> Path:
+        """Creates a new Path and adds it to the paths dictionary with the path_name as key.
+
+        Args:
+            path_name (str): unique identifier for the path
+            waypoints (list[Waypoint]): list of waypoints, must have at least two waypoints
+            speed (float): speed
+            ease (Callable | None): easing function for character movement. Defaults to None.
+            loop (bool): whether the path should loop. Defaults to False.
+
+        Returns:
+            Path: The new path.
+        """
+        if len(waypoints) < 2:
+            raise ValueError("Path must have at least two waypoints.")
+        new_path = Path(path_name, waypoints, speed, ease, loop)
+        self.paths[path_name] = new_path
+        return new_path
 
     def chain_waypoints(self, waypoints: list[Waypoint], loop=False):
         """Creates a chain of waypoints by registering activation events for each waypoints such
@@ -300,7 +432,7 @@ class Motion:
             float: The percentage of total distance to move.
         """
 
-        elapsed_step_ratio = self.inter_waypoint_current_step / self.inter_waypoint_max_steps
+        elapsed_step_ratio = self.motion_target_current_step / self.motion_target_max_steps
         return easing_func(elapsed_step_ratio)
 
     def activate_waypoint(self, waypoint: Waypoint) -> None:
@@ -312,26 +444,43 @@ class Motion:
         """
         self.origin_waypoint = Waypoint("origin", Coord(self.current_coord.column, self.current_coord.row))
         self.active_waypoint = waypoint
-        self.speed = self.active_waypoint.speed
-        self.hold_time_remaining = self.active_waypoint.hold_time
-        if waypoint.bezier_control:
-            self.inter_waypoint_distance = self.find_length_of_curve(
-                self.current_coord, waypoint.bezier_control, waypoint.coord
-            )
-        else:
-            self.inter_waypoint_distance = self.distance(
-                self.current_coord.column,
-                self.current_coord.row,
-                self.active_waypoint.coord.column,
-                self.active_waypoint.coord.row,
-            )
-        self.inter_waypoint_current_step = 0
-        if self.speed > self.inter_waypoint_distance:
-            self.speed = max(self.inter_waypoint_distance, 1)
-        self.inter_waypoint_max_steps = round(self.inter_waypoint_distance / self.speed)
+        if not self.active_path:
+            self.speed = self.active_waypoint.speed
+            self.hold_time_remaining = self.active_waypoint.hold_time
+            if waypoint.bezier_control:
+                self.motion_target_distance = self.find_length_of_curve(
+                    self.current_coord, waypoint.bezier_control, waypoint.coord
+                )
+            else:
+                self.motion_target_distance = self.distance(
+                    self.current_coord.column,
+                    self.current_coord.row,
+                    self.active_waypoint.coord.column,
+                    self.active_waypoint.coord.row,
+                )
+            self.motion_target_current_step = 0
+            if self.speed > self.motion_target_distance:
+                self.speed = max(self.motion_target_distance, 1)
+            self.motion_target_max_steps = round(self.motion_target_distance / self.speed)
         if self.active_waypoint.layer is not None:
             self.character.layer = self.active_waypoint.layer
         self.character.event_handler.handle_event(self.character.event_handler.Event.WAYPOINT_ACTIVATED, waypoint)
+
+    def activate_path(self, path: Path) -> None:
+        """Activates the first waypoint in the path.
+
+        Args:
+            path (Path): the Path to activate
+        """
+        self.activate_waypoint(path.waypoints[path.active_waypoint_index])
+        path.total_distance += self.motion_target_distance
+        path.max_steps += self.motion_target_max_steps
+        if self.speed > path.total_distance:
+            self.speed = max(path.total_distance, 1)
+        self.motion_target_distance = path.total_distance
+        self.motion_target_max_steps = path.max_steps
+        self.motion_target_current_step = 0
+        self.active_path = path
 
     def deactivate_waypoint(self, waypoint: Waypoint) -> None:
         """Unsets the current waypoint if the current waypoint is waypoint.
@@ -341,10 +490,11 @@ class Motion:
         """
         if self.active_waypoint and self.active_waypoint is waypoint:
             self.active_waypoint = None
-            self.hold_time_remaining = 0
-            self.inter_waypoint_distance = 0
-            self.inter_waypoint_max_steps = 0
-            self.inter_waypoint_current_step = 0
+            if not self.active_path:
+                self.hold_time_remaining = 0
+                self.motion_target_distance = 0
+                self.motion_target_max_steps = 0
+                self.motion_target_current_step = 0
 
     def move(self) -> None:
         """Moves the character one step closer to the target position based on an easing function if present, otherwise linearly."""
@@ -353,14 +503,27 @@ class Motion:
 
         if not self.active_waypoint:
             return
-        if self.inter_waypoint_current_step < self.inter_waypoint_max_steps:
-            self.inter_waypoint_current_step += 1
+        if self.motion_target_current_step < self.motion_target_max_steps:
+            self.motion_target_current_step += 1
 
-        if self.inter_waypoint_distance:
-            if self.active_waypoint and self.active_waypoint.ease:
+        if self.motion_target_distance:
+            if self.active_path and self.active_path.ease:
+                distance_factor = self._ease_movement(self.active_path.ease)
+            elif self.active_waypoint and self.active_waypoint.ease:
                 distance_factor = self._ease_movement(self.active_waypoint.ease)
             else:
-                distance_factor = self.inter_waypoint_current_step / self.inter_waypoint_max_steps
+                distance_factor = self.motion_target_current_step / self.motion_target_max_steps
+
+            if (
+                self.active_path
+            ):  # find the target waypoint index at the current distance and the remaining distance factor
+                target_waypoint_index_at_distance, distance_factor = self.active_path.apply_distance_factor(
+                    distance_factor
+                )
+                if target_waypoint_index_at_distance != self.active_path.active_waypoint_index:
+                    self.active_path.active_waypoint_index = target_waypoint_index_at_distance
+                    self.activate_waypoint(self.active_path.waypoints[target_waypoint_index_at_distance])
+
             if self.active_waypoint.bezier_control:
                 self.current_coord = self.find_coord_on_curve(
                     self.origin_waypoint.coord,  # type: ignore
@@ -369,10 +532,11 @@ class Motion:
                     distance_factor,
                 )
             else:
-                distance_to_move = distance_factor * self.inter_waypoint_distance
-                self.current_coord = self._point_at_distance(distance_to_move)
+                self.current_coord = self.find_coord_on_line(
+                    self.origin_waypoint.coord, self.active_waypoint.coord, distance_factor  # type: ignore
+                )
 
-        if self.inter_waypoint_current_step == self.inter_waypoint_max_steps:
+        if self.motion_target_current_step == self.motion_target_max_steps:
             if self.hold_time_remaining == 0:
                 waypoint_reached = self.active_waypoint
                 self.deactivate_waypoint(self.active_waypoint)

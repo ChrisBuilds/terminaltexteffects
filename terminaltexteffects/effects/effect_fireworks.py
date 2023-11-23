@@ -3,7 +3,7 @@ import random
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, motion
+from terminaltexteffects.utils import graphics, argtypes, motion, easing
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -53,9 +53,9 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     effect_parser.add_argument(
         "--firework-volume",
         type=argtypes.positive_int,
-        default=8,
+        default=3,
         metavar="(int > 0)",
-        help="Number of characters in each firework shell. Defaults to 8.",
+        help="Percent of total characters in each firework shell. Defaults to 3.",
     )
     effect_parser.add_argument(
         "--final-color",
@@ -67,55 +67,16 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     effect_parser.add_argument(
         "--launch-delay",
         type=argtypes.ge_zero,
-        default=30,
+        default=60,
         metavar="(int >= 0)",
         help="Number of animation steps to wait between launching each firework shell.",
     )
     effect_parser.add_argument(
-        "--launch-easing",
-        default="OUT_EXPO",
-        type=argtypes.valid_ease,
-        help="Easing function to use firework launch.",
-    )
-    effect_parser.add_argument(
-        "--launch-speed",
-        type=argtypes.valid_speed,
-        default=0.2,
-        metavar="(float > 0)",
-        help="Firework launch speed. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
-    )
-    effect_parser.add_argument(
         "--explode-distance",
-        default=5,
+        default=6,
         type=argtypes.positive_int,
         metavar="(int > 0)",
         help="Maximum distance a character can travel as a part of the firework explosion.",
-    )
-    effect_parser.add_argument(
-        "--explode-easing",
-        default="OUT_QUAD",
-        type=argtypes.valid_ease,
-        help="Easing function to use firework explosion.",
-    )
-    effect_parser.add_argument(
-        "--explode-speed",
-        type=argtypes.valid_speed,
-        default=0.3,
-        metavar="(float > 0)",
-        help="Firework explode speed. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
-    )
-    effect_parser.add_argument(
-        "--fall-easing",
-        default="IN_OUT_CUBIC",
-        type=argtypes.valid_ease,
-        help="Easing function to use for characters falling into place.",
-    )
-    effect_parser.add_argument(
-        "--fall-speed",
-        type=argtypes.valid_speed,
-        default=0.4,
-        metavar="(float > 0)",
-        help="Character fall speed. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
     )
 
 
@@ -132,14 +93,13 @@ class FireworksEffect:
             self.firework_colors = self.args.firework_colors
         else:
             self.firework_colors = ["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"]
+        self.firework_volume = max(1, round((self.args.firework_volume * 0.01) * len(self.terminal.characters)))
+        self.explode_distance = min(max(1, self.terminal.output_area.right // 10), 8)
 
     def prepare_waypoints(self) -> None:
         firework_shell: list[EffectCharacter] = []
-        origin_x = random.randrange(0, self.terminal.output_area.right)
-        origin_y = random.randrange(0, self.terminal.output_area.top)
-        origin_coord = motion.Coord(origin_x, origin_y)
         for character in self.terminal.characters:
-            if len(firework_shell) == self.args.firework_volume:
+            if len(firework_shell) == self.firework_volume or not firework_shell:
                 self.shells.append(firework_shell)
                 firework_shell = []
                 origin_x = random.randrange(0, self.terminal.output_area.right)
@@ -149,29 +109,36 @@ class FireworksEffect:
                     min_row = self.terminal.output_area.bottom
                 origin_y = random.randrange(min_row, self.terminal.output_area.top + 1)
                 origin_coord = motion.Coord(origin_x, origin_y)
-            point_on_circle = random.choice(
-                character.motion.find_coords_on_circle(
-                    origin_coord, random.randrange(1, self.args.explode_distance), self.args.firework_volume
+                explode_waypoint_coords = motion.Motion.find_coords_in_circle(
+                    origin_coord, self.explode_distance, self.firework_volume
                 )
-            )
             character.motion.set_coordinate(motion.Coord(origin_x, self.terminal.output_area.bottom))
             apex_wpt = character.motion.new_waypoint(
                 "apex",
                 origin_coord,
-                speed=self.args.launch_speed,
-                ease=self.args.launch_easing,
+                speed=0.2,
+                ease=easing.out_expo,
             )
             explode_wpt = character.motion.new_waypoint(
                 "explode",
-                point_on_circle,
-                speed=self.args.explode_speed,
-                ease=self.args.explode_easing,
+                random.choice(explode_waypoint_coords),
+                speed=0.3,
+                # ease=self.args.explode_easing,
             )
+            # TODO: Turn this process into a framework function for making curves when changing direction
+            control_point = motion.Motion.find_coord_at_distance(
+                apex_wpt.coord, explode_wpt.coord, self.explode_distance // 2
+            )
+            fall_wpt = character.motion.new_waypoint(
+                "fall",
+                motion.Coord(control_point.column, max(1, control_point.row - (apex_wpt.coord.row // 2))),
+                speed=0.3,
+                # ease=easing.in_quad,
+                bezier_control=control_point,
+            )
+            fall_control_point = motion.Coord(fall_wpt.coord.column, fall_wpt.coord.row - 5)
             input_coord_wpt = character.motion.new_waypoint(
-                "input_coord",
-                character.input_coord,
-                speed=self.args.fall_speed,
-                ease=self.args.fall_easing,
+                "input_coord", character.input_coord, speed=0.3, ease=easing.out_sine, bezier_control=fall_control_point
             )
             character.event_handler.register_event(
                 EventHandler.Event.WAYPOINT_ACTIVATED, apex_wpt, EventHandler.Action.SET_LAYER, 2
@@ -192,8 +159,15 @@ class FireworksEffect:
                 EventHandler.Event.WAYPOINT_COMPLETE,
                 explode_wpt,
                 EventHandler.Action.ACTIVATE_WAYPOINT,
+                fall_wpt,
+            )
+            character.event_handler.register_event(
+                EventHandler.Event.WAYPOINT_COMPLETE,
+                fall_wpt,
+                EventHandler.Action.ACTIVATE_WAYPOINT,
                 input_coord_wpt,
             )
+
             character.motion.activate_waypoint(apex_wpt)
 
             firework_shell.append(character)
