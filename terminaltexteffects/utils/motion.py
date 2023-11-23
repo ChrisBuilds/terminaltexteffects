@@ -95,7 +95,9 @@ class Motion:
     @staticmethod
     def find_coords_in_circle(origin: Coord, radius: int, num_points: int) -> list[Coord]:
         """Finds points that fall within a circle with the given origin and radius. Points are
-        chosen randomly from available points.
+        chosen randomly from available points. There are likely to be duplicate points. There will
+        definitely be duplicate points if the number of points requested is greater than the number
+        of points available.
 
         Args:
             origin (Coord): origin of the circle
@@ -137,6 +139,28 @@ class Motion:
             if Coord(column, row) not in coords:
                 coords.append(Coord(column, row))
         return coords
+
+    @staticmethod
+    def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coord:
+        """Finds the coordinate at the given distance along the line defined by the origin and target coordinates.
+
+        Args:
+            origin (Coord): origin coordinate (a)
+            target (Coord): target coordinate (b)
+            distance (float): distance from the target coordinate (b), away from the origin coordinate (a)
+
+        Returns:
+            Coord: Coordinate at the given distance (c).
+        """
+        total_distance = Motion.distance(origin.column, origin.row, target.column, target.row) + distance
+        if total_distance == 0:
+            return origin
+        t = total_distance / Motion.distance(origin.column, origin.row, target.column, target.row)
+        next_column, next_row = (
+            ((1 - t) * origin.column + t * target.column),
+            ((1 - t) * origin.row + t * target.row),
+        )
+        return Coord(round(next_column), round(next_row))
 
     @staticmethod
     def find_coord_on_curve(start: Coord, control: Coord, end: Coord, t: float) -> Coord:
