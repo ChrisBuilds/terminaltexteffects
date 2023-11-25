@@ -443,31 +443,25 @@ class Animation:
             # if the active scene is synced to movement, calculate the sequence index based on the
             # current waypoint progress
             if self.active_scene.sync:
-                if self.character.motion.active_waypoint:
+                if self.character.motion.active_path:
                     if self.active_scene.sync == SyncMetric.STEP:
                         sequence_index = round(
                             (len(self.active_scene.frames) - 1)
                             * (
-                                max(self.character.motion.inter_waypoint_current_step, 1)
-                                / max(self.character.motion.inter_waypoint_max_steps, 1)
+                                max(self.character.motion.active_path.current_step, 1)
+                                / max(self.character.motion.active_path.max_steps, 1)
                             )
                         )
                     elif self.active_scene.sync == SyncMetric.DISTANCE:
-                        current_distance_to_waypoint = self.character.motion.distance(
-                            self.character.motion.current_coord.column,
-                            self.character.motion.current_coord.row,
-                            self.character.motion.active_waypoint.coord.column,
-                            self.character.motion.active_waypoint.coord.row,
-                        )
                         sequence_index = round(
                             (len(self.active_scene.frames) - 1)
                             * (
                                 max(
-                                    max(self.character.motion.inter_waypoint_distance, 1)
-                                    - max(current_distance_to_waypoint, 1),
+                                    max(self.character.motion.active_path.total_distance, 1)
+                                    - max(self.character.motion.active_path.last_distance_reached, 1),
                                     1,
                                 )
-                                / max(self.character.motion.inter_waypoint_distance, 1)
+                                / max(self.character.motion.active_path.total_distance, 1)
                             )
                         )
                     try:
