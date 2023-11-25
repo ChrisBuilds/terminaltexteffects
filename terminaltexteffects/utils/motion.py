@@ -110,7 +110,8 @@ class Path:
         Initializes the Path object and calculates the total distance and maximum steps.
         """
         self.segments: list[Segment] = []
-        self.waypoints: list[Waypoint] = []
+        self.waypoint_list: list[Waypoint] = []
+        self.waypoints: dict[str, Waypoint] = {}
         self.total_distance: float = 0
         self.current_step: int = 0
         self.max_steps: int = 0
@@ -125,7 +126,7 @@ class Path:
         *,
         bezier_control: Coord | None = None,
     ) -> Waypoint:
-        """Creates a new Waypoint and appends adds it to the waypoints dictionary with the waypoint_id as key.
+        """Creates a new Waypoint and appends adds it to the Path.
 
         Args:
             waypoint_id (str): unique identifier for the waypoint
@@ -136,30 +137,31 @@ class Path:
             Waypoint: The new waypoint.
         """
         new_waypoint = Waypoint(waypoint_id, coord, bezier_control=bezier_control)
-        self.add_waypoint_to_path(new_waypoint)
+        self._add_waypoint_to_path(new_waypoint)
         return new_waypoint
 
-    def add_waypoint_to_path(self, waypoint: Waypoint) -> None:
+    def _add_waypoint_to_path(self, waypoint: Waypoint) -> None:
         """Adds a waypoint to the path and updates the total distance and maximum steps.
 
         Args:
             waypoint (Waypoint): waypoint to add
         """
-        self.waypoints.append(waypoint)
-        if len(self.waypoints) < 2:
+        self.waypoints[waypoint.waypoint_id] = waypoint
+        self.waypoint_list.append(waypoint)
+        if len(self.waypoint_list) < 2:
             return
 
         if waypoint.bezier_control:
             distance_from_previous = Motion.find_length_of_curve(
-                self.waypoints[-2].coord, waypoint.bezier_control, waypoint.coord
+                self.waypoint_list[-2].coord, waypoint.bezier_control, waypoint.coord
             )
         else:
             distance_from_previous = Motion.find_length_of_line(
-                self.waypoints[-2].coord,
+                self.waypoint_list[-2].coord,
                 waypoint.coord,
             )
         self.total_distance += distance_from_previous
-        self.segments.append(Segment(self.waypoints[-2], waypoint, distance_from_previous))
+        self.segments.append(Segment(self.waypoint_list[-2], waypoint, distance_from_previous))
         self.max_steps = round(self.total_distance / self.speed)
 
     def step(self) -> Coord:
@@ -357,24 +359,6 @@ class Motion:
         row_diff = coord2.row - coord1.row
         return math.hypot(column_diff, row_diff)
 
-    def _point_at_distance(self, distance: float) -> Coord:
-        """Returns the coordinate at the given distance along the line defined by the origin waypoint and current waypoint.
-
-        Args:
-            distance (float): distance
-
-        Returns:
-            Coord: Coordinate at the given distance.
-        """
-        if not distance or not self.origin_waypoint or not self.active_waypoint:
-            return self.current_coord
-        t = distance / self.motion_target_distance
-        next_column, next_row = (
-            ((1 - t) * self.origin_waypoint.coord.column + t * self.active_waypoint.coord.column),
-            ((1 - t) * self.origin_waypoint.coord.row + t * self.active_waypoint.coord.row),
-        )
-        return Coord(round(next_column), round(next_row))
-
     def set_coordinate(self, coord: Coord) -> None:
         """Sets the current coordinate to the given coordinate.
 
@@ -412,34 +396,6 @@ class Motion:
         self.paths[path_id] = new_path
         return new_path
 
-    def chain_waypoints(self, waypoints: list[Waypoint], loop=False):
-        """Creates a chain of waypoints by registering activation events for each waypoints such
-        that waypoints[n] activates waypoints[n+1] when reached. If loop is True, waypoints[-1] activates
-        waypoints[0] when reached.
-
-        Args:
-            waypoints (list[Waypoint]): list of waypoints to chain
-            loop (bool, optional): Whether the chain should loop. Defaults to False.
-        """
-        if len(waypoints) < 2:
-            return
-        for i, waypoint in enumerate(waypoints):
-            if i == 0:
-                continue
-            self.character.event_handler.register_event(
-                self.character.event_handler.Event.WAYPOINT_COMPLETE,
-                waypoints[i - 1],
-                self.character.event_handler.Action.ACTIVATE_WAYPOINT,
-                waypoint,
-            )
-        if loop:
-            self.character.event_handler.register_event(
-                self.character.event_handler.Event.WAYPOINT_COMPLETE,
-                waypoints[-1],
-                self.character.event_handler.Action.ACTIVATE_WAYPOINT,
-                waypoints[0],
-            )
-
     def movement_is_complete(self) -> bool:
         """Returns whether the character has reached the final coordinate and moved the requisite number of steps.
 
@@ -471,7 +427,7 @@ class Motion:
             path (Path): the Path to activate
         """
         self.active_path = path
-        first_waypoint = self.active_path.waypoints[0]
+        first_waypoint = self.active_path.waypoint_list[0]
         if first_waypoint.bezier_control:
             distance_to_first_waypoint = self.find_length_of_curve(
                 self.current_coord, first_waypoint.bezier_control, first_waypoint.coord
