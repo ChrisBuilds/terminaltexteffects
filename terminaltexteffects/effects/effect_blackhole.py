@@ -109,7 +109,7 @@ class BlackholeEffect:
             # make rotation waypoints
             blackhole_rotation_path = character.motion.new_path("blackhole_rotation", speed=0.2, loop=True)
             for coord in black_hole_ring_positions[position_index:] + black_hole_ring_positions[:position_index]:
-                blackhole_rotation_path.new_waypoint(str(len(blackhole_rotation_path.waypoints)), coord)
+                blackhole_rotation_path.new_waypoint(str(len(blackhole_rotation_path.waypoint_lookup)), coord)
         for character in self.terminal.characters:
             character.is_active = True
             starting_scn = character.animation.new_scene("starting")
