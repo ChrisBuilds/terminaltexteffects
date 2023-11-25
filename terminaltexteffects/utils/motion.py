@@ -420,6 +420,34 @@ class Motion:
         elapsed_step_ratio = self.active_path.current_step / self.active_path.max_steps
         return easing_func(elapsed_step_ratio)
 
+    def chain_paths(self, paths: list[Path], loop=False):
+        """Creates a chain of paths by registering activation events for each path such
+        that paths[n] activates paths[n+1] when reached. If loop is True, paths[-1] activates
+        paths[0] when reached.
+
+        Args:
+            paths (list[Path]): list of paths to chain
+            loop (bool, optional): Whether the chain should loop. Defaults to False.
+        """
+        if len(paths) < 2:
+            return
+        for i, path in enumerate(paths):
+            if i == 0:
+                continue
+            self.character.event_handler.register_event(
+                self.character.event_handler.Event.PATH_COMPLETE,
+                paths[i - 1],
+                self.character.event_handler.Action.ACTIVATE_PATH,
+                path,
+            )
+        if loop:
+            self.character.event_handler.register_event(
+                self.character.event_handler.Event.PATH_COMPLETE,
+                paths[-1],
+                self.character.event_handler.Action.ACTIVATE_PATH,
+                paths[0],
+            )
+
     def activate_path(self, path: Path) -> None:
         """Activates the first waypoint in the path.
 
