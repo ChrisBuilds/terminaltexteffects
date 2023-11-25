@@ -123,10 +123,9 @@ class Bubble:
 
     def make_waypoints(self):
         waypoint_column = random.randint(self.effect.terminal.output_area.left, self.effect.terminal.output_area.right)
-        floor_waypoint = self.anchor_char.motion.new_waypoint(
-            "floor", motion.Coord(waypoint_column, self.lowest_row), speed=self.effect.args.bubble_speed
-        )
-        self.anchor_char.motion.activate_waypoint(floor_waypoint)
+        floor_path = self.anchor_char.motion.new_path("floor", speed=self.effect.args.bubble_speed)
+        floor_waypoint = floor_path.new_waypoint("floor", motion.Coord(waypoint_column, self.lowest_row))
+        self.anchor_char.motion.activate_path(floor_path)
 
     def make_gradients(self) -> None:
         if self.effect.args.no_rainbow:
@@ -159,16 +158,17 @@ class Bubble:
                 len(self.characters),
             ),
         ):
-            pop_out_waypoint = char.motion.new_waypoint("pop_out", point, speed=0.2, ease=easing.out_expo)
+            pop_out_path = char.motion.new_path("pop_out", speed=0.2, ease=easing.out_expo)
+            pop_out_waypoint = pop_out_path.new_waypoint("pop_out", point)
             char.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE,
-                pop_out_waypoint,
-                EventHandler.Action.ACTIVATE_WAYPOINT,
-                char.motion.waypoints["final"],
+                EventHandler.Event.PATH_COMPLETE,
+                pop_out_path,
+                EventHandler.Action.ACTIVATE_PATH,
+                char.motion.paths["final"],
             )
         for character in self.characters:
             character.animation.activate_scene(character.animation.scenes["pop_1"])
-            character.motion.activate_waypoint(character.motion.waypoints["pop_out"])
+            character.motion.activate_path(character.motion.paths["pop_out"])
 
     def activate(self) -> None:
         for char in self.characters:
@@ -229,14 +229,14 @@ class BubblesEffect:
                 EventHandler.Action.ACTIVATE_SCENE,
                 final_scene,
             )
-            final_waypoint = character.motion.new_waypoint(
+            final_path = character.motion.new_path(
                 "final",
-                character.input_coord,
                 speed=0.3,
                 ease=easing.in_out_expo,
             )
+            final_waypoint = final_path.new_waypoint("final", character.input_coord)
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE, final_waypoint, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.PATH_COMPLETE, final_path, EventHandler.Action.SET_LAYER, 0
             )
 
         unbubbled_chars = []

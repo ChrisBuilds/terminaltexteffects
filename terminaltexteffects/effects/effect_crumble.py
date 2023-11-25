@@ -76,42 +76,42 @@ class CrumbleEffect:
             initial_scn = character.animation.new_scene("initial")
             initial_scn.add_frame(character.input_symbol, 1, color=self.args.initial_color)
             character.animation.activate_scene(initial_scn)
-            fall_wpt = character.motion.new_waypoint(
+            fall_path = character.motion.new_path(
                 "fall",
-                motion.Coord(character.input_coord.column, self.terminal.output_area.bottom),
                 speed=0.2,
                 ease=easing.out_bounce,
+            )
+            fall_wpt = fall_path.new_waypoint(
+                "fall", motion.Coord(character.input_coord.column, self.terminal.output_area.bottom)
             )
             weaken_scn = character.animation.new_scene("weaken")
             for color_step in weaken_gradient:
                 weaken_scn.add_frame(character.input_symbol, 6, color=color_step)
 
             # set up vacuuming stage
-            bottom_vac_wpt = character.motion.new_waypoint(
+            bottom_vac_path = character.motion.new_path("bottom_vac", speed=0.3, ease=easing.in_quint)
+            bottom_vac_wpt = bottom_vac_path.new_waypoint(
                 "bottom_vac",
                 motion.Coord(
                     self.terminal.output_area.center_column,
                     round(self.terminal.output_area.top * random.uniform(0.1, 0.3)),
                 ),
-                speed=0.3,
-                ease=easing.in_quint,
             )
-            top_vac_wpt = character.motion.new_waypoint(
+            top_vac_path = character.motion.new_path("top_vac", speed=0.3)
+            top_vac_wpt = top_vac_path.new_waypoint(
                 "top_vac",
                 motion.Coord(
                     self.terminal.output_area.center_column,
                     round(self.terminal.output_area.top * random.uniform(0.7, 0.9)),
                 ),
-                speed=0.3,
             )
-            top_wpt = character.motion.new_waypoint(
-                "top",
-                motion.Coord(character.input_coord.column, self.terminal.output_area.top),
-                speed=0.3,
-                ease=easing.out_quint,
+            top_path = character.motion.new_path("top", speed=0.3, ease=easing.out_quint)
+            top_wpt = top_path.new_waypoint(
+                "top", motion.Coord(character.input_coord.column, self.terminal.output_area.top)
             )
             # set up reset stage
-            input_wpt = character.motion.new_waypoint("input", character.input_coord, speed=0.3)
+            input_path = character.motion.new_path("input", speed=0.3)
+            input_wpt = input_path.new_waypoint("input", character.input_coord)
             strengthen_flash_scn = character.animation.new_scene("strengthen_flash")
             for color_step in strengthen_flash_gradient:
                 strengthen_flash_scn.add_frame(character.input_symbol, 4, color=color_step)
@@ -123,7 +123,7 @@ class CrumbleEffect:
                 dust_scn.add_frame(random.choice(["*", ".", ","]), 1, color=dust_color)
 
             character.event_handler.register_event(
-                EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.ACTIVATE_WAYPOINT, fall_wpt
+                EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.ACTIVATE_PATH, fall_path
             )
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.SET_LAYER, 1
@@ -132,14 +132,14 @@ class CrumbleEffect:
                 EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.ACTIVATE_SCENE, dust_scn
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE, bottom_vac_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, top_vac_wpt
+                EventHandler.Event.PATH_COMPLETE, bottom_vac_path, EventHandler.Action.ACTIVATE_PATH, top_vac_path
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE, top_vac_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, top_wpt
+                EventHandler.Event.PATH_COMPLETE, top_vac_path, EventHandler.Action.ACTIVATE_PATH, top_path
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE,
-                input_wpt,
+                EventHandler.Event.PATH_COMPLETE,
+                input_path,
                 EventHandler.Action.ACTIVATE_SCENE,
                 strengthen_flash_scn,
             )
@@ -189,7 +189,7 @@ class CrumbleEffect:
             elif stage == "vacuuming":
                 if not vacuumed:
                     for character in self.terminal.characters:
-                        character.motion.activate_waypoint(character.motion.waypoints["bottom_vac"])
+                        character.motion.activate_path(character.motion.paths["bottom_vac"])
                         self.animating_chars.append(character)
                     vacuumed = True
                 if not self.animating_chars:
@@ -198,7 +198,7 @@ class CrumbleEffect:
             elif stage == "resetting":
                 if not reset:
                     for character in self.terminal.characters:
-                        character.motion.activate_waypoint(character.motion.waypoints["input"])
+                        character.motion.activate_path(character.motion.paths["input"])
                         self.animating_chars.append(character)
                     reset = True
                 if not self.animating_chars:

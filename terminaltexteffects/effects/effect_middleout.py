@@ -108,18 +108,14 @@ class MiddleoutEffect:
             else:
                 column = self.terminal.output_area.center_column
                 row = character.input_coord.row
-            center_waypoint = character.motion.new_waypoint(
-                "center",
-                motion.Coord(column, row),
-                speed=self.args.center_movement_speed,
-                ease=self.args.center_easing,
+            center_path = character.motion.new_path(
+                "center", speed=self.args.center_movement_speed, ease=self.args.center_easing
             )
-            full_waypoint = character.motion.new_waypoint(
-                "full",
-                character.input_coord,
-                speed=self.args.full_movement_speed,
-                ease=self.args.full_easing,
+            center_waypoint = center_path.new_waypoint("center", motion.Coord(column, row))
+            full_path = character.motion.new_path(
+                "full", speed=self.args.full_movement_speed, ease=self.args.full_easing
             )
+            full_waypoint = full_path.new_waypoint("full", character.input_coord)
 
             # setup scenes
             center_scene = character.animation.new_scene("center")
@@ -131,7 +127,7 @@ class MiddleoutEffect:
             character.animation.activate_scene(center_scene)
 
             # initialize character state
-            character.motion.activate_waypoint(center_waypoint)
+            character.motion.activate_path(center_path)
             character.animation.activate_scene(center_scene)
             character.is_active = True
             self.animating_chars.append(character)
@@ -141,10 +137,10 @@ class MiddleoutEffect:
         self.prepare_data()
         final = False
         while self.pending_chars or self.animating_chars:
-            if all([character.motion.active_waypoint is None for character in self.animating_chars]):
+            if all([character.motion.active_path is None for character in self.animating_chars]):
                 final = True
                 for character in self.animating_chars:
-                    character.motion.activate_waypoint(character.motion.waypoints["full"])
+                    character.motion.activate_path(character.motion.paths["full"])
                     character.animation.activate_scene(character.animation.scenes["full"])
             self.terminal.print()
             self.animate_chars()

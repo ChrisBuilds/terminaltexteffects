@@ -127,19 +127,20 @@ class Line:
         hold_time = random.randint(1, 50)
         for character in self.characters:
             # make glitch and restore waypoints
-            glitch_wpt = character.motion.new_waypoint(
-                "glitch",
-                motion.Coord(character.input_coord.column + (offset * direction), character.input_coord.row),
-                speed=2,
-                hold_time=hold_time,
+            glitch_path = character.motion.new_path("glitch", speed=2, hold_time=hold_time)
+            glitch_wpt = glitch_path.new_waypoint(
+                "glitch", motion.Coord(character.input_coord.column + (offset * direction), character.input_coord.row)
             )
-            restore_wpt = character.motion.new_waypoint("restore", character.input_coord, speed=2)
+            restore_path = character.motion.new_path("restore", speed=2)
+            restore_wpt = restore_path.new_waypoint("restore", character.input_coord)
             # make glitch wave waypoints
-            glitch_wave_mid_wpt = character.motion.new_waypoint(
-                "glitch_wave_mid", motion.Coord(character.input_coord.column + 8, character.input_coord.row), speed=2
+            glitch_wave_mid_path = character.motion.new_path("glitch_wave_mid", speed=2)
+            glitch_wave_mid_wpt = glitch_wave_mid_path.new_waypoint(
+                "glitch_wave_mid", motion.Coord(character.input_coord.column + 8, character.input_coord.row)
             )
-            glitch_wave_end_wpt = character.motion.new_waypoint(
-                "glitch_wave_end", motion.Coord(character.input_coord.column + 14, character.input_coord.row), speed=2
+            glitch_wave_end_path = character.motion.new_path("glitch_wave_end", speed=2)
+            glitch_wave_end_wpt = glitch_wave_end_path.new_waypoint(
+                "glitch_wave_end", motion.Coord(character.input_coord.column + 14, character.input_coord.row)
             )
 
             # make glitch scenes
@@ -164,29 +165,29 @@ class Line:
                 final_snow_scn.add_frame(random.choice(snow_chars), duration=2, color=random.choice(noise_colors))
             # register events
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE, glitch_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, restore_wpt
+                EventHandler.Event.PATH_COMPLETE, glitch_path, EventHandler.Action.ACTIVATE_PATH, restore_path
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_ACTIVATED,
-                glitch_wpt,
+                EventHandler.Event.PATH_ACTIVATED,
+                glitch_path,
                 EventHandler.Action.ACTIVATE_SCENE,
                 glitch_scn_forward,
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_ACTIVATED,
-                restore_wpt,
+                EventHandler.Event.PATH_ACTIVATED,
+                restore_path,
                 EventHandler.Action.ACTIVATE_SCENE,
                 glitch_scn_backward,
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_ACTIVATED,
-                glitch_wave_mid_wpt,
+                EventHandler.Event.PATH_ACTIVATED,
+                glitch_wave_mid_path,
                 EventHandler.Action.ACTIVATE_SCENE,
                 glitch_scn_forward,
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_ACTIVATED,
-                glitch_wave_end_wpt,
+                EventHandler.Event.PATH_ACTIVATED,
+                glitch_wave_end_path,
                 EventHandler.Action.ACTIVATE_SCENE,
                 glitch_scn_forward,
             )
@@ -212,7 +213,7 @@ class Line:
             None
         """
         for character in self.characters:
-            character.motion.waypoints["glitch"].hold_time = hold_time
+            character.motion.paths["glitch"].hold_time = hold_time
 
     def glitch(self, final=False) -> None:
         """
@@ -225,24 +226,24 @@ class Line:
             None
         """
         for character in self.characters:
-            glitch_wpt = character.motion.waypoints["glitch"]
-            restore_wpt = character.motion.waypoints["restore"]
+            glitch_path = character.motion.paths["glitch"]
+            restore_path = character.motion.paths["restore"]
             if final:
-                glitch_wpt.hold_time = 0
-                restore_wpt.hold_time = 0
-            glitch_wpt.speed = 40 / random.randint(20, 40)
-            restore_wpt.speed = 40 / random.randint(20, 40)
-            character.motion.activate_waypoint(character.motion.waypoints["glitch"])
+                glitch_path.hold_time = 0
+                restore_path.hold_time = 0
+            glitch_path.speed = 40 / random.randint(20, 40)
+            restore_path.speed = 40 / random.randint(20, 40)
+            character.motion.activate_path(character.motion.paths["glitch"])
 
     def restore(self) -> None:
         for character in self.characters:
-            restore_wpt = character.motion.waypoints["restore"]
-            restore_wpt.speed = 40 / random.randint(20, 40)
-            character.motion.activate_waypoint(restore_wpt)
+            restore_path = character.motion.paths["restore"]
+            restore_path.speed = 40 / random.randint(20, 40)
+            character.motion.activate_path(restore_path)
 
-    def activate_waypoint(self, waypoint_id: str) -> None:
+    def activate_path(self, path_id: str) -> None:
         for character in self.characters:
-            character.motion.activate_waypoint(character.motion.waypoints[waypoint_id])
+            character.motion.activate_path(character.motion.paths[path_id])
 
     def line_movement_complete(self):
         return all(character.motion.movement_is_complete() for character in self.characters)
@@ -328,10 +329,10 @@ class VHSTapeEffect:
                 self.active_glitch_wave_lines = []
 
             else:
-                for line, waypoint_id in zip(
+                for line, path_id in zip(
                     self.active_glitch_wave_lines, ("glitch_wave_mid", "glitch_wave_end", "glitch_wave_mid")
                 ):
-                    line.activate_waypoint(waypoint_id)
+                    line.activate_path(path_id)
                     self.animating_chars.extend(line.characters)
 
     def run(self) -> None:

@@ -57,20 +57,20 @@ class ExpandEffect:
 
         for character in self.terminal.characters:
             character.motion.set_coordinate(self.terminal.output_area.center)
-            input_coord_wpt = character.motion.new_waypoint(
+            input_coord_path = character.motion.new_path(
                 "input_coord",
-                character.input_coord,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )
+            input_coord_wpt = input_coord_path.new_waypoint("input_coord", character.input_coord)
             character.is_active = True
-            character.motion.activate_waypoint(input_coord_wpt)
+            character.motion.activate_path(input_coord_path)
             self.animating_chars.append(character)
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_ACTIVATED, input_coord_wpt, EventHandler.Action.SET_LAYER, 1
+                EventHandler.Event.PATH_ACTIVATED, input_coord_path, EventHandler.Action.SET_LAYER, 1
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE, input_coord_wpt, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
             )
 
     def run(self) -> None:

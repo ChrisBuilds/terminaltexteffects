@@ -100,13 +100,13 @@ class PourEffect:
                 )
             elif self.pour_direction == PourDirection.RIGHT:
                 character.motion.set_coordinate(motion.Coord(self.terminal.output_area.left, character.input_coord.row))
-            input_coord_wpt = character.motion.new_waypoint(
+            input_coord_path = character.motion.new_path(
                 "input_coord",
-                character.input_coord,
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )
-            character.motion.activate_waypoint(input_coord_wpt)
+            input_coord_wpt = input_coord_path.new_waypoint("input_coord", character.input_coord)
+            character.motion.activate_path(input_coord_path)
             self.pending_chars.append(character)
 
     def run(self) -> None:

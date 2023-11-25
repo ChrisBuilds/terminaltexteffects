@@ -104,17 +104,11 @@ class ErrorCorrectEffect:
             char1 = all_characters.pop(random.randrange(len(all_characters)))
             char2 = all_characters.pop(random.randrange(len(all_characters)))
             char1.motion.set_coordinate(char2.input_coord)
-            char1_input_coord_waypoint = char1.motion.new_waypoint(
-                "input_coord",
-                char1.input_coord,
-                speed=self.args.movement_speed,
-            )
+            char1_input_coord_path = char1.motion.new_path("input_coord", speed=self.args.movement_speed)
+            char1_input_coord_waypoint = char1_input_coord_path.new_waypoint("input_coord", char1.input_coord)
             char2.motion.set_coordinate(char1.input_coord)
-            char2_input_coord_waypoint = char2.motion.new_waypoint(
-                "input_coord",
-                char2.input_coord,
-                speed=self.args.movement_speed,
-            )
+            char2_input_coord_path = char2.motion.new_path("input_coord", speed=self.args.movement_speed)
+            char2_input_coord_waypoint = char2_input_coord_path.new_waypoint("input_coord", char2.input_coord)
             self.swapped.append((char1, char2))
             for character in (char1, char2):
                 first_block_wipe = character.animation.new_scene("first_block_wipe")
@@ -151,25 +145,25 @@ class ErrorCorrectEffect:
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
                     first_block_wipe,
-                    EventHandler.Action.ACTIVATE_WAYPOINT,
-                    character.motion.waypoints["input_coord"],
+                    EventHandler.Action.ACTIVATE_PATH,
+                    character.motion.paths["input_coord"],
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_ACTIVATED,
-                    character.motion.waypoints["input_coord"],
+                    EventHandler.Event.PATH_ACTIVATED,
+                    character.motion.paths["input_coord"],
                     EventHandler.Action.SET_LAYER,
                     1,
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_COMPLETE,
-                    character.motion.waypoints["input_coord"],
+                    EventHandler.Event.PATH_COMPLETE,
+                    character.motion.paths["input_coord"],
                     EventHandler.Action.SET_LAYER,
                     0,
                 )
 
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_COMPLETE,
-                    character.motion.waypoints["input_coord"],
+                    EventHandler.Event.PATH_COMPLETE,
+                    character.motion.paths["input_coord"],
                     EventHandler.Action.ACTIVATE_SCENE,
                     last_block_wipe,
                 )
