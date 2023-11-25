@@ -110,8 +110,8 @@ class Path:
         Initializes the Path object and calculates the total distance and maximum steps.
         """
         self.segments: list[Segment] = []
-        self.waypoint_list: list[Waypoint] = []
-        self.waypoints: dict[str, Waypoint] = {}
+        self.waypoints: list[Waypoint] = []
+        self.waypoint_lookup: dict[str, Waypoint] = {}
         self.total_distance: float = 0
         self.current_step: int = 0
         self.max_steps: int = 0
@@ -146,22 +146,22 @@ class Path:
         Args:
             waypoint (Waypoint): waypoint to add
         """
-        self.waypoints[waypoint.waypoint_id] = waypoint
-        self.waypoint_list.append(waypoint)
-        if len(self.waypoint_list) < 2:
+        self.waypoint_lookup[waypoint.waypoint_id] = waypoint
+        self.waypoints.append(waypoint)
+        if len(self.waypoints) < 2:
             return
 
         if waypoint.bezier_control:
             distance_from_previous = Motion.find_length_of_curve(
-                self.waypoint_list[-2].coord, waypoint.bezier_control, waypoint.coord
+                self.waypoints[-2].coord, waypoint.bezier_control, waypoint.coord
             )
         else:
             distance_from_previous = Motion.find_length_of_line(
-                self.waypoint_list[-2].coord,
+                self.waypoints[-2].coord,
                 waypoint.coord,
             )
         self.total_distance += distance_from_previous
-        self.segments.append(Segment(self.waypoint_list[-2], waypoint, distance_from_previous))
+        self.segments.append(Segment(self.waypoints[-2], waypoint, distance_from_previous))
         self.max_steps = round(self.total_distance / self.speed)
 
     def step(self) -> Coord:
@@ -427,7 +427,7 @@ class Motion:
             path (Path): the Path to activate
         """
         self.active_path = path
-        first_waypoint = self.active_path.waypoint_list[0]
+        first_waypoint = self.active_path.waypoints[0]
         if first_waypoint.bezier_control:
             distance_to_first_waypoint = self.find_length_of_curve(
                 self.current_coord, first_waypoint.bezier_control, first_waypoint.coord
