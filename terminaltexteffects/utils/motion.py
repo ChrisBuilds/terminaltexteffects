@@ -166,7 +166,7 @@ class Path:
         """Progresses to the next step along the path and returns the coordinate at that step."""
         if not self.max_steps or self.current_step >= self.max_steps or not self.total_distance:
             # if the path has zero distance or there are no more steps, return the coordinate of the final waypoint in the path
-            return self.waypoints[-1].coord
+            return self.segments[-1].end.coord
         else:
             self.current_step += 1
         if self.ease:
@@ -187,10 +187,10 @@ class Path:
 
         segment_distance_to_travel_factor = distance_to_travel / active_segment.distance
 
-        if active_segment.start.bezier_control:
+        if active_segment.end.bezier_control:
             next_coord = Motion.find_coord_on_curve(
                 active_segment.start.coord,
-                active_segment.start.bezier_control,
+                active_segment.end.bezier_control,
                 active_segment.end.coord,
                 segment_distance_to_travel_factor,
             )
