@@ -458,7 +458,11 @@ class Animation:
                             * (
                                 max(
                                     max(self.character.motion.active_path.total_distance, 1)
-                                    - max(self.character.motion.active_path.last_distance_reached, 1),
+                                    - max(
+                                        self.character.motion.active_path.total_distance
+                                        - self.character.motion.active_path.last_distance_reached,
+                                        1,
+                                    ),
                                     1,
                                 )
                                 / max(self.character.motion.active_path.total_distance, 1)
