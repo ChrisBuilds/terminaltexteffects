@@ -17,9 +17,8 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Characters launch and explode like fireworks and fall into place.",
         description="fireworks | Characters explode like fireworks and fall into place.",
-        epilog=f"""{argtypes.EASING_EPILOG}
-        
-Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --final-color 000000 --launch-delay 30 --launch-easing OUT_EXPO --launch-speed 0.2 --explode-easing OUT_QUAD --explode-speed 0.3 --fall-easing IN_SINE --fall-speed 0.6""",
+        epilog=f"""        
+Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 2 --final-color ffffff --launch-delay 60 --explode-distance 10""",
     )
     effect_parser.set_defaults(effect_class=FireworksEffect)
     effect_parser.add_argument(
@@ -39,7 +38,7 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
         "--firework-colors",
         type=argtypes.valid_color,
         nargs="*",
-        default=0,
+        default=["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated list of colors from which firework colors will be randomly selected.",
     )
@@ -73,10 +72,10 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     )
     effect_parser.add_argument(
         "--explode-distance",
-        default=6,
+        default=10,
         type=argtypes.positive_int,
         metavar="(int > 0)",
-        help="Maximum distance a character can travel as a part of the firework explosion.",
+        help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width.",
     )
 
 
@@ -94,7 +93,9 @@ class FireworksEffect:
         else:
             self.firework_colors = ["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"]
         self.firework_volume = max(1, round((self.args.firework_volume * 0.01) * len(self.terminal.characters)))
-        self.explode_distance = min(max(1, round(self.terminal.output_area.right * 0.1)), 6)
+        self.explode_distance = min(
+            max(1, round(self.terminal.output_area.right * (self.args.explode_distance * 0.01))), 6
+        )
 
     def prepare_waypoints(self) -> None:
         firework_shell: list[EffectCharacter] = []
@@ -119,18 +120,18 @@ class FireworksEffect:
             explode_wpt = explode_path.new_waypoint("explode_wpt", random.choice(explode_waypoint_coords))
 
             # TODO: Turn this process into a framework function for making curves when changing direction
-            control_point = motion.Motion.find_coord_at_distance(
+            bloom_control_point = motion.Motion.find_coord_at_distance(
                 apex_wpt.coord, explode_wpt.coord, self.explode_distance // 2
             )
-            fall_wpt = explode_path.new_waypoint(
-                "fall",
-                motion.Coord(control_point.column, max(1, control_point.row - round(apex_wpt.coord.row * 0.7))),
-                bezier_control=control_point,
+            bloom_wpt = explode_path.new_waypoint(
+                "bloom",
+                motion.Coord(bloom_control_point.column, max(1, bloom_control_point.row - 7)),
+                bezier_control=bloom_control_point,
             )
             input_path = character.motion.new_path("input_pth", speed=0.3, ease=easing.in_out_quart)
-            fall_control_point = motion.Coord(fall_wpt.coord.column, 1)
+            input_control_point = motion.Coord(bloom_wpt.coord.column, 1)
             input_coord_wpt = input_path.new_waypoint(
-                "input_coord", character.input_coord, bezier_control=fall_control_point
+                "input_coord", character.input_coord, bezier_control=input_control_point
             )
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED, apex_path, EventHandler.Action.SET_LAYER, 2
@@ -187,7 +188,7 @@ class FireworksEffect:
                 )
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by ___."""
+        """Prepares the data for the effect by building the firework shells and scenes."""
         self.prepare_waypoints()
         self.prepare_scenes()
 
