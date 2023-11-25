@@ -46,23 +46,23 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     effect_parser.add_argument(
         "--firework-symbol",
         type=argtypes.valid_symbol,
-        default="⯏",
+        default="o",
         metavar="(single character)",
-        help="Symbol to use for the firework shell. Defaults to ⯏.",
+        help="Symbol to use for the firework shell.",
     )
     effect_parser.add_argument(
         "--firework-volume",
         type=argtypes.positive_int,
-        default=3,
+        default=2,
         metavar="(int > 0)",
-        help="Percent of total characters in each firework shell. Defaults to 3.",
+        help="Percent of total characters in each firework shell.",
     )
     effect_parser.add_argument(
         "--final-color",
         type=argtypes.valid_color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final character. Defaults to white.",
+        help="Color for the final character.",
     )
     effect_parser.add_argument(
         "--launch-delay",
@@ -94,7 +94,7 @@ class FireworksEffect:
         else:
             self.firework_colors = ["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"]
         self.firework_volume = max(1, round((self.args.firework_volume * 0.01) * len(self.terminal.characters)))
-        self.explode_distance = min(max(1, self.terminal.output_area.right // 10), 8)
+        self.explode_distance = min(max(1, round(self.terminal.output_area.right * 0.1)), 6)
 
     def prepare_waypoints(self) -> None:
         firework_shell: list[EffectCharacter] = []
@@ -113,11 +113,9 @@ class FireworksEffect:
                     origin_coord, self.explode_distance, self.firework_volume
                 )
             character.motion.set_coordinate(motion.Coord(origin_x, self.terminal.output_area.bottom))
-            # apex_path = character.motion.new_path("apex_pth", speed=0.2, ease=easing.out_expo)
-            apex_path = character.motion.new_path("apex_pth", speed=0.2)
+            apex_path = character.motion.new_path("apex_pth", speed=0.2, ease=easing.out_expo)
             apex_wpt = apex_path.new_waypoint("apex_wpt", origin_coord)
-            # explode_path = character.motion.new_path("explode_pth", speed=0.3, ease=easing.out_quad)
-            explode_path = character.motion.new_path("explode_pth", speed=0.3)
+            explode_path = character.motion.new_path("explode_pth", speed=0.15, ease=easing.out_circ)
             explode_wpt = explode_path.new_waypoint("explode_wpt", random.choice(explode_waypoint_coords))
 
             # TODO: Turn this process into a framework function for making curves when changing direction
@@ -126,11 +124,12 @@ class FireworksEffect:
             )
             fall_wpt = explode_path.new_waypoint(
                 "fall",
-                motion.Coord(control_point.column, max(1, control_point.row - (apex_wpt.coord.row // 2))),
+                motion.Coord(control_point.column, max(1, control_point.row - round(apex_wpt.coord.row * 0.7))),
                 bezier_control=control_point,
             )
-            fall_control_point = motion.Coord(fall_wpt.coord.column, fall_wpt.coord.row - 5)
-            input_coord_wpt = explode_path.new_waypoint(
+            input_path = character.motion.new_path("input_pth", speed=0.3, ease=easing.in_out_quart)
+            fall_control_point = motion.Coord(fall_wpt.coord.column, 1)
+            input_coord_wpt = input_path.new_waypoint(
                 "input_coord", character.input_coord, bezier_control=fall_control_point
             )
             character.event_handler.register_event(
@@ -144,6 +143,9 @@ class FireworksEffect:
                 apex_path,
                 EventHandler.Action.ACTIVATE_PATH,
                 explode_path,
+            )
+            character.event_handler.register_event(
+                EventHandler.Event.PATH_COMPLETE, explode_path, EventHandler.Action.ACTIVATE_PATH, input_path
             )
 
             character.motion.activate_path(apex_path)
@@ -164,15 +166,24 @@ class FireworksEffect:
                     launch_scn.is_looping = True
                 # bloom scene
                 bloom_scn = character.animation.new_scene("bloom")
-                bloom_gradient = graphics.Gradient(shell_color, self.args.final_color, 15)
-                for color in bloom_gradient:
-                    bloom_scn.add_frame(character.input_symbol, 15, color=color)
+                bloom_scn.add_frame(character.input_symbol, 1, color=shell_color)
+                # fall scene
+                fall_scn = character.animation.new_scene("fall")
+                fall_gradient = graphics.Gradient(shell_color, self.args.final_color, 15)
+                for color in fall_gradient:
+                    fall_scn.add_frame(character.input_symbol, 15, color=color)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
                     character.motion.paths["apex_pth"],
                     EventHandler.Action.ACTIVATE_SCENE,
                     bloom_scn,
+                )
+                character.event_handler.register_event(
+                    EventHandler.Event.PATH_ACTIVATED,
+                    character.motion.paths["input_pth"],
+                    EventHandler.Action.ACTIVATE_SCENE,
+                    fall_scn,
                 )
 
     def prepare_data(self) -> None:
