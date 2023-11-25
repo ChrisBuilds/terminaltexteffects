@@ -30,8 +30,8 @@ class EventHandler:
         self.character = character
         self.layer: int = 0
         self.registered_events: dict[
-            tuple[EventHandler.Event, graphics.Scene | motion.Waypoint],
-            list[tuple[EventHandler.Action, graphics.Scene | motion.Waypoint | int | motion.Coord]],
+            tuple[EventHandler.Event, graphics.Scene | motion.Waypoint | motion.Path],
+            list[tuple[EventHandler.Action, graphics.Scene | motion.Waypoint | motion.Path | int | motion.Coord]],
         ] = {}
 
     class Event(Enum):
@@ -44,6 +44,9 @@ class EventHandler:
             WAYPOINT_ACTIVATED (Event): A waypoint has been activated.
             WAYPOINT_COMPLETE (Event): A waypoint has been reached.
             WAYPOINT_HOLDING (Event): A waypoint has entered the holding state.
+            PATH_ACTIVATED (Event): A path has been activated.
+            PATH_COMPLETE (Event): A path has been completed.
+            PATH_HOLDING (Event): A path has entered the holding state.
             SCENE_ACTIVATED (Event): An animation scene has been activated.
             SCENE_COMPLETE (Event): An animation scene has completed.
         """
@@ -51,6 +54,9 @@ class EventHandler:
         WAYPOINT_ACTIVATED = auto()
         WAYPOINT_COMPLETE = auto()
         WAYPOINT_HOLDING = auto()
+        PATH_ACTIVATED = auto()
+        PATH_COMPLETE = auto()
+        PATH_HOLDING = auto()
         SCENE_ACTIVATED = auto()
         SCENE_COMPLETE = auto()
 
@@ -62,17 +68,21 @@ class EventHandler:
 
         Attributes:
             ACTIVATE_WAYPOINT (Action): Activates a waypoint. The action target is the waypoint ID.
+            ACTIVATE_PATH (Action): Activates a path. The action target is the path ID.
             ACTIVATE_SCENE (Action): Activates an animation scene. The action target is the scene ID.
             DEACTIVATE_WAYPOINT (Action): Deactivates a waypoint. The action target is the waypoint ID.
+            DEACTIVATE_PATH (Action): Deactivates a path. The action target is the path ID.
             DEACTIVATE_SCENE (Action): Deactivates an animation scene. The action target is the scene ID.
             SET_CHARACTER_ACTIVATION_STATE (Action): Sets the activation state of the character. The action target is the activation state (True/False).
             SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
             SET_COORDINATE (Action): Sets the coordinate of the character. The action target is the coordinate.
         """
 
-        ACTIVATE_WAYPOINT = auto()
+        # ACTIVATE_WAYPOINT = auto()
+        ACTIVATE_PATH = auto()
         ACTIVATE_SCENE = auto()
-        DEACTIVATE_WAYPOINT = auto()
+        # DEACTIVATE_WAYPOINT = auto()
+        DEACTIVATE_PATH = auto()
         DEACTIVATE_SCENE = auto()
         SET_CHARACTER_ACTIVATION_STATE = auto()
         SET_LAYER = auto()
@@ -81,9 +91,9 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: graphics.Scene | motion.Waypoint,
+        caller: graphics.Scene | motion.Waypoint | motion.Path,
         action: Action,
-        target: graphics.Scene | motion.Waypoint | int | motion.Coord,
+        target: graphics.Scene | motion.Waypoint | motion.Path | int | motion.Coord,
     ) -> None:
         """Registers an event to be handled by the EventHandler.
 
@@ -102,7 +112,7 @@ class EventHandler:
             self.registered_events[new_event] = list()
         self.registered_events[new_event].append(new_action)
 
-    def handle_event(self, event: Event, caller: graphics.Scene | motion.Waypoint) -> None:
+    def handle_event(self, event: Event, caller: graphics.Scene | motion.Waypoint | motion.Path) -> None:
         """Handles an event by taking the specified action.
 
         Examples:
@@ -110,12 +120,14 @@ class EventHandler:
 
         Args:
             event (Event): An event to handle. If the event is not registered, nothing happens.
-            subject_id (str): The subject_id of the event subject (waypoint id/scene id).
+            caller (graphics.Scene | motion.Waypoint | motion.Path): The object triggering the call.
         """
         action_map = {
-            EventHandler.Action.ACTIVATE_WAYPOINT: self.character.motion.activate_waypoint,
+            # EventHandler.Action.ACTIVATE_WAYPOINT: self.character.motion.activate_waypoint,
+            EventHandler.Action.ACTIVATE_PATH: self.character.motion.activate_path,
             EventHandler.Action.ACTIVATE_SCENE: self.character.animation.activate_scene,
-            EventHandler.Action.DEACTIVATE_WAYPOINT: self.character.motion.deactivate_waypoint,
+            # EventHandler.Action.DEACTIVATE_WAYPOINT: self.character.motion.deactivate_waypoint,
+            EventHandler.Action.DEACTIVATE_PATH: self.character.motion.deactivate_path,
             EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
             EventHandler.Action.SET_LAYER: lambda layer: setattr(self.character, "layer", layer),
             EventHandler.Action.SET_CHARACTER_ACTIVATION_STATE: lambda state: setattr(
