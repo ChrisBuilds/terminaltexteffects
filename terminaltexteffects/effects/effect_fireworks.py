@@ -113,62 +113,40 @@ class FireworksEffect:
                     origin_coord, self.explode_distance, self.firework_volume
                 )
             character.motion.set_coordinate(motion.Coord(origin_x, self.terminal.output_area.bottom))
-            apex_wpt = character.motion.new_waypoint(
-                "apex",
-                origin_coord,
-                speed=0.2,
-                ease=easing.out_expo,
-            )
-            explode_wpt = character.motion.new_waypoint(
-                "explode",
-                random.choice(explode_waypoint_coords),
-                speed=0.3,
-                # ease=self.args.explode_easing,
-            )
+            # apex_path = character.motion.new_path("apex_pth", speed=0.2, ease=easing.out_expo)
+            apex_path = character.motion.new_path("apex_pth", speed=0.2)
+            apex_wpt = apex_path.new_waypoint("apex_wpt", origin_coord)
+            # explode_path = character.motion.new_path("explode_pth", speed=0.3, ease=easing.out_quad)
+            explode_path = character.motion.new_path("explode_pth", speed=0.3)
+            explode_wpt = explode_path.new_waypoint("explode_wpt", random.choice(explode_waypoint_coords))
+
             # TODO: Turn this process into a framework function for making curves when changing direction
             control_point = motion.Motion.find_coord_at_distance(
                 apex_wpt.coord, explode_wpt.coord, self.explode_distance // 2
             )
-            fall_wpt = character.motion.new_waypoint(
+            fall_wpt = explode_path.new_waypoint(
                 "fall",
                 motion.Coord(control_point.column, max(1, control_point.row - (apex_wpt.coord.row // 2))),
-                speed=0.3,
-                # ease=easing.in_quad,
                 bezier_control=control_point,
             )
             fall_control_point = motion.Coord(fall_wpt.coord.column, fall_wpt.coord.row - 5)
-            input_coord_wpt = character.motion.new_waypoint(
-                "input_coord", character.input_coord, speed=0.3, ease=easing.out_sine, bezier_control=fall_control_point
+            input_coord_wpt = explode_path.new_waypoint(
+                "input_coord", character.input_coord, bezier_control=fall_control_point
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_ACTIVATED, apex_wpt, EventHandler.Action.SET_LAYER, 2
+                EventHandler.Event.PATH_ACTIVATED, apex_path, EventHandler.Action.SET_LAYER, 2
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_ACTIVATED, input_coord_wpt, EventHandler.Action.SET_LAYER, 1
+                EventHandler.Event.PATH_COMPLETE, explode_path, EventHandler.Action.SET_LAYER, 0
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE, input_coord_wpt, EventHandler.Action.SET_LAYER, 0
-            )
-            character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE,
-                apex_wpt,
-                EventHandler.Action.ACTIVATE_WAYPOINT,
-                explode_wpt,
-            )
-            character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE,
-                explode_wpt,
-                EventHandler.Action.ACTIVATE_WAYPOINT,
-                fall_wpt,
-            )
-            character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE,
-                fall_wpt,
-                EventHandler.Action.ACTIVATE_WAYPOINT,
-                input_coord_wpt,
+                EventHandler.Event.PATH_COMPLETE,
+                apex_path,
+                EventHandler.Action.ACTIVATE_PATH,
+                explode_path,
             )
 
-            character.motion.activate_waypoint(apex_wpt)
+            character.motion.activate_path(apex_path)
 
             firework_shell.append(character)
         if firework_shell:
@@ -191,8 +169,8 @@ class FireworksEffect:
                     bloom_scn.add_frame(character.input_symbol, 15, color=color)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_COMPLETE,
-                    character.motion.waypoints["apex"],
+                    EventHandler.Event.PATH_COMPLETE,
+                    character.motion.paths["apex_pth"],
                     EventHandler.Action.ACTIVATE_SCENE,
                     bloom_scn,
                 )
@@ -229,5 +207,5 @@ class FireworksEffect:
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation."""
         for animating_char in self.animating_chars:
-            animating_char.animation.step_animation()
             animating_char.motion.move()
+            animating_char.animation.step_animation()

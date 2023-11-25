@@ -90,19 +90,16 @@ class RainEffect:
                 fade_scn.add_frame(character.input_symbol, 5, color=color)
             character.animation.activate_scene(rain_scn)
             character.motion.set_coordinate(motion.Coord(character.input_coord.column, self.terminal.output_area.top))
-            input_coord_wpt = character.motion.new_waypoint(
-                "input_coord",
-                character.input_coord,
-                speed=self.args.movement_speed,
-                ease=self.args.easing,
-            )
+            input_path = character.motion.new_path("input_coord", speed=self.args.movement_speed, ease=self.args.easing)
+            input_path.new_waypoint("input_coord", character.input_coord)
+
             character.event_handler.register_event(
-                character.event_handler.Event.WAYPOINT_COMPLETE,
-                input_coord_wpt,
+                character.event_handler.Event.PATH_COMPLETE,
+                input_path,
                 character.event_handler.Action.ACTIVATE_SCENE,
                 fade_scn,
             )
-            character.motion.activate_waypoint(input_coord_wpt)
+            character.motion.activate_path(input_path)
             self.pending_chars.append(character)
         for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
             if character.input_coord.row not in self.group_by_row:

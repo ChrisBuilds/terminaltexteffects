@@ -98,17 +98,15 @@ class BouncyBallsEffect:
                     color=step,
                 )
             character.motion.set_coordinate(motion.Coord(character.input_coord.column, self.terminal.output_area.top))
-            input_coord_waypoint = character.motion.new_waypoint(
-                "input_coord",
-                character.input_coord,
-                speed=self.args.movement_speed,
-                ease=self.args.easing,
+            input_coord_path = character.motion.new_path(
+                "input_pth", speed=self.args.movement_speed, ease=self.args.easing
             )
-            character.motion.activate_waypoint(input_coord_waypoint)
+            input_coord_waypoint = input_coord_path.new_waypoint("input_coord_wpt", character.input_coord)
+            character.motion.activate_path(input_coord_path)
             character.animation.activate_scene(ball_scene)
             character.event_handler.register_event(
-                character.event_handler.Event.WAYPOINT_COMPLETE,
-                input_coord_waypoint,
+                character.event_handler.Event.PATH_COMPLETE,
+                input_coord_path,
                 character.event_handler.Action.ACTIVATE_SCENE,
                 final_scene,
             )
