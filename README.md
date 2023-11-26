@@ -178,7 +178,7 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 Any effects shown below are in development and will be available in the next release.
 
 #### Crumble
-![crumble_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed42fed9-47c8-4caa-ad44-e482366a9c25)
+![crumble_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/b052ff86-2920-4067-8a47-2713c43257cc)
 
 #### Rings
 ![rings_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2d97ba47-bf85-4727-9257-45a5b2a9dddd)
