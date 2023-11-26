@@ -118,9 +118,33 @@ class BlackholeEffect:
             starting_scn.add_frame(star_symbol, 1, color=star_color)
             character.animation.activate_scene(starting_scn)
             if character not in self.blackhole_chars:
-                character.motion.set_coordinate(self.terminal.random_coord())
+                starfield_coord = self.terminal.random_coord()
+                character.motion.set_coordinate(starfield_coord)
+                if starfield_coord.row > self.terminal.output_area.center_row:
+                    if starfield_coord.column in range(
+                        round(self.terminal.output_area.right * 0.4), round(self.terminal.output_area.right * 0.7)
+                    ):
+                        # if within the top center 40% of the screen
+                        control_point = motion.Coord(self.terminal.output_area.center.column, starfield_coord.row)
+                    else:
+                        control_point = motion.Coord(starfield_coord.column, self.terminal.output_area.center_row)
+
+                elif starfield_coord.row < self.terminal.output_area.center_row:
+                    if starfield_coord.column in range(
+                        round(self.terminal.output_area.right * 0.4), round(self.terminal.output_area.right * 0.7)
+                    ):
+                        # if within the bottom center 40% of the screen
+                        control_point = motion.Coord(self.terminal.output_area.center.column, starfield_coord.row)
+                    else:
+                        control_point = motion.Coord(starfield_coord.column, self.terminal.output_area.center_row)
+                else:
+                    control_point = self.terminal.output_area.center
                 singularity_path = character.motion.new_path("singularity", speed=0.3, ease=easing.in_expo)
-                singularity_wpt = singularity_path.new_waypoint("singularity", self.terminal.output_area.center)
+                singularity_wpt = singularity_path.new_waypoint(
+                    "singularity",
+                    self.terminal.output_area.center,
+                    bezier_control=control_point,
+                )
                 consumed_scn = character.animation.new_scene("consumed")
                 for color in gradient_map[star_color]:
                     consumed_scn.add_frame(star_symbol, 1, color=color)
