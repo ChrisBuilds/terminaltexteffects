@@ -31,9 +31,11 @@
  * graphics.Animation.random_color() is now a static method.
  * motion.Motion.find_coords_in_circle() now generates 7*radius coords in each inner-circle.
  * BlackholeEffect uses chain_paths() and benefits from better circle support for a much improved blackhole animation.
+ * BlackholeEffect singularity Paths are curved towards center lines.
  * EventHandler.Event.WAYPOINT_REACHED removed and split into two events, PATH_HOLDING and PATH_COMPLETE.
  * EventHandler.Event.PATH_COMPLETE is triggered when the final Path Waypoint is reached AND holding time reaches 0.
  * Fireworks effect uses Paths and curves to create a more realistic firework explosion.
+ * Crumble effect uses control points to create a curved vacuuming phase.
 
 ### Bug Fixes
  * Fixed looping animations when synced to Path not resetting properly.
