@@ -94,13 +94,11 @@ class RowSlide:
                     )
                 else:
                     character.motion.set_coordinate(motion.Coord(0, character.input_coord.row))
-                input_coord_wpt = character.motion.new_waypoint(
-                    "input_coord",
-                    character.input_coord,
-                    speed=self.args.movement_speed,
-                    ease=self.args.easing,
+                input_coord_path = character.motion.new_path(
+                    "input_coord", speed=self.args.movement_speed, ease=self.args.easing
                 )
-                character.motion.activate_waypoint(input_coord_wpt)
+                input_coord_path.new_waypoint("input_coord", character.input_coord)
+                character.motion.activate_path(input_coord_path)
 
     def get_next_row(self) -> list[EffectCharacter]:
         """Gets the next row of characters to animate.

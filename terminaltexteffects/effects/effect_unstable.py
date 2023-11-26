@@ -113,15 +113,10 @@ class UnstableEffect:
             jumbled_coord = character_coords.pop(random.randint(0, len(character_coords) - 1))
             self.jumbled_coords[character] = jumbled_coord
             character.motion.set_coordinate(jumbled_coord)
-            explosion_wpt = character.motion.new_waypoint(
-                "explosion", motion.Coord(col, row), speed=0.75, ease=self.args.explosion_ease
-            )
-            reassembly_wpt = character.motion.new_waypoint(
-                "reassembly",
-                character.input_coord,
-                speed=0.75,
-                ease=self.args.reassembly_ease,
-            )
+            explosion_path = character.motion.new_path("explosion", speed=0.75, ease=self.args.explosion_ease)
+            explosion_wpt = explosion_path.new_waypoint("explosion", motion.Coord(col, row))
+            reassembly_path = character.motion.new_path("reassembly", speed=0.75, ease=self.args.reassembly_ease)
+            reassembly_wpt = reassembly_path.new_waypoint("reassembly", character.input_coord)
             unstable_gradient = graphics.Gradient(self.args.initial_color, self.args.unstable_color, 25)
             rumble_scn = character.animation.new_scene("rumble")
             for step in unstable_gradient:
@@ -133,27 +128,29 @@ class UnstableEffect:
             character.animation.activate_scene(rumble_scn)
             character.is_active = True
 
-    def move_all_to_waypoint(self, waypoint_id) -> None:
+    def move_all_to_waypoint(self, path_id) -> None:
         for character in self.terminal.characters:
-            if waypoint_id == "reassembly":
+            if path_id == "reassembly":
                 character.animation.activate_scene(character.animation.scenes["final"])
             self.animating_chars.append(character)
-            character.motion.activate_waypoint(character.motion.waypoints[waypoint_id])
+            character.motion.activate_path(character.motion.paths[path_id])
         while self.animating_chars:
             self.terminal.print()
             self.animate_chars()
-            if waypoint_id == "reassembly":
+            if path_id == "reassembly":
                 self.animating_chars = [
                     animating_char
                     for animating_char in self.animating_chars
-                    if not animating_char.motion.current_coord == animating_char.motion.waypoints[waypoint_id].coord
+                    if not animating_char.motion.current_coord
+                    == animating_char.motion.paths[path_id].waypoints[0].coord
                     or not animating_char.animation.active_scene_is_complete()
                 ]
             else:
                 self.animating_chars = [
                     animating_char
                     for animating_char in self.animating_chars
-                    if not animating_char.motion.current_coord == animating_char.motion.waypoints[waypoint_id].coord
+                    if not animating_char.motion.current_coord
+                    == animating_char.motion.paths[path_id].waypoints[0].coord
                 ]
 
     def rumble(self) -> None:

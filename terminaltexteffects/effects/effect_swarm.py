@@ -124,60 +124,54 @@ class SwarmEffect:
                 for _, swarm_area_coords in swarm_area_coordinate_map.items():
                     swarm_area_name = f"{swarm_area_count}_swarm_area"
                     swarm_area_count += 1
-                    origin_wpt = character.motion.new_waypoint(
-                        swarm_area_name,
-                        random.choice(swarm_area_coords),
-                        speed=0.25,
-                        ease=easing.out_sine,
+                    origin_path = character.motion.new_path(swarm_area_name, speed=0.25, ease=easing.out_sine)
+                    origin_wpt = origin_path.new_waypoint(swarm_area_name, random.choice(swarm_area_coords))
+                    character.event_handler.register_event(
+                        EventHandler.Event.PATH_ACTIVATED, origin_path, EventHandler.Action.ACTIVATE_SCENE, flash_scn
                     )
                     character.event_handler.register_event(
-                        EventHandler.Event.WAYPOINT_ACTIVATED, origin_wpt, EventHandler.Action.ACTIVATE_SCENE, flash_scn
+                        EventHandler.Event.PATH_ACTIVATED, origin_path, EventHandler.Action.SET_LAYER, 1
                     )
                     character.event_handler.register_event(
-                        EventHandler.Event.WAYPOINT_ACTIVATED, origin_wpt, EventHandler.Action.SET_LAYER, 1
-                    )
-                    character.event_handler.register_event(
-                        EventHandler.Event.WAYPOINT_COMPLETE,
-                        origin_wpt,
+                        EventHandler.Event.PATH_COMPLETE,
+                        origin_path,
                         EventHandler.Action.DEACTIVATE_SCENE,
                         flash_scn,
                     )
-                    inner_waypoints = 0
-                    total_inner_waypoints = 2
-                    while inner_waypoints < total_inner_waypoints:
+                    inner_paths = 0
+                    total_inner_paths = 2
+                    while inner_paths < total_inner_paths:
                         next_coord = random.choice(swarm_area_coords)
-                        inner_waypoints += 1
-                        character.motion.new_waypoint(
-                            str(len(character.motion.waypoints)),
-                            next_coord,
-                            speed=0.1,
-                            ease=easing.in_out_sine,
+                        inner_paths += 1
+                        inner_path = character.motion.new_path(
+                            str(len(character.motion.paths)), speed=0.1, ease=easing.in_out_sine
                         )
+                        inner_path.new_waypoint(str(len(character.motion.paths)), next_coord)
                 # create landing waypoint and scene
-                input_wpt = character.motion.new_waypoint(
-                    "input_coord", character.input_coord, speed=0.3, ease=easing.in_out_quad
-                )
+                input_path = character.motion.new_path("input_coord", speed=0.3, ease=easing.in_out_quad)
+                input_wpt = input_path.new_waypoint("input_coord", character.input_coord)
                 input_scn = character.animation.new_scene("input")
                 for step in final_gradient:
                     input_scn.add_frame(character.input_symbol, 3, color=step)
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_COMPLETE, input_wpt, EventHandler.Action.ACTIVATE_SCENE, input_scn
+                    EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.ACTIVATE_SCENE, input_scn
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_COMPLETE, input_wpt, EventHandler.Action.SET_LAYER, 0
+                    EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.SET_LAYER, 0
                 )
                 # create flash effect when moving between waypoints
                 character.event_handler.register_event(
-                    EventHandler.Event.WAYPOINT_ACTIVATED, input_wpt, EventHandler.Action.ACTIVATE_SCENE, flash_scn
+                    EventHandler.Event.PATH_ACTIVATED, input_path, EventHandler.Action.ACTIVATE_SCENE, flash_scn
                 )
                 # chain waypoints
-                last_wpt = None
-                for wpt in character.motion.waypoints.values():
-                    if last_wpt:
-                        character.event_handler.register_event(
-                            EventHandler.Event.WAYPOINT_COMPLETE, last_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, wpt
-                        )
-                    last_wpt = wpt
+                character.motion.chain_paths(list(character.motion.paths.values()))
+                # last_wpt = None
+                # for wpt in character.motion.waypoints.values():
+                #     if last_wpt:
+                #         character.event_handler.register_event(
+                #             EventHandler.Event.WAYPOINT_COMPLETE, last_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, wpt
+                #         )
+                #     last_wpt = wpt
 
     def run(self) -> None:
         """Runs the effect."""
@@ -190,7 +184,7 @@ class SwarmEffect:
                 current_swarm = self.swarms.pop()
                 active_swarm_area = "0_swarm_area"
                 for character in current_swarm:
-                    character.motion.activate_waypoint(character.motion.waypoints["0_swarm_area"])
+                    character.motion.activate_path(character.motion.paths["0_swarm_area"])
                     character.is_active = True
                     self.animating_chars.append(character)
             self.terminal.print()
@@ -200,15 +194,15 @@ class SwarmEffect:
             if current_swarm:
                 for character in current_swarm:
                     if (
-                        character.motion.active_waypoint
-                        and character.motion.active_waypoint.waypoint_id != active_swarm_area
-                        and "swarm_area" in character.motion.active_waypoint.waypoint_id
-                        and int(character.motion.active_waypoint.waypoint_id[0]) > int(active_swarm_area[0])
+                        character.motion.active_path
+                        and character.motion.active_path.path_id != active_swarm_area
+                        and "swarm_area" in character.motion.active_path.path_id
+                        and int(character.motion.active_path.path_id[0]) > int(active_swarm_area[0])
                     ):
-                        active_swarm_area = character.motion.active_waypoint.waypoint_id
+                        active_swarm_area = character.motion.active_path.path_id
                         for other in current_swarm:
                             if other is not character and random.random() < (self.args.swarm_coordination / 100):
-                                other.motion.activate_waypoint(other.motion.waypoints[active_swarm_area])
+                                other.motion.activate_path(other.motion.paths[active_swarm_area])
                         break
 
             # remove completed chars from animating chars

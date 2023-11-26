@@ -138,17 +138,15 @@ class SprayEffect:
 
         for character in self.terminal.characters:
             character.motion.set_coordinate(spray_origin_map[self.spray_position])
-            input_coord_wpt = character.motion.new_waypoint(
-                "input_coord",
-                character.input_coord,
-                speed=self.args.movement_speed,
-                ease=self.args.easing,
+            input_coord_path = character.motion.new_path(
+                "input_coord", speed=self.args.movement_speed, ease=self.args.easing
+            )
+            input_coord_wpt = input_coord_path.new_waypoint("input_coord", character.input_coord)
+            character.event_handler.register_event(
+                EventHandler.Event.PATH_ACTIVATED, input_coord_path, EventHandler.Action.SET_LAYER, 1
             )
             character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_ACTIVATED, input_coord_wpt, EventHandler.Action.SET_LAYER, 1
-            )
-            character.event_handler.register_event(
-                EventHandler.Event.WAYPOINT_COMPLETE, input_coord_wpt, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
             )
             if self.spray_colors:
                 droplet_scn = character.animation.new_scene("droplet")
@@ -157,7 +155,7 @@ class SprayEffect:
                 for color in spray_gradient:
                     droplet_scn.add_frame(character.input_symbol, 40, color=color)
                 character.animation.activate_scene(droplet_scn)
-            character.motion.activate_waypoint(input_coord_wpt)
+            character.motion.activate_path(input_coord_path)
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
 

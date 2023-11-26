@@ -68,26 +68,22 @@ class VerticalSlice:
                 character.motion.set_coordinate(
                     motion.Coord(character.input_coord.column, self.terminal.output_area.top)
                 )
-                input_coord_wpt = character.motion.new_waypoint(
-                    "input_coord",
-                    character.input_coord,
-                    speed=self.args.movement_speed,
-                    ease=self.args.easing,
+                input_coord_path = character.motion.new_path(
+                    "input_coord", speed=self.args.movement_speed, ease=self.args.easing
                 )
-                character.motion.activate_waypoint(input_coord_wpt)
+                input_coord_wpt = input_coord_path.new_waypoint("input_coord", character.input_coord)
+                character.motion.activate_path(input_coord_path)
             opposite_row = self.rows[-(row_index + 1)]
             right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
             for character in right_half:
                 character.motion.set_coordinate(
                     motion.Coord(character.input_coord.column, self.terminal.output_area.bottom)
                 )
-                input_coord_wpt = character.motion.new_waypoint(
-                    "input_coord",
-                    character.input_coord,
-                    speed=self.args.movement_speed,
-                    ease=self.args.easing,
+                input_coord_path = character.motion.new_path(
+                    "input_coord", speed=self.args.movement_speed, ease=self.args.easing
                 )
-                character.motion.activate_waypoint(input_coord_wpt)
+                input_coord_wpt = input_coord_path.new_waypoint("input_coord", character.input_coord)
+                character.motion.activate_path(input_coord_path)
             new_row.extend(left_half)
             new_row.extend(right_half)
             self.new_rows.append(new_row)

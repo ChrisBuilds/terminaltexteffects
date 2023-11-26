@@ -66,13 +66,12 @@ class RowMergeEffect:
             for character in row:
                 character.is_active = False
                 character.motion.set_coordinate(motion.Coord(column, character.input_coord.row))
-                input_coord_wpt = character.motion.new_waypoint(
-                    "input_coord",
-                    character.input_coord,
-                    speed=self.args.movement_speed,
-                    ease=self.args.easing,
+
+                input_coord_path = character.motion.new_path(
+                    "input_coord", speed=self.args.movement_speed, ease=self.args.easing
                 )
-                character.motion.activate_waypoint(input_coord_wpt)
+                input_coord_path.new_waypoint("input_coord", character.input_coord)
+                character.motion.activate_path(input_coord_path)
             self.rows.append(row)
 
     def run(self) -> None:
