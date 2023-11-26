@@ -96,6 +96,7 @@ class CrumbleEffect:
                     self.terminal.output_area.center_column,
                     round(self.terminal.output_area.top * random.uniform(0.1, 0.3)),
                 ),
+                bezier_control=motion.Coord(self.terminal.output_area.center_column, 1),
             )
             top_vac_path = character.motion.new_path("top_vac", speed=0.3)
             top_vac_wpt = top_vac_path.new_waypoint(
@@ -107,7 +108,9 @@ class CrumbleEffect:
             )
             top_path = character.motion.new_path("top", speed=0.3, ease=easing.out_quint)
             top_wpt = top_path.new_waypoint(
-                "top", motion.Coord(character.input_coord.column, self.terminal.output_area.top)
+                "top",
+                motion.Coord(character.input_coord.column, self.terminal.output_area.top),
+                bezier_control=motion.Coord(self.terminal.output_area.center_column, self.terminal.output_area.top),
             )
             # set up reset stage
             input_path = character.motion.new_path("input", speed=0.3)
