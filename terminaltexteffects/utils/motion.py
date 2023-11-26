@@ -56,6 +56,10 @@ class Segment:
     end: Waypoint
     distance: float
 
+    def __post_init__(self) -> None:
+        self.enter_event_triggered: bool = False
+        self.exit_event_triggered: bool = False
+
     def get_coord_on_segment(self, distance_factor: float) -> Coord:
         """Returns the coordinate at the given distance along the segment.
 
@@ -164,7 +168,7 @@ class Path:
         self.segments.append(Segment(self.waypoints[-2], waypoint, distance_from_previous))
         self.max_steps = round(self.total_distance / self.speed)
 
-    def step(self) -> Coord:
+    def step(self, event_handler: "base_character.EventHandler") -> Coord:
         """Progresses to the next step along the path and returns the coordinate at that step."""
         if not self.max_steps or self.current_step >= self.max_steps or not self.total_distance:
             # if the path has zero distance or there are no more steps, return the coordinate of the final waypoint in the path
@@ -181,8 +185,14 @@ class Path:
         for segment in self.segments:
             if distance_to_travel <= segment.distance:
                 active_segment = segment
+                if not segment.enter_event_triggered:
+                    segment.enter_event_triggered = True
+                    event_handler.handle_event(event_handler.Event.SEGMENT_ENTERED, segment.end)
                 break
             distance_to_travel -= segment.distance
+            if not segment.exit_event_triggered:
+                segment.exit_event_triggered = True
+                event_handler.handle_event(event_handler.Event.SEGMENT_EXITED, segment.end)
         else:  # if the distance_to_travel is further than the last waypoint, preserve the distance from the start of the final segment
             active_segment = self.segments[-1]
             distance_to_travel += active_segment.distance
@@ -476,6 +486,9 @@ class Motion:
         self.active_path.current_step = 0
         self.active_path.hold_time_remaining = self.active_path.hold_time
         self.active_path.max_steps = round(self.active_path.total_distance / self.active_path.speed)
+        for segment in self.active_path.segments:
+            segment.enter_event_triggered = False
+            segment.exit_event_triggered = False
         if self.active_path.layer is not None:
             self.character.layer = self.active_path.layer
         self.character.event_handler.handle_event(self.character.event_handler.Event.PATH_ACTIVATED, self.active_path)
@@ -496,7 +509,7 @@ class Motion:
 
         if not self.active_path or not self.active_path.segments:
             return
-        self.current_coord = self.active_path.step()
+        self.current_coord = self.active_path.step(self.character.event_handler)
         if self.active_path.current_step == self.active_path.max_steps:
             if self.active_path.hold_time and self.active_path.hold_time_remaining == self.active_path.hold_time:
                 self.character.event_handler.handle_event(
