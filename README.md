@@ -111,7 +111,7 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 
 ## Examples
 #### Fireworks
-![fireworks_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/af5929b0-43e4-4ebd-80ec-32fd0deec7f8)
+![fireworks_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/e3788e25-758b-43e1-827f-42066fb29f91)
 
 #### Rain
 ![rain_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed94a21f-503d-46f3-8510-7a1e83b28314)
