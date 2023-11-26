@@ -520,7 +520,7 @@ class Motion:
             elif self.active_path.hold_time_remaining:
                 self.active_path.hold_time_remaining -= 1
                 return
-            if self.active_path.loop:
+            if self.active_path.loop and len(self.active_path.segments) > 1:
                 looping_path = self.active_path
                 self.deactivate_path(self.active_path)
                 self.activate_path(looping_path)
