@@ -3,29 +3,37 @@
 ## Unreleased
 
 ### New Features
+ * New effect, Vhstape. Lines of characters glitch left and right and lose detail like an old VHS tape.
  * New effect, Crumble. Characters lose color and fall as dust before being vacuumed up and rebuilt.
  * New effect, Rings. Characters are dispersed throughout the output area and form into spinning rings.
- * motion.Motion.chain_waypoints(list[Waypoints]) will automatically register waypoints with the EventHandler to create
-   a chain of waypoints. Looping is supported.
+ * motion.Motion.chain_paths(list[Paths]) will automatically register Paths with the EventHandler to create
+   a chain of paths. Looping is supported.
  * motion.Motion.find_coords_in_rect() will return a random selection of coordinates within a rectangular area. This is faster than using
    find_coords_in_circle() and should be used when the shape of the search area isn't important.
  * Terminal.OutputArea.coord_in_output_area() can be used to determine if a Coord is in the output area.
- * New EventHandler.Event WAYPOINT_HOLDING is triggered when a waypoint enters the holding state.
+ * Paths have replaced Waypoints as the motion target specification object. Paths group Waypoints together and allow for easing
+   motion and animations across an arbitrary number of Waypoints. Single Waypoint Paths are supported and function the same as
+   Waypoints did previously. Paths can be looped with the loop argument. 
+ * Quadratic bezier curves are supported. Control points are specified in the Waypoint object signature. When a control point
+   is specified, motion will be curved from the prior Waypoint to the Waypoint with the control point, using the control point
+   to determine the curve. Curves are supported within Paths.
+ * New EventHandler.Event PATH_HOLDING is triggered when a Path enters the holding state.
  * New EventHandler.Action SET_CHARACTER_ACTIVATION_STATE can be used to modify the character activation state based on events.
  * New EventHandler.Action SET_COORDINATE can be used to set the character's current_coordinate attribute.
- * Waypoints have a layer attribute that can be used to automatically adjust the character's layer when the waypoint is activated.
-   Has no effect when waypoint.layer is None, defaults to None.
+ * Paths have a layer attribute that can be used to automatically adjust the character's layer when the Path is activated.
+   Has no effect when Path.layer is None, defaults to None.
 
 
 ### Changes
  * graphics.Animation.random_color() is now a static method.
  * motion.Motion.find_coords_in_circle() now generates 7*radius coords in each inner-circle.
- * BlackholeEffect uses chain_waypoints() and benefits from better circle support for a much improved blackhole animation.
- * EventHandler.Event.WAYPOINT_REACHED removed and split into two events, WAYPOINT_HOLDING and WAYPOINT_COMPLETE.
- * EventHandler.Event.WAYPOINT_COMPLETE is triggered when a waypoint is reached AND holding time reaches 0.
+ * BlackholeEffect uses chain_paths() and benefits from better circle support for a much improved blackhole animation.
+ * EventHandler.Event.WAYPOINT_REACHED removed and split into two events, PATH_HOLDING and PATH_COMPLETE.
+ * EventHandler.Event.PATH_COMPLETE is triggered when the final Path Waypoint is reached AND holding time reaches 0.
+ * Fireworks effect uses Paths and curves to create a more realistic firework explosion.
 
 ### Bug Fixes
- * Fixed looping animations when synced to waypoint not resetting properly.
+ * Fixed looping animations when synced to Path not resetting properly.
 
 
 ## 0.4.3
