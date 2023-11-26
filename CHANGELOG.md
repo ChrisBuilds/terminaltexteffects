@@ -22,6 +22,9 @@
  * New EventHandler.Action SET_COORDINATE can be used to set the character's current_coordinate attribute.
  * Paths have a layer attribute that can be used to automatically adjust the character's layer when the Path is activated.
    Has no effect when Path.layer is None, defaults to None.
+ * New EventHandler.Events SEGMENT_ENTERED and SEGMENT_EXITED. These events are triggered when a character enters or exits a segment
+   in a Path. The segment is specified using the end Waypoint of the segment. These events will only be called one time for each run
+   through the Path. Looping Paths will reset these events to be called again. 
 
 
 ### Changes
