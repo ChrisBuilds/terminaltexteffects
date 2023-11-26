@@ -89,28 +89,30 @@ class CrumbleEffect:
                 weaken_scn.add_frame(character.input_symbol, 6, color=color_step)
 
             # set up vacuuming stage
-            bottom_vac_path = character.motion.new_path("bottom_vac", speed=0.3, ease=easing.in_quint)
-            bottom_vac_wpt = bottom_vac_path.new_waypoint(
-                "bottom_vac",
-                motion.Coord(
-                    self.terminal.output_area.center_column,
-                    round(self.terminal.output_area.top * random.uniform(0.1, 0.3)),
-                ),
-                bezier_control=motion.Coord(self.terminal.output_area.center_column, 1),
-            )
-            top_vac_path = character.motion.new_path("top_vac", speed=0.3)
-            top_vac_wpt = top_vac_path.new_waypoint(
-                "top_vac",
-                motion.Coord(
-                    self.terminal.output_area.center_column,
-                    round(self.terminal.output_area.top * random.uniform(0.7, 0.9)),
-                ),
-            )
+            # bottom_vac_path = character.motion.new_path("bottom_vac", speed=0.3, ease=easing.in_quint)
+            # bottom_vac_wpt = bottom_vac_path.new_waypoint(
+            #     "bottom_vac",
+            #     motion.Coord(
+            #         self.terminal.output_area.center_column,
+            #         round(self.terminal.output_area.top * random.uniform(0.1, 0.3)),
+            #     ),
+            #     bezier_control=motion.Coord(self.terminal.output_area.center_column, 1),
+            # )
+            # top_vac_path = character.motion.new_path("top_vac", speed=0.3)
+            # top_vac_wpt = top_vac_path.new_waypoint(
+            #     "top_vac",
+            #     motion.Coord(
+            #         self.terminal.output_area.center_column,
+            #         round(self.terminal.output_area.top * random.uniform(0.7, 0.9)),
+            #     ),
+            # )
             top_path = character.motion.new_path("top", speed=0.3, ease=easing.out_quint)
             top_wpt = top_path.new_waypoint(
                 "top",
                 motion.Coord(character.input_coord.column, self.terminal.output_area.top),
-                bezier_control=motion.Coord(self.terminal.output_area.center_column, self.terminal.output_area.top),
+                bezier_control=motion.Coord(
+                    self.terminal.output_area.center_column, self.terminal.output_area.center_row
+                ),
             )
             # set up reset stage
             input_path = character.motion.new_path("input", speed=0.3)
@@ -134,12 +136,12 @@ class CrumbleEffect:
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.ACTIVATE_SCENE, dust_scn
             )
-            character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, bottom_vac_path, EventHandler.Action.ACTIVATE_PATH, top_vac_path
-            )
-            character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, top_vac_path, EventHandler.Action.ACTIVATE_PATH, top_path
-            )
+            # character.event_handler.register_event(
+            #     EventHandler.Event.PATH_COMPLETE, bottom_vac_path, EventHandler.Action.ACTIVATE_PATH, top_vac_path
+            # )
+            # character.event_handler.register_event(
+            #     EventHandler.Event.PATH_COMPLETE, top_vac_path, EventHandler.Action.ACTIVATE_PATH, top_path
+            # )
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
                 input_path,
@@ -166,6 +168,8 @@ class CrumbleEffect:
         reset = False
         fall_group_maxsize = 1
         stage = "falling"
+        unvacuumed_chars = list(self.terminal.characters)
+        random.shuffle(unvacuumed_chars)
         self.terminal.print()
         while stage != "complete":
             if stage == "falling":
@@ -190,11 +194,12 @@ class CrumbleEffect:
                 if not self.pending_chars and not self.animating_chars:
                     stage = "vacuuming"
             elif stage == "vacuuming":
-                if not vacuumed:
-                    for character in self.terminal.characters:
-                        character.motion.activate_path(character.motion.paths["bottom_vac"])
-                        self.animating_chars.append(character)
-                    vacuumed = True
+                if unvacuumed_chars:
+                    for _ in range(random.randint(3, 10)):
+                        if unvacuumed_chars:
+                            next_char = unvacuumed_chars.pop(0)
+                            next_char.motion.activate_path(next_char.motion.paths["top"])
+                            self.animating_chars.append(next_char)
                 if not self.animating_chars:
                     stage = "resetting"
 
