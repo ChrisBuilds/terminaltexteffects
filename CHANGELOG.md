@@ -14,7 +14,7 @@
  * Paths have replaced Waypoints as the motion target specification object. Paths group Waypoints together and allow for easing
    motion and animations across an arbitrary number of Waypoints. Single Waypoint Paths are supported and function the same as
    Waypoints did previously. Paths can be looped with the loop argument. 
- * Quadratic bezier curves are supported. Control points are specified in the Waypoint object signature. When a control point
+ * Quadratic and Cubic bezier curves are supported. Control points are specified in the Waypoint object signature. When a control point
    is specified, motion will be curved from the prior Waypoint to the Waypoint with the control point, using the control point
    to determine the curve. Curves are supported within Paths.
  * New EventHandler.Event PATH_HOLDING is triggered when a Path enters the holding state.
