@@ -84,7 +84,7 @@ class RainEffect:
             raindrop_color = random.choice(rain_colors)
             rain_scn = character.animation.new_scene("rain")
             rain_scn.add_frame(random.choice(rain_characters), 1, color=raindrop_color)
-            raindrop_gradient = graphics.Gradient(raindrop_color, self.args.final_color, 7)
+            raindrop_gradient = graphics.Gradient([raindrop_color, self.args.final_color], 7)
             fade_scn = character.animation.new_scene("fade")
             for color in raindrop_gradient:
                 fade_scn.add_frame(character.input_symbol, 5, color=color)

@@ -88,8 +88,8 @@ class SwarmEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by creating swarms of characters and setting waypoints and animations."""
         self.make_swarms()
-        final_gradient = graphics.Gradient(self.args.base_color, self.args.final_color, 10)
-        swarm_gradient = graphics.Gradient(self.args.base_color, self.args.flash_color, 7)
+        final_gradient = graphics.Gradient([self.args.base_color, self.args.final_color], 10)
+        swarm_gradient = graphics.Gradient([self.args.base_color, self.args.flash_color], 7)
         flash_list = [self.args.flash_color for _ in range(10)]
         swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
         for swarm in self.swarms:

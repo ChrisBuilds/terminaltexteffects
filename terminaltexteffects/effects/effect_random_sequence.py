@@ -63,7 +63,7 @@ class RandomSequence:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
-        self.fade_in = graphics.Gradient(args.fade_startcolor, args.fade_endcolor, 10)
+        self.fade_in = graphics.Gradient([args.fade_startcolor, args.fade_endcolor], 10)
 
     def prepare_data(self) -> None:
         for character in self.terminal.characters:

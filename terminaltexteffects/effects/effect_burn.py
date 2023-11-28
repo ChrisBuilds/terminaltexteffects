@@ -69,8 +69,8 @@ class BurnEffect:
             "▜",
             "▀",
         ]
-        fire_gradient = graphics.Gradient("ffffff", self.args.flame_color, 12)
-        burned_gradient = graphics.Gradient(self.args.flame_color, self.args.burned_color, 7)
+        fire_gradient = graphics.Gradient(["ffffff", self.args.flame_color], 12)
+        burned_gradient = graphics.Gradient([self.args.flame_color, self.args.burned_color], 7)
         groups = self.terminal.input_by_column()
         for column in groups.values():
             column.reverse()
@@ -85,13 +85,13 @@ class BurnEffect:
             construct_scn = next_char.animation.new_scene("construct")
             g_start = 0
             for _, block in enumerate(vertical_build_order[:5]):
-                for color in fire_gradient.colors[g_start : g_start + 3]:
+                for color in fire_gradient.spectrum[g_start : g_start + 3]:
                     construct_scn.add_frame(block, 30, color=color)
                 g_start += 2
 
             g_start = 0
             for _, block in enumerate(vertical_build_order[4:]):
-                for color in burned_gradient.colors[g_start : g_start + 3]:
+                for color in burned_gradient.spectrum[g_start : g_start + 3]:
                     construct_scn.add_frame(block, 30, color=color)
                 g_start += 2
 

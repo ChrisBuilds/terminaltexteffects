@@ -87,10 +87,10 @@ class BlackholeEffect:
             "⬦",
             "⬥",
         ]
-        starfield_colors = graphics.Gradient("4a4a4d", "ffffff", 6).colors
+        starfield_colors = graphics.Gradient(["4a4a4d", "ffffff"], 6).spectrum
         gradient_map = {}
         for color in starfield_colors:
-            gradient_map[color] = graphics.Gradient(color, "000000", 10)
+            gradient_map[color] = graphics.Gradient([color, "000000"], 10)
         available_chars = list(self.terminal.characters)
         while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
             self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
@@ -210,7 +210,7 @@ class BlackholeEffect:
             explode_star_color = random.choice(star_colors)
             explode_scn.add_frame(character.input_symbol, 1, color=explode_star_color)
             cooling_scn = character.animation.new_scene("cooling")
-            cooling_gradient = graphics.Gradient(explode_star_color, self.args.final_color, 10)
+            cooling_gradient = graphics.Gradient([explode_star_color, self.args.final_color], 10)
             for color in cooling_gradient:
                 cooling_scn.add_frame(character.input_symbol, 20, color=color)
             character.event_handler.register_event(

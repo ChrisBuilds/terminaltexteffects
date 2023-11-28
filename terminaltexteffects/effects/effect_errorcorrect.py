@@ -93,8 +93,8 @@ class ErrorCorrectEffect:
             character.animation.activate_scene(spawn_scene)
             character.is_active = True
         all_characters: list[EffectCharacter] = list(self.terminal.characters)
-        correcting_gradient = graphics.Gradient(self.args.error_color, self.args.correct_color, 10)
-        final_gradient = graphics.Gradient(self.args.correct_color, self.args.final_color, 10)
+        correcting_gradient = graphics.Gradient([self.args.error_color, self.args.correct_color], 10)
+        final_gradient = graphics.Gradient([self.args.correct_color, self.args.final_color], 10)
         block_symbol = "▓"
         block_wipe_start = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
         block_wipe_end = ("▇", "▆", "▅", "▄", "▃", "▂", "▁")

@@ -170,7 +170,7 @@ class FireworksEffect:
                 bloom_scn.add_frame(character.input_symbol, 1, color=shell_color)
                 # fall scene
                 fall_scn = character.animation.new_scene("fall")
-                fall_gradient = graphics.Gradient(shell_color, self.args.final_color, 15)
+                fall_gradient = graphics.Gradient([shell_color, self.args.final_color], 15)
                 for color in fall_gradient:
                     fall_scn.add_frame(character.input_symbol, 15, color=color)
                 character.animation.activate_scene(launch_scn)

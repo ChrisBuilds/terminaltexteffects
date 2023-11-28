@@ -151,7 +151,7 @@ class SprayEffect:
             if self.spray_colors:
                 droplet_scn = character.animation.new_scene("droplet")
                 spray_color = random.choice(self.spray_colors)
-                spray_gradient = graphics.Gradient(spray_color, self.final_color, 7)
+                spray_gradient = graphics.Gradient([spray_color, self.final_color], 7)
                 for color in spray_gradient:
                     droplet_scn.add_frame(character.input_symbol, 40, color=color)
                 character.animation.activate_scene(droplet_scn)
