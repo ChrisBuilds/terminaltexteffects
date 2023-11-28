@@ -36,6 +36,7 @@
  * EventHandler.Event.PATH_COMPLETE is triggered when the final Path Waypoint is reached AND holding time reaches 0.
  * Fireworks effect uses Paths and curves to create a more realistic firework explosion.
  * Crumble effect uses control points to create a curved vacuuming phase.
+ * graphics.Gradient accepts an arbitrary number of color stops. The number of steps applies between each color stop.
 
 ### Bug Fixes
  * Fixed looping animations when synced to Path not resetting properly.
