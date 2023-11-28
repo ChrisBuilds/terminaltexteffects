@@ -31,10 +31,10 @@ class Waypoint:
 
     waypoint_id: str
     coord: Coord
-    bezier_control: tuple[Coord, ...] | None = None
+    bezier_control: tuple[Coord, ...] | Coord | None = None
 
     def __post_init__(self) -> None:
-        if self.bezier_control and not isinstance(self.bezier_control, tuple):
+        if self.bezier_control and isinstance(self.bezier_control, Coord):
             self.bezier_control = (self.bezier_control,)
 
     def __eq__(self, other: typing.Any) -> bool:
@@ -132,7 +132,7 @@ class Path:
         waypoint_id: str,
         coord: Coord,
         *,
-        bezier_control: tuple[Coord, ...] | None = None,
+        bezier_control: tuple[Coord, ...] | Coord | None = None,
     ) -> Waypoint:
         """Creates a new Waypoint and appends adds it to the Path.
 
@@ -333,8 +333,10 @@ class Motion:
         return Coord(round(next_column), round(next_row))
 
     @staticmethod
-    def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Coord, t: float) -> Coord:
+    def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord, t: float) -> Coord:
         """Finds points on a quadratic or cubic bezier curve."""
+        if isinstance(control, Coord):
+            control = (control,)
         if len(control) == 1:
             control1 = control[0]
             x = (1 - t) ** 2 * start.column + 2 * (1 - t) * t * control1.column + t**2 * end.column
@@ -363,7 +365,7 @@ class Motion:
         return Coord(round(x), round(y))
 
     @staticmethod
-    def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Coord) -> float:
+    def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord) -> float:
         """Finds the length of a quadratic or cubic bezier curve."""
         length = 0.0
         prev_coord = start
