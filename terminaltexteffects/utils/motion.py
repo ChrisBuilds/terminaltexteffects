@@ -263,11 +263,9 @@ class Motion:
         return points
 
     @staticmethod
-    def find_coords_in_circle(origin: Coord, radius: int, num_points: int) -> list[Coord]:
-        """Finds points that fall within a circle with the given origin and radius. Points are
-        chosen randomly from available points. There are likely to be duplicate points. There will
-        definitely be duplicate points if the number of points requested is greater than the number
-        of points available.
+    def find_coords_in_circle(origin: Coord, radius: int) -> list[Coord]:
+        """Finds points that fall within a circle with the given origin and radius. Duplicate points
+        after rounding are removed.
 
         Args:
             origin (Coord): origin of the circle
@@ -278,36 +276,33 @@ class Motion:
             list[Coord]: list of Coord points in the circle
         """
         points: list[Coord] = []
-        selected_points: list[Coord] = []
         for i in range(1, radius + 1):
             points.extend(set((Motion.find_coords_on_circle(origin, i, 7 * radius))))
-        while points and len(selected_points) < num_points:
-            selected_points.append(random.choice(points))
-        return selected_points
+        points = list(set(points))
+        return points
 
     @staticmethod
-    def find_coords_in_rect(origin: Coord, max_distance: int, num_coords: int) -> list[Coord]:
-        """Find coords that fall within a rectangle with the given origin and max_distance
-        from the origin. Distance is approximate and may be slightly further than max_distance.
+    def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
+        """Find coords that fall within a rectangle with the given origin and distance
+        from the origin. Distance specifies the number of units in each direction from the origin.
+        Final width = 2 * distance + 1, final height = 2 * distance + 1.
 
         Args:
             origin (Coord): center of the rectangle
-            max_distance (int): maximum distance from the origin
-            num_coords (int): number of coords to find
+            distance (int): distance from the origin
 
         Returns:
             list[Coord]: list of Coord points in the rectangle
         """
-        left_boundary = origin.column - max_distance
-        right_boundary = origin.column + max_distance
-        top_boundary = origin.row - max_distance
-        bottom_boundary = origin.row + max_distance
+        left_boundary = origin.column - distance
+        right_boundary = origin.column + distance
+        top_boundary = origin.row - distance
+        bottom_boundary = origin.row + distance
         coords: list[Coord] = []
-        while len(coords) < num_coords:
-            column = random.randint(left_boundary, right_boundary)
-            row = random.randint(top_boundary, bottom_boundary)
-            if Coord(column, row) not in coords:
+        for column in range(left_boundary, right_boundary + 1):
+            for row in range(top_boundary, bottom_boundary + 1):
                 coords.append(Coord(column, row))
+
         return coords
 
     @staticmethod
