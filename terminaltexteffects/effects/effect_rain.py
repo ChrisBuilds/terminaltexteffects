@@ -50,7 +50,7 @@ Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.valid_speed,
-        default=0.5,
+        default=0.15,
         metavar="(float > 0)",
         help="Falling speed of the rain drops. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
     )
