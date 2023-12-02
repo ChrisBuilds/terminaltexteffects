@@ -88,8 +88,8 @@ class SwarmEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by creating swarms of characters and setting waypoints and animations."""
         self.make_swarms()
-        final_gradient = graphics.Gradient(self.args.base_color, self.args.final_color, 10)
-        swarm_gradient = graphics.Gradient(self.args.base_color, self.args.flash_color, 7)
+        final_gradient = graphics.Gradient([self.args.base_color, self.args.final_color], 10)
+        swarm_gradient = graphics.Gradient([self.args.base_color, self.args.flash_color], 7)
         flash_list = [self.args.flash_color for _ in range(10)]
         swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
         for swarm in self.swarms:
@@ -109,9 +109,7 @@ class SwarmEffect:
                     swarm_areas.append(area)
                     # swarm area radius is a function of the terminal size, approximately 1/4 of the smallest dimension
                     swarm_area_coordinate_map[area] = motion.Motion.find_coords_in_circle(
-                        area,
-                        max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 6, 1),
-                        self.swarm_size,
+                        area, max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 6, 1)
                     )
 
             # assign characters waypoints for swarm areas and inner waypoints within the swarm areas

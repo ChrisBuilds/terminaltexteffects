@@ -94,8 +94,8 @@ class MiddleoutEffect:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
-        self.center_gradient = graphics.Gradient(self.args.starting_color, self.args.center_expand_color, 10)
-        self.full_gradient = graphics.Gradient(self.args.center_expand_color, self.args.full_expand_color, 10)
+        self.center_gradient = graphics.Gradient([self.args.starting_color, self.args.center_expand_color], 10)
+        self.full_gradient = graphics.Gradient([self.args.center_expand_color, self.args.full_expand_color], 10)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect."""

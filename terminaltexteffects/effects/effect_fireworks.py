@@ -110,9 +110,7 @@ class FireworksEffect:
                     min_row = self.terminal.output_area.bottom
                 origin_y = random.randrange(min_row, self.terminal.output_area.top + 1)
                 origin_coord = motion.Coord(origin_x, origin_y)
-                explode_waypoint_coords = motion.Motion.find_coords_in_circle(
-                    origin_coord, self.explode_distance, self.firework_volume
-                )
+                explode_waypoint_coords = motion.Motion.find_coords_in_circle(origin_coord, self.explode_distance)
             character.motion.set_coordinate(motion.Coord(origin_x, self.terminal.output_area.bottom))
             apex_path = character.motion.new_path("apex_pth", speed=0.2, ease=easing.out_expo)
             apex_wpt = apex_path.new_waypoint("apex_wpt", origin_coord)
@@ -170,7 +168,7 @@ class FireworksEffect:
                 bloom_scn.add_frame(character.input_symbol, 1, color=shell_color)
                 # fall scene
                 fall_scn = character.animation.new_scene("fall")
-                fall_gradient = graphics.Gradient(shell_color, self.args.final_color, 15)
+                fall_gradient = graphics.Gradient([shell_color, self.args.final_color], 15)
                 for color in fall_gradient:
                     fall_scn.add_frame(character.input_symbol, 15, color=color)
                 character.animation.activate_scene(launch_scn)

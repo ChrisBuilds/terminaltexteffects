@@ -87,10 +87,10 @@ class BlackholeEffect:
             "⬦",
             "⬥",
         ]
-        starfield_colors = graphics.Gradient("4a4a4d", "ffffff", 6).colors
+        starfield_colors = graphics.Gradient(["4a4a4d", "ffffff"], 6).spectrum
         gradient_map = {}
         for color in starfield_colors:
-            gradient_map[color] = graphics.Gradient(color, "000000", 10)
+            gradient_map[color] = graphics.Gradient([color, "000000"], 10)
         available_chars = list(self.terminal.characters)
         while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
             self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
@@ -118,9 +118,33 @@ class BlackholeEffect:
             starting_scn.add_frame(star_symbol, 1, color=star_color)
             character.animation.activate_scene(starting_scn)
             if character not in self.blackhole_chars:
-                character.motion.set_coordinate(self.terminal.random_coord())
+                starfield_coord = self.terminal.random_coord()
+                character.motion.set_coordinate(starfield_coord)
+                if starfield_coord.row > self.terminal.output_area.center_row:
+                    if starfield_coord.column in range(
+                        round(self.terminal.output_area.right * 0.4), round(self.terminal.output_area.right * 0.7)
+                    ):
+                        # if within the top center 40% of the screen
+                        control_point = motion.Coord(self.terminal.output_area.center.column, starfield_coord.row)
+                    else:
+                        control_point = motion.Coord(starfield_coord.column, self.terminal.output_area.center_row)
+
+                elif starfield_coord.row < self.terminal.output_area.center_row:
+                    if starfield_coord.column in range(
+                        round(self.terminal.output_area.right * 0.4), round(self.terminal.output_area.right * 0.7)
+                    ):
+                        # if within the bottom center 40% of the screen
+                        control_point = motion.Coord(self.terminal.output_area.center.column, starfield_coord.row)
+                    else:
+                        control_point = motion.Coord(starfield_coord.column, self.terminal.output_area.center_row)
+                else:
+                    control_point = self.terminal.output_area.center
                 singularity_path = character.motion.new_path("singularity", speed=0.3, ease=easing.in_expo)
-                singularity_wpt = singularity_path.new_waypoint("singularity", self.terminal.output_area.center)
+                singularity_wpt = singularity_path.new_waypoint(
+                    "singularity",
+                    self.terminal.output_area.center,
+                    bezier_control=control_point,
+                )
                 consumed_scn = character.animation.new_scene("consumed")
                 for color in gradient_map[star_color]:
                     consumed_scn.add_frame(star_symbol, 1, color=color)
@@ -186,7 +210,7 @@ class BlackholeEffect:
             explode_star_color = random.choice(star_colors)
             explode_scn.add_frame(character.input_symbol, 1, color=explode_star_color)
             cooling_scn = character.animation.new_scene("cooling")
-            cooling_gradient = graphics.Gradient(explode_star_color, self.args.final_color, 10)
+            cooling_gradient = graphics.Gradient([explode_star_color, self.args.final_color], 10)
             for color in cooling_gradient:
                 cooling_scn.add_frame(character.input_symbol, 20, color=color)
             character.event_handler.register_event(

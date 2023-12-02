@@ -31,7 +31,11 @@ class Waypoint:
 
     waypoint_id: str
     coord: Coord
-    bezier_control: Coord | None = None
+    bezier_control: tuple[Coord, ...] | Coord | None = None
+
+    def __post_init__(self) -> None:
+        if self.bezier_control and isinstance(self.bezier_control, Coord):
+            self.bezier_control = (self.bezier_control,)
 
     def __eq__(self, other: typing.Any) -> bool:
         if not isinstance(other, Waypoint):
@@ -70,7 +74,7 @@ class Segment:
             Coord: Coordinate at the given distance.
         """
         if self.start.bezier_control:
-            return Motion.find_coord_on_curve(
+            return Motion.find_coord_on_bezier_curve(
                 self.start.coord,
                 self.start.bezier_control,
                 self.end.coord,
@@ -128,7 +132,7 @@ class Path:
         waypoint_id: str,
         coord: Coord,
         *,
-        bezier_control: Coord | None = None,
+        bezier_control: tuple[Coord, ...] | Coord | None = None,
     ) -> Waypoint:
         """Creates a new Waypoint and appends adds it to the Path.
 
@@ -156,7 +160,7 @@ class Path:
             return
 
         if waypoint.bezier_control:
-            distance_from_previous = Motion.find_length_of_curve(
+            distance_from_previous = Motion.find_length_of_bezier_curve(
                 self.waypoints[-2].coord, waypoint.bezier_control, waypoint.coord
             )
         else:
@@ -200,7 +204,7 @@ class Path:
         segment_distance_to_travel_factor = distance_to_travel / active_segment.distance
 
         if active_segment.end.bezier_control:
-            next_coord = Motion.find_coord_on_curve(
+            next_coord = Motion.find_coord_on_bezier_curve(
                 active_segment.start.coord,
                 active_segment.end.bezier_control,
                 active_segment.end.coord,
@@ -259,11 +263,9 @@ class Motion:
         return points
 
     @staticmethod
-    def find_coords_in_circle(origin: Coord, radius: int, num_points: int) -> list[Coord]:
-        """Finds points that fall within a circle with the given origin and radius. Points are
-        chosen randomly from available points. There are likely to be duplicate points. There will
-        definitely be duplicate points if the number of points requested is greater than the number
-        of points available.
+    def find_coords_in_circle(origin: Coord, radius: int) -> list[Coord]:
+        """Finds points that fall within a circle with the given origin and radius. Duplicate points
+        after rounding are removed.
 
         Args:
             origin (Coord): origin of the circle
@@ -274,36 +276,33 @@ class Motion:
             list[Coord]: list of Coord points in the circle
         """
         points: list[Coord] = []
-        selected_points: list[Coord] = []
         for i in range(1, radius + 1):
             points.extend(set((Motion.find_coords_on_circle(origin, i, 7 * radius))))
-        while points and len(selected_points) < num_points:
-            selected_points.append(random.choice(points))
-        return selected_points
+        points = list(set(points))
+        return points
 
     @staticmethod
-    def find_coords_in_rect(origin: Coord, max_distance: int, num_coords: int) -> list[Coord]:
-        """Find coords that fall within a rectangle with the given origin and max_distance
-        from the origin. Distance is approximate and may be slightly further than max_distance.
+    def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
+        """Find coords that fall within a rectangle with the given origin and distance
+        from the origin. Distance specifies the number of units in each direction from the origin.
+        Final width = 2 * distance + 1, final height = 2 * distance + 1.
 
         Args:
             origin (Coord): center of the rectangle
-            max_distance (int): maximum distance from the origin
-            num_coords (int): number of coords to find
+            distance (int): distance from the origin
 
         Returns:
             list[Coord]: list of Coord points in the rectangle
         """
-        left_boundary = origin.column - max_distance
-        right_boundary = origin.column + max_distance
-        top_boundary = origin.row - max_distance
-        bottom_boundary = origin.row + max_distance
+        left_boundary = origin.column - distance
+        right_boundary = origin.column + distance
+        top_boundary = origin.row - distance
+        bottom_boundary = origin.row + distance
         coords: list[Coord] = []
-        while len(coords) < num_coords:
-            column = random.randint(left_boundary, right_boundary)
-            row = random.randint(top_boundary, bottom_boundary)
-            if Coord(column, row) not in coords:
+        for column in range(left_boundary, right_boundary + 1):
+            for row in range(top_boundary, bottom_boundary + 1):
                 coords.append(Coord(column, row))
+
         return coords
 
     @staticmethod
@@ -329,10 +328,28 @@ class Motion:
         return Coord(round(next_column), round(next_row))
 
     @staticmethod
-    def find_coord_on_curve(start: Coord, control: Coord, end: Coord, t: float) -> Coord:
-        """Finds points on a quadratic bezier curve with a single control point."""
-        x = (1 - t) ** 2 * start.column + 2 * (1 - t) * t * control.column + t**2 * end.column
-        y = (1 - t) ** 2 * start.row + 2 * (1 - t) * t * control.row + t**2 * end.row
+    def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord, t: float) -> Coord:
+        """Finds points on a quadratic or cubic bezier curve."""
+        if isinstance(control, Coord):
+            control = (control,)
+        if len(control) == 1:
+            control1 = control[0]
+            x = (1 - t) ** 2 * start.column + 2 * (1 - t) * t * control1.column + t**2 * end.column
+            y = (1 - t) ** 2 * start.row + 2 * (1 - t) * t * control1.row + t**2 * end.row
+        elif len(control) == 2:
+            control1, control2 = control
+            x = (
+                (1 - t) ** 3 * start.column
+                + 3 * (1 - t) ** 2 * t * control1.column
+                + 3 * (1 - t) * t**2 * control2.column
+                + t**3 * end.column
+            )
+            y = (
+                (1 - t) ** 3 * start.row
+                + 3 * (1 - t) ** 2 * t * control1.row
+                + 3 * (1 - t) * t**2 * control2.row
+                + t**3 * end.row
+            )
         return Coord(round(x), round(y))
 
     @staticmethod
@@ -343,12 +360,12 @@ class Motion:
         return Coord(round(x), round(y))
 
     @staticmethod
-    def find_length_of_curve(start: Coord, control: Coord, end: Coord) -> float:
-        """Finds the length of a quadratic bezier curve."""
+    def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord) -> float:
+        """Finds the length of a quadratic or cubic bezier curve."""
         length = 0.0
         prev_coord = start
         for t in range(1, 10):
-            coord = Motion.find_coord_on_curve(start, control, end, t / 10)
+            coord = Motion.find_coord_on_bezier_curve(start, control, end, t / 10)
             length += Motion.find_length_of_line(prev_coord, coord)
             prev_coord = coord
             prev_coord = coord
@@ -467,7 +484,7 @@ class Motion:
         self.active_path = path
         first_waypoint = self.active_path.waypoints[0]
         if first_waypoint.bezier_control:
-            distance_to_first_waypoint = self.find_length_of_curve(
+            distance_to_first_waypoint = self.find_length_of_bezier_curve(
                 self.current_coord, first_waypoint.bezier_control, first_waypoint.coord
             )
         else:
@@ -520,7 +537,7 @@ class Motion:
             elif self.active_path.hold_time_remaining:
                 self.active_path.hold_time_remaining -= 1
                 return
-            if self.active_path.loop:
+            if self.active_path.loop and len(self.active_path.segments) > 1:
                 looping_path = self.active_path
                 self.deactivate_path(self.active_path)
                 self.activate_path(looping_path)

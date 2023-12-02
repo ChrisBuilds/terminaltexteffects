@@ -65,12 +65,12 @@ class CrumbleEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by registering events and building scenes/waypoints."""
-        strengthen_flash_gradient = graphics.Gradient(self.args.final_color, "ffffff", 6)
-        strengthen_gradient = graphics.Gradient("ffffff", self.args.final_color, 9)
+        strengthen_flash_gradient = graphics.Gradient([self.args.final_color, "ffffff"], 6)
+        strengthen_gradient = graphics.Gradient(["ffffff", self.args.final_color], 9)
 
         for character in self.terminal.characters:
             dust_color = random.choice(self.args.dust_colors)
-            weaken_gradient = graphics.Gradient(self.args.initial_color, dust_color, 9)
+            weaken_gradient = graphics.Gradient([self.args.initial_color, dust_color], 9)
             character.is_active = True
             # set up initial and falling stage
             initial_scn = character.animation.new_scene("initial")

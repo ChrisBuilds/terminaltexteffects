@@ -91,19 +91,21 @@ class Ring:
         self.character_last_ring_path: dict[EffectCharacter, motion.Path] = {}
         self.rotations = 0
         self.rotation_speed = random.uniform(0.2, 0.5)
-        self.gradient = self.make_gradient(ring_color, "ffffff", max(len(self.counter_clockwise_coords) // 3, 1))
+        self.gradient = graphics.Gradient(
+            [ring_color, "ffffff", ring_color], max(len(self.counter_clockwise_coords) // 3, 1)
+        )
         self.gradient_shift = 0
-        self.disperse_gradient = graphics.Gradient(self.ring_color, base_color, 7)
+        self.disperse_gradient = graphics.Gradient([self.ring_color, base_color], 7)
 
     def make_gradient(self, start_color: str, end_color: str, steps: int) -> list[str]:
-        gradient = graphics.Gradient(start_color, end_color, steps)
+        gradient = graphics.Gradient([start_color, end_color], steps)
         full_gradient = list(gradient) + list(gradient)[::-1]
         return full_gradient
 
     def add_character(self, character: EffectCharacter, clockwise: int) -> None:
         # make gradient scene
         gradient_scn = character.animation.new_scene("gradient", is_looping=True)
-        for step in self.gradient[self.gradient_shift :] + self.gradient[: self.gradient_shift]:
+        for step in self.gradient.spectrum[self.gradient_shift :] + self.gradient.spectrum[: self.gradient_shift]:
             gradient_scn.add_frame(character.input_symbol, 1, color=step)
         self.gradient_shift += 1
         # make rotation waypoints
@@ -135,11 +137,13 @@ class Ring:
         Returns:
             motion.Path: the Path to follow.
         """
-        disperse_coords = motion.Motion.find_coords_in_rect(origin, self.ring_gap, 5)
+        disperse_coords = motion.Motion.find_coords_in_rect(origin, self.ring_gap)
         character.motion.paths.pop("disperse", None)
         disperse_path = character.motion.new_path("disperse", speed=0.1, loop=True)
-        for coord in disperse_coords:
-            disperse_path.new_waypoint(str(len(disperse_path.waypoints)), coord)
+        for _ in range(5):
+            disperse_path.new_waypoint(
+                str(len(disperse_path.waypoints)), disperse_coords[random.randrange(0, len(disperse_coords))]
+            )
         return disperse_path
 
     def disperse(self) -> None:
@@ -232,15 +236,13 @@ class RingsEffect:
                 external_wpt = external_path.new_waypoint("external", self.terminal.random_coord(outside_scope=True))
                 # make disperse gradient
                 color = random.choice(self.args.ring_colors)
-                disperse_gradient_front = graphics.Gradient(self.args.base_color, color, 7)
-                disperse_gradient_back = graphics.Gradient(color, self.args.base_color, 7)
+                disperse_gradient = graphics.Gradient([self.args.base_color, color, self.args.base_color], 7)
                 disperse_scn = character.animation.new_scene(
                     "disperse", is_looping=False, sync=graphics.SyncMetric.DISTANCE
                 )
-                for step in disperse_gradient_front:
+                for step in disperse_gradient:
                     disperse_scn.add_frame(character.input_symbol, 2, color=step)
-                for step in disperse_gradient_back:
-                    disperse_scn.add_frame(character.input_symbol, 2, color=step)
+
                     self.non_ring_chars.append(character)
                     character.event_handler.register_event(
                         EventHandler.Event.PATH_COMPLETE,

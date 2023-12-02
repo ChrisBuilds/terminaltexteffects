@@ -134,7 +134,7 @@ class Bubble:
                 sheen_scene.add_frame(character.input_symbol, 1, color=self.effect.args.bubble_color)
                 character.animation.activate_scene(sheen_scene)
         else:
-            rainbow_gradient = list(self.effect.rainbow_gradient.colors)
+            rainbow_gradient = list(self.effect.rainbow_gradient.spectrum)
             gradient_offset = 0
             for character in self.characters:
                 sheen_scene = character.animation.new_scene("sheen")
@@ -197,20 +197,11 @@ class BubblesEffect:
         blue = "487de7"
         indigo = "4b369d"
         violet = "70369d"
-        red_orange = graphics.Gradient(red, orange, 5)
-        orange_yellow = graphics.Gradient(orange, yellow, 5)
-        yellow_green = graphics.Gradient(yellow, green, 5)
-        green_blue = graphics.Gradient(green, blue, 5)
-        blue_indigo = graphics.Gradient(blue, indigo, 5)
-        indigo_violet = graphics.Gradient(indigo, violet, 5)
-        violet_red = graphics.Gradient(violet, red, 5)
-        self.rainbow_gradient = (
-            red_orange + orange_yellow + yellow_green + green_blue + blue_indigo + indigo_violet + violet_red
-        )
+        self.rainbow_gradient = graphics.Gradient([red, orange, yellow, green, blue, indigo, violet], 5)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
-        final_gradient = graphics.Gradient(self.args.pop_color, self.args.final_color, 10)
+        final_gradient = graphics.Gradient([self.args.pop_color, self.args.final_color], 10)
         for character in self.terminal.characters:
             character.layer = 1
             pop_1_scene = character.animation.new_scene("pop_1")

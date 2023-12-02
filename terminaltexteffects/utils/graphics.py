@@ -4,6 +4,7 @@ import typing
 import random
 from enum import Enum, auto
 from dataclasses import dataclass
+import itertools
 
 from terminaltexteffects.utils import ansitools, colorterm, hexterm, motion, easing
 
@@ -32,19 +33,18 @@ class Gradient:
     Args:
         start_color (str|int): RGB hex color string or XTerm-256 color code
         end_color (str|int): RGB hex color string or XTerm-256 color code
-        steps (int): Number of intermediate colors to calculate
+        stops (int): Number of intermediate colors to calculate
 
     Attributes:
         colors (list[str]): List (length=steps + 2) of RGB hex color strings
 
     """
 
-    start_color: str | int
-    end_color: str | int
+    stops: list[int | str]
     steps: int
 
     def __post_init__(self) -> None:
-        self.colors: list[str] = self._generate()
+        self.spectrum: list[str] = self._generate()
         self.index: int = 0
 
     def _generate(self) -> list[str]:
@@ -53,47 +53,52 @@ class Gradient:
         Returns:
             list[str]: List (length=steps + 2) of RGB hex color strings
         """
-        # Convert start_color to hex if it's an XTerm-256 color code
-        if isinstance(self.start_color, int):
-            self.start_color = hexterm.xterm_to_hex(self.start_color)
-        # Convert end_color to hex if it's an XTerm-256 color code
-        if isinstance(self.end_color, int):
-            self.end_color = hexterm.xterm_to_hex(self.end_color)
-        # Convert start_color to a list of RGB values
-        start_color_ints = colorterm._hex_to_int(self.start_color)
-        # Convert end_color to a list of RGB values
-        end_color_ints = colorterm._hex_to_int(self.end_color)
-        # Initialize an empty list to store the gradient colors
-        gradient_colors: list[str] = []
-        # Calculate the color deltas for each RGB value
-        red_delta = (end_color_ints[0] - start_color_ints[0]) // self.steps
-        green_delta = (end_color_ints[1] - start_color_ints[1]) // self.steps
-        blue_delta = (end_color_ints[2] - start_color_ints[2]) // self.steps
-        # Calculate the intermediate colors and add them to the gradient colors list
-        for i in range(max(self.steps - 1, 0)):
-            red = start_color_ints[0] + (red_delta * i)
-            green = start_color_ints[1] + (green_delta * i)
-            blue = start_color_ints[2] + (blue_delta * i)
+        if len(self.stops) < 2:
+            raise ValueError("Gradient must have at least 2 stops.")
+        spectrum: list[str] = []
+        color_pairs = itertools.pairwise(self.stops)
+        for start, end in color_pairs:
+            # Convert start_color to hex if it's an XTerm-256 color code
+            if isinstance(start, int):
+                start = hexterm.xterm_to_hex(start)
+            # Convert end_color to hex if it's an XTerm-256 color code
+            if isinstance(end, int):
+                end = hexterm.xterm_to_hex(end)
+            # Convert start_color to a list of RGB values
+            start_color_ints = colorterm._hex_to_int(start)
+            # Convert end_color to a list of RGB values
+            end_color_ints = colorterm._hex_to_int(end)
+            # Initialize an empty list to store the gradient colors
+            gradient_colors: list[str] = []
+            # Calculate the color deltas for each RGB value
+            red_delta = (end_color_ints[0] - start_color_ints[0]) // self.steps
+            green_delta = (end_color_ints[1] - start_color_ints[1]) // self.steps
+            blue_delta = (end_color_ints[2] - start_color_ints[2]) // self.steps
+            # Calculate the intermediate colors and add them to the gradient colors list
+            for i in range(max(self.steps - 1, 0)):
+                red = start_color_ints[0] + (red_delta * i)
+                green = start_color_ints[1] + (green_delta * i)
+                blue = start_color_ints[2] + (blue_delta * i)
 
-            # Ensure that the RGB values are within the valid range of 0-255
-            red = max(0, min(red, 255))
-            green = max(0, min(green, 255))
-            blue = max(0, min(blue, 255))
+                # Ensure that the RGB values are within the valid range of 0-255
+                red = max(0, min(red, 255))
+                green = max(0, min(green, 255))
+                blue = max(0, min(blue, 255))
 
-            # Convert the RGB values to a hex color string and add it to the gradient colors list
-            gradient_colors.append(f"{red:02x}{green:02x}{blue:02x}")
-        # Add the end color to the gradient colors list
-        gradient_colors.append(self.end_color)
-        # Return the list of gradient colors
-        return gradient_colors
+                # Convert the RGB values to a hex color string and add it to the gradient colors list
+                gradient_colors.append(f"{red:02x}{green:02x}{blue:02x}")
+            # Add the end color to the gradient colors list
+            gradient_colors.append(end)
+            spectrum.extend(gradient_colors)
+        return spectrum
 
     def __iter__(self) -> "Gradient":
         self.index = 0
         return self
 
     def __next__(self) -> str:
-        if self.index < len(self.colors):
-            color = self.colors[self.index]
+        if self.index < len(self.spectrum):
+            color = self.spectrum[self.index]
             self.index += 1
             return color
         else:
@@ -102,11 +107,10 @@ class Gradient:
     def __add__(self, other: "Gradient") -> "Gradient":
         if not isinstance(other, Gradient):
             return NotImplemented
-        new_gradient = Gradient("ffffff", "ffffff", 1)
-        new_gradient.colors = self.colors + other.colors
+        new_gradient = Gradient(["ffffff", "ffffff"], 1)
+        new_gradient.spectrum = self.spectrum + other.spectrum
         new_gradient.steps = self.steps + other.steps
-        new_gradient.start_color = self.start_color
-        new_gradient.end_color = other.end_color
+        new_gradient.stops = self.stops + other.stops
         return new_gradient
 
 
@@ -316,9 +320,9 @@ class Scene:
         if not self.frames:
             return
         else:
-            gradient = Gradient(start_color, end_color, len(self.frames))
+            gradient = Gradient([start_color, end_color], len(self.frames))
             for i, frame in enumerate(self.frames):
-                frame.character_visual.color = gradient.colors[i]
+                frame.character_visual.color = gradient.spectrum[i]
                 frame.character_visual.format_symbol()
 
     def get_next_symbol(self) -> str:

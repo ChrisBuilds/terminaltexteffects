@@ -91,7 +91,7 @@ class BouncyBallsEffect:
             ball_scene = character.animation.new_scene("ball")
             ball_scene.add_frame(symbol, 1, color=color)
             final_scene = character.animation.new_scene("final")
-            for step in graphics.Gradient(color, self.args.final_color, 12):
+            for step in graphics.Gradient([color, self.args.final_color], 12):
                 final_scene.add_frame(
                     character.input_symbol,
                     10,
