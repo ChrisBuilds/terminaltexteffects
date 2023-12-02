@@ -37,6 +37,7 @@
  * Fireworks effect uses Paths and curves to create a more realistic firework explosion.
  * Crumble effect uses control points to create a curved vacuuming phase.
  * graphics.Gradient accepts an arbitrary number of color stops. The number of steps applies between each color stop.
+ * motion.find_coords_in_circle() and motion.find_coords_in_rect() no longer take a num_points argument. All points in the area are returned.
 
 ### Bug Fixes
  * Fixed looping animations when synced to Path not resetting properly.
