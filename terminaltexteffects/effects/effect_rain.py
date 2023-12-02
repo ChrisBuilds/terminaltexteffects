@@ -30,7 +30,7 @@ Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
         "--animation-rate",
         type=argtypes.valid_animationrate,
         default=0.01,
-        help="Time, in seconds, between animation steps.",
+        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--rain-colors",
@@ -52,7 +52,7 @@ Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
         type=argtypes.valid_speed,
         default=0.15,
         metavar="(float > 0)",
-        help="Falling speed of the rain drops. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Falling speed of the rain drops.",
     )
     effect_parser.add_argument(
         "--easing",

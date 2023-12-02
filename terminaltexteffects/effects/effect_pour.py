@@ -30,7 +30,7 @@ Example: terminaltexteffects pour -a 0.004 --pour-direction down""",
         "--animation-rate",
         type=argtypes.valid_animationrate,
         default=0.004,
-        help="Time, in seconds, between animation steps.",
+        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--pour-direction",

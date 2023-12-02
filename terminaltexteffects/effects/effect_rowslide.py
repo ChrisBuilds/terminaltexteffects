@@ -27,7 +27,7 @@ Example: terminaltexteffects rowslide -a 0.003 --slide-direction left""",
         "--animation-rate",
         type=argtypes.valid_animationrate,
         default=0.01,
-        help="Time, in seconds, between animation steps.",
+        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--row-gap",
