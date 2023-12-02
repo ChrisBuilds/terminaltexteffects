@@ -97,7 +97,6 @@ class Ring:
         self.gradient_shift = 0
         self.disperse_gradient = graphics.Gradient([self.ring_color, base_color], 7)
 
-    # todo: use new gradient stuff and maybe remove white part of rings and use solid color
     def make_gradient(self, start_color: str, end_color: str, steps: int) -> list[str]:
         gradient = graphics.Gradient([start_color, end_color], steps)
         full_gradient = list(gradient) + list(gradient)[::-1]
@@ -138,11 +137,13 @@ class Ring:
         Returns:
             motion.Path: the Path to follow.
         """
-        disperse_coords = motion.Motion.find_coords_in_rect(origin, self.ring_gap, 5)
+        disperse_coords = motion.Motion.find_coords_in_rect(origin, self.ring_gap)
         character.motion.paths.pop("disperse", None)
         disperse_path = character.motion.new_path("disperse", speed=0.1, loop=True)
-        for coord in disperse_coords:
-            disperse_path.new_waypoint(str(len(disperse_path.waypoints)), coord)
+        for _ in range(5):
+            disperse_path.new_waypoint(
+                str(len(disperse_path.waypoints)), disperse_coords[random.randrange(0, len(disperse_coords))]
+            )
         return disperse_path
 
     def disperse(self) -> None:

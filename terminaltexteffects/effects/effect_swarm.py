@@ -109,9 +109,7 @@ class SwarmEffect:
                     swarm_areas.append(area)
                     # swarm area radius is a function of the terminal size, approximately 1/4 of the smallest dimension
                     swarm_area_coordinate_map[area] = motion.Motion.find_coords_in_circle(
-                        area,
-                        max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 6, 1),
-                        self.swarm_size,
+                        area, max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 6, 1)
                     )
 
             # assign characters waypoints for swarm areas and inner waypoints within the swarm areas
