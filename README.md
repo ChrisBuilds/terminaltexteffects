@@ -50,6 +50,8 @@ Note: Windows Terminal performance is slow for some effects.
 
 
 ```pip install terminaltexteffects```
+OR
+```pipx install terminaltexteffects```
 
 ## Usage
 ```cat your_text | tte <effect> [options]```
