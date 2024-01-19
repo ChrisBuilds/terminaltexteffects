@@ -139,7 +139,7 @@ class Path:
         Args:
             waypoint_id (str): unique identifier for the waypoint
             coord (Coord): coordinate
-            bezier_control (Coord | None): coordinate of the control point for a bezier curve. Defaults to None.
+            bezier_control (tuple[Coord, ...] | Coord | None): coordinate of the control point for a bezier curve. Defaults to None.
 
         Returns:
             Waypoint: The new waypoint.
@@ -329,7 +329,20 @@ class Motion:
 
     @staticmethod
     def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord, t: float) -> Coord:
-        """Finds points on a quadratic or cubic bezier curve."""
+        """
+        Finds points on a quadratic or cubic bezier curve.
+
+        Args:
+            start (Coord): The starting coordinate of the curve.
+            control (tuple[Coord, ...] | Coord): The control point(s) of the curve.
+                For a quadratic bezier curve, a single control point is expected.
+                For a cubic bezier curve, two control points are expected.
+            end (Coord): The ending coordinate of the curve.
+            t (float): The parameter value between 0 and 1 that determines the position on the curve.
+
+        Returns:
+            Coord: The coordinate on the bezier curve corresponding to the given parameter value.
+        """
         if isinstance(control, Coord):
             control = (control,)
         if len(control) == 1:
@@ -354,14 +367,34 @@ class Motion:
 
     @staticmethod
     def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
-        """Finds points on a line."""
+        """
+        Finds points on a line.
+
+        Args:
+            start (Coord): The starting coordinate of the line.
+            end (Coord): The ending coordinate of the line.
+            t (float): The parameter value between 0 and 1 representing the position on the line.
+
+        Returns:
+            Coord: The coordinate on the line corresponding to the given parameter value.
+        """
         x = (1 - t) * start.column + t * end.column
         y = (1 - t) * start.row + t * end.row
         return Coord(round(x), round(y))
 
     @staticmethod
     def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord) -> float:
-        """Finds the length of a quadratic or cubic bezier curve."""
+        """
+        Finds the length of a quadratic or cubic bezier curve.
+
+        Args:
+            start (Coord): The starting coordinate of the curve.
+            control (tuple[Coord, ...] | Coord): The control point(s) of the curve.
+            end (Coord): The ending coordinate of the curve.
+
+        Returns:
+            float: The length of the bezier curve.
+        """
         length = 0.0
         prev_coord = start
         for t in range(1, 10):
