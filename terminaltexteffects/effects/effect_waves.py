@@ -77,11 +77,11 @@ class WavesEffect:
         """Prepares the data for the effect by creating the wave animations."""
         block_wipe_start = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
         block_wipe_end = ("▇", "▆", "▅", "▄", "▃", "▂", "▁")
-        wave_gradient_light = graphics.Gradient(self.args.wave_shallow_color, self.args.wave_deep_color, 8)
-        wave_gradient_dark = graphics.Gradient(self.args.wave_deep_color, self.args.wave_shallow_color, 8)
+        wave_gradient_light = graphics.Gradient([self.args.wave_shallow_color, self.args.wave_deep_color], 8)
+        wave_gradient_dark = graphics.Gradient([self.args.wave_deep_color, self.args.wave_shallow_color], 8)
         wave_gradient = list(wave_gradient_light) + list(wave_gradient_dark)[1:]
         colored_waves = list(zip(block_wipe_start + block_wipe_end, wave_gradient))
-        final_gradient = graphics.Gradient(self.args.wave_shallow_color, self.args.final_color, 8)
+        final_gradient = graphics.Gradient([self.args.wave_shallow_color, self.args.final_color], 8)
         for character in self.terminal.characters:
             wave_scn = character.animation.new_scene("wave")
             wave_scn.ease = self.args.wave_easing
