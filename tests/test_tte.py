@@ -24,6 +24,7 @@ from terminaltexteffects.effects import (
     effect_crumble,
     effect_rings,
     effect_vhstape,
+    effect_waves,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -64,6 +65,19 @@ def make_args() -> Namespace:
     args.movement_speed = 3
     args.easing = easing.in_sine
     return args
+
+
+def test_waves_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.wave_deep_color = "4651e3"
+        args.wave_shallow_color = "57FB92"
+        args.final_color = "80F7E6"
+        args.wave_count = 6
+        args.wave_easing = easing.in_out_sine
+        terminal = Terminal(input_data, args)
+        waves_effect = effect_waves.WavesEffect(terminal, args)
+        waves_effect.run()
 
 
 def test_vhstape_effect() -> None:
