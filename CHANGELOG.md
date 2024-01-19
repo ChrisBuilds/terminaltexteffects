@@ -3,6 +3,14 @@
 ## Unreleased
 
 ### New Features
+
+### Changes
+
+### Bug Fixes
+
+## 0.5.0
+
+### New Features
  * New effect, Vhstape. Lines of characters glitch left and right and lose detail like an old VHS tape.
  * New effect, Crumble. Characters lose color and fall as dust before being vacuumed up and rebuilt.
  * New effect, Rings. Characters are dispersed throughout the output area and form into spinning rings.
