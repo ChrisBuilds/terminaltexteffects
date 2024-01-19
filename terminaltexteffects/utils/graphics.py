@@ -31,9 +31,8 @@ class Gradient:
     can be interated over to get the next color in the gradient color list.
 
     Args:
-        start_color (str|int): RGB hex color string or XTerm-256 color code
-        end_color (str|int): RGB hex color string or XTerm-256 color code
-        stops (int): Number of intermediate colors to calculate
+        stops list[str]: List of RGB hex color string or XTerm-256 color codes. Each stop will have steps number of frames between it and the next stop.
+        steps (int): Number of intermediate colors to calculate
 
     Attributes:
         colors (list[str]): List (length=steps + 2) of RGB hex color strings
