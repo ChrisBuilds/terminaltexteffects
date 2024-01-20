@@ -7,7 +7,8 @@
 ### Changes
 
 ### Bug Fixes
-
+ * Fixed rare division by zero error in Path.step() when the final segment has a distance of zero and the distance to travel exceeds
+   the total distance of the Path.
 ## 0.5.0
 
 ### New Features
