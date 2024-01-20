@@ -99,7 +99,7 @@ class Path:
 
     Attributes:
         path_id (str): The unique identifier for the path.
-        speed (float): speed
+        speed (float): speed > 0
         ease (Callable | None): easing function for character movement. Defaults to None.
         layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
         hold_time (int): number of animation steps to hold the character at the end of the path. Defaults to 0.
@@ -126,6 +126,8 @@ class Path:
         self.hold_time_remaining = self.hold_time
         self.last_distance_reached: float = 0  # used for animation syncing to distance
         self.origin_segment: Segment | None = None
+        if self.speed <= 0:
+            raise ValueError(f"({self.speed=}) Speed must be greater than 0.")
 
     def new_waypoint(
         self,
@@ -200,8 +202,10 @@ class Path:
         else:  # if the distance_to_travel is further than the last waypoint, preserve the distance from the start of the final segment
             active_segment = self.segments[-1]
             distance_to_travel += active_segment.distance
-
-        segment_distance_to_travel_factor = distance_to_travel / active_segment.distance
+        if active_segment.distance == 0:
+            segment_distance_to_travel_factor = 0
+        else:
+            segment_distance_to_travel_factor = distance_to_travel / active_segment.distance
 
         if active_segment.end.bezier_control:
             next_coord = Motion.find_coord_on_bezier_curve(
