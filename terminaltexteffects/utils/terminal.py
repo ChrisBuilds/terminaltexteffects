@@ -191,11 +191,11 @@ class Terminal:
         else:
             return motion.Coord(self.random_column(), self.random_row())
 
-    def input_by_row(self) -> dict[int, list[EffectCharacter]]:
-        """Get a dict of rows of EffectCharacters where the key is the row index.
+    def get_input_by_row(self) -> dict[int, list[EffectCharacter]]:
+        """Get a dict of rows of EffectCharacters where the key is the row index. 0 is the bottom row.
 
         Returns:
-            dict[int,list[EffectCharacter]]: dict of rows of EffectCharacters where the key is the row index.
+            dict[int,list[EffectCharacter]]: dict of rows of EffectCharacters where the key is the row index. 0 is the bottom row.
         """
         rows: dict[int, list[EffectCharacter]] = dict()
         for row_index in range(self.output_area.top + 1):
@@ -204,11 +204,11 @@ class Terminal:
                 rows[row_index] = characters_in_row
         return rows
 
-    def input_by_column(self) -> dict[int, list[EffectCharacter]]:
-        """Get a dict columns of EffectCharacters where the key is the column index.
+    def get_input_by_column(self) -> dict[int, list[EffectCharacter]]:
+        """Get a dict columns of EffectCharacters where the key is the column index. 0 is the left column.
 
         Returns:
-            dict[int,list[EffectCharacter]]: dict of columns of EffectCharacters where the key is the column index.
+            dict[int,list[EffectCharacter]]: dict of columns of EffectCharacters where the key is the column index. 0 is the left column.
         """
         columns: dict[int, list[EffectCharacter]] = dict()
         for column_index in range(self.output_area.right + 1):

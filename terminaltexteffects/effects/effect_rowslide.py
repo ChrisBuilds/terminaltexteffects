@@ -85,7 +85,7 @@ class RowSlide:
         """Prepares the data for the effect by grouping the characters by row and setting the starting
         coordinate."""
 
-        self.rows = self.terminal.input_by_row()
+        self.rows = self.terminal.get_input_by_row()
         for row in self.rows.values():
             for character in row:
                 if self.slide_direction == SlideDirection.LEFT:

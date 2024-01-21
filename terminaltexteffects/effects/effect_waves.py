@@ -95,7 +95,7 @@ class WavesEffect:
                 EventHandler.Event.SCENE_COMPLETE, wave_scn, EventHandler.Action.ACTIVATE_SCENE, final_scn
             )
             character.animation.activate_scene(wave_scn)
-        columns = self.terminal.input_by_column()
+        columns = self.terminal.get_input_by_column()
         for _, column in columns.items():
             self.pending_columns.append(column)
 
