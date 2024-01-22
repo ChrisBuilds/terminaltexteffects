@@ -35,7 +35,7 @@ class Gradient:
         steps (int): Number of intermediate colors to calculate
 
     Attributes:
-        colors (list[str]): List (length=steps + 2) of RGB hex color strings
+        spectrum (list[str]): List (length=steps) of RGB hex color strings
 
     """
 
