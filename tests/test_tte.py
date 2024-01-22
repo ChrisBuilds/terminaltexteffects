@@ -25,6 +25,7 @@ from terminaltexteffects.effects import (
     effect_rings,
     effect_vhstape,
     effect_waves,
+    effect_print
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -66,6 +67,17 @@ def make_args() -> Namespace:
     args.easing = easing.in_sine
     return args
 
+def test_print_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.text_color = "ffffff"
+        args.print_head_color = "ffffff"
+        args.print_head_return_speed = 0.5
+        args.print_head_easing = easing.in_out_sine
+        args.print_speed = 1
+        terminal = Terminal(input_data, args)
+        print_effect = effect_print.PrintEffect(terminal, args)
+        print_effect.run()
 
 def test_waves_effect() -> None:
     for input_data in test_inputs:
