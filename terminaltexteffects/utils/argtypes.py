@@ -62,7 +62,7 @@ def valid_color(color_string) -> int | str:
 
 
 def valid_duration(duration_arg: str) -> int:
-    """Validates that the given argument is a valid duration value.
+    """Validates that the given argument is a valid duration value (n>=1).
 
     Args:
         duration_arg (str): argument to validate
