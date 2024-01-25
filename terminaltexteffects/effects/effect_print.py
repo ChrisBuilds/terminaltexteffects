@@ -13,13 +13,13 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         subparser (argparse._SubParsersAction): subparser to add arguments to
     """
     effect_parser = subparsers.add_parser(
-        "test",
+        "print",
         formatter_class=argtypes.CustomFormatter,
-        help="effect_description",
-        description="effect_description",
+        help="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
+        description="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
         epilog=f"""{argtypes.EASING_EPILOG}
 
-Example: effect_example""",
+Example: terminaltexteffects print -a 0.01 --print-head-color f3b462 --text-color f2ebc0 --print-head-return-speed 1.5 --print-speed 1 --print-head-easing IN_OUT_QUAD""",
     )
     effect_parser.set_defaults(effect_class=PrintEffect)
     effect_parser.add_argument(
