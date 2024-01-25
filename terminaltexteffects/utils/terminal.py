@@ -52,6 +52,7 @@ class Terminal:
         self.args = args
         self.width, self.height = self._get_terminal_dimensions()
         self.characters = self._decompose_input(args.xterm_colors, args.no_color)
+        self.non_input_characters: list[EffectCharacter] = []
         self.input_width = max([character.input_coord.column for character in self.characters])
         self.input_height = max([character.input_coord.row for character in self.characters])
         self.output_area = OutputArea(min(self.height - 1, self.input_height), self.input_width)
@@ -140,7 +141,7 @@ class Terminal:
         of all active characters.
         """
         rows = [[" " for _ in range(self.output_area.right)] for _ in range(self.output_area.top)]
-        for character in sorted(self.characters, key=lambda c: c.layer):
+        for character in sorted(self.characters + self.non_input_characters, key=lambda c: c.layer):
             if character.is_active:
                 try:
                     # do not allow characters to wrap around the terminal via negative coordinates
@@ -191,8 +192,22 @@ class Terminal:
         else:
             return motion.Coord(self.random_column(), self.random_row())
 
+    def add_character(self, symbol: str) -> EffectCharacter:
+        """Adds a character to the terminal for printing. Used to create characters that are not in the input data.
+        Characters added with this method will have input coordinates outside the output area (0,0).
+
+        Args:
+            symbol (str): symbol to add
+
+        Returns:
+            EffectCharacter: the character that was added
+        """
+        character = EffectCharacter(symbol, 0, 0)
+        self.non_input_characters.append(character)
+        return character
+
     def get_input_by_row(self) -> dict[int, list[EffectCharacter]]:
-        """Get a dict of rows of EffectCharacters where the key is the row index. 0 is the bottom row.
+        """Get a dict of rows of EffectCharacters where the key is the input row index. 0 is the bottom row.
 
         Returns:
             dict[int,list[EffectCharacter]]: dict of rows of EffectCharacters where the key is the row index. 0 is the bottom row.
@@ -205,7 +220,7 @@ class Terminal:
         return rows
 
     def get_input_by_column(self) -> dict[int, list[EffectCharacter]]:
-        """Get a dict columns of EffectCharacters where the key is the column index. 0 is the left column.
+        """Get a dict columns of EffectCharacters where the key is the input column index. 0 is the left column.
 
         Returns:
             dict[int,list[EffectCharacter]]: dict of columns of EffectCharacters where the key is the column index. 0 is the left column.
