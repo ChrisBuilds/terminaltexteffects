@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### New Features
- * New Effect, Print. Lines are printed one at a time following a print head. Print performs line feed, carriage return.
+ * New Effect, Print. Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
 ### Changes
 
 ### Bug Fixes
