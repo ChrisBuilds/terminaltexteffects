@@ -191,6 +191,8 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 ## In-Development Preview
 Any effects shown below are in development and will be available in the next release.
 
+#### Print
+![print_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ff4fcb44-ebb9-4166-933b-8b0ad3d1810a)
 
 ## Recent Changes
 
