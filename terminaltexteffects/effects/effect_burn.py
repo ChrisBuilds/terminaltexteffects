@@ -71,7 +71,12 @@ class BurnEffect:
         ]
         fire_gradient = graphics.Gradient(["ffffff", self.args.flame_color], 12)
         burned_gradient = graphics.Gradient([self.args.flame_color, self.args.burned_color], 7)
-        groups = self.terminal.get_input_by_column()
+        groups = {
+            column_index: column
+            for column_index, column in enumerate(
+                self.terminal.get_characters(sort_order=self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT)
+            )
+        }
         for column in groups.values():
             column.reverse()
 

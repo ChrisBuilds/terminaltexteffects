@@ -85,7 +85,12 @@ class ColumnSlide:
         """Prepares the data for the effect by grouping the characters by column and setting the starting
         coordinate."""
 
-        self.columns = self.terminal.get_input_by_column()
+        self.columns = {
+            column_index: column
+            for column_index, column in enumerate(
+                self.terminal.get_characters(sort_order=self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT)
+            )
+        }
         if self.slide_direction == SlideDirection.DOWN:
             for column_list in self.columns.values():
                 column_list.reverse()

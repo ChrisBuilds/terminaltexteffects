@@ -85,8 +85,8 @@ class RowSlide:
         """Prepares the data for the effect by grouping the characters by row and setting the starting
         coordinate."""
 
-        self.rows = self.terminal.get_input_by_row()
-        for row in self.rows.values():
+        self.rows = self.terminal.get_characters(sort_order=self.terminal.CharacterSort.ROW_TOP_TO_BOTTOM)
+        for row in self.rows:
             for character in row:
                 if self.slide_direction == SlideDirection.LEFT:
                     character.motion.set_coordinate(
@@ -106,7 +106,7 @@ class RowSlide:
         Returns:
             list[effect_char.EffectCharacter]: The next row of characters to animate.
         """
-        next_row = self.rows.pop(min(self.rows.keys()))
+        next_row = self.rows.pop(0)
         return next_row
 
     def run(self) -> None:

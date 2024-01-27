@@ -56,7 +56,6 @@ Example: terminaltexteffects print -a 0.01 --print-head-color f3b462 --text-colo
         default=1,
         metavar="(int >= 1)",
         help="Speed of the print head when printing characters.",
-        
     )
     effect_parser.add_argument(
         "--print-head-easing",
@@ -91,8 +90,17 @@ class Row:
             return next_char
         return None
 
+
 class PrintHead(EffectCharacter):
-    def __init__(self, symbol: str, input_column: int, input_row: int, color: str | int = "0000ff", speed: float=1.5, ease=easing.in_quad):
+    def __init__(
+        self,
+        symbol: str,
+        input_column: int,
+        input_row: int,
+        color: str | int = "0000ff",
+        speed: float = 1.5,
+        ease=easing.in_quad,
+    ):
         super().__init__(symbol, input_column, input_row)
         self.speed = speed
         self.ease = ease
@@ -100,16 +108,21 @@ class PrintHead(EffectCharacter):
         self.head_color_scn = self.animation.new_scene("head_color")
         self.head_color_scn.add_frame(symbol, 1, color=color)
         self.animation.activate_scene(self.head_color_scn)
-    
+
     def carriage_return(self, starting_coord: motion.Coord):
         self.motion.set_coordinate(starting_coord)
         self.motion.paths.clear()
         carriage_return_path: motion.Path = self.motion.new_path("carriage_return", speed=self.speed, ease=self.ease)
-        carriage_return_path.new_waypoint("home",motion.Coord(1,1))
-        self.event_handler.register_event(EventHandler.Event.PATH_COMPLETE, carriage_return_path, EventHandler.Action.SET_CHARACTER_ACTIVATION_STATE, False)
+        carriage_return_path.new_waypoint("home", motion.Coord(1, 1))
+        self.event_handler.register_event(
+            EventHandler.Event.PATH_COMPLETE,
+            carriage_return_path,
+            EventHandler.Action.SET_CHARACTER_ACTIVATION_STATE,
+            False,
+        )
         self.motion.activate_path(carriage_return_path)
         self.is_active = True
-        
+
 
 class PrintEffect:
     """Effect that moves a print head across the screen, printing characters, before performing a line feed and carriage return."""
@@ -124,7 +137,7 @@ class PrintEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
-        input_rows = reversed(self.terminal.get_input_by_row().values())
+        input_rows = self.terminal.get_characters(sort_order=self.terminal.CharacterSort.ROW_TOP_TO_BOTTOM)
         for input_row in input_rows:
             self.pending_rows.append(Row(input_row, self.args.text_color, self.args.print_head_color))
 
@@ -134,7 +147,14 @@ class PrintEffect:
         current_row: Row = self.pending_rows.pop(0)
         typing = True
         delay = 0
-        typing_head = PrintHead('█', 1, 1, color=self.args.print_head_color, speed=self.args.print_head_return_speed, ease=self.args.print_head_easing)
+        typing_head = PrintHead(
+            "█",
+            1,
+            1,
+            color=self.args.print_head_color,
+            speed=self.args.print_head_return_speed,
+            ease=self.args.print_head_easing,
+        )
         self.terminal.characters.append(typing_head)
         last_column = 0
         while self.animating_chars or typing:
@@ -145,7 +165,7 @@ class PrintEffect:
             else:
                 delay = random.randint(0, 0)
                 if current_row.untyped_chars:
-                    for _ in range(min(len(current_row.untyped_chars),self.args.print_speed)):
+                    for _ in range(min(len(current_row.untyped_chars), self.args.print_speed)):
                         next_char = current_row.type_char()
                         if next_char:
                             self.animating_chars.append(next_char)
@@ -156,7 +176,7 @@ class PrintEffect:
                         for row in self.processed_rows:
                             row.move_up()
                         current_row = self.pending_rows.pop(0)
-                        typing_head.carriage_return(motion.Coord(last_column,1))
+                        typing_head.carriage_return(motion.Coord(last_column, 1))
                         self.animating_chars.append(typing_head)
                     else:
                         typing = False
@@ -171,6 +191,7 @@ class PrintEffect:
                 or not animating_char.motion.movement_is_complete()
             ]
         self.terminal.print()
+
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
         to ensure waypoint synced animations have the latest waypoint progress information."""

@@ -57,7 +57,9 @@ class RowMergeEffect:
         side of the terminal and reverse the order."""
 
         self.rows = []
-        for row_index, row in self.terminal.get_input_by_row().items():
+        for row_index, row in enumerate(
+            self.terminal.get_characters(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP)
+        ):
             if row_index % 2 == 0:
                 row = row[::-1]
                 column = self.terminal.output_area.left

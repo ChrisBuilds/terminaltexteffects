@@ -231,7 +231,7 @@ class BubblesEffect:
             )
 
         unbubbled_chars = []
-        for _, char_list in self.terminal.get_input_by_row().items():
+        for char_list in self.terminal.get_characters(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP):
             unbubbled_chars.extend(char_list)
         self.bubbles = []
         while unbubbled_chars:

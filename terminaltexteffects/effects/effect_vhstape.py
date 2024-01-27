@@ -275,7 +275,9 @@ class VHSTapeEffect:
         self.active_glitch_lines: list[Line] = []
 
     def prepare_data(self) -> None:
-        for row_index, characters in self.terminal.get_input_by_row().items():
+        for row_index, characters in enumerate(
+            self.terminal.get_characters(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP)
+        ):
             self.lines[row_index] = Line(characters, self.args)
         for character in self.terminal.characters:
             character.is_active = True
