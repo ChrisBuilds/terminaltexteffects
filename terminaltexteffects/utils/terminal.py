@@ -5,6 +5,7 @@ import sys
 import time
 import argparse
 from dataclasses import dataclass
+from enum import Enum, auto
 
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import ansitools, motion
@@ -46,6 +47,18 @@ class OutputArea:
 
 class Terminal:
     """A class for managing the terminal state and output."""
+
+    class CharacterSort(Enum):
+        """An enum for sorting characters by column, row, or diagonal."""
+
+        COLUMN_LEFT_TO_RIGHT = auto()
+        COLUMN_RIGHT_TO_LEFT = auto()
+        ROW_TOP_TO_BOTTOM = auto()
+        ROW_BOTTOM_TO_TOP = auto()
+        DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT = auto()
+        DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT = auto()
+        DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT = auto()
+        DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT = auto()
 
     def __init__(self, input_data: str, args: argparse.Namespace):
         self.input_data = input_data
@@ -233,6 +246,90 @@ class Terminal:
             if characters_in_column:
                 columns[column_index] = characters_in_column
         return columns
+
+    def get_characters(
+        self, sort_order: CharacterSort = CharacterSort.ROW_TOP_TO_BOTTOM
+    ) -> list[list[EffectCharacter]]:
+        """Get a list of all EffectCharacters in the terminal sorted by the specified sort_order.
+
+        Args:
+            sort_order (CharacterSort, optional): order to sort the characters. Defaults to ROW_TOP_TO_BOTTOM.
+
+        Returns:
+            list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond to rows,
+            columns, or diagonals depending on the sort_order.
+        """
+        if sort_order in (self.CharacterSort.COLUMN_LEFT_TO_RIGHT, self.CharacterSort.COLUMN_RIGHT_TO_LEFT):
+            columns = []
+            for column_index in range(self.output_area.right + 1):
+                characters_in_column = [
+                    character for character in self.characters if character.input_coord.column == column_index
+                ]
+                if characters_in_column:
+                    columns.append(characters_in_column)
+            if sort_order == self.CharacterSort.COLUMN_RIGHT_TO_LEFT:
+                columns.reverse()
+            return columns
+
+        elif sort_order in (self.CharacterSort.ROW_BOTTOM_TO_TOP, self.CharacterSort.ROW_TOP_TO_BOTTOM):
+            rows = []
+            for row_index in range(self.output_area.top + 1):
+                characters_in_row = [
+                    character for character in self.characters if character.input_coord.row == row_index
+                ]
+                if characters_in_row:
+                    rows.append(characters_in_row)
+            if sort_order == self.CharacterSort.ROW_TOP_TO_BOTTOM:
+                rows.reverse()
+            return rows
+        elif sort_order in (
+            self.CharacterSort.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+            self.CharacterSort.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+        ):
+            diagonals = []
+            for diagonal_index in range(self.output_area.top + self.output_area.right + 1):
+                characters_in_diagonal = [
+                    character
+                    for character in self.characters
+                    if character.input_coord.row + character.input_coord.column == diagonal_index
+                ]
+                if characters_in_diagonal:
+                    diagonals.append(characters_in_diagonal)
+            if sort_order == self.CharacterSort.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT:
+                diagonals.reverse()
+            return diagonals
+        elif sort_order in (
+            self.CharacterSort.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            self.CharacterSort.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+        ):
+            diagonals = []
+            for diagonal_index in range(
+                self.output_area.left - self.output_area.top, self.output_area.right - self.output_area.bottom + 1
+            ):
+                characters_in_diagonal = [
+                    character
+                    for character in self.characters
+                    if character.input_coord.column - character.input_coord.row == diagonal_index
+                ]
+                if characters_in_diagonal:
+                    diagonals.append(characters_in_diagonal)
+            if sort_order == self.CharacterSort.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT:
+                diagonals.reverse()
+            return diagonals
+        else:
+            raise ValueError(f"Invalid sort_order: {sort_order}")
+
+    def get_character_by_input_coord(self, row: int, column: int) -> EffectCharacter:
+        """Get an EffectCharacter by its input coordinates.
+
+        Args:
+            row (int): row of the character
+            column (int): column of the character
+
+        Returns:
+            EffectCharacter: the character at the specified coordinates
+        """
+        return self.character_by_input_coord[(row, column)]
 
     def print(self):
         """Prints the current terminal state to stdout while preserving the cursor position."""
