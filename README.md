@@ -194,6 +194,10 @@ Any effects shown below are in development and will be available in the next rel
 #### Print
 ![print_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ff4fcb44-ebb9-4166-933b-8b0ad3d1810a)
 
+#### BinaryPath
+![binarypath_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/f3570ebe-108d-4b34-8766-a448c9ff8f53)
+
+
 ## Recent Changes
 
 ## 0.5.0
