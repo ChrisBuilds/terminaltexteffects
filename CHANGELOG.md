@@ -3,7 +3,15 @@
 ## Unreleased
 
 ### New Features
- * New Effect, Print. Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
+#### Effects
+ * Print. Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
+ * BinaryPath. Characters are converted into their binary representation. These binary groups travel to their input coordinate and collapse
+   into the original character symbol.
+
+#### Engine
+ * Terminal.get_character() method accepts a Terminal.CharacterSort argument to easily retrieve the input
+   characters in groups sorted by various directions, ex: Terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT
+
 ### Changes
 
 ### Bug Fixes
