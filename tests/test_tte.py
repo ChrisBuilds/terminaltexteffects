@@ -25,7 +25,8 @@ from terminaltexteffects.effects import (
     effect_rings,
     effect_vhstape,
     effect_waves,
-    effect_print
+    effect_print,
+    effect_binarypath,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -67,6 +68,20 @@ def make_args() -> Namespace:
     args.easing = easing.in_sine
     return args
 
+
+def test_binarypath_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.fade_color = "265e3c"
+        args.binary_colors = ["044E29", "157e38", "45bf55", "95ed87"]
+        args.final_color = "45bf55"
+        args.movement_speed = 1.0
+        args.active_binary_groups = 0.05
+        terminal = Terminal(input_data, args)
+        binarypath_effect = effect_binarypath.BinaryPathEffect(terminal, args)
+        binarypath_effect.run()
+
+
 def test_print_effect() -> None:
     for input_data in test_inputs:
         args = make_args()
@@ -78,6 +93,7 @@ def test_print_effect() -> None:
         terminal = Terminal(input_data, args)
         print_effect = effect_print.PrintEffect(terminal, args)
         print_effect.run()
+
 
 def test_waves_effect() -> None:
     for input_data in test_inputs:
