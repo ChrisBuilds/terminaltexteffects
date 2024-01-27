@@ -72,11 +72,12 @@ def make_args() -> Namespace:
 def test_binarypath_effect() -> None:
     for input_data in test_inputs:
         args = make_args()
-        args.fade_color = "265e3c"
+        args.base_color = "265e3c"
         args.binary_colors = ["044E29", "157e38", "45bf55", "95ed87"]
         args.final_color = "45bf55"
         args.movement_speed = 1.0
         args.active_binary_groups = 0.05
+        args.skip_final_wipe = False
         terminal = Terminal(input_data, args)
         binarypath_effect = effect_binarypath.BinaryPathEffect(terminal, args)
         binarypath_effect.run()
