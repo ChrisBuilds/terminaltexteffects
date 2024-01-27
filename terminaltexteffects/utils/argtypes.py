@@ -228,7 +228,7 @@ def valid_float_between_zero_and_one(arg: str) -> float:
     if 0 <= float(arg) <= 1:
         return float(arg)
     else:
-        raise argparse.ArgumentTypeError(f"invalid value: {arg} is not >= 0 and <= 1.")
+        raise argparse.ArgumentTypeError(f"invalid value: {arg} is not a float >= 0 and <= 1. Example: 0.5")
 
 
 def ge_zero(arg: str) -> int:
