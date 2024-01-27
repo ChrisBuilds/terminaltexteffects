@@ -29,11 +29,11 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
-        "--fade-color",
+        "--base-color",
         type=argtypes.valid_color,
         default="265e3c",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the characters when faded.",
+        help="Color for the characters when the binary group combines in place.",
     )
     effect_parser.add_argument(
         "--binary-colors",
@@ -63,6 +63,12 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         default=0.05,
         metavar="(float 0 < n <= 1)",
         help="Maximum number of binary groups that are active at any given time. Lower this to improve performance.",
+    )
+    effect_parser.add_argument(
+        "--skip-final-wipe",
+        action="store_true",
+        default=False,
+        help="Skip the final gradient wipe. This will result in the characters remaining as base-color.",
     )
 
 
@@ -107,8 +113,8 @@ class BinaryPathEffect:
         self.pending_binary_representations: list[BinaryRepresentation] = []
 
     def prepare_data(self) -> None:
-        complete_gradient = graphics.Gradient(["ffffff", self.args.fade_color], 10)
-        brighten_gradient = graphics.Gradient([self.args.fade_color, "ffffff", self.args.final_color], 25)
+        complete_gradient = graphics.Gradient(["ffffff", self.args.base_color], 10)
+        brighten_gradient = graphics.Gradient([self.args.base_color, "ffffff", self.args.final_color], 25)
         for character in self.terminal.characters:
             bin_rep = BinaryRepresentation(character)
             for binary_char in bin_rep.binary_string:
@@ -221,7 +227,7 @@ class BinaryPathEffect:
                     phase = "wipe"
 
             if phase == "wipe":
-                if final_wipe_chars:
+                if final_wipe_chars and not self.args.skip_final_wipe:
                     next_group = final_wipe_chars.pop(0)
                     for character in next_group:
                         character.animation.activate_scene(character.animation.scenes["brighten_scn"])
