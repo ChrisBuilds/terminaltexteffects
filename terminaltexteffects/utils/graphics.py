@@ -269,6 +269,8 @@ class Scene:
                     xterm_color = hexterm.hex_to_xterm(color)
                     self.xterm_color_map[color] = xterm_color
                     color = xterm_color
+        else:
+            color = None
         if duration < 1:
             raise ValueError("duration must be greater than 0")
         char_vis = CharacterVisual(
