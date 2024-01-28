@@ -12,12 +12,12 @@
  * Terminal.get_character() method accepts a Terminal.CharacterSort argument to easily retrieve the input
    characters in groups sorted by various directions, ex: Terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT
  * Terminal.add_character() method allows adding characters to the effect that are not part of the input text. These characters
-   are added to a separate list (Terminal.added_characters) in Terminal to allow for iteration over Terminal.input_characters and 
-   adding new characters based on the input characters without modifying the Terminal.input_characters list during iteration. The
+   are added to a separate list (Terminal.non_input_characters) in Terminal to allow for iteration over Terminal.characters and 
+   adding new characters based on the input characters without modifying the Terminal.characters list during iteration. The
    added characters are handled the same as input characters by the Terminal.
 
 ### Changes
-
+  * Terminal._update_terminal_state() refactored for improved performance.
 ### Bug Fixes
  * Fixed rare division by zero error in Path.step() when the final segment has a distance of zero and the distance to travel exceeds
    the total distance of the Path.
