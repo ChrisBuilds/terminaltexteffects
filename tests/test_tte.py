@@ -156,8 +156,8 @@ def test_swarm_effect() -> None:
         args.base_color = "ffffff"
         args.flash_color = "ff0000"
         args.final_color = "ffffff"
-        args.swarm_size = 5
-        args.swarm_coordination = 80
+        args.swarm_size = 0.05
+        args.swarm_coordination = 0.8
         terminal = Terminal(input_data, args)
         swarm_effect = effect_swarm.SwarmEffect(terminal, args)
         swarm_effect.run()
@@ -366,11 +366,11 @@ def test_fireworks_effect() -> None:
         args.final_color = "ffffff"
         args.explode_anywhere = False
         args.firework_symbol = "⯏"
-        args.firework_volume = 8
+        args.firework_volume = 0.08
         args.launch_delay = 30
         args.launch_easing = easing.out_expo
         args.launch_speed = 0.2
-        args.explode_distance = 10
+        args.explode_distance = 0.1
         args.explode_easing = easing.out_quad
         args.explode_speed = 0.3
         args.fall_easing = easing.in_out_cubic
