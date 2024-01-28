@@ -4,6 +4,7 @@ import shutil
 import sys
 import time
 import argparse
+from itertools import chain
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -61,7 +62,7 @@ class Terminal:
         DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT = auto()
 
     def __init__(self, input_data: str, args: argparse.Namespace):
-        self.input_data = input_data
+        self.input_data = input_data.replace("\t", " " * args.tab_width)
         self.args = args
         self.width, self.height = self._get_terminal_dimensions()
         self.characters = self._decompose_input(args.xterm_colors, args.no_color)
@@ -110,6 +111,24 @@ class Terminal:
         else:
             return ""
 
+    def _wrap_lines(self, lines: list[str]) -> list[str]:
+        """
+        Wraps the given lines of text to fit within the width of the terminal.
+
+        Args:
+            lines (list): The lines of text to be wrapped.
+
+        Returns:
+            list: The wrapped lines of text.
+        """
+        wrapped_lines = []
+        for line in lines:
+            while len(line) > self.width:
+                wrapped_lines.append(line[: self.width])
+                line = line[self.width :]
+            wrapped_lines.append(line)
+        return wrapped_lines
+
     def _decompose_input(self, use_xterm_colors: bool, no_color: bool) -> list[EffectCharacter]:
         """Decomposes the output into a list of Character objects containing the symbol and its row/column coordinates
         relative to the input display location.
@@ -123,21 +142,11 @@ class Terminal:
         Returns:
             list[Character]: list of EffectCharacter objects
         """
-        # handle whitespace characters
-        self.input_data = self.input_data.replace("\t", " " * self.args.tab_width)
         formatted_lines = []
         if not self.input_data.strip():
             self.input_data = "No Input."
-        input_lines = self.input_data.splitlines()
-        if not self.args.no_wrap:
-            for line in input_lines:
-                while len(line) > self.width:
-                    formatted_lines.append(line[: self.width])
-                    line = line[self.width :]
-                formatted_lines.append(line)
-        else:
-            for line in input_lines:
-                formatted_lines.append(line[: self.width])
+        lines = self.input_data.splitlines()
+        formatted_lines = self._wrap_lines(lines) if not self.args.no_wrap else [line[: self.width] for line in lines]
         input_height = len(formatted_lines)
         input_characters = []
         for row, line in enumerate(formatted_lines):
@@ -154,18 +163,12 @@ class Terminal:
         of all active characters.
         """
         rows = [[" " for _ in range(self.output_area.right)] for _ in range(self.output_area.top)]
-        for character in sorted(self.characters + self.non_input_characters, key=lambda c: c.layer):
-            if character.is_active:
-                try:
-                    # do not allow characters to wrap around the terminal via negative coordinates
-                    if character.motion.current_coord.row <= 0 or character.motion.current_coord.column <= 0:
-                        continue
-                    rows[character.motion.current_coord.row - 1][
-                        character.motion.current_coord.column - 1
-                    ] = character.symbol
-                except IndexError:
-                    # ignore characters that are outside the output area
-                    pass
+        active_characters = [c for c in chain(self.characters, self.non_input_characters) if c.is_active]
+        for character in sorted(active_characters, key=lambda c: c.layer):
+            row = character.motion.current_coord.row - 1
+            column = character.motion.current_coord.column - 1
+            if 0 <= row < self.output_area.top and 0 <= column < self.output_area.right:
+                rows[row][column] = character.symbol
         terminal_state = ["".join(row) for row in rows]
         self.terminal_state = terminal_state
 
