@@ -59,7 +59,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--active-binary-groups",
-        type=argtypes.valid_float_between_zero_and_one,
+        type=argtypes.valid_float_between_zero_to_one,
         default=0.05,
         metavar="(float 0 < n <= 1)",
         help="Maximum number of binary groups that are active at any given time. Lower this to improve performance.",

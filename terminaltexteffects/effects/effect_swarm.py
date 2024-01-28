@@ -51,15 +51,17 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--swarm-size",
-        type=argtypes.valid_percent_greater_than_zero,
-        default=5,
-        help="Percent of total characters in each swarm. Must be between 1 and 100.",
+        type=argtypes.valid_float_between_zero_to_one,
+        metavar="(float 0 < n <= 1)",
+        default=0.05,
+        help="Percent of total characters in each swarm.",
     )
     effect_parser.add_argument(
         "--swarm-coordination",
-        type=argtypes.valid_percent_greater_than_zero,
-        default=80,
-        help="Percent of characters in a swarm that move as a group. Must be between 1 and 100.",
+        type=argtypes.valid_float_between_zero_to_one,
+        metavar="(float 0 < n <= 1)",
+        default=0.80,
+        help="Percent of characters in a swarm that move as a group.",
     )
 
 
@@ -72,7 +74,7 @@ class SwarmEffect:
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
         self.swarms: list[list[EffectCharacter]] = []
-        self.swarm_size: int = max(round(len(self.terminal.characters) * (self.args.swarm_size / 100)), 1)
+        self.swarm_size: int = max(round(len(self.terminal.characters) * self.args.swarm_size), 1)
 
     def make_swarms(self) -> None:
         unswarmed_characters = list(self.terminal.characters[::-1])
@@ -199,7 +201,7 @@ class SwarmEffect:
                     ):
                         active_swarm_area = character.motion.active_path.path_id
                         for other in current_swarm:
-                            if other is not character and random.random() < (self.args.swarm_coordination / 100):
+                            if other is not character and random.random() < self.args.swarm_coordination:
                                 other.motion.activate_path(other.motion.paths[active_swarm_area])
                         break
 

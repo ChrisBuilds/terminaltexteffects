@@ -51,9 +51,9 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     )
     effect_parser.add_argument(
         "--firework-volume",
-        type=argtypes.positive_int,
-        default=2,
-        metavar="(int > 0)",
+        type=argtypes.valid_float_between_zero_to_one,
+        default=0.02,
+        metavar="(float 0 < n <= 1)",
         help="Percent of total characters in each firework shell.",
     )
     effect_parser.add_argument(
@@ -72,9 +72,9 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     )
     effect_parser.add_argument(
         "--explode-distance",
-        default=10,
-        type=argtypes.positive_int,
-        metavar="(int > 0)",
+        default=0.1,
+        type=argtypes.valid_float_between_zero_to_one,
+        metavar="(float 0 < n <= 1)",
         help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width.",
     )
 
@@ -92,10 +92,8 @@ class FireworksEffect:
             self.firework_colors = self.args.firework_colors
         else:
             self.firework_colors = ["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"]
-        self.firework_volume = max(1, round((self.args.firework_volume * 0.01) * len(self.terminal.characters)))
-        self.explode_distance = min(
-            max(1, round(self.terminal.output_area.right * (self.args.explode_distance * 0.01))), 6
-        )
+        self.firework_volume = max(1, round(self.args.firework_volume * len(self.terminal.characters)))
+        self.explode_distance = min(max(1, round(self.terminal.output_area.right * self.args.explode_distance)), 6)
 
     def prepare_waypoints(self) -> None:
         firework_shell: list[EffectCharacter] = []

@@ -69,14 +69,14 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
     )
     effect_parser.add_argument(
         "--glitch-line-chance",
-        type=argtypes.valid_float_between_zero_and_one,
+        type=argtypes.valid_float_between_zero_to_one,
         default=0.05,
         metavar="(0.0-1.0)",
         help="Chance that a line will glitch on any given frame.",
     )
     effect_parser.add_argument(
         "--noise-chance",
-        type=argtypes.valid_float_between_zero_and_one,
+        type=argtypes.valid_float_between_zero_to_one,
         default=0.004,
         metavar="(0.0-1.0)",
         help="Chance that all characters will experience noise on any given frame.",
