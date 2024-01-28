@@ -216,6 +216,8 @@ class Terminal:
             EffectCharacter: the character that was added
         """
         character = EffectCharacter(symbol, 0, 0)
+        character.animation.use_xterm_colors = self.args.xterm_colors
+        character.animation.no_color = self.args.no_color
         self.non_input_characters.append(character)
         return character
 
