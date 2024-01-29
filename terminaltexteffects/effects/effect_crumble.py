@@ -26,20 +26,20 @@ Example: terminaltexteffects --effect crumble --animation-rate 0.01 --initial-co
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--initial-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="0088bb",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters at the start of the effect.",
     )
     effect_parser.add_argument(
         "--dust-colors",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         nargs="*",
         default=["dadad1", "766b69", "848789", "747a8a"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -47,7 +47,7 @@ Example: terminaltexteffects --effect crumble --animation-rate 0.01 --initial-co
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="0eeaff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final character.",

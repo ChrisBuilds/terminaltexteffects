@@ -35,7 +35,7 @@ class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescri
     pass
 
 
-def valid_color(color_string) -> int | str:
+def color(color_string) -> int | str:
     """Validates that the given argument is a valid color value.
 
     Args:
@@ -61,81 +61,58 @@ def valid_color(color_string) -> int | str:
         return int(color_string)
 
 
-def valid_duration(duration_arg: str) -> int:
-    """Validates that the given argument is a valid duration value (n>=1).
+def nonnegative_int(arg: str) -> int:
+    """Validates that the given argument is a nonnegative integer.
 
     Args:
-        duration_arg (str): argument to validate
+        arg (str): argument to validate
 
     Raises:
-        argparse.ArgumentTypeError: Duration value is not in range.
-
-    Returns:
-        int: validated duration value
-    """
-    if int(duration_arg) < 1:
-        raise argparse.ArgumentTypeError(
-            f"invalid duration value: {duration_arg} is not a valid duration. Duration must be int >= 1."
-        )
-    return int(duration_arg)
-
-
-def valid_gap(gap_arg: str) -> int:
-    """Validates that the given argument is a valid gap value.
-
-    Args:
-        gap_arg (str): argument to validate
-
-    Raises:
-        argparse.ArgumentTypeError: Gap value is not in range.
+        argparse.ArgumentTypeError: Value is not in range.
 
     Returns:
         int: validated gap value
     """
-    if int(gap_arg) < 0:
-        raise argparse.ArgumentTypeError(f"invalid gap value: {gap_arg} is not a valid gap. Gap must be int >= 0.")
-    return int(gap_arg)
+    if int(arg) < 0:
+        raise argparse.ArgumentTypeError(f"invalid value: {arg} Argument must be int >= 0.")
+    return int(arg)
 
 
-def valid_animationrate(animationrate_arg: str) -> float:
+def nonnegative_float(arg: str) -> float:
     """Validates that the given argument is a valid animationrate value.
 
     Args:
-        animationrate_arg (str): argument to validate
+        arg (str): argument to validate
 
     Raises:
-        argparse.ArgumentTypeError: Animationrate value is not in range.
+        argparse.ArgumentTypeError: Argument value is not in range.
 
     Returns:
-        float: validated animationrate value
+        float: validated value
     """
-    if float(animationrate_arg) < 0:
-        raise argparse.ArgumentTypeError(
-            f"invalid animationrate value: {animationrate_arg} is not a valid animationrate. Animationrate must be float >= 0."
-        )
-    return float(animationrate_arg)
+    if float(arg) < 0:
+        raise argparse.ArgumentTypeError(f"invalid argument value: {arg} is out of range. Must be float >= 0.")
+    return float(arg)
 
 
-def valid_speed(speed_arg: str) -> float:
-    """Validates that the given argument is a valid speed value.
+def positive_float(arg: str) -> float:
+    """Validates that the given argument is a positive float.
 
     Args:
-        speed_arg (str): argument to validate
+        arg (str): argument to validate
 
     Raises:
-        argparse.ArgumentTypeError: Speed value is not in range.
+        argparse.ArgumentTypeError: value is not in range.
 
     Returns:
-        float: validated speed value
+        float: validated positive float
     """
-    if float(speed_arg) <= 0:
-        raise argparse.ArgumentTypeError(
-            f"invalid speed value: {speed_arg} is not a valid speed. Speed must be float > 0."
-        )
-    return float(speed_arg)
+    if float(arg) <= 0:
+        raise argparse.ArgumentTypeError(f"invalid value: {arg} is not a valid value. Argument must be a float > 0.")
+    return float(arg)
 
 
-def valid_ease(ease_arg: str) -> typing.Callable:
+def ease(ease_arg: str) -> typing.Callable:
     """Validates that the given argument is a valid easing function.
 
     Args:
@@ -201,7 +178,7 @@ def positive_int(arg: str) -> int:
         raise argparse.ArgumentTypeError(f"invalid value: {arg} is not > 0.")
 
 
-def valid_float_between_zero_to_one(arg: str) -> float:
+def float_zero_to_one(arg: str) -> float:
     """Validates that the given argument is a valid float value between zero and one.
 
     Args:
@@ -214,20 +191,6 @@ def valid_float_between_zero_to_one(arg: str) -> float:
         return float(arg)
     else:
         raise argparse.ArgumentTypeError(f"invalid value: {arg} is not a float >= 0 and <= 1. Example: 0.5")
-
-
-def ge_zero(arg: str) -> int:
-    """Validates that the given argument is an integer greater than or equal to zero.
-    Args:
-        arg (str): argument to validate
-
-    Returns:
-        int: validated integer
-    """
-    if int(arg) >= 0:
-        return int(arg)
-    else:
-        raise argparse.ArgumentTypeError(f"invalid value: {arg} is not >= 0.")
 
 
 def is_ascii_or_utf8(s: str) -> bool:
@@ -252,7 +215,7 @@ def is_ascii_or_utf8(s: str) -> bool:
         return True
 
 
-def valid_symbol(arg: str) -> str:
+def symbol(arg: str) -> str:
     """Validates that the given argument is a valid symbol.
 
     Args:

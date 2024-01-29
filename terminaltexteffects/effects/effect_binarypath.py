@@ -24,20 +24,20 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--base-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="265e3c",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters when the binary group combines in place.",
     )
     effect_parser.add_argument(
         "--binary-colors",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         nargs="*",
         default=["044E29", "157e38", "45bf55", "95ed87"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -45,21 +45,21 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="45bf55",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters after the final gradient wipe.",
     )
     effect_parser.add_argument(
         "--movement-speed",
-        type=argtypes.valid_speed,
+        type=argtypes.positive_float,
         default=1.0,
         metavar="(float > 0)",
         help="Speed of the binary groups as they travel around the terminal.",
     )
     effect_parser.add_argument(
         "--active-binary-groups",
-        type=argtypes.valid_float_between_zero_to_one,
+        type=argtypes.float_zero_to_one,
         default=0.05,
         metavar="(float 0 < n <= 1)",
         help="Maximum number of binary groups that are active at any given time. Lower this to improve performance.",

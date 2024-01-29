@@ -24,7 +24,7 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
@@ -36,7 +36,7 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     )
     effect_parser.add_argument(
         "--firework-colors",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         nargs="*",
         default=["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -44,28 +44,28 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     )
     effect_parser.add_argument(
         "--firework-symbol",
-        type=argtypes.valid_symbol,
+        type=argtypes.symbol,
         default="o",
         metavar="(single character)",
         help="Symbol to use for the firework shell.",
     )
     effect_parser.add_argument(
         "--firework-volume",
-        type=argtypes.valid_float_between_zero_to_one,
+        type=argtypes.float_zero_to_one,
         default=0.02,
         metavar="(float 0 < n <= 1)",
         help="Percent of total characters in each firework shell.",
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final character.",
     )
     effect_parser.add_argument(
         "--launch-delay",
-        type=argtypes.ge_zero,
+        type=argtypes.nonnegative_int,
         default=60,
         metavar="(int >= 0)",
         help="Number of animation steps to wait between launching each firework shell.",
@@ -73,7 +73,7 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     effect_parser.add_argument(
         "--explode-distance",
         default=0.1,
-        type=argtypes.valid_float_between_zero_to_one,
+        type=argtypes.float_zero_to_one,
         metavar="(float 0 < n <= 1)",
         help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width.",
     )

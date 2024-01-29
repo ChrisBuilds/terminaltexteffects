@@ -25,27 +25,27 @@ Example: terminaltexteffects waves -a 0.01 --wave-deep-color 4651e3 --wave-shall
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--wave-deep-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="4651e3",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the deepest part of the wave. A gradient is generated between the shallow and deep parts of the wave.",
     )
     effect_parser.add_argument(
         "--wave-shallow-color",  # make more descriptive
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="57FB92",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the shallow part of the wave. A gradient is generated between the shallow and deep parts of the wave..",
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="80F7E6",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final character. A gradient is generated between the shallow part of the wave and the final color.",
@@ -59,7 +59,7 @@ Example: terminaltexteffects waves -a 0.01 --wave-deep-color 4651e3 --wave-shall
     effect_parser.add_argument(
         "--wave-easing",
         default="IN_OUT_SINE",
-        type=argtypes.valid_ease,
+        type=argtypes.ease,
         help="Easing function to use for wave travel.",
     )
 

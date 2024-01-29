@@ -25,20 +25,20 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--base-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters when they are not glitching.",
     )
     effect_parser.add_argument(
         "--glitch-line-colors",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         nargs="*",
         default=["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -46,7 +46,7 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
     )
     effect_parser.add_argument(
         "--glitch-wave-colors",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         nargs="*",
         default=["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -54,7 +54,7 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
     )
     effect_parser.add_argument(
         "--noise-colors",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         nargs="*",
         default=["1e1e1f", "3c3b3d", "6d6c70", "a2a1a6", "cbc9cf", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -62,28 +62,28 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final characters after the glitching has resolved.",
     )
     effect_parser.add_argument(
         "--glitch-line-chance",
-        type=argtypes.valid_float_between_zero_to_one,
+        type=argtypes.float_zero_to_one,
         default=0.05,
         metavar="(0.0-1.0)",
         help="Chance that a line will glitch on any given frame.",
     )
     effect_parser.add_argument(
         "--noise-chance",
-        type=argtypes.valid_float_between_zero_to_one,
+        type=argtypes.float_zero_to_one,
         default=0.004,
         metavar="(0.0-1.0)",
         help="Chance that all characters will experience noise on any given frame.",
     )
     effect_parser.add_argument(
         "--total-glitch-time",
-        type=argtypes.valid_duration,
+        type=argtypes.positive_int,
         default=1000,
         metavar="(int >= 1)",
         help="Total time, animation steps, that the glitching phase will last.",

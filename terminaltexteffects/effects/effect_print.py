@@ -25,34 +25,34 @@ Example: terminaltexteffects print -a 0.01 --print-head-color f3b462 --text-colo
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--print-head-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="f3b462",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the print head as it moves across the terminal.",
     )
     effect_parser.add_argument(
         "--text-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="f2ebc0",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the text.",
     )
     effect_parser.add_argument(
         "--print-head-return-speed",
-        type=argtypes.valid_speed,
+        type=argtypes.positive_float,
         default=1.5,
         metavar="(float > 0)",
         help="Speed of the print head when performing a carriage return.",
     )
     effect_parser.add_argument(
         "--print-speed",
-        type=argtypes.valid_duration,
+        type=argtypes.positive_int,
         default=1,
         metavar="(int >= 1)",
         help="Speed of the print head when printing characters.",
@@ -60,7 +60,7 @@ Example: terminaltexteffects print -a 0.01 --print-head-color f3b462 --text-colo
     effect_parser.add_argument(
         "--print-head-easing",
         default="IN_OUT_QUAD",
-        type=argtypes.valid_ease,
+        type=argtypes.ease,
         help="Easing function to use for print head movement.",
     )
 

@@ -24,13 +24,13 @@ Example: terminaltexteffects rowmerge -a 0.01""",
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Time, in seconds, to sleep between animation steps.",
     )
     effect_parser.add_argument(
         "--movement-speed",
-        type=argtypes.valid_speed,
+        type=argtypes.positive_float,
         default=0.5,
         metavar="(float > 0)",
         help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
@@ -38,7 +38,7 @@ Example: terminaltexteffects rowmerge -a 0.01""",
     effect_parser.add_argument(
         "--easing",
         default="OUT_QUAD",
-        type=argtypes.valid_ease,
+        type=argtypes.ease,
         help="Easing function to use for row movement.",
     )
 

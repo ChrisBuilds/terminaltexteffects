@@ -28,13 +28,13 @@ Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--rain-colors",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         nargs="*",
         default=0,
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -42,14 +42,14 @@ Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final character.",
     )
     effect_parser.add_argument(
         "--movement-speed",
-        type=argtypes.valid_speed,
+        type=argtypes.positive_float,
         default=0.15,
         metavar="(float > 0)",
         help="Falling speed of the rain drops.",
@@ -57,7 +57,7 @@ Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
     effect_parser.add_argument(
         "--easing",
         default="IN_QUART",
-        type=argtypes.valid_ease,
+        type=argtypes.ease,
         help="Easing function to use for character movement.",
     )
 

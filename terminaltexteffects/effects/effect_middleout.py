@@ -27,27 +27,27 @@ Example: terminaltexteffects middleout -a 0.01 --expand-direction horizontal --c
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--starting-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the initial text in the center of the output area.",
     )
     effect_parser.add_argument(
         "--center-expand-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the row or column as it expands.",
     )
     effect_parser.add_argument(
         "--full-expand-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the full text as it expands.",
@@ -60,14 +60,14 @@ Example: terminaltexteffects middleout -a 0.01 --expand-direction horizontal --c
     )
     effect_parser.add_argument(
         "--center-movement-speed",
-        type=argtypes.valid_speed,
+        type=argtypes.positive_float,
         default=0.35,
         metavar="(float > 0)",
         help="Speed of the characters during the initial expansion of the center vertical/horiztonal line. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
     )
     effect_parser.add_argument(
         "--full-movement-speed",
-        type=argtypes.valid_speed,
+        type=argtypes.positive_float,
         default=0.35,
         metavar="(float > 0)",
         help="Speed of the characters during the final full expansion. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
@@ -75,13 +75,13 @@ Example: terminaltexteffects middleout -a 0.01 --expand-direction horizontal --c
     effect_parser.add_argument(
         "--center-easing",
         default="IN_OUT_SINE",
-        type=argtypes.valid_ease,
+        type=argtypes.ease,
         help="Easing function to use for initial expansion.",
     )
     effect_parser.add_argument(
         "--full-easing",
         default="IN_OUT_SINE",
-        type=argtypes.valid_ease,
+        type=argtypes.ease,
         help="Easing function to use for full expansion.",
     )
 

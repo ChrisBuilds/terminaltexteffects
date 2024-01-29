@@ -26,27 +26,27 @@ Example: terminaltexteffects unstable -a 0.01 --initial-color ffffff --unstable-
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--initial-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters when the effect starts.",
     )
     effect_parser.add_argument(
         "--unstable-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ff9200",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color transitioned to as the characters become unstable.",
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color transitioned to as the characters reassemble.",
@@ -54,12 +54,12 @@ Example: terminaltexteffects unstable -a 0.01 --initial-color ffffff --unstable-
     effect_parser.add_argument(
         "--explosion-ease",
         default="OUT_EXPO",
-        type=argtypes.valid_ease,
+        type=argtypes.ease,
         help="Easing function to use for character movement during the explosion.",
     )
     effect_parser.add_argument(
         "--explosion-speed",
-        type=argtypes.valid_speed,
+        type=argtypes.positive_float,
         default=0.75,
         metavar="(float > 0)",
         help="Speed of characters during explosion. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
@@ -67,12 +67,12 @@ Example: terminaltexteffects unstable -a 0.01 --initial-color ffffff --unstable-
     effect_parser.add_argument(
         "--reassembly-ease",
         default="OUT_EXPO",
-        type=argtypes.valid_ease,
+        type=argtypes.ease,
         help="Easing function to use for character reassembly.",
     )
     effect_parser.add_argument(
         "--reassembly-speed",
-        type=argtypes.valid_speed,
+        type=argtypes.positive_float,
         default=0.75,
         metavar="(float > 0)",
         help="Speed of characters during reassembly. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",

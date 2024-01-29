@@ -25,14 +25,14 @@ Example: terminaltexteffects columnslide -a 0.003 --slide-direction up --easing 
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.003,
         help="Time to sleep, in seconds, between animation steps.",
     )
     effect_parser.add_argument(
         "--column-gap",
         default=5,
-        type=argtypes.valid_gap,
+        type=argtypes.nonnegative_int,
         help="Number of characters to wait before adding a new column.",
     )
     effect_parser.add_argument(
@@ -43,7 +43,7 @@ Example: terminaltexteffects columnslide -a 0.003 --slide-direction up --easing 
     )
     effect_parser.add_argument(
         "--movement-speed",
-        type=argtypes.valid_speed,
+        type=argtypes.positive_float,
         default=0.2,
         metavar="(float > 0)",
         help="Character movement speed. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
@@ -51,7 +51,7 @@ Example: terminaltexteffects columnslide -a 0.003 --slide-direction up --easing 
     effect_parser.add_argument(
         "--easing",
         default="IN_OUT_SINE",
-        type=argtypes.valid_ease,
+        type=argtypes.ease,
         help="Easing function to use for column movement.",
     )
 

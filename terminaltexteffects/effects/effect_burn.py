@@ -23,27 +23,27 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.003,
         help="Time between animation steps. Defaults to 0.03 seconds.",
     )
     effect_parser.add_argument(
         "--burned-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="252525",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color faded toward as blocks burn. Defaults to 252525",
     )
     effect_parser.add_argument(
         "--flame-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ff9600",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the flame. Defaults to 0",
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final character. Will leave as system default if not provided.",
     )

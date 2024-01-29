@@ -26,13 +26,13 @@ Example: terminaltexteffects rings --animation-rate 0.01 --ring-colors ffcc0d ff
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--ring-colors",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         nargs="*",
         default=["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -40,7 +40,7 @@ Example: terminaltexteffects rings --animation-rate 0.01 --ring-colors ffcc0d ff
     )
     effect_parser.add_argument(
         "--base-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters when they are not in rings.",

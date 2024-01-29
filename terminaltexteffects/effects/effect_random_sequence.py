@@ -23,27 +23,27 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.003,
         help="Time to sleep between animation steps. Defaults to 0.01 seconds.",
     )
     effect_parser.add_argument(
         "--fade-startcolor",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="000000",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color to start the fade-in. Defaults to black.",
     )
     effect_parser.add_argument(
         "--fade-endcolor",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color to fade towards. Defaults to white",
     )
     effect_parser.add_argument(
         "--fade-duration",
-        type=argtypes.valid_duration,
+        type=argtypes.positive_int,
         default=5,
         help="Duration the fade effect, in frames. Defaults to 5.",
     )

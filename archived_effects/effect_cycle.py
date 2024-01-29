@@ -25,27 +25,27 @@ Example: terminaltexteffects cycle -a 0.01 --cycling-color ffa15c --discover-col
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--cycling-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffa15c",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters while cycling symbols.",
     )
     effect_parser.add_argument(
         "--discover-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the character upon landing on the correct symbol.",
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="0ed7b1",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color the character will fade towards after the discover flash.",
@@ -53,7 +53,7 @@ Example: terminaltexteffects cycle -a 0.01 --cycling-color ffa15c --discover-col
     effect_parser.add_argument(
         "--easing",
         default="IN_OUT_CIRC",
-        type=argtypes.valid_ease,
+        type=argtypes.ease,
         help="Easing function to use for the cycling animation.",
     )
 

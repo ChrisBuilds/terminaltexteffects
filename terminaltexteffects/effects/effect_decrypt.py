@@ -23,20 +23,20 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.003,
         help="Time to sleep between animation steps. Defaults to 0.003 seconds.",
     )
     effect_parser.add_argument(
         "--ciphertext-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default=40,
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the ciphertext. Defaults to 40",
     )
     effect_parser.add_argument(
         "--plaintext-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="ffb007",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the plaintext. Defaults to 208.",

@@ -24,41 +24,41 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
-        type=argtypes.valid_animationrate,
+        type=argtypes.nonnegative_float,
         default=0.01,
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
         "--base-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="0f74fa",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters when not flashing.",
     )
     effect_parser.add_argument(
         "--flash-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="f2ea79",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the character flash. Characters flash when moving.",
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.valid_color,
+        type=argtypes.color,
         default="96ed89",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters when they reach their input coordinate.",
     )
     effect_parser.add_argument(
         "--swarm-size",
-        type=argtypes.valid_float_between_zero_to_one,
+        type=argtypes.float_zero_to_one,
         metavar="(float 0 < n <= 1)",
         default=0.05,
         help="Percent of total characters in each swarm.",
     )
     effect_parser.add_argument(
         "--swarm-coordination",
-        type=argtypes.valid_float_between_zero_to_one,
+        type=argtypes.float_zero_to_one,
         metavar="(float 0 < n <= 1)",
         default=0.80,
         help="Percent of characters in a swarm that move as a group.",
