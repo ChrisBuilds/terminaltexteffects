@@ -2,14 +2,11 @@ from argparse import Namespace
 
 from terminaltexteffects.effects import (
     effect_blackhole,
-    effect_columnslide,
     effect_decrypt,
     effect_expand,
     effect_pour,
     effect_rain,
     effect_random_sequence,
-    effect_rowmerge,
-    effect_rowslide,
     effect_scattered,
     effect_bouncyballs,
     effect_spray,
@@ -341,40 +338,12 @@ def test_bouncyballs_effect() -> None:
         bouncyballs_effect.run()
 
 
-def test_rowslide_effect() -> None:
-    for input_data in test_inputs:
-        args = make_args()
-        args.slide_direction = effect_rowslide.SlideDirection.LEFT
-        args.row_gap = 5
-        terminal = Terminal(input_data, args)
-        rowslide_effect = effect_rowslide.RowSlide(terminal, args)
-        rowslide_effect.run()
-
-
-def test_columnslide_effect() -> None:
-    for input_data in test_inputs:
-        args = make_args()
-        args.slide_direction = effect_columnslide.SlideDirection.DOWN
-        args.column_gap = 5
-        terminal = Terminal(input_data, args)
-        columnslide_effect = effect_columnslide.ColumnSlide(terminal, args)
-        columnslide_effect.run()
-
-
 def test_verticalslice_effect() -> None:
     for input_data in test_inputs:
         args = make_args()
         terminal = Terminal(input_data, args)
         verticalslice_effect = effect_verticalslice.VerticalSlice(terminal, args)
         verticalslice_effect.run()
-
-
-def test_rowmerge_effect() -> None:
-    for input_data in test_inputs:
-        args = make_args()
-        terminal = Terminal(input_data, args)
-        rowmerge_effect = effect_rowmerge.RowMergeEffect(terminal, args)
-        rowmerge_effect.run()
 
 
 def test_burn_effect() -> None:
