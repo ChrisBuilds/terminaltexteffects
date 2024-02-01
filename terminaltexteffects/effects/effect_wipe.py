@@ -17,9 +17,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Wipes the text across the terminal to reveal characters.",
         description="Wipes the text across the terminal to reveal characters.",
-        epilog=f"""{argtypes.EASING_EPILOG}
-
-Example: terminaltexteffects wipe -a 0.01 --wipe-direction column_left_to_right --gradient ffffff ff0000 00ff00 --wipe-delay 0""",
+        epilog=f"""Example: terminaltexteffects wipe -a 0.01 --wipe-direction column_left_to_right --gradient ffffff ff0000 00ff00 --wipe-delay 0""",
     )
     effect_parser.set_defaults(effect_class=WipeEffect)
     effect_parser.add_argument(
