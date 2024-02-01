@@ -20,7 +20,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="scattered | Move the characters into place from random starting locations.",
         epilog=f"""{argtypes.EASING_EPILOG}
         
-Example: terminaltexteffects scattered -a 0.01""",
+Example: terminaltexteffects scattered --movement-speed 0.5 --easing IN_OUT_BACK""",
     )
     effect_parser.set_defaults(effect_class=ScatteredEffect)
     effect_parser.add_argument(

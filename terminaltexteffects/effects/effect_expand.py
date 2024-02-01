@@ -18,7 +18,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="expand | Expands the text from a single point.",
         epilog=f"""{argtypes.EASING_EPILOG}
         
-Example: terminaltexteffects expand -a 0.01""",
+Example: terminaltexteffects expand -a 0.01 --movement-speed 0.5 --easing IN_OUT_QUART""",
     )
     effect_parser.set_defaults(effect_class=ExpandEffect)
     effect_parser.add_argument(

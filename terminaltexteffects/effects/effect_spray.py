@@ -23,7 +23,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="spray | Draws the characters spawning at varying rates from a single point.",
         epilog=f"""{argtypes.EASING_EPILOG}
         
-Example: terminaltexteffects spray -a 0.01 --spray-position center""",
+Example: terminaltexteffects spray -a 0.01 --spray-position center --spray-volume 5 --movement-speed 0.7 --easing OUT_EXPO --spray-colors 10 11 12 --final-color 0""",
     )
     effect_parser.set_defaults(effect_class=SprayEffect)
     effect_parser.add_argument(
