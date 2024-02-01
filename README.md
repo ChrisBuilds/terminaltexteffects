@@ -144,7 +144,7 @@ options:
 
         
 Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 2 --final-color ffffff --launch-delay 60 --explode-distance 10
-``````
+```
 </details>
 
 #### Rain
