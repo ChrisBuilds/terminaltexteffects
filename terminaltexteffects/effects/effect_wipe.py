@@ -46,9 +46,16 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--gradient",
         type=argtypes.color,
         nargs="*",
-        default=["ffffff"],
+        default=[],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Space separated, unquoted, list of colors for the wipe gradient. Use a single color to disable the gradient.",
+        help="Space separated, unquoted, list of colors for the wipe gradient.",
+    )
+    effect_parser.add_argument(
+        "--gradient-steps",
+        type=argtypes.positive_int,
+        default=10,
+        metavar="(int > 0)",
+        help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--wipe-delay",
@@ -69,9 +76,7 @@ class WipeEffect:
         self.animating_chars: list[EffectCharacter] = []
         self.direction = self.args.wipe_direction
         if len(self.args.gradient) > 1:
-            self.wipe_gradient = graphics.Gradient(self.args.gradient, 10)
-        else:
-            self.wipe_gradient = graphics.Gradient([self.args.gradient[0], self.args.gradient[0]], 1)
+            self.wipe_gradient = graphics.Gradient(self.args.gradient, self.args.gradient_steps)
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
@@ -86,10 +91,15 @@ class WipeEffect:
             "diagonal_bottom_right_to_top_left": self.terminal.CharacterSort.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         }
         for group in self.terminal.get_characters(sort_map[self.direction]):
-            for character in group:
-                wipe_scn = character.animation.new_scene("gradient")
-                for color in self.wipe_gradient:
-                    wipe_scn.add_frame(character.input_symbol, 10, color=color)
+            if self.args.gradient:
+                for character in group:
+                    wipe_scn = character.animation.new_scene("gradient")
+                    if len(self.args.gradient) > 1:
+                        for color in self.wipe_gradient:
+                            wipe_scn.add_frame(character.input_symbol, 7, color=color)
+                    else:
+                        wipe_scn.add_frame(character.input_symbol, 1, color=self.args.gradient[0])
+                    character.animation.activate_scene(wipe_scn)
             self.pending_groups.append(group)
 
     def run(self) -> None:
@@ -102,7 +112,6 @@ class WipeEffect:
                     next_group = self.pending_groups.pop(0)
                     for character in next_group:
                         character.is_active = True
-                        character.animation.activate_scene(character.animation.scenes["gradient"])
                         self.animating_chars.append(character)
                 wipe_delay = self.args.wipe_delay
             else:
