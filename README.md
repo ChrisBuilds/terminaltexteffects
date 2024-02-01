@@ -214,27 +214,209 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 
 #### Spray
 ![spray_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/d39b4caa-7393-4357-8e27-b0ef9dce756b)
+<details>
+<summary>tte spray -h</summary>
+<br>
+    spray | Draws the characters spawning at varying rates from a single point.
+
+    options:
+      -h, --help            show this help message and exit
+      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
+                            Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
+                            no impact beyond a certain lower threshold due to the processing speed of your device. (default: 0.01)
+      --spray-colors [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            List of colors for the character spray. Colors are randomly chosen from the list. (default: 0)
+      --final-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the final character. (default: ffffff)
+      --spray-position {n,ne,e,se,s,sw,w,nw,center}
+                            Position for the spray origin. (default: e)
+      --spray-volume (int > 0)
+                            Maximum number of characters to spray at a time. (default: 5)
+      --movement-speed (float > 0)
+                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.7)
+      --easing EASING       Easing function to use for character movement. (default: OUT_EXPO)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+            
+    Example: terminaltexteffects spray -a 0.01 --spray-position center --spray-volume 5 --movement-speed 0.7 --easing OUT_EXPO --spray-colors 10 11 12 --final-color 0
+</details>
 
 #### Scattered
 ![scattered_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ddcf3c65-a91b-4e42-84fc-0c2508a85be5)
+<details>
+<summary>tte scattered -h</summary>
+<br>
+    scattered | Move the characters into place from random starting locations.
+
+    options:
+      -h, --help            show this help message and exit
+      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
+                            Time between animation steps. (default: 0.01)
+      --movement-speed (float > 0)
+                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.5)
+      --easing EASING       Easing function to use for character movement. (default: IN_OUT_BACK)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+            
+    Example: terminaltexteffects scattered --movement-speed 0.5 --easing IN_OUT_BACK
+</details>
 
 #### Expand
 ![expand_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/9b319e77-d2b7-489e-b59c-c87277ea1285)
+<details>
+<summary>tte expand -h</summary>
+<br>
+    expand | Expands the text from a single point.
+
+    options:
+      -h, --help            show this help message and exit
+      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
+                            Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
+                            no impact beyond a certain lower threshold due to the processing speed of your device. (default: 0.01)
+      --movement-speed (float > 0)
+                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.5)
+      --easing EASING       Easing function to use for character movement. (default: IN_OUT_QUART)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+            
+    Example: terminaltexteffects expand -a 0.01 --movement-speed 0.5 --easing IN_OUT_QUART
+</details>
 
 #### Burn
 ![burn_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ddc8ca36-4157-448b-b10d-573f108361c7)
+<details>
+<summary>tte burn -h</summary>
+<br>
+    burn | Burn the output area.
+
+    options:
+      -h, --help            show this help message and exit
+      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
+                            Time between animation steps. Defaults to 0.03 seconds.
+      --burned-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color faded toward as blocks burn. Defaults to 252525
+      --flame-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the flame. Defaults to 0
+      --final-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the final character. Will leave as system default if not provided.
+
+    Example: terminaltexteffects burn -a 0.003 --flame-color ff9600 --burned-color 252525
+</details>
 
 #### Pour
 ![pour_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/d5b827a5-3267-47ad-88c7-6fb0b2dbb478)
+<details>
+<summary>tte pour -h</summary>
+<br>
+    pour | Pours the characters into position from the given direction.
 
-#### Rowslide
-![rowslide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/fc62bbe3-d75f-4757-b1ef-c14abff2666b)
+    options:
+      -h, --help            show this help message and exit
+      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
+                            Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
+                            no impact beyond a certain lower threshold due to the processing speed of your device. (default: 0.004)
+      --pour-direction {up,down,left,right}
+                            Direction the text will pour. (default: down)
+      --movement-speed (float > 0)
+                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.2)
+      --easing EASING       Easing function to use for character movement. (default: IN_QUAD)
 
-#### Rowmerge
-![rowmerge_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/5cd4d5a1-e82d-42ed-b91c-6ac8061cab44)
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
 
-#### Columnslide
-![columnslide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/f2ecdc42-415d-47d3-889d-8e8993657b8f)
+            
+    Example: terminaltexteffects pour -a 0.004 --pour-direction down
+</details>
 
 #### Randomsequence
 ![randomsequence_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/8ee83d75-6c22-4c0b-8f96-a12301d7a4eb)
