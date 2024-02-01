@@ -27,6 +27,8 @@ from terminaltexteffects.effects import (
     effect_waves,
     effect_print,
     effect_binarypath,
+    effect_slide,
+    effect_wipe,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -67,6 +69,33 @@ def make_args() -> Namespace:
     args.movement_speed = 3
     args.easing = easing.in_sine
     return args
+
+
+def test_slide_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.grouping = "diagonal"
+        args.gradient = [10, 11, 12]
+        args.gap = 1
+        args.merge = True
+        args.reverse_direction = False
+        args.gradient_steps = 5
+        args.easing = easing.out_quad
+        terminal = Terminal(input_data, args)
+        slide_effect = effect_slide.SlideEffect(terminal, args)
+        slide_effect.run()
+
+
+def test_wipe_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.wipe_direction = "column_left_to_right"
+        args.wipe_delay = 0
+        args.gradient = [10, 11, 12]
+        args.gradient_steps = 5
+        terminal = Terminal(input_data, args)
+        wipe_effect = effect_wipe.WipeEffect(terminal, args)
+        wipe_effect.run()
 
 
 def test_binarypath_effect() -> None:
