@@ -147,9 +147,70 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 
 #### Rain
 ![rain_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed94a21f-503d-46f3-8510-7a1e83b28314)
+<details>
+<summary>tte rain -h</summary>
+<br>
+    rain | Rain characters from the top of the output area.
+
+    options:
+      -h, --help            show this help message and exit
+      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
+                            Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
+                            no impact beyond a certain lower threshold due to the processing speed of your device. (default: 0.01)
+      --rain-colors [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            List of colors for the rain drops. Colors are randomly chosen from the list. (default: 0)
+      --final-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the final character. (default: ffffff)
+      --movement-speed (float > 0)
+                            Falling speed of the rain drops. (default: 0.15)
+      --easing EASING       Easing function to use for character movement. (default: IN_QUART)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+            
+    Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21
+</details>
 
 #### Decrypt
 ![decrypt_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/586224f3-6a03-40ae-bdcf-067a6c96cbb5)
+<details>
+<summary>tte decrypt -h</summary>
+<br>
+    decrypt | Movie style decryption effect.
+
+    options:
+      -h, --help            show this help message and exit
+      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
+                            Time to sleep between animation steps. Defaults to 0.003 seconds.
+      --ciphertext-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the ciphertext. Defaults to 40
+      --plaintext-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the plaintext. Defaults to 208.
+
+    Example: terminaltexteffects decrypt -a 0.003 --cipher-text-color 40 --plain-text-color 208
+</details>
 
 #### Spray
 ![spray_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/d39b4caa-7393-4357-8e27-b0ef9dce756b)
