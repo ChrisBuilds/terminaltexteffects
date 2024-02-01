@@ -7,17 +7,15 @@
  * Print. Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
  * BinaryPath. Characters are converted into their binary representation. These binary groups travel to their input coordinate and collapse into the original character symbol.
  * Wipe. Performs directional wipes with an optional trailing gradient.
+ * Slide. Slides characters into position from outside the terminal view. Characters can be grouped by column, row, or diagonal. Groups can be merged from opposite directions or slide from the same direction.
 
 #### Engine
- * Terminal.get_character() method accepts a Terminal.CharacterSort argument to easily retrieve the input
-   characters in groups sorted by various directions, ex: Terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT
- * Terminal.add_character() method allows adding characters to the effect that are not part of the input text. These characters
-   are added to a separate list (Terminal.non_input_characters) in Terminal to allow for iteration over Terminal.characters and 
-   adding new characters based on the input characters without modifying the Terminal.characters list during iteration. The
-   added characters are handled the same as input characters by the Terminal.
+ * Terminal.get_character() method accepts a Terminal.CharacterSort argument to easily retrieve the input characters in groups sorted by various directions, ex: Terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT
+ * Terminal.add_character() method allows adding characters to the effect that are not part of the input text. These characters are added to a separate list (Terminal.non_input_characters) in terminal to allow for iteration over Terminal.characters and adding new characters based on the input characters without modifying the Terminal.characters list during iteration. The added characters are handled the same as input characters by the Terminal.
 
 ### Changes
   * Terminal._update_terminal_state() refactored for improved performance.
+  * rowslide, columnslide, and rowmerge have been replaced with a single effect, slide.
 ### Bug Fixes
  * Fixed rare division by zero error in Path.step() when the final segment has a distance of zero and the distance to travel exceeds
    the total distance of the Path.
