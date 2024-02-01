@@ -56,7 +56,7 @@ Example: effect_example""",
         type=argtypes.positive_float,
         default=1,
         metavar="(float > 0)",
-        help="Speed of the ___. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Speed of the ___.",
     )
     effect_parser.add_argument(
         "--easing",
