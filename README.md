@@ -120,31 +120,29 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 <details>
 <summary>tte fireworks -h</summary>
 <br>
-```
-fireworks | Characters explode like fireworks and fall into place.
+    fireworks | Characters explode like fireworks and fall into place.
 
-options:
-  -h, --help            show this help message and exit
-  -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
-                        Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
-                        no impact beyond a certain lower threshold due to the processing speed of your device. (default: 0.01)
-  --explode-anywhere    If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text. (default: False)
-  --firework-colors [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated list of colors from which firework colors will be randomly selected. (default: ['88F7E2', '44D492', 'F5EB67', 'FFA15C', 'FA233E'])
-  --firework-symbol (single character)
-                        Symbol to use for the firework shell. (default: o)
-  --firework-volume (float 0 < n <= 1)
-                        Percent of total characters in each firework shell. (default: 0.02)
-  --final-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                        Color for the final character. (default: ffffff)
-  --launch-delay (int >= 0)
-                        Number of animation steps to wait between launching each firework shell. (default: 60)
-  --explode-distance (float 0 < n <= 1)
-                        Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width. (default: 0.1)
+    options:
+      -h, --help            show this help message and exit
+      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
+                            Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
+                            no impact beyond a certain lower threshold due to the processing speed of your device. (default: 0.01)
+      --explode-anywhere    If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text. (default: False)
+      --firework-colors [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated list of colors from which firework colors will be randomly selected. (default: ['88F7E2', '44D492', 'F5EB67', 'FFA15C', 'FA233E'])
+      --firework-symbol (single character)
+                            Symbol to use for the firework shell. (default: o)
+      --firework-volume (float 0 < n <= 1)
+                            Percent of total characters in each firework shell. (default: 0.02)
+      --final-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the final character. (default: ffffff)
+      --launch-delay (int >= 0)
+                            Number of animation steps to wait between launching each firework shell. (default: 60)
+      --explode-distance (float 0 < n <= 1)
+                            Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width. (default: 0.1)
 
-        
-Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 2 --final-color ffffff --launch-delay 60 --explode-distance 10
-```
+            
+    Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 2 --final-color ffffff --launch-delay 60 --explode-distance 10
 </details>
 
 #### Rain
