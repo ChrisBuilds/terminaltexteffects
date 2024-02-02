@@ -467,6 +467,14 @@ Any effects shown below are in development and will be available in the next rel
 #### BinaryPath
 ![binarypath_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/f3570ebe-108d-4b34-8766-a448c9ff8f53)
 
+#### Slide
+![rowslide](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/98c91fe4-18fa-49ca-aa2a-3a0a6e3c9c97)
+<details>
+<summary>Slide Variants</summary>
+<br>
+![rowmerge](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/4417debd-0b1a-4717-b165-b2a619266d90)
+</details>
+
 
 ## Recent Changes
 
