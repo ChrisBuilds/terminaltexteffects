@@ -419,7 +419,7 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 </details>
 
 #### Randomsequence
-![randomsequence_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/8ee83d75-6c22-4c0b-8f96-a12301d7a4eb)
+![randomsequence_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/db4d04a2-bb9c-42de-8895-0ef1747ae6e8)
 
 #### Verticalslice
 ![verticalslice_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/237e36c5-cb4e-4866-9a33-b7f27a2907dc)
@@ -466,6 +466,13 @@ Any effects shown below are in development and will be available in the next rel
 
 #### BinaryPath
 ![binarypath_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/f3570ebe-108d-4b34-8766-a448c9ff8f53)
+
+#### Slide
+![slide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/4b862b03-0f97-4e7d-a553-587372e0af27)
+
+#### Wipe
+![wipe_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/8d7821c5-0e11-4a5e-a61a-9684fb0ddcd8)
+
 
 
 ## Recent Changes
