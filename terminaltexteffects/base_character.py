@@ -166,6 +166,21 @@ class EffectCharacter:
         self.is_active: bool = False
         self.layer: int = 0
 
+    def tick(self) -> None:
+        """Progress the character's animation and motion by one step."""
+        self.motion.move()
+        self.animation.step_animation()
+
+    def is_animating(self) -> bool:
+        """Returns whether the character is currently animating. A character is animating if its animation or motion is not complete.
+
+        Returns:
+            bool: True if the character is animating, False if not.
+        """
+        if not self.animation.active_scene_is_complete() or not self.motion.movement_is_complete():
+            return True
+        return False
+
     def __hash__(self) -> int:
         return hash(self.input_coord)
 
