@@ -237,7 +237,7 @@ class Terminal:
             list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond to rows,
             columns, or diagonals depending on the sort_order.
         """
-        all_characters = chain(self.characters, self.non_input_characters)
+        all_characters = self.characters + self.non_input_characters
         if sort_order in (self.CharacterSort.COLUMN_LEFT_TO_RIGHT, self.CharacterSort.COLUMN_RIGHT_TO_LEFT):
             columns = []
             for column_index in range(self.output_area.right + 1):
