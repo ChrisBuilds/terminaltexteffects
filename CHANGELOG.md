@@ -15,8 +15,11 @@
 
 ### Changes
 ### Effects
-  * Many classic effects now support gradient specification which includes stops, steps, and frames to enable greater customization.
   * Rowslide, Columnslide, and Rowmerge have been replaced with a single effect, Slide.
+  * Many classic effects now support gradient specification which includes stops, steps, and frames to enable greater customization.
+  * Randomsequence effect supports gradient specification.
+  * Scattered effect supports gradient specification.
+  * Expand effect supports gradient specification.
   * Pour effect now has a back and forth pouring animation and supports gradient specification.
 
 #### Engine
