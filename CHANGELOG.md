@@ -21,6 +21,8 @@
 
 #### Engine
   * Terminal._update_terminal_state() refactored for improved performance.
+  * EffectCharacter.tick() will progress motion and animation by one step. This solves the problem of running Animation.step_animation() before Motion.move() and desyncing Path synced animations.
+  * EffectCharacter.is_animating() can be used to check if motion/animation is in progress.
 
 ### Bug Fixes
  * Fixed rare division by zero error in Path.step() when the final segment has a distance of zero and the distance to travel exceeds
