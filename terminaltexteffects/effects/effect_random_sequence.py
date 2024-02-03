@@ -28,24 +28,26 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Time to sleep between animation steps. Defaults to 0.01 seconds.",
     )
     effect_parser.add_argument(
-        "--fade-startcolor",
+        "--gradient-stops",
         type=argtypes.color,
-        default="000000",
+        nargs="*",
+        default=[],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color to start the fade-in. Defaults to black.",
+        help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
-        "--fade-endcolor",
-        type=argtypes.color,
-        default="ffffff",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color to fade towards. Defaults to white",
+        "--gradient-steps",
+        type=argtypes.positive_int,
+        default=10,
+        metavar="(int > 0)",
+        help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
-        "--fade-duration",
+        "--gradient-frames",
         type=argtypes.positive_int,
         default=5,
-        help="Duration the fade effect, in frames. Defaults to 5.",
+        metavar="(int > 0)",
+        help="Number of frames to display each gradient step.",
     )
 
 
@@ -63,20 +65,27 @@ class RandomSequence:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
-        self.fade_in = graphics.Gradient([args.fade_startcolor, args.fade_endcolor], 10)
+        self.gradient_stops: list[int | str] = self.args.gradient_stops
 
     def prepare_data(self) -> None:
+        if len(self.gradient_stops) > 1:
+            gradient = graphics.Gradient(self.gradient_stops, self.args.gradient_steps)
         for character in self.terminal.characters:
             character.is_active = False
-            fade_scn = character.animation.new_scene("fade")
-            for color in self.fade_in:
-                fade_scn.add_frame(character.input_symbol, self.args.fade_duration, color=color)
-            character.animation.activate_scene(fade_scn)
+            if self.gradient_stops:
+                gradient_scn = character.animation.new_scene("gradient_scn")
+                if len(self.gradient_stops) > 1:
+                    for step in gradient:
+                        gradient_scn.add_frame(character.input_symbol, self.args.gradient_frames, color=step)
+                else:
+                    gradient_scn.add_frame(character.input_symbol, 1, color=self.gradient_stops[0])
+                character.animation.activate_scene(gradient_scn)
             self.pending_chars.append(character)
 
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
+
         random.shuffle(self.pending_chars)
         while self.pending_chars or self.animating_chars:
             if self.pending_chars:
