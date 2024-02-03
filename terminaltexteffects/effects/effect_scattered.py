@@ -1,7 +1,7 @@
 import argparse
 import random
 
-from terminaltexteffects.utils import motion
+from terminaltexteffects.utils import motion, graphics
 import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminal as terminal
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
@@ -31,6 +31,28 @@ Example: terminaltexteffects scattered --movement-speed 0.5 --easing IN_OUT_BACK
         help="Time between animation steps.",
     )
     effect_parser.add_argument(
+        "--gradient-stops",
+        type=argtypes.color,
+        nargs="*",
+        default=[],
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--gradient-steps",
+        type=argtypes.positive_int,
+        default=10,
+        metavar="(int > 0)",
+        help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )
+    effect_parser.add_argument(
+        "--gradient-frames",
+        type=argtypes.positive_int,
+        default=5,
+        metavar="(int > 0)",
+        help="Number of frames to display each gradient step.",
+    )
+    effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.positive_float,
         default=0.5,
@@ -53,9 +75,13 @@ class ScatteredEffect:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
+        self.gradient_stops: list[int | str] = self.args.gradient_stops
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by scattering the characters within range of the input width and height."""
+        if len(self.gradient_stops) > 1:
+            gradient = graphics.Gradient(self.gradient_stops, self.args.gradient_steps)
+
         for character in self.terminal.characters:
             if self.terminal.output_area.right < 2 or self.terminal.output_area.top < 2:
                 character.motion.set_coordinate(motion.Coord(1, 1))
@@ -73,6 +99,14 @@ class ScatteredEffect:
             )
             character.motion.activate_path(input_coord_path)
             character.is_active = True
+            if self.gradient_stops:
+                gradient_scn = character.animation.new_scene("gradient_scn")
+                if len(self.gradient_stops) > 1:
+                    for step in gradient:
+                        gradient_scn.add_frame(character.input_symbol, self.args.gradient_frames, color=step)
+                else:
+                    gradient_scn.add_frame(character.input_symbol, 1, color=self.gradient_stops[0])
+                character.animation.activate_scene(gradient_scn)
             self.animating_chars.append(character)
 
     def run(self) -> None:
