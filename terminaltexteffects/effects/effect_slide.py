@@ -47,19 +47,33 @@ Example: terminaltexteffects slide --grouping row --movement-speed 0.5 --gradien
         help="Direction to group characters.",
     )
     effect_parser.add_argument(
-        "--gradient",
+        "--gradient-stops",
         type=argtypes.color,
         nargs="*",
         default=[],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Space separated, unquoted, list of colors for the character gradient.",
+        help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--gradient-steps",
+        type=argtypes.positive_int,
+        default=10,
+        metavar="(int > 0)",
+        help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )
+    effect_parser.add_argument(
+        "--gradient-frames",
+        type=argtypes.positive_int,
+        default=5,
+        metavar="(int > 0)",
+        help="Number of frames to display each gradient step.",
     )
     effect_parser.add_argument(
         "--gap",
         type=argtypes.nonnegative_int,
         default=4,
         metavar="(int >= 0)",
-        help="Gap to wait before adding the next group of characters. Increasing this value creates a more staggered effect.",
+        help="Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect.",
     )
     effect_parser.add_argument(
         "--reverse-direction",
@@ -70,13 +84,6 @@ Example: terminaltexteffects slide --grouping row --movement-speed 0.5 --gradien
         "--merge",
         action="store_true",
         help="Merge the character groups originating from either side of the terminal. (--reverse-direction is ignored when merging)",
-    )
-    effect_parser.add_argument(
-        "--gradient-steps",
-        type=argtypes.positive_int,
-        default=10,
-        metavar="(int > 0)",
-        help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--easing",
@@ -97,7 +104,7 @@ class SlideEffect:
         self.grouping: str = self.args.grouping
         self.reverse_direction: bool = self.args.reverse_direction
         self.merge: bool = self.args.merge
-        self.gradient_stops: list[int | str] = self.args.gradient
+        self.gradient_stops: list[int | str] = self.args.gradient_stops
         self.gap = self.args.gap
         self.pending_groups: list[list[EffectCharacter]] = []
         self.easing = self.args.easing
@@ -169,7 +176,7 @@ class SlideEffect:
                     gradient_scn = character.animation.new_scene("gradient_scn")
                     if len(self.gradient_stops) > 1:
                         for step in gradient:
-                            gradient_scn.add_frame(character.input_symbol, 5, color=step)
+                            gradient_scn.add_frame(character.input_symbol, self.args.gradient_frames, color=step)
                     else:
                         gradient_scn.add_frame(character.input_symbol, 1, color=self.gradient_stops[0])
                     character.animation.activate_scene(gradient_scn)
