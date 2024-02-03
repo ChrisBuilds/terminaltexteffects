@@ -116,9 +116,7 @@ class BurnEffect:
             self.animate_chars()
 
             self.animating_chars = [
-                animating_char
-                for animating_char in self.animating_chars
-                if not animating_char.animation.active_scene_is_complete()
+                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
             ]
             self.terminal.print()
 

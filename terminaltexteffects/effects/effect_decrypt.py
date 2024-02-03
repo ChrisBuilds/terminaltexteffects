@@ -147,9 +147,7 @@ class DecryptEffect:
             self.animate_chars()
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char
-                for animating_char in self.animating_chars
-                if not animating_char.animation.active_scene_is_complete()
+                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
             ]
             self.terminal.print()
 
@@ -157,13 +155,11 @@ class DecryptEffect:
         while self.animating_chars:
             self.animate_chars()
             self.animating_chars = [
-                animating_char
-                for animating_char in self.animating_chars
-                if not animating_char.animation.active_scene_is_complete()
+                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
             ]
             self.terminal.print()
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
         for animating_char in self.animating_chars:
-            animating_char.animation.step_animation()
+            animating_char.tick()

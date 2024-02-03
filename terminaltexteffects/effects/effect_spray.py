@@ -173,13 +173,9 @@ class SprayEffect:
             self.animate_chars()
             self.terminal.print()
             self.animating_chars = [
-                animating_char
-                for animating_char in self.animating_chars
-                if not animating_char.animation.active_scene_is_complete()
-                or not animating_char.motion.movement_is_complete()
+                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
             ]
 
     def animate_chars(self) -> None:
         for animating_char in self.animating_chars:
-            animating_char.animation.step_animation()
-            animating_char.motion.move()
+            animating_char.tick()

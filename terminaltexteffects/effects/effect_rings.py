@@ -335,15 +335,11 @@ class RingsEffect:
             self.terminal.print()
             self.animate_chars()
             self.animating_chars = [
-                animating_char
-                for animating_char in self.animating_chars
-                if not animating_char.animation.active_scene_is_complete()
-                or not animating_char.motion.movement_is_complete()
+                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
             ]
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
         to ensure waypoint synced animations have the latest waypoint progress information."""
         for animating_char in self.animating_chars:
-            animating_char.motion.move()
-            animating_char.animation.step_animation()
+            animating_char.tick()

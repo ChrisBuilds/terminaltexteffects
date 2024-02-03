@@ -196,5 +196,4 @@ class UnstableEffect:
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation."""
         for animating_char in self.animating_chars:
-            animating_char.animation.step_animation()
-            animating_char.motion.move()
+            animating_char.tick()

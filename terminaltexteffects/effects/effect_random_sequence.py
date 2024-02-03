@@ -87,12 +87,10 @@ class RandomSequence:
             self.terminal.print()
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char
-                for animating_char in self.animating_chars
-                if not animating_char.animation.active_scene_is_complete()
+                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
             ]
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and step animation."""
         for animating_char in self.animating_chars:
-            animating_char.animation.step_animation()
+            animating_char.tick()
