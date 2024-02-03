@@ -14,8 +14,14 @@
  * Terminal.add_character() method allows adding characters to the effect that are not part of the input text. These characters are added to a separate list (Terminal.non_input_characters) in terminal to allow for iteration over Terminal.characters and adding new characters based on the input characters without modifying the Terminal.characters list during iteration. The added characters are handled the same as input characters by the Terminal.
 
 ### Changes
+### Effects
+  * Many classic effects now support gradient specification which includes stops, steps, and frames to enable greater customization.
+  * Rowslide, Columnslide, and Rowmerge have been replaced with a single effect, Slide.
+  * Pour effect now has a back and forth pouring animation and supports gradient specification.
+
+#### Engine
   * Terminal._update_terminal_state() refactored for improved performance.
-  * rowslide, columnslide, and rowmerge have been replaced with a single effect, slide.
+
 ### Bug Fixes
  * Fixed rare division by zero error in Path.step() when the final segment has a distance of zero and the distance to travel exceeds
    the total distance of the Path.
