@@ -35,7 +35,7 @@ class OutputArea:
         self.center_column = max(self.right // 2, 1)
         self.center = motion.Coord(self.center_column, self.center_row)
 
-    def coord_in_output_area(self, coord: motion.Coord) -> bool:
+    def coord_is_in_output_area(self, coord: motion.Coord) -> bool:
         """Checks whether a coordinate is within the output area.
 
         Args:
@@ -45,6 +45,37 @@ class OutputArea:
             bool: whether the coordinate is within the output area
         """
         return self.left <= coord.column <= self.right and self.bottom <= coord.row <= self.top
+
+    def random_column(self) -> int:
+        """Get a random column position. Position is within the output area.
+
+        Returns:
+            int: a random column position (1 <= x <= output_area.right)"""
+        return random.randint(1, self.right)
+
+    def random_row(self) -> int:
+        """Get a random row position. Position is within the output area.
+
+        Returns:
+            int: a random row position (1 <= x <= terminal.output_area.top)"""
+        return random.randint(1, self.top)
+
+    def random_coord(self, outside_scope=False) -> motion.Coord:
+        """Get a random coordinate. Coordinate is within the output area unless outside_scope is True.
+
+        Args:
+            outside_scope (bool, optional): whether the coordinate should fall outside the output area. Defaults to False.
+
+        Returns:
+            motion.Coord: a random coordinate . Coordinate is within the output area unless outside_scope is True."""
+        if outside_scope is True:
+            random_coord_above = motion.Coord(self.random_column(), self.top + 1)
+            random_coord_below = motion.Coord(self.random_column(), -1)
+            random_coord_left = motion.Coord(-1, self.random_row())
+            random_coord_right = motion.Coord(self.right + 1, self.random_row())
+            return random.choice([random_coord_above, random_coord_below, random_coord_left, random_coord_right])
+        else:
+            return motion.Coord(self.random_column(), self.random_row())
 
 
 class Terminal:
@@ -183,37 +214,6 @@ class Terminal:
         """Prepares the terminal for the effect by adding empty lines above."""
         sys.stdout.write(ansitools.HIDE_CURSOR())
         print("\n" * self.output_area.top)
-
-    def random_column(self) -> int:
-        """Get a random column position. Position is within the output area.
-
-        Returns:
-            int: a random column position (1 <= x <= output_area.right)"""
-        return random.randint(1, self.output_area.right)
-
-    def random_row(self) -> int:
-        """Get a random row position. Position is within the output area.
-
-        Returns:
-            int: a random row position (1 <= x <= terminal.output_area.top)"""
-        return random.randint(1, self.output_area.top)
-
-    def random_coord(self, outside_scope=False) -> motion.Coord:
-        """Get a random coordinate. Coordinate is within the output area unless outside_scope is True.
-
-        Args:
-            outside_scope (bool, optional): whether the coordinate should fall outside the output area. Defaults to False.
-
-        Returns:
-            motion.Coord: a random coordinate . Coordinate is within the output area unless outside_scope is True."""
-        if outside_scope is True:
-            random_coord_above = motion.Coord(self.random_column(), self.output_area.top + 1)
-            random_coord_below = motion.Coord(self.random_column(), -1)
-            random_coord_left = motion.Coord(-1, self.random_row())
-            random_coord_right = motion.Coord(self.output_area.right + 1, self.random_row())
-            return random.choice([random_coord_above, random_coord_below, random_coord_left, random_coord_right])
-        else:
-            return motion.Coord(self.random_column(), self.random_row())
 
     def add_character(self, symbol: str) -> EffectCharacter:
         """Adds a character to the terminal for printing. Used to create characters that are not in the input data.
