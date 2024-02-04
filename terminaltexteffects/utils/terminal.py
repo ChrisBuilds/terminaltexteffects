@@ -232,9 +232,9 @@ class Terminal:
         return character
 
     def get_characters(
-        self, sort_order: CharacterSort = CharacterSort.ROW_TOP_TO_BOTTOM
+        self, sort_order: CharacterSort = CharacterSort.ROW_TOP_TO_BOTTOM, *, input_only=False
     ) -> list[list[EffectCharacter]]:
-        """Get a list of all EffectCharacters, input and non-input, in the terminal sorted by the specified sort_order.
+        """Get a list of all EffectCharacters, input and non-input, in the terminal sorted by the specified sort_order. If input_only is True, only input characters are returned.
 
         Args:
             sort_order (CharacterSort, optional): order to sort the characters. Defaults to ROW_TOP_TO_BOTTOM.
@@ -243,7 +243,10 @@ class Terminal:
             list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond to rows,
             columns, or diagonals depending on the sort_order.
         """
-        all_characters = self.characters + self.non_input_characters
+        if not input_only:
+            all_characters = self.characters + self.non_input_characters
+        else:
+            all_characters = self.characters
         if sort_order in (self.CharacterSort.COLUMN_LEFT_TO_RIGHT, self.CharacterSort.COLUMN_RIGHT_TO_LEFT):
             columns = []
             for column_index in range(self.output_area.right + 1):
