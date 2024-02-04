@@ -60,7 +60,6 @@ OR
 
 ``` cat your_text | python -m terminaltexteffects <effect> [options]```
 
-* All effects support adjustable animation speed using the ```-a``` option.
 * Use ```<effect> -h``` to view options for a specific effect, such as color or movement direction.
   * Ex: ```tte decrypt -h```
 
@@ -115,6 +114,8 @@ Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciph
 
 
 ## Examples
+Note: All effects support extensive customization via effect specific arguments. The examples shown below only represent the default settings for a given effect. 
+
 #### Fireworks
 ![fireworks_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/e3788e25-758b-43e1-827f-42066fb29f91)
 <details>
