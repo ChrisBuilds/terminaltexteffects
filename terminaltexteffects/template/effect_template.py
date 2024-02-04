@@ -52,6 +52,28 @@ Example: effect_example""",
         help="Color for the final character.",
     )
     effect_parser.add_argument(
+        "--gradient-stops",
+        type=argtypes.color,
+        nargs="*",
+        default=[],
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Space separated, unquoted, list of colors for the wipe gradient.",
+    )
+    effect_parser.add_argument(
+        "--gradient-steps",
+        type=argtypes.positive_int,
+        default=10,
+        metavar="(int > 0)",
+        help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )
+    effect_parser.add_argument(
+        "--gradient-frames",
+        type=argtypes.positive_int,
+        default=5,
+        metavar="(int > 0)",
+        help="Number of frames to display each gradient step.",
+    )
+    effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.positive_float,
         default=1,
