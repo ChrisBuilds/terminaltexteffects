@@ -203,7 +203,7 @@ class RingsEffect:
             ring_coords: list[motion.Coord] = []
             circle_coords = motion.Motion.find_coords_on_circle(self.terminal.output_area.center, radius, 7 * radius)
             # check if any part of the ring is in the output area, if not, stop creating rings
-            if not any([self.terminal.output_area.coord_in_output_area(coord) for coord in circle_coords]):
+            if not any([self.terminal.output_area.coord_is_in_output_area(coord) for coord in circle_coords]):
                 break
             # remove any duplicate coords
             for coord in circle_coords:
