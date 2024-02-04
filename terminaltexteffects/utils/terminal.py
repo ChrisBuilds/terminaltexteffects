@@ -103,14 +103,20 @@ class Terminal:
     def get_piped_input() -> str:
         """Gets the piped input from stdin.
 
+        This method checks if there is any piped input from the standard input (stdin).
+        If there is no piped input, it returns an empty string.
+        If there is piped input, it reads the input data from stdin and returns it as a string.
+
+        The `sys.stdin.isatty()` check is used to determine if the program is being run interactively
+        or if there is piped input. When the program is run interactively, `sys.stdin.isatty()` returns True,
+        indicating that there is no piped input. In this case, the method returns an empty string.
+
         Returns:
-            str: string from stdin
+            str: The piped input from stdin as a string, or an empty string if there is no piped input.
         """
-        if not sys.stdin.isatty():
-            input_data = sys.stdin.read()
-            return input_data
-        else:
+        if sys.stdin.isatty():
             return ""
+        return sys.stdin.read()
 
     def _wrap_lines(self, lines: list[str]) -> list[str]:
         """
