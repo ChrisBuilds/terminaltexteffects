@@ -196,7 +196,7 @@ class BinaryPathEffect:
         complete = False
         phase = "travel"
         final_wipe_chars = self.terminal.get_characters(
-            sort_order=self.terminal.CharacterSort.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT
+            sort_order=self.terminal.CharacterSort.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT, input_only=True
         )
         max_active_binary_groups = max(
             1, int(self.args.active_binary_groups * len(self.pending_binary_representations))
