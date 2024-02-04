@@ -86,7 +86,7 @@ class ScatteredEffect:
             if self.terminal.output_area.right < 2 or self.terminal.output_area.top < 2:
                 character.motion.set_coordinate(motion.Coord(1, 1))
             else:
-                character.motion.set_coordinate(self.terminal.random_coord())
+                character.motion.set_coordinate(self.terminal.output_area.random_coord())
             input_coord_path = character.motion.new_path(
                 "input_pth", speed=self.args.movement_speed, ease=self.args.easing
             )

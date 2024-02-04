@@ -124,7 +124,7 @@ class BinaryPathEffect:
 
         for bin_rep in self.pending_binary_representations:
             path_coords: list[motion.Coord] = []
-            starting_coord = self.terminal.random_coord(outside_scope=True)
+            starting_coord = self.terminal.output_area.random_coord(outside_scope=True)
             path_coords.append(starting_coord)
             last_orientation = random.choice(("col", "row"))
             while path_coords[-1] != bin_rep.character.input_coord:

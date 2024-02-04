@@ -118,7 +118,7 @@ class BlackholeEffect:
             starting_scn.add_frame(star_symbol, 1, color=star_color)
             character.animation.activate_scene(starting_scn)
             if character not in self.blackhole_chars:
-                starfield_coord = self.terminal.random_coord()
+                starfield_coord = self.terminal.output_area.random_coord()
                 character.motion.set_coordinate(starfield_coord)
                 if starfield_coord.row > self.terminal.output_area.center_row:
                     if starfield_coord.column in range(

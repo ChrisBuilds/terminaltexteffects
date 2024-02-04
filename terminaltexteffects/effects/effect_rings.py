@@ -233,7 +233,9 @@ class RingsEffect:
             if character not in self.ring_chars:
                 color = random.choice(self.args.ring_colors)
                 external_path = character.motion.new_path("external", speed=0.1, ease=easing.out_cubic)
-                external_wpt = external_path.new_waypoint("external", self.terminal.random_coord(outside_scope=True))
+                external_wpt = external_path.new_waypoint(
+                    "external", self.terminal.output_area.random_coord(outside_scope=True)
+                )
                 # make disperse gradient
                 color = random.choice(self.args.ring_colors)
                 disperse_gradient = graphics.Gradient([self.args.base_color, color, self.args.base_color], 7)

@@ -96,7 +96,7 @@ class SwarmEffect:
         swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
         for swarm in self.swarms:
             swarm_area_coordinate_map: dict[motion.Coord, list[motion.Coord]] = {}
-            swarm_spawn = self.terminal.random_coord(outside_scope=True)
+            swarm_spawn = self.terminal.output_area.random_coord(outside_scope=True)
             swarm_areas: list[motion.Coord] = []
             swarm_area_count = random.randint(2, 4)
             # create areas where characters will swarm
