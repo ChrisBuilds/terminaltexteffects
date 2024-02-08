@@ -2,6 +2,7 @@
 """
 
 import typing
+from dataclasses import dataclass
 from enum import Enum, auto
 from terminaltexteffects.utils import graphics, motion
 
@@ -31,7 +32,12 @@ class EventHandler:
         self.layer: int = 0
         self.registered_events: dict[
             tuple[EventHandler.Event, graphics.Scene | motion.Waypoint | motion.Path],
-            list[tuple[EventHandler.Action, graphics.Scene | motion.Waypoint | motion.Path | int | motion.Coord]],
+            list[
+                tuple[
+                    EventHandler.Action,
+                    graphics.Scene | motion.Waypoint | motion.Path | int | motion.Coord | EventHandler.Callback,
+                ]
+            ],
         ] = {}
 
     class Event(Enum):
@@ -81,13 +87,28 @@ class EventHandler:
         SET_CHARACTER_ACTIVATION_STATE = auto()
         SET_LAYER = auto()
         SET_COORDINATE = auto()
+        CALLBACK = auto()
+
+    @dataclass
+    class Callback:
+        """A callback action target that can be taken when an event is triggered.
+
+        Register callback actions with the EventHandler using the register_event method of the EventHandler class.
+
+        Attributes:
+            callback (typing.Callable): The callback function to call.
+            args (list): The arguments to pass to the callback function. The first argument is automatically the character.
+        """
+
+        callback: typing.Callable
+        args: tuple
 
     def register_event(
         self,
         event: Event,
         caller: graphics.Scene | motion.Waypoint | motion.Path,
         action: Action,
-        target: graphics.Scene | motion.Waypoint | motion.Path | int | motion.Coord,
+        target: graphics.Scene | motion.Waypoint | motion.Path | int | motion.Coord | Callback,
     ) -> None:
         """Registers an event to be handled by the EventHandler.
 
@@ -126,6 +147,7 @@ class EventHandler:
                 self.character, "is_active", state
             ),
             EventHandler.Action.SET_COORDINATE: lambda coord: setattr(self.character.motion, "current_coord", coord),
+            EventHandler.Action.CALLBACK: lambda callback: callback.callback(self.character, *callback.args),
         }
 
         if (event, caller) not in self.registered_events:
