@@ -26,6 +26,7 @@ from terminaltexteffects.effects import (
     effect_binarypath,
     effect_slide,
     effect_wipe,
+    effect_synthgrid,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -69,6 +70,20 @@ def make_args() -> Namespace:
     args.gradient_steps = 5
     args.gradient_frames = 5
     return args
+
+
+def test_synthgrid_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.grid_gradient_stops = ["ffffff", "000000"]
+        args.text_gradient_stops = ["ffffff", "000000"]
+        args.grid_row_symbol = "-"
+        args.grid_column_symbol = "|"
+        args.text_generation_symbols = ["a", "b", "c"]
+        args.max_active_blocks = 0.25
+        terminal = Terminal(input_data, args)
+        synthgrid_effect = effect_synthgrid.SynthGridEffect(terminal, args)
+        synthgrid_effect.run()
 
 
 def test_slide_effect() -> None:
