@@ -474,6 +474,9 @@ Any effects shown below are in development and will be available in the next rel
 #### Wipe
 ![wipe_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/8d7821c5-0e11-4a5e-a61a-9684fb0ddcd8)
 
+#### SynthGrid
+![synthgrid_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ebd8d3f1-c8b0-4de9-81ad-b70dde5a07b4)
+
 
 
 ## Recent Changes
