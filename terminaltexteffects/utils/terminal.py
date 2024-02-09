@@ -109,7 +109,11 @@ class Terminal:
             and character.input_coord.column <= self.output_area.right
         ]
         self.character_by_input_coord: dict[tuple[int, int], EffectCharacter] = {
-            (character.input_coord.row, character.input_coord.column): character for character in self.characters
+            (
+                character.input_coord.column,
+                character.input_coord.row,
+            ): character
+            for character in self.characters
         }
         self.animation_rate = args.animation_rate
         self.last_time_printed = time.time()
@@ -307,17 +311,17 @@ class Terminal:
         else:
             raise ValueError(f"Invalid sort_order: {sort_order}")
 
-    def get_character_by_input_coord(self, row: int, column: int) -> EffectCharacter:
+    def get_character_by_input_coord(self, column: int, row: int) -> EffectCharacter:
         """Get an EffectCharacter by its input coordinates.
 
         Args:
-            row (int): row of the character
             column (int): column of the character
+            row (int): row of the character
 
         Returns:
             EffectCharacter: the character at the specified coordinates
         """
-        return self.character_by_input_coord[(row, column)]
+        return self.character_by_input_coord[(column, row)]
 
     def print(self):
         """Prints the current terminal state to stdout while preserving the cursor position."""
