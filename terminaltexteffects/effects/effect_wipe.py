@@ -118,7 +118,7 @@ class WipeEffect:
                 if self.pending_groups:
                     next_group = self.pending_groups.pop(0)
                     for character in next_group:
-                        character.is_active = True
+                        character.is_visible = True
                         self.animating_chars.append(character)
                 wipe_delay = self.args.wipe_delay
             else:
@@ -128,7 +128,7 @@ class WipeEffect:
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_chars(self) -> None:

@@ -95,7 +95,7 @@ class NamedEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
@@ -107,17 +107,14 @@ class NamedEffect:
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
-        while self.pending_chars or self.animating_chars:
+        while self.pending_chars or self.active_chars:
             self.terminal.print()
             self.animate_chars()
 
             # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
-        for animating_char in self.animating_chars:
+        """Animates the characters by calling the tick method on all active characters."""
+        for animating_char in self.active_chars:
             animating_char.tick()

@@ -89,7 +89,7 @@ class ExpandEffect:
                 ease=self.args.easing,
             )
             input_coord_wpt = input_coord_path.new_waypoint("input_coord", character.input_coord)
-            character.is_active = True
+            character.is_visible = True
             character.motion.activate_path(input_coord_path)
             self.animating_chars.append(character)
             character.event_handler.register_event(
@@ -114,7 +114,7 @@ class ExpandEffect:
         while self.animating_chars:
             self.animate_chars()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
             self.terminal.print()
 

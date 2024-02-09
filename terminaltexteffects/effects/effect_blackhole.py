@@ -111,7 +111,7 @@ class BlackholeEffect:
             for coord in black_hole_ring_positions[position_index:] + black_hole_ring_positions[:position_index]:
                 blackhole_rotation_path.new_waypoint(str(len(blackhole_rotation_path.waypoints)), coord)
         for character in self.terminal.characters:
-            character.is_active = True
+            character.is_visible = True
             starting_scn = character.animation.new_scene("starting")
             star_symbol = random.choice(star_symbols)
             star_color = random.choice(starfield_colors)
@@ -288,7 +288,7 @@ class BlackholeEffect:
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_chars(self) -> None:

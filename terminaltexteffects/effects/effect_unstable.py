@@ -126,7 +126,7 @@ class UnstableEffect:
             for step in final_color:
                 final_scn.add_frame(character.input_symbol, 5, color=step)
             character.animation.activate_scene(rumble_scn)
-            character.is_active = True
+            character.is_visible = True
 
     def move_all_to_waypoint(self, path_id) -> None:
         for character in self.terminal.characters:

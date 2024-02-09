@@ -91,7 +91,7 @@ class ErrorCorrectEffect:
             spawn_scene = character.animation.new_scene("spawn")
             spawn_scene.add_frame(character.input_symbol, 1, color=self.args.final_color)
             character.animation.activate_scene(spawn_scene)
-            character.is_active = True
+            character.is_visible = True
         all_characters: list[EffectCharacter] = list(self.terminal.characters)
         correcting_gradient = graphics.Gradient([self.args.error_color, self.args.correct_color], 10)
         final_gradient = graphics.Gradient([self.args.correct_color, self.args.final_color], 10)
@@ -189,7 +189,7 @@ class ErrorCorrectEffect:
                 self.animate_chars()
 
                 self.animating_chars = [
-                    animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                    animating_char for animating_char in self.animating_chars if animating_char.is_active()
                 ]
                 if not self.animating_chars:
                     pass

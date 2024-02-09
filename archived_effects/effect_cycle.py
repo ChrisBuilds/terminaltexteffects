@@ -78,7 +78,7 @@ class CycleEffect:
         for character in self.terminal.characters:
             if character.input_symbol not in collection:
                 collection += character.input_symbol
-            character.is_active = True
+            character.is_visible = True
             cycle_scn = character.animation.new_scene("cycle")
             for symbol in collection:
                 cycle_scn.add_frame(symbol, 4, color=self.args.cycling_color)
@@ -104,7 +104,7 @@ class CycleEffect:
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_chars(self) -> None:

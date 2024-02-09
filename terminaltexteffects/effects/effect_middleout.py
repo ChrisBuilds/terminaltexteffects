@@ -129,7 +129,7 @@ class MiddleoutEffect:
             # initialize character state
             character.motion.activate_path(center_path)
             character.animation.activate_scene(center_scene)
-            character.is_active = True
+            character.is_visible = True
             self.animating_chars.append(character)
 
     def run(self) -> None:
@@ -146,7 +146,7 @@ class MiddleoutEffect:
             self.animate_chars()
             if final:
                 self.animating_chars = [
-                    animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                    animating_char for animating_char in self.animating_chars if animating_char.is_active()
                 ]
 
     def animate_chars(self) -> None:

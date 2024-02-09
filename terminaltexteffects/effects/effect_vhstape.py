@@ -280,7 +280,7 @@ class VHSTapeEffect:
         ):
             self.lines[row_index] = Line(characters, self.args)
         for character in self.terminal.characters:
-            character.is_active = True
+            character.is_visible = True
             character.animation.activate_scene(character.animation.scenes["base"])
 
     def glitch_wave(self) -> None:
@@ -406,7 +406,7 @@ class VHSTapeEffect:
 
             # Remove completed characters from animating_chars list
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_chars(self) -> None:

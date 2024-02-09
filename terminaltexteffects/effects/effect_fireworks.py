@@ -196,7 +196,7 @@ class FireworksEffect:
             if self.shells and launch_delay == 0:
                 next_group = self.shells.pop()
                 for character in next_group:
-                    character.is_active = True
+                    character.is_visible = True
                     self.animating_chars.append(character)
                 launch_delay = self.args.launch_delay + 1
             self.terminal.print()
@@ -205,7 +205,7 @@ class FireworksEffect:
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
         self.terminal.print()
 

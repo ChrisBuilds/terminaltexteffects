@@ -167,13 +167,13 @@ class SprayEffect:
                 for _ in range(random.randint(1, self.args.spray_volume)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop()
-                        next_character.is_active = True
+                        next_character.is_visible = True
                         self.animating_chars.append(next_character)
 
             self.animate_chars()
             self.terminal.print()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_chars(self) -> None:

@@ -118,7 +118,7 @@ class PourEffect:
         groups = self.terminal.get_characters(sort_order=sort_map[self.pour_direction])
         for i, group in enumerate(groups):
             for character in group:
-                character.is_active = False
+                character.is_visible = False
                 if self.pour_direction == PourDirection.DOWN:
                     character.motion.set_coordinate(
                         motion.Coord(character.input_coord.column, self.terminal.output_area.top)
@@ -169,14 +169,14 @@ class PourEffect:
             if current_group:
                 if not gap:
                     next_character = current_group.pop(0)
-                    next_character.is_active = True
+                    next_character.is_visible = True
                     self.animating_chars.append(next_character)
                     gap = self.args.gap
                 else:
                     gap -= 1
             self.animate_chars()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
             self.terminal.print()
 

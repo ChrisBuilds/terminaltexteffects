@@ -194,7 +194,7 @@ class RingsEffect:
             home_path = character.motion.new_path("home", speed=0.8, ease=easing.out_quad)
             home_wpt = home_path.new_waypoint("home", character.input_coord)
             character.animation.activate_scene(start_scn)
-            character.is_active = True
+            character.is_visible = True
             self.pending_chars.append(character)
 
         random.shuffle(self.pending_chars)
@@ -249,7 +249,7 @@ class RingsEffect:
                     character.event_handler.register_event(
                         EventHandler.Event.PATH_COMPLETE,
                         external_path,
-                        EventHandler.Action.SET_CHARACTER_ACTIVATION_STATE,
+                        EventHandler.Action.SET_CHARACTER_VISIBILITY_STATE,
                         False,
                     )
                 character.event_handler.register_event(
@@ -316,7 +316,7 @@ class RingsEffect:
                     if not cycles_remaining:
                         phase = "final"
                         for character in self.terminal.characters:
-                            character.is_active = True
+                            character.is_visible = True
                             if "external" in character.motion.paths:
                                 self.animating_chars.append(character)
                             character.motion.activate_path(character.motion.paths["home"])
@@ -337,7 +337,7 @@ class RingsEffect:
             self.terminal.print()
             self.animate_chars()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_chars(self) -> None:

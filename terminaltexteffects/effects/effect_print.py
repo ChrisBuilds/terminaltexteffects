@@ -86,7 +86,7 @@ class Row:
         if self.untyped_chars:
             next_char = self.untyped_chars.pop(0)
             self.typed_chars.append(next_char)
-            next_char.is_active = True
+            next_char.is_visible = True
             return next_char
         return None
 
@@ -104,7 +104,7 @@ class PrintHead(EffectCharacter):
         super().__init__(symbol, input_column, input_row)
         self.speed = speed
         self.ease = ease
-        self.is_active = False
+        self.is_visible = False
         self.head_color_scn = self.animation.new_scene("head_color")
         self.head_color_scn.add_frame(symbol, 1, color=color)
         self.animation.activate_scene(self.head_color_scn)
@@ -117,11 +117,11 @@ class PrintHead(EffectCharacter):
         self.event_handler.register_event(
             EventHandler.Event.PATH_COMPLETE,
             carriage_return_path,
-            EventHandler.Action.SET_CHARACTER_ACTIVATION_STATE,
+            EventHandler.Action.SET_CHARACTER_VISIBILITY_STATE,
             False,
         )
         self.motion.activate_path(carriage_return_path)
-        self.is_active = True
+        self.is_visible = True
 
 
 class PrintEffect:
@@ -185,7 +185,7 @@ class PrintEffect:
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
         self.terminal.print()
 

@@ -51,12 +51,12 @@ class RowMergeEffect:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
+        self.rows: list[list[EffectCharacter]] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting every other row to start at the opposite
         side of the terminal and reverse the order."""
 
-        self.rows = []
         for row_index, row in enumerate(
             self.terminal.get_characters(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP)
         ):
@@ -66,7 +66,7 @@ class RowMergeEffect:
             else:
                 column = self.terminal.output_area.right
             for character in row:
-                character.is_active = False
+                character.is_visible = False
                 character.motion.set_coordinate(motion.Coord(column, character.input_coord.row))
 
                 input_coord_path = character.motion.new_path(
@@ -84,7 +84,7 @@ class RowMergeEffect:
             for row in self.rows:
                 if row:
                     next_character = row.pop(0)
-                    next_character.is_active = True
+                    next_character.is_visible = True
                     self.animating_chars.append(next_character)
             self.rows = [row for row in self.rows if row]
 

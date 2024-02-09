@@ -126,11 +126,11 @@ class RowSlide:
                 if row:
                     if self.slide_direction == SlideDirection.LEFT:
                         next_character = row.pop(0)
-                        next_character.is_active = True
+                        next_character.is_visible = True
                         self.animating_chars.append(next_character)
                     else:
                         next_character = row.pop(-1)
-                        next_character.is_active = True
+                        next_character.is_visible = True
                         self.animating_chars.append(next_character)
             self.animate_chars()
             self.terminal.print()

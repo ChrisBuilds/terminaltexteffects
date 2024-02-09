@@ -118,7 +118,7 @@ class RainEffect:
                 for _ in range(random.randint(1, 3)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
-                        next_character.is_active = True
+                        next_character.is_visible = True
                         self.animating_chars.append(next_character)
 
                     else:
@@ -126,7 +126,7 @@ class RainEffect:
             self.animate_chars()
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
             self.terminal.print()
 

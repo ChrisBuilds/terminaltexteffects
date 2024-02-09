@@ -117,7 +117,7 @@ class GridLine:
         for _ in range(count):
             if self.collapsed_characters:
                 next_char = self.collapsed_characters.pop(0)
-                next_char.is_active = True
+                next_char.is_visible = True
                 self.extended_characters.append(next_char)
 
     def collapse(self) -> None:
@@ -130,7 +130,7 @@ class GridLine:
         for _ in range(count):
             if self.extended_characters:
                 next_char = self.extended_characters.pop(0)
-                next_char.is_active = False
+                next_char.is_visible = False
                 self.collapsed_characters.append(next_char)
 
     def is_extended(self) -> bool:
@@ -282,7 +282,7 @@ class SynthGridEffect:
         total_group_count = len(self.pending_groups)
         if not total_group_count:
             for character in self.terminal.characters:
-                character.is_active = True
+                character.is_visible = True
                 self.animating_chars.append(character)
         active_groups: int = 0
         while self.pending_groups or self.animating_chars or phase != "complete":
@@ -297,7 +297,7 @@ class SynthGridEffect:
                 if self.pending_groups and active_groups < total_group_count * self.args.max_active_blocks:
                     group_number, next_group = self.pending_groups.pop(0)
                     for char in next_group:
-                        char.is_active = True
+                        char.is_visible = True
                         self.animating_chars.append(char)
                         self.group_tracker[group_number] += 1
                 if not self.pending_groups and not self.animating_chars and not active_groups:
@@ -314,7 +314,7 @@ class SynthGridEffect:
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
             # active_groups = [group for group in active_groups if any([char in self.animating_chars for char in group])]
             active_groups = 0

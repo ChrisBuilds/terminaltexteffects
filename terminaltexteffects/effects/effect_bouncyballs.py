@@ -82,7 +82,7 @@ class BouncyBallsEffect:
         organizing the characters by row."""
         ball_symbols = ("*", "o", "O", "0", ".")
         for character in self.terminal.characters:
-            character.is_active = False
+            character.is_visible = False
             if self.args.ball_colors:
                 color = random.choice(self.args.ball_colors)
             else:
@@ -128,7 +128,7 @@ class BouncyBallsEffect:
                 for _ in range(random.randint(1, 5)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
-                        next_character.is_active = True
+                        next_character.is_visible = True
                         self.animating_chars.append(next_character)
                     else:
                         break
@@ -136,7 +136,7 @@ class BouncyBallsEffect:
             ball_delay -= 1
             self.animate_chars()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
             self.terminal.print()
 

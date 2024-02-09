@@ -92,12 +92,12 @@ class BinaryRepresentation:
     def deactivate(self) -> None:
         """Deactivates the binary representation by deactivating all binary characters."""
         for bin_char in self.binary_characters:
-            bin_char.is_active = False
+            bin_char.is_visible = False
         self.is_active = False
 
     def activate_source_character(self) -> None:
         """Activates the source character of the binary representation."""
-        self.character.is_active = True
+        self.character.is_visible = True
         self.character.animation.activate_scene(self.character.animation.scenes["collapse_scn"])
 
 
@@ -215,7 +215,7 @@ class BinaryPathEffect:
                         if active_rep.pending_binary_characters:
                             next_char = active_rep.pending_binary_characters.pop(0)
                             self.animating_chars.append(next_char)
-                            next_char.is_active = True
+                            next_char.is_visible = True
                         elif active_rep.travel_complete():
                             active_rep.deactivate()
                             active_rep.activate_source_character()
@@ -231,7 +231,7 @@ class BinaryPathEffect:
                     next_group = final_wipe_chars.pop(0)
                     for character in next_group:
                         character.animation.activate_scene(character.animation.scenes["brighten_scn"])
-                        character.is_active = True
+                        character.is_visible = True
                         self.animating_chars.append(character)
                 else:
                     complete = True
@@ -240,7 +240,7 @@ class BinaryPathEffect:
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
         self.terminal.print()
 

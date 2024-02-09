@@ -96,7 +96,7 @@ class ColumnSlide:
                 column_list.reverse()
         for column in self.columns.values():
             for character in column:
-                character.is_active = False
+                character.is_visible = False
                 if self.slide_direction == SlideDirection.DOWN:
                     character.motion.set_coordinate(
                         motion.Coord(character.input_coord.column, self.terminal.output_area.top)
@@ -142,7 +142,7 @@ class ColumnSlide:
             for column in active_columns:
                 if column:
                     next_character = column.pop(0)
-                    next_character.is_active = True
+                    next_character.is_visible = True
                     self.animating_chars.append(next_character)
             self.animate_chars()
 

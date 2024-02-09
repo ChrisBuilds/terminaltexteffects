@@ -84,7 +84,7 @@ class EventHandler:
         ACTIVATE_SCENE = auto()
         DEACTIVATE_PATH = auto()
         DEACTIVATE_SCENE = auto()
-        SET_CHARACTER_ACTIVATION_STATE = auto()
+        SET_CHARACTER_VISIBILITY_STATE = auto()
         SET_LAYER = auto()
         SET_COORDINATE = auto()
         CALLBACK = auto()
@@ -141,8 +141,8 @@ class EventHandler:
             EventHandler.Action.DEACTIVATE_PATH: self.character.motion.deactivate_path,
             EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
             EventHandler.Action.SET_LAYER: lambda layer: setattr(self.character, "layer", layer),
-            EventHandler.Action.SET_CHARACTER_ACTIVATION_STATE: lambda state: setattr(
-                self.character, "is_active", state
+            EventHandler.Action.SET_CHARACTER_VISIBILITY_STATE: lambda state: setattr(
+                self.character, "is_visible", state
             ),
             EventHandler.Action.SET_COORDINATE: lambda coord: setattr(self.character.motion, "current_coord", coord),
             EventHandler.Action.CALLBACK: lambda callback: callback.callback(self.character, *callback.args),
@@ -166,7 +166,7 @@ class EffectCharacter:
         animation (graphics.Animation): The animation object that controls the character's appearance.
         motion (motion.Motion): The motion object that controls the character's movement.
         event_handler (EventHandler): The event handler object that handles events related to the character.
-        is_active (bool): Whether the character is currently active and should be printed to the terminal.
+        is_visible (bool): Whether the character is currently visible and should be printed to the terminal.
     """
 
     def __init__(self, symbol: str, input_column: int, input_row: int):
@@ -183,7 +183,7 @@ class EffectCharacter:
         self.animation: graphics.Animation = graphics.Animation(self)
         self.motion: motion.Motion = motion.Motion(self)
         self.event_handler: EventHandler = EventHandler(self)
-        self.is_active: bool = False
+        self.is_visible: bool = False
         self.layer: int = 0
 
     def tick(self) -> None:
@@ -191,11 +191,11 @@ class EffectCharacter:
         self.motion.move()
         self.animation.step_animation()
 
-    def is_animating(self) -> bool:
-        """Returns whether the character is currently animating. A character is animating if its animation or motion is not complete.
+    def is_active(self) -> bool:
+        """Returns whether the character is currently active. A character is active if its animation or motion is not complete.
 
         Returns:
-            bool: True if the character is animating, False if not.
+            bool: True if the character is active, False if not.
         """
         if not self.animation.active_scene_is_complete() or not self.motion.movement_is_complete():
             return True

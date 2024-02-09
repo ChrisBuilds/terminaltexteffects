@@ -98,7 +98,7 @@ class ScatteredEffect:
                 EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
             )
             character.motion.activate_path(input_coord_path)
-            character.is_active = True
+            character.is_visible = True
             if self.gradient_stops:
                 gradient_scn = character.animation.new_scene("gradient_scn")
                 if len(self.gradient_stops) > 1:
@@ -116,7 +116,7 @@ class ScatteredEffect:
         while self.pending_chars or self.animating_chars:
             self.animate_chars()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
             self.terminal.print()
 

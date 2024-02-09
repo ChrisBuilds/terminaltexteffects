@@ -198,7 +198,7 @@ class SlideEffect:
             for group in active_groups:
                 if group:
                     next_char = group.pop(0)
-                    next_char.is_active = True
+                    next_char.is_visible = True
                     next_char.motion.activate_path(next_char.motion.paths["input_path"])
                     self.animating_chars.append(next_char)
             active_groups = [group for group in active_groups if group]
@@ -207,7 +207,7 @@ class SlideEffect:
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_chars(self) -> None:

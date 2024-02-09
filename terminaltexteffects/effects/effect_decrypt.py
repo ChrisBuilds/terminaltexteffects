@@ -141,13 +141,13 @@ class DecryptEffect:
             if self.pending_chars:
                 if random.randint(0, 100) <= 75:
                     next_character = self.pending_chars.pop(0)
-                    next_character.is_active = True
+                    next_character.is_visible = True
                     next_character.animation.activate_scene(next_character.animation.scenes["typing"])
                     self.animating_chars.append(next_character)
             self.animate_chars()
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
             self.terminal.print()
 
@@ -155,7 +155,7 @@ class DecryptEffect:
         while self.animating_chars:
             self.animate_chars()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
             self.terminal.print()
 

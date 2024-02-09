@@ -51,6 +51,7 @@ class VerticalSlice:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.animating_chars: list[EffectCharacter] = []
+        self.new_rows: list[list[EffectCharacter]] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting the left half to start at the top and the
@@ -60,7 +61,6 @@ class VerticalSlice:
         self.rows = self.terminal.get_characters(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP)
         lengths = [max([c.input_coord.column for c in row]) for row in self.rows]
         mid_point = sum(lengths) // len(lengths) // 2
-        self.new_rows = []
         for row_index, row in enumerate(self.rows):
             new_row = []
             left_half = [character for character in row if character.input_coord.column <= mid_point]
@@ -95,13 +95,13 @@ class VerticalSlice:
             if self.new_rows:
                 next_row = self.new_rows.pop(0)
                 for character in next_row:
-                    character.is_active = True
+                    character.is_visible = True
                 self.animating_chars.extend(next_row)
             self.animate_chars()
             self.terminal.print()
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_chars(self) -> None:

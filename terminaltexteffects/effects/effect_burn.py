@@ -86,7 +86,7 @@ class BurnEffect:
         while groups_remaining(groups):
             keys = [key for key in groups.keys() if groups[key]]
             next_char = groups[random.choice(keys)].pop(0)
-            next_char.is_active = False
+            next_char.is_visible = False
             construct_scn = next_char.animation.new_scene("construct")
             g_start = 0
             for _, block in enumerate(vertical_build_order[:5]):
@@ -110,13 +110,13 @@ class BurnEffect:
         while self.pending_chars or self.animating_chars:
             if self.pending_chars:
                 next_char = self.pending_chars.pop(0)
-                next_char.is_active = True
+                next_char.is_visible = True
                 self.animating_chars.append(next_char)
 
             self.animate_chars()
 
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
             self.terminal.print()
 

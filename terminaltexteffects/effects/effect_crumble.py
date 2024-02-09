@@ -71,7 +71,7 @@ class CrumbleEffect:
         for character in self.terminal.characters:
             dust_color = random.choice(self.args.dust_colors)
             weaken_gradient = graphics.Gradient([self.args.initial_color, dust_color], 9)
-            character.is_active = True
+            character.is_visible = True
             # set up initial and falling stage
             initial_scn = character.animation.new_scene("initial")
             initial_scn.add_frame(character.input_symbol, 1, color=self.args.initial_color)
@@ -215,7 +215,7 @@ class CrumbleEffect:
             self.terminal.print()
             self.animate_chars()
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_chars(self) -> None:

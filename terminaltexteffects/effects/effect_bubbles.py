@@ -172,7 +172,7 @@ class Bubble:
 
     def activate(self) -> None:
         for char in self.characters:
-            char.is_active = True
+            char.is_visible = True
 
     def move(self) -> None:
         self.anchor_char.motion.move()
@@ -274,7 +274,7 @@ class BubblesEffect:
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_bubbles(self, animating_bubbles: list[Bubble]) -> None:

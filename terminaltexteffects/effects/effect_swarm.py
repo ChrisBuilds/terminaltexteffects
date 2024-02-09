@@ -185,7 +185,7 @@ class SwarmEffect:
                 active_swarm_area = "0_swarm_area"
                 for character in current_swarm:
                     character.motion.activate_path(character.motion.paths["0_swarm_area"])
-                    character.is_active = True
+                    character.is_visible = True
                     self.animating_chars.append(character)
             self.terminal.print()
             self.animate_chars()
@@ -207,7 +207,7 @@ class SwarmEffect:
 
             # remove completed chars from animating chars
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_chars(self) -> None:

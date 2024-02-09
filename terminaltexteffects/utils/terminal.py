@@ -202,11 +202,11 @@ class Terminal:
 
     def _update_terminal_state(self):
         """Update the internal representation of the terminal state with the current position
-        of all active characters.
+        of all visible characters.
         """
         rows = [[" " for _ in range(self.output_area.right)] for _ in range(self.output_area.top)]
-        active_characters = [c for c in chain(self.characters, self.non_input_characters) if c.is_active]
-        for character in sorted(active_characters, key=lambda c: c.layer):
+        visible_characters = [c for c in chain(self.characters, self.non_input_characters) if c.is_visible]
+        for character in sorted(visible_characters, key=lambda c: c.layer):
             row = character.motion.current_coord.row - 1
             column = character.motion.current_coord.column - 1
             if 0 <= row < self.output_area.top and 0 <= column < self.output_area.right:

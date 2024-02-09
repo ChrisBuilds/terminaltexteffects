@@ -105,13 +105,13 @@ class WavesEffect:
             if self.pending_columns:
                 next_column = self.pending_columns.pop(0)
                 for character in next_column:
-                    character.is_active = True
+                    character.is_visible = True
                     self.animating_chars.append(character)
             self.terminal.print()
             self.animate_chars()
 
             self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_animating()
+                animating_char for animating_char in self.animating_chars if animating_char.is_active()
             ]
 
     def animate_chars(self) -> None:
