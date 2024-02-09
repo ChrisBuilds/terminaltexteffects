@@ -28,7 +28,8 @@ class SyncMetric(Enum):
 class Gradient:
     """A Gradient is a list of RGB hex color strings transitioning from one color to another. The gradient color
     list is calculated using linear interpolation based on the provided start and end colors and the number of steps. Gradients
-    can be interated over to get the next color in the gradient color list.
+    can be interated over to get the next color in the gradient color list.If there is only one color in the stops list,
+    the gradient will be a list of the same color.
 
     Args:
         stops list[str]: List of RGB hex color string or XTerm-256 color codes. Each stop will have steps number of frames between it and the next stop.
@@ -47,14 +48,19 @@ class Gradient:
         self.index: int = 0
 
     def _generate(self) -> list[str]:
-        """Calculate a gradient of colors between two colors using linear interpolation.
+        """Calculate a gradient of colors between two colors using linear interpolation. If
+        there is only one color in the stops list, the gradient will be a list of the same color.
 
         Returns:
-            list[str]: List (length=steps + 2) of RGB hex color strings
+            list[str]: List (length=steps) of RGB hex color strings. The first and last colors are the start and end stops, respectively.
         """
-        if len(self.stops) < 2:
-            raise ValueError("Gradient must have at least 2 stops.")
         spectrum: list[str] = []
+        if len(self.stops) == 1:
+            color = self.stops[0]
+            if isinstance(color, int):
+                color = hexterm.xterm_to_hex(color)
+            for _ in range(self.steps):
+                spectrum.append(color)
         color_pairs = itertools.pairwise(self.stops)
         for start, end in color_pairs:
             # Convert start_color to hex if it's an XTerm-256 color code
