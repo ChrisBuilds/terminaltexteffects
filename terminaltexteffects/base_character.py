@@ -89,7 +89,7 @@ class EventHandler:
         SET_COORDINATE = auto()
         CALLBACK = auto()
 
-    @dataclass
+    @dataclass(init=False)
     class Callback:
         """A callback action target that can be taken when an event is triggered.
 
@@ -97,11 +97,15 @@ class EventHandler:
 
         Attributes:
             callback (typing.Callable): The callback function to call.
-            args (list): The arguments to pass to the callback function. The first argument is automatically the character.
+            args (tuple[typing.Any,...]): A tuple of arguments to pass to the callback function.
         """
 
         callback: typing.Callable
-        args: tuple
+        args: tuple[typing.Any, ...]
+
+        def __init__(self, callback: typing.Callable, *args: typing.Any):
+            self.callback = callback
+            self.args = args
 
     def register_event(
         self,
@@ -111,9 +115,6 @@ class EventHandler:
         target: graphics.Scene | motion.Waypoint | motion.Path | int | motion.Coord | Callback,
     ) -> None:
         """Registers an event to be handled by the EventHandler.
-
-        Examples:
-            >>> character.event_handler.register_event(EventHandler.Event.PATH_COMPLETE, "path_1", EventHandler.Action.ACTIVATE_PATH, "path_2")
 
         Args:
             event (Event): The event to register.
@@ -129,9 +130,6 @@ class EventHandler:
 
     def handle_event(self, event: Event, caller: graphics.Scene | motion.Waypoint | motion.Path) -> None:
         """Handles an event by taking the specified action.
-
-        Examples:
-            >>> character.event_handler.handle_event(EventHandler.Event.WAYPOINT_REACHED, "waypoint_1")
 
         Args:
             event (Event): An event to handle. If the event is not registered, nothing happens.
