@@ -8,10 +8,13 @@
  * BinaryPath. Characters are converted into their binary representation. These binary groups travel to their input coordinate and collapse into the original character symbol.
  * Wipe. Performs directional wipes with an optional trailing gradient.
  * Slide. Slides characters into position from outside the terminal view. Characters can be grouped by column, row, or diagonal. Groups can be merged from opposite directions or slide from the same direction.
+ * SynthGrid. Creates a gradient colored grid in which blocks of characters dissolve into the input text.
 
 #### Engine
  * Terminal.get_character() method accepts a Terminal.CharacterSort argument to easily retrieve the input characters in groups sorted by various directions, ex: Terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT
  * Terminal.add_character() method allows adding characters to the effect that are not part of the input text. These characters are added to a separate list (Terminal.non_input_characters) in terminal to allow for iteration over Terminal.characters and adding new characters based on the input characters without modifying the Terminal.characters list during iteration. The added characters are handled the same as input characters by the Terminal.
+ * New EventHandler Action, Callback. The Action target can be any callable and will pass the character as the first argument, followed by any additional arguments provided. Uses new EventHandler.Callback type with signature EventHandler.Callback(typing.Callable, *args)
+ * graphics.Gradient() objects specified with a single color will create a list of the single color with length *steps*. This enables gradients to be specified via command line arguments while supporting an arbitrary number of colors > 0, without needing to perform any checking in the effect logic. 
 
 ### Changes
 ### Effects
