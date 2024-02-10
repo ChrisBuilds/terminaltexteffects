@@ -131,22 +131,31 @@ class Path:
 
     def new_waypoint(
         self,
-        waypoint_id: str,
         coord: Coord,
         *,
         bezier_control: tuple[Coord, ...] | Coord | None = None,
+        id: str = "",
     ) -> Waypoint:
         """Creates a new Waypoint and appends adds it to the Path.
 
         Args:
-            waypoint_id (str): unique identifier for the waypoint
+            id (str): Unique identifier for the waypoint. Used to query for the waypoint.
             coord (Coord): coordinate
             bezier_control (tuple[Coord, ...] | Coord | None): coordinate of the control point for a bezier curve. Defaults to None.
 
         Returns:
             Waypoint: The new waypoint.
         """
-        new_waypoint = Waypoint(waypoint_id, coord, bezier_control=bezier_control)
+        if not id:
+            found_unique = False
+            current_id = len(self.waypoints)
+            while not found_unique:
+                id = f"{len(self.waypoints)}"
+                if id not in self.waypoint_lookup:
+                    found_unique = True
+                else:
+                    current_id += 1
+        new_waypoint = Waypoint(id, coord, bezier_control=bezier_control)
         self._add_waypoint_to_path(new_waypoint)
         return new_waypoint
 
@@ -173,6 +182,20 @@ class Path:
         self.total_distance += distance_from_previous
         self.segments.append(Segment(self.waypoints[-2], waypoint, distance_from_previous))
         self.max_steps = round(self.total_distance / self.speed)
+
+    def query_waypoint(self, waypoint_id: str) -> Waypoint:
+        """Returns the waypoint with the given waypoint_id.
+
+        Args:
+            waypoint_id (str): waypoint_id
+
+        Returns:
+            Waypoint: The waypoint with the given waypoint_id.
+        """
+        waypoint = self.waypoint_lookup.get(waypoint_id, None)
+        if not waypoint:
+            raise ValueError(f"Waypoint with id {waypoint_id} not found.")
+        return waypoint
 
     def step(self, event_handler: "base_character.EventHandler") -> Coord:
         """Progresses to the next step along the path and returns the coordinate at that step."""
@@ -433,18 +456,18 @@ class Motion:
 
     def new_path(
         self,
-        path_id: str,
         *,
         speed: float = 1,
         ease: typing.Callable | None = None,
         layer: int | None = None,
         hold_time: int = 0,
         loop: bool = False,
+        id: str = "",
     ) -> Path:
         """Creates a new Path and adds it to the Motion.paths dictionary with the path_id as key.
 
         Args:
-            path_id (str): unique identifier for the path
+            path_id (str): Unique identifier for the path. Used to query for the path.
             speed (float): speed
             ease (Callable | None): easing function for character movement. Defaults to None.
             layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
@@ -454,11 +477,34 @@ class Motion:
         Returns:
             Path: The new path.
         """
-        if path_id in self.paths:
-            raise ValueError(f"Path with id {path_id} already exists.")
-        new_path = Path(path_id, speed, ease, layer, hold_time, loop)
-        self.paths[path_id] = new_path
+        if not id:
+            found_unique = False
+            current_id = len(self.paths)
+            while not found_unique:
+                id = f"{len(self.paths)}"
+                if id not in self.paths:
+                    found_unique = True
+                else:
+                    current_id += 1
+        if id in self.paths:
+            raise ValueError(f"Path with id {id} already exists.")
+        new_path = Path(id, speed, ease, layer, hold_time, loop)
+        self.paths[id] = new_path
         return new_path
+
+    def query_path(self, path_id: str) -> Path:
+        """Returns the path with the given path_id.
+
+        Args:
+            path_id (str): path_id
+
+        Returns:
+            Path: The path with the given path_id.
+        """
+        path = self.paths.get(path_id, None)
+        if not path:
+            raise ValueError(f"Path with id {path_id} not found.")
+        return path
 
     def movement_is_complete(self) -> bool:
         """Returns whether the character has reached the final coordinate and moved the requisite number of steps.
