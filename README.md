@@ -370,7 +370,7 @@ Note: All effects support extensive customization via effect specific arguments.
 </details>
 
 #### Pour
-![pour_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/d5b827a5-3267-47ad-88c7-6fb0b2dbb478)
+![pour_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/b67a0f36-a96c-4869-85f2-6850d15f6b71)
 <details>
 <summary>tte pour -h</summary>
 <br>
