@@ -125,7 +125,7 @@ class SwarmEffect:
                     swarm_area_name = f"{swarm_area_count}_swarm_area"
                     swarm_area_count += 1
                     origin_path = character.motion.new_path(id=swarm_area_name, speed=0.25, ease=easing.out_sine)
-                    origin_wpt = origin_path.new_waypoint(random.choice(swarm_area_coords), id=swarm_area_name)
+                    origin_path.new_waypoint(random.choice(swarm_area_coords), id=swarm_area_name)
                     character.event_handler.register_event(
                         EventHandler.Event.PATH_ACTIVATED, origin_path, EventHandler.Action.ACTIVATE_SCENE, flash_scn
                     )
@@ -149,7 +149,7 @@ class SwarmEffect:
                         inner_path.new_waypoint(next_coord, id=str(len(character.motion.paths)))
                 # create landing waypoint and scene
                 input_path = character.motion.new_path(speed=0.3, ease=easing.in_out_quad)
-                input_wpt = input_path.new_waypoint(character.input_coord)
+                input_path.new_waypoint(character.input_coord)
                 input_scn = character.animation.new_scene()
                 for step in final_gradient:
                     input_scn.add_frame(character.input_symbol, 3, color=step)

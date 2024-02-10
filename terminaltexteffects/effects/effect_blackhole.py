@@ -100,7 +100,7 @@ class BlackholeEffect:
         for position_index, character in enumerate(self.blackhole_chars):
             starting_pos = black_hole_ring_positions[position_index]
             blackhole_path = character.motion.new_path(id="blackhole", speed=0.5, ease=easing.in_out_sine)
-            blackhole_wpt = blackhole_path.new_waypoint(starting_pos)
+            blackhole_path.new_waypoint(starting_pos)
             blackhole_scn = character.animation.new_scene(id="blackhole")
             blackhole_scn.add_frame("✸", 1, color=self.args.blackhole_color)
             character.event_handler.register_event(
@@ -140,9 +140,7 @@ class BlackholeEffect:
                 else:
                     control_point = self.terminal.output_area.center
                 singularity_path = character.motion.new_path(id="singularity", speed=0.3, ease=easing.in_expo)
-                singularity_wpt = singularity_path.new_waypoint(
-                    self.terminal.output_area.center, bezier_control=control_point
-                )
+                singularity_path.new_waypoint(self.terminal.output_area.center, bezier_control=control_point)
                 consumed_scn = character.animation.new_scene()
                 for color in gradient_map[star_color]:
                     consumed_scn.add_frame(star_symbol, 1, color=color)
@@ -174,9 +172,9 @@ class BlackholeEffect:
         for character in self.blackhole_chars:
             next_pos = black_hole_ring_positions.pop(0)
             expand_path = character.motion.new_path(speed=0.1, ease=easing.in_expo)
-            expand_wpt = expand_path.new_waypoint(next_pos)
+            expand_path.new_waypoint(next_pos)
             collapse_path = character.motion.new_path(speed=0.3, ease=easing.in_expo)
-            collapse_wpt = collapse_path.new_waypoint(self.terminal.output_area.center)
+            collapse_path.new_waypoint(self.terminal.output_area.center)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE, expand_path, EventHandler.Action.ACTIVATE_PATH, collapse_path
             )
@@ -201,9 +199,9 @@ class BlackholeEffect:
         for character in self.terminal.characters:
             nearby_coord = motion.Motion.find_coords_on_circle(character.input_coord, 3, 5)[random.randrange(0, 5)]
             nearby_path = character.motion.new_path(speed=random.randint(2, 3) / 10, ease=easing.out_expo)
-            nearby_wpt = nearby_path.new_waypoint(nearby_coord)
+            nearby_path.new_waypoint(nearby_coord)
             input_path = character.motion.new_path(speed=random.randint(3, 5) / 100, ease=easing.in_cubic)
-            input_wpt = input_path.new_waypoint(character.input_coord)
+            input_path.new_waypoint(character.input_coord)
             explode_scn = character.animation.new_scene()
             explode_star_color = random.choice(star_colors)
             explode_scn.add_frame(character.input_symbol, 1, color=explode_star_color)

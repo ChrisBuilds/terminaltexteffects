@@ -157,7 +157,7 @@ class Ring:
     def spin(self) -> None:
         for character in self.characters:
             condense_path = character.motion.new_path(speed=0.1)
-            condense_wpt = condense_path.new_waypoint(self.character_last_ring_path[character].waypoints[0].coord)
+            condense_path.new_waypoint(self.character_last_ring_path[character].waypoints[0].coord)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
                 condense_path,
@@ -187,7 +187,7 @@ class RingsEffect:
             start_scn = character.animation.new_scene()
             start_scn.add_frame(character.input_symbol, 1, color=self.args.base_color)
             home_path = character.motion.new_path(speed=0.8, ease=easing.out_quad, id="home")
-            home_wpt = home_path.new_waypoint(character.input_coord)
+            home_path.new_waypoint(character.input_coord)
             character.animation.activate_scene(start_scn)
             character.is_visible = True
             self.pending_chars.append(character)
@@ -228,7 +228,7 @@ class RingsEffect:
             if character not in self.ring_chars:
                 color = random.choice(self.args.ring_colors)
                 external_path = character.motion.new_path(id="external", speed=0.1, ease=easing.out_cubic)
-                external_wpt = external_path.new_waypoint(self.terminal.output_area.random_coord(outside_scope=True))
+                external_path.new_waypoint(self.terminal.output_area.random_coord(outside_scope=True))
                 # make disperse gradient
                 color = random.choice(self.args.ring_colors)
                 disperse_gradient = graphics.Gradient([self.args.base_color, color, self.args.base_color], 7)
@@ -279,7 +279,7 @@ class RingsEffect:
                                 character, character.motion.paths["0"].waypoints[0].coord
                             )
                             initial_path = character.motion.new_path(speed=0.3, ease=easing.out_cubic)
-                            initial_wpt = initial_path.new_waypoint(disperse_path.waypoints[0].coord)
+                            initial_path.new_waypoint(disperse_path.waypoints[0].coord)
                             character.event_handler.register_event(
                                 EventHandler.Event.PATH_COMPLETE,
                                 initial_path,

@@ -105,10 +105,10 @@ class ErrorCorrectEffect:
             char2 = all_characters.pop(random.randrange(len(all_characters)))
             char1.motion.set_coordinate(char2.input_coord)
             char1_input_coord_path = char1.motion.new_path(id="input_coord", speed=self.args.movement_speed)
-            char1_input_coord_waypoint = char1_input_coord_path.new_waypoint(char1.input_coord)
+            char1_input_coord_path.new_waypoint(char1.input_coord)
             char2.motion.set_coordinate(char1.input_coord)
             char2_input_coord_path = char2.motion.new_path(id="input_coord", speed=self.args.movement_speed)
-            char2_input_coord_waypoint = char2_input_coord_path.new_waypoint(char2.input_coord)
+            char2_input_coord_path.new_waypoint(char2.input_coord)
             self.swapped.append((char1, char2))
             for character in (char1, char2):
                 first_block_wipe = character.animation.new_scene()

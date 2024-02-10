@@ -109,11 +109,11 @@ class MiddleoutEffect:
                 column = self.terminal.output_area.center_column
                 row = character.input_coord.row
             center_path = character.motion.new_path(speed=self.args.center_movement_speed, ease=self.args.center_easing)
-            center_waypoint = center_path.new_waypoint(motion.Coord(column, row))
+            center_path.new_waypoint(motion.Coord(column, row))
             full_path = character.motion.new_path(
                 id="full", speed=self.args.full_movement_speed, ease=self.args.full_easing
             )
-            full_waypoint = full_path.new_waypoint(character.input_coord, id="full")
+            full_path.new_waypoint(character.input_coord, id="full")
 
             # setup scenes
             center_scene = character.animation.new_scene()
