@@ -24,7 +24,7 @@
 * [Options](#options)
 * [Examples](#examples)
 * [In-Development Preview](#in-development-preview)
-* [Recent Changes](#recent-changes)
+* [Latest Release Notes](#latest-release-notes)
 * [License](#license)
 
 
@@ -76,40 +76,36 @@ options:
 Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
-  {blackhole,bouncyballs,bubbles,burn,columnslide,crumble,decrypt,errorcorrect,expand,fireworks,middleout,pour,rain,randomsequence,rings,rowmerge,rowslide,scattered,spray,swarm,test,unstable,verticalslice,vhstape,waves}
+  {binarypath,blackhole,bouncyballs,bubbles,burn,crumble,decrypt,errorcorrect,expand,fireworks,middleout,pour,print,rain,randomsequence,rings,scattered,slide,spray,swarm,synthgrid,test,unstable,verticalslice,vhstape,waves,wipe}
                         Available Effects
+    binarypath          Binary representations of each character move through the terminal towards the home coordinate of the character.
     blackhole           Characters are consumed by a black hole and explode outwards.
     bouncyballs         Characters are bouncy balls falling from the top of the output area.
     bubbles             Characters are formed into bubbles that float down and pop.
     burn                Burns vertically in the output area.
-    columnslide         Slides each column into place from the outside to the middle.
     crumble             Characters lose color and crumble into dust, vacuumed up, and reformed.
     decrypt             Display a movie style decryption effect.
     errorcorrect        Some characters start in the wrong position and are corrected in sequence.
     expand              Expands the text from a single point.
     fireworks           Characters launch and explode like fireworks and fall into place.
-    middleout           Text expands in a single row or column in the middle of the output area then
-                        out.
+    middleout           Text expands in a single row or column in the middle of the output area then out.
     pour                Pours the characters into position from the given direction.
+    print               Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
     rain                Rain characters from the top of the output area.
     randomsequence      Prints the input data in a random sequence.
     rings               Characters are dispersed and form into spinning rings.
-    rowmerge            Merges rows of characters.
-    rowslide            Slides each row into place.
     scattered           Move the characters into place from random starting locations.
+    slide               Slide characters into view from outside the terminal.
     spray               Draws the characters spawning at varying rates from a single point.
-    swarm               Characters are grouped into swarms and move around the terminal before settling
-                        into position.
-    test                effect_description
-    unstable            Spawn characters jumbled, explode them to the edge of the output area, then
-                        reassemble them in the correct layout.
-    verticalslice       Slices the input in half vertically and slides it into place from opposite
-                        directions.
+    swarm               Characters are grouped into swarms and move around the terminal before settling into position.
+    synthgrid           Create a grid which fills with characters dissolving into the final text.
+    unstable            Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.
+    verticalslice       Slices the input in half vertically and slides it into place from opposite directions.
     vhstape             Lines of characters glitch left and right and lose detail like an old VHS tape.
     waves               Waves travel across the terminal leaving behind the characters.
+    wipe                Wipes the text across the terminal to reveal characters.
 
-Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciphertext-color 00ff00
---plaintext-color ff0000 --final-color 0000ff
+Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciphertext-color 00ff00 --plaintext-color ff0000 --final-color 0000ff
 ```
 
 
@@ -458,10 +454,6 @@ Note: All effects support extensive customization via effect specific arguments.
 #### VHStape
 ![vhstape_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ff11e292-4bfd-4989-ab81-1a624b2c0822)
 
-
-## In-Development Preview
-Any effects shown below are in development and will be available in the next release.
-
 #### Print
 ![print_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ff4fcb44-ebb9-4166-933b-8b0ad3d1810a)
 
@@ -478,50 +470,51 @@ Any effects shown below are in development and will be available in the next rel
 ![synthgrid_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ebd8d3f1-c8b0-4de9-81ad-b70dde5a07b4)
 
 
+## In-Development Preview
+Any effects shown below are in development and will be available in the next release.
 
-## Recent Changes
 
-## 0.5.0
+
+
+
+## Latest Release Notes
+
+## 0.6.0
 
 ### New Features
- * New effect, Vhstape. Lines of characters glitch left and right and lose detail like an old VHS tape.
- * New effect, Crumble. Characters lose color and fall as dust before being vacuumed up and rebuilt.
- * New effect, Rings. Characters are dispersed throughout the output area and form into spinning rings.
- * motion.Motion.chain_paths(list[Paths]) will automatically register Paths with the EventHandler to create
-   a chain of paths. Looping is supported.
- * motion.Motion.find_coords_in_rect() will return a random selection of coordinates within a rectangular area. This is faster than using
-   find_coords_in_circle() and should be used when the shape of the search area isn't important.
- * Terminal.OutputArea.coord_in_output_area() can be used to determine if a Coord is in the output area.
- * Paths have replaced Waypoints as the motion target specification object. Paths group Waypoints together and allow for easing
-   motion and animations across an arbitrary number of Waypoints. Single Waypoint Paths are supported and function the same as
-   Waypoints did previously. Paths can be looped with the loop argument. 
- * Quadratic and Cubic bezier curves are supported. Control points are specified in the Waypoint object signature. When a control point
-   is specified, motion will be curved from the prior Waypoint to the Waypoint with the control point, using the control point
-   to determine the curve. Curves are supported within Paths.
- * New EventHandler.Event PATH_HOLDING is triggered when a Path enters the holding state.
- * New EventHandler.Action SET_CHARACTER_ACTIVATION_STATE can be used to modify the character activation state based on events.
- * New EventHandler.Action SET_COORDINATE can be used to set the character's current_coordinate attribute.
- * Paths have a layer attribute that can be used to automatically adjust the character's layer when the Path is activated.
-   Has no effect when Path.layer is None, defaults to None.
- * New EventHandler.Events SEGMENT_ENTERED and SEGMENT_EXITED. These events are triggered when a character enters or exits a segment
-   in a Path. The segment is specified using the end Waypoint of the segment. These events will only be called one time for each run
-   through the Path. Looping Paths will reset these events to be called again. 
+#### Effects
+ * Print. Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
+ * BinaryPath. Characters are converted into their binary representation. These binary groups travel to their input coordinate and collapse into the original character symbol.
+ * Wipe. Performs directional wipes with an optional trailing gradient.
+ * Slide. Slides characters into position from outside the terminal view. Characters can be grouped by column, row, or diagonal. Groups can be merged from opposite directions or slide from the same direction.
+ * SynthGrid. Creates a gradient colored grid in which blocks of characters dissolve into the input text.
 
+#### Engine
+ * Terminal.get_character() method accepts a Terminal.CharacterSort argument to easily retrieve the input characters in groups sorted by various directions, ex: Terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT
+ * Terminal.add_character() method allows adding characters to the effect that are not part of the input text. These characters are added to a separate list (Terminal.non_input_characters) in terminal to allow for iteration over Terminal.characters and adding new characters based on the input characters without modifying the Terminal.characters list during iteration. The added characters are handled the same as input characters by the Terminal.
+ * New EventHandler Action, Callback. The Action target can be any callable and will pass the character as the first argument, followed by any additional arguments provided. Uses new EventHandler.Callback type with signature EventHandler.Callback(typing.Callable, *args)
+ * graphics.Gradient() objects specified with a single color will create a list of the single color with length *steps*. This enables gradients to be specified via command line arguments while supporting an arbitrary number of colors > 0, without needing to perform any checking in the effect logic. 
 
 ### Changes
- * graphics.Animation.random_color() is now a static method.
- * motion.Motion.find_coords_in_circle() now generates 7*radius coords in each inner-circle.
- * BlackholeEffect uses chain_paths() and benefits from better circle support for a much improved blackhole animation.
- * BlackholeEffect singularity Paths are curved towards center lines.
- * EventHandler.Event.WAYPOINT_REACHED removed and split into two events, PATH_HOLDING and PATH_COMPLETE.
- * EventHandler.Event.PATH_COMPLETE is triggered when the final Path Waypoint is reached AND holding time reaches 0.
- * Fireworks effect uses Paths and curves to create a more realistic firework explosion.
- * Crumble effect uses control points to create a curved vacuuming phase.
- * graphics.Gradient accepts an arbitrary number of color stops. The number of steps applies between each color stop.
- * motion.find_coords_in_circle() and motion.find_coords_in_rect() no longer take a num_points argument. All points in the area are returned.
+### Effects
+  * Rowslide, Columnslide, and Rowmerge have been replaced with a single effect, Slide.
+  * Many classic effects now support gradient specification which includes stops, steps, and frames to enable greater customization.
+  * Randomsequence effect supports gradient specification.
+  * Scattered effect supports gradient specification.
+  * Expand effect supports gradient specification.
+  * Pour effect now has a back and forth pouring animation and supports gradient specification.
+
+#### Engine
+  * Terminal._update_terminal_state() refactored for improved performance.
+  * EffectCharacter.tick() will progress motion and animation by one step. This solves the problem of running Animation.step_animation() before Motion.move() and desyncing Path synced animations.
+  * EffectCharacter.is_active has been renamed to EffectCharacter.is_visible. 
+  * EffectCharacter.is_active() can be used to check if motion/animation is in progress.
+  * graphics.Animation.new_scene(), motion.Motion.new_path(), and Path.new_waypoint() all support automatic IDs. If no ID is provided a unique ID is automatically generated.
 
 ### Bug Fixes
- * Fixed looping animations when synced to Path not resetting properly.
+ * Fixed rare division by zero error in Path.step() when the final segment has a distance of zero and the distance to travel exceeds
+   the total distance of the Path.
+ * Fixed effects not respecting --no-color argument.
 
 ## License
 
