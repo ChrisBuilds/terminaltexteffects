@@ -30,6 +30,7 @@
   * EffectCharacter.tick() will progress motion and animation by one step. This solves the problem of running Animation.step_animation() before Motion.move() and desyncing Path synced animations.
   * EffectCharacter.is_active has been renamed to EffectCharacter.is_visible. 
   * EffectCharacter.is_active() can be used to check if motion/animation is in progress.
+  * graphics.Animation.new_scene(), motion.Motion.new_path(), and Path.new_waypoint() all support automatic IDs. If no ID is provided a unique ID is automatically generated.
 
 ### Bug Fixes
  * Fixed rare division by zero error in Path.step() when the final segment has a distance of zero and the distance to travel exceeds
