@@ -107,7 +107,7 @@ class SprayEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.spray_position = {
             "n": SprayPosition.N,
             "ne": SprayPosition.NE,
@@ -138,10 +138,8 @@ class SprayEffect:
 
         for character in self.terminal.characters:
             character.motion.set_coordinate(spray_origin_map[self.spray_position])
-            input_coord_path = character.motion.new_path(
-                "input_coord", speed=self.args.movement_speed, ease=self.args.easing
-            )
-            input_coord_wpt = input_coord_path.new_waypoint("input_coord", character.input_coord)
+            input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+            input_coord_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED, input_coord_path, EventHandler.Action.SET_LAYER, 1
             )
@@ -149,7 +147,7 @@ class SprayEffect:
                 EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
             )
             if self.spray_colors:
-                droplet_scn = character.animation.new_scene("droplet")
+                droplet_scn = character.animation.new_scene()
                 spray_color = random.choice(self.spray_colors)
                 spray_gradient = graphics.Gradient([spray_color, self.final_color], 7)
                 for color in spray_gradient:
@@ -162,20 +160,18 @@ class SprayEffect:
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
-        while self.pending_chars or self.animating_chars:
+        while self.pending_chars or self.active_chars:
             if self.pending_chars:
                 for _ in range(random.randint(1, self.args.spray_volume)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop()
                         next_character.is_visible = True
-                        self.animating_chars.append(next_character)
+                        self.active_chars.append(next_character)
 
             self.animate_chars()
             self.terminal.print()
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        for character in self.active_chars:
+            character.tick()

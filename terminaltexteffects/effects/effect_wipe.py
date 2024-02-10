@@ -80,7 +80,7 @@ class WipeEffect:
         self.terminal = terminal
         self.args = args
         self.pending_groups: list[list[EffectCharacter]] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.direction = self.args.wipe_direction
         if len(self.args.gradient_stops) > 1:
             self.wipe_gradient = graphics.Gradient(self.args.gradient_stops, self.args.gradient_steps)
@@ -100,7 +100,7 @@ class WipeEffect:
         for group in self.terminal.get_characters(sort_map[self.direction]):
             if self.args.gradient_stops:
                 for character in group:
-                    wipe_scn = character.animation.new_scene("gradient")
+                    wipe_scn = character.animation.new_scene()
                     if len(self.args.gradient_stops) > 1:
                         for color in self.wipe_gradient:
                             wipe_scn.add_frame(character.input_symbol, self.args.gradient_frames, color=color)
@@ -113,26 +113,22 @@ class WipeEffect:
         """Runs the effect."""
         self.prepare_data()
         wipe_delay = self.args.wipe_delay
-        while self.pending_groups or self.animating_chars:
+        while self.pending_groups or self.active_chars:
             if not wipe_delay:
                 if self.pending_groups:
                     next_group = self.pending_groups.pop(0)
                     for character in next_group:
                         character.is_visible = True
-                        self.animating_chars.append(character)
+                        self.active_chars.append(character)
                 wipe_delay = self.args.wipe_delay
             else:
                 wipe_delay -= 1
             self.terminal.print()
             self.animate_chars()
 
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method on all active characters."""
+        for character in self.active_chars:
+            character.tick()

@@ -87,7 +87,7 @@ class UnstableEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.jumbled_coords: dict[EffectCharacter, motion.Coord] = dict()
 
     def prepare_data(self) -> None:
@@ -113,16 +113,16 @@ class UnstableEffect:
             jumbled_coord = character_coords.pop(random.randint(0, len(character_coords) - 1))
             self.jumbled_coords[character] = jumbled_coord
             character.motion.set_coordinate(jumbled_coord)
-            explosion_path = character.motion.new_path("explosion", speed=0.75, ease=self.args.explosion_ease)
-            explosion_wpt = explosion_path.new_waypoint("explosion", motion.Coord(col, row))
-            reassembly_path = character.motion.new_path("reassembly", speed=0.75, ease=self.args.reassembly_ease)
-            reassembly_wpt = reassembly_path.new_waypoint("reassembly", character.input_coord)
+            explosion_path = character.motion.new_path(id="explosion", speed=0.75, ease=self.args.explosion_ease)
+            explosion_path.new_waypoint(motion.Coord(col, row))
+            reassembly_path = character.motion.new_path(id="reassembly", speed=0.75, ease=self.args.reassembly_ease)
+            reassembly_path.new_waypoint(character.input_coord)
             unstable_gradient = graphics.Gradient([self.args.initial_color, self.args.unstable_color], 25)
-            rumble_scn = character.animation.new_scene("rumble")
+            rumble_scn = character.animation.new_scene(id="rumble")
             for step in unstable_gradient:
                 rumble_scn.add_frame(character.input_symbol, 10, color=step)
             final_color = graphics.Gradient([self.args.unstable_color, self.args.final_color], 12)
-            final_scn = character.animation.new_scene("final")
+            final_scn = character.animation.new_scene(id="final")
             for step in final_color:
                 final_scn.add_frame(character.input_symbol, 5, color=step)
             character.animation.activate_scene(rumble_scn)
@@ -131,26 +131,24 @@ class UnstableEffect:
     def move_all_to_waypoint(self, path_id) -> None:
         for character in self.terminal.characters:
             if path_id == "reassembly":
-                character.animation.activate_scene(character.animation.scenes["final"])
-            self.animating_chars.append(character)
-            character.motion.activate_path(character.motion.paths[path_id])
-        while self.animating_chars:
+                character.animation.activate_scene(character.animation.query_scene("final"))
+            self.active_chars.append(character)
+            character.motion.activate_path(character.motion.query_path(path_id))
+        while self.active_chars:
             self.terminal.print()
             self.animate_chars()
             if path_id == "reassembly":
-                self.animating_chars = [
-                    animating_char
-                    for animating_char in self.animating_chars
-                    if not animating_char.motion.current_coord
-                    == animating_char.motion.paths[path_id].waypoints[0].coord
-                    or not animating_char.animation.active_scene_is_complete()
+                self.active_chars = [
+                    character
+                    for character in self.active_chars
+                    if not character.motion.current_coord == character.motion.query_path(path_id).waypoints[0].coord
+                    or not character.animation.active_scene_is_complete()
                 ]
             else:
-                self.animating_chars = [
-                    animating_char
-                    for animating_char in self.animating_chars
-                    if not animating_char.motion.current_coord
-                    == animating_char.motion.paths[path_id].waypoints[0].coord
+                self.active_chars = [
+                    character
+                    for character in self.active_chars
+                    if not character.motion.current_coord == character.motion.query_path(path_id).waypoints[0].coord
                 ]
 
     def rumble(self) -> None:
@@ -194,6 +192,6 @@ class UnstableEffect:
         self.move_all_to_waypoint("reassembly")
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method."""
+        for character in self.active_chars:
+            character.tick()

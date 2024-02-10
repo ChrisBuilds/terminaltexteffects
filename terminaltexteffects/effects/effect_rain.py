@@ -69,7 +69,7 @@ class RainEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
@@ -82,16 +82,16 @@ class RainEffect:
 
         for character in self.terminal.characters:
             raindrop_color = random.choice(rain_colors)
-            rain_scn = character.animation.new_scene("rain")
+            rain_scn = character.animation.new_scene()
             rain_scn.add_frame(random.choice(rain_characters), 1, color=raindrop_color)
             raindrop_gradient = graphics.Gradient([raindrop_color, self.args.final_color], 7)
-            fade_scn = character.animation.new_scene("fade")
+            fade_scn = character.animation.new_scene()
             for color in raindrop_gradient:
                 fade_scn.add_frame(character.input_symbol, 5, color=color)
             character.animation.activate_scene(rain_scn)
             character.motion.set_coordinate(motion.Coord(character.input_coord.column, self.terminal.output_area.top))
-            input_path = character.motion.new_path("input_coord", speed=self.args.movement_speed, ease=self.args.easing)
-            input_path.new_waypoint("input_coord", character.input_coord)
+            input_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+            input_path.new_waypoint(character.input_coord)
 
             character.event_handler.register_event(
                 character.event_handler.Event.PATH_COMPLETE,
@@ -111,7 +111,7 @@ class RainEffect:
         self.prepare_data()
         self.pending_chars.clear()
         self.terminal.print()
-        while self.group_by_row or self.animating_chars or self.pending_chars:
+        while self.group_by_row or self.active_chars or self.pending_chars:
             if not self.pending_chars and self.group_by_row:
                 self.pending_chars.extend(self.group_by_row.pop(min(self.group_by_row.keys())))  # type: ignore
             if self.pending_chars:
@@ -119,18 +119,15 @@ class RainEffect:
                     if self.pending_chars:
                         next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
                         next_character.is_visible = True
-                        self.animating_chars.append(next_character)
+                        self.active_chars.append(next_character)
 
                     else:
                         break
             self.animate_chars()
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
             self.terminal.print()
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tick method."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        for character in self.active_chars:
+            character.tick()

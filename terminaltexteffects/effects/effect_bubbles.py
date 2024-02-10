@@ -123,21 +123,21 @@ class Bubble:
 
     def make_waypoints(self):
         waypoint_column = random.randint(self.effect.terminal.output_area.left, self.effect.terminal.output_area.right)
-        floor_path = self.anchor_char.motion.new_path("floor", speed=self.effect.args.bubble_speed)
-        floor_waypoint = floor_path.new_waypoint("floor", motion.Coord(waypoint_column, self.lowest_row))
+        floor_path = self.anchor_char.motion.new_path(speed=self.effect.args.bubble_speed)
+        floor_path.new_waypoint(motion.Coord(waypoint_column, self.lowest_row))
         self.anchor_char.motion.activate_path(floor_path)
 
     def make_gradients(self) -> None:
         if self.effect.args.no_rainbow:
             for character in self.characters:
-                sheen_scene = character.animation.new_scene("sheen")
+                sheen_scene = character.animation.new_scene()
                 sheen_scene.add_frame(character.input_symbol, 1, color=self.effect.args.bubble_color)
                 character.animation.activate_scene(sheen_scene)
         else:
             rainbow_gradient = list(self.effect.rainbow_gradient.spectrum)
             gradient_offset = 0
             for character in self.characters:
-                sheen_scene = character.animation.new_scene("sheen")
+                sheen_scene = character.animation.new_scene()
                 for step in rainbow_gradient:
                     sheen_scene.add_frame(character.input_symbol, 5, color=step)
                 gradient_offset += 2
@@ -158,8 +158,8 @@ class Bubble:
                 len(self.characters),
             ),
         ):
-            pop_out_path = char.motion.new_path("pop_out", speed=0.2, ease=easing.out_expo)
-            pop_out_waypoint = pop_out_path.new_waypoint("pop_out", point)
+            pop_out_path = char.motion.new_path(id="pop_out", speed=0.2, ease=easing.out_expo)
+            pop_out_path.new_waypoint(point)
             char.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
                 pop_out_path,
@@ -167,8 +167,8 @@ class Bubble:
                 char.motion.paths["final"],
             )
         for character in self.characters:
-            character.animation.activate_scene(character.animation.scenes["pop_1"])
-            character.motion.activate_path(character.motion.paths["pop_out"])
+            character.animation.activate_scene(character.animation.query_scene("pop_1"))
+            character.motion.activate_path(character.motion.query_path("pop_out"))
 
     def activate(self) -> None:
         for char in self.characters:
@@ -182,13 +182,13 @@ class Bubble:
 
 
 class BubblesEffect:
-    """Effect that ___."""
+    """Effect that forms circles with the characters. Circles float down and pop into the characters."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.bubbles: list[Bubble] = []
         red = "e81416"
         orange = "ffa500"
@@ -204,11 +204,11 @@ class BubblesEffect:
         final_gradient = graphics.Gradient([self.args.pop_color, self.args.final_color], 10)
         for character in self.terminal.characters:
             character.layer = 1
-            pop_1_scene = character.animation.new_scene("pop_1")
-            pop_2_scene = character.animation.new_scene("pop_2")
+            pop_1_scene = character.animation.new_scene(id="pop_1")
+            pop_2_scene = character.animation.new_scene()
             pop_1_scene.add_frame("*", 25, color=self.args.pop_color)
             pop_2_scene.add_frame("'", 25, color=self.args.pop_color)
-            final_scene = character.animation.new_scene("final")
+            final_scene = character.animation.new_scene()
             for step in final_gradient:
                 final_scene.add_frame(character.input_symbol, 5, color=step)
             character.event_handler.register_event(
@@ -221,11 +221,11 @@ class BubblesEffect:
                 final_scene,
             )
             final_path = character.motion.new_path(
-                "final",
+                id="final",
                 speed=0.3,
                 ease=easing.in_out_expo,
             )
-            final_waypoint = final_path.new_waypoint("final", character.input_coord)
+            final_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE, final_path, EventHandler.Action.SET_LAYER, 0
             )
@@ -254,7 +254,7 @@ class BubblesEffect:
         self.prepare_data()
         animating_bubbles: list[Bubble] = []
         steps_since_last_bubble = 0
-        while animating_bubbles or self.animating_chars or self.bubbles:
+        while animating_bubbles or self.active_chars or self.bubbles:
             if self.bubbles and steps_since_last_bubble >= self.args.bubble_delay:
                 next_bubble = self.bubbles.pop(0)
                 next_bubble.activate()
@@ -265,23 +265,20 @@ class BubblesEffect:
             for bubble in animating_bubbles:
                 if bubble.landed:
                     bubble.pop()
-                    self.animating_chars.extend(bubble.characters)
+                    self.active_chars.extend(bubble.characters)
 
             animating_bubbles = [bubble for bubble in animating_bubbles if not bubble.landed]
             self.animate_bubbles(animating_bubbles)
             self.animate_chars()
             self.terminal.print()
 
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_bubbles(self, animating_bubbles: list[Bubble]) -> None:
         for bubble in animating_bubbles:
             bubble.move()
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method."""
+        for character in self.active_chars:
+            character.tick()

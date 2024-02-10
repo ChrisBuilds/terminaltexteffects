@@ -72,7 +72,7 @@ class SwarmEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.swarms: list[list[EffectCharacter]] = []
         self.swarm_size: int = max(round(len(self.terminal.characters) * self.args.swarm_size), 1)
 
@@ -118,14 +118,14 @@ class SwarmEffect:
             for character in swarm:
                 swarm_area_count = 0
                 character.motion.set_coordinate(swarm_spawn)
-                flash_scn = character.animation.new_scene("speed", sync=graphics.SyncMetric.DISTANCE)
+                flash_scn = character.animation.new_scene(sync=graphics.SyncMetric.DISTANCE)
                 for step in swarm_gradient_mirror:
                     flash_scn.add_frame(character.input_symbol, 1, color=step)
                 for _, swarm_area_coords in swarm_area_coordinate_map.items():
                     swarm_area_name = f"{swarm_area_count}_swarm_area"
                     swarm_area_count += 1
-                    origin_path = character.motion.new_path(swarm_area_name, speed=0.25, ease=easing.out_sine)
-                    origin_wpt = origin_path.new_waypoint(swarm_area_name, random.choice(swarm_area_coords))
+                    origin_path = character.motion.new_path(id=swarm_area_name, speed=0.25, ease=easing.out_sine)
+                    origin_wpt = origin_path.new_waypoint(random.choice(swarm_area_coords), id=swarm_area_name)
                     character.event_handler.register_event(
                         EventHandler.Event.PATH_ACTIVATED, origin_path, EventHandler.Action.ACTIVATE_SCENE, flash_scn
                     )
@@ -144,13 +144,13 @@ class SwarmEffect:
                         next_coord = random.choice(swarm_area_coords)
                         inner_paths += 1
                         inner_path = character.motion.new_path(
-                            str(len(character.motion.paths)), speed=0.1, ease=easing.in_out_sine
+                            id=str(len(character.motion.paths)), speed=0.1, ease=easing.in_out_sine
                         )
-                        inner_path.new_waypoint(str(len(character.motion.paths)), next_coord)
+                        inner_path.new_waypoint(next_coord, id=str(len(character.motion.paths)))
                 # create landing waypoint and scene
-                input_path = character.motion.new_path("input_coord", speed=0.3, ease=easing.in_out_quad)
-                input_wpt = input_path.new_waypoint("input_coord", character.input_coord)
-                input_scn = character.animation.new_scene("input")
+                input_path = character.motion.new_path(speed=0.3, ease=easing.in_out_quad)
+                input_wpt = input_path.new_waypoint(character.input_coord)
+                input_scn = character.animation.new_scene()
                 for step in final_gradient:
                     input_scn.add_frame(character.input_symbol, 3, color=step)
                 character.event_handler.register_event(
@@ -159,37 +159,28 @@ class SwarmEffect:
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.SET_LAYER, 0
                 )
-                # create flash effect when moving between waypoints
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED, input_path, EventHandler.Action.ACTIVATE_SCENE, flash_scn
                 )
-                # chain waypoints
                 character.motion.chain_paths(list(character.motion.paths.values()))
-                # last_wpt = None
-                # for wpt in character.motion.waypoints.values():
-                #     if last_wpt:
-                #         character.event_handler.register_event(
-                #             EventHandler.Event.WAYPOINT_COMPLETE, last_wpt, EventHandler.Action.ACTIVATE_WAYPOINT, wpt
-                #         )
-                #     last_wpt = wpt
 
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
         call_next = True
         active_swarm_area = "0_swarm_area"
-        while self.swarms or self.animating_chars:
+        while self.swarms or self.active_chars:
             if self.swarms and call_next:
                 call_next = False
                 current_swarm = self.swarms.pop()
                 active_swarm_area = "0_swarm_area"
                 for character in current_swarm:
-                    character.motion.activate_path(character.motion.paths["0_swarm_area"])
+                    character.motion.activate_path(character.motion.query_path("0_swarm_area"))
                     character.is_visible = True
-                    self.animating_chars.append(character)
+                    self.active_chars.append(character)
             self.terminal.print()
             self.animate_chars()
-            if len(self.animating_chars) < len(current_swarm):
+            if len(self.active_chars) < len(current_swarm):
                 call_next = True
             if current_swarm:
                 for character in current_swarm:
@@ -205,13 +196,9 @@ class SwarmEffect:
                                 other.motion.activate_path(other.motion.paths[active_swarm_area])
                         break
 
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method."""
+        for character in self.active_chars:
+            character.tick()

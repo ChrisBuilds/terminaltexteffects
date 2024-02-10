@@ -74,7 +74,7 @@ class ScatteredEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.gradient_stops: list[int | str] = self.args.gradient_stops
 
     def prepare_data(self) -> None:
@@ -87,10 +87,8 @@ class ScatteredEffect:
                 character.motion.set_coordinate(motion.Coord(1, 1))
             else:
                 character.motion.set_coordinate(self.terminal.output_area.random_coord())
-            input_coord_path = character.motion.new_path(
-                "input_pth", speed=self.args.movement_speed, ease=self.args.easing
-            )
-            input_coord_path.new_waypoint("input_coord_wpt", character.input_coord)
+            input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+            input_coord_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED, input_coord_path, EventHandler.Action.SET_LAYER, 1
             )
@@ -100,26 +98,24 @@ class ScatteredEffect:
             character.motion.activate_path(input_coord_path)
             character.is_visible = True
             if self.gradient_stops:
-                gradient_scn = character.animation.new_scene("gradient_scn")
+                gradient_scn = character.animation.new_scene()
                 if len(self.gradient_stops) > 1:
                     for step in gradient:
                         gradient_scn.add_frame(character.input_symbol, self.args.gradient_frames, color=step)
                 else:
                     gradient_scn.add_frame(character.input_symbol, 1, color=self.gradient_stops[0])
                 character.animation.activate_scene(gradient_scn)
-            self.animating_chars.append(character)
+            self.active_chars.append(character)
 
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
         self.terminal.print()
-        while self.pending_chars or self.animating_chars:
+        while self.pending_chars or self.active_chars:
             self.animate_chars()
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
             self.terminal.print()
 
     def animate_chars(self) -> None:
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        for character in self.active_chars:
+            character.tick()

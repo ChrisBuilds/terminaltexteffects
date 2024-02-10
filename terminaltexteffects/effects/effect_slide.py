@@ -100,7 +100,7 @@ class SlideEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.grouping: str = self.args.grouping
         self.reverse_direction: bool = self.args.reverse_direction
         self.merge: bool = self.args.merge
@@ -122,8 +122,10 @@ class SlideEffect:
             groups = self.terminal.get_characters(self.terminal.CharacterSort.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT)
         for group in groups:
             for character in group:
-                input_path = character.motion.new_path("input_path", speed=self.args.movement_speed, ease=self.easing)
-                input_path.new_waypoint("input_coord", character.input_coord)
+                input_path = character.motion.new_path(
+                    id="input_path", speed=self.args.movement_speed, ease=self.easing
+                )
+                input_path.new_waypoint(character.input_coord)
 
         for group_index, group in enumerate(groups):
             if self.grouping == "row":
@@ -173,7 +175,7 @@ class SlideEffect:
                     character.motion.set_coordinate(starting_coord)
             if self.gradient_stops:
                 for character in group:
-                    gradient_scn = character.animation.new_scene("gradient_scn")
+                    gradient_scn = character.animation.new_scene()
                     if len(self.gradient_stops) > 1:
                         for step in gradient:
                             gradient_scn.add_frame(character.input_symbol, self.args.gradient_frames, color=step)
@@ -188,7 +190,7 @@ class SlideEffect:
         self.prepare_data()
         active_groups: list[list[EffectCharacter]] = []
         current_gap = 0
-        while self.pending_groups or self.animating_chars or active_groups:
+        while self.pending_groups or self.active_chars or active_groups:
             if current_gap == self.gap and self.pending_groups:
                 active_groups.append(self.pending_groups.pop(0))
                 current_gap = 0
@@ -200,18 +202,14 @@ class SlideEffect:
                     next_char = group.pop(0)
                     next_char.is_visible = True
                     next_char.motion.activate_path(next_char.motion.paths["input_path"])
-                    self.animating_chars.append(next_char)
+                    self.active_chars.append(next_char)
             active_groups = [group for group in active_groups if group]
             self.terminal.print()
             self.animate_chars()
 
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method on all active characters."""
+        for character in self.active_chars:
+            character.tick()

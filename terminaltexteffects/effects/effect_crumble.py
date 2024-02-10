@@ -61,7 +61,7 @@ class CrumbleEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by registering events and building scenes/waypoints."""
@@ -73,57 +73,37 @@ class CrumbleEffect:
             weaken_gradient = graphics.Gradient([self.args.initial_color, dust_color], 9)
             character.is_visible = True
             # set up initial and falling stage
-            initial_scn = character.animation.new_scene("initial")
+            initial_scn = character.animation.new_scene()
             initial_scn.add_frame(character.input_symbol, 1, color=self.args.initial_color)
             character.animation.activate_scene(initial_scn)
             fall_path = character.motion.new_path(
-                "fall",
                 speed=0.2,
                 ease=easing.out_bounce,
             )
             fall_wpt = fall_path.new_waypoint(
-                "fall", motion.Coord(character.input_coord.column, self.terminal.output_area.bottom)
+                motion.Coord(character.input_coord.column, self.terminal.output_area.bottom)
             )
-            weaken_scn = character.animation.new_scene("weaken")
+            weaken_scn = character.animation.new_scene(id="weaken")
             for color_step in weaken_gradient:
                 weaken_scn.add_frame(character.input_symbol, 6, color=color_step)
 
-            # set up vacuuming stage
-            # bottom_vac_path = character.motion.new_path("bottom_vac", speed=0.3, ease=easing.in_quint)
-            # bottom_vac_wpt = bottom_vac_path.new_waypoint(
-            #     "bottom_vac",
-            #     motion.Coord(
-            #         self.terminal.output_area.center_column,
-            #         round(self.terminal.output_area.top * random.uniform(0.1, 0.3)),
-            #     ),
-            #     bezier_control=motion.Coord(self.terminal.output_area.center_column, 1),
-            # )
-            # top_vac_path = character.motion.new_path("top_vac", speed=0.3)
-            # top_vac_wpt = top_vac_path.new_waypoint(
-            #     "top_vac",
-            #     motion.Coord(
-            #         self.terminal.output_area.center_column,
-            #         round(self.terminal.output_area.top * random.uniform(0.7, 0.9)),
-            #     ),
-            # )
-            top_path = character.motion.new_path("top", speed=0.3, ease=easing.out_quint)
+            top_path = character.motion.new_path(id="top", speed=0.3, ease=easing.out_quint)
             top_wpt = top_path.new_waypoint(
-                "top",
                 motion.Coord(character.input_coord.column, self.terminal.output_area.top),
                 bezier_control=motion.Coord(
                     self.terminal.output_area.center_column, self.terminal.output_area.center_row
                 ),
             )
             # set up reset stage
-            input_path = character.motion.new_path("input", speed=0.3)
-            input_wpt = input_path.new_waypoint("input", character.input_coord)
-            strengthen_flash_scn = character.animation.new_scene("strengthen_flash")
+            input_path = character.motion.new_path(id="input", speed=0.3)
+            input_wpt = input_path.new_waypoint(character.input_coord)
+            strengthen_flash_scn = character.animation.new_scene()
             for color_step in strengthen_flash_gradient:
                 strengthen_flash_scn.add_frame(character.input_symbol, 4, color=color_step)
-            strengthen_scn = character.animation.new_scene("strengthen")
+            strengthen_scn = character.animation.new_scene()
             for color_step in strengthen_gradient:
                 strengthen_scn.add_frame(character.input_symbol, 6, color=color_step)
-            dust_scn = character.animation.new_scene("dust", sync=graphics.SyncMetric.DISTANCE)
+            dust_scn = character.animation.new_scene(sync=graphics.SyncMetric.DISTANCE)
             for _ in range(5):
                 dust_scn.add_frame(random.choice(["*", ".", ","]), 1, color=dust_color)
 
@@ -136,12 +116,7 @@ class CrumbleEffect:
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.ACTIVATE_SCENE, dust_scn
             )
-            # character.event_handler.register_event(
-            #     EventHandler.Event.PATH_COMPLETE, bottom_vac_path, EventHandler.Action.ACTIVATE_PATH, top_vac_path
-            # )
-            # character.event_handler.register_event(
-            #     EventHandler.Event.PATH_COMPLETE, top_vac_path, EventHandler.Action.ACTIVATE_PATH, top_path
-            # )
+
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
                 input_path,
@@ -181,8 +156,8 @@ class CrumbleEffect:
                         for _ in range(fall_group_size):
                             if self.pending_chars:
                                 next_char = self.pending_chars.pop(0)
-                                next_char.animation.activate_scene(next_char.animation.scenes["weaken"])
-                                self.animating_chars.append(next_char)
+                                next_char.animation.activate_scene(next_char.animation.query_scene("weaken"))
+                                self.active_chars.append(next_char)
                         # Reset the fall delay and adjust the fall group size and delay range
                         fall_delay = random.randint(min_fall_delay, max_fall_delay)
                         if random.randint(1, 10) > 4:  # 60% chance to modify the fall delay and group size
@@ -191,35 +166,32 @@ class CrumbleEffect:
                             max_fall_delay = max(0, max_fall_delay - 1)
                     else:
                         fall_delay -= 1
-                if not self.pending_chars and not self.animating_chars:
+                if not self.pending_chars and not self.active_chars:
                     stage = "vacuuming"
             elif stage == "vacuuming":
                 if unvacuumed_chars:
                     for _ in range(random.randint(3, 10)):
                         if unvacuumed_chars:
                             next_char = unvacuumed_chars.pop(0)
-                            next_char.motion.activate_path(next_char.motion.paths["top"])
-                            self.animating_chars.append(next_char)
-                if not self.animating_chars:
+                            next_char.motion.activate_path(next_char.motion.query_path("top"))
+                            self.active_chars.append(next_char)
+                if not self.active_chars:
                     stage = "resetting"
 
             elif stage == "resetting":
                 if not reset:
                     for character in self.terminal.characters:
-                        character.motion.activate_path(character.motion.paths["input"])
-                        self.animating_chars.append(character)
+                        character.motion.activate_path(character.motion.query_path("input"))
+                        self.active_chars.append(character)
                     reset = True
-                if not self.animating_chars:
+                if not self.active_chars:
                     stage = "complete"
 
             self.terminal.print()
             self.animate_chars()
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method."""
+        for character in self.active_chars:
+            character.tick()

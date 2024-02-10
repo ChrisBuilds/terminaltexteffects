@@ -56,7 +56,7 @@ class BurnEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by building the burn animation and organizing the data into columns."""
@@ -87,7 +87,7 @@ class BurnEffect:
             keys = [key for key in groups.keys() if groups[key]]
             next_char = groups[random.choice(keys)].pop(0)
             next_char.is_visible = False
-            construct_scn = next_char.animation.new_scene("construct")
+            construct_scn = next_char.animation.new_scene()
             g_start = 0
             for _, block in enumerate(vertical_build_order[:5]):
                 for color in fire_gradient.spectrum[g_start : g_start + 3]:
@@ -107,20 +107,18 @@ class BurnEffect:
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
-        while self.pending_chars or self.animating_chars:
+        while self.pending_chars or self.active_chars:
             if self.pending_chars:
                 next_char = self.pending_chars.pop(0)
                 next_char.is_visible = True
-                self.animating_chars.append(next_char)
+                self.active_chars.append(next_char)
 
             self.animate_chars()
 
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
             self.terminal.print()
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation."""
-        for animating_char in self.animating_chars:
-            animating_char.animation.step_animation()
+        """Animates the characters by calling the tick method."""
+        for character in self.active_chars:
+            character.animation.step_animation()

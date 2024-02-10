@@ -87,13 +87,13 @@ Example: terminaltexteffects middleout -a 0.01 --expand-direction horizontal --c
 
 
 class MiddleoutEffect:
-    """Effect that expands a single row and column followed by the rest of the output area."""
+    """Effect that expands a single row and column followed by the rest of the output area"""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.center_gradient = graphics.Gradient([self.args.starting_color, self.args.center_expand_color], 10)
         self.full_gradient = graphics.Gradient([self.args.center_expand_color, self.args.full_expand_color], 10)
 
@@ -108,18 +108,16 @@ class MiddleoutEffect:
             else:
                 column = self.terminal.output_area.center_column
                 row = character.input_coord.row
-            center_path = character.motion.new_path(
-                "center", speed=self.args.center_movement_speed, ease=self.args.center_easing
-            )
-            center_waypoint = center_path.new_waypoint("center", motion.Coord(column, row))
+            center_path = character.motion.new_path(speed=self.args.center_movement_speed, ease=self.args.center_easing)
+            center_waypoint = center_path.new_waypoint(motion.Coord(column, row))
             full_path = character.motion.new_path(
-                "full", speed=self.args.full_movement_speed, ease=self.args.full_easing
+                id="full", speed=self.args.full_movement_speed, ease=self.args.full_easing
             )
-            full_waypoint = full_path.new_waypoint("full", character.input_coord)
+            full_waypoint = full_path.new_waypoint(character.input_coord, id="full")
 
             # setup scenes
-            center_scene = character.animation.new_scene("center")
-            full_scene = character.animation.new_scene("full")
+            center_scene = character.animation.new_scene()
+            full_scene = character.animation.new_scene(id="full")
             for step in self.center_gradient:
                 center_scene.add_frame(character.input_symbol, 2, color=step)
             for step in self.full_gradient:
@@ -130,26 +128,24 @@ class MiddleoutEffect:
             character.motion.activate_path(center_path)
             character.animation.activate_scene(center_scene)
             character.is_visible = True
-            self.animating_chars.append(character)
+            self.active_chars.append(character)
 
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
         final = False
-        while self.pending_chars or self.animating_chars:
-            if all([character.motion.active_path is None for character in self.animating_chars]):
+        while self.pending_chars or self.active_chars:
+            if all([character.motion.active_path is None for character in self.active_chars]):
                 final = True
-                for character in self.animating_chars:
-                    character.motion.activate_path(character.motion.paths["full"])
-                    character.animation.activate_scene(character.animation.scenes["full"])
+                for character in self.active_chars:
+                    character.motion.activate_path(character.motion.query_path("full"))
+                    character.animation.activate_scene(character.animation.query_scene("full"))
             self.terminal.print()
             self.animate_chars()
             if final:
-                self.animating_chars = [
-                    animating_char for animating_char in self.animating_chars if animating_char.is_active()
-                ]
+                self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method."""
+        for character in self.active_chars:
+            character.tick()

@@ -65,7 +65,7 @@ class CycleEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by building the cycling animations."""
@@ -73,19 +73,19 @@ class CycleEffect:
         letters_upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         numbers = "0123456789"
         symbols = "!@#$%^&*()_+-=[]{}\\|;:'\",<.>/?`~"
-        flash_final_gradient = graphics.Gradient(self.args.discover_color, self.args.final_color, 10)
+        flash_final_gradient = graphics.Gradient([self.args.discover_color, self.args.final_color], 10)
         collection = letters_lower + letters_upper + numbers + symbols
         for character in self.terminal.characters:
             if character.input_symbol not in collection:
                 collection += character.input_symbol
             character.is_visible = True
-            cycle_scn = character.animation.new_scene("cycle")
+            cycle_scn = character.animation.new_scene()
             for symbol in collection:
                 cycle_scn.add_frame(symbol, 4, color=self.args.cycling_color)
             for symbol in collection[: collection.index(character.input_symbol)]:
                 cycle_scn.add_frame(symbol, 9, color=self.args.cycling_color)
             cycle_scn.ease = self.args.easing
-            final_symbol_scn = character.animation.new_scene("final_symbol")
+            final_symbol_scn = character.animation.new_scene()
             for color in flash_final_gradient:
                 final_symbol_scn.add_frame(character.input_symbol, 10, color=color)
             final_symbol_scn.ease = easing.in_quart
@@ -93,22 +93,18 @@ class CycleEffect:
                 EventHandler.Event.SCENE_COMPLETE, cycle_scn, EventHandler.Action.ACTIVATE_SCENE, final_symbol_scn
             )
             character.animation.activate_scene(cycle_scn)
-            self.animating_chars.append(character)
+            self.active_chars.append(character)
 
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
-        while self.pending_chars or self.animating_chars:
+        while self.pending_chars or self.active_chars:
             self.terminal.print()
             self.animate_chars()
 
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method."""
+        for character in self.active_chars:
+            character.tick()

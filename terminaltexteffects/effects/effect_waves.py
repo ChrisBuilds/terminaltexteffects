@@ -71,7 +71,7 @@ class WavesEffect:
         self.terminal = terminal
         self.args = args
         self.pending_columns: list[list[EffectCharacter]] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by creating the wave animations."""
@@ -83,12 +83,12 @@ class WavesEffect:
         colored_waves = list(zip(block_wipe_start + block_wipe_end, wave_gradient))
         final_gradient = graphics.Gradient([self.args.wave_shallow_color, self.args.final_color], 8)
         for character in self.terminal.characters:
-            wave_scn = character.animation.new_scene("wave")
+            wave_scn = character.animation.new_scene()
             wave_scn.ease = self.args.wave_easing
             for _ in range(self.args.wave_count):
                 for block, color in colored_waves:
                     wave_scn.add_frame(block, 3, color=color)
-            final_scn = character.animation.new_scene("final")
+            final_scn = character.animation.new_scene()
             for step in final_gradient:
                 final_scn.add_frame(character.input_symbol, 15, color=step)
             character.event_handler.register_event(
@@ -101,21 +101,18 @@ class WavesEffect:
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
-        while self.pending_columns or self.animating_chars:
+        while self.pending_columns or self.active_chars:
             if self.pending_columns:
                 next_column = self.pending_columns.pop(0)
                 for character in next_column:
                     character.is_visible = True
-                    self.animating_chars.append(character)
+                    self.active_chars.append(character)
             self.terminal.print()
             self.animate_chars()
 
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method on all active characters."""
+        for character in self.active_chars:
+            character.tick()

@@ -64,7 +64,7 @@ class RandomSequence:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.gradient_stops: list[int | str] = self.args.gradient_stops
 
     def prepare_data(self) -> None:
@@ -73,7 +73,7 @@ class RandomSequence:
         for character in self.terminal.characters:
             character.is_visible = False
             if self.gradient_stops:
-                gradient_scn = character.animation.new_scene("gradient_scn")
+                gradient_scn = character.animation.new_scene()
                 if len(self.gradient_stops) > 1:
                     for step in gradient:
                         gradient_scn.add_frame(character.input_symbol, self.args.gradient_frames, color=step)
@@ -87,19 +87,16 @@ class RandomSequence:
         self.prepare_data()
 
         random.shuffle(self.pending_chars)
-        while self.pending_chars or self.animating_chars:
+        while self.pending_chars or self.active_chars:
             if self.pending_chars:
                 self.next_char = self.pending_chars.pop()
                 self.next_char.is_visible = True
-                self.animating_chars.append(self.next_char)
+                self.active_chars.append(self.next_char)
             self.animate_chars()
             self.terminal.print()
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method."""
+        for character in self.active_chars:
+            character.tick()

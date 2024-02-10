@@ -50,7 +50,7 @@ class RowMergeEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.rows: list[list[EffectCharacter]] = []
 
     def prepare_data(self) -> None:
@@ -69,34 +69,27 @@ class RowMergeEffect:
                 character.is_visible = False
                 character.motion.set_coordinate(motion.Coord(column, character.input_coord.row))
 
-                input_coord_path = character.motion.new_path(
-                    "input_coord", speed=self.args.movement_speed, ease=self.args.easing
-                )
-                input_coord_path.new_waypoint("input_coord", character.input_coord)
+                input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+                input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
             self.rows.append(row)
 
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
-        while self.rows or self.animating_chars:
+        while self.rows or self.active_chars:
             self.animate_chars()
             for row in self.rows:
                 if row:
                     next_character = row.pop(0)
                     next_character.is_visible = True
-                    self.animating_chars.append(next_character)
+                    self.active_chars.append(next_character)
             self.rows = [row for row in self.rows if row]
 
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char
-                for animating_char in self.animating_chars
-                if not animating_char.motion.movement_is_complete()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
             self.terminal.print()
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and printing the characters to the terminal."""
-        for animating_char in self.animating_chars:
-            animating_char.motion.move()
+        for character in self.active_chars:
+            character.motion.move()

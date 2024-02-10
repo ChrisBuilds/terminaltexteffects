@@ -50,7 +50,7 @@ class VerticalSlice:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.new_rows: list[list[EffectCharacter]] = []
 
     def prepare_data(self) -> None:
@@ -68,10 +68,8 @@ class VerticalSlice:
                 character.motion.set_coordinate(
                     motion.Coord(character.input_coord.column, self.terminal.output_area.top)
                 )
-                input_coord_path = character.motion.new_path(
-                    "input_coord", speed=self.args.movement_speed, ease=self.args.easing
-                )
-                input_coord_wpt = input_coord_path.new_waypoint("input_coord", character.input_coord)
+                input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+                input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
             opposite_row = self.rows[-(row_index + 1)]
             right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
@@ -79,10 +77,8 @@ class VerticalSlice:
                 character.motion.set_coordinate(
                     motion.Coord(character.input_coord.column, self.terminal.output_area.bottom)
                 )
-                input_coord_path = character.motion.new_path(
-                    "input_coord", speed=self.args.movement_speed, ease=self.args.easing
-                )
-                input_coord_wpt = input_coord_path.new_waypoint("input_coord", character.input_coord)
+                input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+                input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
             new_row.extend(left_half)
             new_row.extend(right_half)
@@ -91,20 +87,17 @@ class VerticalSlice:
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
-        while self.new_rows or self.animating_chars:
+        while self.new_rows or self.active_chars:
             if self.new_rows:
                 next_row = self.new_rows.pop(0)
                 for character in next_row:
                     character.is_visible = True
-                self.animating_chars.extend(next_row)
+                self.active_chars.extend(next_row)
             self.animate_chars()
             self.terminal.print()
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method and printing the characters to the terminal."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        for character in self.active_chars:
+            character.tick()

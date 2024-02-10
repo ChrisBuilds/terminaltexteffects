@@ -74,7 +74,7 @@ class BouncyBallsEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
 
     def prepare_data(self) -> None:
@@ -88,9 +88,9 @@ class BouncyBallsEffect:
             else:
                 color = graphics.Animation.random_color()
             symbol = random.choice(ball_symbols)
-            ball_scene = character.animation.new_scene("ball")
+            ball_scene = character.animation.new_scene()
             ball_scene.add_frame(symbol, 1, color=color)
-            final_scene = character.animation.new_scene("final")
+            final_scene = character.animation.new_scene()
             for step in graphics.Gradient([color, self.args.final_color], 12):
                 final_scene.add_frame(
                     character.input_symbol,
@@ -98,10 +98,8 @@ class BouncyBallsEffect:
                     color=step,
                 )
             character.motion.set_coordinate(motion.Coord(character.input_coord.column, self.terminal.output_area.top))
-            input_coord_path = character.motion.new_path(
-                "input_pth", speed=self.args.movement_speed, ease=self.args.easing
-            )
-            input_coord_waypoint = input_coord_path.new_waypoint("input_coord_wpt", character.input_coord)
+            input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+            input_coord_path.new_waypoint(character.input_coord)
             character.motion.activate_path(input_coord_path)
             character.animation.activate_scene(ball_scene)
             character.event_handler.register_event(
@@ -121,7 +119,7 @@ class BouncyBallsEffect:
         self.prepare_data()
         self.pending_chars.clear()
         ball_delay = 0
-        while self.group_by_row or self.animating_chars or self.pending_chars:
+        while self.group_by_row or self.active_chars or self.pending_chars:
             if not self.pending_chars and self.group_by_row:
                 self.pending_chars.extend(self.group_by_row.pop(min(self.group_by_row.keys())))  # type: ignore
             if self.pending_chars and ball_delay == 0:
@@ -129,18 +127,16 @@ class BouncyBallsEffect:
                     if self.pending_chars:
                         next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
                         next_character.is_visible = True
-                        self.animating_chars.append(next_character)
+                        self.active_chars.append(next_character)
                     else:
                         break
                 ball_delay = self.args.ball_delay
             ball_delay -= 1
             self.animate_chars()
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
             self.terminal.print()
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the tween method and printing the characters to the terminal."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method."""
+        for character in self.active_chars:
+            character.tick()

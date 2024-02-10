@@ -74,7 +74,7 @@ class RowSlide:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.row_gap: int = args.row_gap
         if args.slide_direction == "left":
             self.slide_direction = SlideDirection.LEFT
@@ -94,10 +94,8 @@ class RowSlide:
                     )
                 else:
                     character.motion.set_coordinate(motion.Coord(0, character.input_coord.row))
-                input_coord_path = character.motion.new_path(
-                    "input_coord", speed=self.args.movement_speed, ease=self.args.easing
-                )
-                input_coord_path.new_waypoint("input_coord", character.input_coord)
+                input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+                input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
 
     def get_next_row(self) -> list[EffectCharacter]:
@@ -115,7 +113,7 @@ class RowSlide:
         active_rows: list[list[EffectCharacter]] = []
         active_rows.append(self.get_next_row())
         row_delay_countdown = self.row_gap
-        while active_rows or self.animating_chars:
+        while active_rows or self.active_chars:
             if (row_delay_countdown == 0 and self.rows) or (not active_rows and self.rows):
                 active_rows.append(self.get_next_row())
                 row_delay_countdown = self.row_gap
@@ -127,21 +125,17 @@ class RowSlide:
                     if self.slide_direction == SlideDirection.LEFT:
                         next_character = row.pop(0)
                         next_character.is_visible = True
-                        self.animating_chars.append(next_character)
+                        self.active_chars.append(next_character)
                     else:
                         next_character = row.pop(-1)
                         next_character.is_visible = True
-                        self.animating_chars.append(next_character)
+                        self.active_chars.append(next_character)
             self.animate_chars()
             self.terminal.print()
-            self.animating_chars = [
-                animating_char
-                for animating_char in self.animating_chars
-                if not animating_char.motion.movement_is_complete()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
             active_rows = [row for row in active_rows if row]
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the move method."""
-        for animating_char in self.animating_chars:
-            animating_char.motion.move()
+        for character in self.active_chars:
+            character.motion.move()

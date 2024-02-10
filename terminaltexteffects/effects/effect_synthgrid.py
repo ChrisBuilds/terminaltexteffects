@@ -91,7 +91,7 @@ class GridLine:
         if direction == "horizontal":
             for column_index in range(self.terminal.output_area.left, self.terminal.output_area.right):
                 effect_char = self.terminal.add_character(self.grid_symbol)
-                grid_scn = effect_char.animation.new_scene("grid")
+                grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(self.grid_symbol, 1, color=self.gradient.spectrum[self.origin.row - 1])
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
@@ -100,7 +100,7 @@ class GridLine:
         elif direction == "vertical":
             for row_index in range(self.terminal.output_area.bottom, self.terminal.output_area.top):
                 effect_char = self.terminal.add_character(self.grid_symbol)
-                grid_scn = effect_char.animation.new_scene("grid")
+                grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(self.grid_symbol, 1, color=self.gradient.spectrum.pop(0))
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
@@ -255,7 +255,7 @@ class SynthGridEffect:
                     (character.input_coord.row / self.terminal.output_area.top) * (len(output_gradient.spectrum) - 1)
                 )
 
-                dissolve_scn = character.animation.new_scene("dissolve")
+                dissolve_scn = character.animation.new_scene()
                 for _ in range(random.randint(15, 30)):
                     dissolve_scn.add_frame(
                         random.choice(self.args.text_generation_symbols),
@@ -323,7 +323,6 @@ class SynthGridEffect:
                     active_groups += 1
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
+        """Animates the characters by calling the tick method on all active characters."""
         for animating_char in self.animating_chars:
             animating_char.tick()

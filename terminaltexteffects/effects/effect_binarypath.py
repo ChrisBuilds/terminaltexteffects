@@ -98,7 +98,7 @@ class BinaryRepresentation:
     def activate_source_character(self) -> None:
         """Activates the source character of the binary representation."""
         self.character.is_visible = True
-        self.character.animation.activate_scene(self.character.animation.scenes["collapse_scn"])
+        self.character.animation.activate_scene(self.character.animation.query_scene("collapse_scn"))
 
 
 class BinaryPathEffect:
@@ -109,7 +109,7 @@ class BinaryPathEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.pending_binary_representations: list[BinaryRepresentation] = []
 
     def prepare_data(self) -> None:
@@ -169,23 +169,22 @@ class BinaryPathEffect:
             path_coords.append(final_coord)
             for bin_effectchar in bin_rep.binary_characters:
                 bin_effectchar.motion.set_coordinate(path_coords[0])
-                digital_path = bin_effectchar.motion.new_path("digital_path", speed=self.args.movement_speed)
+                digital_path = bin_effectchar.motion.new_path(speed=self.args.movement_speed)
                 for coord in path_coords:
-                    digital_path.new_waypoint(str(len(digital_path.waypoints)), coord)
+                    digital_path.new_waypoint(coord)
                 bin_effectchar.motion.activate_path(digital_path)
                 bin_effectchar.layer = 1
-                color_scn = bin_effectchar.animation.new_scene("color_scn")
+                color_scn = bin_effectchar.animation.new_scene()
                 color_scn.add_frame(bin_effectchar.symbol, 1, color=random.choice(self.args.binary_colors))
                 bin_effectchar.animation.activate_scene(color_scn)
 
         for character in self.terminal.characters:
-            collapse_scn = character.animation.new_scene("collapse_scn", ease=easing.in_quad)
+            collapse_scn = character.animation.new_scene(ease=easing.in_quad, id="collapse_scn")
             for spectrum in complete_gradient.spectrum:
                 collapse_scn.add_frame(character.input_symbol, 10, color=spectrum)
 
-            brighten_scn = character.animation.new_scene("brighten_scn")
+            brighten_scn = character.animation.new_scene(id="brighten_scn")
             for spectrum in brighten_gradient.spectrum:
-                # brighten_scn.add_frame(random.choice(("0", "1")), 2, color=spectrum)
                 brighten_scn.add_frame(character.input_symbol, 2, color=spectrum)
             brighten_scn.add_frame(character.input_symbol, 2, color=self.args.final_color)
 
@@ -201,7 +200,7 @@ class BinaryPathEffect:
         max_active_binary_groups = max(
             1, int(self.args.active_binary_groups * len(self.pending_binary_representations))
         )
-        while not complete or self.animating_chars:
+        while not complete or self.active_chars:
             if phase == "travel":
                 while len(active_binary_reps) < max_active_binary_groups and self.pending_binary_representations:
                     next_binary_rep = self.pending_binary_representations.pop(
@@ -214,38 +213,34 @@ class BinaryPathEffect:
                     for active_rep in active_binary_reps:
                         if active_rep.pending_binary_characters:
                             next_char = active_rep.pending_binary_characters.pop(0)
-                            self.animating_chars.append(next_char)
+                            self.active_chars.append(next_char)
                             next_char.is_visible = True
                         elif active_rep.travel_complete():
                             active_rep.deactivate()
                             active_rep.activate_source_character()
-                            self.animating_chars.append(active_rep.character)
+                            self.active_chars.append(active_rep.character)
 
                     active_binary_reps = [binary_rep for binary_rep in active_binary_reps if binary_rep.is_active]
 
-                if not self.animating_chars:
+                if not self.active_chars:
                     phase = "wipe"
 
             if phase == "wipe":
                 if final_wipe_chars and not self.args.skip_final_wipe:
                     next_group = final_wipe_chars.pop(0)
                     for character in next_group:
-                        character.animation.activate_scene(character.animation.scenes["brighten_scn"])
+                        character.animation.activate_scene(character.animation.query_scene("brighten_scn"))
                         character.is_visible = True
-                        self.animating_chars.append(character)
+                        self.active_chars.append(character)
                 else:
                     complete = True
             self.terminal.print()
             self.animate_chars()
 
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
         self.terminal.print()
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method on all active characters."""
+        for character in self.active_chars:
+            character.tick()

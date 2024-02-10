@@ -72,7 +72,7 @@ class Row:
         for character in self.untyped_chars:
             character.motion.set_coordinate(motion.Coord(character.input_coord.column, 1))
             color_gradient = graphics.Gradient([typing_head_color, character_color], 5)
-            typed_animation = character.animation.new_scene("typed")
+            typed_animation = character.animation.new_scene()
             for n, symbol in enumerate(("█", "▓", "▒", "░", character.input_symbol)):
                 typed_animation.add_frame(symbol, 5, color=color_gradient.spectrum[n])
             character.animation.activate_scene(typed_animation)
@@ -105,15 +105,15 @@ class PrintHead(EffectCharacter):
         self.speed = speed
         self.ease = ease
         self.is_visible = False
-        self.head_color_scn = self.animation.new_scene("head_color")
+        self.head_color_scn = self.animation.new_scene()
         self.head_color_scn.add_frame(symbol, 1, color=color)
         self.animation.activate_scene(self.head_color_scn)
 
     def carriage_return(self, starting_coord: motion.Coord):
         self.motion.set_coordinate(starting_coord)
         self.motion.paths.clear()
-        carriage_return_path: motion.Path = self.motion.new_path("carriage_return", speed=self.speed, ease=self.ease)
-        carriage_return_path.new_waypoint("home", motion.Coord(1, 1))
+        carriage_return_path: motion.Path = self.motion.new_path(speed=self.speed, ease=self.ease)
+        carriage_return_path.new_waypoint(motion.Coord(1, 1))
         self.event_handler.register_event(
             EventHandler.Event.PATH_COMPLETE,
             carriage_return_path,
@@ -131,7 +131,7 @@ class PrintEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.pending_rows: list[Row] = []
         self.processed_rows: list[Row] = []
 
@@ -157,7 +157,7 @@ class PrintEffect:
         )
         self.terminal.characters.append(typing_head)
         last_column = 0
-        while self.animating_chars or typing:
+        while self.active_chars or typing:
             if typing_head.motion.active_path:
                 pass
             elif delay:
@@ -168,7 +168,7 @@ class PrintEffect:
                     for _ in range(min(len(current_row.untyped_chars), self.args.print_speed)):
                         next_char = current_row.type_char()
                         if next_char:
-                            self.animating_chars.append(next_char)
+                            self.active_chars.append(next_char)
                             last_column = next_char.input_coord.column
                 else:
                     self.processed_rows.append(current_row)
@@ -177,20 +177,16 @@ class PrintEffect:
                             row.move_up()
                         current_row = self.pending_rows.pop(0)
                         typing_head.carriage_return(motion.Coord(last_column, 1))
-                        self.animating_chars.append(typing_head)
+                        self.active_chars.append(typing_head)
                     else:
                         typing = False
             self.terminal.print()
             self.animate_chars()
 
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
         self.terminal.print()
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method on all active characters."""
+        for character in self.active_chars:
+            character.tick()

@@ -86,7 +86,7 @@ class FireworksEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.shells: list[list[EffectCharacter]] = []
         if self.args.firework_colors:
             self.firework_colors = self.args.firework_colors
@@ -110,25 +110,22 @@ class FireworksEffect:
                 origin_coord = motion.Coord(origin_x, origin_y)
                 explode_waypoint_coords = motion.Motion.find_coords_in_circle(origin_coord, self.explode_distance)
             character.motion.set_coordinate(motion.Coord(origin_x, self.terminal.output_area.bottom))
-            apex_path = character.motion.new_path("apex_pth", speed=0.2, ease=easing.out_expo)
-            apex_wpt = apex_path.new_waypoint("apex_wpt", origin_coord)
-            explode_path = character.motion.new_path("explode_pth", speed=0.15, ease=easing.out_circ)
-            explode_wpt = explode_path.new_waypoint("explode_wpt", random.choice(explode_waypoint_coords))
+            apex_path = character.motion.new_path(id="apex_pth", speed=0.2, ease=easing.out_expo)
+            apex_wpt = apex_path.new_waypoint(origin_coord)
+            explode_path = character.motion.new_path(speed=0.15, ease=easing.out_circ)
+            explode_wpt = explode_path.new_waypoint(random.choice(explode_waypoint_coords))
 
             # TODO: Turn this process into a framework function for making curves when changing direction
             bloom_control_point = motion.Motion.find_coord_at_distance(
                 apex_wpt.coord, explode_wpt.coord, self.explode_distance // 2
             )
             bloom_wpt = explode_path.new_waypoint(
-                "bloom",
                 motion.Coord(bloom_control_point.column, max(1, bloom_control_point.row - 7)),
                 bezier_control=bloom_control_point,
             )
-            input_path = character.motion.new_path("input_pth", speed=0.3, ease=easing.in_out_quart)
+            input_path = character.motion.new_path(id="input_pth", speed=0.3, ease=easing.in_out_quart)
             input_control_point = motion.Coord(bloom_wpt.coord.column, 1)
-            input_coord_wpt = input_path.new_waypoint(
-                "input_coord", character.input_coord, bezier_control=input_control_point
-            )
+            input_path.new_waypoint(character.input_coord, bezier_control=input_control_point)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED, apex_path, EventHandler.Action.SET_LAYER, 2
             )
@@ -156,29 +153,29 @@ class FireworksEffect:
             shell_color = random.choice(self.firework_colors)
             for character in firework_shell:
                 # launch scene
-                launch_scn = character.animation.new_scene("launch")
+                launch_scn = character.animation.new_scene()
                 for color in self.firework_colors:
                     launch_scn.add_frame(self.args.firework_symbol, 2, color=shell_color)
                     launch_scn.add_frame(self.args.firework_symbol, 1, color="FFFFFF")
                     launch_scn.is_looping = True
                 # bloom scene
-                bloom_scn = character.animation.new_scene("bloom")
+                bloom_scn = character.animation.new_scene()
                 bloom_scn.add_frame(character.input_symbol, 1, color=shell_color)
                 # fall scene
-                fall_scn = character.animation.new_scene("fall")
+                fall_scn = character.animation.new_scene()
                 fall_gradient = graphics.Gradient([shell_color, self.args.final_color], 15)
                 for color in fall_gradient:
                     fall_scn.add_frame(character.input_symbol, 15, color=color)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
-                    character.motion.paths["apex_pth"],
+                    character.motion.query_path("apex_pth"),
                     EventHandler.Action.ACTIVATE_SCENE,
                     bloom_scn,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
-                    character.motion.paths["input_pth"],
+                    character.motion.query_path("input_pth"),
                     EventHandler.Action.ACTIVATE_SCENE,
                     fall_scn,
                 )
@@ -192,24 +189,21 @@ class FireworksEffect:
         """Runs the effect."""
         self.prepare_data()
         launch_delay = 0
-        while self.shells or self.animating_chars:
+        while self.shells or self.active_chars:
             if self.shells and launch_delay == 0:
                 next_group = self.shells.pop()
                 for character in next_group:
                     character.is_visible = True
-                    self.animating_chars.append(character)
+                    self.active_chars.append(character)
                 launch_delay = self.args.launch_delay + 1
             self.terminal.print()
             self.animate_chars()
             launch_delay -= 1
 
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
         self.terminal.print()
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method."""
+        for character in self.active_chars:
+            character.tick()

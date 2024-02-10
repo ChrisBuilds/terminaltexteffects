@@ -74,7 +74,7 @@ class ColumnSlide:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.column_gap: int = args.column_gap
         if args.slide_direction == "down":
             self.slide_direction = SlideDirection.DOWN
@@ -106,11 +106,10 @@ class ColumnSlide:
                         motion.Coord(character.input_coord.column, self.terminal.output_area.bottom)
                     )
                 input_coord_path = character.motion.new_path(
-                    "input_coord",
                     speed=self.args.movement_speed,
                     ease=self.args.easing,
                 )
-                input_coord_wpt = input_coord_path.new_waypoint("input_coord", character.input_coord)
+                input_coord_wpt = input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
 
     def get_next_column(self) -> list[EffectCharacter]:
@@ -132,7 +131,7 @@ class ColumnSlide:
         active_columns.append(self.get_next_column())
         column_delay_countdown = self.column_gap
         self.terminal.print()
-        while active_columns or self.animating_chars or self.columns:
+        while active_columns or self.active_chars or self.columns:
             if (column_delay_countdown == 0 and self.columns) or (self.columns and not active_columns):
                 active_columns.append(self.get_next_column())
                 column_delay_countdown = self.column_gap
@@ -143,19 +142,14 @@ class ColumnSlide:
                 if column:
                     next_character = column.pop(0)
                     next_character.is_visible = True
-                    self.animating_chars.append(next_character)
+                    self.active_chars.append(next_character)
             self.animate_chars()
 
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char
-                for animating_char in self.animating_chars
-                if not animating_char.motion.movement_is_complete()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
             active_columns = [column for column in active_columns if column]
             self.terminal.print()
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
-        for animating_char in self.animating_chars:
-            animating_char.motion.move()
+        for character in self.active_chars:
+            character.motion.move()

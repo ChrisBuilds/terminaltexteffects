@@ -104,7 +104,7 @@ class Ring:
 
     def add_character(self, character: EffectCharacter, clockwise: int) -> None:
         # make gradient scene
-        gradient_scn = character.animation.new_scene("gradient", is_looping=True)
+        gradient_scn = character.animation.new_scene(is_looping=True, id="gradient")
         for step in self.gradient.spectrum[self.gradient_shift :] + self.gradient.spectrum[: self.gradient_shift]:
             gradient_scn.add_frame(character.input_symbol, 1, color=step)
         self.gradient_shift += 1
@@ -116,12 +116,12 @@ class Ring:
         else:
             coords = self.counter_clockwise_coords
         for coord in coords[character_starting_index:] + coords[:character_starting_index]:
-            ring_path = character.motion.new_path(str(len(ring_paths)), speed=self.rotation_speed)
-            ring_path.new_waypoint(str(len(ring_path.waypoints)), coord)
+            ring_path = character.motion.new_path(id=str(len(ring_paths)), speed=self.rotation_speed)
+            ring_path.new_waypoint(coord, id=str(len(ring_path.waypoints)))
             ring_paths.append(ring_path)
         self.character_last_ring_path[character] = ring_paths[0]
         # make disperse scene
-        disperse_scn = character.animation.new_scene("disperse", is_looping=False)
+        disperse_scn = character.animation.new_scene(is_looping=False, id="disperse")
         for step in self.disperse_gradient:
             disperse_scn.add_frame(character.input_symbol, 16, color=step)
         character.motion.chain_paths(ring_paths, loop=True)
@@ -139,11 +139,9 @@ class Ring:
         """
         disperse_coords = motion.Motion.find_coords_in_rect(origin, self.ring_gap)
         character.motion.paths.pop("disperse", None)
-        disperse_path = character.motion.new_path("disperse", speed=0.1, loop=True)
+        disperse_path = character.motion.new_path(speed=0.1, loop=True, id="disperse")
         for _ in range(5):
-            disperse_path.new_waypoint(
-                str(len(disperse_path.waypoints)), disperse_coords[random.randrange(0, len(disperse_coords))]
-            )
+            disperse_path.new_waypoint(disperse_coords[random.randrange(0, len(disperse_coords))])
         return disperse_path
 
     def disperse(self) -> None:
@@ -154,15 +152,12 @@ class Ring:
             else:
                 self.character_last_ring_path[character] = character.motion.paths["0"]
             character.motion.activate_path(self.make_disperse_waypoints(character, character.motion.current_coord))
-            character.animation.activate_scene(character.animation.scenes["disperse"])
+            character.animation.activate_scene(character.animation.query_scene("disperse"))
 
     def spin(self) -> None:
         for character in self.characters:
-            condense_path = character.motion.new_path(str(len(character.motion.paths)), speed=0.1)
-            condense_wpt = condense_path.new_waypoint(
-                str(len(condense_path.waypoints)),
-                self.character_last_ring_path[character].waypoints[0].coord,
-            )
+            condense_path = character.motion.new_path(speed=0.1)
+            condense_wpt = condense_path.new_waypoint(self.character_last_ring_path[character].waypoints[0].coord)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
                 condense_path,
@@ -170,7 +165,7 @@ class Ring:
                 self.character_last_ring_path[character],
             )
             character.motion.activate_path(condense_path)
-            character.animation.activate_scene(character.animation.scenes["gradient"])
+            character.animation.activate_scene(character.animation.query_scene("gradient"))
 
 
 class RingsEffect:
@@ -180,7 +175,7 @@ class RingsEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.ring_chars: list[EffectCharacter] = []
         self.non_ring_chars: list[EffectCharacter] = []
         self.rings: dict[int, Ring] = {}
@@ -189,10 +184,10 @@ class RingsEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by building rings and associated animations/waypoints."""
         for character in self.terminal.characters:
-            start_scn = character.animation.new_scene("start")
+            start_scn = character.animation.new_scene()
             start_scn.add_frame(character.input_symbol, 1, color=self.args.base_color)
-            home_path = character.motion.new_path("home", speed=0.8, ease=easing.out_quad)
-            home_wpt = home_path.new_waypoint("home", character.input_coord)
+            home_path = character.motion.new_path(speed=0.8, ease=easing.out_quad, id="home")
+            home_wpt = home_path.new_waypoint(character.input_coord)
             character.animation.activate_scene(start_scn)
             character.is_visible = True
             self.pending_chars.append(character)
@@ -232,15 +227,13 @@ class RingsEffect:
         for character in self.terminal.characters:
             if character not in self.ring_chars:
                 color = random.choice(self.args.ring_colors)
-                external_path = character.motion.new_path("external", speed=0.1, ease=easing.out_cubic)
-                external_wpt = external_path.new_waypoint(
-                    "external", self.terminal.output_area.random_coord(outside_scope=True)
-                )
+                external_path = character.motion.new_path(id="external", speed=0.1, ease=easing.out_cubic)
+                external_wpt = external_path.new_waypoint(self.terminal.output_area.random_coord(outside_scope=True))
                 # make disperse gradient
                 color = random.choice(self.args.ring_colors)
                 disperse_gradient = graphics.Gradient([self.args.base_color, color, self.args.base_color], 7)
                 disperse_scn = character.animation.new_scene(
-                    "disperse", is_looping=False, sync=graphics.SyncMetric.DISTANCE
+                    id="disperse", is_looping=False, sync=graphics.SyncMetric.DISTANCE
                 )
                 for step in disperse_gradient:
                     disperse_scn.add_frame(character.input_symbol, 2, color=step)
@@ -285,21 +278,21 @@ class RingsEffect:
                             disperse_path = ring.make_disperse_waypoints(
                                 character, character.motion.paths["0"].waypoints[0].coord
                             )
-                            initial_path = character.motion.new_path("initial", speed=0.3, ease=easing.out_cubic)
-                            initial_wpt = initial_path.new_waypoint("initial", disperse_path.waypoints[0].coord)
+                            initial_path = character.motion.new_path(speed=0.3, ease=easing.out_cubic)
+                            initial_wpt = initial_path.new_waypoint(disperse_path.waypoints[0].coord)
                             character.event_handler.register_event(
                                 EventHandler.Event.PATH_COMPLETE,
                                 initial_path,
                                 EventHandler.Action.ACTIVATE_PATH,
                                 disperse_path,
                             )
-                            character.animation.activate_scene(character.animation.scenes["disperse"])
+                            character.animation.activate_scene(character.animation.query_scene("disperse"))
                             character.motion.activate_path(initial_path)
-                            self.animating_chars.append(character)
+                            self.active_chars.append(character)
 
                     for character in self.non_ring_chars:
-                        character.motion.activate_path(character.motion.paths["external"])
-                        self.animating_chars.append(character)
+                        character.motion.activate_path(character.motion.query_path("external"))
+                        self.active_chars.append(character)
 
                 else:
                     if not disperse_time_remaining:
@@ -318,9 +311,9 @@ class RingsEffect:
                         for character in self.terminal.characters:
                             character.is_visible = True
                             if "external" in character.motion.paths:
-                                self.animating_chars.append(character)
-                            character.motion.activate_path(character.motion.paths["home"])
-                            character.animation.activate_scene(character.animation.scenes["disperse"])
+                                self.active_chars.append(character)
+                            character.motion.activate_path(character.motion.query_path("home"))
+                            character.animation.activate_scene(character.animation.query_scene("disperse"))
                     else:
                         disperse_time_remaining = self.args.disperse_duration
                         for ring in rings:
@@ -331,17 +324,14 @@ class RingsEffect:
                     spin_time_remaining -= 1
 
             elif phase == "final":
-                if not self.animating_chars:
+                if not self.active_chars:
                     phase = "complete"
 
             self.terminal.print()
             self.animate_chars()
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
+            self.active_chars = [character for character in self.active_chars if character.is_active()]
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method on all active characters."""
+        for character in self.active_chars:
+            character.tick()

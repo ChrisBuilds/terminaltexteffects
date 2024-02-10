@@ -82,13 +82,13 @@ class ErrorCorrectEffect:
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.swapped: list[tuple[EffectCharacter, EffectCharacter]] = []
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by swapping positions and generating animations and waypoints."""
         for character in self.terminal.characters:
-            spawn_scene = character.animation.new_scene("spawn")
+            spawn_scene = character.animation.new_scene()
             spawn_scene.add_frame(character.input_symbol, 1, color=self.args.final_color)
             character.animation.activate_scene(spawn_scene)
             character.is_visible = True
@@ -104,32 +104,33 @@ class ErrorCorrectEffect:
             char1 = all_characters.pop(random.randrange(len(all_characters)))
             char2 = all_characters.pop(random.randrange(len(all_characters)))
             char1.motion.set_coordinate(char2.input_coord)
-            char1_input_coord_path = char1.motion.new_path("input_coord", speed=self.args.movement_speed)
-            char1_input_coord_waypoint = char1_input_coord_path.new_waypoint("input_coord", char1.input_coord)
+            char1_input_coord_path = char1.motion.new_path(id="input_coord", speed=self.args.movement_speed)
+            char1_input_coord_waypoint = char1_input_coord_path.new_waypoint(char1.input_coord)
             char2.motion.set_coordinate(char1.input_coord)
-            char2_input_coord_path = char2.motion.new_path("input_coord", speed=self.args.movement_speed)
-            char2_input_coord_waypoint = char2_input_coord_path.new_waypoint("input_coord", char2.input_coord)
+            char2_input_coord_path = char2.motion.new_path(id="input_coord", speed=self.args.movement_speed)
+            char2_input_coord_waypoint = char2_input_coord_path.new_waypoint(char2.input_coord)
             self.swapped.append((char1, char2))
             for character in (char1, char2):
-                first_block_wipe = character.animation.new_scene("first_block_wipe")
-                last_block_wipe = character.animation.new_scene("last_block_wipe")
+                first_block_wipe = character.animation.new_scene()
+                last_block_wipe = character.animation.new_scene()
                 for block in block_wipe_start:
                     first_block_wipe.add_frame(block, 3, color=self.args.error_color)
                 for block in block_wipe_end:
                     last_block_wipe.add_frame(block, 3, color=self.args.correct_color)
-                initial_scene = character.animation.new_scene("initial")
+                initial_scene = character.animation.new_scene()
                 initial_scene.add_frame(character.input_symbol, 1, color=self.args.error_color)
                 character.animation.activate_scene(initial_scene)
-                error_scene = character.animation.new_scene("error")
+                error_scene = character.animation.new_scene(id="error")
                 for _ in range(10):
                     error_scene.add_frame(block_symbol, 3, color=self.args.error_color)
                     error_scene.add_frame(character.input_symbol, 3, color="ffffff")
-                correcting_scene = character.animation.new_scene("correcting", sync=graphics.SyncMetric.DISTANCE)
+                correcting_scene = character.animation.new_scene(sync=graphics.SyncMetric.DISTANCE)
                 for step in correcting_gradient:
                     correcting_scene.add_frame("█", 3, color=step)
-                final_scene = character.animation.new_scene("final")
+                final_scene = character.animation.new_scene()
                 for step in final_gradient:
                     final_scene.add_frame(character.input_symbol, 3, color=step)
+                input_coord_path = character.motion.query_path("input_coord")
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
                     error_scene,
@@ -146,24 +147,24 @@ class ErrorCorrectEffect:
                     EventHandler.Event.SCENE_COMPLETE,
                     first_block_wipe,
                     EventHandler.Action.ACTIVATE_PATH,
-                    character.motion.paths["input_coord"],
+                    input_coord_path,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
-                    character.motion.paths["input_coord"],
+                    input_coord_path,
                     EventHandler.Action.SET_LAYER,
                     1,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
-                    character.motion.paths["input_coord"],
+                    input_coord_path,
                     EventHandler.Action.SET_LAYER,
                     0,
                 )
 
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
-                    character.motion.paths["input_coord"],
+                    input_coord_path,
                     EventHandler.Action.ACTIVATE_SCENE,
                     last_block_wipe,
                 )
@@ -177,27 +178,24 @@ class ErrorCorrectEffect:
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
-        while self.swapped or self.animating_chars:
+        while self.swapped or self.active_chars:
             swap_delay = self.args.swap_delay
             if self.swapped:
                 next_pair = self.swapped.pop(0)
                 for char in next_pair:
-                    char.animation.activate_scene(char.animation.scenes["error"])
-                    self.animating_chars.append(char)
+                    char.animation.activate_scene(char.animation.query_scene("error"))
+                    self.active_chars.append(char)
             while swap_delay:
                 self.terminal.print()
                 self.animate_chars()
 
-                self.animating_chars = [
-                    animating_char for animating_char in self.animating_chars if animating_char.is_active()
-                ]
-                if not self.animating_chars:
+                self.active_chars = [character for character in self.active_chars if character.is_active()]
+                if not self.active_chars:
                     pass
                 swap_delay -= 1
         self.terminal.print()
 
     def animate_chars(self) -> None:
-        """Animates the characters by calling the move method and step animation. Move characters prior to stepping animation
-        to ensure waypoint synced animations have the latest waypoint progress information."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        """Animates the characters by calling the tick method on all active characters."""
+        for character in self.active_chars:
+            character.tick()
