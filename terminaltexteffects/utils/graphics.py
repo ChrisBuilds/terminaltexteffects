@@ -386,16 +386,16 @@ class Animation:
 
     def new_scene(
         self,
-        scene_name: str,
         *,
         is_looping: bool = False,
         sync: SyncMetric | None = None,
         ease: typing.Callable | None = None,
+        id: str = "",
     ) -> Scene:
         """Creates a new Scene and adds it to the Animation.
 
         Args:
-            scene_name (str): Unique name for the scene. Used to reference the scene outside the scope in which is was created.
+            id (str): Unique name for the scene. Used to query for the scene.
             is_looping (bool): Whether the scene should loop.
             sync (SyncMetric): The type of sync to use for the scene.
             ease (typing.Callable): The easing function to use for the scene.
@@ -403,11 +403,35 @@ class Animation:
         Returns:
             Scene: the new Scene
         """
-        new_scene = Scene(scene_name, is_looping=is_looping, sync=sync, ease=ease)
-        self.scenes[scene_name] = new_scene
+        if not id:
+            found_unique = False
+            current_id = len(self.scenes)
+            while not found_unique:
+                id = f"{len(self.scenes)}"
+                if id not in self.scenes:
+                    found_unique = True
+                else:
+                    current_id += 1
+
+        new_scene = Scene(scene_id=id, is_looping=is_looping, sync=sync, ease=ease)
+        self.scenes[id] = new_scene
         new_scene.no_color = self.no_color
         new_scene.use_xterm_colors = self.use_xterm_colors
         return new_scene
+
+    def query_scene(self, scene_id: str) -> Scene:
+        """Returns a Scene from the Animation. If the scene doesn't exist, raises a ValueError.
+
+        Args:
+            scene_id (str): the ID of the Scene
+
+        Returns:
+            Scene: the Scene
+        """
+        scene = self.scenes.get(scene_id, None)
+        if not scene:
+            raise ValueError(f"Scene {scene_id} does not exist.")
+        return scene
 
     def active_scene_is_complete(self) -> bool:
         """Returns whether the active scene is complete. A scene is complete if all sequences have been played.
