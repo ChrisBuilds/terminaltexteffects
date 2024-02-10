@@ -4,6 +4,23 @@
 
 ### New Features
 #### Effects
+
+#### Engine
+
+### Changes
+#### Effects
+
+#### Engine
+
+### Bug Fixes
+#### Effects
+
+#### Engine
+
+## 0.6.0
+
+### New Features
+#### Effects
  * Print. Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
  * BinaryPath. Characters are converted into their binary representation. These binary groups travel to their input coordinate and collapse into the original character symbol.
  * Wipe. Performs directional wipes with an optional trailing gradient.
