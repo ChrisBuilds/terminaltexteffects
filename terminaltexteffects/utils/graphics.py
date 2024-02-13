@@ -11,6 +11,8 @@ from terminaltexteffects.utils import ansitools, colorterm, hexterm, motion, eas
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
 
+Color: typing.TypeAlias = int | str
+
 
 class SyncMetric(Enum):
     """Enum for specifying the type of sync to use for a Scene.
@@ -28,41 +30,65 @@ class SyncMetric(Enum):
 class Gradient:
     """A Gradient is a list of RGB hex color strings transitioning from one color to another. The gradient color
     list is calculated using linear interpolation based on the provided start and end colors and the number of steps. Gradients
-    can be interated over to get the next color in the gradient color list.If there is only one color in the stops list,
+    can be interated over to get the next color in the gradient color list. If there is only one color in the stops list,
     the gradient will be a list of the same color.
+
+    If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps for the pair
+    based on the order of stops and steps.
+
+    Ex: stops = ["ffffff", "aaaaaa", "000000"], steps = (6, 3)
+
+    "fffffff" -> (6 steps) -> "aaaaaa" -> (3 steps) -> "000000"
+
+    The step count includes the stop for each pair. Total number of colors in the resulting gradient spectrum:
+    sum(steps) + 1
 
     Args:
         stops list[str]: List of RGB hex color string or XTerm-256 color codes. Each stop will have steps number of frames between it and the next stop.
-        steps (int): Number of intermediate colors to calculate
+        steps tuple[int, ...] | int: Number of steps from the start to the end stop. If multiple steps are given, steps and stops will be paired.
 
     Attributes:
-        spectrum (list[str]): List (length=steps) of RGB hex color strings
+        spectrum (list[str]): List (length=sum(steps) + 1) of RGB hex color strings
 
     """
 
-    stops: list[int | str]
-    steps: int
+    stops: list[Color]
+    steps: tuple[int, ...] | int
 
     def __post_init__(self) -> None:
-        self.spectrum: list[str] = self._generate()
+        self.spectrum: list[str] = self._generate(self.steps)
         self.index: int = 0
 
-    def _generate(self) -> list[str]:
+    def _generate(self, steps) -> list[str]:
         """Calculate a gradient of colors between two colors using linear interpolation. If
         there is only one color in the stops list, the gradient will be a list of the same color.
 
+        If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps for the pair
+        based on the order of stops and steps.
+
+        Ex: stops = ["ffffff", "aaaaaa", "000000"], steps = (6, 3)
+        "fffffff" -> (6 steps) -> "aaaaaa" -> (3 steps) -> "000000"
+
+        The step count includes the stop for each pair. Total number of colors in the resulting gradient spectrum:
+        sum(steps) + 1
+
         Returns:
-            list[str]: List (length=steps) of RGB hex color strings. The first and last colors are the start and end stops, respectively.
+            list[str]: List (length=sum(steps) + 1) of RGB hex color strings. The first and last colors are the start and end stops, respectively.
         """
+        if isinstance(steps, int):
+            steps = (steps,)
         spectrum: list[str] = []
         if len(self.stops) == 1:
             color = self.stops[0]
             if isinstance(color, int):
                 color = hexterm.xterm_to_hex(color)
-            for _ in range(self.steps):
+            for _ in range(steps[0]):
                 spectrum.append(color)
-        color_pairs = itertools.pairwise(self.stops)
-        for start, end in color_pairs:
+            return spectrum
+        color_pairs = list(itertools.pairwise(self.stops))
+        steps = steps[: len(color_pairs)]
+        for color_pair, steps in itertools.zip_longest(color_pairs, steps, fillvalue=steps[-1]):
+            start, end = color_pair
             # Convert start_color to hex if it's an XTerm-256 color code
             if isinstance(start, int):
                 start = hexterm.xterm_to_hex(start)
@@ -76,11 +102,12 @@ class Gradient:
             # Initialize an empty list to store the gradient colors
             gradient_colors: list[str] = []
             # Calculate the color deltas for each RGB value
-            red_delta = (end_color_ints[0] - start_color_ints[0]) // self.steps
-            green_delta = (end_color_ints[1] - start_color_ints[1]) // self.steps
-            blue_delta = (end_color_ints[2] - start_color_ints[2]) // self.steps
+            red_delta = (end_color_ints[0] - start_color_ints[0]) // steps
+            green_delta = (end_color_ints[1] - start_color_ints[1]) // steps
+            blue_delta = (end_color_ints[2] - start_color_ints[2]) // steps
             # Calculate the intermediate colors and add them to the gradient colors list
-            for i in range(max(self.steps - 1, 0)):
+            range_start = int(color_pair != color_pairs[0])
+            for i in range(range_start, max(steps, 0)):
                 red = start_color_ints[0] + (red_delta * i)
                 green = start_color_ints[1] + (green_delta * i)
                 blue = start_color_ints[2] + (blue_delta * i)
@@ -108,15 +135,6 @@ class Gradient:
             return color
         else:
             raise StopIteration
-
-    def __add__(self, other: "Gradient") -> "Gradient":
-        if not isinstance(other, Gradient):
-            return NotImplemented
-        new_gradient = Gradient(["ffffff", "ffffff"], 1)
-        new_gradient.spectrum = self.spectrum + other.spectrum
-        new_gradient.steps = self.steps + other.steps
-        new_gradient.stops = self.stops + other.stops
-        return new_gradient
 
 
 @dataclass
@@ -307,30 +325,6 @@ class Scene:
             return self.frames[0].symbol
         else:
             raise ValueError("Scene has no sequences.")
-
-    def apply_gradient(self, start_color: str | int, end_color: str | int) -> None:
-        """
-        Applies a gradient effect across the frames of the scene. The gradient is generated
-        to have the same number of steps as the number of frames in the scene.
-
-        Parameters
-        ----------
-        start_color : str | int
-            The starting color of the gradient.
-        end_color : str | int
-            The ending color of the gradient.
-
-        Returns
-        -------
-        None
-        """
-        if not self.frames:
-            return
-        else:
-            gradient = Gradient([start_color, end_color], len(self.frames))
-            for i, frame in enumerate(self.frames):
-                frame.character_visual.color = gradient.spectrum[i]
-                frame.character_visual.format_symbol()
 
     def get_next_symbol(self) -> str:
         """Returns the next symbol in the Scene.
