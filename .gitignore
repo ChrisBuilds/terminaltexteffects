@@ -167,3 +167,4 @@ terminaltexteffects/test_tte.py
 testinput/*
 github_resources/*
 terminaltexteffects/effects/effect_test.py
+terminaltexteffects/effects/effect_dev.py
