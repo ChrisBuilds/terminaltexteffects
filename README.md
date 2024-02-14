@@ -473,8 +473,8 @@ Note: All effects support extensive customization via effect specific arguments.
 ## In-Development Preview
 Any effects shown below are in development and will be available in the next release.
 
-
-
+#### Beams
+![synthgrid_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/c5543bf5-df49-4fdd-ac3b-dc3eede8d991)
 
 
 ## Latest Release Notes
