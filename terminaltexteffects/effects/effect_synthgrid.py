@@ -90,7 +90,7 @@ class GridLine:
         self.characters: list[EffectCharacter] = []
         if direction == "horizontal":
             for column_index in range(self.terminal.output_area.left, self.terminal.output_area.right):
-                effect_char = self.terminal.add_character(self.grid_symbol)
+                effect_char = self.terminal.add_character(self.grid_symbol, motion.Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(self.grid_symbol, 1, color=self.gradient.spectrum[self.origin.row - 1])
                 effect_char.animation.activate_scene(grid_scn)
@@ -99,7 +99,7 @@ class GridLine:
                 self.characters.append(effect_char)
         elif direction == "vertical":
             for row_index in range(self.terminal.output_area.bottom, self.terminal.output_area.top):
-                effect_char = self.terminal.add_character(self.grid_symbol)
+                effect_char = self.terminal.add_character(self.grid_symbol, motion.Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(self.grid_symbol, 1, color=self.gradient.spectrum.pop(0))
                 effect_char.animation.activate_scene(grid_scn)
@@ -234,12 +234,12 @@ class SynthGridEffect:
         for row_index in row_indexes:
             prev_column_index = 1
             for column_index in column_indexes:
-                coords_in_block: list[tuple[int, int]] = []
+                coords_in_block: list[motion.Coord] = []
                 if row_index == self.terminal.output_area.top:  # make sure the top row is included
                     row_index += 1
                 for row in range(prev_row_index, row_index):
                     for column in range(prev_column_index, column_index):
-                        coords_in_block.append((column, row))
+                        coords_in_block.append(motion.Coord(column, row))
                 characters_in_block: list[EffectCharacter] = []
                 for coord in coords_in_block:
                     if coord in self.terminal.character_by_input_coord:
