@@ -4,7 +4,7 @@
 
 ### New Features
 #### Effects
- * Beam. Light beams travel across the output area and illuminate the characters behind them.
+ * Beams. Light beams travel across the output area and illuminate the characters behind them.
 #### Engine
  * Gradients now support multiple step specification to control the distance between each stop pair. For example:
    graphics.Gradient(RED, BLUE, YELLOW, steps=(2,5)) results in a spectrum of RED -> (1 step1) -> BLUE -> (4 steps) -> YELLOW
