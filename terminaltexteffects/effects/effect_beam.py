@@ -14,13 +14,13 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         subparser (argparse._SubParsersAction): subparser to add arguments to
     """
     effect_parser = subparsers.add_parser(
-        "beam",
+        "beams",
         formatter_class=argtypes.CustomFormatter,
         help="Create beams which travel over the output area illuminating the characters behind them.",
         description="Create beams which travel over the output area illuminating the characters behind them.",
         epilog=f"""Example: terminaltexteffects beam -a 0.01 --beam-row-symbols ▂▁_ --beam-column-symbols ▌▍▎▏ --beam-delay 10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --text-glow-color 00D1FF --text-fade-color 333333 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 6 --final-gradient-frames 5 --final-wipe-speed 1""",
     )
-    effect_parser.set_defaults(effect_class=BeamEffect)
+    effect_parser.set_defaults(effect_class=BeamsEffect)
     effect_parser.add_argument(
         "-a",
         "--animation-rate",
@@ -195,7 +195,7 @@ class Group:
         return not self.characters
 
 
-class BeamEffect:
+class BeamsEffect:
     """Effect that creates beams which travel over the output area illuminated the characters behind them."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
