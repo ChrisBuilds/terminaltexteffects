@@ -474,8 +474,7 @@ Note: All effects support extensive customization via effect specific arguments.
 Any effects shown below are in development and will be available in the next release.
 
 #### Beams
-![beams_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/b3c0d2fd-248e-42f9-b49e-ea70d2357950)
-
+![beams_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2768489f-755e-4460-92f7-bccc8b83a026)
 
 
 ## Latest Release Notes
