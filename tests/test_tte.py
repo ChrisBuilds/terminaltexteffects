@@ -27,6 +27,7 @@ from terminaltexteffects.effects import (
     effect_slide,
     effect_wipe,
     effect_synthgrid,
+    effect_beams,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -70,6 +71,30 @@ def make_args() -> Namespace:
     args.gradient_steps = 5
     args.gradient_frames = 5
     return args
+
+
+def test_beams_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.beam_row_symbols = "▂▁_"
+        args.beam_column_symbols = "▎▍▌"
+        args.beam_delay = 10
+        args.beam_row_min_speed = 10
+        args.beam_row_max_speed = 40
+        args.beam_column_min_speed = 6
+        args.beam_column_max_speed = 10
+        args.beam_gradient_stops = ["ffffff", "00D1FF", "8A008A"]
+        args.beam_gradient_steps = [2, 8]
+        args.beam_gradient_frames = 2
+        args.text_glow_color = "00d1ff"
+        args.text_fade_color = "333333"
+        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
+        args.final_gradient_steps = 6
+        args.final_gradient_frames = 5
+        args.final_wipe_speed = 1
+        terminal = Terminal(input_data, args)
+        beams_effect = effect_beams.BeamsEffect(terminal, args)
+        beams_effect.run()
 
 
 def test_synthgrid_effect() -> None:
