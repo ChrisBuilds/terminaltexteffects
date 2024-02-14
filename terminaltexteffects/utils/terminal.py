@@ -108,12 +108,8 @@ class Terminal:
             if character.input_coord.row <= self.output_area.top
             and character.input_coord.column <= self.output_area.right
         ]
-        self.character_by_input_coord: dict[tuple[int, int], EffectCharacter] = {
-            (
-                character.input_coord.column,
-                character.input_coord.row,
-            ): character
-            for character in self.characters
+        self.character_by_input_coord: dict[motion.Coord, EffectCharacter] = {
+            (character.input_coord): character for character in self.characters
         }
         self.animation_rate = args.animation_rate
         self.last_time_printed = time.time()
@@ -219,17 +215,17 @@ class Terminal:
         sys.stdout.write(ansitools.HIDE_CURSOR())
         print("\n" * self.output_area.top)
 
-    def add_character(self, symbol: str) -> EffectCharacter:
+    def add_character(self, symbol: str, coord: motion.Coord) -> EffectCharacter:
         """Adds a character to the terminal for printing. Used to create characters that are not in the input data.
-        Characters added with this method will have input coordinates outside the output area (0,0).
 
         Args:
             symbol (str): symbol to add
+            coord: (motion.Coord): set character's input coordinates
 
         Returns:
             EffectCharacter: the character that was added
         """
-        character = EffectCharacter(symbol, 0, 0)
+        character = EffectCharacter(symbol, coord.column, coord.row)
         character.animation.use_xterm_colors = self.args.xterm_colors
         character.animation.no_color = self.args.no_color
         self.non_input_characters.append(character)
@@ -311,17 +307,18 @@ class Terminal:
         else:
             raise ValueError(f"Invalid sort_order: {sort_order}")
 
-    def get_character_by_input_coord(self, column: int, row: int) -> EffectCharacter:
+    def get_character_by_input_coord(self, coord: motion.Coord) -> EffectCharacter:
         """Get an EffectCharacter by its input coordinates.
 
         Args:
-            column (int): column of the character
-            row (int): row of the character
+            coord (motion.Coord): input coordinates of the character
 
         Returns:
             EffectCharacter: the character at the specified coordinates
         """
-        return self.character_by_input_coord[(column, row)]
+        if coord not in self.character_by_input_coord:
+            raise ValueError(f"No character at input coordinates {coord}")
+        return self.character_by_input_coord[coord]
 
     def print(self):
         """Prints the current terminal state to stdout while preserving the cursor position."""
