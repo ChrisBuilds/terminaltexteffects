@@ -230,3 +230,20 @@ def symbol(arg: str) -> str:
         raise argparse.ArgumentTypeError(
             f"invalid symbol: {arg} is not a valid symbol. Must be a single ASCII/UTF-8 character."
         )
+
+
+def symbol_multiple(arg: str) -> str:
+    """Validates that the given argument is string containing valid symbols.
+
+    Args:
+        arg (str): argument to validate
+
+    Returns:
+        str: validated symbol string
+    """
+    if len(arg) > 0 and is_ascii_or_utf8(arg):
+        return arg
+    else:
+        raise argparse.ArgumentTypeError(
+            f"invalid symbol: {arg} is not a valid symbol. Must be a single ASCII/UTF-8 character."
+        )
