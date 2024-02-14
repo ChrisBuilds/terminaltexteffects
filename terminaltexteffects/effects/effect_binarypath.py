@@ -118,7 +118,7 @@ class BinaryPathEffect:
         for character in self.terminal.characters:
             bin_rep = BinaryRepresentation(character)
             for binary_char in bin_rep.binary_string:
-                bin_rep.binary_characters.append(self.terminal.add_character(binary_char))
+                bin_rep.binary_characters.append(self.terminal.add_character(binary_char, motion.Coord(0, 0)))
                 bin_rep.pending_binary_characters.append(bin_rep.binary_characters[-1])
             self.pending_binary_representations.append(bin_rep)
 
