@@ -344,7 +344,7 @@ class Scene:
                 self.played_frames.clear()
         return next_symbol
 
-    def apply_gradient_to_symbols(self, gradient: Gradient, symbols: list[str], duration: int) -> None:
+    def apply_gradient_to_symbols(self, gradient: Gradient, symbols: typing.Sequence[str], duration: int) -> None:
         """
         Applies a gradient effect to a list of symbols and adds the frames to the Scene.
 
