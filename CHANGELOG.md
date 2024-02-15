@@ -8,6 +8,7 @@
 #### Engine
  * Gradients now support multiple step specification to control the distance between each stop pair. For example:
    graphics.Gradient(RED, BLUE, YELLOW, steps=(2,5)) results in a spectrum of RED -> (1 step1) -> BLUE -> (4 steps) -> YELLOW
+ * The Scene class has a new method: apply_gradient_to_symbols(). This method will iterate over a list of symbols and apply the colors from a gradient to the symbols. A frame with the symbol will be added for each color starting from the last color used in the previous symbol, up to the the index determined by the ratio of the current symbol's index in the symbols list to the total length of the list. This method allows scenes to automatically create frames from a list of symbols and gradient of arbitrary length while ensuring every symbol and color is displayed.
 ### Changes
 #### Effects
 
