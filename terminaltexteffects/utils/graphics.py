@@ -344,6 +344,26 @@ class Scene:
                 self.played_frames.clear()
         return next_symbol
 
+    def apply_gradient_to_symbols(self, gradient: Gradient, symbols: list[str], duration: int) -> None:
+        """
+        Applies a gradient effect to a list of symbols and adds the frames to the Scene.
+
+        Args:
+            gradient (Gradient): The gradient to apply.
+            symbols (list[str]): The list of symbols to apply the gradient to.
+            duration (int): The duration to show each frame.
+
+        Returns:
+            None
+        """
+        last_index = 0
+        for symbol_index, symbol in enumerate(symbols):
+            symbol_progress = (symbol_index + 1) / len(symbols)
+            gradient_index = int(symbol_progress * len(gradient.spectrum))
+            for color in gradient.spectrum[last_index : max(gradient_index, 1)]:
+                self.add_frame(symbol, duration, color=color)
+            last_index = gradient_index
+
     def reset_scene(self) -> None:
         """Resets the Scene."""
         for sequence in self.frames:
