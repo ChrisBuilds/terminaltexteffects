@@ -221,19 +221,12 @@ class BeamsEffect:
             for character in group.characters:
                 beam_row_scn = character.animation.new_scene(id="beam_row")
                 beam_column_scn = character.animation.new_scene(id="beam_column")
-                scn: graphics.Scene
-                for scn, symbols in [
-                    (beam_row_scn, self.args.beam_row_symbols),
-                    (beam_column_scn, self.args.beam_column_symbols),
-                ]:
-                    last_index = 0
-                    for symbol_index, symbol in enumerate(symbols):
-                        symbol_progress = (symbol_index + 1) / len(symbols)
-                        color_progress = int(symbol_progress * len(beam_gradient.spectrum))
-                        for color in beam_gradient.spectrum[last_index : max(color_progress, 1)]:
-                            scn.add_frame(symbol, self.args.beam_gradient_frames, color=color)
-                        last_index = color_progress
-
+                beam_row_scn.apply_gradient_to_symbols(
+                    beam_gradient, self.args.beam_row_symbols, self.args.beam_gradient_frames
+                )
+                beam_column_scn.apply_gradient_to_symbols(
+                    beam_gradient, self.args.beam_column_symbols, self.args.beam_gradient_frames
+                )
                 for color in faded_text_gradient:
                     beam_row_scn.add_frame(character.input_symbol, 5, color=color)
                     beam_column_scn.add_frame(character.input_symbol, 5, color=color)
