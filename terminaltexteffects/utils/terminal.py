@@ -97,6 +97,7 @@ class Terminal:
         self.input_data = input_data.replace("\t", " " * args.tab_width)
         self.args = args
         self.width, self.height = self._get_terminal_dimensions()
+        self.next_character_id = 0
         self.characters = self._decompose_input(args.xterm_colors, args.no_color)
         self.non_input_characters: list[EffectCharacter] = []
         self.input_width = max([character.input_coord.column for character in self.characters])
@@ -112,6 +113,7 @@ class Terminal:
             (character.input_coord): character for character in self.characters
         }
         self.fill_characters = self._make_fill_characters()
+        self.visible_characters: set[EffectCharacter] = set()
         self.animation_rate = args.animation_rate
         self.last_time_printed = time.time()
         self._update_terminal_state()
@@ -191,10 +193,11 @@ class Terminal:
         for row, line in enumerate(formatted_lines):
             for column, symbol in enumerate(line):
                 if symbol != " ":
-                    character = EffectCharacter(symbol, column + 1, input_height - row)
+                    character = EffectCharacter(self.next_character_id, symbol, column + 1, input_height - row)
                     character.animation.use_xterm_colors = use_xterm_colors
                     character.animation.no_color = no_color
                     input_characters.append(character)
+                    self.next_character_id += 1
         return input_characters
 
     def _make_fill_characters(self) -> list[EffectCharacter]:
@@ -208,31 +211,9 @@ class Terminal:
             for column in range(1, self.output_area.right + 1):
                 coord = motion.Coord(column, row)
                 if coord not in self.character_by_input_coord:
-                    fill_characters.append(EffectCharacter(" ", column, row))
+                    fill_characters.append(EffectCharacter(self.next_character_id, " ", column, row))
+                    self.next_character_id += 1
         return fill_characters
-
-    def _update_terminal_state(self):
-        """Update the internal representation of the terminal state with the current position
-        of all visible characters.
-        """
-        rows = [[" " for _ in range(self.output_area.right)] for _ in range(self.output_area.top)]
-        visible_characters = [
-            character
-            for character in chain(self.characters, self.non_input_characters, self.fill_characters)
-            if character.is_visible
-        ]
-        for character in sorted(visible_characters, key=lambda c: c.layer):
-            row = character.motion.current_coord.row - 1
-            column = character.motion.current_coord.column - 1
-            if 0 <= row < self.output_area.top and 0 <= column < self.output_area.right:
-                rows[row][column] = character.symbol
-        terminal_state = ["".join(row) for row in rows]
-        self.terminal_state = terminal_state
-
-    def _prep_outputarea(self) -> None:
-        """Prepares the terminal for the effect by adding empty lines above."""
-        sys.stdout.write(ansitools.HIDE_CURSOR())
-        print("\n" * self.output_area.top)
 
     def add_character(self, symbol: str, coord: motion.Coord) -> EffectCharacter:
         """Adds a character to the terminal for printing. Used to create characters that are not in the input data.
@@ -244,11 +225,30 @@ class Terminal:
         Returns:
             EffectCharacter: the character that was added
         """
-        character = EffectCharacter(symbol, coord.column, coord.row)
+        character = EffectCharacter(self.next_character_id, symbol, coord.column, coord.row)
         character.animation.use_xterm_colors = self.args.xterm_colors
         character.animation.no_color = self.args.no_color
         self.non_input_characters.append(character)
+        self.next_character_id += 1
         return character
+
+    def _update_terminal_state(self):
+        """Update the internal representation of the terminal state with the current position
+        of all visible characters.
+        """
+        rows = [[" " for _ in range(self.output_area.right)] for _ in range(self.output_area.top)]
+        for character in sorted(self.visible_characters, key=lambda c: c.layer):
+            row = character.motion.current_coord.row - 1
+            column = character.motion.current_coord.column - 1
+            if 0 <= row < self.output_area.top and 0 <= column < self.output_area.right:
+                rows[row][column] = character.symbol
+        terminal_state = ["".join(row) for row in rows]
+        self.terminal_state = terminal_state
+
+    def _prep_outputarea(self) -> None:
+        """Prepares the terminal for the effect by adding empty lines above."""
+        sys.stdout.write(ansitools.HIDE_CURSOR())
+        print("\n" * self.output_area.top)
 
     def get_characters(
         self, sort_order: CharacterSort = CharacterSort.ROW_TOP_TO_BOTTOM, *, input_only=False
@@ -338,6 +338,19 @@ class Terminal:
         if coord not in self.character_by_input_coord:
             raise ValueError(f"No character at input coordinates {coord}")
         return self.character_by_input_coord[coord]
+
+    def set_character_visibility(self, character: EffectCharacter, is_visible: bool) -> None:
+        """Set the visibility of a character.
+
+        Args:
+            character (EffectCharacter): the character to set visibility for
+            is_visible (bool): whether the character should be visible
+        """
+        character._is_visible = is_visible
+        if is_visible:
+            self.visible_characters.add(character)
+        else:
+            self.visible_characters.discard(character)
 
     def print(self):
         """Prints the current terminal state to stdout while preserving the cursor position."""
