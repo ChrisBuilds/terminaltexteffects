@@ -111,6 +111,7 @@ class Terminal:
         self.character_by_input_coord: dict[motion.Coord, EffectCharacter] = {
             (character.input_coord): character for character in self.characters
         }
+        self.fill_characters = self._make_fill_characters()
         self.animation_rate = args.animation_rate
         self.last_time_printed = time.time()
         self._update_terminal_state()
@@ -196,12 +197,30 @@ class Terminal:
                     input_characters.append(character)
         return input_characters
 
+    def _make_fill_characters(self) -> list[EffectCharacter]:
+        """Creates a list of characters to fill the empty spaces in the output area. The characters input_symbol is a space.
+
+        Returns:
+            list[EffectCharacter]: list of characters
+        """
+        fill_characters = []
+        for row in range(1, self.output_area.top + 1):
+            for column in range(1, self.output_area.right + 1):
+                coord = motion.Coord(column, row)
+                if coord not in self.character_by_input_coord:
+                    fill_characters.append(EffectCharacter(" ", column, row))
+        return fill_characters
+
     def _update_terminal_state(self):
         """Update the internal representation of the terminal state with the current position
         of all visible characters.
         """
         rows = [[" " for _ in range(self.output_area.right)] for _ in range(self.output_area.top)]
-        visible_characters = [c for c in chain(self.characters, self.non_input_characters) if c.is_visible]
+        visible_characters = [
+            character
+            for character in chain(self.characters, self.non_input_characters, self.fill_characters)
+            if character.is_visible
+        ]
         for character in sorted(visible_characters, key=lambda c: c.layer):
             row = character.motion.current_coord.row - 1
             column = character.motion.current_coord.column - 1
