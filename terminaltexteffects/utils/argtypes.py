@@ -62,7 +62,7 @@ def color(color_string) -> int | str:
 
 
 def nonnegative_int(arg: str) -> int:
-    """Validates that the given argument is a nonnegative integer.
+    """Validates that the given argument is a nonnegative integer. n >= 0.
 
     Args:
         arg (str): argument to validate
@@ -79,7 +79,7 @@ def nonnegative_int(arg: str) -> int:
 
 
 def nonnegative_float(arg: str) -> float:
-    """Validates that the given argument is a valid animationrate value.
+    """Validates that the given argument is a valid animationrate value. n >= 0.
 
     Args:
         arg (str): argument to validate
@@ -96,7 +96,7 @@ def nonnegative_float(arg: str) -> float:
 
 
 def positive_float(arg: str) -> float:
-    """Validates that the given argument is a positive float.
+    """Validates that the given argument is a positive float. n > 0.
 
     Args:
         arg (str): argument to validate
@@ -164,7 +164,7 @@ def ease(ease_arg: str) -> typing.Callable:
 
 
 def positive_int(arg: str) -> int:
-    """Validates that the given argument is a positive integer.
+    """Validates that the given argument is a positive integer. n > 0.
 
     Args:
         arg (str): argument to validate
