@@ -73,8 +73,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
 
 
 class BinaryRepresentation:
-    def __init__(self, character: EffectCharacter):
+    def __init__(self, character: EffectCharacter, terminal: Terminal):
         self.character = character
+        self.terminal = terminal
         self.binary_string = format(ord(self.character.symbol), "08b")
         self.binary_characters: list[EffectCharacter] = []
         self.pending_binary_characters: list[EffectCharacter] = []
@@ -92,12 +93,12 @@ class BinaryRepresentation:
     def deactivate(self) -> None:
         """Deactivates the binary representation by deactivating all binary characters."""
         for bin_char in self.binary_characters:
-            bin_char.is_visible = False
+            self.terminal.set_character_visibility(bin_char, False)
         self.is_active = False
 
     def activate_source_character(self) -> None:
         """Activates the source character of the binary representation."""
-        self.character.is_visible = True
+        self.terminal.set_character_visibility(self.character, True)
         self.character.animation.activate_scene(self.character.animation.query_scene("collapse_scn"))
 
 
@@ -116,7 +117,7 @@ class BinaryPathEffect:
         complete_gradient = graphics.Gradient(["ffffff", self.args.base_color], 10)
         brighten_gradient = graphics.Gradient([self.args.base_color, "ffffff", self.args.final_color], 25)
         for character in self.terminal.characters:
-            bin_rep = BinaryRepresentation(character)
+            bin_rep = BinaryRepresentation(character, self.terminal)
             for binary_char in bin_rep.binary_string:
                 bin_rep.binary_characters.append(self.terminal.add_character(binary_char, motion.Coord(0, 0)))
                 bin_rep.pending_binary_characters.append(bin_rep.binary_characters[-1])
@@ -214,7 +215,7 @@ class BinaryPathEffect:
                         if active_rep.pending_binary_characters:
                             next_char = active_rep.pending_binary_characters.pop(0)
                             self.active_chars.append(next_char)
-                            next_char.is_visible = True
+                            self.terminal.set_character_visibility(next_char, True)
                         elif active_rep.travel_complete():
                             active_rep.deactivate()
                             active_rep.activate_source_character()
@@ -230,7 +231,7 @@ class BinaryPathEffect:
                     next_group = final_wipe_chars.pop(0)
                     for character in next_group:
                         character.animation.activate_scene(character.animation.query_scene("brighten_scn"))
-                        character.is_visible = True
+                        self.terminal.set_character_visibility(character, True)
                         self.active_chars.append(character)
                 else:
                     complete = True
