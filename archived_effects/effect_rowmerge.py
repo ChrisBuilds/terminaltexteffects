@@ -86,7 +86,7 @@ class RowMergeEffect:
                     self.active_chars.append(next_character)
             self.rows = [row for row in self.rows if row]
 
-            self.active_chars = [character for character in self.active_chars if character.is_active()]
+            self.active_chars = [character for character in self.active_chars if character.is_active]
             self.terminal.print()
 
     def animate_chars(self) -> None:

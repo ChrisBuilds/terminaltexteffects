@@ -145,7 +145,7 @@ class ColumnSlide:
                     self.active_chars.append(next_character)
             self.animate_chars()
 
-            self.active_chars = [character for character in self.active_chars if character.is_active()]
+            self.active_chars = [character for character in self.active_chars if character.is_active]
             active_columns = [column for column in active_columns if column]
             self.terminal.print()
 

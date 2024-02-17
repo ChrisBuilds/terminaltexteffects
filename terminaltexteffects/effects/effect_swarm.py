@@ -196,7 +196,7 @@ class SwarmEffect:
                                 other.motion.activate_path(other.motion.paths[active_swarm_area])
                         break
 
-            self.active_chars = [character for character in self.active_chars if character.is_active()]
+            self.active_chars = [character for character in self.active_chars if character.is_active]
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tick method."""

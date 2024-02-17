@@ -147,7 +147,7 @@ class SynthGridEffect:
         self.terminal = terminal
         self.args = args
         self.pending_groups: list[tuple[int, list[EffectCharacter]]] = []
-        self.animating_chars: list[EffectCharacter] = []
+        self.active_chars: list[EffectCharacter] = []
         self.grid_lines: list[GridLine] = []
         self.group_tracker: dict[int, int] = {}
 
@@ -283,9 +283,9 @@ class SynthGridEffect:
         if not total_group_count:
             for character in self.terminal._input_characters:
                 self.terminal.set_character_visibility(character, True)
-                self.animating_chars.append(character)
+                self.active_chars.append(character)
         active_groups: int = 0
-        while self.pending_groups or self.animating_chars or phase != "complete":
+        while self.pending_groups or self.active_chars or phase != "complete":
             if phase == "grid_expand":
                 if not all([grid_line.is_extended() for grid_line in self.grid_lines]):
                     for grid_line in self.grid_lines:
@@ -298,9 +298,9 @@ class SynthGridEffect:
                     group_number, next_group = self.pending_groups.pop(0)
                     for char in next_group:
                         self.terminal.set_character_visibility(char, True)
-                        self.animating_chars.append(char)
+                        self.active_chars.append(char)
                         self.group_tracker[group_number] += 1
-                if not self.pending_groups and not self.animating_chars and not active_groups:
+                if not self.pending_groups and not self.active_chars and not active_groups:
                     phase = "collapse"
             elif phase == "collapse":
                 if not all([grid_line.is_collapsed() for grid_line in self.grid_lines]):
@@ -312,11 +312,7 @@ class SynthGridEffect:
             self.terminal.print()
             self.animate_chars()
 
-            # remove completed chars from animating chars
-            self.animating_chars = [
-                animating_char for animating_char in self.animating_chars if animating_char.is_active()
-            ]
-            # active_groups = [group for group in active_groups if any([char in self.animating_chars for char in group])]
+            self.active_chars = [character for character in self.active_chars if character.is_active]
             active_groups = 0
             for _, active_count in self.group_tracker.items():
                 if active_count:
@@ -324,5 +320,5 @@ class SynthGridEffect:
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tick method on all active characters."""
-        for animating_char in self.animating_chars:
-            animating_char.tick()
+        for character in self.active_chars:
+            character.tick()

@@ -143,7 +143,7 @@ class MiddleoutEffect:
             self.terminal.print()
             self.animate_chars()
             if final:
-                self.active_chars = [character for character in self.active_chars if character.is_active()]
+                self.active_chars = [character for character in self.active_chars if character.is_active]
 
     def animate_chars(self) -> None:
         """Animates the characters by calling the tick method."""

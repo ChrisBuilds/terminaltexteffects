@@ -200,11 +200,7 @@ class EffectCharacter:
     def character_id(self) -> int:
         return self._character_id
 
-    def tick(self) -> None:
-        """Progress the character's animation and motion by one step."""
-        self.motion.move()
-        self.animation.step_animation()
-
+    @property
     def is_active(self) -> bool:
         """Returns whether the character is currently active. A character is active if its animation or motion is not complete.
 
@@ -214,6 +210,11 @@ class EffectCharacter:
         if not self.animation.active_scene_is_complete() or not self.motion.movement_is_complete():
             return True
         return False
+
+    def tick(self) -> None:
+        """Progress the character's animation and motion by one step."""
+        self.motion.move()
+        self.animation.step_animation()
 
     def __hash__(self) -> int:
         return hash(self.character_id)

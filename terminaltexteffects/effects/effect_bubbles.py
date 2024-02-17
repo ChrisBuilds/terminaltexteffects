@@ -274,7 +274,7 @@ class BubblesEffect:
             self.animate_chars()
             self.terminal.print()
 
-            self.active_chars = [character for character in self.active_chars if character.is_active()]
+            self.active_chars = [character for character in self.active_chars if character.is_active]
 
     def animate_bubbles(self, animating_bubbles: list[Bubble]) -> None:
         for bubble in animating_bubbles:

@@ -145,13 +145,13 @@ class DecryptEffect:
                     next_character.animation.activate_scene(next_character.animation.query_scene("typing"))
                     self.active_chars.append(next_character)
             self.animate_chars()
-            self.active_chars = [character for character in self.active_chars if character.is_active()]
+            self.active_chars = [character for character in self.active_chars if character.is_active]
             self.terminal.print()
 
     def run_decryption_effect(self) -> None:
         while self.active_chars:
             self.animate_chars()
-            self.active_chars = [character for character in self.active_chars if character.is_active()]
+            self.active_chars = [character for character in self.active_chars if character.is_active]
             self.terminal.print()
 
     def animate_chars(self) -> None:

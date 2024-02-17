@@ -132,7 +132,7 @@ class RowSlide:
                         self.active_chars.append(next_character)
             self.animate_chars()
             self.terminal.print()
-            self.active_chars = [character for character in self.active_chars if character.is_active()]
+            self.active_chars = [character for character in self.active_chars if character.is_active]
             active_rows = [row for row in active_rows if row]
 
     def animate_chars(self) -> None:

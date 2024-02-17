@@ -174,7 +174,7 @@ class PourEffect:
                 else:
                     gap -= 1
             self.animate_chars()
-            self.active_characters = [character for character in self.active_characters if character.is_active()]
+            self.active_characters = [character for character in self.active_characters if character.is_active]
             self.terminal.print()
 
     def animate_chars(self) -> None:
