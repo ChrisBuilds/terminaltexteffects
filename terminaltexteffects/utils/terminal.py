@@ -98,21 +98,21 @@ class Terminal:
         self.args = args
         self.width, self.height = self._get_terminal_dimensions()
         self.next_character_id = 0
-        self.characters = self._decompose_input(args.xterm_colors, args.no_color)
-        self.non_input_characters: list[EffectCharacter] = []
-        self.input_width = max([character.input_coord.column for character in self.characters])
-        self.input_height = max([character.input_coord.row for character in self.characters])
+        self._input_characters = self._decompose_input(args.xterm_colors, args.no_color)
+        self._added_characters: list[EffectCharacter] = []
+        self.input_width = max([character.input_coord.column for character in self._input_characters])
+        self.input_height = max([character.input_coord.row for character in self._input_characters])
         self.output_area = OutputArea(min(self.height - 1, self.input_height), self.input_width)
-        self.characters = [
+        self._input_characters = [
             character
-            for character in self.characters
+            for character in self._input_characters
             if character.input_coord.row <= self.output_area.top
             and character.input_coord.column <= self.output_area.right
         ]
         self.character_by_input_coord: dict[motion.Coord, EffectCharacter] = {
-            (character.input_coord): character for character in self.characters
+            (character.input_coord): character for character in self._input_characters
         }
-        self.fill_characters = self._make_fill_characters()
+        self._fill_characters = self._make_fill_characters()
         self.visible_characters: set[EffectCharacter] = set()
         self.animation_rate = args.animation_rate
         self.last_time_printed = time.time()
@@ -228,7 +228,7 @@ class Terminal:
         character = EffectCharacter(self.next_character_id, symbol, coord.column, coord.row)
         character.animation.use_xterm_colors = self.args.xterm_colors
         character.animation.no_color = self.args.no_color
-        self.non_input_characters.append(character)
+        self._added_characters.append(character)
         self.next_character_id += 1
         return character
 
@@ -251,21 +251,54 @@ class Terminal:
         print("\n" * self.output_area.top)
 
     def get_characters(
-        self, sort_order: CharacterSort = CharacterSort.ROW_TOP_TO_BOTTOM, *, input_only=False
+        self, *, input_characters: bool = True, fill_chars: bool = False, added_chars: bool = False
+    ) -> list[EffectCharacter]:
+        """Get a list of all EffectCharacters in the terminal.
+
+        Args:
+            input_characters (bool, optional): whether to include input characters. Defaults to True.
+            fill_chars (bool, optional): whether to include fill characters. Defaults to False.
+            added_chars (bool, optional): whether to include added characters. Defaults to False.
+
+        Returns:
+            list[EffectCharacter]: list of EffectCharacters in the terminal
+        """
+        all_characters = []
+        if input_characters:
+            all_characters.extend(self._input_characters)
+        if fill_chars:
+            all_characters.extend(self._fill_characters)
+        if added_chars:
+            all_characters.extend(self._added_characters)
+        return all_characters
+
+    def get_characters_sorted(
+        self,
+        sort_order: CharacterSort = CharacterSort.ROW_TOP_TO_BOTTOM,
+        *,
+        input_characters: bool = True,
+        fill_chars: bool = False,
+        added_chars: bool = False,
     ) -> list[list[EffectCharacter]]:
         """Get a list of all EffectCharacters, input and non-input, in the terminal sorted by the specified sort_order. If input_only is True, only input characters are returned.
 
         Args:
             sort_order (CharacterSort, optional): order to sort the characters. Defaults to ROW_TOP_TO_BOTTOM.
+            input_characters (bool, optional): whether to include input characters. Defaults to True.
+            fill_chars (bool, optional): whether to include fill characters. Defaults to False.
+            added_chars (bool, optional): whether to include added characters. Defaults to False.
 
         Returns:
             list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond to rows,
             columns, or diagonals depending on the sort_order.
         """
-        if not input_only:
-            all_characters = self.characters + self.non_input_characters
-        else:
-            all_characters = self.characters
+        all_characters = []
+        if input_characters:
+            all_characters.extend(self._input_characters)
+        if fill_chars:
+            all_characters.extend(self._fill_characters)
+        if added_chars:
+            all_characters.extend(self._added_characters)
         if sort_order in (self.CharacterSort.COLUMN_LEFT_TO_RIGHT, self.CharacterSort.COLUMN_RIGHT_TO_LEFT):
             columns = []
             for column_index in range(self.output_area.right + 1):
