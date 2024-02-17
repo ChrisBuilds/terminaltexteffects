@@ -5,15 +5,25 @@
 ### New Features
 #### Effects
  * Beams. Light beams travel across the output area and illuminate the characters behind them.
+
 #### Engine
  * Gradients now support multiple step specification to control the distance between each stop pair. For example:
-   graphics.Gradient(RED, BLUE, YELLOW, steps=(2,5)) results in a spectrum of RED -> (1 step1) -> BLUE -> (4 steps) -> YELLOW
+   graphics.Gradient(RED, BLUE, YELLOW, steps=(2,5)) results in a spectrum of RED -> (1 step) -> BLUE -> (4 steps) -> YELLOW
  * The Scene class has a new method: apply_gradient_to_symbols(). This method will iterate over a list of symbols and apply the colors from a gradient to the symbols. A frame with the symbol will be added for each color starting from the last color used in the previous symbol, up to the the index determined by the ratio of the current symbol's index in the symbols list to the total length of the list. This method allows scenes to automatically create frames from a list of symbols and gradient of arbitrary length while ensuring every symbol and color is displayed.
+ * On instatiation, Terminal creates EffectCharacters for every coordinate in the output area that does not have an input character. These EffectCharacters have the symbol " " and are stored in Terminal._fill_characters. 
+
 ### Changes
 #### Effects
+ * All effects have been updated to use the latest API calls for improved performance.
 
 #### Engine
  * Terminal.add_character() takes a motion.Coord() argument to set the character's input_coordinate.
+ * EffectCharacters have a unique ID set by the Terminal on instatiation. As a result, all EffectCharacters should be created using Terminal.add_character().
+ * EffectCharacters added by the effect are stored in Terminal._added_characters.
+ * Retrieving EffectCharacters from the terminal should no longer be done via accessing the lists of characters [_added_characters, _fill_characters, _input_characters], but should be retrieved via Terminal.get_characters() and Terminal.get_characters_sorted(). 
+ * Setting EffectCharacter visibility is now done via Terminal.set_character_visibility(). This enables the terminal to keep track of all visible characters without needing to iterate over all characters on every call to _update_terminal_state().
+ * EventHandler.Action.SET_CHARACTER_VISIBILITY_STATE has been removed as visibilty state is handled by the Terminal. To enable visibility state changes through the event system, us a CALLBACK action with target EventHandler.Callback(terminal.set_character_visibility, True/False).
+
 ### Bug Fixes
 #### Effects
 
