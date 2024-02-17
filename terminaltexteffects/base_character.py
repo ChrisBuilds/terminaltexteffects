@@ -75,16 +75,15 @@ class EventHandler:
             ACTIVATE_SCENE (Action): Activates an animation scene. The action target is the scene ID.
             DEACTIVATE_PATH (Action): Deactivates a path. The action target is the path ID.
             DEACTIVATE_SCENE (Action): Deactivates an animation scene. The action target is the scene ID.
-            SET_CHARACTER_ACTIVATION_STATE (Action): Sets the activation state of the character. The action target is the activation state (True/False).
             SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
             SET_COORDINATE (Action): Sets the coordinate of the character. The action target is the coordinate.
+            CALLBACK (Action): Calls a callback function. The action target is an EventHandler.Callback object.
         """
 
         ACTIVATE_PATH = auto()
         ACTIVATE_SCENE = auto()
         DEACTIVATE_PATH = auto()
         DEACTIVATE_SCENE = auto()
-        SET_CHARACTER_VISIBILITY_STATE = auto()
         SET_LAYER = auto()
         SET_COORDINATE = auto()
         CALLBACK = auto()
@@ -97,7 +96,7 @@ class EventHandler:
 
         Attributes:
             callback (typing.Callable): The callback function to call.
-            args (tuple[typing.Any,...]): A tuple of arguments to pass to the callback function.
+            args (tuple[typing.Any,...]): A tuple of arguments to pass to the callback function. The first argument will be the character, followed by any additional arguments.
         """
 
         callback: typing.Callable
@@ -118,9 +117,9 @@ class EventHandler:
 
         Args:
             event (Event): The event to register.
-            subject_id (str): The ID of the event subject (path id/scene id).
+            caller (graphics.Scene | motion.Waypoint | motion.Path): The object that triggers the event.
             action (Action): The action to take when the event is triggered.
-            action_target (str): The ID of the action target.
+            target (graphics.Scene | motion.Waypoint | motion.Path | int | motion.Coord | Callback): The target of the action.
         """
         new_event = (event, caller)
         new_action = (action, target)
@@ -141,9 +140,6 @@ class EventHandler:
             EventHandler.Action.DEACTIVATE_PATH: self.character.motion.deactivate_path,
             EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
             EventHandler.Action.SET_LAYER: lambda layer: setattr(self.character, "layer", layer),
-            EventHandler.Action.SET_CHARACTER_VISIBILITY_STATE: lambda state: setattr(
-                self.character, "is_visible", state
-            ),
             EventHandler.Action.SET_COORDINATE: lambda coord: setattr(self.character.motion, "current_coord", coord),
             EventHandler.Action.CALLBACK: lambda callback: callback.callback(self.character, *callback.args),
         }
