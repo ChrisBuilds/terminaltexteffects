@@ -183,13 +183,13 @@ class RingsEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by building rings and associated animations/waypoints."""
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             start_scn = character.animation.new_scene()
             start_scn.add_frame(character.input_symbol, 1, color=self.args.base_color)
             home_path = character.motion.new_path(speed=0.8, ease=easing.out_quad, id="home")
             home_path.new_waypoint(character.input_coord)
             character.animation.activate_scene(start_scn)
-            character.is_visible = True
+            self.terminal.set_character_visibility(character, True)
             self.pending_chars.append(character)
 
         random.shuffle(self.pending_chars)
@@ -224,7 +224,7 @@ class RingsEffect:
             ring_count += 1
 
         # make external waypoints for characters not in rings
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             if character not in self.ring_chars:
                 color = random.choice(self.args.ring_colors)
                 external_path = character.motion.new_path(id="external", speed=0.1, ease=easing.out_cubic)
@@ -242,8 +242,8 @@ class RingsEffect:
                     character.event_handler.register_event(
                         EventHandler.Event.PATH_COMPLETE,
                         external_path,
-                        EventHandler.Action.SET_CHARACTER_VISIBILITY_STATE,
-                        False,
+                        EventHandler.Action.CALLBACK,
+                        EventHandler.Callback(self.terminal.set_character_visibility, False),
                     )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
@@ -308,8 +308,8 @@ class RingsEffect:
                 if not spin_time_remaining:
                     if not cycles_remaining:
                         phase = "final"
-                        for character in self.terminal.characters:
-                            character.is_visible = True
+                        for character in self.terminal._input_characters:
+                            self.terminal.set_character_visibility(character, True)
                             if "external" in character.motion.paths:
                                 self.active_chars.append(character)
                             character.motion.activate_path(character.motion.query_path("home"))

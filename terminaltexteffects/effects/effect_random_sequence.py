@@ -70,8 +70,8 @@ class RandomSequence:
     def prepare_data(self) -> None:
         if len(self.gradient_stops) > 1:
             gradient = graphics.Gradient(self.gradient_stops, self.args.gradient_steps)
-        for character in self.terminal.characters:
-            character.is_visible = False
+        for character in self.terminal._input_characters:
+            self.terminal.set_character_visibility(character, False)
             if self.gradient_stops:
                 gradient_scn = character.animation.new_scene()
                 if len(self.gradient_stops) > 1:
@@ -90,7 +90,7 @@ class RandomSequence:
         while self.pending_chars or self.active_chars:
             if self.pending_chars:
                 self.next_char = self.pending_chars.pop()
-                self.next_char.is_visible = True
+                self.terminal.set_character_visibility(self.next_char, True)
                 self.active_chars.append(self.next_char)
             self.animate_chars()
             self.terminal.print()

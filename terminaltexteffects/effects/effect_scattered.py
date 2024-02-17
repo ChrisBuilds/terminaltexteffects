@@ -82,7 +82,7 @@ class ScatteredEffect:
         if len(self.gradient_stops) > 1:
             gradient = graphics.Gradient(self.gradient_stops, self.args.gradient_steps)
 
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             if self.terminal.output_area.right < 2 or self.terminal.output_area.top < 2:
                 character.motion.set_coordinate(motion.Coord(1, 1))
             else:
@@ -96,7 +96,7 @@ class ScatteredEffect:
                 EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
             )
             character.motion.activate_path(input_coord_path)
-            character.is_visible = True
+            self.terminal.set_character_visibility(character, True)
             if self.gradient_stops:
                 gradient_scn = character.animation.new_scene()
                 if len(self.gradient_stops) > 1:

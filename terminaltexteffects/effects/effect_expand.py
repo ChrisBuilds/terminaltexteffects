@@ -81,14 +81,14 @@ class ExpandEffect:
         if len(self.gradient_stops) > 1:
             gradient = graphics.Gradient(self.gradient_stops, self.args.gradient_steps)
 
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             character.motion.set_coordinate(self.terminal.output_area.center)
             input_coord_path = character.motion.new_path(
                 speed=self.args.movement_speed,
                 ease=self.args.easing,
             )
             input_coord_path.new_waypoint(character.input_coord)
-            character.is_visible = True
+            self.terminal.set_character_visibility(character, True)
             character.motion.activate_path(input_coord_path)
             self.active_chars.append(character)
             character.event_handler.register_event(

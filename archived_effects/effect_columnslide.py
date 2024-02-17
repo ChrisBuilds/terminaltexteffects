@@ -88,7 +88,7 @@ class ColumnSlide:
         self.columns = {
             column_index: column
             for column_index, column in enumerate(
-                self.terminal.get_characters(sort_order=self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT)
+                self.terminal.get_characters_sorted(sort_order=self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT)
             )
         }
         if self.slide_direction == SlideDirection.DOWN:
@@ -96,7 +96,7 @@ class ColumnSlide:
                 column_list.reverse()
         for column in self.columns.values():
             for character in column:
-                character.is_visible = False
+                self.terminal.set_character_visibility(character, False)
                 if self.slide_direction == SlideDirection.DOWN:
                     character.motion.set_coordinate(
                         motion.Coord(character.input_coord.column, self.terminal.output_area.top)

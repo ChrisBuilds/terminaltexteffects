@@ -74,10 +74,10 @@ class SwarmEffect:
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
         self.swarms: list[list[EffectCharacter]] = []
-        self.swarm_size: int = max(round(len(self.terminal.characters) * self.args.swarm_size), 1)
+        self.swarm_size: int = max(round(len(self.terminal._input_characters) * self.args.swarm_size), 1)
 
     def make_swarms(self) -> None:
-        unswarmed_characters = list(self.terminal.characters[::-1])
+        unswarmed_characters = list(self.terminal._input_characters[::-1])
         while unswarmed_characters:
             new_swarm: list[EffectCharacter] = []
             for _ in range(self.swarm_size):
@@ -176,7 +176,7 @@ class SwarmEffect:
                 active_swarm_area = "0_swarm_area"
                 for character in current_swarm:
                     character.motion.activate_path(character.motion.query_path("0_swarm_area"))
-                    character.is_visible = True
+                    self.terminal.set_character_visibility(character, True)
                     self.active_chars.append(character)
             self.terminal.print()
             self.animate_chars()

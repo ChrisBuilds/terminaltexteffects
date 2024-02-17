@@ -86,42 +86,8 @@ class Row:
         if self.untyped_chars:
             next_char = self.untyped_chars.pop(0)
             self.typed_chars.append(next_char)
-            next_char.is_visible = True
             return next_char
         return None
-
-
-class PrintHead(EffectCharacter):
-    def __init__(
-        self,
-        symbol: str,
-        input_column: int,
-        input_row: int,
-        color: str | int = "0000ff",
-        speed: float = 1.5,
-        ease=easing.in_quad,
-    ):
-        super().__init__(symbol, input_column, input_row)
-        self.speed = speed
-        self.ease = ease
-        self.is_visible = False
-        self.head_color_scn = self.animation.new_scene()
-        self.head_color_scn.add_frame(symbol, 1, color=color)
-        self.animation.activate_scene(self.head_color_scn)
-
-    def carriage_return(self, starting_coord: motion.Coord):
-        self.motion.set_coordinate(starting_coord)
-        self.motion.paths.clear()
-        carriage_return_path: motion.Path = self.motion.new_path(speed=self.speed, ease=self.ease)
-        carriage_return_path.new_waypoint(motion.Coord(1, 1))
-        self.event_handler.register_event(
-            EventHandler.Event.PATH_COMPLETE,
-            carriage_return_path,
-            EventHandler.Action.SET_CHARACTER_VISIBILITY_STATE,
-            False,
-        )
-        self.motion.activate_path(carriage_return_path)
-        self.is_visible = True
 
 
 class PrintEffect:
@@ -134,12 +100,15 @@ class PrintEffect:
         self.active_chars: list[EffectCharacter] = []
         self.pending_rows: list[Row] = []
         self.processed_rows: list[Row] = []
+        self.typing_head = self.terminal.add_character("█", motion.Coord(1, 1))
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
-        input_rows = self.terminal.get_characters(sort_order=self.terminal.CharacterSort.ROW_TOP_TO_BOTTOM)
+        input_rows = self.terminal.get_characters_sorted(sort_order=self.terminal.CharacterSort.ROW_TOP_TO_BOTTOM)
         for input_row in input_rows:
             self.pending_rows.append(Row(input_row, self.args.text_color, self.args.print_head_color))
+        head_color_scn = self.typing_head.animation.new_scene()
+        head_color_scn.add_frame(self.typing_head.input_symbol, 1, color=self.args.print_head_color)
 
     def run(self) -> None:
         """Runs the effect."""
@@ -147,18 +116,9 @@ class PrintEffect:
         current_row: Row = self.pending_rows.pop(0)
         typing = True
         delay = 0
-        typing_head = PrintHead(
-            "█",
-            1,
-            1,
-            color=self.args.print_head_color,
-            speed=self.args.print_head_return_speed,
-            ease=self.args.print_head_easing,
-        )
-        self.terminal.characters.append(typing_head)
         last_column = 0
         while self.active_chars or typing:
-            if typing_head.motion.active_path:
+            if self.typing_head.motion.active_path:
                 pass
             elif delay:
                 delay -= 1
@@ -168,6 +128,7 @@ class PrintEffect:
                     for _ in range(min(len(current_row.untyped_chars), self.args.print_speed)):
                         next_char = current_row.type_char()
                         if next_char:
+                            self.terminal.set_character_visibility(next_char, True)
                             self.active_chars.append(next_char)
                             last_column = next_char.input_coord.column
                 else:
@@ -176,8 +137,23 @@ class PrintEffect:
                         for row in self.processed_rows:
                             row.move_up()
                         current_row = self.pending_rows.pop(0)
-                        typing_head.carriage_return(motion.Coord(last_column, 1))
-                        self.active_chars.append(typing_head)
+                        self.typing_head.motion.set_coordinate(motion.Coord(last_column, 1))
+                        self.terminal.set_character_visibility(self.typing_head, True)
+                        self.typing_head.motion.paths.clear()
+                        carriage_return_path: motion.Path = self.typing_head.motion.new_path(
+                            speed=self.args.print_head_return_speed,
+                            ease=self.args.print_head_easing,
+                            id="carriage_return_path",
+                        )
+                        carriage_return_path.new_waypoint(motion.Coord(1, 1))
+                        self.typing_head.motion.activate_path(carriage_return_path)
+                        self.typing_head.event_handler.register_event(
+                            EventHandler.Event.PATH_COMPLETE,
+                            carriage_return_path,
+                            EventHandler.Action.CALLBACK,
+                            EventHandler.Callback(self.terminal.set_character_visibility, False),
+                        )
+                        self.active_chars.append(self.typing_head)
                     else:
                         typing = False
             self.terminal.print()

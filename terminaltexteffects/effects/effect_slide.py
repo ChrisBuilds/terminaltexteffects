@@ -115,11 +115,11 @@ class SlideEffect:
             gradient = graphics.Gradient(self.gradient_stops, self.args.gradient_steps)
         groups: list[list[EffectCharacter]] = []
         if self.grouping == "row":
-            groups = self.terminal.get_characters(self.terminal.CharacterSort.ROW_TOP_TO_BOTTOM)
+            groups = self.terminal.get_characters_sorted(self.terminal.CharacterSort.ROW_TOP_TO_BOTTOM)
         elif self.grouping == "column":
-            groups = self.terminal.get_characters(self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT)
+            groups = self.terminal.get_characters_sorted(self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT)
         elif self.grouping == "diagonal":
-            groups = self.terminal.get_characters(self.terminal.CharacterSort.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT)
+            groups = self.terminal.get_characters_sorted(self.terminal.CharacterSort.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT)
         for group in groups:
             for character in group:
                 input_path = character.motion.new_path(
@@ -200,7 +200,7 @@ class SlideEffect:
             for group in active_groups:
                 if group:
                     next_char = group.pop(0)
-                    next_char.is_visible = True
+                    self.terminal.set_character_visibility(next_char, True)
                     next_char.motion.activate_path(next_char.motion.paths["input_path"])
                     self.active_chars.append(next_char)
             active_groups = [group for group in active_groups if group]

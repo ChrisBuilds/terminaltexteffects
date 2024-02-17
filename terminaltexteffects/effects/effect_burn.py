@@ -74,7 +74,7 @@ class BurnEffect:
         groups = {
             column_index: column
             for column_index, column in enumerate(
-                self.terminal.get_characters(sort_order=self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT)
+                self.terminal.get_characters_sorted(sort_order=self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT)
             )
         }
         for column in groups.values():
@@ -86,7 +86,7 @@ class BurnEffect:
         while groups_remaining(groups):
             keys = [key for key in groups.keys() if groups[key]]
             next_char = groups[random.choice(keys)].pop(0)
-            next_char.is_visible = False
+            self.terminal.set_character_visibility(next_char, False)
             construct_scn = next_char.animation.new_scene()
             g_start = 0
             for _, block in enumerate(vertical_build_order[:5]):
@@ -110,7 +110,7 @@ class BurnEffect:
         while self.pending_chars or self.active_chars:
             if self.pending_chars:
                 next_char = self.pending_chars.pop(0)
-                next_char.is_visible = True
+                self.terminal.set_character_visibility(next_char, True)
                 self.active_chars.append(next_char)
 
             self.animate_chars()

@@ -94,8 +94,8 @@ class UnstableEffect:
         """Prepares the data for the effect by jumbling the character positions and
         choosing a location on the perimeter of the output area for the character to travel
         after exploding. Creates all waypoints and scenes for the characters."""
-        character_coords = [character.input_coord for character in self.terminal.characters]
-        for character in self.terminal.characters:
+        character_coords = [character.input_coord for character in self.terminal._input_characters]
+        for character in self.terminal._input_characters:
             pos = random.randint(0, 3)
             match pos:
                 case 0:
@@ -126,10 +126,10 @@ class UnstableEffect:
             for step in final_color:
                 final_scn.add_frame(character.input_symbol, 5, color=step)
             character.animation.activate_scene(rumble_scn)
-            character.is_visible = True
+            self.terminal.set_character_visibility(character, True)
 
     def move_all_to_waypoint(self, path_id) -> None:
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             if path_id == "reassembly":
                 character.animation.activate_scene(character.animation.query_scene("final"))
             self.active_chars.append(character)
@@ -159,7 +159,7 @@ class UnstableEffect:
             if current_rumble_steps > 30 and current_rumble_steps % rumble_mod_delay == 0:
                 row_offset = random.choice([-1, 0, 1])
                 column_offset = random.choice([-1, 0, 1])
-                for character in self.terminal.characters:
+                for character in self.terminal._input_characters:
                     character.motion.set_coordinate(
                         motion.Coord(
                             character.motion.current_coord.column + column_offset,
@@ -168,12 +168,12 @@ class UnstableEffect:
                     )
                     character.animation.step_animation()
                 self.terminal.print()
-                for character in self.terminal.characters:
+                for character in self.terminal._input_characters:
                     character.motion.set_coordinate(self.jumbled_coords[character])
                 rumble_mod_delay -= 1
                 rumble_mod_delay = max(rumble_mod_delay, 1)
             else:
-                for character in self.terminal.characters:
+                for character in self.terminal._input_characters:
                     character.animation.step_animation()
                 self.terminal.print()
 

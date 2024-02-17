@@ -100,7 +100,7 @@ class NamedEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
 
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             pass
             # do something with the data if needed (sort, adjust positions, etc)
 

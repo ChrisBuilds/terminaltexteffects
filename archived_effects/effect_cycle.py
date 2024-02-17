@@ -75,10 +75,10 @@ class CycleEffect:
         symbols = "!@#$%^&*()_+-=[]{}\\|;:'\",<.>/?`~"
         flash_final_gradient = graphics.Gradient([self.args.discover_color, self.args.final_color], 10)
         collection = letters_lower + letters_upper + numbers + symbols
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             if character.input_symbol not in collection:
                 collection += character.input_symbol
-            character.is_visible = True
+            self.terminal.set_character_visibility(character, True)
             cycle_scn = character.animation.new_scene()
             for symbol in collection:
                 cycle_scn.add_frame(symbol, 4, color=self.args.cycling_color)

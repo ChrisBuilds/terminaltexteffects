@@ -116,7 +116,7 @@ class BinaryPathEffect:
     def prepare_data(self) -> None:
         complete_gradient = graphics.Gradient(["ffffff", self.args.base_color], 10)
         brighten_gradient = graphics.Gradient([self.args.base_color, "ffffff", self.args.final_color], 25)
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             bin_rep = BinaryRepresentation(character, self.terminal)
             for binary_char in bin_rep.binary_string:
                 bin_rep.binary_characters.append(self.terminal.add_character(binary_char, motion.Coord(0, 0)))
@@ -179,7 +179,7 @@ class BinaryPathEffect:
                 color_scn.add_frame(bin_effectchar.symbol, 1, color=random.choice(self.args.binary_colors))
                 bin_effectchar.animation.activate_scene(color_scn)
 
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             collapse_scn = character.animation.new_scene(ease=easing.in_quad, id="collapse_scn")
             for spectrum in complete_gradient.spectrum:
                 collapse_scn.add_frame(character.input_symbol, 10, color=spectrum)
@@ -195,8 +195,8 @@ class BinaryPathEffect:
         active_binary_reps: list[BinaryRepresentation] = []
         complete = False
         phase = "travel"
-        final_wipe_chars = self.terminal.get_characters(
-            sort_order=self.terminal.CharacterSort.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT, input_only=True
+        final_wipe_chars = self.terminal.get_characters_sorted(
+            sort_order=self.terminal.CharacterSort.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT
         )
         max_active_binary_groups = max(
             1, int(self.args.active_binary_groups * len(self.pending_binary_representations))

@@ -92,12 +92,12 @@ class FireworksEffect:
             self.firework_colors = self.args.firework_colors
         else:
             self.firework_colors = ["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"]
-        self.firework_volume = max(1, round(self.args.firework_volume * len(self.terminal.characters)))
+        self.firework_volume = max(1, round(self.args.firework_volume * len(self.terminal._input_characters)))
         self.explode_distance = min(max(1, round(self.terminal.output_area.right * self.args.explode_distance)), 6)
 
     def prepare_waypoints(self) -> None:
         firework_shell: list[EffectCharacter] = []
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             if len(firework_shell) == self.firework_volume or not firework_shell:
                 self.shells.append(firework_shell)
                 firework_shell = []
@@ -193,7 +193,7 @@ class FireworksEffect:
             if self.shells and launch_delay == 0:
                 next_group = self.shells.pop()
                 for character in next_group:
-                    character.is_visible = True
+                    self.terminal.set_character_visibility(character, True)
                     self.active_chars.append(character)
                 launch_delay = self.args.launch_delay + 1
             self.terminal.print()

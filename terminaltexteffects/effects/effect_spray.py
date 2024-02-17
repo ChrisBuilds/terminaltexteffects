@@ -136,7 +136,7 @@ class SprayEffect:
             SprayPosition.NE: motion.Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top),
         }
 
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             character.motion.set_coordinate(spray_origin_map[self.spray_position])
             input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
             input_coord_path.new_waypoint(character.input_coord)
@@ -165,7 +165,7 @@ class SprayEffect:
                 for _ in range(random.randint(1, self.args.spray_volume)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop()
-                        next_character.is_visible = True
+                        self.terminal.set_character_visibility(next_character, True)
                         self.active_chars.append(next_character)
 
             self.animate_chars()

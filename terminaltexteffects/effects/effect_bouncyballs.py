@@ -81,8 +81,7 @@ class BouncyBallsEffect:
         """Prepares the data for the effect by assigning colors and waypoints and
         organizing the characters by row."""
         ball_symbols = ("*", "o", "O", "0", ".")
-        for character in self.terminal.characters:
-            character.is_visible = False
+        for character in self.terminal._input_characters:
             if self.args.ball_colors:
                 color = random.choice(self.args.ball_colors)
             else:
@@ -126,7 +125,7 @@ class BouncyBallsEffect:
                 for _ in range(random.randint(1, 5)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
-                        next_character.is_visible = True
+                        self.terminal.set_character_visibility(next_character, True)
                         self.active_chars.append(next_character)
                     else:
                         break

@@ -277,11 +277,11 @@ class VHSTapeEffect:
 
     def prepare_data(self) -> None:
         for row_index, characters in enumerate(
-            self.terminal.get_characters(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP)
+            self.terminal.get_characters_sorted(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP)
         ):
             self.lines[row_index] = Line(characters, self.args)
-        for character in self.terminal.characters:
-            character.is_visible = True
+        for character in self.terminal._input_characters:
+            self.terminal.set_character_visibility(character, True)
             character.animation.activate_scene(character.animation.query_scene("base"))
 
     def glitch_wave(self) -> None:
@@ -386,7 +386,7 @@ class VHSTapeEffect:
             elif phase == "noise":
                 # Activate final snow animation for all characters
                 if not self.active_chars:
-                    for character in self.terminal.characters:
+                    for character in self.terminal._input_characters:
                         character.animation.activate_scene(character.animation.query_scene("final_snow"))
                         self.active_chars.append(character)
                     phase = "redraw"

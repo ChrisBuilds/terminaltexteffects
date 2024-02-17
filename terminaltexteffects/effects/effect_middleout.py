@@ -99,7 +99,7 @@ class MiddleoutEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect."""
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             character.motion.set_coordinate(self.terminal.output_area.center)
             # setup waypoints
             if self.args.expand_direction == "vertical":
@@ -127,7 +127,7 @@ class MiddleoutEffect:
             # initialize character state
             character.motion.activate_path(center_path)
             character.animation.activate_scene(center_scene)
-            character.is_visible = True
+            self.terminal.set_character_visibility(character, True)
             self.active_chars.append(character)
 
     def run(self) -> None:

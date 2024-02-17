@@ -97,7 +97,7 @@ class WipeEffect:
             "diagonal_top_right_to_bottom_left": self.terminal.CharacterSort.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
             "diagonal_bottom_right_to_top_left": self.terminal.CharacterSort.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         }
-        for group in self.terminal.get_characters(sort_map[self.direction]):
+        for group in self.terminal.get_characters_sorted(sort_map[self.direction]):
             if self.args.gradient_stops:
                 for character in group:
                     wipe_scn = character.animation.new_scene()
@@ -118,7 +118,7 @@ class WipeEffect:
                 if self.pending_groups:
                     next_group = self.pending_groups.pop(0)
                     for character in next_group:
-                        character.is_visible = True
+                        self.terminal.set_character_visibility(character, True)
                         self.active_chars.append(character)
                 wipe_delay = self.args.wipe_delay
             else:

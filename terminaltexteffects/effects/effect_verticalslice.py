@@ -58,7 +58,7 @@ class VerticalSlice:
         right half to start at the bottom, and creating rows consisting off halves from opposite
         input rows."""
 
-        self.rows = self.terminal.get_characters(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP)
+        self.rows = self.terminal.get_characters_sorted(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP)
         lengths = [max([c.input_coord.column for c in row]) for row in self.rows]
         mid_point = sum(lengths) // len(lengths) // 2
         for row_index, row in enumerate(self.rows):
@@ -91,7 +91,7 @@ class VerticalSlice:
             if self.new_rows:
                 next_row = self.new_rows.pop(0)
                 for character in next_row:
-                    character.is_visible = True
+                    self.terminal.set_character_visibility(character, True)
                 self.active_chars.extend(next_row)
             self.animate_chars()
             self.terminal.print()

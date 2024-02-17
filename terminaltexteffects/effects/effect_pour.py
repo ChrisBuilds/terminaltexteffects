@@ -115,10 +115,10 @@ class PourEffect:
         }
         if len(self.gradient_stops) > 1:
             gradient = graphics.Gradient(self.gradient_stops, self.args.gradient_steps)
-        groups = self.terminal.get_characters(sort_order=sort_map[self.pour_direction])
+        groups = self.terminal.get_characters_sorted(sort_order=sort_map[self.pour_direction])
         for i, group in enumerate(groups):
             for character in group:
-                character.is_visible = False
+                self.terminal.set_character_visibility(character, False)
                 if self.pour_direction == PourDirection.DOWN:
                     character.motion.set_coordinate(
                         motion.Coord(character.input_coord.column, self.terminal.output_area.top)
@@ -168,7 +168,7 @@ class PourEffect:
             if current_group:
                 if not gap:
                     next_character = current_group.pop(0)
-                    next_character.is_visible = True
+                    self.terminal.set_character_visibility(next_character, True)
                     self.active_characters.append(next_character)
                     gap = self.args.gap
                 else:

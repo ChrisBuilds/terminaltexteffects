@@ -68,10 +68,10 @@ class CrumbleEffect:
         strengthen_flash_gradient = graphics.Gradient([self.args.final_color, "ffffff"], 6)
         strengthen_gradient = graphics.Gradient(["ffffff", self.args.final_color], 9)
 
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             dust_color = random.choice(self.args.dust_colors)
             weaken_gradient = graphics.Gradient([self.args.initial_color, dust_color], 9)
-            character.is_visible = True
+            self.terminal.set_character_visibility(character, True)
             # set up initial and falling stage
             initial_scn = character.animation.new_scene()
             initial_scn.add_frame(character.input_symbol, 1, color=self.args.initial_color)
@@ -141,7 +141,7 @@ class CrumbleEffect:
         reset = False
         fall_group_maxsize = 1
         stage = "falling"
-        unvacuumed_chars = list(self.terminal.characters)
+        unvacuumed_chars = list(self.terminal._input_characters)
         random.shuffle(unvacuumed_chars)
         self.terminal.print()
         while stage != "complete":
@@ -178,7 +178,7 @@ class CrumbleEffect:
 
             elif stage == "resetting":
                 if not reset:
-                    for character in self.terminal.characters:
+                    for character in self.terminal._input_characters:
                         character.motion.activate_path(character.motion.query_path("input"))
                         self.active_chars.append(character)
                     reset = True

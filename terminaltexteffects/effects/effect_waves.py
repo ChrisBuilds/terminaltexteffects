@@ -82,7 +82,7 @@ class WavesEffect:
         wave_gradient = list(wave_gradient_light) + list(wave_gradient_dark)[1:]
         colored_waves = list(zip(block_wipe_start + block_wipe_end, wave_gradient))
         final_gradient = graphics.Gradient([self.args.wave_shallow_color, self.args.final_color], 8)
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             wave_scn = character.animation.new_scene()
             wave_scn.ease = self.args.wave_easing
             for _ in range(self.args.wave_count):
@@ -95,7 +95,7 @@ class WavesEffect:
                 EventHandler.Event.SCENE_COMPLETE, wave_scn, EventHandler.Action.ACTIVATE_SCENE, final_scn
             )
             character.animation.activate_scene(wave_scn)
-        for column in self.terminal.get_characters(sort_order=self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT):
+        for column in self.terminal.get_characters_sorted(sort_order=self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT):
             self.pending_columns.append(column)
 
     def run(self) -> None:
@@ -105,7 +105,7 @@ class WavesEffect:
             if self.pending_columns:
                 next_column = self.pending_columns.pop(0)
                 for character in next_column:
-                    character.is_visible = True
+                    self.terminal.set_character_visibility(character, True)
                     self.active_chars.append(character)
             self.terminal.print()
             self.animate_chars()

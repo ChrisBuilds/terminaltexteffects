@@ -87,12 +87,12 @@ class ErrorCorrectEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by swapping positions and generating animations and waypoints."""
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             spawn_scene = character.animation.new_scene()
             spawn_scene.add_frame(character.input_symbol, 1, color=self.args.final_color)
             character.animation.activate_scene(spawn_scene)
-            character.is_visible = True
-        all_characters: list[EffectCharacter] = list(self.terminal.characters)
+            self.terminal.set_character_visibility(character, True)
+        all_characters: list[EffectCharacter] = list(self.terminal._input_characters)
         correcting_gradient = graphics.Gradient([self.args.error_color, self.args.correct_color], 10)
         final_gradient = graphics.Gradient([self.args.correct_color, self.args.final_color], 10)
         block_symbol = "▓"

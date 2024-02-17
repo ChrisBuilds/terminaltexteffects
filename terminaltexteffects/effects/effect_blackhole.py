@@ -91,7 +91,7 @@ class BlackholeEffect:
         gradient_map = {}
         for color in starfield_colors:
             gradient_map[color] = graphics.Gradient([color, "000000"], 10)
-        available_chars = list(self.terminal.characters)
+        available_chars = list(self.terminal._input_characters)
         while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
             self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
         black_hole_ring_positions = motion.Motion.find_coords_on_circle(
@@ -110,8 +110,8 @@ class BlackholeEffect:
             blackhole_rotation_path = character.motion.new_path(id="blackhole_rotation", speed=0.2, loop=True)
             for coord in black_hole_ring_positions[position_index:] + black_hole_ring_positions[:position_index]:
                 blackhole_rotation_path.new_waypoint(coord, id=str(len(blackhole_rotation_path.waypoints)))
-        for character in self.terminal.characters:
-            character.is_visible = True
+        for character in self.terminal.get_characters():
+            self.terminal.set_character_visibility(character, True)
             starting_scn = character.animation.new_scene()
             star_symbol = random.choice(star_symbols)
             star_color = random.choice(starfield_colors)
@@ -196,7 +196,7 @@ class BlackholeEffect:
 
     def explode_singularity(self) -> None:
         star_colors = ["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c" "049dbf"]
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             nearby_coord = motion.Motion.find_coords_on_circle(character.input_coord, 3, 5)[random.randrange(0, 5)]
             nearby_path = character.motion.new_path(speed=random.randint(2, 3) / 10, ease=easing.out_expo)
             nearby_path.new_waypoint(nearby_coord)
@@ -229,7 +229,7 @@ class BlackholeEffect:
         formation_delay = max(100 // len(self.blackhole_chars), 10)
         f_delay = formation_delay
         next_char_consuming_delay = 0
-        max_consume = max(min(int(0.1 * len(self.terminal.characters)), 15), 2)
+        max_consume = max(min(int(0.1 * len(self.terminal._input_characters)), 15), 2)
         phase = "forming"
         awaiting_blackhole_chars = list(self.blackhole_chars)
         while self.active_chars or phase != "complete":

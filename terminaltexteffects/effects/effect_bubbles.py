@@ -91,12 +91,14 @@ class Bubble:
         effect: "BubblesEffect",
         origin: motion.Coord,
         characters: list[EffectCharacter],
+        terminal: Terminal,
     ):
         self.effect = effect
         self.characters = characters
+        self.terminal = terminal
         self.radius = max(len(self.characters) // 5, 1)
         self.origin = origin
-        self.anchor_char = EffectCharacter(" ", origin.column, origin.row)
+        self.anchor_char = self.terminal.add_character(" ", self.origin)
         if self.effect.args.pop_condition == "row":
             self.lowest_row = min([char.input_coord.row for char in self.characters])
         else:
@@ -172,7 +174,7 @@ class Bubble:
 
     def activate(self) -> None:
         for char in self.characters:
-            char.is_visible = True
+            self.terminal.set_character_visibility(char, True)
 
     def move(self) -> None:
         self.anchor_char.motion.move()
@@ -202,7 +204,7 @@ class BubblesEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
         final_gradient = graphics.Gradient([self.args.pop_color, self.args.final_color], 10)
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             character.layer = 1
             pop_1_scene = character.animation.new_scene(id="pop_1")
             pop_2_scene = character.animation.new_scene()
@@ -231,7 +233,7 @@ class BubblesEffect:
             )
 
         unbubbled_chars = []
-        for char_list in self.terminal.get_characters(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP):
+        for char_list in self.terminal.get_characters_sorted(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP):
             unbubbled_chars.extend(char_list)
         self.bubbles = []
         while unbubbled_chars:
@@ -246,7 +248,7 @@ class BubblesEffect:
                 random.randint(self.terminal.output_area.left, self.terminal.output_area.right),
                 self.terminal.output_area.top,
             )
-            new_bubble = Bubble(self, bubble_origin, bubble_group)
+            new_bubble = Bubble(self, bubble_origin, bubble_group, self.terminal)
             self.bubbles.append(new_bubble)
 
     def run(self) -> None:

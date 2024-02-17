@@ -150,28 +150,16 @@ class Group:
     def __init__(self, characters: list[EffectCharacter], direction: str, terminal: Terminal, args: argparse.Namespace):
         self.characters = characters
         self.direction: str = direction
+        self.terminal = terminal
         direction_speed_range = {
             "row": (args.beam_row_min_speed, args.beam_row_max_speed),
             "column": (args.beam_column_min_speed, args.beam_column_max_speed),
         }
         self.speed = random.randint(direction_speed_range[direction][0], direction_speed_range[direction][1]) * 0.1
         self.next_character_counter: float = 0
-        input_coord_map = {
-            (character.input_coord.column, character.input_coord.row): character for character in characters
-        }
         if self.direction == "row":
-            row_index = self.characters[0].input_coord.row
-            for column_index in range(terminal.output_area.left, terminal.output_area.right + 1):
-                if not input_coord_map.get((column_index, row_index)):
-                    new_char = terminal.add_character(" ", motion.Coord(column_index, row_index))
-                    self.characters.append(new_char)
             self.characters.sort(key=lambda character: character.input_coord.column)
         elif self.direction == "column":
-            column_index = self.characters[0].input_coord.column
-            for row_index in range(terminal.output_area.bottom, terminal.output_area.top + 1):
-                if not input_coord_map.get((column_index, row_index)):
-                    new_char = terminal.add_character(" ", motion.Coord(column_index, row_index))
-                    self.characters.append(new_char)
             self.characters.sort(key=lambda character: character.input_coord.row)
         if random.choice([True, False]):
             self.characters.reverse()
@@ -186,7 +174,7 @@ class Group:
             next_character.animation.active_scene.reset_scene()
             return_value = None
         else:
-            next_character.is_visible = True
+            self.terminal.set_character_visibility(next_character, True)
             return_value = next_character
         next_character.animation.activate_scene(next_character.animation.query_scene("beam_" + self.direction))
         return return_value
@@ -213,9 +201,9 @@ class BeamsEffect:
         final_text_gradient = graphics.Gradient(self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
         faded_text_gradient = graphics.Gradient([self.args.text_glow_color, self.args.text_fade_color], steps=5)
         groups: list[Group] = []
-        for row in self.terminal.get_characters(Terminal.CharacterSort.ROW_TOP_TO_BOTTOM):
+        for row in self.terminal.get_characters_sorted(Terminal.CharacterSort.ROW_TOP_TO_BOTTOM, fill_chars=True):
             groups.append(Group(row, "row", self.terminal, self.args))
-        for column in self.terminal.get_characters(Terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT):
+        for column in self.terminal.get_characters_sorted(Terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT, fill_chars=True):
             groups.append(Group(column, "column", self.terminal, self.args))
         for group in groups:
             for character in group.characters:
@@ -250,7 +238,9 @@ class BeamsEffect:
         active_groups: list[Group] = []
         delay = 0
         phase = "beams"
-        final_wipe_groups = self.terminal.get_characters(Terminal.CharacterSort.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT)
+        final_wipe_groups = self.terminal.get_characters_sorted(
+            Terminal.CharacterSort.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
+        )
         while phase != "complete" or self.active_chars:
             if phase == "beams":
                 if not delay:
@@ -280,7 +270,7 @@ class BeamsEffect:
                         next_group = final_wipe_groups.pop(0)
                         for character in next_group:
                             character.animation.activate_scene(character.animation.query_scene("brighten"))
-                            character.is_visible = True
+                            self.terminal.set_character_visibility(character, True)
                             self.active_chars.append(character)
                 else:
                     phase = "complete"

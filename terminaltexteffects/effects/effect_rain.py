@@ -80,7 +80,7 @@ class RainEffect:
             rain_colors = [39, 45, 51, 21, 117, 159]
         rain_characters = ["o", ".", ",", "*", "|"]
 
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             raindrop_color = random.choice(rain_colors)
             rain_scn = character.animation.new_scene()
             rain_scn.add_frame(random.choice(rain_characters), 1, color=raindrop_color)
@@ -118,7 +118,7 @@ class RainEffect:
                 for _ in range(random.randint(1, 3)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
-                        next_character.is_visible = True
+                        self.terminal.set_character_visibility(next_character, True)
                         self.active_chars.append(next_character)
 
                     else:

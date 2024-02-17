@@ -100,7 +100,7 @@ class DecryptEffect:
 
     def prepare_data_for_type_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             typing_scene = character.animation.new_scene(id="typing")
             for block_char in ["▉", "▓", "▒", "░"]:
                 typing_scene.add_frame(block_char, 2, color=self.ciphertext_color)
@@ -110,7 +110,7 @@ class DecryptEffect:
 
     def prepare_data_for_decrypt_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
-        for character in self.terminal.characters:
+        for character in self.terminal._input_characters:
             self.make_decrypting_animation_scenes(character)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
@@ -141,7 +141,7 @@ class DecryptEffect:
             if self.pending_chars:
                 if random.randint(0, 100) <= 75:
                     next_character = self.pending_chars.pop(0)
-                    next_character.is_visible = True
+                    self.terminal.set_character_visibility(next_character, True)
                     next_character.animation.activate_scene(next_character.animation.query_scene("typing"))
                     self.active_chars.append(next_character)
             self.animate_chars()
