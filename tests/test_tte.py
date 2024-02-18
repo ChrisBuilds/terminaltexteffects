@@ -28,6 +28,7 @@ from terminaltexteffects.effects import (
     effect_wipe,
     effect_synthgrid,
     effect_beams,
+    effect_overflow,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -71,6 +72,18 @@ def make_args() -> Namespace:
     args.gradient_steps = 5
     args.gradient_frames = 5
     return args
+
+
+def test_overflow_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.final_color = "f3b462"
+        args.overflow_gradient_stops = ["f2ebc0", "8dbfb3", "f2ebc0"]
+        args.overflow_cycles_range = (2, 4)
+        args.overflow_speed = 3
+        terminal = Terminal(input_data, args)
+        overflow_effect = effect_overflow.OverflowEffect(terminal, args)
+        overflow_effect.run()
 
 
 def test_beams_effect() -> None:
