@@ -114,7 +114,7 @@ class OverflowEffect:
         delay = 0
         g = graphics.Gradient(
             self.args.overflow_gradient_stops,
-            self.terminal.output_area.top // max(1, len(self.args.overflow_gradient_stops) - 1),
+            max((self.terminal.output_area.top // max(1, len(self.args.overflow_gradient_stops) - 1)), 1),
         )
 
         while self.pending_rows:
