@@ -247,3 +247,23 @@ def symbol_multiple(arg: str) -> str:
         raise argparse.ArgumentTypeError(
             f"invalid symbol: {arg} is not a valid symbol. Must be a single ASCII/UTF-8 character."
         )
+
+
+def int_range(arg: str) -> tuple[int, int]:
+    """Validates that the given argument is a valid range of integers n >= 0.
+
+    Args:
+        arg (str): argument to validate
+
+    Returns:
+        tuple[int,int]: validated range
+    """
+    try:
+        start, end = map(int, arg.split("-"))
+        if start > end:
+            raise argparse.ArgumentTypeError(
+                f"invalid range: {arg} is not a valid rangeof ints. Must be start <= end. Ex: 0-10"
+            )
+        return start, end
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"invalid range: {arg} is not a valid range. Must be start-end. Ex: 0-10")
