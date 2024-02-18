@@ -461,6 +461,27 @@ class Animation:
 
         return False
 
+    def set_appearance(self, symbol: str, color: str | int | None = None) -> None:
+        """Applies a symbol and color to the character. If the character has an active scene, any appearance set with this method
+        will be overwritten when the scene is stepped to the next frame.
+
+        Args:
+            symbol (str): The symbol to apply.
+            color (str | int | None): The color to apply.
+        """
+        if not self.no_color and color is not None:
+            if self.use_xterm_colors and isinstance(color, str):
+                if color in self.xterm_color_map:
+                    color = self.xterm_color_map[color]
+                else:
+                    xterm_color = hexterm.hex_to_xterm(color)
+                    self.xterm_color_map[color] = xterm_color
+                    color = xterm_color
+        else:
+            color = None
+        visual = CharacterVisual(symbol, color=color)
+        self.character.symbol = visual.symbol
+
     @staticmethod
     def random_color() -> str:
         """Returns a random hex color code.
