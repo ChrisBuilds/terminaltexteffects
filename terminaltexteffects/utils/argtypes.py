@@ -262,7 +262,7 @@ def int_range(arg: str) -> tuple[int, int]:
         start, end = map(int, arg.split("-"))
         if start > end:
             raise argparse.ArgumentTypeError(
-                f"invalid range: {arg} is not a valid rangeof ints. Must be start <= end. Ex: 0-10"
+                f"invalid range: {arg} is not a valid range of ints. Must be start <= end. Ex: 0-10"
             )
         return start, end
     except ValueError:
