@@ -80,7 +80,6 @@ class Row:
 
 
 class OverflowEffect:
-    """Effect that ___."""
 
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
         self.terminal = terminal
