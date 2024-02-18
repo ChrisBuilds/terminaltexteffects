@@ -476,6 +476,8 @@ Any effects shown below are in development and will be available in the next rel
 #### Beams
 ![beams_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2768489f-755e-4460-92f7-bccc8b83a026)
 
+#### Overflow
+![overflow_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/83bc225f-926b-4ddd-bbf0-777c601ba244)
 
 ## Latest Release Notes
 
