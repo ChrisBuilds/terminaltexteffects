@@ -507,14 +507,12 @@ class Motion:
         return path
 
     def movement_is_complete(self) -> bool:
-        """Returns whether the character has reached the final coordinate and moved the requisite number of steps, or the path is looping.
+        """Returns whether the character has reached the final coordinate and moved the requisite number of steps.
 
         Returns:
             bool: True if the character has reached the final coordinate and has taken the maximum number of steps, False otherwise.
         """
         if self.active_path is None:
-            return True
-        elif self.active_path and self.active_path.loop:
             return True
         return False
 
