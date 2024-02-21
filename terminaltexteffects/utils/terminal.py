@@ -5,7 +5,7 @@ import shutil
 import sys
 import time
 import argparse
-from itertools import chain
+
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -92,6 +92,8 @@ class Terminal:
         DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT = auto()
         DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT = auto()
         DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT = auto()
+        CENTER_TO_OUTSIDE = auto()
+        OUTSIDE_TO_CENTER = auto()
 
     def __init__(self, input_data: str, args: argparse.Namespace):
         self.input_data = input_data.replace("\t", " " * args.tab_width)
@@ -292,7 +294,7 @@ class Terminal:
             list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond to rows,
             columns, or diagonals depending on the sort_order.
         """
-        all_characters = []
+        all_characters: list[EffectCharacter] = []
         if input_characters:
             all_characters.extend(self._input_characters)
         if fill_chars:
@@ -356,6 +358,20 @@ class Terminal:
             if sort_order == self.CharacterSort.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT:
                 diagonals.reverse()
             return diagonals
+        elif sort_order in (self.CharacterSort.CENTER_TO_OUTSIDE, self.CharacterSort.OUTSIDE_TO_CENTER):
+            distance_map: dict[int, list[EffectCharacter]] = {}
+            center_out = []
+            for character in all_characters:
+                distance = abs(character.input_coord.column - self.output_area.center.column) + abs(
+                    character.input_coord.row - self.output_area.center.row
+                )
+                if distance not in distance_map:
+                    distance_map[distance] = []
+                distance_map[distance].append(character)
+            for distance in sorted(distance_map.keys(), reverse=sort_order is self.CharacterSort.OUTSIDE_TO_CENTER):
+                center_out.append(distance_map[distance])
+            return center_out
+
         else:
             raise ValueError(f"Invalid sort_order: {sort_order}")
 
