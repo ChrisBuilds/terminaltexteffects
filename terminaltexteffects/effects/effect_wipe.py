@@ -88,16 +88,16 @@ class WipeEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
         sort_map = {
-            "column_left_to_right": self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT,
-            "column_right_to_left": self.terminal.CharacterSort.COLUMN_RIGHT_TO_LEFT,
-            "row_top_to_bottom": self.terminal.CharacterSort.ROW_TOP_TO_BOTTOM,
-            "row_bottom_to_top": self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP,
-            "diagonal_top_left_to_bottom_right": self.terminal.CharacterSort.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
-            "diagonal_bottom_left_to_top_right": self.terminal.CharacterSort.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
-            "diagonal_top_right_to_bottom_left": self.terminal.CharacterSort.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
-            "diagonal_bottom_right_to_top_left": self.terminal.CharacterSort.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+            "column_left_to_right": self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            "column_right_to_left": self.terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            "row_top_to_bottom": self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            "row_bottom_to_top": self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
+            "diagonal_top_left_to_bottom_right": self.terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            "diagonal_bottom_left_to_top_right": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+            "diagonal_top_right_to_bottom_left": self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+            "diagonal_bottom_right_to_top_left": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         }
-        for group in self.terminal.get_characters_sorted(sort_map[self.direction]):
+        for group in self.terminal.get_characters_grouped(sort_map[self.direction]):
             if self.args.gradient_stops:
                 for character in group:
                     wipe_scn = character.animation.new_scene()

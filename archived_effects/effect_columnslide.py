@@ -88,7 +88,7 @@ class ColumnSlide:
         self.columns = {
             column_index: column
             for column_index, column in enumerate(
-                self.terminal.get_characters_sorted(sort_order=self.terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT)
+                self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
             )
         }
         if self.slide_direction == SlideDirection.DOWN:

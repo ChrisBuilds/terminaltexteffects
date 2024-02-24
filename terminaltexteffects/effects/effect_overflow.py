@@ -92,7 +92,7 @@ class OverflowEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
         lower_range, upper_range = self.args.overflow_cycles_range
-        rows = self.terminal.get_characters_sorted(Terminal.CharacterSort.ROW_TOP_TO_BOTTOM)
+        rows = self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
         if upper_range > 0:
             for _ in range(random.randint(lower_range, upper_range)):
                 random.shuffle(rows)
@@ -102,7 +102,7 @@ class OverflowEffect:
                     ]
                     self.pending_rows.append(Row(copied_characters))
         # add rows in correct order to the end of self.pending_rows
-        for row in self.terminal.get_characters_sorted(Terminal.CharacterSort.ROW_TOP_TO_BOTTOM, fill_chars=True):
+        for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
             next_row = Row(row)
             next_row.set_color(self.args.final_color)
             self.pending_rows.append(Row(row, final=True))

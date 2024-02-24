@@ -195,8 +195,8 @@ class BinaryPathEffect:
         active_binary_reps: list[BinaryRepresentation] = []
         complete = False
         phase = "travel"
-        final_wipe_chars = self.terminal.get_characters_sorted(
-            sort_order=self.terminal.CharacterSort.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT
+        final_wipe_chars = self.terminal.get_characters_grouped(
+            grouping=self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT
         )
         max_active_binary_groups = max(
             1, int(self.args.active_binary_groups * len(self.pending_binary_representations))

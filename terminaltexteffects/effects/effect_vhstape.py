@@ -277,7 +277,7 @@ class VHSTapeEffect:
 
     def prepare_data(self) -> None:
         for row_index, characters in enumerate(
-            self.terminal.get_characters_sorted(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP)
+            self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP)
         ):
             self.lines[row_index] = Line(characters, self.args)
         for character in self.terminal._input_characters:

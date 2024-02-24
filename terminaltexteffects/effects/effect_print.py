@@ -104,7 +104,7 @@ class PrintEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
-        input_rows = self.terminal.get_characters_sorted(sort_order=self.terminal.CharacterSort.ROW_TOP_TO_BOTTOM)
+        input_rows = self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
         for input_row in input_rows:
             self.pending_rows.append(Row(input_row, self.args.text_color, self.args.print_head_color))
         head_color_scn = self.typing_head.animation.new_scene()

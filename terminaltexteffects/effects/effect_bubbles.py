@@ -111,9 +111,7 @@ class Bubble:
     def set_character_coordinates(self) -> None:
         for i, char in enumerate(self.characters):
             point = self.anchor_char.motion.find_coords_on_circle(
-                self.anchor_char.motion.current_coord,
-                self.radius,
-                len(self.characters),
+                self.anchor_char.motion.current_coord, self.radius, len(self.characters), unique=False
             )[i]
             char.motion.set_coordinate(point)
             if point.row == self.lowest_row:
@@ -233,7 +231,7 @@ class BubblesEffect:
             )
 
         unbubbled_chars = []
-        for char_list in self.terminal.get_characters_sorted(sort_order=self.terminal.CharacterSort.ROW_BOTTOM_TO_TOP):
+        for char_list in self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP):
             unbubbled_chars.extend(char_list)
         self.bubbles = []
         while unbubbled_chars:

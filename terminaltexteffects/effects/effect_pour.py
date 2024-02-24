@@ -108,14 +108,14 @@ class PourEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by sorting the characters by the pour direction."""
         sort_map = {
-            PourDirection.DOWN: Terminal.CharacterSort.ROW_BOTTOM_TO_TOP,
-            PourDirection.UP: Terminal.CharacterSort.ROW_TOP_TO_BOTTOM,
-            PourDirection.LEFT: Terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT,
-            PourDirection.RIGHT: Terminal.CharacterSort.COLUMN_RIGHT_TO_LEFT,
+            PourDirection.DOWN: Terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
+            PourDirection.UP: Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            PourDirection.LEFT: Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            PourDirection.RIGHT: Terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
         }
         if len(self.gradient_stops) > 1:
             gradient = graphics.Gradient(self.gradient_stops, self.args.gradient_steps)
-        groups = self.terminal.get_characters_sorted(sort_order=sort_map[self.pour_direction])
+        groups = self.terminal.get_characters_grouped(grouping=sort_map[self.pour_direction])
         for i, group in enumerate(groups):
             for character in group:
                 self.terminal.set_character_visibility(character, False)

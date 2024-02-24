@@ -201,9 +201,11 @@ class BeamsEffect:
         final_text_gradient = graphics.Gradient(self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
         faded_text_gradient = graphics.Gradient([self.args.text_glow_color, self.args.text_fade_color], steps=5)
         groups: list[Group] = []
-        for row in self.terminal.get_characters_sorted(Terminal.CharacterSort.ROW_TOP_TO_BOTTOM, fill_chars=True):
+        for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
             groups.append(Group(row, "row", self.terminal, self.args))
-        for column in self.terminal.get_characters_sorted(Terminal.CharacterSort.COLUMN_LEFT_TO_RIGHT, fill_chars=True):
+        for column in self.terminal.get_characters_grouped(
+            Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, fill_chars=True
+        ):
             groups.append(Group(column, "column", self.terminal, self.args))
         for group in groups:
             for character in group.characters:
@@ -238,8 +240,8 @@ class BeamsEffect:
         active_groups: list[Group] = []
         delay = 0
         phase = "beams"
-        final_wipe_groups = self.terminal.get_characters_sorted(
-            Terminal.CharacterSort.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
+        final_wipe_groups = self.terminal.get_characters_grouped(
+            Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
         )
         while phase != "complete" or self.active_chars:
             if phase == "beams":
