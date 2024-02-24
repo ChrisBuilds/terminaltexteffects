@@ -81,8 +81,8 @@ class OutputArea:
 class Terminal:
     """A class for managing the terminal state and output."""
 
-    class CharacterSort(Enum):
-        """An enum for sorting characters by column, row, or diagonal."""
+    class CharacterGroup(Enum):
+        """An enum for grouping characters."""
 
         COLUMN_LEFT_TO_RIGHT = auto()
         COLUMN_RIGHT_TO_LEFT = auto()
@@ -92,8 +92,19 @@ class Terminal:
         DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT = auto()
         DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT = auto()
         DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT = auto()
-        CENTER_TO_OUTSIDE = auto()
-        OUTSIDE_TO_CENTER = auto()
+        CENTER_TO_OUTSIDE_DIAMONDS = auto()
+        OUTSIDE_TO_CENTER_DIAMONDS = auto()
+
+    class CharacterSort(Enum):
+        """An enum for sorting characters."""
+
+        RANDOM = auto()
+        TOP_TO_BOTTOM_LEFT_TO_RIGHT = auto()
+        TOP_TO_BOTTOM_RIGHT_TO_LEFT = auto()
+        BOTTOM_TO_TOP_LEFT_TO_RIGHT = auto()
+        BOTTOM_TO_TOP_RIGHT_TO_LEFT = auto()
+        OUTSIDE_ROW_TO_MIDDLE = auto()
+        MIDDLE_ROW_TO_OUTSIDE = auto()
 
     def __init__(self, input_data: str, args: argparse.Namespace):
         self.input_data = input_data.replace("\t", " " * args.tab_width)
@@ -253,46 +264,23 @@ class Terminal:
         print("\n" * self.output_area.top)
 
     def get_characters(
-        self, *, input_characters: bool = True, fill_chars: bool = False, added_chars: bool = False
-    ) -> list[EffectCharacter]:
-        """Get a list of all EffectCharacters in the terminal.
-
-        Args:
-            input_characters (bool, optional): whether to include input characters. Defaults to True.
-            fill_chars (bool, optional): whether to include fill characters. Defaults to False.
-            added_chars (bool, optional): whether to include added characters. Defaults to False.
-
-        Returns:
-            list[EffectCharacter]: list of EffectCharacters in the terminal
-        """
-        all_characters = []
-        if input_characters:
-            all_characters.extend(self._input_characters)
-        if fill_chars:
-            all_characters.extend(self._fill_characters)
-        if added_chars:
-            all_characters.extend(self._added_characters)
-        return all_characters
-
-    def get_characters_sorted(
         self,
-        sort_order: CharacterSort = CharacterSort.ROW_TOP_TO_BOTTOM,
         *,
         input_characters: bool = True,
         fill_chars: bool = False,
         added_chars: bool = False,
-    ) -> list[list[EffectCharacter]]:
-        """Get a list of all EffectCharacters, input and non-input, in the terminal sorted by the specified sort_order. If input_only is True, only input characters are returned.
+        sort: CharacterSort = CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT,
+    ) -> list[EffectCharacter]:
+        """Get a list of all EffectCharacters in the terminal with an optional sort.
 
         Args:
-            sort_order (CharacterSort, optional): order to sort the characters. Defaults to ROW_TOP_TO_BOTTOM.
             input_characters (bool, optional): whether to include input characters. Defaults to True.
             fill_chars (bool, optional): whether to include fill characters. Defaults to False.
             added_chars (bool, optional): whether to include added characters. Defaults to False.
+            sort (CharacterSort, optional): order to sort the characters. Defaults to CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT.
 
         Returns:
-            list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond to rows,
-            columns, or diagonals depending on the sort_order.
+            list[EffectCharacter]: list of EffectCharacters in the terminal
         """
         all_characters: list[EffectCharacter] = []
         if input_characters:
@@ -301,7 +289,56 @@ class Terminal:
             all_characters.extend(self._fill_characters)
         if added_chars:
             all_characters.extend(self._added_characters)
-        if sort_order in (self.CharacterSort.COLUMN_LEFT_TO_RIGHT, self.CharacterSort.COLUMN_RIGHT_TO_LEFT):
+
+        if sort is self.CharacterSort.RANDOM:
+            random.shuffle(all_characters)
+
+        elif sort in (self.CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT, self.CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT):
+            if sort is self.CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT:
+                all_characters.reverse()
+
+        elif sort in (self.CharacterSort.BOTTOM_TO_TOP_LEFT_TO_RIGHT, self.CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT):
+            all_characters.sort(key=lambda character: (character.input_coord.row, character.input_coord.column))
+            if sort is self.CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT:
+                all_characters.reverse()
+
+        elif sort in (self.CharacterSort.OUTSIDE_ROW_TO_MIDDLE, self.CharacterSort.MIDDLE_ROW_TO_OUTSIDE):
+            all_characters.sort(key=lambda character: (character.input_coord.row, character.input_coord.column))
+            all_characters = [
+                all_characters.pop(0) if i % 2 == 0 else all_characters.pop(-1) for i in range(len(all_characters))
+            ]
+            if sort is self.CharacterSort.MIDDLE_ROW_TO_OUTSIDE:
+                all_characters.reverse()
+
+        return all_characters
+
+    def get_characters_grouped(
+        self,
+        grouping: CharacterGroup = CharacterGroup.ROW_TOP_TO_BOTTOM,
+        *,
+        input_characters: bool = True,
+        fill_chars: bool = False,
+        added_chars: bool = False,
+    ) -> list[list[EffectCharacter]]:
+        """Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping. If input_only is True, only input characters are returned.
+
+        Args:
+            grouping (CharacterGroup, optional): order to group the characters. Defaults to ROW_TOP_TO_BOTTOM.
+            input_characters (bool, optional): whether to include input characters. Defaults to True.
+            fill_chars (bool, optional): whether to include fill characters. Defaults to False.
+            added_chars (bool, optional): whether to include added characters. Defaults to False.
+
+        Returns:
+            list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond to groups as specified in the grouping.
+        """
+        all_characters: list[EffectCharacter] = []
+        if input_characters:
+            all_characters.extend(self._input_characters)
+        if fill_chars:
+            all_characters.extend(self._fill_characters)
+        if added_chars:
+            all_characters.extend(self._added_characters)
+        if grouping in (self.CharacterGroup.COLUMN_LEFT_TO_RIGHT, self.CharacterGroup.COLUMN_RIGHT_TO_LEFT):
             columns = []
             for column_index in range(self.output_area.right + 1):
                 characters_in_column = [
@@ -309,11 +346,11 @@ class Terminal:
                 ]
                 if characters_in_column:
                     columns.append(characters_in_column)
-            if sort_order == self.CharacterSort.COLUMN_RIGHT_TO_LEFT:
+            if grouping == self.CharacterGroup.COLUMN_RIGHT_TO_LEFT:
                 columns.reverse()
             return columns
 
-        elif sort_order in (self.CharacterSort.ROW_BOTTOM_TO_TOP, self.CharacterSort.ROW_TOP_TO_BOTTOM):
+        elif grouping in (self.CharacterGroup.ROW_BOTTOM_TO_TOP, self.CharacterGroup.ROW_TOP_TO_BOTTOM):
             rows = []
             for row_index in range(self.output_area.top + 1):
                 characters_in_row = [
@@ -321,12 +358,12 @@ class Terminal:
                 ]
                 if characters_in_row:
                     rows.append(characters_in_row)
-            if sort_order == self.CharacterSort.ROW_TOP_TO_BOTTOM:
+            if grouping == self.CharacterGroup.ROW_TOP_TO_BOTTOM:
                 rows.reverse()
             return rows
-        elif sort_order in (
-            self.CharacterSort.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
-            self.CharacterSort.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+        elif grouping in (
+            self.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+            self.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
         ):
             diagonals = []
             for diagonal_index in range(self.output_area.top + self.output_area.right + 1):
@@ -337,12 +374,12 @@ class Terminal:
                 ]
                 if characters_in_diagonal:
                     diagonals.append(characters_in_diagonal)
-            if sort_order == self.CharacterSort.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT:
+            if grouping == self.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT:
                 diagonals.reverse()
             return diagonals
-        elif sort_order in (
-            self.CharacterSort.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
-            self.CharacterSort.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+        elif grouping in (
+            self.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            self.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         ):
             diagonals = []
             for diagonal_index in range(
@@ -355,10 +392,13 @@ class Terminal:
                 ]
                 if characters_in_diagonal:
                     diagonals.append(characters_in_diagonal)
-            if sort_order == self.CharacterSort.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT:
+            if grouping == self.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT:
                 diagonals.reverse()
             return diagonals
-        elif sort_order in (self.CharacterSort.CENTER_TO_OUTSIDE, self.CharacterSort.OUTSIDE_TO_CENTER):
+        elif grouping in (
+            self.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS,
+            self.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
+        ):
             distance_map: dict[int, list[EffectCharacter]] = {}
             center_out = []
             for character in all_characters:
@@ -368,12 +408,14 @@ class Terminal:
                 if distance not in distance_map:
                     distance_map[distance] = []
                 distance_map[distance].append(character)
-            for distance in sorted(distance_map.keys(), reverse=sort_order is self.CharacterSort.OUTSIDE_TO_CENTER):
+            for distance in sorted(
+                distance_map.keys(), reverse=grouping is self.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS
+            ):
                 center_out.append(distance_map[distance])
             return center_out
 
         else:
-            raise ValueError(f"Invalid sort_order: {sort_order}")
+            raise ValueError(f"Invalid sort_order: {grouping}")
 
     def get_character_by_input_coord(self, coord: motion.Coord) -> EffectCharacter:
         """Get an EffectCharacter by its input coordinates.
