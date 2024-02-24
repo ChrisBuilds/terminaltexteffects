@@ -290,6 +290,8 @@ class Terminal:
         if added_chars:
             all_characters.extend(self._added_characters)
 
+        all_characters.sort(key=lambda character: (character.input_coord.row, character.input_coord.column))
+
         if sort is self.CharacterSort.RANDOM:
             random.shuffle(all_characters)
 
@@ -303,7 +305,6 @@ class Terminal:
                 all_characters.reverse()
 
         elif sort in (self.CharacterSort.OUTSIDE_ROW_TO_MIDDLE, self.CharacterSort.MIDDLE_ROW_TO_OUTSIDE):
-            all_characters.sort(key=lambda character: (character.input_coord.row, character.input_coord.column))
             all_characters = [
                 all_characters.pop(0) if i % 2 == 0 else all_characters.pop(-1) for i in range(len(all_characters))
             ]
