@@ -55,6 +55,20 @@ class Gradient:
     stops: list[Color]
     steps: tuple[int, ...] | int
 
+    def get_color_at_fraction(self, fraction: float) -> str:
+        """Returns the color at a fraction of the gradient.
+
+        Args:
+            fraction (float): The fraction of the gradient to get the color for.
+
+        Returns:
+            str: The color at the fraction of the gradient.
+        """
+        if fraction < 0 or fraction > 1:
+            raise ValueError("Fraction must be 0 <= fraction <= 1.")
+        index = int(fraction * (len(self.spectrum) - 1))
+        return self.spectrum[index]
+
     def __post_init__(self) -> None:
         self.spectrum: list[str] = self._generate(self.steps)
         self.index: int = 0
@@ -135,6 +149,9 @@ class Gradient:
             return color
         else:
             raise StopIteration
+
+    def __len__(self) -> int:
+        return len(self.spectrum)
 
 
 @dataclass
