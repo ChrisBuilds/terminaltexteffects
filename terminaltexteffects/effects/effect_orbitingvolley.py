@@ -1,5 +1,4 @@
 import argparse
-import random
 from itertools import cycle
 
 import terminaltexteffects.utils.argtypes as argtypes
