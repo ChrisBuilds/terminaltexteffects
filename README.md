@@ -479,6 +479,9 @@ Any effects shown below are in development and will be available in the next rel
 #### Overflow
 ![overflow_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/83bc225f-926b-4ddd-bbf0-777c601ba244)
 
+#### OrbittingVolley
+![orbittingvolley_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/705a2c7a-4eda-4bb3-91c0-beccc1713c4d)
+
 ## Latest Release Notes
 
 ## 0.6.0
