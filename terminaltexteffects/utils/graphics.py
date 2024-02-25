@@ -30,7 +30,7 @@ class SyncMetric(Enum):
 class Gradient:
     """A Gradient is a list of RGB hex color strings transitioning from one color to another. The gradient color
     list is calculated using linear interpolation based on the provided start and end colors and the number of steps. Gradients
-    can be interated over to get the next color in the gradient color list. If there is only one color in the stops list,
+    can be iterated over to get the next color in the gradient color list. If there is only one color in the stops list,
     the gradient will be a list of the same color.
 
     If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps for the pair
