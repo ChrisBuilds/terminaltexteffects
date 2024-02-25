@@ -29,6 +29,7 @@ from terminaltexteffects.effects import (
     effect_synthgrid,
     effect_beams,
     effect_overflow,
+    effect_orbitingvolley,
 )
 from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -74,11 +75,30 @@ def make_args() -> Namespace:
     return args
 
 
+def test_orbittingvolley_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.top_launcher_symbol = "█"
+        args.right_launcher_symbol = "█"
+        args.bottom_launcher_symbol = "█"
+        args.left_launcher_symbol = "█"
+        args.final_gradient_stops = ["ffa51f", "ffa51f", "6177b3", "6177b3"]
+        args.final_gradient_steps = [6, 8, 10]
+        args.launcher_movement_speed = 0.5
+        args.character_movement_speed = 1
+        args.volley_size = 0.06
+        args.launch_delay = 1
+        args.character_easing = easing.out_sine
+        terminal = Terminal(input_data, args)
+        orbittingvolley_effect = effect_orbitingvolley.OrbittingVolleyEffect(terminal, args)
+        orbittingvolley_effect.run()
+
+
 def test_overflow_effect() -> None:
     for input_data in test_inputs:
         args = make_args()
         args.final_color = "f3b462"
-        args.overflow_gradient_stops = ["f2ebc0", "8dbfb3", "f2ebc0"]
+        args.overflow_gradient_stop = ["f2ebc0", "8dbfb3", "f2ebc0"]
         args.overflow_cycles_range = (2, 4)
         args.overflow_speed = 3
         terminal = Terminal(input_data, args)
