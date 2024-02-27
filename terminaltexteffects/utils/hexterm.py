@@ -305,3 +305,25 @@ def xterm_to_hex(xterm_color: int) -> str:
         int: RGB Hex color code
     """
     return xterm_to_hex_map[xterm_color].strip("#")
+
+
+def is_valid_color(color: int | str) -> bool:
+    """Check if the input is a valid RGB Hex color code.
+
+    Args:
+        color (int | str): X-Term 256 color code or RGB Hex color code, '#' is optional
+
+    Returns:
+        bool: True if the input is a valid color code
+
+    """
+    if isinstance(color, str):
+        if len(color) not in [6, 7]:
+            return False
+        try:
+            int(color.strip("#"), 16)
+        except ValueError:
+            return False
+        return True
+    else:
+        return color in range(256)
