@@ -418,17 +418,17 @@ class Terminal:
         else:
             raise ValueError(f"Invalid sort_order: {grouping}")
 
-    def get_character_by_input_coord(self, coord: motion.Coord) -> EffectCharacter:
+    def get_character_by_input_coord(self, coord: motion.Coord) -> EffectCharacter | None:
         """Get an EffectCharacter by its input coordinates.
 
         Args:
             coord (motion.Coord): input coordinates of the character
 
         Returns:
-            EffectCharacter: the character at the specified coordinates
+            EffectCharacter | None: the character at the specified coordinates, or None if no character is found
         """
         if coord not in self.character_by_input_coord:
-            raise ValueError(f"No character at input coordinates {coord}")
+            return None
         return self.character_by_input_coord[coord]
 
     def set_character_visibility(self, character: EffectCharacter, is_visible: bool) -> None:
