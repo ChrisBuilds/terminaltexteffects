@@ -312,9 +312,59 @@ class Motion:
         """
         points: list[Coord] = []
         for i in range(1, radius + 1):
-            points.extend(set((Motion.find_coords_on_circle(origin, i, 7 * radius))))
+            points.extend(set((Motion.find_coords_on_circle(origin, i))))
         points = list(set(points))
         return points
+
+    @staticmethod
+    def find_coords_in_ellipse(center: Coord, major_axis: int) -> list[Coord]:
+        h, k = center.column, center.row
+        coords_in_ellipse: list[Coord] = []
+        a_squared = major_axis**2
+        b_squared = (major_axis / 2) ** 2
+
+        for x in range(h - major_axis, h + major_axis + 1):
+            for y in range(k - major_axis, k + major_axis + 1):
+                if (x - h) ** 2 / a_squared + (y - k) ** 2 / b_squared <= 1:
+                    coords_in_ellipse.append(Coord(x, y))
+
+        return coords_in_ellipse
+
+    @staticmethod
+    def find_coords_on_ellipse(
+        center: Coord, major_axis: int, *, tolerance: float | None = None, sort=False
+    ) -> list[Coord]:
+        """
+        Finds the coordinates on an ellipse given the center, major axis length, and tolerance. The major axis is the X axis to account for the terminal character height/width ratio.
+
+        Args:
+            center (Coord): The center coordinate of the ellipse.
+            major_axis (int > 0): The length of the major axis of the ellipse.
+            tolerance (float, optional): The tolerance for determining if a point is on the ellipse, increase to add more points. If None, tolerance will be automatically calculated inversely proportional to the major axis. Defaults to None.
+            sort (bool, optional): Whether to sort the coordinates. Coordinates will be sorted clockwise around the ellipse. Defaults to False.
+
+        Returns:
+            list[Coord]: A list of coordinates on the ellipse.
+        """
+
+        if major_axis <= 0:
+            raise ValueError(f"({major_axis=}) Major axis must be greater than 0.")
+        h, k = center.column, center.row
+        coords_on_ellipse: list[Coord] = []
+        a_squared = major_axis**2
+        b_squared = (major_axis / 2) ** 2
+        if tolerance is None:
+            tolerance = (1 / major_axis) + (0.25 * (1 / major_axis))
+        else:
+            tolerance = tolerance
+
+        for x in range(h - major_axis, h + major_axis + 1):
+            for y in range(k - major_axis, k + major_axis + 1):
+                if abs((x - h) ** 2 / a_squared + (y - k) ** 2 / b_squared - 1) <= tolerance:
+                    coords_on_ellipse.append(Coord(x, y))
+        coords_on_ellipse = sorted(coords_on_ellipse, key=lambda coord: -math.atan2(coord.row - k, coord.column - h))
+
+        return coords_on_ellipse
 
     @staticmethod
     def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
@@ -440,18 +490,23 @@ class Motion:
         return length
 
     @staticmethod
-    def find_length_of_line(coord1: Coord, coord2: Coord) -> float:
-        """Returns the length of the line intersecting coord1 and coord2.
+    def find_length_of_line(coord1: Coord, coord2: Coord, double_row_diff: bool = False) -> float:
+        """Returns the length of the line intersecting coord1 and coord2. If double_row_diff is True, the distance is
+        doubled to account for the terminal character height/width ratio.
 
         Args:
-            coord1 (Coord): first coordinate
-            coord2 (Coord): second coordinate
+            coord1 (Coord): first coordinate.
+            coord2 (Coord): second coordinate.
+            double_row_diff (bool, optional): whether to double the row difference to account for terminal character height/width ratio. Defaults to
+            False.
 
         Returns:
             float: length of the line
         """
         column_diff = coord2.column - coord1.column
         row_diff = coord2.row - coord1.row
+        if double_row_diff:
+            return math.hypot(column_diff, 2 * row_diff)
         return math.hypot(column_diff, row_diff)
 
     def set_coordinate(self, coord: Coord) -> None:
