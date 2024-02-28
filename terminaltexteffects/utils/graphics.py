@@ -508,6 +508,73 @@ class Animation:
         """
         return hex(random.randint(0, 0xFFFFFF))[2:].zfill(6)
 
+    @staticmethod
+    def adjust_color_brightness(hex_color: str, brightness: float) -> str:
+        """
+        Adjusts the brightness of a given hex color.
+
+        Args:
+            hex_color (str): The hex color code to adjust.
+            brightness (float): The brightness adjustment factor.
+
+        Returns:
+            str: The adjusted hex color code.
+        """
+
+        def hue_to_rgb(p, q, t):
+            if t < 0:
+                t += 1
+            if t > 1:
+                t -= 1
+            if t < 1 / 6:
+                return p + (q - p) * 6 * t
+            if t < 1 / 2:
+                return q
+            if t < 2 / 3:
+                return p + (q - p) * (2 / 3 - t) * 6
+            return p
+
+        # Split the hex color string into RGB components and convert to decimal
+        r = int(hex_color[0:2], 16) / 255
+        g = int(hex_color[2:4], 16) / 255
+        b = int(hex_color[4:6], 16) / 255
+
+        # Convert RGB to HSL
+        max_val = max(r, g, b)
+        min_val = min(r, g, b)
+        l = (max_val + min_val) / 2
+
+        if max_val == min_val:
+            h = s = 0.0  # achromatic
+        else:
+            diff = max_val - min_val
+            s = diff / (2 - max_val - min_val) if l > 0.5 else diff / (max_val + min_val)
+            if max_val == r:
+                h = (g - b) / diff + (6 if g < b else 0)
+            elif max_val == g:
+                h = (b - r) / diff + 2
+            else:
+                h = (r - g) / diff + 4
+            h /= 6
+
+        # Adjust lightness
+        l = max(min(l * brightness, 1), 0)
+
+        # Convert back to RGB
+        if s == 0:
+            r = g = b = l  # achromatic
+        else:
+            q = l * (1 + s) if l < 0.5 else l + s - l * s
+            p = 2 * l - q
+            r = hue_to_rgb(p, q, h + 1 / 3)
+            g = hue_to_rgb(p, q, h)
+            b = hue_to_rgb(p, q, h - 1 / 3)
+
+        # Convert to hex and return
+        adjusted_hex = "{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))
+
+        return adjusted_hex
+
     def _ease_animation(self, easing_func: typing.Callable) -> float:
         """Returns the percentage of total distance that should be moved based on the easing function.
 
