@@ -57,7 +57,7 @@ Example: effect_example""",
         nargs="*",
         default=[],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Space separated, unquoted, list of colors for the wipe gradient.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
         "--gradient-steps",
