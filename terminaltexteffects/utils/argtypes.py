@@ -267,3 +267,23 @@ def int_range(arg: str) -> tuple[int, int]:
         return start, end
     except ValueError:
         raise argparse.ArgumentTypeError(f"invalid range: {arg} is not a valid range. Must be start-end. Ex: 0-10")
+
+
+def float_range(arg: str) -> tuple[float, float]:
+    """Validates that the given argument is a valid range of floats n >= 0.
+
+    Args:
+        arg (str): argument to validate
+
+    Returns:
+        tuple[float,float]: validated range
+    """
+    try:
+        start, end = map(float, arg.split("-"))
+        if start > end:
+            raise argparse.ArgumentTypeError(
+                f"invalid range: {arg} is not a valid range of floats. Must be start <= end. Ex: 0.1-1.0"
+            )
+        return start, end
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"invalid range: {arg} is not a valid range. Must be start-end. Ex: 0.1-1.0")
