@@ -47,9 +47,9 @@ Example: terminaltexteffects spotlights -a 0.01 --gradient-stops 8A008A 00D1FF F
     )
     effect_parser.add_argument(
         "--beam-width-ratio",
-        type=argtypes.positive_int,
-        default=2,
-        metavar="(int > 0)",
+        type=argtypes.positive_float,
+        default=2.0,
+        metavar="(float > 0)",
         help="Width of the beam of light as min(width, height) // n of the input text.",
     )
     effect_parser.add_argument(
@@ -73,6 +73,13 @@ Example: terminaltexteffects spotlights -a 0.01 --gradient-stops 8A008A 00D1FF F
         metavar="(e.g. 0.25-0.5)",
         help="Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values.",
     )
+    effect_parser.add_argument(
+        "--spotlight-count",
+        type=argtypes.positive_int,
+        default=3,
+        metavar="(int > 0)",
+        help="Number of spotlights to use.",
+    )
 
 
 class SpotlightsEffect:
@@ -81,7 +88,7 @@ class SpotlightsEffect:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
-        self.spotlights: list[EffectCharacter] = self.make_spotlights(3)
+        self.spotlights: list[EffectCharacter] = self.make_spotlights(self.args.spotlight_count)
         self.illuminated_chars: set[EffectCharacter] = set()
         self.character_color_map: dict[EffectCharacter, tuple[str, str]] = {}  # tuple[str, str] = (bright, dark)
 
@@ -177,8 +184,8 @@ class SpotlightsEffect:
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
-        illuminate_range = max(
-            min(self.terminal.output_area.right, self.terminal.output_area.top) // self.args.beam_width_ratio, 1
+        illuminate_range = int(
+            max(min(self.terminal.output_area.right, self.terminal.output_area.top) // self.args.beam_width_ratio, 1)
         )
         search_duration = self.args.search_duration
         searching = True
