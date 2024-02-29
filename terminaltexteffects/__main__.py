@@ -64,7 +64,10 @@ def main():
         try:
             terminal = term.Terminal(input_data, args)
             effect = args.effect_class(terminal, args)
-            effect.run()
+            try:
+                effect.run()
+            except KeyboardInterrupt:
+                sys.exit(0)
         except Exception as e:
             raise Exception(f"Error running effect: {e}")
         finally:
