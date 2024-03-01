@@ -1,27 +1,15 @@
-import random
-import typing, math
+import typing
 from dataclasses import dataclass
-import terminaltexteffects.utils.easing as easing
+from terminaltexteffects.utils import geometry
+from terminaltexteffects.utils.geometry import Coord
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
 
 
-@dataclass(eq=True, frozen=True)
-class Coord:
-    """A coordinate with row and column values.
-
-    Args:
-        column (int): column value
-        row (int): row value"""
-
-    column: int
-    row: int
-
-
 @dataclass
 class Waypoint:
-    """A coordinate, speed, and easing function.
+    """A coordinate, speed, and bezier control point(s).
 
     Args:
         waypoint_id (str): unique identifier for the waypoint
@@ -74,14 +62,14 @@ class Segment:
             Coord: Coordinate at the given distance.
         """
         if self.start.bezier_control:
-            return Motion.find_coord_on_bezier_curve(
+            return geometry.find_coord_on_bezier_curve(
                 self.start.coord,
                 self.start.bezier_control,
                 self.end.coord,
                 distance_factor,
             )
         else:
-            return Motion.find_coord_on_line(self.start.coord, self.end.coord, distance_factor)
+            return geometry.find_coord_on_line(self.start.coord, self.end.coord, distance_factor)
 
     def __eq__(self, other: typing.Any) -> bool:
         if not isinstance(other, Segment):
@@ -171,11 +159,11 @@ class Path:
             return
 
         if waypoint.bezier_control:
-            distance_from_previous = Motion.find_length_of_bezier_curve(
+            distance_from_previous = geometry.find_length_of_bezier_curve(
                 self.waypoints[-2].coord, waypoint.bezier_control, waypoint.coord
             )
         else:
-            distance_from_previous = Motion.find_length_of_line(
+            distance_from_previous = geometry.find_length_of_line(
                 self.waypoints[-2].coord,
                 waypoint.coord,
             )
@@ -231,14 +219,14 @@ class Path:
             segment_distance_to_travel_factor = distance_to_travel / active_segment.distance
 
         if active_segment.end.bezier_control:
-            next_coord = Motion.find_coord_on_bezier_curve(
+            next_coord = geometry.find_coord_on_bezier_curve(
                 active_segment.start.coord,
                 active_segment.end.bezier_control,
                 active_segment.end.coord,
                 segment_distance_to_travel_factor,
             )
         else:
-            next_coord = Motion.find_coord_on_line(
+            next_coord = geometry.find_coord_on_line(
                 active_segment.start.coord, active_segment.end.coord, segment_distance_to_travel_factor
             )
 
@@ -265,249 +253,6 @@ class Motion:
         self.current_coord: Coord = Coord(character.input_coord.column, character.input_coord.row)
         self.previous_coord: Coord = Coord(-1, -1)
         self.active_path: Path | None = None
-
-    @staticmethod
-    def find_coords_on_circle(origin: Coord, radius: int, points_limit: int = 0, unique: bool = True) -> list[Coord]:
-        """Finds points on a circle.
-
-        Args:
-            origin (Coord): origin of the circle
-            radius (int): radius of the circle
-            num_points (int): number of points to find, if 0, the number of points is calculated based on the circumference of the circle
-            unique (bool): whether to remove duplicate points. Defaults to True.
-
-        Returns:
-            list (Coord): list of Coord points on the circle
-        """
-        points = []
-        if not points_limit:
-            points_limit = round(2 * math.pi * radius)
-        for i in range(points_limit):
-            angle = 2 * math.pi * i / points_limit
-            x = origin.column + radius * math.cos(angle)
-            # correct for terminal character height/width ratio by doubling the x distance from origin
-            x_diff = x - origin.column
-            x += x_diff
-            y = origin.row + radius * math.sin(angle)
-            point_coord = Coord(round(x), round(y))
-            if unique and point_coord not in points:
-                points.append(point_coord)
-            elif not unique:
-                points.append(point_coord)
-
-        return points
-
-    @staticmethod
-    def find_coords_in_circle(origin: Coord, radius: int) -> list[Coord]:
-        """Finds points that fall within a circle with the given origin and radius. Duplicate points
-        after rounding are removed.
-
-        Args:
-            origin (Coord): origin of the circle
-            radius (int): radius of the circle
-            num_points (int): number of points to find
-
-        Returns:
-            list[Coord]: list of Coord points in the circle
-        """
-        points: list[Coord] = []
-        for i in range(1, radius + 1):
-            points.extend(set((Motion.find_coords_on_circle(origin, i))))
-        points = list(set(points))
-        return points
-
-    @staticmethod
-    def find_coords_in_ellipse(center: Coord, major_axis: int) -> list[Coord]:
-        h, k = center.column, center.row
-        coords_in_ellipse: list[Coord] = []
-        a_squared = major_axis**2
-        b_squared = (major_axis / 2) ** 2
-
-        for x in range(h - major_axis, h + major_axis + 1):
-            for y in range(k - major_axis, k + major_axis + 1):
-                if (x - h) ** 2 / a_squared + (y - k) ** 2 / b_squared <= 1:
-                    coords_in_ellipse.append(Coord(x, y))
-
-        return coords_in_ellipse
-
-    @staticmethod
-    def find_coords_on_ellipse(
-        center: Coord, major_axis: int, *, tolerance: float | None = None, sort=False
-    ) -> list[Coord]:
-        """
-        Finds the coordinates on an ellipse given the center, major axis length, and tolerance. The major axis is the X axis to account for the terminal character height/width ratio.
-
-        Args:
-            center (Coord): The center coordinate of the ellipse.
-            major_axis (int > 0): The length of the major axis of the ellipse.
-            tolerance (float, optional): The tolerance for determining if a point is on the ellipse, increase to add more points. If None, tolerance will be automatically calculated inversely proportional to the major axis. Defaults to None.
-            sort (bool, optional): Whether to sort the coordinates. Coordinates will be sorted clockwise around the ellipse. Defaults to False.
-
-        Returns:
-            list[Coord]: A list of coordinates on the ellipse.
-        """
-
-        if major_axis <= 0:
-            raise ValueError(f"({major_axis=}) Major axis must be greater than 0.")
-        h, k = center.column, center.row
-        coords_on_ellipse: list[Coord] = []
-        a_squared = major_axis**2
-        b_squared = (major_axis / 2) ** 2
-        if tolerance is None:
-            tolerance = (1 / major_axis) + (0.25 * (1 / major_axis))
-        else:
-            tolerance = tolerance
-
-        for x in range(h - major_axis, h + major_axis + 1):
-            for y in range(k - major_axis, k + major_axis + 1):
-                if abs((x - h) ** 2 / a_squared + (y - k) ** 2 / b_squared - 1) <= tolerance:
-                    coords_on_ellipse.append(Coord(x, y))
-        coords_on_ellipse = sorted(coords_on_ellipse, key=lambda coord: -math.atan2(coord.row - k, coord.column - h))
-
-        return coords_on_ellipse
-
-    @staticmethod
-    def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
-        """Find coords that fall within a rectangle with the given origin and distance
-        from the origin. Distance specifies the number of units in each direction from the origin.
-        Final width = 2 * distance + 1, final height = 2 * distance + 1.
-
-        Args:
-            origin (Coord): center of the rectangle
-            distance (int): distance from the origin
-
-        Returns:
-            list[Coord]: list of Coord points in the rectangle
-        """
-        left_boundary = origin.column - distance
-        right_boundary = origin.column + distance
-        top_boundary = origin.row - distance
-        bottom_boundary = origin.row + distance
-        coords: list[Coord] = []
-        for column in range(left_boundary, right_boundary + 1):
-            for row in range(top_boundary, bottom_boundary + 1):
-                coords.append(Coord(column, row))
-
-        return coords
-
-    @staticmethod
-    def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coord:
-        """Finds the coordinate at the given distance along the line defined by the origin and target coordinates.
-
-        Args:
-            origin (Coord): origin coordinate (a)
-            target (Coord): target coordinate (b)
-            distance (float): distance from the target coordinate (b), away from the origin coordinate (a)
-
-        Returns:
-            Coord: Coordinate at the given distance (c).
-        """
-        total_distance = Motion.find_length_of_line(origin, target) + distance
-        if total_distance == 0:
-            return origin
-        t = total_distance / Motion.find_length_of_line(origin, target)
-        next_column, next_row = (
-            ((1 - t) * origin.column + t * target.column),
-            ((1 - t) * origin.row + t * target.row),
-        )
-        return Coord(round(next_column), round(next_row))
-
-    @staticmethod
-    def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord, t: float) -> Coord:
-        """
-        Finds points on a quadratic or cubic bezier curve.
-
-        Args:
-            start (Coord): The starting coordinate of the curve.
-            control (tuple[Coord, ...] | Coord): The control point(s) of the curve.
-                For a quadratic bezier curve, a single control point is expected.
-                For a cubic bezier curve, two control points are expected.
-            end (Coord): The ending coordinate of the curve.
-            t (float): The parameter value between 0 and 1 that determines the position on the curve.
-
-        Returns:
-            Coord: The coordinate on the bezier curve corresponding to the given parameter value.
-        """
-        if isinstance(control, Coord):
-            control = (control,)
-        if len(control) == 1:
-            control1 = control[0]
-            x = (1 - t) ** 2 * start.column + 2 * (1 - t) * t * control1.column + t**2 * end.column
-            y = (1 - t) ** 2 * start.row + 2 * (1 - t) * t * control1.row + t**2 * end.row
-        elif len(control) == 2:
-            control1, control2 = control
-            x = (
-                (1 - t) ** 3 * start.column
-                + 3 * (1 - t) ** 2 * t * control1.column
-                + 3 * (1 - t) * t**2 * control2.column
-                + t**3 * end.column
-            )
-            y = (
-                (1 - t) ** 3 * start.row
-                + 3 * (1 - t) ** 2 * t * control1.row
-                + 3 * (1 - t) * t**2 * control2.row
-                + t**3 * end.row
-            )
-        return Coord(round(x), round(y))
-
-    @staticmethod
-    def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
-        """
-        Finds points on a line.
-
-        Args:
-            start (Coord): The starting coordinate of the line.
-            end (Coord): The ending coordinate of the line.
-            t (float): The parameter value between 0 and 1 representing the position on the line.
-
-        Returns:
-            Coord: The coordinate on the line corresponding to the given parameter value.
-        """
-        x = (1 - t) * start.column + t * end.column
-        y = (1 - t) * start.row + t * end.row
-        return Coord(round(x), round(y))
-
-    @staticmethod
-    def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord) -> float:
-        """
-        Finds the length of a quadratic or cubic bezier curve.
-
-        Args:
-            start (Coord): The starting coordinate of the curve.
-            control (tuple[Coord, ...] | Coord): The control point(s) of the curve.
-            end (Coord): The ending coordinate of the curve.
-
-        Returns:
-            float: The length of the bezier curve.
-        """
-        length = 0.0
-        prev_coord = start
-        for t in range(1, 10):
-            coord = Motion.find_coord_on_bezier_curve(start, control, end, t / 10)
-            length += Motion.find_length_of_line(prev_coord, coord)
-            prev_coord = coord
-            prev_coord = coord
-        return length
-
-    @staticmethod
-    def find_length_of_line(coord1: Coord, coord2: Coord, double_row_diff: bool = False) -> float:
-        """Returns the length of the line intersecting coord1 and coord2. If double_row_diff is True, the distance is
-        doubled to account for the terminal character height/width ratio.
-
-        Args:
-            coord1 (Coord): first coordinate.
-            coord2 (Coord): second coordinate.
-            double_row_diff (bool, optional): whether to double the row difference to account for terminal character height/width ratio. Defaults to
-            False.
-
-        Returns:
-            float: length of the line
-        """
-        column_diff = coord2.column - coord1.column
-        row_diff = coord2.row - coord1.row
-        if double_row_diff:
-            return math.hypot(column_diff, 2 * row_diff)
-        return math.hypot(column_diff, row_diff)
 
     def set_coordinate(self, coord: Coord) -> None:
         """Sets the current coordinate to the given coordinate.
@@ -630,11 +375,11 @@ class Motion:
         self.active_path = path
         first_waypoint = self.active_path.waypoints[0]
         if first_waypoint.bezier_control:
-            distance_to_first_waypoint = self.find_length_of_bezier_curve(
+            distance_to_first_waypoint = geometry.find_length_of_bezier_curve(
                 self.current_coord, first_waypoint.bezier_control, first_waypoint.coord
             )
         else:
-            distance_to_first_waypoint = self.find_length_of_line(
+            distance_to_first_waypoint = geometry.find_length_of_line(
                 self.current_coord,
                 first_waypoint.coord,
             )
