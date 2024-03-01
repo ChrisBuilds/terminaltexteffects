@@ -68,8 +68,8 @@ def main():
                 effect.run()
             except KeyboardInterrupt:
                 sys.exit(0)
-        except Exception as e:
-            raise Exception(f"Error running effect: {e}")
+        except:
+            raise
         finally:
             sys.stdout.write(ansitools.SHOW_CURSOR())
 
