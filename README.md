@@ -482,6 +482,9 @@ Any effects shown below are in development and will be available in the next rel
 #### OrbittingVolley
 ![orbittingvolley_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/705a2c7a-4eda-4bb3-91c0-beccc1713c4d)
 
+#### Spotlights
+![spotlights_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/98f32186-c0bc-4eab-bd1f-f2c6a74ff171)
+
 ## Latest Release Notes
 
 ## 0.6.0
