@@ -2,9 +2,9 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -46,13 +46,15 @@ Example: terminaltexteffects bouncyball -a 0.01 --ball-colors 00ff00 ff0000 0000
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final character.",
     )
-    effect_parser.add_argument(
-        "--ball-delay",
-        type=argtypes.positive_int,
-        default=15,
-        metavar="(int > 0)",
-        help="Number of animation steps between ball drops, increase to reduce ball drop rate.",
-    ),
+    (
+        effect_parser.add_argument(
+            "--ball-delay",
+            type=argtypes.positive_int,
+            default=15,
+            metavar="(int > 0)",
+            help="Number of animation steps between ball drops, increase to reduce ball drop rate.",
+        ),
+    )
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.positive_float,

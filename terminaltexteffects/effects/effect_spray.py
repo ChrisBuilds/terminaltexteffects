@@ -7,8 +7,8 @@ from enum import Enum, auto
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import graphics
-from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:

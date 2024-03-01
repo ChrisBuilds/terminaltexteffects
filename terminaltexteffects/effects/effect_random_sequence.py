@@ -3,8 +3,8 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:

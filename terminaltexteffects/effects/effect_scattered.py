@@ -1,8 +1,7 @@
 import argparse
-import random
 
-from terminaltexteffects.utils import graphics, argtypes, terminal
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.utils import argtypes, graphics, terminal
 from terminaltexteffects.utils.geometry import Coord
 
 

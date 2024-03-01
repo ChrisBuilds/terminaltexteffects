@@ -3,9 +3,9 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, easing
+from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -136,7 +136,6 @@ class CrumbleEffect:
         fall_delay = 20
         max_fall_delay = 20
         min_fall_delay = 15
-        vacuumed = False
         reset = False
         fall_group_maxsize = 1
         stage = "falling"

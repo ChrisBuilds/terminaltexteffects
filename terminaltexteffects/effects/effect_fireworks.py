@@ -2,9 +2,9 @@ import argparse
 import random
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, easing, geometry
+from terminaltexteffects.utils import argtypes, easing, geometry, graphics
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -18,7 +18,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Characters launch and explode like fireworks and fall into place.",
         description="fireworks | Characters explode like fireworks and fall into place.",
-        epilog=f"""        
+        epilog="""        
 Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 2 --final-color ffffff --launch-delay 60 --explode-distance 10""",
     )
     effect_parser.set_defaults(effect_class=FireworksEffect)

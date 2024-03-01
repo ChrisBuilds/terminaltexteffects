@@ -3,9 +3,9 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -19,7 +19,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
         description="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
-        epilog=f"""Example: terminaltexteffects overflow --final-color f3b462 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3""",
+        epilog="""Example: terminaltexteffects overflow --final-color f3b462 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3""",
     )
     effect_parser.set_defaults(effect_class=OverflowEffect)
     effect_parser.add_argument(
@@ -81,7 +81,6 @@ class Row:
 
 
 class OverflowEffect:
-
     def __init__(self, terminal: Terminal, args: argparse.Namespace):
         self.terminal = terminal
         self.args = args

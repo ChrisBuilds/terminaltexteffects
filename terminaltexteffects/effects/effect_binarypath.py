@@ -3,9 +3,9 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, easing
+from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -19,7 +19,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Binary representations of each character move through the terminal towards the home coordinate of the character.",
         description="Binary representations of each character move through the terminal towards the home coordinate of the character.",
-        epilog=f"""Example: effect_example""",
+        epilog="""Example: effect_example""",
     )
     effect_parser.set_defaults(effect_class=BinaryPathEffect)
     effect_parser.add_argument(

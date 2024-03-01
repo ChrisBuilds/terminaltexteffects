@@ -1,9 +1,10 @@
 import argparse
 import random
+
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils import argtypes, graphics
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -17,7 +18,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Create a grid which fills with characters dissolving into the final text.",
         description="Create a grid which fills with characters dissolving into the final text.",
-        epilog=f"""Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --text-gradient-stops 8A008A 00D1FF FFFFFF --grid-row-symbol - --grid-column-symbol | --max-active-blocks 0.1 --text-generation-symbols ░ ▒ ▓""",
+        epilog="""Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --text-gradient-stops 8A008A 00D1FF FFFFFF --grid-row-symbol - --grid-column-symbol | --max-active-blocks 0.1 --text-generation-symbols ░ ▒ ▓""",
     )
     effect_parser.set_defaults(effect_class=SynthGridEffect)
     effect_parser.add_argument(

@@ -3,9 +3,9 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, easing, geometry
+from terminaltexteffects.utils import easing, geometry, graphics
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -19,7 +19,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Characters are grouped into swarms and move around the terminal before settling into position.",
         description="Characters are grouped into swarms and move around the terminal before settling into position.",
-        epilog=f"""Example: terminaltexteffects swarm -a 0.01 --base-color 0f74fa --flash-color f2ea79 --final-color 96ed89 --swarm-size 5 --swarm-coordination 80""",
+        epilog="""Example: terminaltexteffects swarm -a 0.01 --base-color 0f74fa --flash-color f2ea79 --final-color 96ed89 --swarm-size 5 --swarm-coordination 80""",
     )
     effect_parser.set_defaults(effect_class=SwarmEffect)
     effect_parser.add_argument(

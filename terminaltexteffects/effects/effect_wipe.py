@@ -2,8 +2,8 @@ import argparse
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -17,7 +17,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Wipes the text across the terminal to reveal characters.",
         description="Wipes the text across the terminal to reveal characters.",
-        epilog=f"""Example: terminaltexteffects wipe -a 0.01 --wipe-direction column_left_to_right --gradient ffffff ff0000 00ff00 --wipe-delay 0""",
+        epilog="""Example: terminaltexteffects wipe -a 0.01 --wipe-direction column_left_to_right --gradient ffffff ff0000 00ff00 --wipe-delay 0""",
     )
     effect_parser.set_defaults(effect_class=WipeEffect)
     effect_parser.add_argument(

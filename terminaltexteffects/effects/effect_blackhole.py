@@ -1,10 +1,11 @@
 import argparse
 import random
+
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, easing, geometry
+from terminaltexteffects.utils import easing, geometry, graphics
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -18,7 +19,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Characters are consumed by a black hole and explode outwards.",
         description="Characters are consumed by a black hole and explode outwards.",
-        epilog=f"""
+        epilog="""
 Example: terminaltexteffects blackhole -a 0.01 --star-colors ffcc0d ff7326 ff194d bf2669 702a8c 049dbf --final-color 00a7c2""",
     )
     effect_parser.set_defaults(effect_class=BlackholeEffect)
@@ -64,7 +65,11 @@ class BlackholeEffect:
         self.blackhole_chars: list[EffectCharacter] = []
         self.awaiting_consumption_chars: list[EffectCharacter] = []
         self.blackhole_radius = max(
-            min(round(self.terminal.output_area.right * 0.3), round(self.terminal.output_area.top * 0.3)), 3
+            min(
+                round(self.terminal.output_area.right * 0.3),
+                round(self.terminal.output_area.top * 0.3),
+            ),
+            3,
         )
 
     def prepare_blackhole(self) -> None:
@@ -96,7 +101,9 @@ class BlackholeEffect:
         while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
             self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
         black_hole_ring_positions = geometry.find_coords_on_circle(
-            self.terminal.output_area.center, self.blackhole_radius, len(self.blackhole_chars)
+            self.terminal.output_area.center,
+            self.blackhole_radius,
+            len(self.blackhole_chars),
         )
         for position_index, character in enumerate(self.blackhole_chars):
             starting_pos = black_hole_ring_positions[position_index]
@@ -105,7 +112,10 @@ class BlackholeEffect:
             blackhole_scn = character.animation.new_scene(id="blackhole")
             blackhole_scn.add_frame("✸", 1, color=self.args.blackhole_color)
             character.event_handler.register_event(
-                EventHandler.Event.PATH_ACTIVATED, blackhole_path, EventHandler.Action.SET_LAYER, 1
+                EventHandler.Event.PATH_ACTIVATED,
+                blackhole_path,
+                EventHandler.Action.SET_LAYER,
+                1,
             )
             # make rotation waypoints
             blackhole_rotation_path = character.motion.new_path(id="blackhole_rotation", speed=0.2, loop=True)
@@ -123,7 +133,8 @@ class BlackholeEffect:
                 character.motion.set_coordinate(starfield_coord)
                 if starfield_coord.row > self.terminal.output_area.center_row:
                     if starfield_coord.column in range(
-                        round(self.terminal.output_area.right * 0.4), round(self.terminal.output_area.right * 0.7)
+                        round(self.terminal.output_area.right * 0.4),
+                        round(self.terminal.output_area.right * 0.7),
                     ):
                         # if within the top center 40% of the screen
                         control_point = Coord(self.terminal.output_area.center.column, starfield_coord.row)
@@ -132,7 +143,8 @@ class BlackholeEffect:
 
                 elif starfield_coord.row < self.terminal.output_area.center_row:
                     if starfield_coord.column in range(
-                        round(self.terminal.output_area.right * 0.4), round(self.terminal.output_area.right * 0.7)
+                        round(self.terminal.output_area.right * 0.4),
+                        round(self.terminal.output_area.right * 0.7),
                     ):
                         # if within the bottom center 40% of the screen
                         control_point = Coord(self.terminal.output_area.center.column, starfield_coord.row)
@@ -148,7 +160,10 @@ class BlackholeEffect:
                 consumed_scn.add_frame(" ", 1)
                 consumed_scn.sync = graphics.SyncMetric.DISTANCE
                 character.event_handler.register_event(
-                    EventHandler.Event.PATH_ACTIVATED, singularity_path, EventHandler.Action.SET_LAYER, 2
+                    EventHandler.Event.PATH_ACTIVATED,
+                    singularity_path,
+                    EventHandler.Action.SET_LAYER,
+                    2,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
@@ -166,7 +181,9 @@ class BlackholeEffect:
 
     def collapse_blackhole(self) -> None:
         black_hole_ring_positions = geometry.find_coords_on_circle(
-            self.terminal.output_area.center, self.blackhole_radius + 3, len(self.blackhole_chars)
+            self.terminal.output_area.center,
+            self.blackhole_radius + 3,
+            len(self.blackhole_chars),
         )
         unstable_symbols = ["◦", "◎", "◉", "●", "◉", "◎", "◦"]
         point_char_made = False
@@ -177,7 +194,10 @@ class BlackholeEffect:
             collapse_path = character.motion.new_path(speed=0.3, ease=easing.in_expo)
             collapse_path.new_waypoint(self.terminal.output_area.center)
             character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, expand_path, EventHandler.Action.ACTIVATE_PATH, collapse_path
+                EventHandler.Event.PATH_COMPLETE,
+                expand_path,
+                EventHandler.Action.ACTIVATE_PATH,
+                collapse_path,
             )
             if not point_char_made:
                 point_scn = character.animation.new_scene()
@@ -185,10 +205,16 @@ class BlackholeEffect:
                     for symbol in unstable_symbols:
                         point_scn.add_frame(symbol, 6, color=random.choice(self.args.star_colors))
                 character.event_handler.register_event(
-                    EventHandler.Event.PATH_COMPLETE, collapse_path, EventHandler.Action.ACTIVATE_SCENE, point_scn
+                    EventHandler.Event.PATH_COMPLETE,
+                    collapse_path,
+                    EventHandler.Action.ACTIVATE_SCENE,
+                    point_scn,
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.PATH_COMPLETE, collapse_path, EventHandler.Action.SET_LAYER, 3
+                    EventHandler.Event.PATH_COMPLETE,
+                    collapse_path,
+                    EventHandler.Action.SET_LAYER,
+                    3,
                 )
                 point_char_made = True
 
@@ -211,10 +237,16 @@ class BlackholeEffect:
             for color in cooling_gradient:
                 cooling_scn.add_frame(character.input_symbol, 20, color=color)
             character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, nearby_path, EventHandler.Action.ACTIVATE_PATH, input_path
+                EventHandler.Event.PATH_COMPLETE,
+                nearby_path,
+                EventHandler.Action.ACTIVATE_PATH,
+                input_path,
             )
             character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, nearby_path, EventHandler.Action.ACTIVATE_SCENE, cooling_scn
+                EventHandler.Event.PATH_COMPLETE,
+                nearby_path,
+                EventHandler.Action.ACTIVATE_SCENE,
+                cooling_scn,
             )
             character.animation.activate_scene(explode_scn)
             character.motion.activate_path(nearby_path)

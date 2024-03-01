@@ -2,11 +2,10 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.base_character import EventHandler
-from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, easing, geometry
+from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.utils import easing, geometry, graphics
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:

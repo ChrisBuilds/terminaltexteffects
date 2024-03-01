@@ -1,9 +1,9 @@
 import argparse
 
-from terminaltexteffects.utils import argtypes
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils.terminal import Terminal
+from terminaltexteffects.utils import argtypes
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:

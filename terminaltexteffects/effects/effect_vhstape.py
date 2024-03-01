@@ -3,9 +3,9 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -19,7 +19,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Lines of characters glitch left and right and lose detail like an old VHS tape.",
         description="Lines of characters glitch left and right and lose detail like an old VHS tape.",
-        epilog=f"""
+        epilog="""
 Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 0000ff --base-color ffffff --final-color ffffff --glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000""",
     )
     effect_parser.set_defaults(effect_class=VHSTapeEffect)
@@ -129,19 +129,19 @@ class Line:
         for character in self.characters:
             # make glitch and restore waypoints
             glitch_path = character.motion.new_path(id="glitch", speed=2, hold_time=hold_time)
-            glitch_wpt = glitch_path.new_waypoint(
+            glitch_path.new_waypoint(
                 Coord(character.input_coord.column + (offset * direction), character.input_coord.row),
                 id="glitch",
             )
             restore_path = character.motion.new_path(id="restore", speed=2)
-            restore_wpt = restore_path.new_waypoint(character.input_coord, id="restore")
+            restore_path.new_waypoint(character.input_coord, id="restore")
             # make glitch wave waypoints
             glitch_wave_mid_path = character.motion.new_path(id="glitch_wave_mid", speed=2)
-            glitch_wave_mid_wpt = glitch_wave_mid_path.new_waypoint(
+            glitch_wave_mid_path.new_waypoint(
                 Coord(character.input_coord.column + 8, character.input_coord.row), id="glitch_wave_mid"
             )
             glitch_wave_end_path = character.motion.new_path(id="glitch_wave_end", speed=2)
-            glitch_wave_end_wpt = glitch_wave_end_path.new_waypoint(
+            glitch_wave_end_path.new_waypoint(
                 Coord(character.input_coord.column + 14, character.input_coord.row), id="glitch_wave_end"
             )
 

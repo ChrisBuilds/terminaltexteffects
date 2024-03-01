@@ -3,7 +3,7 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils import argtypes, graphics
 from terminaltexteffects.utils.terminal import Terminal
 
 

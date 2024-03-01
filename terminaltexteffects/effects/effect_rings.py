@@ -3,9 +3,9 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes, easing, geometry
+from terminaltexteffects.utils import easing, geometry, graphics, motion
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -19,7 +19,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Characters are dispersed and form into spinning rings.",
         description="Characters are dispersed and form into spinning rings.",
-        epilog=f"""
+        epilog="""
 
 Example: terminaltexteffects rings --animation-rate 0.01 --ring-colors ffcc0d ff7326 ff194d bf2669 702a8c --base-color ffffff --ring-gap 6 --spin-duration 200 --disperse-duration 200 --spin-disperse-cycles 3""",
     )

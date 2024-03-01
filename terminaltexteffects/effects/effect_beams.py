@@ -3,8 +3,8 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -18,7 +18,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Create beams which travel over the output area illuminating the characters behind them.",
         description="Create beams which travel over the output area illuminating the characters behind them.",
-        epilog=f"""Example: terminaltexteffects beam -a 0.01 --beam-row-symbols ▂▁_ --beam-column-symbols ▌▍▎▏ --beam-delay 10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --text-glow-color 00D1FF --text-fade-color 333333 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 6 --final-gradient-frames 5 --final-wipe-speed 1""",
+        epilog="""Example: terminaltexteffects beam -a 0.01 --beam-row-symbols ▂▁_ --beam-column-symbols ▌▍▎▏ --beam-delay 10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --text-glow-color 00D1FF --text-fade-color 333333 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 6 --final-gradient-frames 5 --final-wipe-speed 1""",
     )
     effect_parser.set_defaults(effect_class=BeamsEffect)
     effect_parser.add_argument(
