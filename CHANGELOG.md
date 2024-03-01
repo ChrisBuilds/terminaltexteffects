@@ -6,37 +6,45 @@
 #### Effects
  * Beams. Light beams travel across the output area and illuminate the characters behind them.
  * Overflow. The input text is scrambled by row and repeated randomly, scrolling up the terminal, before eventually displaying in the correct order.
- * OrbitingVolley. Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.
+ * OrbitingVolley. 
+ * Spotlights. Spotlights search the text area, illuminating characters, before converging in the center and expanding.
 
 #### Engine
  * Gradients now support multiple step specification to control the distance between each stop pair. For example:
    graphics.Gradient(RED, BLUE, YELLOW, steps=(2,5)) results in a spectrum of RED -> (1 step) -> BLUE -> (4 steps) -> YELLOW
  * The Scene class has a new method: apply_gradient_to_symbols(). This method will iterate over a list of symbols and apply the colors from a gradient to the symbols. A frame with the symbol will be added for each color starting from the last color used in the previous symbol, up to the the index determined by the ratio of the current symbol's index in the symbols list to the total length of the list. This method allows scenes to automatically create frames from a list of symbols and gradient of arbitrary length while ensuring every symbol and color is displayed.
  * On instatiation, Terminal creates EffectCharacters for every coordinate in the output area that does not have an input character. These EffectCharacters have the symbol " " and are stored in Terminal._fill_characters. 
- * argtypes.int_range will validate a range specified as m-n and return a tuple[int,int] as tuple(m,n).
+ * argtypes.int_range will validate a range specified as "int-int" and return a tuple[int,int].
+ * argtypes.float_range will validate a range of floats specified as "float-float" and return a tuple[float, float].
  * character.animation.set_appearance(symbol, color) will set the character symbol in color directly. If a Scene is active, the appearance will be overwritten with the Scene frame on the next call to step_animation(). This method is intended for the occasion where a full scene isn't needed, or the appearance needs to be set based on conditions not compatible with Scenes or the EventHandler. For example, setting the color based on the terminal row. 
  * Terminal.CharacterSort enums moved to Terminal.CharacterGroup, Terminal.CharacterSort is now used for sorting and return a flat list of characters.
  * Terminal.CharacterSort has new sort methods, TOP_TO_BOTTOM_LEFT_TO_RIGHT, TOP_TO_BOTTOM_RIGHT_TO_LEFT, BOTTOM_TO_TOP_LEFT_TO_RIGHT, BOTTOM_TO_TOP_RIGHT_TO_LEFT, OUTSIDE_ROW_TO_MIDDLE, MIDDLE_ROW_TO_OUTSIDE
  * New Terminal.CharacterGroup options, CENTER_TO_OUTSIDE_DIAMONDS and OUTSIDE_TO_CENTER_DIAMONS
  * graphics.Gradient.get_color_at_fraction(fraction: float) will return a color at the given fraction of the spectrum when provided a float between 0 and 1, inclusive. This can be used to match the color to a ratio/ For example, the character height in the terminal.
-
+ * graphics.Animation.adjust_color_brightness(color: str, brightness: float) will convert the color to HSL, adjust the brightness to the given level, and return 
+   an RGB hex string.
+ * CTRL-C keyboard interrupt during a running effect will exit gracefully.
+ * geometry.find_coords_in_circle() has been rewritten to find all coords which fall in an ellipse. The result is a circle due to the height/width ratio of terminal cells. This function now finds all terminal coordinates within the 'circle' rather than an arbitrary subset.
 ### Changes
 #### Effects
  * All effects have been updated to use the latest API calls for improved performance.
 
 #### Engine
- * Terminal.add_character() takes a motion.Coord() argument to set the character's input_coordinate.
+ * Geometry related methods have been removed from the motion class. They are now located at terminaltexteffects.utils.geometry as separate functions.
+ * The Coord() object definition has been moved from the motion module to the geometry module.
+ * Terminal.add_character() takes a geometry.Coord() argument to set the character's input_coordinate.
  * EffectCharacters have a unique ID set by the Terminal on instatiation. As a result, all EffectCharacters should be created using Terminal.add_character().
  * EffectCharacters added by the effect are stored in Terminal._added_characters.
  * Retrieving EffectCharacters from the terminal should no longer be done via accessing the lists of characters [_added_characters, _fill_characters, _input_characters], but should be retrieved via Terminal.get_characters() and Terminal.get_characters_sorted(). 
  * Setting EffectCharacter visibility is now done via Terminal.set_character_visibility(). This enables the terminal to keep track of all visible characters without needing to iterate over all characters on every call to _update_terminal_state().
  * EventHandler.Action.SET_CHARACTER_VISIBILITY_STATE has been removed as visibilty state is handled by the Terminal. To enable visibility state changes through the event system, us a CALLBACK action with target EventHandler.Callback(terminal.set_character_visibility, True/False).
- * motion.find_points_on_circle() num_points arg renamed to points_limit and new arg unique: bool, added to remove any duplicate Coords.
+ * geometry.find_points_on_circle() num_points arg renamed to points_limit and new arg unique: bool, added to remove any duplicate Coords.
 
 ### Bug Fixes
 #### Effects
 
 #### Engine
+ * Fixed division by zero error in geometry.find_coord_at_distance() when the origin coord and the target coord are the same.
 
 ## 0.6.0
 
