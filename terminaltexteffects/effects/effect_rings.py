@@ -196,15 +196,13 @@ class RingsEffect:
         random.shuffle(self.pending_chars)
         # make rings
         for radius in range(1, max(self.terminal.output_area.right, self.terminal.output_area.top), self.ring_gap):
-            ring_coords: list[Coord] = []
-            circle_coords = geometry.find_coords_on_circle(self.terminal.output_area.center, radius, 7 * radius)
+            ring_coords = geometry.find_coords_on_circle(
+                self.terminal.output_area.center, radius, 7 * radius, unique=True
+            )
             # check if any part of the ring is in the output area, if not, stop creating rings
-            if not any([self.terminal.output_area.coord_is_in_output_area(coord) for coord in circle_coords]):
+            if not any([self.terminal.output_area.coord_is_in_output_area(coord) for coord in ring_coords]):
                 break
-            # remove any duplicate coords
-            for coord in circle_coords:
-                if coord not in ring_coords:
-                    ring_coords.append(coord)
+
             self.rings[radius] = Ring(
                 radius,
                 self.terminal.output_area.center,
