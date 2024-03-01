@@ -1,5 +1,6 @@
 import argparse
 import typing
+
 from terminaltexteffects.utils import easing
 
 EASING_EPILOG = """\

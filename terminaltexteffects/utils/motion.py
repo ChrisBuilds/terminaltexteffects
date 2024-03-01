@@ -1,5 +1,6 @@
 import typing
 from dataclasses import dataclass
+
 from terminaltexteffects.utils import geometry
 from terminaltexteffects.utils.geometry import Coord
 

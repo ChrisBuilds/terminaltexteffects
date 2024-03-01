@@ -1,6 +1,5 @@
 """Converts xterm color codes and hex colors into ANSI escape sequences."""
 
-
 RESET = "\x1b[0m"
 
 

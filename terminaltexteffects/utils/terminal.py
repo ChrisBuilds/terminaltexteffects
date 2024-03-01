@@ -1,11 +1,10 @@
 """A module for managing the terminal state and output."""
 
+import argparse
 import random
 import shutil
 import sys
 import time
-import argparse
-
 from dataclasses import dataclass
 from enum import Enum, auto
 

@@ -1,9 +1,9 @@
-"""This module contains the EffectCharacter class and EventHandler class used to manage the state of a single character from the input data.
-"""
+"""This module contains the EffectCharacter class and EventHandler class used to manage the state of a single character from the input data."""
 
 import typing
 from dataclasses import dataclass
 from enum import Enum, auto
+
 from terminaltexteffects.utils import graphics, motion
 from terminaltexteffects.utils.geometry import Coord
 

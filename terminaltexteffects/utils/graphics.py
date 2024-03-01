@@ -1,12 +1,12 @@
 """Classes for storing and manipulating character graphics."""
 
-import typing
-import random
-from enum import Enum, auto
-from dataclasses import dataclass
 import itertools
+import random
+import typing
+from dataclasses import dataclass
+from enum import Enum, auto
 
-from terminaltexteffects.utils import ansitools, colorterm, hexterm, motion, easing
+from terminaltexteffects.utils import ansitools, colorterm, easing, hexterm
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
@@ -542,13 +542,13 @@ class Animation:
         # Convert RGB to HSL
         max_val = max(r, g, b)
         min_val = min(r, g, b)
-        l = (max_val + min_val) / 2
+        lightness = (max_val + min_val) / 2
 
         if max_val == min_val:
             h = s = 0.0  # achromatic
         else:
             diff = max_val - min_val
-            s = diff / (2 - max_val - min_val) if l > 0.5 else diff / (max_val + min_val)
+            s = diff / (2 - max_val - min_val) if lightness > 0.5 else diff / (max_val + min_val)
             if max_val == r:
                 h = (g - b) / diff + (6 if g < b else 0)
             elif max_val == g:
@@ -558,14 +558,14 @@ class Animation:
             h /= 6
 
         # Adjust lightness
-        l = max(min(l * brightness, 1), 0)
+        lightness = max(min(lightness * brightness, 1), 0)
 
         # Convert back to RGB
         if s == 0:
-            r = g = b = l  # achromatic
+            r = g = b = lightness  # achromatic
         else:
-            q = l * (1 + s) if l < 0.5 else l + s - l * s
-            p = 2 * l - q
+            q = lightness * (1 + s) if lightness < 0.5 else lightness + s - lightness * s
+            p = 2 * lightness - q
             r = hue_to_rgb(p, q, h + 1 / 3)
             g = hue_to_rgb(p, q, h)
             b = hue_to_rgb(p, q, h - 1 / 3)

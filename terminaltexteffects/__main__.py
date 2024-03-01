@@ -4,9 +4,9 @@ import pkgutil
 import sys
 
 import terminaltexteffects.effects
-import terminaltexteffects.utils.terminal as term
 import terminaltexteffects.utils.ansitools as ansitools
 import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.terminal as term
 
 
 def main():
