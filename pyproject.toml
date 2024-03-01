@@ -12,6 +12,10 @@ python = "^3.10"
 [tool.poetry.scripts]
 tte = "terminaltexteffects.__main__:main"
 
+[tool.ruff]
+show-fixes = true
+line-length = 120
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
