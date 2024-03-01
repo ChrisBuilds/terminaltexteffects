@@ -2,9 +2,10 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, motion
+from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -88,7 +89,7 @@ class UnstableEffect:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
-        self.jumbled_coords: dict[EffectCharacter, motion.Coord] = dict()
+        self.jumbled_coords: dict[EffectCharacter, Coord] = dict()
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by jumbling the character positions and
@@ -114,7 +115,7 @@ class UnstableEffect:
             self.jumbled_coords[character] = jumbled_coord
             character.motion.set_coordinate(jumbled_coord)
             explosion_path = character.motion.new_path(id="explosion", speed=0.75, ease=self.args.explosion_ease)
-            explosion_path.new_waypoint(motion.Coord(col, row))
+            explosion_path.new_waypoint(Coord(col, row))
             reassembly_path = character.motion.new_path(id="reassembly", speed=0.75, ease=self.args.reassembly_ease)
             reassembly_path.new_waypoint(character.input_coord)
             unstable_gradient = graphics.Gradient([self.args.initial_color, self.args.unstable_color], 25)
@@ -161,7 +162,7 @@ class UnstableEffect:
                 column_offset = random.choice([-1, 0, 1])
                 for character in self.terminal._input_characters:
                     character.motion.set_coordinate(
-                        motion.Coord(
+                        Coord(
                             character.motion.current_coord.column + column_offset,
                             character.motion.current_coord.row + row_offset,
                         )

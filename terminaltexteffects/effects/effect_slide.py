@@ -1,9 +1,10 @@
 import argparse
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes, easing
+from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -140,7 +141,7 @@ class SlideEffect:
                     groups[group_index] = groups[group_index][::-1]
                     starting_column = self.terminal.output_area.right + 1
                 for character in groups[group_index]:
-                    character.motion.set_coordinate(motion.Coord(starting_column, character.input_coord.row))
+                    character.motion.set_coordinate(Coord(starting_column, character.input_coord.row))
             elif self.grouping == "column":
                 if self.merge and group_index % 2 == 0:
                     starting_row = self.terminal.output_area.bottom - 1
@@ -151,24 +152,24 @@ class SlideEffect:
                     groups[group_index] = groups[group_index][::-1]
                     starting_row = self.terminal.output_area.bottom - 1
                 for character in groups[group_index]:
-                    character.motion.set_coordinate(motion.Coord(character.input_coord.column, starting_row))
+                    character.motion.set_coordinate(Coord(character.input_coord.column, starting_row))
             if self.grouping == "diagonal":
                 distance_from_outside_bottom = group[-1].input_coord.row - (self.terminal.output_area.bottom - 1)
-                starting_coord = motion.Coord(
+                starting_coord = Coord(
                     group[-1].input_coord.column - distance_from_outside_bottom,
                     group[-1].input_coord.row - distance_from_outside_bottom,
                 )
                 if self.merge and group_index % 2 == 0:
                     groups[group_index] = groups[group_index][::-1]
                     distance_from_outside = (self.terminal.output_area.top + 1) - group[0].input_coord.row
-                    starting_coord = motion.Coord(
+                    starting_coord = Coord(
                         group[0].input_coord.column + distance_from_outside,
                         group[0].input_coord.row + distance_from_outside,
                     )
                 if self.reverse_direction and not self.merge:
                     groups[group_index] = groups[group_index][::-1]
                     distance_from_outside = (self.terminal.output_area.top + 1) - group[0].input_coord.row
-                    starting_coord = motion.Coord(
+                    starting_coord = Coord(
                         group[0].input_coord.column + distance_from_outside,
                         group[0].input_coord.row + distance_from_outside,
                     )

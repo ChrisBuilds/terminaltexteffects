@@ -3,7 +3,8 @@ import argparse, random
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes, easing
+from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -70,7 +71,7 @@ class Row:
         self.untyped_chars: list[EffectCharacter] = characters
         self.typed_chars: list[EffectCharacter] = []
         for character in self.untyped_chars:
-            character.motion.set_coordinate(motion.Coord(character.input_coord.column, 1))
+            character.motion.set_coordinate(Coord(character.input_coord.column, 1))
             color_gradient = graphics.Gradient([typing_head_color, character_color], 5)
             typed_animation = character.animation.new_scene()
             for n, symbol in enumerate(("█", "▓", "▒", "░", character.input_symbol)):
@@ -80,7 +81,7 @@ class Row:
     def move_up(self):
         for character in self.typed_chars:
             current_row = character.motion.current_coord.row
-            character.motion.set_coordinate(motion.Coord(character.motion.current_coord.column, current_row + 1))
+            character.motion.set_coordinate(Coord(character.motion.current_coord.column, current_row + 1))
 
     def type_char(self) -> EffectCharacter | None:
         if self.untyped_chars:
@@ -100,7 +101,7 @@ class PrintEffect:
         self.active_chars: list[EffectCharacter] = []
         self.pending_rows: list[Row] = []
         self.processed_rows: list[Row] = []
-        self.typing_head = self.terminal.add_character("█", motion.Coord(1, 1))
+        self.typing_head = self.terminal.add_character("█", Coord(1, 1))
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
@@ -137,15 +138,15 @@ class PrintEffect:
                         for row in self.processed_rows:
                             row.move_up()
                         current_row = self.pending_rows.pop(0)
-                        self.typing_head.motion.set_coordinate(motion.Coord(last_column, 1))
+                        self.typing_head.motion.set_coordinate(Coord(last_column, 1))
                         self.terminal.set_character_visibility(self.typing_head, True)
                         self.typing_head.motion.paths.clear()
-                        carriage_return_path: motion.Path = self.typing_head.motion.new_path(
+                        carriage_return_path = self.typing_head.motion.new_path(
                             speed=self.args.print_head_return_speed,
                             ease=self.args.print_head_easing,
                             id="carriage_return_path",
                         )
-                        carriage_return_path.new_waypoint(motion.Coord(1, 1))
+                        carriage_return_path.new_waypoint(Coord(1, 1))
                         self.typing_head.motion.activate_path(carriage_return_path)
                         self.typing_head.event_handler.register_event(
                             EventHandler.Event.PATH_COMPLETE,

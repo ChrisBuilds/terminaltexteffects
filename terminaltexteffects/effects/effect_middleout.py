@@ -3,7 +3,8 @@ import argparse
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, motion
+from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -109,7 +110,7 @@ class MiddleoutEffect:
                 column = self.terminal.output_area.center_column
                 row = character.input_coord.row
             center_path = character.motion.new_path(speed=self.args.center_movement_speed, ease=self.args.center_easing)
-            center_path.new_waypoint(motion.Coord(column, row))
+            center_path.new_waypoint(Coord(column, row))
             full_path = character.motion.new_path(
                 id="full", speed=self.args.full_movement_speed, ease=self.args.full_easing
             )

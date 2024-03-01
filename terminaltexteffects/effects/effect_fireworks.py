@@ -3,7 +3,8 @@ import random
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, motion, easing
+from terminaltexteffects.utils import graphics, argtypes, easing, geometry
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -93,7 +94,7 @@ class FireworksEffect:
         else:
             self.firework_colors = ["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"]
         self.firework_volume = max(1, round(self.args.firework_volume * len(self.terminal._input_characters)))
-        self.explode_distance = min(max(1, round(self.terminal.output_area.right * self.args.explode_distance)), 6)
+        self.explode_distance = max(1, round(self.terminal.output_area.right * self.args.explode_distance))
 
     def prepare_waypoints(self) -> None:
         firework_shell: list[EffectCharacter] = []
@@ -107,24 +108,23 @@ class FireworksEffect:
                 else:
                     min_row = self.terminal.output_area.bottom
                 origin_y = random.randrange(min_row, self.terminal.output_area.top + 1)
-                origin_coord = motion.Coord(origin_x, origin_y)
-                explode_waypoint_coords = motion.Motion.find_coords_in_circle(origin_coord, self.explode_distance)
-            character.motion.set_coordinate(motion.Coord(origin_x, self.terminal.output_area.bottom))
+                origin_coord = Coord(origin_x, origin_y)
+                explode_waypoint_coords = geometry.find_coords_in_circle(origin_coord, self.explode_distance)
+            character.motion.set_coordinate(Coord(origin_x, self.terminal.output_area.bottom))
             apex_path = character.motion.new_path(id="apex_pth", speed=0.2, ease=easing.out_expo)
             apex_wpt = apex_path.new_waypoint(origin_coord)
             explode_path = character.motion.new_path(speed=0.15, ease=easing.out_circ)
             explode_wpt = explode_path.new_waypoint(random.choice(explode_waypoint_coords))
 
-            # TODO: Turn this process into a framework function for making curves when changing direction
-            bloom_control_point = motion.Motion.find_coord_at_distance(
+            bloom_control_point = geometry.find_coord_at_distance(
                 apex_wpt.coord, explode_wpt.coord, self.explode_distance // 2
             )
             bloom_wpt = explode_path.new_waypoint(
-                motion.Coord(bloom_control_point.column, max(1, bloom_control_point.row - 7)),
+                Coord(bloom_control_point.column, max(1, bloom_control_point.row - 7)),
                 bezier_control=bloom_control_point,
             )
             input_path = character.motion.new_path(id="input_pth", speed=0.3, ease=easing.in_out_quart)
-            input_control_point = motion.Coord(bloom_wpt.coord.column, 1)
+            input_control_point = Coord(bloom_wpt.coord.column, 1)
             input_path.new_waypoint(character.input_coord, bezier_control=input_control_point)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED, apex_path, EventHandler.Action.SET_LAYER, 2

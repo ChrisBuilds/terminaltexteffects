@@ -98,12 +98,10 @@ class ColumnSlide:
             for character in column:
                 self.terminal.set_character_visibility(character, False)
                 if self.slide_direction == SlideDirection.DOWN:
-                    character.motion.set_coordinate(
-                        motion.Coord(character.input_coord.column, self.terminal.output_area.top)
-                    )
+                    character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
                 else:
                     character.motion.set_coordinate(
-                        motion.Coord(character.input_coord.column, self.terminal.output_area.bottom)
+                        Coord(character.input_coord.column, self.terminal.output_area.bottom)
                     )
                 input_coord_path = character.motion.new_path(
                     speed=self.args.movement_speed,

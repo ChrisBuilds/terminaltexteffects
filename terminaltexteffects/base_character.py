@@ -5,6 +5,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 from terminaltexteffects.utils import graphics, motion
+from terminaltexteffects.utils.geometry import Coord
 
 
 class EventHandler:
@@ -35,7 +36,7 @@ class EventHandler:
             list[
                 tuple[
                     EventHandler.Action,
-                    graphics.Scene | motion.Waypoint | motion.Path | int | motion.Coord | EventHandler.Callback,
+                    graphics.Scene | motion.Waypoint | motion.Path | int | Coord | EventHandler.Callback,
                 ]
             ],
         ] = {}
@@ -111,7 +112,7 @@ class EventHandler:
         event: Event,
         caller: graphics.Scene | motion.Waypoint | motion.Path,
         action: Action,
-        target: graphics.Scene | motion.Waypoint | motion.Path | int | motion.Coord | Callback,
+        target: graphics.Scene | motion.Waypoint | motion.Path | int | Coord | Callback,
     ) -> None:
         """Registers an event to be handled by the EventHandler.
 
@@ -119,7 +120,7 @@ class EventHandler:
             event (Event): The event to register.
             caller (graphics.Scene | motion.Waypoint | motion.Path): The object that triggers the event.
             action (Action): The action to take when the event is triggered.
-            target (graphics.Scene | motion.Waypoint | motion.Path | int | motion.Coord | Callback): The target of the action.
+            target (graphics.Scene | motion.Waypoint | motion.Path | int | Coord | Callback): The target of the action.
         """
         new_event = (event, caller)
         new_action = (action, target)
@@ -157,7 +158,7 @@ class EffectCharacter:
 
     Attributes:
         input_symbol (str): The symbol for the character in the input data.
-        input_coord (motion.Coord): The coordinate of the character in the input data.
+        input_coord (Coord): The coordinate of the character in the input data.
         symbol (str): The current symbol for the character, determined by the animation units.
         animation (graphics.Animation): The animation object that controls the character's appearance.
         motion (motion.Motion): The motion object that controls the character's movement.
@@ -176,7 +177,7 @@ class EffectCharacter:
         """
         self._character_id: int = character_id
         self._input_symbol: str = symbol
-        self._input_coord: motion.Coord = motion.Coord(input_column, input_row)
+        self._input_coord: Coord = Coord(input_column, input_row)
         self._is_visible: bool = False
         self.symbol: str = symbol
         self.animation: graphics.Animation = graphics.Animation(self)
@@ -189,7 +190,7 @@ class EffectCharacter:
         return self._input_symbol
 
     @property
-    def input_coord(self) -> motion.Coord:
+    def input_coord(self) -> Coord:
         return self._input_coord
 
     @property

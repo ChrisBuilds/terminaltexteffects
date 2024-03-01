@@ -1,10 +1,9 @@
 import argparse
 import random
 
-from terminaltexteffects.utils import motion, graphics
-import terminaltexteffects.utils.argtypes as argtypes
-import terminaltexteffects.utils.terminal as terminal
+from terminaltexteffects.utils import graphics, argtypes, terminal
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -84,7 +83,7 @@ class ScatteredEffect:
 
         for character in self.terminal._input_characters:
             if self.terminal.output_area.right < 2 or self.terminal.output_area.top < 2:
-                character.motion.set_coordinate(motion.Coord(1, 1))
+                character.motion.set_coordinate(Coord(1, 1))
             else:
                 character.motion.set_coordinate(self.terminal.output_area.random_coord())
             input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)

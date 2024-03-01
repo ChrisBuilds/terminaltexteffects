@@ -89,11 +89,9 @@ class RowSlide:
         for row in self.rows:
             for character in row:
                 if self.slide_direction == SlideDirection.LEFT:
-                    character.motion.set_coordinate(
-                        motion.Coord(self.terminal.output_area.right, character.input_coord.row)
-                    )
+                    character.motion.set_coordinate(Coord(self.terminal.output_area.right, character.input_coord.row))
                 else:
-                    character.motion.set_coordinate(motion.Coord(0, character.input_coord.row))
+                    character.motion.set_coordinate(Coord(0, character.input_coord.row))
                 input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
                 input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)

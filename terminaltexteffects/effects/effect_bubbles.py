@@ -5,7 +5,8 @@ import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.base_character import EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, motion, easing
+from terminaltexteffects.utils import graphics, argtypes, easing, geometry
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -89,7 +90,7 @@ class Bubble:
     def __init__(
         self,
         effect: "BubblesEffect",
-        origin: motion.Coord,
+        origin: Coord,
         characters: list[EffectCharacter],
         terminal: Terminal,
     ):
@@ -110,7 +111,7 @@ class Bubble:
 
     def set_character_coordinates(self) -> None:
         for i, char in enumerate(self.characters):
-            point = self.anchor_char.motion.find_coords_on_circle(
+            point = geometry.find_coords_on_circle(
                 self.anchor_char.motion.current_coord, self.radius, len(self.characters), unique=False
             )[i]
             char.motion.set_coordinate(point)
@@ -124,7 +125,7 @@ class Bubble:
     def make_waypoints(self):
         waypoint_column = random.randint(self.effect.terminal.output_area.left, self.effect.terminal.output_area.right)
         floor_path = self.anchor_char.motion.new_path(speed=self.effect.args.bubble_speed)
-        floor_path.new_waypoint(motion.Coord(waypoint_column, self.lowest_row))
+        floor_path.new_waypoint(Coord(waypoint_column, self.lowest_row))
         self.anchor_char.motion.activate_path(floor_path)
 
     def make_gradients(self) -> None:
@@ -149,10 +150,10 @@ class Bubble:
 
     def pop(self) -> None:
         char: EffectCharacter
-        point: motion.Coord
+        point: Coord
         for char, point in zip(
             self.characters,
-            self.anchor_char.motion.find_coords_on_circle(
+            geometry.find_coords_on_circle(
                 self.anchor_char.motion.current_coord,
                 self.radius + 3,
                 len(self.characters),
@@ -242,7 +243,7 @@ class BubblesEffect:
             else:
                 for _ in range(random.randint(5, min(len(unbubbled_chars), 20))):
                     bubble_group.append(unbubbled_chars.pop(0))
-            bubble_origin = motion.Coord(
+            bubble_origin = Coord(
                 random.randint(self.terminal.output_area.left, self.terminal.output_area.right),
                 self.terminal.output_area.top,
             )

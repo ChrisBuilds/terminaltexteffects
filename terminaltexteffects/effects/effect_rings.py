@@ -4,7 +4,8 @@ import random
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes, easing
+from terminaltexteffects.utils import graphics, motion, argtypes, easing, geometry
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -75,14 +76,14 @@ class Ring:
     def __init__(
         self,
         radius: int,
-        origin: motion.Coord,
-        ring_coords: list[motion.Coord],
+        origin: Coord,
+        ring_coords: list[Coord],
         ring_gap: int,
         ring_color: str,
         base_color: str,
     ):
         self.radius = radius
-        self.origin: motion.Coord = origin
+        self.origin: Coord = origin
         self.counter_clockwise_coords = ring_coords
         self.clockwise_coords = ring_coords[::-1]
         self.ring_gap = ring_gap
@@ -127,17 +128,17 @@ class Ring:
         character.motion.chain_paths(ring_paths, loop=True)
         self.characters.append(character)
 
-    def make_disperse_waypoints(self, character: EffectCharacter, origin: motion.Coord) -> motion.Path:
+    def make_disperse_waypoints(self, character: EffectCharacter, origin: Coord) -> motion.Path:
         """Make the Path for the character to follow when the ring disperses.
 
         Args:
             character (EffectCharacter): Character to disperse.
-            origin (motion.Coord): Origin coordinate for the character.
+            origin (Coord): Origin coordinate for the character.
 
         Returns:
             motion.Path: the Path to follow.
         """
-        disperse_coords = motion.Motion.find_coords_in_rect(origin, self.ring_gap)
+        disperse_coords = geometry.find_coords_in_rect(origin, self.ring_gap)
         character.motion.paths.pop("disperse", None)
         disperse_path = character.motion.new_path(speed=0.1, loop=True, id="disperse")
         for _ in range(5):
@@ -195,8 +196,8 @@ class RingsEffect:
         random.shuffle(self.pending_chars)
         # make rings
         for radius in range(1, max(self.terminal.output_area.right, self.terminal.output_area.top), self.ring_gap):
-            ring_coords: list[motion.Coord] = []
-            circle_coords = motion.Motion.find_coords_on_circle(self.terminal.output_area.center, radius, 7 * radius)
+            ring_coords: list[Coord] = []
+            circle_coords = geometry.find_coords_on_circle(self.terminal.output_area.center, radius, 7 * radius)
             # check if any part of the ring is in the output area, if not, stop creating rings
             if not any([self.terminal.output_area.coord_is_in_output_area(coord) for coord in circle_coords]):
                 break

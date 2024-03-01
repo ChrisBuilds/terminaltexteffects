@@ -4,7 +4,8 @@ from itertools import cycle
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes
+from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -111,7 +112,7 @@ Example: terminaltexteffects orbittingvolley -a 0.01 --top-launcher-symbol █ -
 
 
 class Launcher:
-    def __init__(self, terminal: Terminal, args: argparse.Namespace, starting_edge_coord: motion.Coord, symbol: str):
+    def __init__(self, terminal: Terminal, args: argparse.Namespace, starting_edge_coord: Coord, symbol: str):
         self.terminal = terminal
         self.args = args
         self.character = self.terminal.add_character(symbol, starting_edge_coord)
@@ -119,8 +120,8 @@ class Launcher:
 
     def build_paths(self) -> None:
         waypoints = [
-            motion.Coord(self.terminal.output_area.left, self.terminal.output_area.top),
-            motion.Coord(self.terminal.output_area.right, self.terminal.output_area.top),
+            Coord(self.terminal.output_area.left, self.terminal.output_area.top),
+            Coord(self.terminal.output_area.right, self.terminal.output_area.top),
         ]
 
         waypoint_start_index = waypoints.index(self.character.input_coord)
@@ -165,20 +166,16 @@ class OrbittingVolleyEffect:
     def set_launcher_coordinates(self, parent: Launcher, child: Launcher) -> None:
         """Sets the coordinates for the child launcher."""
         parent_progress = parent.character.motion.current_coord.column / self.terminal.output_area.right
-        if child.character.input_coord == motion.Coord(self.terminal.output_area.right, self.terminal.output_area.top):
+        if child.character.input_coord == Coord(self.terminal.output_area.right, self.terminal.output_area.top):
             child_row = self.terminal.output_area.top - int((self.terminal.output_area.top * parent_progress))
-            child.character.motion.set_coordinate(motion.Coord(self.terminal.output_area.right, max(1, child_row)))
-        elif child.character.input_coord == motion.Coord(
-            self.terminal.output_area.right, self.terminal.output_area.bottom
-        ):
+            child.character.motion.set_coordinate(Coord(self.terminal.output_area.right, max(1, child_row)))
+        elif child.character.input_coord == Coord(self.terminal.output_area.right, self.terminal.output_area.bottom):
             child_column = self.terminal.output_area.right - int((self.terminal.output_area.right * parent_progress))
-            child.character.motion.set_coordinate(motion.Coord(max(1, child_column), self.terminal.output_area.bottom))
-        elif child.character.input_coord == motion.Coord(
-            self.terminal.output_area.left, self.terminal.output_area.bottom
-        ):
+            child.character.motion.set_coordinate(Coord(max(1, child_column), self.terminal.output_area.bottom))
+        elif child.character.input_coord == Coord(self.terminal.output_area.left, self.terminal.output_area.bottom):
             child_row = self.terminal.output_area.bottom + int((self.terminal.output_area.top * parent_progress))
             child.character.motion.set_coordinate(
-                motion.Coord(self.terminal.output_area.left, min(self.terminal.output_area.top, child_row))
+                Coord(self.terminal.output_area.left, min(self.terminal.output_area.top, child_row))
             )
         color = self.final_gradient.get_color_at_fraction(
             child.character.motion.current_coord.row / self.terminal.output_area.top
@@ -191,19 +188,19 @@ class OrbittingVolleyEffect:
         launchers: list[Launcher] = []
         for coord, symbol in (
             (
-                motion.Coord(self.terminal.output_area.left, self.terminal.output_area.top),
+                Coord(self.terminal.output_area.left, self.terminal.output_area.top),
                 self.args.top_launcher_symbol,
             ),
             (
-                motion.Coord(self.terminal.output_area.right, self.terminal.output_area.top),
+                Coord(self.terminal.output_area.right, self.terminal.output_area.top),
                 self.args.right_launcher_symbol,
             ),
             (
-                motion.Coord(self.terminal.output_area.right, self.terminal.output_area.bottom),
+                Coord(self.terminal.output_area.right, self.terminal.output_area.bottom),
                 self.args.bottom_launcher_symbol,
             ),
             (
-                motion.Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
+                Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
                 self.args.left_launcher_symbol,
             ),
         ):

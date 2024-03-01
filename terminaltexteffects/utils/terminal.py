@@ -10,7 +10,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import ansitools, motion
+from terminaltexteffects.utils import ansitools
+from terminaltexteffects.utils.geometry import Coord
 
 
 @dataclass
@@ -33,13 +34,13 @@ class OutputArea:
     def __post_init__(self):
         self.center_row = max(self.top // 2, 1)
         self.center_column = max(self.right // 2, 1)
-        self.center = motion.Coord(self.center_column, self.center_row)
+        self.center = Coord(self.center_column, self.center_row)
 
-    def coord_is_in_output_area(self, coord: motion.Coord) -> bool:
+    def coord_is_in_output_area(self, coord: Coord) -> bool:
         """Checks whether a coordinate is within the output area.
 
         Args:
-            coord (motion.Coord): coordinate to check
+            coord (Coord): coordinate to check
 
         Returns:
             bool: whether the coordinate is within the output area
@@ -60,22 +61,22 @@ class OutputArea:
             int: a random row position (1 <= x <= terminal.output_area.top)"""
         return random.randint(1, self.top)
 
-    def random_coord(self, outside_scope=False) -> motion.Coord:
+    def random_coord(self, outside_scope=False) -> Coord:
         """Get a random coordinate. Coordinate is within the output area unless outside_scope is True.
 
         Args:
             outside_scope (bool, optional): whether the coordinate should fall outside the output area. Defaults to False.
 
         Returns:
-            motion.Coord: a random coordinate . Coordinate is within the output area unless outside_scope is True."""
+            Coord: a random coordinate . Coordinate is within the output area unless outside_scope is True."""
         if outside_scope is True:
-            random_coord_above = motion.Coord(self.random_column(), self.top + 1)
-            random_coord_below = motion.Coord(self.random_column(), -1)
-            random_coord_left = motion.Coord(-1, self.random_row())
-            random_coord_right = motion.Coord(self.right + 1, self.random_row())
+            random_coord_above = Coord(self.random_column(), self.top + 1)
+            random_coord_below = Coord(self.random_column(), -1)
+            random_coord_left = Coord(-1, self.random_row())
+            random_coord_right = Coord(self.right + 1, self.random_row())
             return random.choice([random_coord_above, random_coord_below, random_coord_left, random_coord_right])
         else:
-            return motion.Coord(self.random_column(), self.random_row())
+            return Coord(self.random_column(), self.random_row())
 
 
 class Terminal:
@@ -122,7 +123,7 @@ class Terminal:
             if character.input_coord.row <= self.output_area.top
             and character.input_coord.column <= self.output_area.right
         ]
-        self.character_by_input_coord: dict[motion.Coord, EffectCharacter] = {
+        self.character_by_input_coord: dict[Coord, EffectCharacter] = {
             (character.input_coord): character for character in self._input_characters
         }
         self._fill_characters = self._make_fill_characters()
@@ -222,18 +223,18 @@ class Terminal:
         fill_characters = []
         for row in range(1, self.output_area.top + 1):
             for column in range(1, self.output_area.right + 1):
-                coord = motion.Coord(column, row)
+                coord = Coord(column, row)
                 if coord not in self.character_by_input_coord:
                     fill_characters.append(EffectCharacter(self.next_character_id, " ", column, row))
                     self.next_character_id += 1
         return fill_characters
 
-    def add_character(self, symbol: str, coord: motion.Coord) -> EffectCharacter:
+    def add_character(self, symbol: str, coord: Coord) -> EffectCharacter:
         """Adds a character to the terminal for printing. Used to create characters that are not in the input data.
 
         Args:
             symbol (str): symbol to add
-            coord: (motion.Coord): set character's input coordinates
+            coord: (Coord): set character's input coordinates
 
         Returns:
             EffectCharacter: the character that was added
@@ -418,11 +419,11 @@ class Terminal:
         else:
             raise ValueError(f"Invalid sort_order: {grouping}")
 
-    def get_character_by_input_coord(self, coord: motion.Coord) -> EffectCharacter | None:
+    def get_character_by_input_coord(self, coord: Coord) -> EffectCharacter | None:
         """Get an EffectCharacter by its input coordinates.
 
         Args:
-            coord (motion.Coord): input coordinates of the character
+            coord (Coord): input coordinates of the character
 
         Returns:
             EffectCharacter | None: the character at the specified coordinates, or None if no character is found

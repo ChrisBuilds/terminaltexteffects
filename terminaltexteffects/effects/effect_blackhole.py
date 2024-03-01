@@ -3,7 +3,8 @@ import random
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes, easing
+from terminaltexteffects.utils import graphics, argtypes, easing, geometry
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -94,7 +95,7 @@ class BlackholeEffect:
         available_chars = list(self.terminal._input_characters)
         while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
             self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
-        black_hole_ring_positions = motion.Motion.find_coords_on_circle(
+        black_hole_ring_positions = geometry.find_coords_on_circle(
             self.terminal.output_area.center, self.blackhole_radius, len(self.blackhole_chars)
         )
         for position_index, character in enumerate(self.blackhole_chars):
@@ -125,18 +126,18 @@ class BlackholeEffect:
                         round(self.terminal.output_area.right * 0.4), round(self.terminal.output_area.right * 0.7)
                     ):
                         # if within the top center 40% of the screen
-                        control_point = motion.Coord(self.terminal.output_area.center.column, starfield_coord.row)
+                        control_point = Coord(self.terminal.output_area.center.column, starfield_coord.row)
                     else:
-                        control_point = motion.Coord(starfield_coord.column, self.terminal.output_area.center_row)
+                        control_point = Coord(starfield_coord.column, self.terminal.output_area.center_row)
 
                 elif starfield_coord.row < self.terminal.output_area.center_row:
                     if starfield_coord.column in range(
                         round(self.terminal.output_area.right * 0.4), round(self.terminal.output_area.right * 0.7)
                     ):
                         # if within the bottom center 40% of the screen
-                        control_point = motion.Coord(self.terminal.output_area.center.column, starfield_coord.row)
+                        control_point = Coord(self.terminal.output_area.center.column, starfield_coord.row)
                     else:
-                        control_point = motion.Coord(starfield_coord.column, self.terminal.output_area.center_row)
+                        control_point = Coord(starfield_coord.column, self.terminal.output_area.center_row)
                 else:
                     control_point = self.terminal.output_area.center
                 singularity_path = character.motion.new_path(id="singularity", speed=0.3, ease=easing.in_expo)
@@ -164,7 +165,7 @@ class BlackholeEffect:
             self.active_chars.append(character)
 
     def collapse_blackhole(self) -> None:
-        black_hole_ring_positions = motion.Motion.find_coords_on_circle(
+        black_hole_ring_positions = geometry.find_coords_on_circle(
             self.terminal.output_area.center, self.blackhole_radius + 3, len(self.blackhole_chars)
         )
         unstable_symbols = ["◦", "◎", "◉", "●", "◉", "◎", "◦"]
@@ -197,7 +198,7 @@ class BlackholeEffect:
     def explode_singularity(self) -> None:
         star_colors = ["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c" "049dbf"]
         for character in self.terminal._input_characters:
-            nearby_coord = motion.Motion.find_coords_on_circle(character.input_coord, 3, 5)[random.randrange(0, 5)]
+            nearby_coord = geometry.find_coords_on_circle(character.input_coord, 3, 5)[random.randrange(0, 5)]
             nearby_path = character.motion.new_path(speed=random.randint(2, 3) / 10, ease=easing.out_expo)
             nearby_path.new_waypoint(nearby_coord)
             input_path = character.motion.new_path(speed=random.randint(3, 5) / 100, ease=easing.in_cubic)

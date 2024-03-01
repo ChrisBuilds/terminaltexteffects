@@ -6,7 +6,8 @@ from enum import Enum, auto
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import motion, graphics
+from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -120,21 +121,15 @@ class PourEffect:
             for character in group:
                 self.terminal.set_character_visibility(character, False)
                 if self.pour_direction == PourDirection.DOWN:
-                    character.motion.set_coordinate(
-                        motion.Coord(character.input_coord.column, self.terminal.output_area.top)
-                    )
+                    character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
                 elif self.pour_direction == PourDirection.UP:
                     character.motion.set_coordinate(
-                        motion.Coord(character.input_coord.column, self.terminal.output_area.bottom)
+                        Coord(character.input_coord.column, self.terminal.output_area.bottom)
                     )
                 elif self.pour_direction == PourDirection.LEFT:
-                    character.motion.set_coordinate(
-                        motion.Coord(self.terminal.output_area.right, character.input_coord.row)
-                    )
+                    character.motion.set_coordinate(Coord(self.terminal.output_area.right, character.input_coord.row))
                 elif self.pour_direction == PourDirection.RIGHT:
-                    character.motion.set_coordinate(
-                        motion.Coord(self.terminal.output_area.left, character.input_coord.row)
-                    )
+                    character.motion.set_coordinate(Coord(self.terminal.output_area.left, character.input_coord.row))
                 input_coord_path = character.motion.new_path(
                     speed=self.args.movement_speed,
                     ease=self.args.easing,

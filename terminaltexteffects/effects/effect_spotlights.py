@@ -3,7 +3,8 @@ import random
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes, easing
+from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils import graphics, motion, argtypes, easing, geometry
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -99,7 +100,7 @@ class SpotlightsEffect:
             spotlight = self.terminal.add_character("O", self.terminal.output_area.random_coord(outside_scope=True))
             spotlights.append(spotlight)
 
-            spotlight_target_coords: list[motion.Coord] = []
+            spotlight_target_coords: list[Coord] = []
             last_coord = self.terminal.output_area.random_coord()
             spotlight_target_coords.append(last_coord)
             for _ in range(10):
@@ -123,19 +124,19 @@ class SpotlightsEffect:
 
         return spotlights
 
-    def find_coord_at_minimum_distance(self, origin_coord: motion.Coord, minimum_distance: int) -> motion.Coord:
+    def find_coord_at_minimum_distance(self, origin_coord: Coord, minimum_distance: int) -> Coord:
         coord_found = False
         while not coord_found:
             coord = self.terminal.output_area.random_coord()
-            distance = motion.Motion.find_length_of_line(origin_coord, coord)
+            distance = geometry.find_length_of_line(origin_coord, coord)
             if distance >= minimum_distance:
                 coord_found = True
         return coord
 
     def illuminate_chars(self, range: int) -> None:
-        coords_in_range: list[motion.Coord] = []
+        coords_in_range: list[Coord] = []
         for spotlight in self.spotlights:
-            coords_in_range.extend(spotlight.motion.find_coords_in_ellipse(spotlight.motion.current_coord, range))
+            coords_in_range.extend(geometry.find_coords_in_circle(spotlight.motion.current_coord, range))
         chars_in_range: set[EffectCharacter] = set()
         for coord in coords_in_range:
             character = self.terminal.get_character_by_input_coord(coord)
@@ -151,7 +152,7 @@ class SpotlightsEffect:
         for character in chars_in_range:
             distance = min(
                 [
-                    motion.Motion.find_length_of_line(
+                    geometry.find_length_of_line(
                         spotlight.motion.current_coord, character.input_coord, double_row_diff=True
                     )
                     for spotlight in self.spotlights

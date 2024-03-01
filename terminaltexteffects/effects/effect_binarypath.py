@@ -2,9 +2,10 @@ import argparse
 import random
 
 import terminaltexteffects.utils.argtypes as argtypes
-from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes, easing
+from terminaltexteffects.utils import graphics, argtypes, easing
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -119,12 +120,12 @@ class BinaryPathEffect:
         for character in self.terminal._input_characters:
             bin_rep = BinaryRepresentation(character, self.terminal)
             for binary_char in bin_rep.binary_string:
-                bin_rep.binary_characters.append(self.terminal.add_character(binary_char, motion.Coord(0, 0)))
+                bin_rep.binary_characters.append(self.terminal.add_character(binary_char, Coord(0, 0)))
                 bin_rep.pending_binary_characters.append(bin_rep.binary_characters[-1])
             self.pending_binary_representations.append(bin_rep)
 
         for bin_rep in self.pending_binary_representations:
-            path_coords: list[motion.Coord] = []
+            path_coords: list[Coord] = []
             starting_coord = self.terminal.output_area.random_coord(outside_scope=True)
             path_coords.append(starting_coord)
             last_orientation = random.choice(("col", "row"))
@@ -145,7 +146,7 @@ class BinaryPathEffect:
                 max_column_distance = abs(last_coord.column - bin_rep.character.input_coord.column)
                 max_row_distance = abs(last_coord.row - bin_rep.character.input_coord.row)
                 if last_orientation == "col" and max_row_distance > 0:
-                    next_coord = motion.Coord(
+                    next_coord = Coord(
                         last_coord.column,
                         last_coord.row
                         + (
@@ -155,7 +156,7 @@ class BinaryPathEffect:
                     )
                     last_orientation = "row"
                 elif last_orientation == "row" and max_column_distance > 0:
-                    next_coord = motion.Coord(
+                    next_coord = Coord(
                         last_coord.column + (random.randint(1, min(max_column_distance, 4)) * column_direction),
                         last_coord.row,
                     )

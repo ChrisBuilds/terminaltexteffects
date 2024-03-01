@@ -4,7 +4,8 @@ import random
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes, easing
+from terminaltexteffects.utils import graphics, argtypes, easing, geometry
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -95,9 +96,9 @@ class SwarmEffect:
         flash_list = [self.args.flash_color for _ in range(10)]
         swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
         for swarm in self.swarms:
-            swarm_area_coordinate_map: dict[motion.Coord, list[motion.Coord]] = {}
+            swarm_area_coordinate_map: dict[Coord, list[Coord]] = {}
             swarm_spawn = self.terminal.output_area.random_coord(outside_scope=True)
-            swarm_areas: list[motion.Coord] = []
+            swarm_areas: list[Coord] = []
             swarm_area_count = random.randint(2, 4)
             # create areas where characters will swarm
             while len(swarm_areas) < swarm_area_count:
@@ -106,12 +107,11 @@ class SwarmEffect:
                 row = random.randint(
                     round(self.terminal.output_area.top * 0.1), round(self.terminal.output_area.top * 0.9) + 1
                 )
-                area = motion.Coord(col, row)
+                area = Coord(col, row)
                 if area not in swarm_areas:
                     swarm_areas.append(area)
-                    # swarm area radius is a function of the terminal size, approximately 1/4 of the smallest dimension
-                    swarm_area_coordinate_map[area] = motion.Motion.find_coords_in_circle(
-                        area, max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 6, 1)
+                    swarm_area_coordinate_map[area] = geometry.find_coords_in_circle(
+                        area, max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 6, 1) * 2
                     )
 
             # assign characters waypoints for swarm areas and inner waypoints within the swarm areas

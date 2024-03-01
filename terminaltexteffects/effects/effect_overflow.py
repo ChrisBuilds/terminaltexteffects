@@ -4,7 +4,8 @@ import random
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes
+from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -68,11 +69,11 @@ class Row:
     def move_up(self) -> None:
         for character in self.characters:
             current_row = character.motion.current_coord.row
-            character.motion.set_coordinate(motion.Coord(character.motion.current_coord.column, current_row + 1))
+            character.motion.set_coordinate(Coord(character.motion.current_coord.column, current_row + 1))
 
     def setup(self) -> None:
         for character in self.characters:
-            character.motion.set_coordinate(motion.Coord(character.input_coord.column, 0))
+            character.motion.set_coordinate(Coord(character.input_coord.column, 0))
 
     def set_color(self, color: str) -> None:
         for character in self.characters:

@@ -6,8 +6,9 @@ from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import graphics, motion
+from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.terminal import Terminal
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -126,14 +127,14 @@ class SprayEffect:
         """Prepares the data for the effect by starting all of the characters from a point based on SparklerPosition."""
         spray_origin_map = {
             SprayPosition.CENTER: (self.terminal.output_area.center),
-            SprayPosition.N: motion.Coord(self.terminal.output_area.right // 2, self.terminal.output_area.top),
-            SprayPosition.NW: motion.Coord(self.terminal.output_area.left, self.terminal.output_area.top),
-            SprayPosition.W: motion.Coord(self.terminal.output_area.left, self.terminal.output_area.top // 2),
-            SprayPosition.SW: motion.Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
-            SprayPosition.S: motion.Coord(self.terminal.output_area.right // 2, self.terminal.output_area.bottom),
-            SprayPosition.SE: motion.Coord(self.terminal.output_area.right - 1, self.terminal.output_area.bottom),
-            SprayPosition.E: motion.Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top // 2),
-            SprayPosition.NE: motion.Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top),
+            SprayPosition.N: Coord(self.terminal.output_area.right // 2, self.terminal.output_area.top),
+            SprayPosition.NW: Coord(self.terminal.output_area.left, self.terminal.output_area.top),
+            SprayPosition.W: Coord(self.terminal.output_area.left, self.terminal.output_area.top // 2),
+            SprayPosition.SW: Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
+            SprayPosition.S: Coord(self.terminal.output_area.right // 2, self.terminal.output_area.bottom),
+            SprayPosition.SE: Coord(self.terminal.output_area.right - 1, self.terminal.output_area.bottom),
+            SprayPosition.E: Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top // 2),
+            SprayPosition.NE: Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top),
         }
 
         for character in self.terminal._input_characters:

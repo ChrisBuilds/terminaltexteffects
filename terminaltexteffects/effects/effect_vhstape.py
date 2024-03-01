@@ -4,7 +4,8 @@ import random
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes
+from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -129,7 +130,7 @@ class Line:
             # make glitch and restore waypoints
             glitch_path = character.motion.new_path(id="glitch", speed=2, hold_time=hold_time)
             glitch_wpt = glitch_path.new_waypoint(
-                motion.Coord(character.input_coord.column + (offset * direction), character.input_coord.row),
+                Coord(character.input_coord.column + (offset * direction), character.input_coord.row),
                 id="glitch",
             )
             restore_path = character.motion.new_path(id="restore", speed=2)
@@ -137,11 +138,11 @@ class Line:
             # make glitch wave waypoints
             glitch_wave_mid_path = character.motion.new_path(id="glitch_wave_mid", speed=2)
             glitch_wave_mid_wpt = glitch_wave_mid_path.new_waypoint(
-                motion.Coord(character.input_coord.column + 8, character.input_coord.row), id="glitch_wave_mid"
+                Coord(character.input_coord.column + 8, character.input_coord.row), id="glitch_wave_mid"
             )
             glitch_wave_end_path = character.motion.new_path(id="glitch_wave_end", speed=2)
             glitch_wave_end_wpt = glitch_wave_end_path.new_waypoint(
-                motion.Coord(character.input_coord.column + 14, character.input_coord.row), id="glitch_wave_end"
+                Coord(character.input_coord.column + 14, character.input_coord.row), id="glitch_wave_end"
             )
 
             # make glitch scenes

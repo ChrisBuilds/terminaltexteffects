@@ -2,7 +2,8 @@ import argparse
 import random
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes
+from terminaltexteffects.utils import graphics, argtypes
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -74,7 +75,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
 
 
 class GridLine:
-    def __init__(self, terminal: Terminal, args: argparse.Namespace, origin: motion.Coord, direction: str):
+    def __init__(self, terminal: Terminal, args: argparse.Namespace, origin: Coord, direction: str):
         self.terminal = terminal
         self.args = args
         self.origin = origin
@@ -90,21 +91,21 @@ class GridLine:
         self.characters: list[EffectCharacter] = []
         if direction == "horizontal":
             for column_index in range(self.terminal.output_area.left, self.terminal.output_area.right):
-                effect_char = self.terminal.add_character(self.grid_symbol, motion.Coord(0, 0))
+                effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(self.grid_symbol, 1, color=self.gradient.spectrum[self.origin.row - 1])
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
-                effect_char.motion.set_coordinate(motion.Coord(column_index, origin.row))
+                effect_char.motion.set_coordinate(Coord(column_index, origin.row))
                 self.characters.append(effect_char)
         elif direction == "vertical":
             for row_index in range(self.terminal.output_area.bottom, self.terminal.output_area.top):
-                effect_char = self.terminal.add_character(self.grid_symbol, motion.Coord(0, 0))
+                effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(self.grid_symbol, 1, color=self.gradient.spectrum.pop(0))
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
-                effect_char.motion.set_coordinate(motion.Coord(origin.column, row_index))
+                effect_char.motion.set_coordinate(Coord(origin.column, row_index))
                 self.characters.append(effect_char)
         self.collapsed_characters = [effect_char for effect_char in self.characters]
         self.extended_characters: list[EffectCharacter] = []
@@ -166,7 +167,7 @@ class SynthGridEffect:
             GridLine(
                 self.terminal,
                 self.args,
-                motion.Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
+                Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
                 "horizontal",
             )
         )
@@ -174,7 +175,7 @@ class SynthGridEffect:
             GridLine(
                 self.terminal,
                 self.args,
-                motion.Coord(self.terminal.output_area.left, self.terminal.output_area.top),
+                Coord(self.terminal.output_area.left, self.terminal.output_area.top),
                 "horizontal",
             )
         )
@@ -182,7 +183,7 @@ class SynthGridEffect:
             GridLine(
                 self.terminal,
                 self.args,
-                motion.Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
+                Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
                 "vertical",
             )
         )
@@ -190,7 +191,7 @@ class SynthGridEffect:
             GridLine(
                 self.terminal,
                 self.args,
-                motion.Coord(self.terminal.output_area.right, self.terminal.output_area.bottom),
+                Coord(self.terminal.output_area.right, self.terminal.output_area.bottom),
                 "vertical",
             )
         )
@@ -208,18 +209,14 @@ class SynthGridEffect:
         ):
             row_indexes.append(row_index)
             self.grid_lines.append(
-                GridLine(
-                    self.terminal, self.args, motion.Coord(self.terminal.output_area.left, row_index), "horizontal"
-                )
+                GridLine(self.terminal, self.args, Coord(self.terminal.output_area.left, row_index), "horizontal")
             )
         for column_index in range(
             self.terminal.output_area.left + column_gap, self.terminal.output_area.right, max(column_gap, 1)
         ):
             column_indexes.append(column_index)
             self.grid_lines.append(
-                GridLine(
-                    self.terminal, self.args, motion.Coord(column_index, self.terminal.output_area.bottom), "vertical"
-                )
+                GridLine(self.terminal, self.args, Coord(column_index, self.terminal.output_area.bottom), "vertical")
             )
         output_gradient = graphics.Gradient(self.args.text_gradient_stops, 10)
         if not row_indexes:
@@ -234,12 +231,12 @@ class SynthGridEffect:
         for row_index in row_indexes:
             prev_column_index = 1
             for column_index in column_indexes:
-                coords_in_block: list[motion.Coord] = []
+                coords_in_block: list[Coord] = []
                 if row_index == self.terminal.output_area.top:  # make sure the top row is included
                     row_index += 1
                 for row in range(prev_row_index, row_index):
                     for column in range(prev_column_index, column_index):
-                        coords_in_block.append(motion.Coord(column, row))
+                        coords_in_block.append(Coord(column, row))
                 characters_in_block: list[EffectCharacter] = []
                 for coord in coords_in_block:
                     if coord in self.terminal.character_by_input_coord:

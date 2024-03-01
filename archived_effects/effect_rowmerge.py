@@ -67,7 +67,7 @@ class RowMergeEffect:
                 column = self.terminal.output_area.right
             for character in row:
                 self.terminal.set_character_visibility(character, False)
-                character.motion.set_coordinate(motion.Coord(column, character.input_coord.row))
+                character.motion.set_coordinate(Coord(column, character.input_coord.row))
 
                 input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
                 input_coord_path.new_waypoint(character.input_coord)

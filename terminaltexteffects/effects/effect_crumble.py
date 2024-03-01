@@ -4,7 +4,8 @@ import random
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, motion, argtypes, easing
+from terminaltexteffects.utils import graphics, argtypes, easing
+from terminaltexteffects.utils.geometry import Coord
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -80,17 +81,15 @@ class CrumbleEffect:
                 speed=0.2,
                 ease=easing.out_bounce,
             )
-            fall_path.new_waypoint(motion.Coord(character.input_coord.column, self.terminal.output_area.bottom))
+            fall_path.new_waypoint(Coord(character.input_coord.column, self.terminal.output_area.bottom))
             weaken_scn = character.animation.new_scene(id="weaken")
             for color_step in weaken_gradient:
                 weaken_scn.add_frame(character.input_symbol, 6, color=color_step)
 
             top_path = character.motion.new_path(id="top", speed=0.3, ease=easing.out_quint)
             top_path.new_waypoint(
-                motion.Coord(character.input_coord.column, self.terminal.output_area.top),
-                bezier_control=motion.Coord(
-                    self.terminal.output_area.center_column, self.terminal.output_area.center_row
-                ),
+                Coord(character.input_coord.column, self.terminal.output_area.top),
+                bezier_control=Coord(self.terminal.output_area.center_column, self.terminal.output_area.center_row),
             )
             # set up reset stage
             input_path = character.motion.new_path(id="input", speed=0.3)
