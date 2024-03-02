@@ -509,16 +509,16 @@ class Animation:
         return hex(random.randint(0, 0xFFFFFF))[2:].zfill(6)
 
     @staticmethod
-    def adjust_color_brightness(hex_color: str, brightness: float) -> str:
+    def adjust_color_brightness(color: Color, brightness: float) -> Color:
         """
-        Adjusts the brightness of a given hex color.
+        Adjusts the brightness of a given color.
 
         Args:
-            hex_color (str): The hex color code to adjust.
+            color (Color): The color code to adjust.
             brightness (float): The brightness adjustment factor.
 
         Returns:
-            str: The adjusted hex color code.
+            Color: The adjusted color code.
         """
 
         def hue_to_rgb(p, q, t):
@@ -534,10 +534,15 @@ class Animation:
                 return p + (q - p) * (2 / 3 - t) * 6
             return p
 
+        xterm = False
+        if isinstance(color, int):
+            color = hexterm.xterm_to_hex(color)
+            xterm = True
+
         # Split the hex color string into RGB components and convert to decimal
-        r = int(hex_color[0:2], 16) / 255
-        g = int(hex_color[2:4], 16) / 255
-        b = int(hex_color[4:6], 16) / 255
+        r = int(color[0:2], 16) / 255
+        g = int(color[2:4], 16) / 255
+        b = int(color[4:6], 16) / 255
 
         # Convert RGB to HSL
         max_val = max(r, g, b)
@@ -570,10 +575,11 @@ class Animation:
             g = hue_to_rgb(p, q, h)
             b = hue_to_rgb(p, q, h - 1 / 3)
 
-        # Convert to hex and return
-        adjusted_hex = "{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))
-
-        return adjusted_hex
+        # Convert to hex
+        adjusted_color = "{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))
+        if xterm:
+            return hexterm.hex_to_xterm(adjusted_color)
+        return adjusted_color
 
     def _ease_animation(self, easing_func: typing.Callable) -> float:
         """Returns the percentage of total distance that should be moved based on the easing function.
