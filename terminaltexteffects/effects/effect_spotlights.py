@@ -92,7 +92,7 @@ class SpotlightsEffect:
         self.active_chars: list[EffectCharacter] = []
         self.spotlights: list[EffectCharacter] = self.make_spotlights(self.args.spotlight_count)
         self.illuminated_chars: set[EffectCharacter] = set()
-        self.character_color_map: dict[EffectCharacter, tuple[str, str]] = {}  # tuple[str, str] = (bright, dark)
+        self.character_color_map: dict[EffectCharacter, tuple[graphics.Color, graphics.Color]] = {}  # (bright, dark)
 
     def make_spotlights(self, num_spotlights: int) -> list[EffectCharacter]:
         spotlights: list[EffectCharacter] = []
