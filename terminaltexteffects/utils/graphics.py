@@ -55,7 +55,7 @@ class Gradient:
     stops: list[Color]
     steps: tuple[int, ...] | int
 
-    def get_color_at_fraction(self, fraction: float) -> str:
+    def get_color_at_fraction(self, fraction: float) -> Color:
         """Returns the color at a fraction of the gradient.
 
         Args:
@@ -171,7 +171,7 @@ class CharacterVisual:
         reverse (bool): reverse mode
         hidden (bool): hidden mode
         strike (bool): strike mode
-        color (int | str): color code
+        color (Color): color code
     """
 
     symbol: str
@@ -183,7 +183,7 @@ class CharacterVisual:
     reverse: bool = False
     hidden: bool = False
     strike: bool = False
-    color: int | str | None = None
+    color: Color | None = None
 
     def __post_init__(self):
         self.format_symbol()
