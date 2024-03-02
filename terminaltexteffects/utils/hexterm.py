@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-"""Convert RGB Hex colors to their closest XTerm-256 color."""
+"""Convert between RGB Hex color strings and XTerm-256 color codes."""
 
 xterm_to_hex_map = {
     0: "#000000",
