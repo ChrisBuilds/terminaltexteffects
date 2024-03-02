@@ -1,38 +1,39 @@
 from argparse import Namespace
 
 from terminaltexteffects.effects import (
+    effect_beams,
+    effect_binarypath,
     effect_blackhole,
+    effect_bouncyballs,
+    effect_bubbles,
+    effect_burn,
+    effect_crumble,
     effect_decrypt,
+    effect_errorcorrect,
     effect_expand,
+    effect_fireworks,
+    effect_middleout,
+    effect_orbitingvolley,
+    effect_overflow,
     effect_pour,
+    effect_print,
     effect_rain,
     effect_random_sequence,
-    effect_scattered,
-    effect_bouncyballs,
-    effect_spray,
-    effect_verticalslice,
-    effect_burn,
-    effect_fireworks,
-    effect_unstable,
-    effect_bubbles,
-    effect_middleout,
-    effect_errorcorrect,
-    effect_swarm,
-    effect_crumble,
     effect_rings,
+    effect_scattered,
+    effect_slide,
+    effect_spotlights,
+    effect_spray,
+    effect_swarm,
+    effect_synthgrid,
+    effect_unstable,
+    effect_verticalslice,
     effect_vhstape,
     effect_waves,
-    effect_print,
-    effect_binarypath,
-    effect_slide,
     effect_wipe,
-    effect_synthgrid,
-    effect_beams,
-    effect_overflow,
-    effect_orbitingvolley,
 )
-from terminaltexteffects.utils.terminal import Terminal
 from terminaltexteffects.utils import easing
+from terminaltexteffects.utils.terminal import Terminal
 
 t1 = ""
 t2 = "a"
@@ -73,6 +74,24 @@ def make_args() -> Namespace:
     args.gradient_steps = 5
     args.gradient_frames = 5
     return args
+
+
+# TODO: Add spotlights test
+
+
+def test_spotlights_effect() -> None:
+    for input_data in test_inputs:
+        args = make_args()
+        args.gradient_stops = ["8A008A", "00D1FF", "FFFFFF"]
+        args.gradient_steps = [12]
+        args.beam_width_ratio = 2.0
+        args.beam_falloff = 0.3
+        args.search_duration = 750
+        args.search_speed_range = (0.25, 0.5)
+        args.spotlight_count = 3
+        terminal = Terminal(input_data, args)
+        spotlights_effect = effect_spotlights.SpotlightsEffect(terminal, args)
+        spotlights_effect.run()
 
 
 def test_orbittingvolley_effect() -> None:
