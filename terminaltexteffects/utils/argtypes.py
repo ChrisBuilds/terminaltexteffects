@@ -251,7 +251,7 @@ def symbol_multiple(arg: str) -> str:
 
 
 def int_range(arg: str) -> tuple[int, int]:
-    """Validates that the given argument is a valid range of integers n >= 0.
+    """Validates that the given argument is a valid range of integers n > 0.
 
     Args:
         arg (str): argument to validate
@@ -261,13 +261,17 @@ def int_range(arg: str) -> tuple[int, int]:
     """
     try:
         start, end = map(int, arg.split("-"))
+        if start <= 0:
+            raise argparse.ArgumentTypeError(
+                f"invalid range: {arg} is not a valid range of ints. Must be start > 0. Ex: 1-10"
+            )
         if start > end:
             raise argparse.ArgumentTypeError(
-                f"invalid range: {arg} is not a valid range of ints. Must be start <= end. Ex: 0-10"
+                f"invalid range: {arg} is not a valid range of ints. Must be start <= end. Ex: 1-10"
             )
         return start, end
     except ValueError:
-        raise argparse.ArgumentTypeError(f"invalid range: {arg} is not a valid range. Must be start-end. Ex: 0-10")
+        raise argparse.ArgumentTypeError(f"invalid range: {arg} is not a valid range. Must be start-end. Ex: 1-10")
 
 
 def float_range(arg: str) -> tuple[float, float]:
