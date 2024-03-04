@@ -2,6 +2,7 @@ import argparse
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -38,7 +39,7 @@ Example: effect_example""",
     effect_parser.add_argument(
         "--color-list",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=0,
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the ___.",
@@ -51,22 +52,23 @@ Example: effect_example""",
         help="Color for the final character.",
     )
     effect_parser.add_argument(
-        "--gradient-stops",
+        "--final-gradient-stops",
         type=argtypes.color,
-        nargs="*",
-        default=[],
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
-        "--gradient-steps",
+        "--final-gradient-steps",
         type=argtypes.positive_int,
-        default=10,
+        nargs="+",
+        default=[12],
         metavar="(int > 0)",
-        help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
-        "--gradient-frames",
+        "--final-gradient-frames",
         type=argtypes.positive_int,
         default=5,
         metavar="(int > 0)",
@@ -95,12 +97,16 @@ class NamedEffect:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
-
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
         for character in self.terminal.get_characters():
-            pass
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
             # do something with the data if needed (sort, adjust positions, etc)
 
     def run(self) -> None:
