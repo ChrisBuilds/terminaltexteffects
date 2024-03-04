@@ -2,8 +2,8 @@ import argparse
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.terminal import Terminal
-from terminaltexteffects.utils import graphics, argtypes, easing
 
 
 def add_arguments(subparsers: argparse._SubParsersAction) -> None:
@@ -75,7 +75,7 @@ class CycleEffect:
         symbols = "!@#$%^&*()_+-=[]{}\\|;:'\",<.>/?`~"
         flash_final_gradient = graphics.Gradient([self.args.discover_color, self.args.final_color], 10)
         collection = letters_lower + letters_upper + numbers + symbols
-        for character in self.terminal._input_characters:
+        for character in self.terminal.get_characters():
             if character.input_symbol not in collection:
                 collection += character.input_symbol
             self.terminal.set_character_visibility(character, True)
