@@ -6,7 +6,7 @@
 #### Effects
  * Beams. Light beams travel across the output area and illuminate the characters behind them.
  * Overflow. The input text is scrambled by row and repeated randomly, scrolling up the terminal, before eventually displaying in the correct order.
- * OrbitingVolley. 
+ * OrbitingVolley. Characters fire from launcher which orbit output area.
  * Spotlights. Spotlights search the text area, illuminating characters, before converging in the center and expanding.
 
 #### Engine
@@ -25,9 +25,21 @@
    an RGB hex string.
  * CTRL-C keyboard interrupt during a running effect will exit gracefully.
  * geometry.find_coords_in_circle() has been rewritten to find all coords which fall in an ellipse. The result is a circle due to the height/width ratio of terminal cells. This function now finds all terminal coordinates within the 'circle' rather than an arbitrary subset.
+ 
 ### Changes
 #### Effects
  * All effects have been updated to use the latest API calls for improved performance.
+ * All effects support gradients for the final appearance.
+ * ErrorCorrect swap-delay lowered and error-pairs specification changed to percent float.
+ * Rain effect supports character specification for rain drops and movement speed range for the rain drop falling speed.
+ * Print effect uses the row final gradient color for the print head color.
+ * RandomSequence effect accepts a starting color and a speed.
+ * Rings effect prepares faster. Ring colors are set in order of appearance in the ring-colors argument. Ring spin speed is configurable. Rings with less than 25% visible characters based on radius are no longer generated. Ring gap is set as a percent of the smallest output area dimension.
+ * Scattered effect gradient progresses from the first color to the row color.
+ * Spray effect spray-volume is specified as a percent of the total number of characters and movement speed is a range.
+ * Swarm effect swarm focus points algorithm changed to reduce long distances between points. 
+ * Decrypt effect supports gradient specification for ciphertext and plaintext
+ * Beams effect uses Animation.adjust_color_brightness() to lower the background character brightness and shows the lighter color when the beam passes by.
 
 #### Engine
  * Geometry related methods have been removed from the motion class. They are now located at terminaltexteffects.utils.geometry as separate functions.
@@ -42,6 +54,7 @@
 
 ### Bug Fixes
 #### Effects
+ * All effects with command line options that accept variable length arguments which require at least 1 argument will present an error message when the option is called with 0 arguments.
 
 #### Engine
  * Fixed division by zero error in geometry.find_coord_at_distance() when the origin coord and the target coord are the same.
