@@ -339,6 +339,9 @@ class Terminal:
             all_characters.extend(self._fill_characters)
         if added_chars:
             all_characters.extend(self._added_characters)
+
+        all_characters.sort(key=lambda character: (character.input_coord.row, character.input_coord.column))
+
         if grouping in (self.CharacterGroup.COLUMN_LEFT_TO_RIGHT, self.CharacterGroup.COLUMN_RIGHT_TO_LEFT):
             columns = []
             for column_index in range(self.output_area.right + 1):
