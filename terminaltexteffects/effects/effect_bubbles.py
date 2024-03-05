@@ -50,12 +50,22 @@ Example: terminaltexteffects bubbles -a 0.01 --pop-color ff9600 --final-color 25
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the spray emitted when a bubble pops.",
     )
+
     effect_parser.add_argument(
-        "--final-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="ffffff",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final character.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--bubble-speed",
@@ -198,19 +208,25 @@ class BubblesEffect:
         indigo = "4b369d"
         violet = "70369d"
         self.rainbow_gradient = graphics.Gradient([red, orange, yellow, green, blue, indigo, violet], 5)
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
-        final_gradient = graphics.Gradient([self.args.pop_color, self.args.final_color], 10)
-        for character in self.terminal._input_characters:
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
             character.layer = 1
             pop_1_scene = character.animation.new_scene(id="pop_1")
             pop_2_scene = character.animation.new_scene()
-            pop_1_scene.add_frame("*", 25, color=self.args.pop_color)
-            pop_2_scene.add_frame("'", 25, color=self.args.pop_color)
+            pop_1_scene.add_frame("*", 20, color=self.args.pop_color)
+            pop_2_scene.add_frame("'", 20, color=self.args.pop_color)
             final_scene = character.animation.new_scene()
-            for step in final_gradient:
-                final_scene.add_frame(character.input_symbol, 5, color=step)
+            char_final_gradient = graphics.Gradient(
+                [self.args.pop_color, self.character_final_color_map[character]], 10
+            )
+            final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, pop_1_scene, EventHandler.Action.ACTIVATE_SCENE, pop_2_scene
             )

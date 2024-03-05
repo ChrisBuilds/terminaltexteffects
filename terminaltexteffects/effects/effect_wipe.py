@@ -45,15 +45,16 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "--gradient-stops",
         type=argtypes.color,
-        nargs="*",
-        default=[],
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )
     effect_parser.add_argument(
         "--gradient-steps",
         type=argtypes.positive_int,
-        default=10,
+        nargs="+",
+        default=[12],
         metavar="(int > 0)",
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
@@ -82,11 +83,16 @@ class WipeEffect:
         self.pending_groups: list[list[EffectCharacter]] = []
         self.active_chars: list[EffectCharacter] = []
         self.direction = self.args.wipe_direction
-        if len(self.args.gradient_stops) > 1:
-            self.wipe_gradient = graphics.Gradient(self.args.gradient_stops, self.args.gradient_steps)
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
+        final_gradient = graphics.Gradient(self.args.gradient_stops, self.args.gradient_steps)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
         sort_map = {
             "column_left_to_right": self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             "column_right_to_left": self.terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
@@ -98,15 +104,14 @@ class WipeEffect:
             "diagonal_bottom_right_to_top_left": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         }
         for group in self.terminal.get_characters_grouped(sort_map[self.direction]):
-            if self.args.gradient_stops:
-                for character in group:
-                    wipe_scn = character.animation.new_scene()
-                    if len(self.args.gradient_stops) > 1:
-                        for color in self.wipe_gradient:
-                            wipe_scn.add_frame(character.input_symbol, self.args.gradient_frames, color=color)
-                    else:
-                        wipe_scn.add_frame(character.input_symbol, 1, color=self.args.gradient_stops[0])
-                    character.animation.activate_scene(wipe_scn)
+            for character in group:
+                wipe_scn = character.animation.new_scene()
+                wipe_gradient = graphics.Gradient(
+                    [final_gradient.spectrum[0], self.character_final_color_map[character]],
+                    self.args.gradient_steps,
+                )
+                wipe_scn.apply_gradient_to_symbols(wipe_gradient, character.input_symbol, self.args.gradient_frames)
+                character.animation.activate_scene(wipe_scn)
             self.pending_groups.append(group)
 
     def run(self) -> None:

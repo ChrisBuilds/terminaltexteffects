@@ -62,7 +62,7 @@ Example: terminaltexteffects orbittingvolley -a 0.01 --top-launcher-symbol █ -
     effect_parser.add_argument(
         "--final-gradient-stops",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["ffa51f", "ffa51f", "6177b3", "6177b3"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the wipe gradient.",
@@ -70,7 +70,7 @@ Example: terminaltexteffects orbittingvolley -a 0.01 --top-launcher-symbol █ -
     effect_parser.add_argument(
         "--final-gradient-steps",
         type=argtypes.positive_int,
-        nargs="*",
+        nargs="+",
         default=[6, 8, 10],
         metavar="(int > 0)",
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in --final-gradient-stops.",

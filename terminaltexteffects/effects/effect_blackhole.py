@@ -40,17 +40,26 @@ Example: terminaltexteffects blackhole -a 0.01 --star-colors ffcc0d ff7326 ff194
     effect_parser.add_argument(
         "--star-colors",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c", "049dbf"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="List of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color.",
     )
     effect_parser.add_argument(
-        "--final-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="00a7c2",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Final color that characters will shift to after exploding.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
 
 
@@ -71,6 +80,7 @@ class BlackholeEffect:
             ),
             3,
         )
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_blackhole(self) -> None:
         star_symbols = [
@@ -223,7 +233,7 @@ class BlackholeEffect:
 
     def explode_singularity(self) -> None:
         star_colors = ["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c" "049dbf"]
-        for character in self.terminal._input_characters:
+        for character in self.terminal.get_characters():
             nearby_coord = geometry.find_coords_on_circle(character.input_coord, 3, 5)[random.randrange(0, 5)]
             nearby_path = character.motion.new_path(speed=random.randint(2, 3) / 10, ease=easing.out_expo)
             nearby_path.new_waypoint(nearby_coord)
@@ -233,9 +243,8 @@ class BlackholeEffect:
             explode_star_color = random.choice(star_colors)
             explode_scn.add_frame(character.input_symbol, 1, color=explode_star_color)
             cooling_scn = character.animation.new_scene()
-            cooling_gradient = graphics.Gradient([explode_star_color, self.args.final_color], 10)
-            for color in cooling_gradient:
-                cooling_scn.add_frame(character.input_symbol, 20, color=color)
+            cooling_gradient = graphics.Gradient([explode_star_color, self.character_final_color_map[character]], 10)
+            cooling_scn.apply_gradient_to_symbols(cooling_gradient, character.input_symbol, 20)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
                 nearby_path,
@@ -254,6 +263,11 @@ class BlackholeEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by creating the starfield, blackhole, and consumption scenes/waypoints."""
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
         self.prepare_blackhole()
 
     def run(self) -> None:

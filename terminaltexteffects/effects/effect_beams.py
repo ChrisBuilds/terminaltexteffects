@@ -80,7 +80,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "--beam-gradient-stops",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["ffffff", "00D1FF", "8A008A"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors.",
@@ -88,7 +88,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "--beam-gradient-steps",
         type=argtypes.positive_int,
-        nargs="*",
+        nargs="+",
         default=[2, 8],
         metavar="(int > 0)",
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
@@ -101,23 +101,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Number of frames to display each gradient step.",
     )
     effect_parser.add_argument(
-        "--text-glow-color",
-        type=argtypes.color,
-        default="00D1FF",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the glow of the text.",
-    )
-    effect_parser.add_argument(
-        "--text-fade-color",
-        type=argtypes.color,
-        default="333333",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the text while faded in the background. Gradient: text-glow-color -> text-fade-color.",
-    )
-    effect_parser.add_argument(
         "--final-gradient-stops",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["8A008A", "00D1FF", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the wipe gradient.",
@@ -125,8 +111,8 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "--final-gradient-steps",
         type=argtypes.positive_int,
-        nargs="*",
-        default=6,
+        nargs="+",
+        default=[12],
         metavar="(int > 0)",
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
     )
@@ -191,15 +177,22 @@ class BeamsEffect:
         self.args = args
         self.pending_groups: list[Group] = []
         self.active_chars: list[EffectCharacter] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+
         if (self.args.beam_row_min_speed > self.args.beam_row_max_speed) or (
             self.args.beam_column_min_speed > self.args.beam_column_max_speed
         ):
             raise ValueError("Minimum speed cannot be greater than maximum speed.")
 
     def prepare_data(self) -> None:  # testing
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
+        for character in self.terminal.get_characters(fill_chars=True):
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
         beam_gradient = graphics.Gradient(self.args.beam_gradient_stops, steps=self.args.beam_gradient_steps)
-        final_text_gradient = graphics.Gradient(self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
-        faded_text_gradient = graphics.Gradient([self.args.text_glow_color, self.args.text_fade_color], steps=5)
         groups: list[Group] = []
         for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
             groups.append(Group(row, "row", self.terminal, self.args))
@@ -217,20 +210,19 @@ class BeamsEffect:
                 beam_column_scn.apply_gradient_to_symbols(
                     beam_gradient, self.args.beam_column_symbols, self.args.beam_gradient_frames
                 )
-                for color in faded_text_gradient:
-                    beam_row_scn.add_frame(character.input_symbol, 5, color=color)
-                    beam_column_scn.add_frame(character.input_symbol, 5, color=color)
+                faded_color = character.animation.adjust_color_brightness(
+                    self.character_final_color_map[character], 0.3
+                )
+                fade_gradient = graphics.Gradient([self.character_final_color_map[character], faded_color], steps=10)
+                beam_row_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
+                beam_column_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
+                brighten_gradient = graphics.Gradient(
+                    [faded_color, self.character_final_color_map[character]], steps=10
+                )
                 brigthen_scn = character.animation.new_scene(id="brighten")
-                for color in final_text_gradient.spectrum[
-                    : int(
-                        max(
-                            1,
-                            (character.input_coord.row / self.terminal.output_area.top)
-                            * len(final_text_gradient.spectrum),
-                        )
-                    )
-                ]:
-                    brigthen_scn.add_frame(character.input_symbol, self.args.final_gradient_frames, color=color)
+                brigthen_scn.apply_gradient_to_symbols(
+                    brighten_gradient, character.input_symbol, self.args.final_gradient_frames
+                )
         self.pending_groups = groups
         random.shuffle(self.pending_groups)
 

@@ -38,7 +38,7 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
     effect_parser.add_argument(
         "--firework-colors",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated list of colors from which firework colors will be randomly selected.",
@@ -58,11 +58,20 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
         help="Percent of total characters in each firework shell.",
     )
     effect_parser.add_argument(
-        "--final-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="ffffff",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final character.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--launch-delay",
@@ -89,16 +98,13 @@ class FireworksEffect:
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
         self.shells: list[list[EffectCharacter]] = []
-        if self.args.firework_colors:
-            self.firework_colors = self.args.firework_colors
-        else:
-            self.firework_colors = ["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"]
         self.firework_volume = max(1, round(self.args.firework_volume * len(self.terminal._input_characters)))
         self.explode_distance = max(1, round(self.terminal.output_area.right * self.args.explode_distance))
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_waypoints(self) -> None:
         firework_shell: list[EffectCharacter] = []
-        for character in self.terminal._input_characters:
+        for character in self.terminal.get_characters():
             if len(firework_shell) == self.firework_volume or not firework_shell:
                 self.shells.append(firework_shell)
                 firework_shell = []
@@ -149,23 +155,28 @@ class FireworksEffect:
             self.shells.append(firework_shell)
 
     def prepare_scenes(self) -> None:
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
         for firework_shell in self.shells:
-            shell_color = random.choice(self.firework_colors)
+            shell_color = random.choice(self.args.firework_colors)
             for character in firework_shell:
                 # launch scene
                 launch_scn = character.animation.new_scene()
-                for color in self.firework_colors:
-                    launch_scn.add_frame(self.args.firework_symbol, 2, color=shell_color)
-                    launch_scn.add_frame(self.args.firework_symbol, 1, color="FFFFFF")
-                    launch_scn.is_looping = True
+                launch_scn.add_frame(self.args.firework_symbol, 2, color=shell_color)
+                launch_scn.add_frame(self.args.firework_symbol, 1, color="FFFFFF")
+                launch_scn.is_looping = True
                 # bloom scene
                 bloom_scn = character.animation.new_scene()
                 bloom_scn.add_frame(character.input_symbol, 1, color=shell_color)
                 # fall scene
                 fall_scn = character.animation.new_scene()
-                fall_gradient = graphics.Gradient([shell_color, self.args.final_color], 15)
-                for color in fall_gradient:
-                    fall_scn.add_frame(character.input_symbol, 15, color=color)
+                fall_gradient = graphics.Gradient([shell_color, self.character_final_color_map[character]], 15)
+                fall_scn.apply_gradient_to_symbols(fall_gradient, character.input_symbol, 15)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,

@@ -31,16 +31,26 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
-        "--base-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="ffffff",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the characters when they are not glitching.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )
+
     effect_parser.add_argument(
         "--glitch-line-colors",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors are applied in order as an animation.",
@@ -48,7 +58,7 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
     effect_parser.add_argument(
         "--glitch-wave-colors",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.",
@@ -56,17 +66,10 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
     effect_parser.add_argument(
         "--noise-colors",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["1e1e1f", "3c3b3d", "6d6c70", "a2a1a6", "cbc9cf", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the characters during the noise phase.",
-    )
-    effect_parser.add_argument(
-        "--final-color",
-        type=argtypes.color,
-        default="ffffff",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final characters after the glitching has resolved.",
     )
     effect_parser.add_argument(
         "--glitch-line-chance",
@@ -114,9 +117,15 @@ class Line:
 
     """
 
-    def __init__(self, characters: list[EffectCharacter], args: argparse.Namespace) -> None:
+    def __init__(
+        self,
+        characters: list[EffectCharacter],
+        args: argparse.Namespace,
+        character_final_color_map: dict[EffectCharacter, graphics.Color],
+    ) -> None:
         self.characters = characters
         self.args = args
+        self.character_final_color_map = character_final_color_map
         self.build_line_effects()
 
     def build_line_effects(self) -> None:
@@ -147,7 +156,7 @@ class Line:
 
             # make glitch scenes
             base_scn = character.animation.new_scene(id="base")
-            base_scn.add_frame(character.input_symbol, duration=1, color=self.args.base_color)
+            base_scn.add_frame(character.input_symbol, duration=1, color=self.character_final_color_map[character])
             glitch_scn_forward = character.animation.new_scene(id="rgb_glitch_fwd", sync=graphics.SyncMetric.STEP)
             for color in glitch_line_colors:
                 glitch_scn_forward.add_frame(character.input_symbol, duration=1, color=color)
@@ -157,11 +166,13 @@ class Line:
             snow_scn = character.animation.new_scene(id="snow")
             for _ in range(25):
                 snow_scn.add_frame(random.choice(snow_chars), duration=2, color=random.choice(noise_colors))
-            snow_scn.add_frame(character.input_symbol, duration=1, color=self.args.base_color)
+            snow_scn.add_frame(character.input_symbol, duration=1, color=self.character_final_color_map[character])
             final_snow_scn = character.animation.new_scene(id="final_snow")
             final_redraw_scn = character.animation.new_scene(id="final_redraw")
             final_redraw_scn.add_frame("█", duration=10, color="ffffff")
-            final_redraw_scn.add_frame(character.input_symbol, duration=1, color=self.args.final_color)
+            final_redraw_scn.add_frame(
+                character.input_symbol, duration=1, color=self.character_final_color_map[character]
+            )
 
             for _ in range(50):
                 final_snow_scn.add_frame(random.choice(snow_chars), duration=2, color=random.choice(noise_colors))
@@ -275,13 +286,19 @@ class VHSTapeEffect:
         self.active_glitch_wave_top: int | None = None
         self.active_glitch_wave_lines: list[Line] = []
         self.active_glitch_lines: list[Line] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
         for row_index, characters in enumerate(
             self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP)
         ):
-            self.lines[row_index] = Line(characters, self.args)
-        for character in self.terminal._input_characters:
+            self.lines[row_index] = Line(characters, self.args, self.character_final_color_map)
+        for character in self.terminal.get_characters():
             self.terminal.set_character_visibility(character, True)
             character.animation.activate_scene(character.animation.query_scene("base"))
 
@@ -387,7 +404,7 @@ class VHSTapeEffect:
             elif phase == "noise":
                 # Activate final snow animation for all characters
                 if not self.active_chars:
-                    for character in self.terminal._input_characters:
+                    for character in self.terminal.get_characters():
                         character.animation.activate_scene(character.animation.query_scene("final_snow"))
                         self.active_chars.append(character)
                     phase = "redraw"

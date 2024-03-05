@@ -34,26 +34,43 @@ Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
+        "--rain-symbols",
+        type=argtypes.symbol,
+        nargs="+",
+        default=["o", ".", ",", "*", "|"],
+        metavar="(ASCII/UTF-8 character string)",
+        help="Space separated, unquoted, list of symbols to use for the rain drops. Symbols are randomly chosen from the list. ",
+    )
+    effect_parser.add_argument(
         "--rain-colors",
         type=argtypes.color,
-        nargs="*",
-        default=0,
+        nargs="+",
+        default=["00315C", "004C8F", "0075DB", "3F91D9", "78B9F2", "9AC8F5", "B8D8F8", "E3EFFC"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="List of colors for the rain drops. Colors are randomly chosen from the list.",
     )
     effect_parser.add_argument(
-        "--final-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="ffffff",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final character.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--movement-speed",
-        type=argtypes.positive_float,
-        default=0.15,
-        metavar="(float > 0)",
-        help="Falling speed of the rain drops.",
+        type=argtypes.float_range,
+        default=(0.1, 0.2),
+        metavar="(float range e.g. 0.25-0.5)",
+        help="Falling speed range of the rain drops.",
     )
     effect_parser.add_argument(
         "--easing",
@@ -72,26 +89,29 @@ class RainEffect:
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
         self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""
-        if self.args.rain_colors:
-            rain_colors = self.args.rain_colors
-        else:
-            rain_colors = [39, 45, 51, 21, 117, 159]
-        rain_characters = ["o", ".", ",", "*", "|"]
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
 
-        for character in self.terminal._input_characters:
-            raindrop_color = random.choice(rain_colors)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
+        for character in self.terminal.get_characters():
+            raindrop_color = random.choice(self.args.rain_colors)
             rain_scn = character.animation.new_scene()
-            rain_scn.add_frame(random.choice(rain_characters), 1, color=raindrop_color)
-            raindrop_gradient = graphics.Gradient([raindrop_color, self.args.final_color], 7)
+            rain_scn.add_frame(random.choice(self.args.rain_symbols), 1, color=raindrop_color)
+            raindrop_gradient = graphics.Gradient([raindrop_color, self.character_final_color_map[character]], 7)
             fade_scn = character.animation.new_scene()
-            for color in raindrop_gradient:
-                fade_scn.add_frame(character.input_symbol, 5, color=color)
+            fade_scn.apply_gradient_to_symbols(raindrop_gradient, character.input_symbol, 5)
             character.animation.activate_scene(rain_scn)
             character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
-            input_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+            input_path = character.motion.new_path(
+                speed=random.uniform(self.args.movement_speed[0], self.args.movement_speed[1]), ease=self.args.easing
+            )
             input_path.new_waypoint(character.input_coord)
 
             character.event_handler.register_event(

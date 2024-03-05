@@ -32,26 +32,20 @@ Example: terminaltexteffects --effect crumble --animation-rate 0.01 --initial-co
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
-        "--initial-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="0088bb",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the characters at the start of the effect.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
-        "--dust-colors",
-        type=argtypes.color,
-        nargs="*",
-        default=["dadad1", "766b69", "848789", "747a8a"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Space separated, unquoted, list of colors for the dust particles.",
-    )
-    effect_parser.add_argument(
-        "--final-color",
-        type=argtypes.color,
-        default="0eeaff",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final character.",
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
 
 
@@ -63,19 +57,27 @@ class CrumbleEffect:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by registering events and building scenes/waypoints."""
-        strengthen_flash_gradient = graphics.Gradient([self.args.final_color, "ffffff"], 6)
-        strengthen_gradient = graphics.Gradient(["ffffff", self.args.final_color], 9)
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
 
-        for character in self.terminal._input_characters:
-            dust_color = random.choice(self.args.dust_colors)
-            weaken_gradient = graphics.Gradient([self.args.initial_color, dust_color], 9)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
+        for character in self.terminal.get_characters():
+            strengthen_flash_gradient = graphics.Gradient([self.character_final_color_map[character], "ffffff"], 6)
+            strengthen_gradient = graphics.Gradient(["ffffff", self.character_final_color_map[character]], 9)
+            weak_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.85)
+            dust_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.65)
+            weaken_gradient = graphics.Gradient([weak_color, dust_color], 9)
             self.terminal.set_character_visibility(character, True)
             # set up initial and falling stage
             initial_scn = character.animation.new_scene()
-            initial_scn.add_frame(character.input_symbol, 1, color=self.args.initial_color)
+            initial_scn.add_frame(character.input_symbol, 1, color=weak_color)
             character.animation.activate_scene(initial_scn)
             fall_path = character.motion.new_path(
                 speed=0.2,
@@ -83,10 +85,9 @@ class CrumbleEffect:
             )
             fall_path.new_waypoint(Coord(character.input_coord.column, self.terminal.output_area.bottom))
             weaken_scn = character.animation.new_scene(id="weaken")
-            for color_step in weaken_gradient:
-                weaken_scn.add_frame(character.input_symbol, 6, color=color_step)
+            weaken_scn.apply_gradient_to_symbols(weaken_gradient, character.input_symbol, 6)
 
-            top_path = character.motion.new_path(id="top", speed=0.3, ease=easing.out_quint)
+            top_path = character.motion.new_path(id="top", speed=0.5, ease=easing.out_quint)
             top_path.new_waypoint(
                 Coord(character.input_coord.column, self.terminal.output_area.top),
                 bezier_control=Coord(self.terminal.output_area.center_column, self.terminal.output_area.center_row),
@@ -95,11 +96,9 @@ class CrumbleEffect:
             input_path = character.motion.new_path(id="input", speed=0.3)
             input_path.new_waypoint(character.input_coord)
             strengthen_flash_scn = character.animation.new_scene()
-            for color_step in strengthen_flash_gradient:
-                strengthen_flash_scn.add_frame(character.input_symbol, 4, color=color_step)
+            strengthen_flash_scn.apply_gradient_to_symbols(strengthen_flash_gradient, character.input_symbol, 4)
             strengthen_scn = character.animation.new_scene()
-            for color_step in strengthen_gradient:
-                strengthen_scn.add_frame(character.input_symbol, 6, color=color_step)
+            strengthen_scn.apply_gradient_to_symbols(strengthen_gradient, character.input_symbol, 6)
             dust_scn = character.animation.new_scene(sync=graphics.SyncMetric.DISTANCE)
             for _ in range(5):
                 dust_scn.add_frame(random.choice(["*", ".", ","]), 1, color=dust_color)
@@ -176,7 +175,7 @@ class CrumbleEffect:
 
             elif stage == "resetting":
                 if not reset:
-                    for character in self.terminal._input_characters:
+                    for character in self.terminal.get_characters():
                         character.motion.activate_path(character.motion.query_path("input"))
                         self.active_chars.append(character)
                     reset = True

@@ -34,29 +34,45 @@ Example: terminaltexteffects rings --animation-rate 0.01 --ring-colors ffcc0d ff
     effect_parser.add_argument(
         "--ring-colors",
         type=argtypes.color,
-        nargs="*",
-        default=["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c"],
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the rings.",
     )
     effect_parser.add_argument(
-        "--base-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="ffffff",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the characters when they are not in rings.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--ring-gap",
-        type=argtypes.positive_int,
-        default=6,
-        help="Distance between rings. Lower distance results in more rings on screen.",
+        type=argtypes.positive_float,
+        default=0.1,
+        help="Distance between rings as a percent of the smallest output area dimension.",
     )
     effect_parser.add_argument(
         "--spin-duration",
         type=argtypes.positive_int,
         default=200,
         help="Number of animation steps for each cycle of the spin phase.",
+    )
+    effect_parser.add_argument(
+        "--spin-speed",
+        type=argtypes.float_range,
+        default=(0.25, 1.0),
+        metavar="(float range e.g. 0.25-1.0)",
+        help="Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring.",
     )
     effect_parser.add_argument(
         "--disperse-duration",
@@ -75,13 +91,15 @@ Example: terminaltexteffects rings --animation-rate 0.01 --ring-colors ffcc0d ff
 class Ring:
     def __init__(
         self,
+        args: argparse.Namespace,
         radius: int,
         origin: Coord,
         ring_coords: list[Coord],
         ring_gap: int,
         ring_color: str,
-        base_color: str,
+        character_color_map: dict[EffectCharacter, graphics.Color],
     ):
+        self.args = args
         self.radius = radius
         self.origin: Coord = origin
         self.counter_clockwise_coords = ring_coords
@@ -91,24 +109,15 @@ class Ring:
         self.characters: list[EffectCharacter] = []
         self.character_last_ring_path: dict[EffectCharacter, motion.Path] = {}
         self.rotations = 0
-        self.rotation_speed = random.uniform(0.2, 0.5)
-        self.gradient = graphics.Gradient(
-            [ring_color, "ffffff", ring_color], max(len(self.counter_clockwise_coords) // 3, 1)
-        )
-        self.gradient_shift = 0
-        self.disperse_gradient = graphics.Gradient([self.ring_color, base_color], 7)
-
-    def make_gradient(self, start_color: str, end_color: str, steps: int) -> list[str]:
-        gradient = graphics.Gradient([start_color, end_color], steps)
-        full_gradient = list(gradient) + list(gradient)[::-1]
-        return full_gradient
+        self.rotation_speed = random.uniform(self.args.spin_speed[0], self.args.spin_speed[1])
+        self.character_color_map = character_color_map
 
     def add_character(self, character: EffectCharacter, clockwise: int) -> None:
         # make gradient scene
-        gradient_scn = character.animation.new_scene(is_looping=True, id="gradient")
-        for step in self.gradient.spectrum[self.gradient_shift :] + self.gradient.spectrum[: self.gradient_shift]:
-            gradient_scn.add_frame(character.input_symbol, 1, color=step)
-        self.gradient_shift += 1
+        gradient_scn = character.animation.new_scene(id="gradient")
+        char_gradient = graphics.Gradient([self.character_color_map[character], self.ring_color], 8)
+        gradient_scn.apply_gradient_to_symbols(char_gradient, character.input_symbol, 5)
+
         # make rotation waypoints
         ring_paths: list[motion.Path] = []
         character_starting_index = len(self.characters)
@@ -123,8 +132,8 @@ class Ring:
         self.character_last_ring_path[character] = ring_paths[0]
         # make disperse scene
         disperse_scn = character.animation.new_scene(is_looping=False, id="disperse")
-        for step in self.disperse_gradient:
-            disperse_scn.add_frame(character.input_symbol, 16, color=step)
+        disperse_gradient = graphics.Gradient([self.ring_color, self.character_color_map[character]], 8)
+        disperse_scn.apply_gradient_to_symbols(disperse_gradient, character.input_symbol, 16)
         character.motion.chain_paths(ring_paths, loop=True)
         self.characters.append(character)
 
@@ -180,13 +189,20 @@ class RingsEffect:
         self.ring_chars: list[EffectCharacter] = []
         self.non_ring_chars: list[EffectCharacter] = []
         self.rings: dict[int, Ring] = {}
-        self.ring_gap = self.args.ring_gap
+        self.ring_gap = int(
+            max(round(min(self.terminal.output_area.top, self.terminal.output_area.right) * self.args.ring_gap), 1)
+        )
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by building rings and associated animations/waypoints."""
-        for character in self.terminal._input_characters:
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
             start_scn = character.animation.new_scene()
-            start_scn.add_frame(character.input_symbol, 1, color=self.args.base_color)
+            start_scn.add_frame(character.input_symbol, 1, color=self.character_final_color_map[character])
             home_path = character.motion.new_path(speed=0.8, ease=easing.out_quad, id="home")
             home_path.new_waypoint(character.input_coord)
             character.animation.activate_scene(start_scn)
@@ -200,16 +216,21 @@ class RingsEffect:
                 self.terminal.output_area.center, radius, 7 * radius, unique=True
             )
             # check if any part of the ring is in the output area, if not, stop creating rings
-            if not any([self.terminal.output_area.coord_is_in_output_area(coord) for coord in ring_coords]):
+            if (
+                len([coord for coord in ring_coords if self.terminal.output_area.coord_is_in_output_area(coord)])
+                / len(ring_coords)
+                < 0.25
+            ):
                 break
 
             self.rings[radius] = Ring(
+                self.args,
                 radius,
                 self.terminal.output_area.center,
                 ring_coords,
                 self.ring_gap,
-                random.choice(self.args.ring_colors),
-                self.args.base_color,
+                self.args.ring_colors[len(self.rings) % len(self.args.ring_colors)],
+                self.character_final_color_map,
             )
         # assign characters to rings
         ring_count = 0
@@ -223,32 +244,17 @@ class RingsEffect:
             ring_count += 1
 
         # make external waypoints for characters not in rings
-        for character in self.terminal._input_characters:
+        for character in self.terminal.get_characters():
             if character not in self.ring_chars:
-                color = random.choice(self.args.ring_colors)
-                external_path = character.motion.new_path(id="external", speed=0.1, ease=easing.out_cubic)
+                external_path = character.motion.new_path(id="external", speed=0.8, ease=easing.out_sine)
                 external_path.new_waypoint(self.terminal.output_area.random_coord(outside_scope=True))
-                # make disperse gradient
-                color = random.choice(self.args.ring_colors)
-                disperse_gradient = graphics.Gradient([self.args.base_color, color, self.args.base_color], 7)
-                disperse_scn = character.animation.new_scene(
-                    id="disperse", is_looping=False, sync=graphics.SyncMetric.DISTANCE
-                )
-                for step in disperse_gradient:
-                    disperse_scn.add_frame(character.input_symbol, 2, color=step)
 
-                    self.non_ring_chars.append(character)
-                    character.event_handler.register_event(
-                        EventHandler.Event.PATH_COMPLETE,
-                        external_path,
-                        EventHandler.Action.CALLBACK,
-                        EventHandler.Callback(self.terminal.set_character_visibility, False),
-                    )
+                self.non_ring_chars.append(character)
                 character.event_handler.register_event(
-                    EventHandler.Event.PATH_ACTIVATED,
+                    EventHandler.Event.PATH_COMPLETE,
                     external_path,
-                    EventHandler.Action.ACTIVATE_SCENE,
-                    disperse_scn,
+                    EventHandler.Action.CALLBACK,
+                    EventHandler.Callback(self.terminal.set_character_visibility, False),
                 )
 
     def run(self) -> None:
@@ -307,11 +313,12 @@ class RingsEffect:
                 if not spin_time_remaining:
                     if not cycles_remaining:
                         phase = "final"
-                        for character in self.terminal._input_characters:
+                        for character in self.terminal.get_characters():
                             self.terminal.set_character_visibility(character, True)
-                            if "external" in character.motion.paths:
-                                self.active_chars.append(character)
                             character.motion.activate_path(character.motion.query_path("home"))
+                            self.active_chars.append(character)
+                            if "external" in character.motion.paths:
+                                continue
                             character.animation.activate_scene(character.animation.query_scene("disperse"))
                     else:
                         disperse_time_remaining = self.args.disperse_duration

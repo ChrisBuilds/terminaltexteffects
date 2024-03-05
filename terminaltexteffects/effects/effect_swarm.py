@@ -32,9 +32,10 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "--base-color",
         type=argtypes.color,
-        default="0f74fa",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the characters when not flashing.",
+        help="Space separated, unquoted, list of colors for the swarms",
     )
     effect_parser.add_argument(
         "--flash-color",
@@ -44,17 +45,26 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Color for the character flash. Characters flash when moving.",
     )
     effect_parser.add_argument(
-        "--final-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="96ed89",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the characters when they reach their input coordinate.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--swarm-size",
         type=argtypes.float_zero_to_one,
         metavar="(float 0 < n <= 1)",
-        default=0.05,
+        default=0.1,
         help="Percent of total characters in each swarm.",
     )
     effect_parser.add_argument(
@@ -63,6 +73,13 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         metavar="(float 0 < n <= 1)",
         default=0.80,
         help="Percent of characters in a swarm that move as a group.",
+    )
+    effect_parser.add_argument(
+        "--swarm-area-count",
+        type=argtypes.int_range,
+        metavar="(int range e.g. 2-3)",
+        default=[2, 4],
+        help="Range of the number of areas where characters will swarm.",
     )
 
 
@@ -76,6 +93,7 @@ class SwarmEffect:
         self.active_chars: list[EffectCharacter] = []
         self.swarms: list[list[EffectCharacter]] = []
         self.swarm_size: int = max(round(len(self.terminal._input_characters) * self.args.swarm_size), 1)
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def make_swarms(self) -> None:
         unswarmed_characters = list(self.terminal._input_characters[::-1])
@@ -91,28 +109,38 @@ class SwarmEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by creating swarms of characters and setting waypoints and animations."""
         self.make_swarms()
-        final_gradient = graphics.Gradient([self.args.base_color, self.args.final_color], 10)
-        swarm_gradient = graphics.Gradient([self.args.base_color, self.args.flash_color], 7)
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
         flash_list = [self.args.flash_color for _ in range(10)]
-        swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
         for swarm in self.swarms:
+            swarm_gradient = graphics.Gradient([random.choice(self.args.base_color), self.args.flash_color], 7)
+            swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
             swarm_area_coordinate_map: dict[Coord, list[Coord]] = {}
             swarm_spawn = self.terminal.output_area.random_coord(outside_scope=True)
             swarm_areas: list[Coord] = []
-            swarm_area_count = random.randint(2, 4)
+            swarm_area_count = random.randint(self.args.swarm_area_count[0], self.args.swarm_area_count[1])
             # create areas where characters will swarm
+            last_focus_coord = swarm_spawn
+            radius = max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 2, 1)
             while len(swarm_areas) < swarm_area_count:
-                # get random coord within inner 90% of terminal
-                col = random.randint(round(self.terminal.input_width * 0.1), round(self.terminal.input_width * 0.9) + 1)
-                row = random.randint(
-                    round(self.terminal.output_area.top * 0.1), round(self.terminal.output_area.top * 0.9) + 1
+                potential_focus_coords = geometry.find_coords_on_circle(last_focus_coord, radius)
+                random.shuffle(potential_focus_coords)
+                for coord in potential_focus_coords:
+                    if self.terminal.output_area.coord_is_in_output_area(coord):
+                        next_focus_coord = coord
+                        break
+                else:
+                    next_focus_coord = self.terminal.output_area.random_coord()
+                swarm_areas.append(next_focus_coord)
+                swarm_area_coordinate_map[last_focus_coord] = geometry.find_coords_in_circle(
+                    last_focus_coord,
+                    max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 6, 1) * 2,
                 )
-                area = Coord(col, row)
-                if area not in swarm_areas:
-                    swarm_areas.append(area)
-                    swarm_area_coordinate_map[area] = geometry.find_coords_in_circle(
-                        area, max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 6, 1) * 2
-                    )
+                last_focus_coord = next_focus_coord
 
             # assign characters waypoints for swarm areas and inner waypoints within the swarm areas
             for character in swarm:
@@ -151,7 +179,7 @@ class SwarmEffect:
                 input_path = character.motion.new_path(speed=0.3, ease=easing.in_out_quad)
                 input_path.new_waypoint(character.input_coord)
                 input_scn = character.animation.new_scene()
-                for step in final_gradient:
+                for step in graphics.Gradient([self.args.flash_color, self.character_final_color_map[character]], 10):
                     input_scn.add_frame(character.input_symbol, 3, color=step)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.ACTIVATE_SCENE, input_scn

@@ -50,29 +50,29 @@ Example: terminaltexteffects slide --grouping row --movement-speed 0.5 --gradien
     effect_parser.add_argument(
         "--gradient-stops",
         type=argtypes.color,
-        nargs="*",
-        default=[],
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
         "--gradient-steps",
         type=argtypes.positive_int,
-        default=10,
+        default=[12],
         metavar="(int > 0)",
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--gradient-frames",
         type=argtypes.positive_int,
-        default=5,
+        default=10,
         metavar="(int > 0)",
         help="Number of frames to display each gradient step.",
     )
     effect_parser.add_argument(
         "--gap",
         type=argtypes.nonnegative_int,
-        default=4,
+        default=3,
         metavar="(int >= 0)",
         help="Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect.",
     )
@@ -109,11 +109,16 @@ class SlideEffect:
         self.gap = self.args.gap
         self.pending_groups: list[list[EffectCharacter]] = []
         self.easing = self.args.easing
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting starting coordinates and building Paths/Scenes."""
-        if len(self.gradient_stops) > 1:
-            gradient = graphics.Gradient(self.gradient_stops, self.args.gradient_steps)
+        final_gradient = graphics.Gradient(self.args.gradient_stops, self.args.gradient_steps)
+
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
         groups: list[list[EffectCharacter]] = []
         if self.grouping == "row":
             groups = self.terminal.get_characters_grouped(self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
@@ -176,15 +181,13 @@ class SlideEffect:
 
                 for character in groups[group_index]:
                     character.motion.set_coordinate(starting_coord)
-            if self.gradient_stops:
-                for character in group:
-                    gradient_scn = character.animation.new_scene()
-                    if len(self.gradient_stops) > 1:
-                        for step in gradient:
-                            gradient_scn.add_frame(character.input_symbol, self.args.gradient_frames, color=step)
-                    else:
-                        gradient_scn.add_frame(character.input_symbol, 1, color=self.gradient_stops[0])
-                    character.animation.activate_scene(gradient_scn)
+            for character in group:
+                gradient_scn = character.animation.new_scene()
+                char_gradient = graphics.Gradient(
+                    [self.gradient_stops[0], self.character_final_color_map[character]], 10
+                )
+                gradient_scn.apply_gradient_to_symbols(char_gradient, character.input_symbol, self.args.gradient_frames)
+                character.animation.activate_scene(gradient_scn)
 
         self.pending_groups = groups
 

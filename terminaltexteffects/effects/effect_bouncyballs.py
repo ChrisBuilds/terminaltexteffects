@@ -34,26 +34,33 @@ Example: terminaltexteffects bouncyball -a 0.01 --ball-colors 00ff00 ff0000 0000
     effect_parser.add_argument(
         "--ball-colors",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=0,
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated list of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random.",
     )
     effect_parser.add_argument(
-        "--final-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="ffffff",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final character.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
-    (
-        effect_parser.add_argument(
-            "--ball-delay",
-            type=argtypes.positive_int,
-            default=15,
-            metavar="(int > 0)",
-            help="Number of animation steps between ball drops, increase to reduce ball drop rate.",
-        ),
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )
+    effect_parser.add_argument(
+        "--ball-delay",
+        type=argtypes.positive_int,
+        default=15,
+        metavar="(int > 0)",
+        help="Number of animation steps between ball drops, increase to reduce ball drop rate.",
     )
     effect_parser.add_argument(
         "--movement-speed",
@@ -79,12 +86,18 @@ class BouncyBallsEffect:
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
         self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by assigning colors and waypoints and
         organizing the characters by row."""
         ball_symbols = ("*", "o", "O", "0", ".")
-        for character in self.terminal._input_characters:
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
             if self.args.ball_colors:
                 color = random.choice(self.args.ball_colors)
             else:
@@ -93,12 +106,8 @@ class BouncyBallsEffect:
             ball_scene = character.animation.new_scene()
             ball_scene.add_frame(symbol, 1, color=color)
             final_scene = character.animation.new_scene()
-            for step in graphics.Gradient([color, self.args.final_color], 12):
-                final_scene.add_frame(
-                    character.input_symbol,
-                    10,
-                    color=step,
-                )
+            char_final_gradient = graphics.Gradient([color, self.character_final_color_map[character]], 10)
+            final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
             character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
             input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
             input_coord_path.new_waypoint(character.input_coord)

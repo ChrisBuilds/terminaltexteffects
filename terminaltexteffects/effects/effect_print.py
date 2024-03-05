@@ -32,18 +32,20 @@ Example: terminaltexteffects print -a 0.01 --print-head-color f3b462 --text-colo
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
-        "--print-head-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="f3b462",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the print head as it moves across the terminal.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
-        "--text-color",
-        type=argtypes.color,
-        default="f2ebc0",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the text.",
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--print-head-return-speed",
@@ -67,17 +69,25 @@ Example: terminaltexteffects print -a 0.01 --print-head-color f3b462 --text-colo
     )
 
 
+# TODO: apply gradients
+
+
 class Row:
     def __init__(self, characters: list[EffectCharacter], character_color: str | int, typing_head_color: str | int):
-        self.untyped_chars: list[EffectCharacter] = characters
+        self.untyped_chars: list[EffectCharacter] = []
         self.typed_chars: list[EffectCharacter] = []
-        for character in self.untyped_chars:
+        blank_row_accounted = False
+        for character in characters:
+            if character.input_symbol == " ":
+                if blank_row_accounted:
+                    continue
+                blank_row_accounted = True
             character.motion.set_coordinate(Coord(character.input_coord.column, 1))
             color_gradient = graphics.Gradient([typing_head_color, character_color], 5)
             typed_animation = character.animation.new_scene()
-            for n, symbol in enumerate(("█", "▓", "▒", "░", character.input_symbol)):
-                typed_animation.add_frame(symbol, 5, color=color_gradient.spectrum[n])
+            typed_animation.apply_gradient_to_symbols(color_gradient, ("█", "▓", "▒", "░", character.input_symbol), 5)
             character.animation.activate_scene(typed_animation)
+            self.untyped_chars.append(character)
 
     def move_up(self):
         for character in self.typed_chars:
@@ -103,14 +113,30 @@ class PrintEffect:
         self.pending_rows: list[Row] = []
         self.processed_rows: list[Row] = []
         self.typing_head = self.terminal.add_character("█", Coord(1, 1))
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
-        input_rows = self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
+        for character in self.terminal.get_characters(
+            fill_chars=True, sort=Terminal.CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT
+        ):
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
+        input_rows = self.terminal.get_characters_grouped(
+            grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True
+        )
         for input_row in input_rows:
-            self.pending_rows.append(Row(input_row, self.args.text_color, self.args.print_head_color))
-        head_color_scn = self.typing_head.animation.new_scene()
-        head_color_scn.add_frame(self.typing_head.input_symbol, 1, color=self.args.print_head_color)
+            self.pending_rows.append(
+                Row(
+                    input_row,
+                    self.character_final_color_map[input_row[0]],
+                    self.character_final_color_map[input_row[0]],
+                )
+            )
 
     def run(self) -> None:
         """Runs the effect."""
@@ -119,6 +145,8 @@ class PrintEffect:
         typing = True
         delay = 0
         last_column = 0
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
         while self.active_chars or typing:
             if self.typing_head.motion.active_path:
                 pass
@@ -139,6 +167,7 @@ class PrintEffect:
                         for row in self.processed_rows:
                             row.move_up()
                         current_row = self.pending_rows.pop(0)
+                        current_row_height = current_row.untyped_chars[0].input_coord.row
                         self.typing_head.motion.set_coordinate(Coord(last_column, 1))
                         self.terminal.set_character_visibility(self.typing_head, True)
                         self.typing_head.motion.paths.clear()
@@ -149,6 +178,10 @@ class PrintEffect:
                         )
                         carriage_return_path.new_waypoint(Coord(1, 1))
                         self.typing_head.motion.activate_path(carriage_return_path)
+                        self.typing_head.animation.set_appearance(
+                            self.typing_head.input_symbol,
+                            final_gradient.get_color_at_fraction(current_row_height / self.terminal.output_area.top),
+                        )
                         self.typing_head.event_handler.register_event(
                             EventHandler.Event.PATH_COMPLETE,
                             carriage_return_path,

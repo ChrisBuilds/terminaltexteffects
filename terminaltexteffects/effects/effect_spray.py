@@ -35,19 +35,20 @@ Example: terminaltexteffects spray -a 0.01 --spray-position center --spray-volum
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
-        "--spray-colors",
+        "--final-gradient-stops",
         type=argtypes.color,
-        nargs="*",
-        default=0,
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="List of colors for the character spray. Colors are randomly chosen from the list.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
-        "--final-color",
-        type=argtypes.color,
-        default="ffffff",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final character.",
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--spray-position",
@@ -57,17 +58,17 @@ Example: terminaltexteffects spray -a 0.01 --spray-position center --spray-volum
     )
     effect_parser.add_argument(
         "--spray-volume",
-        default=5,
-        type=argtypes.positive_int,
-        metavar="(int > 0)",
-        help="Maximum number of characters to spray at a time.",
+        default=0.005,
+        type=argtypes.positive_float,
+        metavar="(float > 0)",
+        help="Number of characters to spray per tick as a percent of the total number of characters.",
     )
     effect_parser.add_argument(
         "--movement-speed",
-        type=argtypes.positive_float,
-        default=0.7,
-        metavar="(float > 0)",
-        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        type=argtypes.float_range,
+        default=(0.4, 1.0),
+        metavar="(float range e.g. 0.4-1.0)",
+        help="Movement speed of the characters.",
     )
     effect_parser.add_argument(
         "--easing",
@@ -120,11 +121,16 @@ class SprayEffect:
             "nw": SprayPosition.NW,
             "center": SprayPosition.CENTER,
         }.get(args.spray_position, SprayPosition.E)
-        self.spray_colors = args.spray_colors
-        self.final_color = args.final_color
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point based on SparklerPosition."""
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
         spray_origin_map = {
             SprayPosition.CENTER: (self.terminal.output_area.center),
             SprayPosition.N: Coord(self.terminal.output_area.right // 2, self.terminal.output_area.top),
@@ -137,9 +143,11 @@ class SprayEffect:
             SprayPosition.NE: Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top),
         }
 
-        for character in self.terminal._input_characters:
+        for character in self.terminal.get_characters():
             character.motion.set_coordinate(spray_origin_map[self.spray_position])
-            input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+            input_coord_path = character.motion.new_path(
+                speed=random.uniform(self.args.movement_speed[0], self.args.movement_speed[1]), ease=self.args.easing
+            )
             input_coord_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED, input_coord_path, EventHandler.Action.SET_LAYER, 1
@@ -147,13 +155,12 @@ class SprayEffect:
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
             )
-            if self.spray_colors:
-                droplet_scn = character.animation.new_scene()
-                spray_color = random.choice(self.spray_colors)
-                spray_gradient = graphics.Gradient([spray_color, self.final_color], 7)
-                for color in spray_gradient:
-                    droplet_scn.add_frame(character.input_symbol, 40, color=color)
-                character.animation.activate_scene(droplet_scn)
+            droplet_scn = character.animation.new_scene()
+            spray_gradient = graphics.Gradient(
+                [random.choice(final_gradient.spectrum), self.character_final_color_map[character]], 7
+            )
+            droplet_scn.apply_gradient_to_symbols(spray_gradient, character.input_symbol, 20)
+            character.animation.activate_scene(droplet_scn)
             character.motion.activate_path(input_coord_path)
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
@@ -161,9 +168,10 @@ class SprayEffect:
     def run(self) -> None:
         """Runs the effect."""
         self.prepare_data()
+        volume = max(int(len(self.pending_chars) * self.args.spray_volume), 1)
         while self.pending_chars or self.active_chars:
             if self.pending_chars:
-                for _ in range(random.randint(1, self.args.spray_volume)):
+                for _ in range(random.randint(1, volume)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop()
                         self.terminal.set_character_visibility(next_character, True)

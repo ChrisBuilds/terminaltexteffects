@@ -31,19 +31,37 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "--grid-gradient-stops",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["CC00CC", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the grid gradient.",
     )
     effect_parser.add_argument(
+        "--grid-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )
+
+    effect_parser.add_argument(
         "--text-gradient-stops",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the text gradient.",
     )
+    effect_parser.add_argument(
+        "--text-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )
+
     effect_parser.add_argument(
         "--grid-row-symbol",
         type=argtypes.symbol,
@@ -61,7 +79,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     effect_parser.add_argument(
         "--text-generation-symbols",
         type=argtypes.symbol,
-        nargs="*",
+        nargs="+",
         default=["░", "▒", "▓"],
         metavar="(characters)",
         help="Space separated, unquoted, list of characters for the text generation animation.",
@@ -71,7 +89,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         type=argtypes.positive_float,
         default=0.1,
         metavar="(0 < n <= 1.0)",
-        help="Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10% of the blocks will be active at any given time.",
+        help="Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time.",
     )
 
 
@@ -83,18 +101,19 @@ class GridLine:
         self.direction = direction
         if self.direction == "horizontal":
             self.grid_symbol = self.args.grid_row_symbol
-            self.gradient = graphics.Gradient(self.args.grid_gradient_stops, self.terminal.output_area.top)
         elif self.direction == "vertical":
             self.grid_symbol = self.args.grid_column_symbol
-            self.gradient = graphics.Gradient(
-                self.args.grid_gradient_stops, max(self.terminal.output_area.top - self.terminal.output_area.bottom, 1)
-            )
+        self.gradient = graphics.Gradient(self.args.grid_gradient_stops, self.args.grid_gradient_steps)
         self.characters: list[EffectCharacter] = []
         if direction == "horizontal":
             for column_index in range(self.terminal.output_area.left, self.terminal.output_area.right):
                 effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
-                grid_scn.add_frame(self.grid_symbol, 1, color=self.gradient.spectrum[self.origin.row - 1])
+                grid_scn.add_frame(
+                    self.grid_symbol,
+                    1,
+                    color=self.gradient.get_color_at_fraction(column_index / self.terminal.output_area.right),
+                )
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
                 effect_char.motion.set_coordinate(Coord(column_index, origin.row))
@@ -103,7 +122,11 @@ class GridLine:
             for row_index in range(self.terminal.output_area.bottom, self.terminal.output_area.top):
                 effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
-                grid_scn.add_frame(self.grid_symbol, 1, color=self.gradient.spectrum.pop(0))
+                grid_scn.add_frame(
+                    self.grid_symbol,
+                    1,
+                    color=self.gradient.get_color_at_fraction(row_index / self.terminal.output_area.top),
+                )
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
                 effect_char.motion.set_coordinate(Coord(origin.column, row_index))
@@ -219,7 +242,7 @@ class SynthGridEffect:
             self.grid_lines.append(
                 GridLine(self.terminal, self.args, Coord(column_index, self.terminal.output_area.bottom), "vertical")
             )
-        output_gradient = graphics.Gradient(self.args.text_gradient_stops, 10)
+        output_gradient = graphics.Gradient(self.args.text_gradient_stops, self.args.text_gradient_steps)
         if not row_indexes:
             row_indexes.append(self.terminal.output_area.top)
         else:
@@ -249,10 +272,6 @@ class SynthGridEffect:
         for group_number, group in self.pending_groups:
             self.group_tracker[group_number] = 0
             for character in group:
-                text_gradient_index = round(
-                    (character.input_coord.row / self.terminal.output_area.top) * (len(output_gradient.spectrum) - 1)
-                )
-
                 dissolve_scn = character.animation.new_scene()
                 for _ in range(random.randint(15, 30)):
                     dissolve_scn.add_frame(
@@ -260,7 +279,13 @@ class SynthGridEffect:
                         3,
                         color=random.choice(output_gradient.spectrum),
                     )
-                dissolve_scn.add_frame(character.input_symbol, 1, color=output_gradient.spectrum[text_gradient_index])
+                dissolve_scn.add_frame(
+                    character.input_symbol,
+                    1,
+                    color=output_gradient.get_color_at_fraction(
+                        character.input_coord.row / self.terminal.output_area.top
+                    ),
+                )
                 character.animation.activate_scene(dissolve_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
@@ -279,7 +304,7 @@ class SynthGridEffect:
         phase = "grid_expand"
         total_group_count = len(self.pending_groups)
         if not total_group_count:
-            for character in self.terminal._input_characters:
+            for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, True)
                 self.active_chars.append(character)
         active_groups: int = 0

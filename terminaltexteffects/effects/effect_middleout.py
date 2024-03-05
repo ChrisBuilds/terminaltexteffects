@@ -40,18 +40,20 @@ Example: terminaltexteffects middleout -a 0.01 --expand-direction horizontal --c
         help="Color for the initial text in the center of the output area.",
     )
     effect_parser.add_argument(
-        "--center-expand-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="ffffff",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the row or column as it expands.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
-        "--full-expand-color",
-        type=argtypes.color,
-        default="ffffff",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the full text as it expands.",
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--expand-direction",
@@ -95,12 +97,17 @@ class MiddleoutEffect:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
-        self.center_gradient = graphics.Gradient([self.args.starting_color, self.args.center_expand_color], 10)
-        self.full_gradient = graphics.Gradient([self.args.center_expand_color, self.args.full_expand_color], 10)
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect."""
-        for character in self.terminal._input_characters:
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
             character.motion.set_coordinate(self.terminal.output_area.center)
             # setup waypoints
             if self.args.expand_direction == "vertical":
@@ -117,17 +124,13 @@ class MiddleoutEffect:
             full_path.new_waypoint(character.input_coord, id="full")
 
             # setup scenes
-            center_scene = character.animation.new_scene()
             full_scene = character.animation.new_scene(id="full")
-            for step in self.center_gradient:
-                center_scene.add_frame(character.input_symbol, 2, color=step)
-            for step in self.full_gradient:
-                full_scene.add_frame(character.input_symbol, 2, color=step)
-            character.animation.activate_scene(center_scene)
+            full_gradient = graphics.Gradient([self.args.starting_color, self.character_final_color_map[character]], 10)
+            full_scene.apply_gradient_to_symbols(full_gradient, character.input_symbol, 10)
 
             # initialize character state
             character.motion.activate_path(center_path)
-            character.animation.activate_scene(center_scene)
+            character.animation.set_appearance(character.input_symbol, self.args.starting_color)
             self.terminal.set_character_visibility(character, True)
             self.active_chars.append(character)
 

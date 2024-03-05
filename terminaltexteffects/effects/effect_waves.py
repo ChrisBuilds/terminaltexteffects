@@ -30,30 +30,48 @@ Example: terminaltexteffects waves -a 0.01 --wave-deep-color 4651e3 --wave-shall
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
-        "--wave-deep-color",
-        type=argtypes.color,
-        default="4651e3",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the deepest part of the wave. A gradient is generated between the shallow and deep parts of the wave.",
+        "--wave-symbols",
+        type=argtypes.symbol_multiple,
+        default="▁▂▃▄▅▆▇█▇▆▅▄▃▂▁",
+        metavar="(ASCII/UTF-8 character string)",
+        help="Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an animation.",
     )
     effect_parser.add_argument(
-        "--wave-shallow-color",  # make more descriptive
+        "--wave-gradient-stops",
         type=argtypes.color,
-        default="57FB92",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF", "00D1FF", "8A008A"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the shallow part of the wave. A gradient is generated between the shallow and deep parts of the wave..",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
-        "--final-color",
+        "--wave-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[6],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="80F7E6",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final character. A gradient is generated between the shallow part of the wave and the final color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--wave-count",
         type=argtypes.positive_int,
-        default=6,
+        default=7,
         help="Number of waves to generate. n > 0.",
     )
     effect_parser.add_argument(
@@ -72,25 +90,29 @@ class WavesEffect:
         self.args = args
         self.pending_columns: list[list[EffectCharacter]] = []
         self.active_chars: list[EffectCharacter] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by creating the wave animations."""
-        block_wipe_start = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
-        block_wipe_end = ("▇", "▆", "▅", "▄", "▃", "▂", "▁")
-        wave_gradient_light = graphics.Gradient([self.args.wave_shallow_color, self.args.wave_deep_color], 8)
-        wave_gradient_dark = graphics.Gradient([self.args.wave_deep_color, self.args.wave_shallow_color], 8)
-        wave_gradient = list(wave_gradient_light) + list(wave_gradient_dark)[1:]
-        colored_waves = list(zip(block_wipe_start + block_wipe_end, wave_gradient))
-        final_gradient = graphics.Gradient([self.args.wave_shallow_color, self.args.final_color], 8)
-        for character in self.terminal._input_characters:
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
+        wave_gradient = graphics.Gradient(self.args.wave_gradient_stops, self.args.wave_gradient_steps)
+        for character in self.terminal.get_characters():
             wave_scn = character.animation.new_scene()
             wave_scn.ease = self.args.wave_easing
             for _ in range(self.args.wave_count):
-                for block, color in colored_waves:
-                    wave_scn.add_frame(block, 3, color=color)
+                wave_scn.apply_gradient_to_symbols(wave_gradient, self.args.wave_symbols, duration=3)
             final_scn = character.animation.new_scene()
-            for step in final_gradient:
-                final_scn.add_frame(character.input_symbol, 15, color=step)
+            for step in graphics.Gradient(
+                [wave_gradient.spectrum[-1], self.character_final_color_map[character]],
+                self.args.final_gradient_steps,
+            ):
+                final_scn.add_frame(character.input_symbol, 10, color=step)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, wave_scn, EventHandler.Action.ACTIVATE_SCENE, final_scn
             )

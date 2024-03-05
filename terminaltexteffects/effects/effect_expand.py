@@ -30,22 +30,23 @@ Example: terminaltexteffects expand -a 0.01 --movement-speed 0.5 --easing IN_OUT
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
-        "--gradient-stops",
+        "--final-gradient-stops",
         type=argtypes.color,
-        nargs="*",
-        default=[],
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
-        "--gradient-steps",
+        "--final-gradient-steps",
         type=argtypes.positive_int,
-        default=10,
+        nargs="+",
+        default=[12],
         metavar="(int > 0)",
-        help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
-        "--gradient-frames",
+        "--final-gradient-frames",
         type=argtypes.positive_int,
         default=5,
         metavar="(int > 0)",
@@ -54,7 +55,7 @@ Example: terminaltexteffects expand -a 0.01 --movement-speed 0.5 --easing IN_OUT
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.positive_float,
-        default=0.5,
+        default=0.35,
         metavar="(float > 0)",
         help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
     )
@@ -74,14 +75,17 @@ class ExpandEffect:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
-        self.gradient_stops: list[int | str] = self.args.gradient_stops
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""
-        if len(self.gradient_stops) > 1:
-            gradient = graphics.Gradient(self.gradient_stops, self.args.gradient_steps)
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
 
-        for character in self.terminal._input_characters:
+        for character in self.terminal.get_characters():
             character.motion.set_coordinate(self.terminal.output_area.center)
             input_coord_path = character.motion.new_path(
                 speed=self.args.movement_speed,
@@ -97,14 +101,10 @@ class ExpandEffect:
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
             )
-            if self.gradient_stops:
-                gradient_scn = character.animation.new_scene()
-                if len(self.gradient_stops) > 1:
-                    for step in gradient:
-                        gradient_scn.add_frame(character.input_symbol, self.args.gradient_frames, color=step)
-                else:
-                    gradient_scn.add_frame(character.input_symbol, 1, color=self.gradient_stops[0])
-                character.animation.activate_scene(gradient_scn)
+            gradient_scn = character.animation.new_scene()
+            gradient = graphics.Gradient([final_gradient.spectrum[0], self.character_final_color_map[character]], 10)
+            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.args.final_gradient_frames)
+            character.animation.activate_scene(gradient_scn)
 
     def run(self) -> None:
         """Runs the effect."""

@@ -34,7 +34,7 @@ Example: terminaltexteffects spotlights -a 0.01 --gradient-stops 8A008A 00D1FF F
     effect_parser.add_argument(
         "--gradient-stops",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
@@ -42,7 +42,7 @@ Example: terminaltexteffects spotlights -a 0.01 --gradient-stops 8A008A 00D1FF F
     effect_parser.add_argument(
         "--gradient-steps",
         type=argtypes.positive_int,
-        nargs="*",
+        nargs="+",
         default=[12],
         metavar="(int > 0)",
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",

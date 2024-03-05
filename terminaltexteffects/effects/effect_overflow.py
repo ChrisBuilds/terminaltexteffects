@@ -30,16 +30,25 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
-        "--final-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="f3b462",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final text.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--overflow-gradient-stops",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["f2ebc0", "8dbfb3", "f2ebc0"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the overflow gradient.",
@@ -75,7 +84,7 @@ class Row:
         for character in self.characters:
             character.motion.set_coordinate(Coord(character.input_coord.column, 0))
 
-    def set_color(self, color: str) -> None:
+    def set_color(self, color: int | str) -> None:
         for character in self.characters:
             character.animation.set_appearance(character.input_symbol, color)
 
@@ -91,6 +100,8 @@ class OverflowEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by ___."""
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
         lower_range, upper_range = self.args.overflow_cycles_range
         rows = self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
         if upper_range > 0:
@@ -104,7 +115,9 @@ class OverflowEffect:
         # add rows in correct order to the end of self.pending_rows
         for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
             next_row = Row(row)
-            next_row.set_color(self.args.final_color)
+            next_row.set_color(
+                final_gradient.get_color_at_fraction(row[0].input_coord.row / self.terminal.output_area.top)
+            )
             self.pending_rows.append(Row(row, final=True))
 
     def run(self) -> None:

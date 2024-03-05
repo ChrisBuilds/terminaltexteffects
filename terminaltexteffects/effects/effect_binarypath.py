@@ -30,26 +30,28 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
     )
     effect_parser.add_argument(
-        "--base-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="265e3c",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the characters when the binary group combines in place.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--binary-colors",
         type=argtypes.color,
-        nargs="*",
+        nargs="+",
         default=["044E29", "157e38", "45bf55", "95ed87"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the binary characters. Character color is randomly assigned from this list.",
-    )
-    effect_parser.add_argument(
-        "--final-color",
-        type=argtypes.color,
-        default="45bf55",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the characters after the final gradient wipe.",
     )
     effect_parser.add_argument(
         "--movement-speed",
@@ -64,12 +66,6 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         default=0.05,
         metavar="(float 0 < n <= 1)",
         help="Maximum number of binary groups that are active at any given time. Lower this to improve performance.",
-    )
-    effect_parser.add_argument(
-        "--skip-final-wipe",
-        action="store_true",
-        default=False,
-        help="Skip the final gradient wipe. This will result in the characters remaining as base-color.",
     )
 
 
@@ -113,11 +109,17 @@ class BinaryPathEffect:
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
         self.pending_binary_representations: list[BinaryRepresentation] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
-        complete_gradient = graphics.Gradient(["ffffff", self.args.base_color], 10)
-        brighten_gradient = graphics.Gradient([self.args.base_color, "ffffff", self.args.final_color], 25)
-        for character in self.terminal._input_characters:
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
+        for character in self.terminal.get_characters():
             bin_rep = BinaryRepresentation(character, self.terminal)
             for binary_char in bin_rep.binary_string:
                 bin_rep.binary_characters.append(self.terminal.add_character(binary_char, Coord(0, 0)))
@@ -180,15 +182,15 @@ class BinaryPathEffect:
                 color_scn.add_frame(bin_effectchar.symbol, 1, color=random.choice(self.args.binary_colors))
                 bin_effectchar.animation.activate_scene(color_scn)
 
-        for character in self.terminal._input_characters:
+        for character in self.terminal.get_characters():
             collapse_scn = character.animation.new_scene(ease=easing.in_quad, id="collapse_scn")
-            for spectrum in complete_gradient.spectrum:
-                collapse_scn.add_frame(character.input_symbol, 10, color=spectrum)
+            dim_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.5)
+            dim_gradient = graphics.Gradient(["ffffff", dim_color], 10)
+            collapse_scn.apply_gradient_to_symbols(dim_gradient, character.input_symbol, 7)
 
             brighten_scn = character.animation.new_scene(id="brighten_scn")
-            for spectrum in brighten_gradient.spectrum:
-                brighten_scn.add_frame(character.input_symbol, 2, color=spectrum)
-            brighten_scn.add_frame(character.input_symbol, 2, color=self.args.final_color)
+            brighten_gradient = graphics.Gradient([dim_color, self.character_final_color_map[character]], 10)
+            brighten_scn.apply_gradient_to_symbols(brighten_gradient, character.input_symbol, 2)
 
     def run(self) -> None:
         """Runs the effect."""
@@ -228,7 +230,7 @@ class BinaryPathEffect:
                     phase = "wipe"
 
             if phase == "wipe":
-                if final_wipe_chars and not self.args.skip_final_wipe:
+                if final_wipe_chars:
                     next_group = final_wipe_chars.pop(0)
                     for character in next_group:
                         character.animation.activate_scene(character.animation.query_scene("brighten_scn"))

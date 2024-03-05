@@ -42,10 +42,20 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Color for the flame. Defaults to 0",
     )
     effect_parser.add_argument(
-        "--final-color",
+        "--final-gradient-stops",
         type=argtypes.color,
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the final character. Will leave as system default if not provided.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
 
 
@@ -57,6 +67,7 @@ class BurnEffect:
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by building the burn animation and organizing the data into columns."""
@@ -69,6 +80,12 @@ class BurnEffect:
             "▜",
             "▀",
         ]
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
         fire_gradient = graphics.Gradient(["ffffff", self.args.flame_color], 12)
         burned_gradient = graphics.Gradient([self.args.flame_color, self.args.burned_color], 7)
         groups = {
@@ -100,7 +117,7 @@ class BurnEffect:
                     construct_scn.add_frame(block, 30, color=color)
                 g_start += 2
 
-            construct_scn.add_frame(next_char.input_symbol, 1, color=self.args.final_color)
+            construct_scn.add_frame(next_char.input_symbol, 1, color=self.character_final_color_map[next_char])
             next_char.animation.activate_scene(construct_scn)
             self.pending_chars.append(next_char)
 

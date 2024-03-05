@@ -54,24 +54,31 @@ Example: terminaltexteffects pour -a 0.004 --pour-direction down""",
         help="Number of frames to wait between each character in the pour effect. Increase to slow down effect and create a more defined back and forth motion.",
     )
     effect_parser.add_argument(
-        "--gradient-stops",
+        "--starting-color",
         type=argtypes.color,
-        nargs="*",
-        default=[],
+        default="ffffff",
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        help="Color of the characters before the gradient starts.",
+    )
+    effect_parser.add_argument(
+        "--pour-gradient-stops",
+        type=argtypes.color,
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
-        "--gradient-steps",
+        "--pour-gradient-steps",
         type=argtypes.positive_int,
-        default=10,
+        default=[12],
         metavar="(int > 0)",
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
-        "--gradient-frames",
+        "--pour-gradient-frames",
         type=argtypes.positive_int,
-        default=5,
+        default=25,
         metavar="(int > 0)",
         help="Number of frames to display each gradient step.",
     )
@@ -104,18 +111,23 @@ class PourEffect:
             "left": PourDirection.LEFT,
             "right": PourDirection.RIGHT,
         }.get(args.pour_direction, PourDirection.DOWN)
-        self.gradient_stops: list[int | str] = self.args.gradient_stops
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by sorting the characters by the pour direction."""
+        final_gradient = graphics.Gradient(self.args.pour_gradient_stops, self.args.pour_gradient_steps)
+
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
         sort_map = {
             PourDirection.DOWN: Terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
             PourDirection.UP: Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
             PourDirection.LEFT: Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             PourDirection.RIGHT: Terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
         }
-        if len(self.gradient_stops) > 1:
-            gradient = graphics.Gradient(self.gradient_stops, self.args.gradient_steps)
         groups = self.terminal.get_characters_grouped(grouping=sort_map[self.pour_direction])
         for i, group in enumerate(groups):
             for character in group:
@@ -136,19 +148,19 @@ class PourEffect:
                 )
                 input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
+
+                pour_gradient = graphics.Gradient(
+                    [self.args.starting_color, self.character_final_color_map[character]], self.args.pour_gradient_steps
+                )
+                pour_scn = character.animation.new_scene()
+                pour_scn.apply_gradient_to_symbols(
+                    pour_gradient, character.input_symbol, self.args.pour_gradient_frames
+                )
+                character.animation.activate_scene(pour_scn)
             if i % 2 == 0:
                 self.pending_groups.append(group)
             else:
                 self.pending_groups.append(group[::-1])
-            if self.gradient_stops:
-                for character in group:
-                    gradient_scn = character.animation.new_scene()
-                    if len(self.gradient_stops) > 1:
-                        for step in gradient:
-                            gradient_scn.add_frame(character.input_symbol, self.args.gradient_frames, color=step)
-                    else:
-                        gradient_scn.add_frame(character.input_symbol, 1, color=self.gradient_stops[0])
-                    character.animation.activate_scene(gradient_scn)
 
     def run(self) -> None:
         """Runs the effect."""

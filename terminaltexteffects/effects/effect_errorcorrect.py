@@ -33,15 +33,15 @@ Example: terminaltexteffects errorcorrect -a 0.01 --error-pairs 12 --swap-delay 
     )
     effect_parser.add_argument(
         "--error-pairs",
-        type=argtypes.positive_int,
-        default=12,
+        type=argtypes.positive_float,
+        default=0.2,
         metavar="(int > 0)",
-        help="Number of character pairs to swap.",
+        help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20% of the characters will be in the wrong position.",
     )
     effect_parser.add_argument(
         "--swap-delay",
         type=argtypes.positive_int,
-        default=70,
+        default=10,
         metavar="(int > 0)",
         help="Number of animation steps between swaps.",
     )
@@ -60,11 +60,20 @@ Example: terminaltexteffects errorcorrect -a 0.01 --error-pairs 12 --swap-delay 
         help="Color for the characters once corrected, this is a gradient from error-color and fades to final-color.",
     )
     effect_parser.add_argument(
-        "--final-color",
+        "--final-gradient-stops",
         type=argtypes.color,
-        default="ffffff",
+        nargs="+",
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Color for the characters in their correct position.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )
+    effect_parser.add_argument(
+        "--final-gradient-steps",
+        type=argtypes.positive_int,
+        nargs="+",
+        default=[12],
+        metavar="(int > 0)",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--movement-speed",
@@ -84,21 +93,28 @@ class ErrorCorrectEffect:
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
         self.swapped: list[tuple[EffectCharacter, EffectCharacter]] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by swapping positions and generating animations and waypoints."""
-        for character in self.terminal._input_characters:
+        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
+            )
+
+        for character in self.terminal.get_characters():
             spawn_scene = character.animation.new_scene()
-            spawn_scene.add_frame(character.input_symbol, 1, color=self.args.final_color)
+            spawn_scene.add_frame(character.input_symbol, 1, color=self.character_final_color_map[character])
             character.animation.activate_scene(spawn_scene)
             self.terminal.set_character_visibility(character, True)
         all_characters: list[EffectCharacter] = list(self.terminal._input_characters)
         correcting_gradient = graphics.Gradient([self.args.error_color, self.args.correct_color], 10)
-        final_gradient = graphics.Gradient([self.args.correct_color, self.args.final_color], 10)
         block_symbol = "▓"
         block_wipe_start = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
         block_wipe_end = ("▇", "▆", "▅", "▄", "▃", "▂", "▁")
-        for _ in range(self.args.error_pairs):
+        for _ in range(int(self.args.error_pairs * len(self.terminal._input_characters))):
             if len(all_characters) < 2:
                 break
             char1 = all_characters.pop(random.randrange(len(all_characters)))
@@ -125,11 +141,12 @@ class ErrorCorrectEffect:
                     error_scene.add_frame(block_symbol, 3, color=self.args.error_color)
                     error_scene.add_frame(character.input_symbol, 3, color="ffffff")
                 correcting_scene = character.animation.new_scene(sync=graphics.SyncMetric.DISTANCE)
-                for step in correcting_gradient:
-                    correcting_scene.add_frame("█", 3, color=step)
+                correcting_scene.apply_gradient_to_symbols(correcting_gradient, "█", 3)
                 final_scene = character.animation.new_scene()
-                for step in final_gradient:
-                    final_scene.add_frame(character.input_symbol, 3, color=step)
+                char_final_gradient = graphics.Gradient(
+                    [self.args.correct_color, self.character_final_color_map[character]], 10
+                )
+                final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 3)
                 input_coord_path = character.motion.query_path("input_coord")
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
