@@ -75,6 +75,13 @@ Example: terminaltexteffects waves -a 0.01 --wave-deep-color 4651e3 --wave-shall
         help="Number of waves to generate. n > 0.",
     )
     effect_parser.add_argument(
+        "--wave-length",
+        type=argtypes.positive_int,
+        default=2,
+        metavar="(int > 0)",
+        help="The number of frames for each step of the wave. Higher wave-lengths will create a slower wave.",
+    )
+    effect_parser.add_argument(
         "--wave-easing",
         default="IN_OUT_SINE",
         type=argtypes.ease,
@@ -106,7 +113,9 @@ class WavesEffect:
             wave_scn = character.animation.new_scene()
             wave_scn.ease = self.args.wave_easing
             for _ in range(self.args.wave_count):
-                wave_scn.apply_gradient_to_symbols(wave_gradient, self.args.wave_symbols, duration=3)
+                wave_scn.apply_gradient_to_symbols(
+                    wave_gradient, self.args.wave_symbols, duration=self.args.wave_length
+                )
             final_scn = character.animation.new_scene()
             for step in graphics.Gradient(
                 [wave_gradient.spectrum[-1], self.character_final_color_map[character]],
