@@ -290,7 +290,8 @@ class Terminal:
         if added_chars:
             all_characters.extend(self._added_characters)
 
-        all_characters.sort(key=lambda character: (character.input_coord.row, character.input_coord.column))
+        # default sort TOP_TO_BOTTOM_LEFT_TO_RIGHT
+        all_characters.sort(key=lambda character: (-character.input_coord.row, character.input_coord.column))
 
         if sort is self.CharacterSort.RANDOM:
             random.shuffle(all_characters)
