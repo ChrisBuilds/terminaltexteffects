@@ -363,7 +363,19 @@ class Scene:
 
     def apply_gradient_to_symbols(self, gradient: Gradient, symbols: typing.Sequence[str], duration: int) -> None:
         """
-        Applies a gradient effect to a list of symbols and adds the frames to the Scene.
+        Applies a gradient effect to a sequence of symbols and adds each symbol as a frame to the Scene.
+
+        This method works by iterating over the symbols and calculating a progress ratio for each symbol.
+        This ratio is calculated by dividing the index of the current symbol (plus one) by the total number of symbols.
+        The gradient index is then calculated by multiplying the symbol progress by the length of the gradient's spectrum.
+        This index is used to select a color from the gradient's spectrum.
+
+        The method then iterates over the colors in the gradient's spectrum from the last index to the gradient index
+        (or 1 if gradient index is 0). For each color, it calls the add_frame method, passing the symbol, duration, and color.
+        This adds a frame to the Scene with the symbol displayed in the color from the gradient.
+
+        Finally, the last index is updated to the current gradient index, and the process repeats for the next symbol.
+        This results in each symbol being displayed in a sequence of colors from the gradient, creating a gradient effect across the symbols.
 
         Args:
             gradient (Gradient): The gradient to apply.
