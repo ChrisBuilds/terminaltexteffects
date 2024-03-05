@@ -76,9 +76,6 @@ def make_args() -> Namespace:
     return args
 
 
-# TODO: Add spotlights test
-
-
 def test_spotlights_effect() -> None:
     for input_data in test_inputs:
         args = make_args()
