@@ -63,17 +63,17 @@ Example: terminaltexteffects orbittingvolley -a 0.01 --top-launcher-symbol █ -
         "--final-gradient-stops",
         type=argtypes.color,
         nargs="+",
-        default=["ffa51f", "ffa51f", "6177b3", "6177b3"],
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Space separated, unquoted, list of colors for the wipe gradient.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
         "--final-gradient-steps",
         type=argtypes.positive_int,
         nargs="+",
-        default=[6, 8, 10],
+        default=[12],
         metavar="(int > 0)",
-        help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in --final-gradient-stops.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
     effect_parser.add_argument(
         "--launcher-movement-speed",
