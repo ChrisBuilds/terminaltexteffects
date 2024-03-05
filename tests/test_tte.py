@@ -230,6 +230,7 @@ def test_waves_effect() -> None:
         args.wave_gradient_steps = 6
         args.wave_symbols = "▁▂▃▄▅▆▇█▇▆▅▄▃▂▁"
         args.wave_count = 6
+        args.wave_length = 2
         args.wave_easing = easing.in_out_sine
         terminal = Terminal(input_data, args)
         waves_effect = effect_waves.WavesEffect(terminal, args)
