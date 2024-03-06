@@ -455,6 +455,7 @@ def test_bouncyballs_effect() -> None:
     for input_data in test_inputs:
         args = make_args()
         args.ball_colors = ["fe0345", "03faf0", "34a00f"]
+        args.ball_symbols = ["o", "O", "0", "*", "."]
         args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
         args.final_gradient_steps = 12
         args.ball_delay = 5
