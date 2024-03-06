@@ -75,7 +75,7 @@ def nonnegative_int(arg: str) -> int:
         int: validated gap value
     """
     if int(arg) < 0:
-        raise argparse.ArgumentTypeError(f"invalid value: {arg} Argument must be int >= 0.")
+        raise argparse.ArgumentTypeError(f"invalid value: '{arg}' Argument must be int >= 0.")
     return int(arg)
 
 
@@ -92,7 +92,7 @@ def nonnegative_float(arg: str) -> float:
         float: validated value
     """
     if float(arg) < 0:
-        raise argparse.ArgumentTypeError(f"invalid argument value: {arg} is out of range. Must be float >= 0.")
+        raise argparse.ArgumentTypeError(f"invalid argument value: '{arg}' is out of range. Must be float >= 0.")
     return float(arg)
 
 
@@ -109,7 +109,7 @@ def positive_float(arg: str) -> float:
         float: validated positive float
     """
     if float(arg) <= 0:
-        raise argparse.ArgumentTypeError(f"invalid value: {arg} is not a valid value. Argument must be a float > 0.")
+        raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a valid value. Argument must be a float > 0.")
     return float(arg)
 
 
@@ -176,7 +176,7 @@ def positive_int(arg: str) -> int:
     if int(arg) > 0:
         return int(arg)
     else:
-        raise argparse.ArgumentTypeError(f"invalid value: {arg} is not > 0.")
+        raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not > 0.")
 
 
 def float_zero_to_one(arg: str) -> float:
@@ -191,7 +191,7 @@ def float_zero_to_one(arg: str) -> float:
     if 0 <= float(arg) <= 1:
         return float(arg)
     else:
-        raise argparse.ArgumentTypeError(f"invalid value: {arg} is not a float >= 0 and <= 1. Example: 0.5")
+        raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a float >= 0 and <= 1. Example: 0.5")
 
 
 def is_ascii_or_utf8(s: str) -> bool:
@@ -229,7 +229,7 @@ def symbol(arg: str) -> str:
         return arg
     else:
         raise argparse.ArgumentTypeError(
-            f"invalid symbol: {arg} is not a valid symbol. Must be a single ASCII/UTF-8 character."
+            f"invalid symbol: '{arg}' is not a valid symbol. Must be a single ASCII/UTF-8 character."
         )
 
 
@@ -246,7 +246,7 @@ def symbol_multiple(arg: str) -> str:
         return arg
     else:
         raise argparse.ArgumentTypeError(
-            f"invalid symbol: {arg} is not a valid symbol. Must be a single ASCII/UTF-8 character."
+            f"invalid symbol: '{arg}' is not a valid symbol. Must be a single ASCII/UTF-8 character."
         )
 
 
@@ -263,15 +263,15 @@ def int_range(arg: str) -> tuple[int, int]:
         start, end = map(int, arg.split("-"))
         if start <= 0:
             raise argparse.ArgumentTypeError(
-                f"invalid range: {arg} is not a valid range of ints. Must be start > 0. Ex: 1-10"
+                f"invalid range: '{arg}' is not a valid range of ints. Must be start > 0. Ex: 1-10"
             )
         if start > end:
             raise argparse.ArgumentTypeError(
-                f"invalid range: {arg} is not a valid range of ints. Must be start <= end. Ex: 1-10"
+                f"invalid range: '{arg}' is not a valid range of ints. Must be start <= end. Ex: 1-10"
             )
         return start, end
     except ValueError:
-        raise argparse.ArgumentTypeError(f"invalid range: {arg} is not a valid range. Must be start-end. Ex: 1-10")
+        raise argparse.ArgumentTypeError(f"invalid range: '{arg}' is not a valid range. Must be start-end. Ex: 1-10")
 
 
 def float_range(arg: str) -> tuple[float, float]:
@@ -287,8 +287,8 @@ def float_range(arg: str) -> tuple[float, float]:
         start, end = map(float, arg.split("-"))
         if start > end:
             raise argparse.ArgumentTypeError(
-                f"invalid range: {arg} is not a valid range of floats. Must be start <= end. Ex: 0.1-1.0"
+                f"invalid range: '{arg}' is not a valid range of floats. Must be start <= end. Ex: 0.1-1.0"
             )
         return start, end
     except ValueError:
-        raise argparse.ArgumentTypeError(f"invalid range: {arg} is not a valid range. Must be start-end. Ex: 0.1-1.0")
+        raise argparse.ArgumentTypeError(f"invalid range: '{arg}' is not a valid range. Must be start-end. Ex: 0.1-1.0")
