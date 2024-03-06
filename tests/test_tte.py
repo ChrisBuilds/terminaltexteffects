@@ -129,10 +129,8 @@ def test_beams_effect() -> None:
         args.beam_row_symbols = "▂▁_"
         args.beam_column_symbols = "▎▍▌"
         args.beam_delay = 10
-        args.beam_row_min_speed = 10
-        args.beam_row_max_speed = 40
-        args.beam_column_min_speed = 6
-        args.beam_column_max_speed = 10
+        args.beam_row_speed_range = (10, 40)
+        args.beam_column_speed_range = (6, 10)
         args.beam_gradient_stops = ["ffffff", "00D1FF", "8A008A"]
         args.beam_gradient_steps = [2, 8]
         args.beam_gradient_frames = 2
