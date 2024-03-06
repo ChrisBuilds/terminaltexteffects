@@ -34,7 +34,7 @@ Example: terminaltexteffects errorcorrect -a 0.01 --error-pairs 12 --swap-delay 
     effect_parser.add_argument(
         "--error-pairs",
         type=argtypes.positive_float,
-        default=0.2,
+        default=0.1,
         metavar="(int > 0)",
         help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20% of the characters will be in the wrong position.",
     )
@@ -114,7 +114,7 @@ class ErrorCorrectEffect:
         block_symbol = "▓"
         block_wipe_start = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
         block_wipe_end = ("▇", "▆", "▅", "▄", "▃", "▂", "▁")
-        for _ in range(int(self.args.error_pairs * len(self.terminal._input_characters))):
+        for _ in range(int(self.args.error_pairs * len(self.terminal.get_characters()))):
             if len(all_characters) < 2:
                 break
             char1 = all_characters.pop(random.randrange(len(all_characters)))
