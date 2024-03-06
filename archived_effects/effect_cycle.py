@@ -31,21 +31,21 @@ Example: terminaltexteffects cycle -a 0.01 --cycling-color ffa15c --discover-col
     )
     effect_parser.add_argument(
         "--cycling-color",
-        type=argtypes.color,
+        type=argtypes.Color,
         default="ffa15c",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters while cycling symbols.",
     )
     effect_parser.add_argument(
         "--discover-color",
-        type=argtypes.color,
+        type=argtypes.Color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the character upon landing on the correct symbol.",
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.color,
+        type=argtypes.Color,
         default="0ed7b1",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color the character will fade towards after the discover flash.",
