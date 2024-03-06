@@ -30,7 +30,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--grid-gradient-stops",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["CC00CC", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -47,7 +47,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
 
     effect_parser.add_argument(
         "--text-gradient-stops",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",

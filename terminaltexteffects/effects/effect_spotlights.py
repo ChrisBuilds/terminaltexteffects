@@ -33,7 +33,7 @@ Example: terminaltexteffects spotlights -a 0.01 --gradient-stops 8A008A 00D1FF F
     )
     effect_parser.add_argument(
         "--gradient-stops",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",

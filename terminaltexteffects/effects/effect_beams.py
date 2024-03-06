@@ -18,7 +18,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Create beams which travel over the output area illuminating the characters behind them.",
         description="Create beams which travel over the output area illuminating the characters behind them.",
-        epilog="""Example: terminaltexteffects beam -a 0.01 --beam-row-symbols ▂▁_ --beam-column-symbols ▌▍▎▏ --beam-delay 10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --text-glow-color 00D1FF --text-fade-color 333333 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 6 --final-gradient-frames 5 --final-wipe-speed 1""",
+        epilog="""Example: terminaltexteffects """,
     )
     effect_parser.set_defaults(effect_class=BeamsEffect)
     effect_parser.add_argument(
@@ -50,36 +50,22 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5).",
     )
     effect_parser.add_argument(
-        "--beam-row-min-speed",
-        type=argtypes.positive_int,
-        default=10,
-        metavar="(int > 0)",
+        "--beam-row-speed-range",
+        type=argtypes.int_range,
+        default="10-40",
+        metavar="(int range e.g. 2-3)",
         help="Minimum speed of the beam when moving along a row.",
     )
     effect_parser.add_argument(
-        "--beam-row-max-speed",
-        type=argtypes.positive_int,
-        default=40,
-        metavar="(int > 0)",
-        help="Maximum speed of the beam when moving along a row.",
-    )
-    effect_parser.add_argument(
-        "--beam-column-min-speed",
-        type=argtypes.positive_int,
-        default=6,
-        metavar="(int > 0)",
+        "--beam-column-speed-range",
+        type=argtypes.int_range,
+        default="6-10",
+        metavar="(int range e.g. 2-3)",
         help="Minimum speed of the beam when moving along a column.",
     )
     effect_parser.add_argument(
-        "--beam-column-max-speed",
-        type=argtypes.positive_int,
-        default=10,
-        metavar="(int > 0)",
-        help="Maximum speed of the beam when moving along a column.",
-    )
-    effect_parser.add_argument(
         "--beam-gradient-stops",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["ffffff", "00D1FF", "8A008A"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -102,7 +88,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["8A008A", "00D1FF", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -138,8 +124,8 @@ class Group:
         self.direction: str = direction
         self.terminal = terminal
         direction_speed_range = {
-            "row": (args.beam_row_min_speed, args.beam_row_max_speed),
-            "column": (args.beam_column_min_speed, args.beam_column_max_speed),
+            "row": (args.beam_row_speed_range[0], args.beam_row_speed_range[1]),
+            "column": (args.beam_column_speed_range[0], args.beam_column_speed_range[1]),
         }
         self.speed = random.randint(direction_speed_range[direction][0], direction_speed_range[direction][1]) * 0.1
         self.next_character_counter: float = 0
@@ -178,11 +164,6 @@ class BeamsEffect:
         self.pending_groups: list[Group] = []
         self.active_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-
-        if (self.args.beam_row_min_speed > self.args.beam_row_max_speed) or (
-            self.args.beam_column_min_speed > self.args.beam_column_max_speed
-        ):
-            raise ValueError("Minimum speed cannot be greater than maximum speed.")
 
     def prepare_data(self) -> None:  # testing
         final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)

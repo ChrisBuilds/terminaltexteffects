@@ -29,14 +29,14 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--starting-color",
-        type=argtypes.color,
+        type=argtypes.Color,
         default="000000",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color of the characters at spawn.",
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",

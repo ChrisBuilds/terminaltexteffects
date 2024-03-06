@@ -38,14 +38,14 @@ Example: terminaltexteffects bubbles -a 0.01 --pop-color ff9600 --final-color 25
     )
     effect_parser.add_argument(
         "--bubble-color",
-        type=argtypes.color,
+        type=argtypes.Color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the bubbles. Ignored if --no-rainbow is left as default False.",
     )
     effect_parser.add_argument(
         "--pop-color",
-        type=argtypes.color,
+        type=argtypes.Color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the spray emitted when a bubble pops.",
@@ -53,7 +53,7 @@ Example: terminaltexteffects bubbles -a 0.01 --pop-color ff9600 --final-color 25
 
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",

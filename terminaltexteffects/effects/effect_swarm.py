@@ -31,7 +31,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--base-color",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -39,14 +39,14 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--flash-color",
-        type=argtypes.color,
+        type=argtypes.Color,
         default="f2ea79",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the character flash. Characters flash when moving.",
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -78,7 +78,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "--swarm-area-count",
         type=argtypes.int_range,
         metavar="(int range e.g. 2-3)",
-        default=[2, 4],
+        default="2-4",
         help="Range of the number of areas where characters will swarm.",
     )
 

@@ -29,21 +29,21 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--burned-color",
-        type=argtypes.color,
+        type=argtypes.Color,
         default="252525",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color faded toward as blocks burn. Defaults to 252525",
     )
     effect_parser.add_argument(
         "--flame-color",
-        type=argtypes.color,
+        type=argtypes.Color,
         default="ff9600",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the flame. Defaults to 0",
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",

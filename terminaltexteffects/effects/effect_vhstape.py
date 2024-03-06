@@ -32,7 +32,7 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -49,7 +49,7 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
 
     effect_parser.add_argument(
         "--glitch-line-colors",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -57,7 +57,7 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
     )
     effect_parser.add_argument(
         "--glitch-wave-colors",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -65,7 +65,7 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
     )
     effect_parser.add_argument(
         "--noise-colors",
-        type=argtypes.color,
+        type=argtypes.Color,
         nargs="+",
         default=["1e1e1f", "3c3b3d", "6d6c70", "a2a1a6", "cbc9cf", "ffffff"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
