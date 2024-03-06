@@ -35,9 +35,17 @@ Example: terminaltexteffects bouncyball -a 0.01 --ball-colors 00ff00 ff0000 0000
         "--ball-colors",
         type=argtypes.color,
         nargs="+",
-        default=0,
+        default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated list of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random.",
+    )
+    effect_parser.add_argument(
+        "--ball-symbols",
+        type=argtypes.symbol,
+        nargs="+",
+        default=["*", "o", "O", "0", "."],
+        metavar="(ASCII/UTF-8 character string)",
+        help="Space separated list of symbols to use for the balls.",
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
@@ -57,9 +65,9 @@ Example: terminaltexteffects bouncyball -a 0.01 --ball-colors 00ff00 ff0000 0000
     )
     effect_parser.add_argument(
         "--ball-delay",
-        type=argtypes.positive_int,
-        default=15,
-        metavar="(int > 0)",
+        type=argtypes.nonnegative_int,
+        default=7,
+        metavar="(int >= 0)",
         help="Number of animation steps between ball drops, increase to reduce ball drop rate.",
     )
     effect_parser.add_argument(
@@ -91,24 +99,22 @@ class BouncyBallsEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by assigning colors and waypoints and
         organizing the characters by row."""
-        ball_symbols = ("*", "o", "O", "0", ".")
         final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
                 character.input_coord.row / self.terminal.output_area.top
             )
-            if self.args.ball_colors:
-                color = random.choice(self.args.ball_colors)
-            else:
-                color = graphics.Animation.random_color()
-            symbol = random.choice(ball_symbols)
+            color = random.choice(self.args.ball_colors)
+            symbol = random.choice(self.args.ball_symbols)
             ball_scene = character.animation.new_scene()
             ball_scene.add_frame(symbol, 1, color=color)
             final_scene = character.animation.new_scene()
             char_final_gradient = graphics.Gradient([color, self.character_final_color_map[character]], 10)
             final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
-            character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
+            character.motion.set_coordinate(
+                Coord(character.input_coord.column, int(self.terminal.output_area.top * random.uniform(1.0, 1.5)))
+            )
             input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
             input_coord_path.new_waypoint(character.input_coord)
             character.motion.activate_path(input_coord_path)
@@ -133,16 +139,19 @@ class BouncyBallsEffect:
         while self.group_by_row or self.active_chars or self.pending_chars:
             if not self.pending_chars and self.group_by_row:
                 self.pending_chars.extend(self.group_by_row.pop(min(self.group_by_row.keys())))  # type: ignore
-            if self.pending_chars and ball_delay == 0:
-                for _ in range(random.randint(1, 5)):
-                    if self.pending_chars:
-                        next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
-                        self.terminal.set_character_visibility(next_character, True)
-                        self.active_chars.append(next_character)
-                    else:
-                        break
-                ball_delay = self.args.ball_delay
-            ball_delay -= 1
+            if self.pending_chars:
+                if ball_delay == 0:
+                    for _ in range(random.randint(2, 6)):
+                        if self.pending_chars:
+                            next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
+                            self.terminal.set_character_visibility(next_character, True)
+                            self.active_chars.append(next_character)
+                        else:
+                            break
+                    ball_delay = self.args.ball_delay
+                else:
+                    ball_delay -= 1
+
             self.animate_chars()
             self.active_chars = [character for character in self.active_chars if character.is_active]
             self.terminal.print()
