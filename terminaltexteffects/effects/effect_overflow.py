@@ -34,7 +34,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         type=argtypes.color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar=argtypes.Color.METAVAR,
+        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )
     effect_parser.add_argument(
