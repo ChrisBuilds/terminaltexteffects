@@ -1,8 +1,8 @@
 import argparse
 from enum import Enum, auto
 
-from terminaltexteffects.utils import argtypes, motion
 from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.utils import argtypes, geometry
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -89,9 +89,11 @@ class RowSlide:
         for row in self.rows:
             for character in row:
                 if self.slide_direction == SlideDirection.LEFT:
-                    character.motion.set_coordinate(Coord(self.terminal.output_area.right, character.input_coord.row))
+                    character.motion.set_coordinate(
+                        geometry.Coord(self.terminal.output_area.right, character.input_coord.row)
+                    )
                 else:
-                    character.motion.set_coordinate(Coord(0, character.input_coord.row))
+                    character.motion.set_coordinate(geometry.Coord(0, character.input_coord.row))
                 input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
                 input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
@@ -122,11 +124,11 @@ class RowSlide:
                 if row:
                     if self.slide_direction == SlideDirection.LEFT:
                         next_character = row.pop(0)
-                        next_character.is_visible = True
+                        self.terminal.set_character_visibility(next_character, True)
                         self.active_chars.append(next_character)
                     else:
                         next_character = row.pop(-1)
-                        next_character.is_visible = True
+                        self.terminal.set_character_visibility(next_character, True)
                         self.active_chars.append(next_character)
             self.animate_chars()
             self.terminal.print()
