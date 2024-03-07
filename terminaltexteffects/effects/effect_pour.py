@@ -55,14 +55,14 @@ Example: terminaltexteffects pour -a 0.004 --pour-direction down""",
     )
     effect_parser.add_argument(
         "--starting-color",
-        type=argtypes.Color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color of the characters before the gradient starts.",
     )
     effect_parser.add_argument(
         "--pour-gradient-stops",
-        type=argtypes.Color,
+        type=argtypes.color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",

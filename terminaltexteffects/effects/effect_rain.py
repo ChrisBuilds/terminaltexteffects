@@ -43,7 +43,7 @@ Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
     )
     effect_parser.add_argument(
         "--rain-colors",
-        type=argtypes.Color,
+        type=argtypes.color,
         nargs="+",
         default=["00315C", "004C8F", "0075DB", "3F91D9", "78B9F2", "9AC8F5", "B8D8F8", "E3EFFC"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -51,7 +51,7 @@ Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.Color,
+        type=argtypes.color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",

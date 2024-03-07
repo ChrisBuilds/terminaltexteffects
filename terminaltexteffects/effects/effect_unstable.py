@@ -33,14 +33,14 @@ Example: terminaltexteffects unstable -a 0.01 --initial-color ffffff --unstable-
     )
     effect_parser.add_argument(
         "--unstable-color",
-        type=argtypes.Color,
+        type=argtypes.color,
         default="ff9200",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color transitioned to as the characters become unstable.",
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.Color,
+        type=argtypes.color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",

@@ -1,6 +1,5 @@
 import argparse
 import typing
-from dataclasses import dataclass
 
 from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.graphics import Color as ColorType
@@ -38,43 +37,30 @@ class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescri
     pass
 
 
-@dataclass
-class Color:
+def color(arg: str) -> ColorType:
     """Validates that the given argument is a valid color value.
 
-    Valid color values are either a valid xterm color (0-255) or a valid hex color (000000-ffffff).
-    Default values for the argument can be a single color string/int or a list of color strings/ints.
+    Args:
+        arg (str): argument to validate
+
+    Raises:
+        argparse.ArgumentTypeError: Color value is not in range.
+
+    Returns:
+        Color : validated color value
     """
-
-    METAVAR: str = "(XTerm [0-255] OR RGB Hex [000000-ffffff])"
-
-    def __call__(self, color_string: str) -> ColorType:
-        """Validates that the given argument is a valid color value.
-
-        Args:
-            color_string (str): argument to validate
-
-        Raises:
-            argparse.ArgumentTypeError: Color value is not in range.
-
-        Returns:
-            Color : validated color value
-        """
-
-        xterm_min = 0
-        xterm_max = 255
-        if len(color_string) == 6:
-            # Check if the hex value is a valid color
-            if not 0 <= int(color_string, 16) <= 16777215:
-                raise argparse.ArgumentTypeError(f"invalid color value: {color_string} is not a valid hex color.")
-            return color_string
-        else:
-            # Check if the color is a valid xterm color
-            if not xterm_min <= int(color_string) <= xterm_max:
-                raise argparse.ArgumentTypeError(
-                    f"invalid color value: {color_string} is not a valid xterm color (0-255)."
-                )
-            return int(color_string)
+    xterm_min = 0
+    xterm_max = 255
+    if len(arg) == 6:
+        # Check if the hex value is a valid color
+        if not 0 <= int(arg, 16) <= 16777215:
+            raise argparse.ArgumentTypeError(f"invalid color value: {arg} is not a valid hex color.")
+        return arg
+    else:
+        # Check if the color is a valid xterm color
+        if not xterm_min <= int(arg) <= xterm_max:
+            raise argparse.ArgumentTypeError(f"invalid color value: {arg} is not a valid xterm color (0-255).")
+        return int(arg)
 
 
 def nonnegative_int(arg: str) -> int:

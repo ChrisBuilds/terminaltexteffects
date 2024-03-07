@@ -31,14 +31,14 @@ Example: effect_example""",
     )
     effect_parser.add_argument(
         "--color-single",
-        type=argtypes.Color,
+        type=argtypes.color,
         default=0,
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the ___.",
     )
     effect_parser.add_argument(
         "--color-list",
-        type=argtypes.Color,
+        type=argtypes.color,
         nargs="+",
         default=0,
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -46,14 +46,14 @@ Example: effect_example""",
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.Color,
+        type=argtypes.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final character.",
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.Color,
+        type=argtypes.color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",

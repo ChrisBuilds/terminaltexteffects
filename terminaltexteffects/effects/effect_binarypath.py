@@ -31,7 +31,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.Color,
+        type=argtypes.color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -47,7 +47,7 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     )
     effect_parser.add_argument(
         "--binary-colors",
-        type=argtypes.Color,
+        type=argtypes.color,
         nargs="+",
         default=["044E29", "157e38", "45bf55", "95ed87"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",

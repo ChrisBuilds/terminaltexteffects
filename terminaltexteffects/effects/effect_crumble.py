@@ -33,7 +33,7 @@ Example: terminaltexteffects --effect crumble --animation-rate 0.01 --initial-co
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.Color,
+        type=argtypes.color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
