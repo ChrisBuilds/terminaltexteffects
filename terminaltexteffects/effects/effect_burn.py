@@ -94,8 +94,6 @@ class BurnEffect:
                 self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
             )
         }
-        for column in groups.values():
-            column.reverse()
 
         def groups_remaining(rows) -> bool:
             return any(row for row in rows.values())
