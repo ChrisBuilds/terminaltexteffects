@@ -78,7 +78,7 @@ Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F
         type=argtypes.nonnegative_int,
         default=60,
         metavar="(int >= 0)",
-        help="Number of animation steps to wait between launching each firework shell.",
+        help="Number of animation steps to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.",
     )
     effect_parser.add_argument(
         "--explode-distance",
@@ -206,7 +206,7 @@ class FireworksEffect:
                 for character in next_group:
                     self.terminal.set_character_visibility(character, True)
                     self.active_chars.append(character)
-                launch_delay = self.args.launch_delay + 1
+                launch_delay = int(self.args.launch_delay * random.uniform(0.5, 1.5))
             self.terminal.print()
             self.animate_chars()
             launch_delay -= 1
