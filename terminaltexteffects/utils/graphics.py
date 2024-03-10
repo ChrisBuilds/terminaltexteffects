@@ -81,7 +81,10 @@ class Gradient:
         based on the order of stops and steps.
 
         Ex: stops = ["ffffff", "aaaaaa", "000000"], steps = (6, 3)
-        "fffffff" -> (6 steps) -> "aaaaaa" -> (3 steps) -> "000000"
+        Distance from "ffffff" to "aaaaaa" = 6 steps (7 colors including start and end)
+        Distance from "aaaaaa" to "000000" = 3 steps (4 colors including start and end)
+        Total colors in the gradient spectrum = 10 ("aaaaaa" is not repeated when transitioning from "ffffff" to "aaaaaa" and from "aaaaaa" to "000000")
+
 
         The step count includes the stop for each pair. Total number of colors in the resulting gradient spectrum:
         sum(steps) + 1
@@ -120,7 +123,7 @@ class Gradient:
             green_delta = (end_color_ints[1] - start_color_ints[1]) // steps
             blue_delta = (end_color_ints[2] - start_color_ints[2]) // steps
             # Calculate the intermediate colors and add them to the gradient colors list
-            range_start = int(color_pair != color_pairs[0])
+            range_start = int(len(spectrum) > 0)  # if this is the first pair, add the start color to the spectrum
             for i in range(range_start, max(steps, 0)):
                 red = start_color_ints[0] + (red_delta * i)
                 green = start_color_ints[1] + (green_delta * i)
