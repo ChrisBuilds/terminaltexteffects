@@ -36,7 +36,7 @@ Example: terminaltexteffects errorcorrect -a 0.01 --error-pairs 12 --swap-delay 
         type=argtypes.positive_float,
         default=0.1,
         metavar="(int > 0)",
-        help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20% of the characters will be in the wrong position.",
+        help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position.",
     )
     effect_parser.add_argument(
         "--swap-delay",
