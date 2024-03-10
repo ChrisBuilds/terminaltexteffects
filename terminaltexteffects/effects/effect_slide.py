@@ -59,6 +59,7 @@ Example: terminaltexteffects slide --grouping row --movement-speed 0.5 --gradien
         "--gradient-steps",
         type=argtypes.positive_int,
         default=[12],
+        nargs="+",
         metavar="(int > 0)",
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
