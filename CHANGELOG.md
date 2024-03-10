@@ -59,6 +59,7 @@
 
 #### Engine
  * Fixed division by zero error in geometry.find_coord_at_distance() when the origin coord and the target coord are the same.
+ * Fixed gradient generating an extra color in the spectrum when the initial color pair was repeated. Ex: Gradient(['ffffff','000000','ffffff','000000], 5) would result in the third color 'ffffff' being added to the spectrum when it was already present as the end of the generation from '000000'->'ffffff'. 
 
 ## 0.6.0
 
