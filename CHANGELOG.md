@@ -41,6 +41,7 @@
  * Decrypt effect supports gradient specification for ciphertext and plaintext
  * Beams effect uses Animation.adjust_color_brightness() to lower the background character brightness and shows the lighter color when the beam passes by.
  * Crumble effect uses Animation.adjust_color_brightness() to set the weak and dust colors based on the final gradient.
+ * Fireworks effect launch_delay argument has a +/- 0-50% randomness applied. 
 
 #### Engine
  * Geometry related methods have been removed from the motion class. They are now located at terminaltexteffects.utils.geometry as separate functions.
