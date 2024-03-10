@@ -13,7 +13,7 @@ from terminaltexteffects.effects import (
     effect_expand,
     effect_fireworks,
     effect_middleout,
-    effect_orbitingvolley,
+    effect_orbittingvolley,
     effect_overflow,
     effect_pour,
     effect_print,
@@ -106,7 +106,7 @@ def test_orbittingvolley_effect() -> None:
         args.launch_delay = 1
         args.character_easing = easing.out_sine
         terminal = Terminal(input_data, args)
-        orbittingvolley_effect = effect_orbitingvolley.OrbittingVolleyEffect(terminal, args)
+        orbittingvolley_effect = effect_orbittingvolley.OrbittingVolleyEffect(terminal, args)
         orbittingvolley_effect.run()
 
 
