@@ -215,6 +215,7 @@ class Terminal:
 
     def _make_fill_characters(self) -> list[EffectCharacter]:
         """Creates a list of characters to fill the empty spaces in the output area. The characters input_symbol is a space.
+        The fill characters are added to the character_by_input_coord dictionary.
 
         Returns:
             list[EffectCharacter]: list of characters
@@ -224,7 +225,9 @@ class Terminal:
             for column in range(1, self.output_area.right + 1):
                 coord = Coord(column, row)
                 if coord not in self.character_by_input_coord:
-                    fill_characters.append(EffectCharacter(self.next_character_id, " ", column, row))
+                    fill_char = EffectCharacter(self.next_character_id, " ", column, row)
+                    fill_characters.append(fill_char)
+                    self.character_by_input_coord[coord] = fill_char
                     self.next_character_id += 1
         return fill_characters
 
