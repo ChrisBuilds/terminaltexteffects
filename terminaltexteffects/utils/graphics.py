@@ -61,7 +61,7 @@ class Gradient:
         """
         if fraction < 0 or fraction > 1:
             raise ValueError("Fraction must be 0 <= fraction <= 1.")
-        index = int(fraction * (len(self.spectrum) - 1))
+        index = round(fraction * (len(self.spectrum) - 1))
         return self.spectrum[index]
 
     def __post_init__(self) -> None:
