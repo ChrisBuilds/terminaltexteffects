@@ -32,7 +32,7 @@ from terminaltexteffects.effects import (
     effect_waves,
     effect_wipe,
 )
-from terminaltexteffects.utils import easing
+from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.terminal import Terminal
 
 t1 = ""
@@ -166,6 +166,7 @@ def test_slide_effect() -> None:
         args.gradient_stops = ["8A008A", "00D1FF", "FFFFFF"]
         args.gradient_steps = [12]
         args.gradient_frames = 5
+        args.gradient_direction = graphics.Gradient.Direction.VERTICAL
         args.gap = 1
         args.merge = True
         args.reverse_direction = False
