@@ -6,7 +6,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from terminaltexteffects.utils import ansitools, colorterm, easing, hexterm
+from terminaltexteffects.utils import ansitools, colorterm, easing, geometry, hexterm
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
@@ -54,6 +54,14 @@ class Gradient:
 
     stops: list[Color]
     steps: tuple[int, ...] | int
+
+    class Direction(Enum):
+        """Enum for specifying the direction of the gradient."""
+
+        VERTICAL = auto()
+        HORIZONTAL = auto()
+        CENTER = auto()
+        DIAGONAL = auto()
 
     def get_color_at_fraction(self, fraction: float) -> Color:
         """Returns the color at a fraction of the gradient.
@@ -140,6 +148,49 @@ class Gradient:
             gradient_colors.append(end)
             spectrum.extend(gradient_colors)
         return spectrum
+
+    def build_coordinate_color_mapping(
+        self, max_row: int, max_column: int, direction: "Gradient.Direction"
+    ) -> dict[geometry.Coord, Color]:
+        """Builds a mapping of coordinates to colors based on the gradient and a direction.
+
+        Args:
+            max_row (int): The maximum row value.
+            max_column (int): The maximum column value.
+            direction (Gradient.Direction): The direction of the gradient.
+
+        Returns:
+            dict[Coord, str]: A mapping of coordinates to colors.
+        """
+        gradient_mapping: dict[geometry.Coord, Color] = {}
+        if direction == Gradient.Direction.VERTICAL:
+            for row_value in range(max_row + 1):
+                fraction = row_value / max_row
+                color = self.get_color_at_fraction(fraction)
+                for column_value in range(1, max_column + 1):
+                    gradient_mapping[geometry.Coord(column_value, row_value)] = color
+        elif direction == Gradient.Direction.HORIZONTAL:
+            for column_value in range(1, max_column + 1):
+                fraction = column_value / max_column
+                color = self.get_color_at_fraction(fraction)
+                for row_value in range(max_row + 1):
+                    gradient_mapping[geometry.Coord(column_value, row_value)] = color
+        elif direction == Gradient.Direction.CENTER:
+            for row_value in range(max_row + 1):
+                for column_value in range(1, max_column + 1):
+                    distance_from_center = geometry.find_normalized_distance_from_center(
+                        max_row, max_column, geometry.Coord(column_value, row_value)
+                    )
+                    color = self.get_color_at_fraction(distance_from_center)
+                    gradient_mapping[geometry.Coord(column_value, row_value)] = color
+        elif direction == Gradient.Direction.DIAGONAL:
+            for row_value in range(max_row + 1):
+                for column_value in range(1, max_column + 1):
+                    fraction = ((row_value * 2) + column_value) / ((max_row * 2) + max_column)
+                    color = self.get_color_at_fraction(fraction)
+                    gradient_mapping[geometry.Coord(column_value, row_value)] = color
+
+        return gradient_mapping
 
     def __iter__(self) -> "Gradient":
         self.index = 0
