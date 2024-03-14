@@ -3,7 +3,7 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import animation, graphics
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -140,7 +140,7 @@ class ErrorCorrectEffect:
                 for _ in range(10):
                     error_scene.add_frame(block_symbol, 3, color=self.args.error_color)
                     error_scene.add_frame(character.input_symbol, 3, color="ffffff")
-                correcting_scene = character.animation.new_scene(sync=graphics.SyncMetric.DISTANCE)
+                correcting_scene = character.animation.new_scene(sync=animation.SyncMetric.DISTANCE)
                 correcting_scene.apply_gradient_to_symbols(correcting_gradient, "█", 3)
                 final_scene = character.animation.new_scene()
                 char_final_gradient = graphics.Gradient(

@@ -3,7 +3,7 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import animation, graphics
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -157,10 +157,10 @@ class Line:
             # make glitch scenes
             base_scn = character.animation.new_scene(id="base")
             base_scn.add_frame(character.input_symbol, duration=1, color=self.character_final_color_map[character])
-            glitch_scn_forward = character.animation.new_scene(id="rgb_glitch_fwd", sync=graphics.SyncMetric.STEP)
+            glitch_scn_forward = character.animation.new_scene(id="rgb_glitch_fwd", sync=animation.SyncMetric.STEP)
             for color in glitch_line_colors:
                 glitch_scn_forward.add_frame(character.input_symbol, duration=1, color=color)
-            glitch_scn_backward = character.animation.new_scene(id="rgb_glitch_bwd", sync=graphics.SyncMetric.STEP)
+            glitch_scn_backward = character.animation.new_scene(id="rgb_glitch_bwd", sync=animation.SyncMetric.STEP)
             for color in glitch_line_colors[::-1]:
                 glitch_scn_backward.add_frame(character.input_symbol, duration=1, color=color)
             snow_scn = character.animation.new_scene(id="snow")

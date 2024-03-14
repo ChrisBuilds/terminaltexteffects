@@ -3,7 +3,7 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils import animation, easing, graphics
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -99,7 +99,7 @@ class CrumbleEffect:
             strengthen_flash_scn.apply_gradient_to_symbols(strengthen_flash_gradient, character.input_symbol, 4)
             strengthen_scn = character.animation.new_scene()
             strengthen_scn.apply_gradient_to_symbols(strengthen_gradient, character.input_symbol, 6)
-            dust_scn = character.animation.new_scene(sync=graphics.SyncMetric.DISTANCE)
+            dust_scn = character.animation.new_scene(sync=animation.SyncMetric.DISTANCE)
             for _ in range(5):
                 dust_scn.add_frame(random.choice(["*", ".", ","]), 1, color=dust_color)
 

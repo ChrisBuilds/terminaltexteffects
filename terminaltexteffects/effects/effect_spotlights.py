@@ -3,7 +3,7 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import easing, geometry, graphics, motion
+from terminaltexteffects.utils import animation, easing, geometry, graphics, motion
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -164,7 +164,7 @@ class SpotlightsEffect:
                 brightness_factor = max(
                     1 - (distance - range * (1 - self.args.beam_falloff)) / (range * self.args.beam_falloff), 0.2
                 )
-                adjusted_color = graphics.Animation.adjust_color_brightness(
+                adjusted_color = animation.Animation.adjust_color_brightness(
                     self.character_color_map[character][0], brightness_factor
                 )
             else:
@@ -179,7 +179,7 @@ class SpotlightsEffect:
                 character.input_coord.row / self.terminal.output_area.top
             )
             self.terminal.set_character_visibility(character, True)
-            color_dark = graphics.Animation.adjust_color_brightness(color_bright, 0.2)
+            color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
             self.character_color_map[character] = (color_bright, color_dark)
             character.animation.set_appearance(character.input_symbol, color_dark)
 
