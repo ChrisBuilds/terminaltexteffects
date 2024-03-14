@@ -227,3 +227,26 @@ def find_length_of_line(coord1: Coord, coord2: Coord, double_row_diff: bool = Fa
     if double_row_diff:
         return math.hypot(column_diff, 2 * row_diff)
     return math.hypot(column_diff, row_diff)
+
+
+def find_normalized_distance_from_center(max_row: int, max_column: int, other_coord: Coord) -> float:
+    """Returns the normalized distance from the center of the OutputArea as a float between 0 and 1.
+
+    The distance is calculated using the Pythagorean theorem and accounts for the aspect ratio of the terminal.
+
+    Args:
+        max_row (int): Maximum row value of the OutputArea.
+        max_column (int): Maximum column value of the OutputArea.
+        other_coord (Coord): Other coordinate from which to calculate the distance.
+
+    Returns:
+        float: Normalized distance from the center of the OutputArea, float between 0 and 1.
+    """
+    center_x = max_column / 2
+    center_y = max_row / 2
+
+    max_distance = ((max_column**2) + ((max_row * 2) ** 2)) ** 0.5
+
+    distance = ((other_coord.column - center_x) ** 2 + (((other_coord.row) - center_y) * 2) ** 2) ** 0.5
+
+    return distance / (max_distance / 2)
