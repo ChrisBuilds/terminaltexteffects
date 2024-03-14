@@ -13,6 +13,45 @@ from terminaltexteffects.utils import ansitools
 from terminaltexteffects.utils.geometry import Coord
 
 
+from terminaltexteffects.utils.argsdataclass import ArgsDataClass, ArgField
+import terminaltexteffects.utils.argtypes as argtypes
+
+@dataclass
+class TerminalArgs(ArgsDataClass):
+    tab_width: int= ArgField(
+        cmd_name= ["--tab-width"],
+        type_parser= argtypes.positive_int,
+        default= 4,
+        help= "Number of spaces to use for a tab character.")
+    
+    xterm_colors: bool= ArgField(
+        cmd_name= ["--xterm-colors"],
+        default= False,
+        action="store_true",
+        help= "Convert any colors specified in RBG hex to the closest XTerm-256 color.")
+        
+    no_color: bool= ArgField(
+        cmd_name= ["--no-color"],
+        default= False,
+        action="store_true",
+        help= "Disable all colors in the effect.")
+    
+    no_wrap: int= ArgField(
+        cmd_name= "--no-wrap",
+        default= False,
+        action="store_true",
+        help= "Disable wrapping of text.")
+    
+    animation_rate: float= ArgField(
+        cmd_name= ["-a", "--animation-rate"],
+        type_parser= argtypes.nonnegative_float,
+        default=0.01,
+        help= """Minimum time, in seconds, between animation steps. 
+        This value does not normally need to be modified. 
+        Use this to increase the playback speed of all aspects of the effect. 
+        This will have no impact beyond a certain lower threshold due to the 
+        processing speed of your device.""")   
+    
 @dataclass
 class OutputArea:
     """A class for storing the output area of an effect.
