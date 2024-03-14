@@ -174,10 +174,11 @@ class SpotlightsEffect:
 
     def prepare_data(self) -> None:
         base_gradient = graphics.Gradient(self.args.gradient_stops, self.args.gradient_steps)
+        base_gradient_mapping = base_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, graphics.Gradient.Direction.CENTER
+        )
         for character in self.terminal.get_characters():
-            color_bright = base_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
+            color_bright = base_gradient_mapping[character.input_coord]
             self.terminal.set_character_visibility(character, True)
             color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
             self.character_color_map[character] = (color_bright, color_dark)
