@@ -3,6 +3,7 @@ import typing
 
 from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.graphics import Color as ColorType
+from terminaltexteffects.utils.graphics import Gradient
 
 EASING_EPILOG = """\
     Easing
@@ -35,6 +36,32 @@ class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescri
     """Custom formatter for argparse that combines ArgumentDefaultsHelpFormatter and RawDescriptionHelpFormatter."""
 
     pass
+
+
+def gradient_direction(arg: str) -> Gradient.Direction:
+    """Validates that the given argument is a valid gradient direction.
+
+    Args:
+        arg (str): argument to validate
+
+    Returns:
+        Gradient.Direction: validated gradient direction
+
+    Raises:
+        argparse.ArgumentTypeError: Argument value is not a valid gradient direction.
+    """
+    direction_map = {
+        "horizontal": Gradient.Direction.HORIZONTAL,
+        "vertical": Gradient.Direction.VERTICAL,
+        "diagonal": Gradient.Direction.DIAGONAL,
+        "center": Gradient.Direction.CENTER,
+    }
+    if arg.lower() in direction_map:
+        return direction_map[arg.lower()]
+    else:
+        raise argparse.ArgumentTypeError(
+            f"invalid gradient direction: '{arg}' is not a valid gradient direction. Choices are diagonal, horizontal, vertical, or center."
+        )
 
 
 def color(arg: str) -> ColorType:
