@@ -2,8 +2,7 @@ import argparse
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import graphics
-from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils import geometry, graphics
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -71,6 +70,12 @@ Example: terminaltexteffects slide --grouping row --movement-speed 0.5 --gradien
         help="Number of frames to display each gradient step.",
     )
     effect_parser.add_argument(
+        "--gradient-direction",
+        default="vertical",
+        type=argtypes.gradient_direction,
+        help="Direction of the gradient (vertical, horizontal, diagonal, center).",
+    )
+    effect_parser.add_argument(
         "--gap",
         type=argtypes.nonnegative_int,
         default=3,
@@ -115,11 +120,12 @@ class SlideEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting starting coordinates and building Paths/Scenes."""
         final_gradient = graphics.Gradient(self.args.gradient_stops, self.args.gradient_steps)
-
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.gradient_direction
+        )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+
         groups: list[list[EffectCharacter]] = []
         if self.grouping == "row":
             groups = self.terminal.get_characters_grouped(self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
@@ -147,7 +153,7 @@ class SlideEffect:
                     groups[group_index] = groups[group_index][::-1]
                     starting_column = self.terminal.output_area.right + 1
                 for character in groups[group_index]:
-                    character.motion.set_coordinate(Coord(starting_column, character.input_coord.row))
+                    character.motion.set_coordinate(geometry.Coord(starting_column, character.input_coord.row))
             elif self.grouping == "column":
                 if self.merge and group_index % 2 == 0:
                     starting_row = self.terminal.output_area.bottom - 1
@@ -158,24 +164,24 @@ class SlideEffect:
                     groups[group_index] = groups[group_index][::-1]
                     starting_row = self.terminal.output_area.bottom - 1
                 for character in groups[group_index]:
-                    character.motion.set_coordinate(Coord(character.input_coord.column, starting_row))
+                    character.motion.set_coordinate(geometry.Coord(character.input_coord.column, starting_row))
             if self.grouping == "diagonal":
                 distance_from_outside_bottom = group[-1].input_coord.row - (self.terminal.output_area.bottom - 1)
-                starting_coord = Coord(
+                starting_coord = geometry.Coord(
                     group[-1].input_coord.column - distance_from_outside_bottom,
                     group[-1].input_coord.row - distance_from_outside_bottom,
                 )
                 if self.merge and group_index % 2 == 0:
                     groups[group_index] = groups[group_index][::-1]
                     distance_from_outside = (self.terminal.output_area.top + 1) - group[0].input_coord.row
-                    starting_coord = Coord(
+                    starting_coord = geometry.Coord(
                         group[0].input_coord.column + distance_from_outside,
                         group[0].input_coord.row + distance_from_outside,
                     )
                 if self.reverse_direction and not self.merge:
                     groups[group_index] = groups[group_index][::-1]
                     distance_from_outside = (self.terminal.output_area.top + 1) - group[0].input_coord.row
-                    starting_coord = Coord(
+                    starting_coord = geometry.Coord(
                         group[0].input_coord.column + distance_from_outside,
                         group[0].input_coord.row + distance_from_outside,
                     )
