@@ -3,7 +3,7 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import argtypes, graphics
+from terminaltexteffects.utils import animation, argtypes, graphics
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -80,7 +80,7 @@ class DecryptEffect:
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
         self.encrypted_symbols: list[str] = []
-        self.scenes: dict[str, graphics.Scene] = {}
+        self.scenes: dict[str, animation.Scene] = {}
         self.character_cipher_text_map: dict[EffectCharacter, graphics.Color] = {}
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
