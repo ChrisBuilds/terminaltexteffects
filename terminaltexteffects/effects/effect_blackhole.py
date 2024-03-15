@@ -3,7 +3,7 @@ import random
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import easing, geometry, graphics
+from terminaltexteffects.utils import animation, easing, geometry, graphics
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -168,7 +168,7 @@ class BlackholeEffect:
                 for color in gradient_map[star_color]:
                     consumed_scn.add_frame(star_symbol, 1, color=color)
                 consumed_scn.add_frame(" ", 1)
-                consumed_scn.sync = graphics.SyncMetric.DISTANCE
+                consumed_scn.sync = animation.SyncMetric.DISTANCE
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
                     singularity_path,

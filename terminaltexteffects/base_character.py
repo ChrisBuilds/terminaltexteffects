@@ -4,7 +4,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from terminaltexteffects.utils import graphics, motion
+from terminaltexteffects.utils import animation, motion
 from terminaltexteffects.utils.geometry import Coord
 
 
@@ -32,11 +32,11 @@ class EventHandler:
         self.character = character
         self.layer: int = 0
         self.registered_events: dict[
-            tuple[EventHandler.Event, graphics.Scene | motion.Waypoint | motion.Path],
+            tuple[EventHandler.Event, animation.Scene | motion.Waypoint | motion.Path],
             list[
                 tuple[
                     EventHandler.Action,
-                    graphics.Scene | motion.Waypoint | motion.Path | int | Coord | EventHandler.Callback,
+                    animation.Scene | motion.Waypoint | motion.Path | int | Coord | EventHandler.Callback,
                 ]
             ],
         ] = {}
@@ -110,17 +110,17 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: graphics.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path,
         action: Action,
-        target: graphics.Scene | motion.Waypoint | motion.Path | int | Coord | Callback,
+        target: animation.Scene | motion.Waypoint | motion.Path | int | Coord | Callback,
     ) -> None:
         """Registers an event to be handled by the EventHandler.
 
         Args:
             event (Event): The event to register.
-            caller (graphics.Scene | motion.Waypoint | motion.Path): The object that triggers the event.
+            caller (animation.Scene | motion.Waypoint | motion.Path): The object that triggers the event.
             action (Action): The action to take when the event is triggered.
-            target (graphics.Scene | motion.Waypoint | motion.Path | int | Coord | Callback): The target of the action.
+            target (animation.Scene | motion.Waypoint | motion.Path | int | Coord | Callback): The target of the action.
         """
         new_event = (event, caller)
         new_action = (action, target)
@@ -128,12 +128,12 @@ class EventHandler:
             self.registered_events[new_event] = list()
         self.registered_events[new_event].append(new_action)
 
-    def handle_event(self, event: Event, caller: graphics.Scene | motion.Waypoint | motion.Path) -> None:
+    def handle_event(self, event: Event, caller: animation.Scene | motion.Waypoint | motion.Path) -> None:
         """Handles an event by taking the specified action.
 
         Args:
             event (Event): An event to handle. If the event is not registered, nothing happens.
-            caller (graphics.Scene | motion.Waypoint | motion.Path): The object triggering the call.
+            caller (animation.Scene | motion.Waypoint | motion.Path): The object triggering the call.
         """
         action_map = {
             EventHandler.Action.ACTIVATE_PATH: self.character.motion.activate_path,
@@ -180,7 +180,7 @@ class EffectCharacter:
         self._input_coord: Coord = Coord(input_column, input_row)
         self._is_visible: bool = False
         self.symbol: str = symbol
-        self.animation: graphics.Animation = graphics.Animation(self)
+        self.animation: animation.Animation = animation.Animation(self)
         self.motion: motion.Motion = motion.Motion(self)
         self.event_handler: EventHandler = EventHandler(self)
         self.layer: int = 0
