@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 import random
-from typing import Callable
+import typing
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
@@ -13,7 +13,7 @@ from terminaltexteffects.utils.argsdataclass import ArgsDataClass, ArgField, arg
 from terminaltexteffects.utils import easing
 
 
-def get_effect_and_args() -> tuple[any, ArgsDataClass]:
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     return RainEffect, RainEffectArgs
 
 
@@ -26,6 +26,7 @@ def get_effect_and_args() -> tuple[any, ArgsDataClass]:
                 Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
 )
 @dataclass
+@typing.no_type_check
 class RainEffectArgs(ArgsDataClass):
     rain_colors: list[str | int] = ArgField(
         cmd_name=["--rain-colors"],
@@ -34,7 +35,7 @@ class RainEffectArgs(ArgsDataClass):
         nargs="+",
         default=("00315C", "004C8F", "0075DB", "3F91D9", "78B9F2", "9AC8F5", "B8D8F8", "E3EFFC"),
         help="List of colors for the rain drops. Colors are randomly chosen from the list.",
-    )
+    ) # type: ignore[assignment]
 
     final_color: int | str = ArgField(
         cmd_name=["--final-color"],
@@ -42,15 +43,15 @@ class RainEffectArgs(ArgsDataClass):
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final character.",
-    )
+    )# type: ignore[assignment]
 
-    movement_speed: float = ArgField(
+    movement_speed: list[float] = ArgField(
         cmd_name="--movement-speed",
         type_parser=argtypes.float_range,
         default=(0.1, 0.2),
         metavar="(float range e.g. 0.25-0.5)",
         help="Falling speed range of the rain drops.",
-    )
+    )# type: ignore[assignment]
     
     rain_symbols: list[str]= ArgField(
         cmd_name= "--rain-symbols",
@@ -59,7 +60,7 @@ class RainEffectArgs(ArgsDataClass):
         default=("o", ".", ",", "*", "|"),
         metavar="(ASCII/UTF-8 character string)",
         help= "Space separated, unquoted, list of symbols to use for the rain drops. Symbols are randomly chosen from the list. "
-    )
+    )# type: ignore[assignment]
     
     final_gradient_stops: list[str | int] = ArgField(
         cmd_name= "--final-gradient-stops",
@@ -68,7 +69,7 @@ class RainEffectArgs(ArgsDataClass):
         default=("8A008A", "00D1FF", "FFFFFF"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
+    )# type: ignore[assignment]
     
     final_gradient_steps: int= ArgField(
         cmd_name= "--final-gradient-steps",
@@ -77,14 +78,14 @@ class RainEffectArgs(ArgsDataClass):
         default=(12),
         metavar="(int > 0)",
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
+    )# type: ignore[assignment]
         
-    easing: Callable = ArgField(
+    easing: typing.Callable = ArgField(
         cmd_name=["--easing"],
         default=easing.in_quart,  # "IN_QUART"
         type_parser=argtypes.ease,
         help="Easing function to use for character movement.",
-    )
+    )# type: ignore[assignment]
 
     @classmethod
     def get_effect_class(selfClass):

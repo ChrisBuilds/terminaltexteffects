@@ -1,6 +1,7 @@
 import argparse
 import inspect
 from dataclasses import Field, dataclass, fields, MISSING
+import typing
 
 
 class ArgField(Field):
@@ -9,10 +10,10 @@ class ArgField(Field):
         # custom metadata
         cmd_name: str | list[str],
         help: str,
-        type_parser: any = None,
-        metavar: str = None,
-        nargs: str = None,
-        action: str = None,
+        type_parser: typing.Any = None,
+        metavar: str|None = None,
+        nargs: str|None = None,
+        action: str|None = None,
         required: bool = False,
         # python internal attrs
         default=MISSING,
@@ -38,12 +39,24 @@ class ArgField(Field):
     @dataclass
     class FieldAdditionalMetaData:
         cmd_name: str | list[str]
-        type_parser: any = None
-        metavar: str = None
-        nargs: str = None
-        help: str = None
-        action: str = None
+        type_parser: typing.Any|None = None
+        metavar: str|None = None
+        nargs: str|None = None
+        help: str|None = None
+        action: str|None = None
         required: bool = False
+        
+        
+@dataclass
+class ArgParserDescriptor:
+    """This dataclass contains required attributes to call "add_parser()" method of
+    _argparse._SubParsersAction" class
+    """
+    name: str
+    formatter_class: typing.Any
+    help: str
+    description: str
+    epilog: str        
 
 
 @dataclass
@@ -52,7 +65,7 @@ class ArgsDataClass:
     def from_parsed_args_mapping(selfClass, parsed_args: argparse.Namespace, arg_class=None):
         # parsed_args.
         if arg_class is None:
-            arg_class: ArgsDataClass = parsed_args.arg_class
+            arg_class= parsed_args.arg_class
 
         signature = inspect.signature(arg_class.__init__)
         parameters = signature.parameters
@@ -66,7 +79,7 @@ class ArgsDataClass:
         return new_instance
 
     @classmethod
-    def get_All_properties(selfClass) -> list[ArgField]:
+    def get_All_fields(selfClass) -> dict[str, Field]:
         fields_list = {}
         for f in fields(selfClass):
             fields_list[f.name] = f
@@ -75,8 +88,10 @@ class ArgsDataClass:
 
     @classmethod
     def add_args_to_parser(selfClass, parser):
-        args: list[ArgField] = selfClass.get_All_properties()
+        args = selfClass.get_All_fields()
         for arg in args.values():
+            if not arg.metadata:
+                continue
             additional_metadata = ArgField.FieldAdditionalMetaData(**arg.metadata)
             if isinstance(additional_metadata.cmd_name, str):
                 additional_metadata.cmd_name = [additional_metadata.cmd_name]
@@ -103,25 +118,15 @@ class ArgsDataClass:
             arg_data_class (ArgsDataClass): ArgDataClass that required args defined in it
             subparser (argparse._SubParsersAction): subparser to add arguments to
         """
-        sub_parser_descriptor: ArgParserDescriptor = selfClass.arg_class_metadata
+        sub_parser_descriptor= getattr(selfClass,"arg_class_metadata")
         new_parser = subparsers.add_parser(**vars(sub_parser_descriptor))
         new_parser.set_defaults(arg_class=selfClass)
         selfClass.add_args_to_parser(new_parser)
+        
+    #arg_class_metadata:ArgParserDescriptor|None= None
 
 
-@dataclass
-class ArgParserDescriptor:
-    """This dataclass contains required attributes to call "add_parser()" method of
-    _argparse._SubParsersAction" class
-    """
-    name: str
-    formatter_class: any
-    help: str
-    description: str
-    epilog: str
-
-
-def argclass(name: str, formatter_class: any, help: str, description: str, epilog: str):
+def argclass(name: str, formatter_class: typing.Any, help: str, description: str, epilog: str):
     """Decorator for providing required metadata to an "ArgDataClass"
 
     Args:
