@@ -19,17 +19,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Lines of characters glitch left and right and lose detail like an old VHS tape.",
         description="Lines of characters glitch left and right and lose detail like an old VHS tape.",
-        epilog="""
-Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 0000ff --base-color ffffff --final-color ffffff --glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000""",
+        epilog="""Example: terminaltexteffects vhstape --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --glitch-line-colors ffffff ff0000 00ff00 0000ff ffffff --glitch-wave-colors ffffff ff0000 00ff00 0000ff ffffff --noise-colors 1e1e1f 3c3b3d 6d6c70 a2a1a6 cbc9cf ffffff --glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000""",
     )
     effect_parser.set_defaults(effect_class=VHSTapeEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--final-gradient-stops",
         type=argtypes.color,
@@ -46,7 +38,6 @@ Example: terminaltexteffects vhstape -a 0.01 --glitch-line-colors 00ff00 ff0000 
         metavar="(int > 0)",
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )
-
     effect_parser.add_argument(
         "--glitch-line-colors",
         type=argtypes.color,

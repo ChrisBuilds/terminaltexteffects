@@ -17,16 +17,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "burn",
         help="Burns vertically in the output area.",
         description="burn | Burn the output area.",
-        epilog="Example: terminaltexteffects burn -a 0.003 --flame-color ff9600 --burned-color 252525",
+        epilog="Example: terminaltexteffects burn --burned-color 252525 --flame-color ff9600 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12",
     )
     effect_parser.set_defaults(effect_class=BurnEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.003,
-        help="Time between animation steps. Defaults to 0.03 seconds.",
-    )
     effect_parser.add_argument(
         "--burned-color",
         type=argtypes.color,

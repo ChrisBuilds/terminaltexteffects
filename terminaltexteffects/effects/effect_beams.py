@@ -18,16 +18,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Create beams which travel over the output area illuminating the characters behind them.",
         description="Create beams which travel over the output area illuminating the characters behind them.",
-        epilog="""Example: terminaltexteffects """,
+        epilog="""Example: terminaltexteffects beams --beam-row-symbols "▂▁_" --beam-column-symbols "▌▍▎▏" --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops ffffff 00D1FF 8A008A --final-gradient-steps 12 --final-gradient-frames 5 --final-wipe-speed 1""",
     )
     effect_parser.set_defaults(effect_class=BeamsEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--beam-row-symbols",
         type=argtypes.symbol_multiple,

@@ -19,16 +19,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="expand | Expands the text from a single point.",
         epilog=f"""{argtypes.EASING_EPILOG}
         
-Example: terminaltexteffects expand -a 0.01 --movement-speed 0.5 --easing IN_OUT_QUART""",
+Example: terminaltexteffects expand --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 5 --movement-speed 0.35 --easing IN_OUT_QUART""",
     )
     effect_parser.set_defaults(effect_class=ExpandEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--final-gradient-stops",
         type=argtypes.color,

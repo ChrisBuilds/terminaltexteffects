@@ -3,7 +3,7 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import argtypes, graphics
+from terminaltexteffects.utils import animation, argtypes, graphics
 from terminaltexteffects.utils.terminal import Terminal
 
 
@@ -17,16 +17,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "decrypt",
         help="Display a movie style decryption effect.",
         description="decrypt | Movie style decryption effect.",
-        epilog="Example: terminaltexteffects decrypt -a 0.003 --cipher-text-color 40 --plain-text-color 208",
+        epilog="Example: terminaltexteffects decrypt --ciphertext-gradient-stops 8A008A 00D1FF FFFFFF --ciphertext-gradient-steps 12 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12",
     )
     effect_parser.set_defaults(effect_class=DecryptEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.003,
-        help="Time to sleep between animation steps. Defaults to 0.003 seconds.",
-    )
     effect_parser.add_argument(
         "--ciphertext-gradient-stops",
         type=argtypes.color,
@@ -80,7 +73,7 @@ class DecryptEffect:
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
         self.encrypted_symbols: list[str] = []
-        self.scenes: dict[str, graphics.Scene] = {}
+        self.scenes: dict[str, animation.Scene] = {}
         self.character_cipher_text_map: dict[EffectCharacter, graphics.Color] = {}
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 

@@ -19,18 +19,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Characters are dispersed and form into spinning rings.",
         description="Characters are dispersed and form into spinning rings.",
-        epilog="""
-
-Example: terminaltexteffects rings --animation-rate 0.01 --ring-colors ffcc0d ff7326 ff194d bf2669 702a8c --base-color ffffff --ring-gap 6 --spin-duration 200 --disperse-duration 200 --spin-disperse-cycles 3""",
+        epilog="""Example: terminaltexteffects rings --ring-colors 8A008A 00D1FF FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 --disperse-duration 200 --spin-disperse-cycles 3""",
     )
     effect_parser.set_defaults(effect_class=RingsEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--ring-colors",
         type=argtypes.color,

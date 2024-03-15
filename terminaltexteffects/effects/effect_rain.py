@@ -23,16 +23,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="rain | Rain characters from the top of the output area.",
         epilog=f"""{argtypes.EASING_EPILOG}
         
-Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21""",
+Example: terminaltexteffects rain --rain-symbols o . , "*" "|" --rain-colors 00315C 004C8F 0075DB 3F91D9 78B9F2 9AC8F5 B8D8F8 E3EFFC --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.1-0.2 --easing IN_QUART""",
     )
     effect_parser.set_defaults(effect_class=RainEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--rain-symbols",
         type=argtypes.symbol,

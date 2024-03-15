@@ -20,18 +20,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="Text expands in a single row or column in the middle of the output area then out.",
         epilog=f"""{argtypes.EASING_EPILOG}
 
-Example: terminaltexteffects middleout -a 0.01 --expand-direction horizontal --center-movement-speed 0.35 
-         --full-movement-speed 0.35 --center-easing IN_OUT_SINE --full-easing IN_OUT_SINE 
-         --center-expand-color 00ff00 --full-expand-color 0000ff --starting-color ff0000""",
+Example: terminaltexteffects middleout --starting-color 8A008A --final-gradient-stops 00D1FF FFFFFF --final-gradient-steps 12 12 --expand-direction vertical --center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE --full-easing IN_OUT_SINE""",
     )
     effect_parser.set_defaults(effect_class=MiddleoutEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--starting-color",
         type=argtypes.color,

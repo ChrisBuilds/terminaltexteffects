@@ -19,16 +19,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="Slide characters into view from outside the terminal, grouped by row, column, or diagonal.",
         epilog=f"""{argtypes.EASING_EPILOG}
 
-Example: terminaltexteffects slide --grouping row --movement-speed 0.5 --gradient 10 11 12 13 14 --gap 5 --merge --gradient-steps 10 --easing OUT_QUAD""",
+Example: terminaltexteffects slide --movement-speed 0.5 --grouping row --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --gradient-frames 10 --gradient-direction vertical --gap 3 --reverse-direction --easing OUT_QUAD""",
     )
     effect_parser.set_defaults(effect_class=SlideEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--movement-speed",
         type=argtypes.positive_float,
