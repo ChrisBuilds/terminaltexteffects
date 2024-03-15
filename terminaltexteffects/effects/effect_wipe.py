@@ -17,16 +17,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Wipes the text across the terminal to reveal characters.",
         description="Wipes the text across the terminal to reveal characters.",
-        epilog="""Example: terminaltexteffects wipe -a 0.01 --wipe-direction column_left_to_right --gradient ffffff ff0000 00ff00 --wipe-delay 0""",
+        epilog="""Example: terminaltexteffects wipe --wipe-direction column_left_to_right --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --gradient-frames 5 --wipe-delay 0""",
     )
     effect_parser.set_defaults(effect_class=WipeEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--wipe-direction",
         default="column_left_to_right",
@@ -86,7 +79,6 @@ class WipeEffect:
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by ___."""
         final_gradient = graphics.Gradient(self.args.gradient_stops, self.args.gradient_steps)
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(

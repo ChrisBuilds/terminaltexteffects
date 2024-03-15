@@ -21,16 +21,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="Characters are formed into bubbles that float down and pop.",
         epilog=f"""{argtypes.EASING_EPILOG}
 
-Example: terminaltexteffects bubbles -a 0.01 --pop-color ff9600 --final-color 252525 --bubble-speed 0.1 --bubble-delay 50 --easing IN_OUT_SINE""",
+Example: terminaltexteffects bubbles --no-rainbow --bubble-color 00ff00 --pop-color ff0000 --final-gradient-stops 00ff00 ff0000 0000ff --final-gradient-steps 12 --bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE""",
     )
     effect_parser.set_defaults(effect_class=BubblesEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--no-rainbow",
         action="store_true",
@@ -50,7 +43,6 @@ Example: terminaltexteffects bubbles -a 0.01 --pop-color ff9600 --final-color 25
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the spray emitted when a bubble pops.",
     )
-
     effect_parser.add_argument(
         "--final-gradient-stops",
         type=argtypes.color,
@@ -211,7 +203,6 @@ class BubblesEffect:
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by ___."""
         final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(

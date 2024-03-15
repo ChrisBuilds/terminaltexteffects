@@ -23,16 +23,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="pour | Pours the characters into position from the given direction.",
         epilog=f"""{argtypes.EASING_EPILOG}
         
-Example: terminaltexteffects pour -a 0.004 --pour-direction down""",
+Example: terminaltexteffects pour --pour-direction down --movement-speed 0.2 --gap 1 --starting-color 8A008A --pour-gradient-stops 00D1FF FFFFFF --pour-gradient-steps 12 --pour-gradient-frames 25 --easing IN_QUAD""",
     )
     effect_parser.set_defaults(effect_class=PourEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.004,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--pour-direction",
         default="down",

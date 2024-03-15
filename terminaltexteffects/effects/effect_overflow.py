@@ -19,16 +19,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
         description="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
-        epilog="""Example: terminaltexteffects overflow --final-color f3b462 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3""",
+        epilog="""Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3""",
     )
     effect_parser.set_defaults(effect_class=OverflowEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--final-gradient-stops",
         type=argtypes.color,
@@ -99,7 +92,6 @@ class OverflowEffect:
         self.active_rows: list[Row] = []
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by ___."""
         final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
 
         lower_range, upper_range = self.args.overflow_cycles_range

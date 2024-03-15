@@ -17,16 +17,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         "randomsequence",
         help="Prints the input data in a random sequence.",
         description="randomsequence | Prints the input data in a random sequence.",
-        epilog="Example: terminaltexteffects randomsequence -a 0.01",
+        epilog="Example: terminaltexteffects randomsequence --starting-color 8A008A --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 12 --speed 0.0001",
     )
     effect_parser.set_defaults(effect_class=RandomSequence)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.003,
-        help="Time to sleep between animation steps. Defaults to 0.01 seconds.",
-    )
     effect_parser.add_argument(
         "--starting-color",
         type=argtypes.color,

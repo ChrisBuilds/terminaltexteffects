@@ -21,16 +21,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
         epilog=f"""{argtypes.EASING_EPILOG}
 
-Example: terminaltexteffects orbittingvolley -a 0.01 --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops ffa51f ffa51f 6177b3 6177b3 --final-gradient-steps 6 8 10 --launcher-movement-speed 0.5 --character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE""",
+Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 12 --launcher-movement-speed 0.5 --character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE""",
     )
     effect_parser.set_defaults(effect_class=OrbittingVolleyEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--top-launcher-symbol",
         type=argtypes.symbol,

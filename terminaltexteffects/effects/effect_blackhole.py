@@ -20,16 +20,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         help="Characters are consumed by a black hole and explode outwards.",
         description="Characters are consumed by a black hole and explode outwards.",
         epilog="""
-Example: terminaltexteffects blackhole -a 0.01 --star-colors ffcc0d ff7326 ff194d bf2669 702a8c 049dbf --final-color 00a7c2""",
+Example: terminaltexteffects blackhole --star-colors ffcc0d ff7326 ff194d bf2669 702a8c 049dbf --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12""",
     )
     effect_parser.set_defaults(effect_class=BlackholeEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--blackhole-color",
         type=argtypes.color,

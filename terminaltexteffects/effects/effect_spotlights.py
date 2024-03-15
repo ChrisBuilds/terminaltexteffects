@@ -21,16 +21,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
         epilog=f"""{argtypes.EASING_EPILOG}
 
-Example: terminaltexteffects spotlights -a 0.01 --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --beam-width-ratio 2 --beam-falloff 0.3 --search-duration 750 --search-speed-range 0.25-0.5""",
+Example: terminaltexteffects spotlights --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration 750 --search-speed-range 0.25-0.5 --spotlight-count 3""",
     )
     effect_parser.set_defaults(effect_class=SpotlightsEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--gradient-stops",
         type=argtypes.color,
@@ -175,7 +168,7 @@ class SpotlightsEffect:
     def prepare_data(self) -> None:
         base_gradient = graphics.Gradient(self.args.gradient_stops, self.args.gradient_steps)
         base_gradient_mapping = base_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, graphics.Gradient.Direction.CENTER
+            self.terminal.output_area.top, self.terminal.output_area.right, graphics.Gradient.Direction.VERTICAL
         )
         for character in self.terminal.get_characters():
             color_bright = base_gradient_mapping[character.input_coord]

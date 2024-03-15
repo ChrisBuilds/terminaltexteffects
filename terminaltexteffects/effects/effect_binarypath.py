@@ -19,16 +19,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Binary representations of each character move through the terminal towards the home coordinate of the character.",
         description="Binary representations of each character move through the terminal towards the home coordinate of the character.",
-        epilog="""Example: effect_example""",
+        epilog="""Example: terminaltexteffects binarypath --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --binary-colors 044E29 157e38 45bf55 95ed87 --movement-speed 1.0 --active-binary-groups 0.05""",
     )
     effect_parser.set_defaults(effect_class=BinaryPathEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--final-gradient-stops",
         type=argtypes.color,

@@ -18,16 +18,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         formatter_class=argtypes.CustomFormatter,
         help="Create a grid which fills with characters dissolving into the final text.",
         description="Create a grid which fills with characters dissolving into the final text.",
-        epilog="""Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --text-gradient-stops 8A008A 00D1FF FFFFFF --grid-row-symbol - --grid-column-symbol | --max-active-blocks 0.1 --text-generation-symbols ░ ▒ ▓""",
+        epilog="""Example: terminaltexteffects synthgrid --grid-gradient-stops 8A008A FFFFFF --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol │ --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1""",
     )
     effect_parser.set_defaults(effect_class=SynthGridEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--grid-gradient-stops",
         type=argtypes.color,
@@ -186,7 +179,6 @@ class SynthGridEffect:
         return 4
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by ___."""
         self.grid_lines.append(
             GridLine(
                 self.terminal,

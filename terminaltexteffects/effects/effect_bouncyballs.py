@@ -21,16 +21,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="bouncyball | Characters are bouncy balls falling from the top of the output area.",
         epilog=f"""{argtypes.EASING_EPILOG}
         
-Example: terminaltexteffects bouncyball -a 0.01 --ball-colors 00ff00 ff0000 0000ff --final-color ffffff --ball-delay 15 --movement-speed 0.25 --easing OUT_BOUNCE""",
+Example: terminaltexteffects bouncyballs --ball-colors 00ff00 ff0000 0000ff --ball-symbols "o" "*" "O" "0" "." --final-gradient-stops 00ff00 ff0000 0000ff --final-gradient-steps 12 --ball-delay 7 --movement-speed 0.25 --easing OUT_BOUNCE""",
     )
     effect_parser.set_defaults(effect_class=BouncyBallsEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Time between animation steps. ",
-    )
     effect_parser.add_argument(
         "--ball-colors",
         type=argtypes.color,
