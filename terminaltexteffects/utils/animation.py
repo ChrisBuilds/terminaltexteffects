@@ -3,7 +3,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, hexterm
+from terminaltexteffects.utils import ansitools, colorterm, graphics, hexterm
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
@@ -130,7 +130,7 @@ class Scene:
         self.scene_id = scene_id
         self.is_looping = is_looping
         self.sync: SyncMetric | None = sync
-        self.ease: easing.Ease | None = ease
+        self.ease: typing.Callable | None = ease
         self.no_color = no_color
         self.use_xterm_colors = use_xterm_colors
         self.frames: list[Frame] = []
