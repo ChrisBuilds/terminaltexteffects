@@ -18,16 +18,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="scattered | Move the characters into place from random starting locations.",
         epilog=f"""{argtypes.EASING_EPILOG}
         
-Example: terminaltexteffects scattered --movement-speed 0.5 --easing IN_OUT_BACK""",
+Example: terminaltexteffects scattered --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --gradient-frames 12 --movement-speed 0.5 --easing IN_OUT_BACK""",
     )
     effect_parser.set_defaults(effect_class=ScatteredEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Time between animation steps.",
-    )
     effect_parser.add_argument(
         "--gradient-stops",
         type=argtypes.color,

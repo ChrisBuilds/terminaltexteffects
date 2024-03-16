@@ -21,16 +21,9 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
         description="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
         epilog=f"""{argtypes.EASING_EPILOG}
 
-Example: terminaltexteffects print -a 0.01 --print-head-color f3b462 --text-color f2ebc0 --print-head-return-speed 1.5 --print-speed 1 --print-head-easing IN_OUT_QUAD""",
+Example: terminaltexteffects print --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 12 --print-head-return-speed 1.5 --print-speed 1 --print-head-easing IN_OUT_QUAD""",
     )
     effect_parser.set_defaults(effect_class=PrintEffect)
-    effect_parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
     effect_parser.add_argument(
         "--final-gradient-stops",
         type=argtypes.color,
@@ -116,7 +109,6 @@ class PrintEffect:
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
-        """Prepares the data for the effect by ___."""
         final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters(
