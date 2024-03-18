@@ -1,7 +1,7 @@
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects.utils import geometry
+from terminaltexteffects.utils import easing, geometry
 from terminaltexteffects.utils.geometry import Coord
 
 if typing.TYPE_CHECKING:
@@ -89,7 +89,7 @@ class Path:
     Attributes:
         path_id (str): The unique identifier for the path.
         speed (float): speed > 0
-        ease (Callable | None): easing function for character movement. Defaults to None.
+        ease (easing.EasingFunction | None): easing function for character movement. Defaults to None.
         layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
         hold_time (int): number of animation steps to hold the character at the end of the path. Defaults to 0.
         loop (bool): Whether the path should loop back to the beginning. Default is False.
@@ -97,7 +97,7 @@ class Path:
 
     path_id: str
     speed: float = 1.0
-    ease: typing.Callable | None = None
+    ease: easing.EasingFunction | None = None
     layer: int | None = None
     hold_time: int = 0
     loop: bool = False
@@ -215,7 +215,7 @@ class Path:
             active_segment = self.segments[-1]
             distance_to_travel += active_segment.distance
         if active_segment.distance == 0:
-            segment_distance_to_travel_factor = 0
+            segment_distance_to_travel_factor = 0.0
         else:
             segment_distance_to_travel_factor = distance_to_travel / active_segment.distance
 
@@ -267,7 +267,7 @@ class Motion:
         self,
         *,
         speed: float = 1,
-        ease: typing.Callable | None = None,
+        ease: easing.EasingFunction | None = None,
         layer: int | None = None,
         hold_time: int = 0,
         loop: bool = False,
@@ -278,7 +278,7 @@ class Motion:
         Args:
             path_id (str): Unique identifier for the path. Used to query for the path.
             speed (float): speed
-            ease (Callable | None): easing function for character movement. Defaults to None.
+            ease (easing.EasingFunction | None): easing function for character movement. Defaults to None.
             layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
             hold_time (int): number of animation steps to hold the character at the end of the path. Defaults to 0.
             loop (bool): whether the path should loop. Defaults to False.
