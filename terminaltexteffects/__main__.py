@@ -5,8 +5,9 @@ import sys
 
 import terminaltexteffects.effects
 import terminaltexteffects.utils.ansitools as ansitools
-import terminaltexteffects.utils.argtypes as argtypes
 import terminaltexteffects.utils.terminal as term
+from terminaltexteffects.utils.argsdataclass import ArgsDataClass
+from terminaltexteffects.utils.terminal import TerminalArgs
 
 
 def main():
@@ -15,37 +16,9 @@ def main():
         description="Apply visual effects to terminal text piped in from stdin.",
         epilog="Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciphertext-color 00ff00 --plaintext-color ff0000 --final-color 0000ff",
     )
-    parser.add_argument(
-        "--xterm-colors",
-        action="store_true",
-        help="Convert any colors specified in RBG hex to the closest XTerm-256 color.",
-        default=False,
-    )
-    parser.add_argument(
-        "--no-color",
-        action="store_true",
-        help="Disable all colors in the effect.",
-        default=False,
-    )
-    parser.add_argument(
-        "--tab-width",
-        type=argtypes.positive_int,
-        help="Number of spaces to use for a tab character.",
-        default=4,
-    )
-    parser.add_argument(
-        "--no-wrap",
-        action="store_true",
-        help="Disable wrapping of text.",
-        default=False,
-    )
-    parser.add_argument(
-        "-a",
-        "--animation-rate",
-        type=argtypes.nonnegative_float,
-        default=0.01,
-        help="Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have no impact beyond a certain lower threshold due to the processing speed of your device.",
-    )
+
+    TerminalArgs.add_args_to_parser(parser)
+
     subparsers = parser.add_subparsers(
         title="Effect",
         description="Name of the effect to apply. Use <effect> -h for effect specific help.",
@@ -53,15 +26,14 @@ def main():
         required=True,
     )
 
-    discovered_effects = [
-        importlib.import_module(module.name)
-        for module in pkgutil.iter_modules(
-            terminaltexteffects.effects.__path__, terminaltexteffects.effects.__name__ + "."
-        )
-    ]
+    for module_info in pkgutil.iter_modules(
+        terminaltexteffects.effects.__path__, terminaltexteffects.effects.__name__ + "."
+    ):
+        module = importlib.import_module(module_info.name)
 
-    for effect in discovered_effects:
-        effect.add_arguments(subparsers)
+        if hasattr(module, "get_effect_and_args"):
+            effect_class, args_class = tuple[any, ArgsDataClass](module.get_effect_and_args())
+            args_class.add_to_args_subparsers(subparsers)
 
     args = parser.parse_args()
     input_data = term.Terminal.get_piped_input()
@@ -69,14 +41,14 @@ def main():
         print("NO INPUT.")
     else:
         try:
-            terminal = term.Terminal(input_data, args)
-            effect = args.effect_class(terminal, args)
-            try:
-                effect.run()
-            except KeyboardInterrupt:
-                sys.exit(0)
-        except:
-            raise
+            terminal_args = TerminalArgs.from_parsed_args_mapping(args, TerminalArgs)
+            terminal = term.Terminal(input_data, terminal_args)
+            effect_args = ArgsDataClass.from_parsed_args_mapping(args)
+            effect_class = effect_args.get_effect_class()
+            effect = effect_class(terminal, effect_args)
+            effect.run()
+        except Exception as e:
+            raise Exception(f"Error running effect: {e}")
         finally:
             sys.stdout.write(ansitools.SHOW_CURSOR())
 
