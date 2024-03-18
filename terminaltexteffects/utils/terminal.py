@@ -361,7 +361,7 @@ class Terminal:
         fill_chars: bool = False,
         added_chars: bool = False,
     ) -> list[list[EffectCharacter]]:
-        """Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping. If input_only is True, only input characters are returned.
+        """Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping.
 
         Args:
             grouping (CharacterGroup, optional): order to group the characters. Defaults to ROW_TOP_TO_BOTTOM.
