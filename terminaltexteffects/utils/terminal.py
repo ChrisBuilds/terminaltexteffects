@@ -1,6 +1,5 @@
 """A module for managing the terminal state and output."""
 
-import argparse
 import random
 import shutil
 import sys
@@ -8,53 +7,46 @@ import time
 from dataclasses import dataclass
 from enum import Enum, auto
 
+import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import ansitools
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass
 from terminaltexteffects.utils.geometry import Coord
 
-
-from terminaltexteffects.utils.argsdataclass import ArgsDataClass, ArgField
-import terminaltexteffects.utils.argtypes as argtypes
 
 @dataclass
 class TerminalArgs(ArgsDataClass):
     tab_width: int = ArgField(
         cmd_name=["--tab-width"],
-        type_parser=argtypes.positive_int,
+        type_parser=argtypes.PositiveInt.type_parser,
+        metavar=argtypes.PositiveInt.METAVAR,
         default=4,
         help="Number of spaces to use for a tab character.",
-    )# type: ignore[assignment]
+    )  # type: ignore[assignment]
 
     xterm_colors: bool = ArgField(
         cmd_name=["--xterm-colors"],
         default=False,
         action="store_true",
         help="Convert any colors specified in RBG hex to the closest XTerm-256 color.",
-    )# type: ignore[assignment]
+    )  # type: ignore[assignment]
 
     no_color: bool = ArgField(
-        cmd_name=["--no-color"],
-        default=False, action="store_true",
-        help="Disable all colors in the effect."
-    )# type: ignore[assignment]
+        cmd_name=["--no-color"], default=False, action="store_true", help="Disable all colors in the effect."
+    )  # type: ignore[assignment]
 
-    no_wrap: int = ArgField(
-        cmd_name="--no-wrap",
-        default=False,
-        action="store_true",
-        help="Disable wrapping of text."
-    )# type: ignore[assignment]
+    no_wrap: int = ArgField(cmd_name="--no-wrap", default=False, action="store_true", help="Disable wrapping of text.")  # type: ignore[assignment]
 
     animation_rate: float = ArgField(
         cmd_name=["-a", "--animation-rate"],
-        type_parser=argtypes.nonnegative_float,
+        type_parser=argtypes.NonNegativeFloat.type_parser,
         default=0.01,
         help="""Minimum time, in seconds, between animation steps. 
         This value does not normally need to be modified. 
         Use this to increase the playback speed of all aspects of the effect. 
         This will have no impact beyond a certain lower threshold due to the 
         processing speed of your device.""",
-    )# type: ignore[assignment]
+    )  # type: ignore[assignment]
 
 
 @dataclass
@@ -150,7 +142,7 @@ class Terminal:
         OUTSIDE_ROW_TO_MIDDLE = auto()
         MIDDLE_ROW_TO_OUTSIDE = auto()
 
-    def __init__(self, input_data: str, args: argparse.Namespace):
+    def __init__(self, input_data: str, args: TerminalArgs):
         self.input_data = input_data.replace("\t", " " * args.tab_width)
         self.args = args
         self.width, self.height = self._get_terminal_dimensions()
