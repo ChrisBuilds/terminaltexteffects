@@ -2,7 +2,6 @@
 
 import itertools
 import typing
-from dataclasses import dataclass
 from enum import Enum, auto
 
 from terminaltexteffects.utils import colorterm, geometry, hexterm
@@ -13,7 +12,6 @@ if typing.TYPE_CHECKING:
 Color: typing.TypeAlias = int | str
 
 
-@dataclass
 class Gradient:
     """A Gradient is a list of RGB hex color strings transitioning from one color to another. The gradient color
     list is calculated using linear interpolation based on the provided start and end colors and the number of steps. Gradients
@@ -23,7 +21,7 @@ class Gradient:
     If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps for the pair
     based on the order of stops and steps.
 
-    Ex: stops = ["ffffff", "aaaaaa", "000000"], steps = (6, 3)
+    Ex: stops = ("ffffff", "aaaaaa", "000000"), steps = (6, 3)
 
     "fffffff" -> (6 steps) -> "aaaaaa" -> (3 steps) -> "000000"
 
@@ -31,16 +29,13 @@ class Gradient:
     each pair of stops plus 1.
 
     Args:
-        stops list[str]: List of RGB hex color string or XTerm-256 color codes. Each stop will have steps number of frames between it and the next stop.
+        *stops (Color): RGB hex color strings or XTerm-256 color codes. Each stop will have steps number of frames between it and the next stop.
         steps tuple[int, ...] | int: Number of steps from the start to the end stop. If multiple steps are given, steps and stops will be paired.
 
     Attributes:
         spectrum (list[str]): List (length=sum(steps) + 1) of RGB hex color strings
 
     """
-
-    stops: list[Color]
-    steps: tuple[int, ...] | int
 
     class Direction(Enum):
         """Enum for specifying the direction of the gradient."""
@@ -49,6 +44,12 @@ class Gradient:
         HORIZONTAL = auto()
         CENTER = auto()
         DIAGONAL = auto()
+
+    def __init__(self, *stops: Color, steps: int | tuple[int, ...] = 1) -> None:
+        self.stops = stops
+        self.steps = steps
+        self.spectrum: list[str] = self._generate(self.steps)
+        self.index: int = 0
 
     def get_color_at_fraction(self, fraction: float) -> Color:
         """Returns the color at a fraction of the gradient.
@@ -64,18 +65,14 @@ class Gradient:
         index = round(fraction * (len(self.spectrum) - 1))
         return self.spectrum[index]
 
-    def __post_init__(self) -> None:
-        self.spectrum: list[str] = self._generate(self.steps)
-        self.index: int = 0
-
     def _generate(self, steps) -> list[str]:
         """Calculate a gradient of colors between two colors using linear interpolation. If
-        there is only one color in the stops list, the gradient will be a list of the same color.
+        there is only one color in the stops tuple, the gradient will be a list of the same color.
 
         If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps for the pair
         based on the order of stops and steps.
 
-        Ex: stops = ["ffffff", "aaaaaa", "000000"], steps = (6, 3)
+        Ex: stops = ("ffffff", "aaaaaa", "000000"), steps = (6, 3)
         Distance from "ffffff" to "aaaaaa" = 6 steps (7 colors including start and end)
         Distance from "aaaaaa" to "000000" = 3 steps (4 colors including start and end)
         Total colors in the gradient spectrum = 10 ("aaaaaa" is not repeated when transitioning from "ffffff" to "aaaaaa" and from "aaaaaa" to "000000")
