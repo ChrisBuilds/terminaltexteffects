@@ -1,85 +1,86 @@
 import argparse
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
-
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "effect_name",
-        formatter_class=arg_validators.CustomFormatter,
-        help="effect_description",
-        description="effect_description",
-        epilog=f"""{arg_validators.EASING_EPILOG}
-
-Example: effect_example""",
-    )
-    effect_parser.set_defaults(effect_class=NamedEffect)
-    effect_parser.add_argument(
-        "--color-single",
-        type=arg_validators.color,
+@argclass(
+    name="namedeffect",
+    formatter_class=arg_validators.CustomFormatter,
+    help="effect_description",
+    description="effect_description",
+    epilog=f"""{arg_validators.EASING_EPILOG}
+    """,
+)
+@dataclass
+class NamedEffectArgs(ArgsDataClass):
+    color_single: graphics.Color = ArgField(
+        cmd_name=["--color-single"],
+        type_parser=arg_validators.Color.type_parser,
         default=0,
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        metavar=arg_validators.Color.METAVAR,
         help="Color for the ___.",
-    )
-    effect_parser.add_argument(
-        "--color-list",
-        type=arg_validators.color,
+    )  # type: ignore[assignment]
+    color_list: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--color-list"],
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=0,
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the ___.",
-    )
-    effect_parser.add_argument(
-        "--final-color",
-        type=arg_validators.color,
+    )  # type: ignore[assignment]
+    final_color: graphics.Color = ArgField(
+        cmd_name=["--final-color"],
+        type_parser=arg_validators.Color.type_parser,
         default="ffffff",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        metavar=arg_validators.Color.METAVAR,
         help="Color for the final character.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=arg_validators.color,
+    )  # type: ignore[assignment]
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=arg_validators.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-frames",
-        type=arg_validators.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_frames: int = ArgField(
+        cmd_name="--final-gradient-frames",
+        type_parser=arg_validators.PositiveInt.type_parser,
         default=5,
-        metavar="(int > 0)",
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
-    )
-    effect_parser.add_argument(
-        "--movement-speed",
-        type=arg_validators.positive_float,
+    )  # type: ignore[assignment]
+    movement_speed: float = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=arg_validators.PositiveFloat.type_parser,
         default=1,
-        metavar="(float > 0)",
+        metavar=arg_validators.PositiveFloat.METAVAR,
         help="Speed of the ___.",
-    )
-    effect_parser.add_argument(
-        "--easing",
-        default="IN_OUT_SINE",
-        type=arg_validators.ease,
+    )  # type: ignore[assignment]
+    easing: typing.Callable = ArgField(
+        cmd_name=["--easing"],
+        default=easing.in_out_sine,
+        type_parser=arg_validators.Ease.type_parser,
         help="Easing function to use for character movement.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return NamedEffect
 
 
 class NamedEffect:
