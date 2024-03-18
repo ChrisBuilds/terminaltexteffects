@@ -163,8 +163,8 @@ class ArgsDataClass:
             it is wrapped in a list before being passed to `add_argument`.
             If a field has no metadata, it is skipped and no corresponding argument is added to the parser.
         """
-        args = cls.get_all_fields()
-        for arg in args.values():
+        arg_fields = cls.get_all_fields()
+        for arg in arg_fields.values():
             if not arg.metadata:
                 continue
             additional_metadata = ArgField.FieldAdditionalMetaData(**arg.metadata)
