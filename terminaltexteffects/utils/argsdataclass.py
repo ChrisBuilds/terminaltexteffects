@@ -5,12 +5,46 @@ from dataclasses import MISSING, Field, dataclass, fields
 
 
 class ArgField(Field):
+    """
+    A subclass of the dataclasses.Field class that represents a command-line argument.
+
+    This class extends the built-in Field class to include additional metadata specific to command-line arguments.
+    This metadata includes the command-line argument name, help text, type parser, metavar, nargs, action, required
+    status, and choices.
+
+    The class also overrides the __init__ method to handle the additional metadata and to set default values based on
+    the 'action' attribute. If 'action' is "store_true", the default value is set to False. If 'action' is "store_false",
+    the default value is set to True.
+
+    Args:
+        cmd_name (str | list[str]): The name or names of the command-line argument.
+        help (str): The help text to display for the argument.
+        type_parser (typing.Any, optional): The validator to use to validate the argument. Defaults to None.
+        metavar (str | None, optional): A name for the argument in usage messages. Defaults to None.
+        nargs (str | None, optional): The number of command-line arguments that should be consumed. Defaults to None.
+        action (str | None, optional): The basic type of action to be taken when this argument is encountered at the
+                                       command line. Defaults to None.
+        required (bool, optional): Whether or not the command-line option is required. Defaults to False.
+        choices (list[str | int] | None, optional): A container of the allowable values for the argument. Defaults to None.
+        default (any, optional): The value produced if the argument is absent from the command line. Defaults to MISSING.
+        default_factory (any, optional): A function that is called to provide the default value. Defaults to MISSING.
+        init (bool, optional): If true (the default), this field is included as a parameter to the generated __init__
+                               method. Defaults to True.
+        repr (bool, optional): If true (the default), this field is included in the string returned by the generated
+                               __repr__ method. Defaults to True.
+        hash (bool | None, optional): This can be a bool or None. If true, this field is included in the generated
+                                      __hash__ method. Defaults to None.
+        compare (bool, optional): If true (the default), this field is included in the generated equality and comparison
+                                  methods (__eq__, __gt__, etc.). Defaults to True.
+        kw_only (bool, optional): If true, this field must be passed as a keyword argument. Defaults to MISSING.
+    """
+
     def __init__(
         self,
         # custom metadata
         cmd_name: str | list[str],
         help: str,
-        type_parser: typing.Any = None,
+        type_parser: typing.Callable | None = None,
         metavar: str | None = None,
         nargs: str | None = None,
         action: str | None = None,
