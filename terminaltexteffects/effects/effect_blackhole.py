@@ -1,65 +1,70 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import animation, easing, geometry, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return BlackholeEffect, BlackholeEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "blackhole",
-        formatter_class=argtypes.CustomFormatter,
-        help="Characters are consumed by a black hole and explode outwards.",
-        description="Characters are consumed by a black hole and explode outwards.",
-        epilog="""
+
+@argclass(
+    name="blackhole",
+    formatter_class=argtypes.CustomFormatter,
+    help="Characters are consumed by a black hole and explode outwards.",
+    description="Characters are consumed by a black hole and explode outwards.",
+    epilog="""
 Example: terminaltexteffects blackhole --star-colors ffcc0d ff7326 ff194d bf2669 702a8c 049dbf --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12""",
-    )
-    effect_parser.set_defaults(effect_class=BlackholeEffect)
-    effect_parser.add_argument(
-        "--blackhole-color",
-        type=argtypes.color,
+)
+@dataclass
+class BlackholeEffectArgs(ArgsDataClass):
+    blackhole_color: graphics.Color = ArgField(
+        cmd_name=["--blackhole-color"],
+        type_parser=argtypes.Color.type_parser,
         default="ffffff",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        metavar=argtypes.Color.METAVAR,
         help="Color for the stars that comprise the blackhole border.",
-    )
-    effect_parser.add_argument(
-        "--star-colors",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    star_colors: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--star-colors"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c", "049dbf"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c", "049dbf"),
+        metavar=argtypes.Color.METAVAR,
         help="List of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name=["--final-gradient-steps"],
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return BlackholeEffect
 
 
 class BlackholeEffect:
     """Effect that creates a blackhole in a starfield, consumes the stars, and explodes the input characters out to position."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: BlackholeEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -96,10 +101,10 @@ class BlackholeEffect:
             "⬦",
             "⬥",
         ]
-        starfield_colors = graphics.Gradient(["4a4a4d", "ffffff"], 6).spectrum
+        starfield_colors = graphics.Gradient("4a4a4d", "ffffff", steps=6).spectrum
         gradient_map = {}
         for color in starfield_colors:
-            gradient_map[color] = graphics.Gradient([color, "000000"], 10)
+            gradient_map[color] = graphics.Gradient(color, "000000", steps=10)
         available_chars = list(self.terminal._input_characters)
         while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
             self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
@@ -236,7 +241,9 @@ class BlackholeEffect:
             explode_star_color = random.choice(star_colors)
             explode_scn.add_frame(character.input_symbol, 1, color=explode_star_color)
             cooling_scn = character.animation.new_scene()
-            cooling_gradient = graphics.Gradient([explode_star_color, self.character_final_color_map[character]], 10)
+            cooling_gradient = graphics.Gradient(
+                explode_star_color, self.character_final_color_map[character], steps=10
+            )
             cooling_scn.apply_gradient_to_symbols(cooling_gradient, character.input_symbol, 20)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
@@ -256,7 +263,7 @@ class BlackholeEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by creating the starfield, blackhole, and consumption scenes/waypoints."""
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
                 character.input_coord.row / self.terminal.output_area.top

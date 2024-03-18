@@ -1,69 +1,74 @@
-import argparse
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return ExpandEffect, ExpandEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "expand",
-        formatter_class=argtypes.CustomFormatter,
-        help="Expands the text from a single point.",
-        description="expand | Expands the text from a single point.",
-        epilog=f"""{argtypes.EASING_EPILOG}
-        
+
+@argclass(
+    name="expand",
+    formatter_class=argtypes.CustomFormatter,
+    help="Expands the text from a single point.",
+    description="expand | Expands the text from a single point.",
+    epilog=f"""{argtypes.EASING_EPILOG}
+    
 Example: terminaltexteffects expand --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 5 --movement-speed 0.35 --easing IN_OUT_QUART""",
-    )
-    effect_parser.set_defaults(effect_class=ExpandEffect)
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+)
+@dataclass
+class ExpandEffectArgs(ArgsDataClass):
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-frames",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_frames: int = ArgField(
+        cmd_name="--final-gradient-frames",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=5,
-        metavar="(int > 0)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
-    )
-    effect_parser.add_argument(
-        "--movement-speed",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    movement_speed: float = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.35,
-        metavar="(float > 0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
-    )
-    effect_parser.add_argument(
-        "--easing",
-        default="IN_OUT_QUART",
-        type=argtypes.ease,
+    )  # type: ignore[assignment]
+    expand_easing: typing.Callable = ArgField(
+        cmd_name="--expand-easing",
+        default=easing.in_out_quart,
+        type_parser=argtypes.Ease.type_parser,
         help="Easing function to use for character movement.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return ExpandEffect
 
 
 class ExpandEffect:
     """Effect that draws the characters expanding from a single point."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: ExpandEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -72,7 +77,7 @@ class ExpandEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
                 character.input_coord.row / self.terminal.output_area.top
@@ -82,7 +87,7 @@ class ExpandEffect:
             character.motion.set_coordinate(self.terminal.output_area.center)
             input_coord_path = character.motion.new_path(
                 speed=self.args.movement_speed,
-                ease=self.args.easing,
+                ease=self.args.expand_easing,
             )
             input_coord_path.new_waypoint(character.input_coord)
             self.terminal.set_character_visibility(character, True)
@@ -95,7 +100,9 @@ class ExpandEffect:
                 EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
             )
             gradient_scn = character.animation.new_scene()
-            gradient = graphics.Gradient([final_gradient.spectrum[0], self.character_final_color_map[character]], 10)
+            gradient = graphics.Gradient(
+                final_gradient.spectrum[0], self.character_final_color_map[character], steps=10
+            )
             gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.args.final_gradient_frames)
             character.animation.activate_scene(gradient_scn)
 

@@ -1,68 +1,70 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return PrintEffect, PrintEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "print",
-        formatter_class=argtypes.CustomFormatter,
-        help="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
-        description="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
-        epilog=f"""{argtypes.EASING_EPILOG}
 
+@argclass(
+    name="print",
+    formatter_class=argtypes.CustomFormatter,
+    help="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
+    description="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
+    epilog=f"""{argtypes.EASING_EPILOG}
+    
 Example: terminaltexteffects print --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 12 --print-head-return-speed 1.5 --print-speed 1 --print-head-easing IN_OUT_QUAD""",
-    )
-    effect_parser.set_defaults(effect_class=PrintEffect)
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+)
+@dataclass
+class PrintEffectArgs(ArgsDataClass):
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name=["--final-gradient-steps"],
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--print-head-return-speed",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    print_head_return_speed: float = ArgField(
+        cmd_name=["--print-head-return-speed"],
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=1.5,
-        metavar="(float > 0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Speed of the print head when performing a carriage return.",
-    )
-    effect_parser.add_argument(
-        "--print-speed",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    print_speed: int = ArgField(
+        cmd_name=["--print-speed"],
+        type_parser=argtypes.PositiveInt.type_parser,
         default=1,
-        metavar="(int >= 1)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Speed of the print head when printing characters.",
-    )
-    effect_parser.add_argument(
-        "--print-head-easing",
-        default="IN_OUT_QUAD",
-        type=argtypes.ease,
+    )  # type: ignore[assignment]
+    print_head_easing: typing.Callable = ArgField(
+        cmd_name=["--print-head-easing"],
+        default=easing.in_out_quad,
+        type_parser=argtypes.Ease.type_parser,
         help="Easing function to use for print head movement.",
-    )
+    )  # type: ignore[assignment]
 
-
-# TODO: apply gradients
+    @classmethod
+    def get_effect_class(cls):
+        return PrintEffect
 
 
 class Row:
@@ -76,7 +78,7 @@ class Row:
                     continue
                 blank_row_accounted = True
             character.motion.set_coordinate(Coord(character.input_coord.column, 1))
-            color_gradient = graphics.Gradient([typing_head_color, character_color], 5)
+            color_gradient = graphics.Gradient(typing_head_color, character_color, steps=5)
             typed_animation = character.animation.new_scene()
             typed_animation.apply_gradient_to_symbols(color_gradient, ("█", "▓", "▒", "░", character.input_symbol), 5)
             character.animation.activate_scene(typed_animation)
@@ -98,7 +100,7 @@ class Row:
 class PrintEffect:
     """Effect that moves a print head across the screen, printing characters, before performing a line feed and carriage return."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: PrintEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -109,7 +111,7 @@ class PrintEffect:
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters(
             fill_chars=True, sort=Terminal.CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT
@@ -137,7 +139,7 @@ class PrintEffect:
         typing = True
         delay = 0
         last_column = 0
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         while self.active_chars or typing:
             if self.typing_head.motion.active_path:

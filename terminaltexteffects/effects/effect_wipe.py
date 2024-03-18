@@ -1,27 +1,28 @@
-import argparse
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return WipeEffect, WipeEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "wipe",
-        formatter_class=argtypes.CustomFormatter,
-        help="Wipes the text across the terminal to reveal characters.",
-        description="Wipes the text across the terminal to reveal characters.",
-        epilog="""Example: terminaltexteffects wipe --wipe-direction column_left_to_right --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --gradient-frames 5 --wipe-delay 0""",
-    )
-    effect_parser.set_defaults(effect_class=WipeEffect)
-    effect_parser.add_argument(
-        "--wipe-direction",
+
+@argclass(
+    name="wipe",
+    formatter_class=argtypes.CustomFormatter,
+    help="Wipes the text across the terminal to reveal characters.",
+    description="Wipes the text across the terminal to reveal characters.",
+    epilog="""Example: terminaltexteffects wipe --wipe-direction column_left_to_right --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --gradient-frames 5 --wipe-delay 0""",
+)
+@dataclass
+class WipeEffectArgs(ArgsDataClass):
+    wipe_direction: str = ArgField(
+        cmd_name="--wipe-direction",
         default="column_left_to_right",
         choices=[
             "column_left_to_right",
@@ -34,43 +35,47 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
             "diagonal_bottom_right_to_top_left",
         ],
         help="Direction the text will wipe.",
-    )
-    effect_parser.add_argument(
-        "--gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--gradient-stops",
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
-    )
-    effect_parser.add_argument(
-        "--gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--gradient-frames",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    gradient_frames: int = ArgField(
+        cmd_name="--gradient-frames",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=5,
-        metavar="(int > 0)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
-    )
-    effect_parser.add_argument(
-        "--wipe-delay",
-        type=argtypes.nonnegative_int,
+    )  # type: ignore[assignment]
+    wipe_delay: int = ArgField(
+        cmd_name="--wipe-delay",
+        type_parser=argtypes.NonNegativeInt.type_parser,
         default=0,
-        metavar="(int >= 0)",
+        metavar=argtypes.NonNegativeInt.METAVAR,
         help="Number of animation cycles to wait before adding the next character group. Increase, to slow down the effect.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return WipeEffect
 
 
 class WipeEffect:
     """Effect that performs a wipe across the terminal to reveal characters."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: WipeEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_groups: list[list[EffectCharacter]] = []
@@ -79,7 +84,7 @@ class WipeEffect:
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
-        final_gradient = graphics.Gradient(self.args.gradient_stops, self.args.gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.gradient_stops, steps=self.args.gradient_steps)
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
                 character.input_coord.row / self.terminal.output_area.top
@@ -99,8 +104,9 @@ class WipeEffect:
             for character in group:
                 wipe_scn = character.animation.new_scene()
                 wipe_gradient = graphics.Gradient(
-                    [final_gradient.spectrum[0], self.character_final_color_map[character]],
-                    self.args.gradient_steps,
+                    final_gradient.spectrum[0],
+                    self.character_final_color_map[character],
+                    steps=self.args.gradient_steps,
                 )
                 wipe_scn.apply_gradient_to_symbols(wipe_gradient, character.input_symbol, self.args.gradient_frames)
                 character.animation.activate_scene(wipe_scn)

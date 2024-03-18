@@ -1,65 +1,70 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return BinaryPathEffect, BinaryPathEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "binarypath",
-        formatter_class=argtypes.CustomFormatter,
-        help="Binary representations of each character move through the terminal towards the home coordinate of the character.",
-        description="Binary representations of each character move through the terminal towards the home coordinate of the character.",
-        epilog="""Example: terminaltexteffects binarypath --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --binary-colors 044E29 157e38 45bf55 95ed87 --movement-speed 1.0 --active-binary-groups 0.05""",
-    )
-    effect_parser.set_defaults(effect_class=BinaryPathEffect)
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+
+@argclass(
+    name="binarypath",
+    formatter_class=argtypes.CustomFormatter,
+    help="Binary representations of each character move through the terminal towards the home coordinate of the character.",
+    description="Binary representations of each character move through the terminal towards the home coordinate of the character.",
+    epilog="""Example: terminaltexteffects binarypath --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --binary-colors 044E29 157e38 45bf55 95ed87 --movement-speed 1.0 --active-binary-groups 0.05""",
+)
+@dataclass
+class BinaryPathEffectArgs(ArgsDataClass):
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name=["--final-gradient-steps"],
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--binary-colors",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    binary_colors: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--binary-colors"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["044E29", "157e38", "45bf55", "95ed87"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("044E29", "157e38", "45bf55", "95ed87"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the binary characters. Character color is randomly assigned from this list.",
-    )
-    effect_parser.add_argument(
-        "--movement-speed",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    movement_speed: float = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=1.0,
-        metavar="(float > 0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Speed of the binary groups as they travel around the terminal.",
-    )
-    effect_parser.add_argument(
-        "--active-binary-groups",
-        type=argtypes.float_zero_to_one,
+    )  # type: ignore[assignment]
+    active_binary_groups: float = ArgField(
+        cmd_name="--active-binary-groups",
+        type_parser=argtypes.Ratio.type_parser,
         default=0.05,
-        metavar="(float 0 < n <= 1)",
+        metavar=argtypes.Ratio.METAVAR,
         help="Maximum number of binary groups that are active at any given time. Lower this to improve performance.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return BinaryPathEffect
 
 
 class BinaryRepresentation:
@@ -96,7 +101,7 @@ class BinaryPathEffect:
     """Effect that decodes characters into their binary form. Characters travel from outside the output area towards their input coordinate,
     moving at right angles."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: BinaryPathEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -105,7 +110,7 @@ class BinaryPathEffect:
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
@@ -178,11 +183,11 @@ class BinaryPathEffect:
         for character in self.terminal.get_characters():
             collapse_scn = character.animation.new_scene(ease=easing.in_quad, id="collapse_scn")
             dim_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.5)
-            dim_gradient = graphics.Gradient(["ffffff", dim_color], 10)
+            dim_gradient = graphics.Gradient("ffffff", dim_color, steps=10)
             collapse_scn.apply_gradient_to_symbols(dim_gradient, character.input_symbol, 7)
 
             brighten_scn = character.animation.new_scene(id="brighten_scn")
-            brighten_gradient = graphics.Gradient([dim_color, self.character_final_color_map[character]], 10)
+            brighten_gradient = graphics.Gradient(dim_color, self.character_final_color_map[character], steps=10)
             brighten_scn.apply_gradient_to_symbols(brighten_gradient, character.input_symbol, 2)
 
     def run(self) -> None:

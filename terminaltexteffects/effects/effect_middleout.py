@@ -1,89 +1,94 @@
-import argparse
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return MiddleoutEffect, MiddleoutEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "middleout",
-        formatter_class=argtypes.CustomFormatter,
-        help="Text expands in a single row or column in the middle of the output area then out.",
-        description="Text expands in a single row or column in the middle of the output area then out.",
-        epilog=f"""{argtypes.EASING_EPILOG}
 
+@argclass(
+    name="middleout",
+    formatter_class=argtypes.CustomFormatter,
+    help="Text expands in a single row or column in the middle of the output area then out.",
+    description="Text expands in a single row or column in the middle of the output area then out.",
+    epilog=f"""{argtypes.EASING_EPILOG}
+    
 Example: terminaltexteffects middleout --starting-color 8A008A --final-gradient-stops 00D1FF FFFFFF --final-gradient-steps 12 12 --expand-direction vertical --center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE --full-easing IN_OUT_SINE""",
-    )
-    effect_parser.set_defaults(effect_class=MiddleoutEffect)
-    effect_parser.add_argument(
-        "--starting-color",
-        type=argtypes.color,
+)
+@dataclass
+class MiddleoutEffectArgs(ArgsDataClass):
+    starting_color: graphics.Color = ArgField(
+        cmd_name="--starting-color",
+        type_parser=argtypes.Color.type_parser,
         default="ffffff",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        metavar=argtypes.Color.METAVAR,
         help="Color for the initial text in the center of the output area.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--final-gradient-stops",
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--expand-direction",
+    )  # type: ignore[assignment]
+    expand_direction: str = ArgField(
+        cmd_name="--expand-direction",
         default="vertical",
         choices=["vertical", "horizontal"],
         help="Direction the text will expand.",
-    )
-    effect_parser.add_argument(
-        "--center-movement-speed",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    center_movement_speed: float = ArgField(
+        cmd_name="--center-movement-speed",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.35,
-        metavar="(float > 0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Speed of the characters during the initial expansion of the center vertical/horiztonal line. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
-    )
-    effect_parser.add_argument(
-        "--full-movement-speed",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    full_movement_speed: float = ArgField(
+        cmd_name="--full-movement-speed",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.35,
-        metavar="(float > 0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Speed of the characters during the final full expansion. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
-    )
-    effect_parser.add_argument(
-        "--center-easing",
-        default="IN_OUT_SINE",
-        type=argtypes.ease,
+    )  # type: ignore[assignment]
+    center_easing: typing.Callable = ArgField(
+        cmd_name="--center-easing",
+        default=easing.in_out_sine,
+        type_parser=argtypes.Ease.type_parser,
         help="Easing function to use for initial expansion.",
-    )
-    effect_parser.add_argument(
-        "--full-easing",
-        default="IN_OUT_SINE",
-        type=argtypes.ease,
+    )  # type: ignore[assignment]
+    full_easing: typing.Callable = ArgField(
+        cmd_name="--full-easing",
+        default=easing.in_out_sine,
+        type_parser=argtypes.Ease.type_parser,
         help="Easing function to use for full expansion.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return MiddleoutEffect
 
 
 class MiddleoutEffect:
     """Effect that expands a single row and column followed by the rest of the output area"""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: MiddleoutEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -92,7 +97,7 @@ class MiddleoutEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect."""
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
@@ -116,7 +121,9 @@ class MiddleoutEffect:
 
             # setup scenes
             full_scene = character.animation.new_scene(id="full")
-            full_gradient = graphics.Gradient([self.args.starting_color, self.character_final_color_map[character]], 10)
+            full_gradient = graphics.Gradient(
+                self.args.starting_color, self.character_final_color_map[character], steps=10
+            )
             full_scene.apply_gradient_to_symbols(full_gradient, character.input_symbol, 10)
 
             # initialize character state

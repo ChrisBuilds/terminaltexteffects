@@ -1,82 +1,100 @@
 """Creates a rain effect where characters fall from the top of the terminal."""
 
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return RainEffect, RainEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "rain",
-        formatter_class=argtypes.CustomFormatter,
-        help="Rain characters from the top of the output area.",
-        description="rain | Rain characters from the top of the output area.",
-        epilog=f"""{argtypes.EASING_EPILOG}
-        
-Example: terminaltexteffects rain --rain-symbols o . , "*" "|" --rain-colors 00315C 004C8F 0075DB 3F91D9 78B9F2 9AC8F5 B8D8F8 E3EFFC --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.1-0.2 --easing IN_QUART""",
-    )
-    effect_parser.set_defaults(effect_class=RainEffect)
-    effect_parser.add_argument(
-        "--rain-symbols",
-        type=argtypes.symbol,
+
+@argclass(
+    name="rain",
+    formatter_class=argtypes.CustomFormatter,
+    help="Rain characters from the top of the output area.",
+    description="rain | Rain characters from the top of the output area.",
+    epilog=f"""{argtypes.EASING_EPILOG} 
+                Example: terminaltexteffects rain --rain-symbols o . , "*" "|" --rain-colors 00315C 004C8F 0075DB 3F91D9 78B9F2 9AC8F5 B8D8F8 E3EFFC --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.1-0.2 --easing IN_QUART""",
+)
+@dataclass
+class RainEffectArgs(ArgsDataClass):
+    rain_colors: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--rain-colors"],
+        type_parser=argtypes.Color.type_parser,
+        metavar=argtypes.Color.METAVAR,
         nargs="+",
-        default=["o", ".", ",", "*", "|"],
-        metavar="(ASCII/UTF-8 character string)",
-        help="Space separated, unquoted, list of symbols to use for the rain drops. Symbols are randomly chosen from the list. ",
-    )
-    effect_parser.add_argument(
-        "--rain-colors",
-        type=argtypes.color,
-        nargs="+",
-        default=["00315C", "004C8F", "0075DB", "3F91D9", "78B9F2", "9AC8F5", "B8D8F8", "E3EFFC"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("00315C", "004C8F", "0075DB", "3F91D9", "78B9F2", "9AC8F5", "B8D8F8", "E3EFFC"),
         help="List of colors for the rain drops. Colors are randomly chosen from the list.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
-        nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
-        nargs="+",
-        default=[12],
-        metavar="(int > 0)",
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--movement-speed",
-        type=argtypes.float_range,
+    )  # type: ignore[assignment]
+
+    final_color: graphics.Color = ArgField(
+        cmd_name=["--final-color"],
+        type_parser=argtypes.Color.type_parser,
+        default="ffffff",
+        metavar=argtypes.Color.METAVAR,
+        help="Color for the final character.",
+    )  # type: ignore[assignment]
+
+    movement_speed: tuple[float, float] = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argtypes.PositiveFloatRange.type_parser,
         default=(0.1, 0.2),
-        metavar="(float range e.g. 0.25-0.5)",
+        metavar=argtypes.PositiveFloatRange.METAVAR,
         help="Falling speed range of the rain drops.",
-    )
-    effect_parser.add_argument(
-        "--easing",
-        default="IN_QUART",
-        type=argtypes.ease,
+    )  # type: ignore[assignment]
+
+    rain_symbols: tuple[str, ...] = ArgField(
+        cmd_name="--rain-symbols",
+        type_parser=argtypes.Symbol.type_parser,
+        nargs="+",
+        default=("o", ".", ",", "*", "|"),
+        metavar=argtypes.Symbol.METAVAR,
+        help="Space separated list of symbols to use for the rain drops. Symbols are randomly chosen from the list.",
+    )  # type: ignore[assignment]
+
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--final-gradient-stops",
+        type_parser=argtypes.Color.type_parser,
+        nargs="+",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )  # type: ignore[assignment]
+
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
+        nargs="+",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )  # type: ignore[assignment]
+
+    easing: typing.Callable = ArgField(
+        cmd_name=["--easing"],
+        default=easing.in_quart,
+        type_parser=argtypes.Ease.type_parser,
+        metavar=argtypes.Ease.METAVAR,
         help="Easing function to use for character movement.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return RainEffect
 
 
 class RainEffect:
     """Creates a rain effect where characters fall from the top of the output area."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: RainEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -86,7 +104,7 @@ class RainEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
@@ -97,7 +115,7 @@ class RainEffect:
             raindrop_color = random.choice(self.args.rain_colors)
             rain_scn = character.animation.new_scene()
             rain_scn.add_frame(random.choice(self.args.rain_symbols), 1, color=raindrop_color)
-            raindrop_gradient = graphics.Gradient([raindrop_color, self.character_final_color_map[character]], 7)
+            raindrop_gradient = graphics.Gradient(raindrop_color, self.character_final_color_map[character], steps=7)
             fade_scn = character.animation.new_scene()
             fade_scn.apply_gradient_to_symbols(raindrop_gradient, character.input_symbol, 5)
             character.animation.activate_scene(rain_scn)

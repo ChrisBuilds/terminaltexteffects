@@ -1,51 +1,54 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import animation, easing, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return CrumbleEffect, CrumbleEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "crumble",
-        formatter_class=argtypes.CustomFormatter,
-        help="Characters lose color and crumble into dust, vacuumed up, and reformed.",
-        description="Characters lose color and crumble into dust, vacuumed up, and reformed.",
-        epilog=f"""{argtypes.EASING_EPILOG}
 
-Example: terminaltexteffects crumble --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12""",
-    )
-    effect_parser.set_defaults(effect_class=CrumbleEffect)
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+@argclass(
+    name="crumble",
+    formatter_class=argtypes.CustomFormatter,
+    help="Characters lose color and crumble into dust, vacuumed up, and reformed.",
+    description="Characters lose color and crumble into dust, vacuumed up, and reformed.",
+    epilog="""Example: terminaltexteffects crumble --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12""",
+)
+@dataclass
+class CrumbleEffectArgs(ArgsDataClass):
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return CrumbleEffect
 
 
 class CrumbleEffect:
     """Characters crumble into dust before being vacuumed up and rebuilt."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: CrumbleEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -54,7 +57,7 @@ class CrumbleEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by registering events and building scenes/waypoints."""
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
@@ -62,11 +65,11 @@ class CrumbleEffect:
             )
 
         for character in self.terminal.get_characters():
-            strengthen_flash_gradient = graphics.Gradient([self.character_final_color_map[character], "ffffff"], 6)
-            strengthen_gradient = graphics.Gradient(["ffffff", self.character_final_color_map[character]], 9)
+            strengthen_flash_gradient = graphics.Gradient(self.character_final_color_map[character], "ffffff", steps=6)
+            strengthen_gradient = graphics.Gradient("ffffff", self.character_final_color_map[character], steps=9)
             weak_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.85)
             dust_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.65)
-            weaken_gradient = graphics.Gradient([weak_color, dust_color], 9)
+            weaken_gradient = graphics.Gradient(weak_color, dust_color, steps=9)
             self.terminal.set_character_visibility(character, True)
             # set up initial and falling stage
             initial_scn = character.animation.new_scene()

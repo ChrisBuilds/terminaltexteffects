@@ -1,88 +1,93 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import animation, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return VHSTapeEffect, VHSTapeEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "vhstape",
-        formatter_class=argtypes.CustomFormatter,
-        help="Lines of characters glitch left and right and lose detail like an old VHS tape.",
-        description="Lines of characters glitch left and right and lose detail like an old VHS tape.",
-        epilog="""Example: terminaltexteffects vhstape --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --glitch-line-colors ffffff ff0000 00ff00 0000ff ffffff --glitch-wave-colors ffffff ff0000 00ff00 0000ff ffffff --noise-colors 1e1e1f 3c3b3d 6d6c70 a2a1a6 cbc9cf ffffff --glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000""",
-    )
-    effect_parser.set_defaults(effect_class=VHSTapeEffect)
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+
+@argclass(
+    name="vhstape",
+    formatter_class=argtypes.CustomFormatter,
+    help="Lines of characters glitch left and right and lose detail like an old VHS tape.",
+    description="vhstape | Lines of characters glitch left and right and lose detail like an old VHS tape.",
+    epilog="""Example: terminaltexteffects vhstape --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --glitch-line-colors ffffff ff0000 00ff00 0000ff ffffff --glitch-wave-colors ffffff ff0000 00ff00 0000ff ffffff --noise-colors 1e1e1f 3c3b3d 6d6c70 a2a1a6 cbc9cf ffffff --glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000""",
+)
+@dataclass
+class VHSTapeEffectArgs(ArgsDataClass):
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--glitch-line-colors",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    glitch_line_colors: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--glitch-line-colors",
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("ffffff", "ff0000", "00ff00", "0000ff", "ffffff"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors are applied in order as an animation.",
-    )
-    effect_parser.add_argument(
-        "--glitch-wave-colors",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    glitch_wave_colors: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--glitch-wave-colors",
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("ffffff", "ff0000", "00ff00", "0000ff", "ffffff"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.",
-    )
-    effect_parser.add_argument(
-        "--noise-colors",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    noise_colors: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--noise-colors",
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["1e1e1f", "3c3b3d", "6d6c70", "a2a1a6", "cbc9cf", "ffffff"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("1e1e1f", "3c3b3d", "6d6c70", "a2a1a6", "cbc9cf", "ffffff"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the characters during the noise phase.",
-    )
-    effect_parser.add_argument(
-        "--glitch-line-chance",
-        type=argtypes.float_zero_to_one,
+    )  # type: ignore[assignment]
+    glitch_line_chance: float = ArgField(
+        cmd_name="--glitch-line-chance",
+        type_parser=argtypes.Ratio.type_parser,
         default=0.05,
-        metavar="(0.0-1.0)",
+        metavar=argtypes.Ratio.METAVAR,
         help="Chance that a line will glitch on any given frame.",
-    )
-    effect_parser.add_argument(
-        "--noise-chance",
-        type=argtypes.float_zero_to_one,
+    )  # type: ignore[assignment]
+    noise_chance: float = ArgField(
+        cmd_name="--noise-chance",
+        type_parser=argtypes.Ratio.type_parser,
         default=0.004,
-        metavar="(0.0-1.0)",
+        metavar=argtypes.Ratio.METAVAR,
         help="Chance that all characters will experience noise on any given frame.",
-    )
-    effect_parser.add_argument(
-        "--total-glitch-time",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    total_glitch_time: int = ArgField(
+        cmd_name="--total-glitch-time",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=1000,
-        metavar="(int >= 1)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Total time, animation steps, that the glitching phase will last.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return VHSTapeEffect
 
 
 class Line:
@@ -111,7 +116,7 @@ class Line:
     def __init__(
         self,
         characters: list[EffectCharacter],
-        args: argparse.Namespace,
+        args: VHSTapeEffectArgs,
         character_final_color_map: dict[EffectCharacter, graphics.Color],
     ) -> None:
         self.characters = characters
@@ -259,7 +264,7 @@ class VHSTapeEffect:
 
     Attributes:
         terminal (Terminal): The terminal object.
-        args (argparse.Namespace): The command-line arguments.
+        args (VHSTapeEffectArgs): The command-line arguments.
         pending_chars (list[EffectCharacter]): The list of pending effect characters.
         animating_chars (list[EffectCharacter]): The list of animating effect characters.
         lines (dict[int, Line]): The dictionary of lines indexed by row index.
@@ -268,7 +273,7 @@ class VHSTapeEffect:
         active_glitch_lines (list[Line]): The list of active glitch lines.
     """
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: VHSTapeEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -280,7 +285,7 @@ class VHSTapeEffect:
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
                 character.input_coord.row / self.terminal.output_area.top

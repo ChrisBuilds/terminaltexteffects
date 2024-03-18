@@ -1,74 +1,79 @@
 """Effect that draws the characters spawning at varying rates from a single point."""
 
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return SprayEffect, SprayEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "spray",
-        formatter_class=argtypes.CustomFormatter,
-        help="Draws the characters spawning at varying rates from a single point.",
-        description="spray | Draws the characters spawning at varying rates from a single point.",
-        epilog=f"""{argtypes.EASING_EPILOG}
-        
-Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 --easing OUT_EXPO""",
-    )
-    effect_parser.set_defaults(effect_class=SprayEffect)
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+
+@argclass(
+    name="spray",
+    formatter_class=argtypes.CustomFormatter,
+    help="Draws the characters spawning at varying rates from a single point.",
+    description="spray | Draws the characters spawning at varying rates from a single point.",
+    epilog=f"""{argtypes.EASING_EPILOG}
+    
+Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 --movement-easing OUT_EXPO""",
+)
+@dataclass
+class SprayEffectArgs(ArgsDataClass):
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name=["--final-gradient-steps"],
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--spray-position",
-        default="e",
+    )  # type: ignore[assignment]
+    spray_position: str = ArgField(
+        cmd_name="--spray-position",
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"],
+        default="e",
         help="Position for the spray origin.",
-    )
-    effect_parser.add_argument(
-        "--spray-volume",
+    )  # type: ignore[assignment]
+    spray_volume: float = ArgField(
+        cmd_name="--spray-volume",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.005,
-        type=argtypes.positive_float,
-        metavar="(float > 0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Number of characters to spray per tick as a percent of the total number of characters.",
-    )
-    effect_parser.add_argument(
-        "--movement-speed",
-        type=argtypes.float_range,
+    )  # type: ignore[assignment]
+    movement_speed: tuple[float, float] = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argtypes.PositiveFloatRange.type_parser,
         default=(0.4, 1.0),
-        metavar="(float range e.g. 0.4-1.0)",
+        metavar=argtypes.PositiveFloatRange.METAVAR,
         help="Movement speed of the characters.",
-    )
-    effect_parser.add_argument(
-        "--easing",
-        default="OUT_EXPO",
-        type=argtypes.ease,
+    )  # type: ignore[assignment]
+    movement_easing: easing.EasingFunction = ArgField(
+        cmd_name="--movement-easing",
+        type_parser=argtypes.Ease.type_parser,
+        default=easing.out_expo,
         help="Easing function to use for character movement.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return SprayEffect
 
 
 class SprayPosition(Enum):
@@ -91,7 +96,7 @@ class SprayEffect:
     def __init__(
         self,
         terminal: Terminal,
-        args: argparse.Namespace,
+        args: SprayEffectArgs,
     ):
         """Effect that draws the characters spawning at varying rates from a single point.
 
@@ -118,7 +123,7 @@ class SprayEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point based on SparklerPosition."""
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
@@ -139,7 +144,8 @@ class SprayEffect:
         for character in self.terminal.get_characters():
             character.motion.set_coordinate(spray_origin_map[self.spray_position])
             input_coord_path = character.motion.new_path(
-                speed=random.uniform(self.args.movement_speed[0], self.args.movement_speed[1]), ease=self.args.easing
+                speed=random.uniform(self.args.movement_speed[0], self.args.movement_speed[1]),
+                ease=self.args.movement_easing,
             )
             input_coord_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
@@ -150,7 +156,7 @@ class SprayEffect:
             )
             droplet_scn = character.animation.new_scene()
             spray_gradient = graphics.Gradient(
-                [random.choice(final_gradient.spectrum), self.character_final_color_map[character]], 7
+                random.choice(final_gradient.spectrum), self.character_final_color_map[character], steps=7
             )
             droplet_scn.apply_gradient_to_symbols(spray_gradient, character.input_symbol, 20)
             character.animation.activate_scene(droplet_scn)

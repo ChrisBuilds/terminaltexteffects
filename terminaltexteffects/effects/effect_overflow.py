@@ -1,65 +1,70 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return OverflowEffect, OverflowEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "overflow",
-        formatter_class=argtypes.CustomFormatter,
-        help="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
-        description="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
-        epilog="""Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3""",
-    )
-    effect_parser.set_defaults(effect_class=OverflowEffect)
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+
+@argclass(
+    name="overflow",
+    formatter_class=argtypes.CustomFormatter,
+    help="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
+    description="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
+    epilog="""Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3""",
+)
+@dataclass
+class OverflowEffectArgs(ArgsDataClass):
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name=["--final-gradient-steps"],
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--overflow-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    overflow_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--overflow-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["f2ebc0", "8dbfb3", "f2ebc0"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("f2ebc0", "8dbfb3", "f2ebc0"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the overflow gradient.",
-    )
-    effect_parser.add_argument(
-        "--overflow-cycles-range",
-        type=argtypes.int_range,
-        default="2-4",
-        metavar="(int range e.g. 2-3)",
+    )  # type: ignore[assignment]
+    overflow_cycles_range: tuple[int, int] = ArgField(
+        cmd_name=["--overflow-cycles-range"],
+        type_parser=argtypes.IntRange.type_parser,
+        default=(2, 4),
+        metavar=argtypes.IntRange.METAVAR,
         help="Number of cycles to overflow the text.",
-    )
-    effect_parser.add_argument(
-        "--overflow-speed",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    overflow_speed: int = ArgField(
+        cmd_name=["--overflow-speed"],
+        type_parser=argtypes.PositiveInt.type_parser,
         default=3,
-        metavar="int > 0",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Speed of the overflow effect.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return OverflowEffect
 
 
 class Row:
@@ -83,7 +88,7 @@ class Row:
 
 
 class OverflowEffect:
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: OverflowEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -92,7 +97,7 @@ class OverflowEffect:
         self.active_rows: list[Row] = []
 
     def prepare_data(self) -> None:
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         lower_range, upper_range = self.args.overflow_cycles_range
         rows = self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
@@ -117,8 +122,8 @@ class OverflowEffect:
         self.prepare_data()
         delay = 0
         g = graphics.Gradient(
-            self.args.overflow_gradient_stops,
-            max((self.terminal.output_area.top // max(1, len(self.args.overflow_gradient_stops) - 1)), 1),
+            *self.args.overflow_gradient_stops,
+            steps=max((self.terminal.output_area.top // max(1, len(self.args.overflow_gradient_stops) - 1)), 1),
         )
 
         while self.pending_rows:

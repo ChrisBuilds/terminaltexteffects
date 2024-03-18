@@ -1,86 +1,90 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import animation, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return ErrorCorrectEffect, ErrorCorrectEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "errorcorrect",
-        formatter_class=argtypes.CustomFormatter,
-        help="Some characters start in the wrong position and are corrected in sequence.",
-        description="Some characters start in the wrong position and are corrected in sequence.",
-        epilog=f"""{argtypes.EASING_EPILOG}
 
+@argclass(
+    name="errorcorrect",
+    formatter_class=argtypes.CustomFormatter,
+    help="Some characters start in the wrong position and are corrected in sequence.",
+    description="Some characters start in the wrong position and are corrected in sequence.",
+    epilog=f"""{argtypes.EASING_EPILOG}
+    
 Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c --correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5""",
-    )
-    effect_parser.set_defaults(effect_class=ErrorCorrectEffect)
-
-    effect_parser.add_argument(
-        "--error-pairs",
-        type=argtypes.positive_float,
+)
+@dataclass
+class ErrorCorrectEffectArgs(ArgsDataClass):
+    error_pairs: float = ArgField(
+        cmd_name="--error-pairs",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.1,
         metavar="(int > 0)",
         help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position.",
-    )
-    effect_parser.add_argument(
-        "--swap-delay",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    swap_delay: int = ArgField(
+        cmd_name="--swap-delay",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=10,
         metavar="(int > 0)",
         help="Number of animation steps between swaps.",
-    )
-    effect_parser.add_argument(
-        "--error-color",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    error_color: graphics.Color = ArgField(
+        cmd_name=["--error-color"],
+        type_parser=argtypes.Color.type_parser,
         default="e74c3c",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters that are in the wrong position.",
-    )
-    effect_parser.add_argument(
-        "--correct-color",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    correct_color: graphics.Color = ArgField(
+        cmd_name=["--correct-color"],
+        type_parser=argtypes.Color.type_parser,
         default="45bf55",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters once corrected, this is a gradient from error-color and fades to final-color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
+        default=("8A008A", "00D1FF", "FFFFFF"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
+        default=(12,),
         metavar="(int > 0)",
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--movement-speed",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    movement_speed: float = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.5,
         metavar="(float > 0)",
         help="Speed of the characters while moving to the correct position. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return ErrorCorrectEffect
 
 
 class ErrorCorrectEffect:
     """Effect that swaps characters from an incorrect initial position to the correct position."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: ErrorCorrectEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -90,7 +94,7 @@ class ErrorCorrectEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by swapping positions and generating animations and waypoints."""
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
@@ -103,7 +107,7 @@ class ErrorCorrectEffect:
             character.animation.activate_scene(spawn_scene)
             self.terminal.set_character_visibility(character, True)
         all_characters: list[EffectCharacter] = list(self.terminal._input_characters)
-        correcting_gradient = graphics.Gradient([self.args.error_color, self.args.correct_color], 10)
+        correcting_gradient = graphics.Gradient(self.args.error_color, self.args.correct_color, steps=10)
         block_symbol = "▓"
         block_wipe_start = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
         block_wipe_end = ("▇", "▆", "▅", "▄", "▃", "▂", "▁")
@@ -137,7 +141,7 @@ class ErrorCorrectEffect:
                 correcting_scene.apply_gradient_to_symbols(correcting_gradient, "█", 3)
                 final_scene = character.animation.new_scene()
                 char_final_gradient = graphics.Gradient(
-                    [self.args.correct_color, self.character_final_color_map[character]], 10
+                    self.args.correct_color, self.character_final_color_map[character], steps=10
                 )
                 final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 3)
                 input_coord_path = character.motion.query_path("input_coord")

@@ -1,86 +1,91 @@
 """Effect that pours the characters into position from the top, bottom, left, or right."""
 
-import argparse
+import typing
+from dataclasses import dataclass
 from enum import Enum, auto
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return PourEffect, PourEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "pour",
-        formatter_class=argtypes.CustomFormatter,
-        help="Pours the characters into position from the given direction.",
-        description="pour | Pours the characters into position from the given direction.",
-        epilog=f"""{argtypes.EASING_EPILOG}
-        
+
+@argclass(
+    name="pour",
+    formatter_class=argtypes.CustomFormatter,
+    help="Pours the characters into position from the given direction.",
+    description="pour | Pours the characters into position from the given direction.",
+    epilog=f"""{argtypes.EASING_EPILOG}
+    
 Example: terminaltexteffects pour --pour-direction down --movement-speed 0.2 --gap 1 --starting-color 8A008A --pour-gradient-stops 00D1FF FFFFFF --pour-gradient-steps 12 --pour-gradient-frames 25 --easing IN_QUAD""",
-    )
-    effect_parser.set_defaults(effect_class=PourEffect)
-    effect_parser.add_argument(
-        "--pour-direction",
+)
+@dataclass
+class PourEffectArgs(ArgsDataClass):
+    pour_direction: str = ArgField(
+        cmd_name=["--pour-direction"],
         default="down",
         choices=["up", "down", "left", "right"],
         help="Direction the text will pour.",
-    )
-    effect_parser.add_argument(
-        "--movement-speed",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    movement_speed: float = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.2,
-        metavar="(float > 0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
-    )
-    effect_parser.add_argument(
-        "--gap",
-        type=argtypes.nonnegative_int,
+    )  # type: ignore[assignment]
+    gap: int = ArgField(
+        cmd_name="--gap",
+        type_parser=argtypes.NonNegativeInt.type_parser,
         default=1,
-        metavar="(int >= 0)",
+        metavar=argtypes.NonNegativeInt.METAVAR,
         help="Number of frames to wait between each character in the pour effect. Increase to slow down effect and create a more defined back and forth motion.",
-    )
-    effect_parser.add_argument(
-        "--starting-color",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    starting_color: graphics.Color = ArgField(
+        cmd_name=["--starting-color"],
+        type_parser=argtypes.Color.type_parser,
         default="ffffff",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        metavar=argtypes.Color.METAVAR,
         help="Color of the characters before the gradient starts.",
-    )
-    effect_parser.add_argument(
-        "--pour-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    pour_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--pour-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--pour-gradient-steps",
-        type=argtypes.positive_int,
-        default=[12],
-        metavar="(int > 0)",
+    )  # type: ignore[assignment]
+    pour_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name=["--pour-gradient-steps"],
+        type_parser=argtypes.PositiveInt.type_parser,
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--pour-gradient-frames",
-        type=argtypes.positive_int,
-        default=25,
-        metavar="(int > 0)",
+    )  # type: ignore[assignment]
+    pour_gradient_frames: int = ArgField(
+        cmd_name=["--pour-gradient-frames"],
+        type_parser=argtypes.PositiveInt.type_parser,
+        default=15,
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
-    )
-    effect_parser.add_argument(
-        "--easing",
-        default="IN_QUAD",
-        type=argtypes.ease,
+    )  # type: ignore[assignment]
+    easing: typing.Callable = ArgField(
+        cmd_name="--easing",
+        default=easing.in_quad,
+        type_parser=argtypes.Ease.type_parser,
         help="Easing function to use for character movement.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return PourEffect
 
 
 class PourDirection(Enum):
@@ -93,7 +98,7 @@ class PourDirection(Enum):
 class PourEffect:
     """Effect that pours the characters into position from the top, bottom, left, or right."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: PourEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_groups: list[list[EffectCharacter]] = []
@@ -108,7 +113,7 @@ class PourEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by sorting the characters by the pour direction."""
-        final_gradient = graphics.Gradient(self.args.pour_gradient_stops, self.args.pour_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.pour_gradient_stops, steps=self.args.pour_gradient_steps)
 
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
@@ -143,7 +148,9 @@ class PourEffect:
                 character.motion.activate_path(input_coord_path)
 
                 pour_gradient = graphics.Gradient(
-                    [self.args.starting_color, self.character_final_color_map[character]], self.args.pour_gradient_steps
+                    self.args.starting_color,
+                    self.character_final_color_map[character],
+                    steps=self.args.pour_gradient_steps,
                 )
                 pour_scn = character.animation.new_scene()
                 pour_scn.apply_gradient_to_symbols(

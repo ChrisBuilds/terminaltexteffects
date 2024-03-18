@@ -1,102 +1,103 @@
-import argparse
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import geometry, graphics
+from terminaltexteffects.utils import easing, geometry, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return SlideEffect, SlideEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "slide",
-        formatter_class=argtypes.CustomFormatter,
-        help="Slide characters into view from outside the terminal.",
-        description="Slide characters into view from outside the terminal, grouped by row, column, or diagonal.",
-        epilog=f"""{argtypes.EASING_EPILOG}
 
-Example: terminaltexteffects slide --movement-speed 0.5 --grouping row --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --gradient-frames 10 --gradient-direction vertical --gap 3 --reverse-direction --easing OUT_QUAD""",
-    )
-    effect_parser.set_defaults(effect_class=SlideEffect)
-    effect_parser.add_argument(
-        "--movement-speed",
-        type=argtypes.positive_float,
+@argclass(
+    name="slide",
+    formatter_class=argtypes.CustomFormatter,
+    help="Slide characters into view from outside the terminal.",
+    description="slide | Slide characters into view from outside the terminal, grouped by row, column, or diagonal.",
+    epilog=f"""{argtypes.EASING_EPILOG}
+    
+Example: terminaltexteffects slide --movement-speed 0.5 --grouping row --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --gradient-frames 10 --gradient-direction vertical --gap 3 --reverse-direction --movement-easing OUT_QUAD""",
+)
+@dataclass
+class SlideEffectArgs(ArgsDataClass):
+    movement_speed: float = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.5,
-        metavar="(float > 0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Speed of the characters.",
-    )
-    effect_parser.add_argument(
-        "--grouping",
+    )  # type: ignore[assignment]
+    grouping: str = ArgField(
+        cmd_name="--grouping",
         default="row",
-        choices=[
-            "row",
-            "column",
-            "diagonal",
-        ],
+        choices=["row", "column", "diagonal"],
         help="Direction to group characters.",
-    )
-    effect_parser.add_argument(
-        "--gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    gradient_stops: tuple[int | str, ...] = ArgField(
+        cmd_name=["--gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--gradient-steps",
-        type=argtypes.positive_int,
-        default=[12],
-        nargs="+",
-        metavar="(int > 0)",
+    )  # type: ignore[assignment]
+    gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--gradient-frames",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    gradient_frames: int = ArgField(
+        cmd_name="--gradient-frames",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=10,
-        metavar="(int > 0)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
-    )
-    effect_parser.add_argument(
-        "--gradient-direction",
-        default="vertical",
-        type=argtypes.gradient_direction,
+    )  # type: ignore[assignment]
+    gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--gradient-direction",
+        default=graphics.Gradient.Direction.VERTICAL,
+        type_parser=argtypes.GradientDirection.type_parser,
         help="Direction of the gradient (vertical, horizontal, diagonal, center).",
-    )
-    effect_parser.add_argument(
-        "--gap",
-        type=argtypes.nonnegative_int,
+    )  # type: ignore[assignment]
+    gap: int = ArgField(
+        cmd_name="--gap",
+        type_parser=argtypes.NonNegativeInt.type_parser,
         default=3,
-        metavar="(int >= 0)",
+        metavar=argtypes.NonNegativeInt.METAVAR,
         help="Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect.",
-    )
-    effect_parser.add_argument(
-        "--reverse-direction",
+    )  # type: ignore[assignment]
+    reverse_direction: bool = ArgField(
+        cmd_name="--reverse-direction",
         action="store_true",
         help="Reverse the direction of the characters.",
-    )
-    effect_parser.add_argument(
-        "--merge",
+    )  # type: ignore[assignment]
+    merge: bool = ArgField(
+        cmd_name="--merge",
         action="store_true",
         help="Merge the character groups originating from either side of the terminal. (--reverse-direction is ignored when merging)",
-    )
-    effect_parser.add_argument(
-        "--easing",
-        default="OUT_QUAD",
-        type=argtypes.ease,
+    )  # type: ignore[assignment]
+    movement_easing: easing.EasingFunction = ArgField(
+        cmd_name=["--movement-easing"],
+        default=easing.in_out_quad,
+        type_parser=argtypes.Ease.type_parser,
+        metavar=argtypes.Ease.METAVAR,
         help="Easing function to use for character movement.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return SlideEffect
 
 
 class SlideEffect:
     """Effect that slides characters into view from outside the terminal. Characters are grouped by column, row, or diagonal."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: SlideEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -104,15 +105,15 @@ class SlideEffect:
         self.grouping: str = self.args.grouping
         self.reverse_direction: bool = self.args.reverse_direction
         self.merge: bool = self.args.merge
-        self.gradient_stops: list[int | str] = self.args.gradient_stops
+        self.gradient_stops = self.args.gradient_stops
         self.gap = self.args.gap
         self.pending_groups: list[list[EffectCharacter]] = []
-        self.easing = self.args.easing
+        self.easing = self.args.movement_easing
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by setting starting coordinates and building Paths/Scenes."""
-        final_gradient = graphics.Gradient(self.args.gradient_stops, self.args.gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.gradient_stops, steps=self.args.gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.args.gradient_direction
         )
@@ -184,7 +185,7 @@ class SlideEffect:
             for character in group:
                 gradient_scn = character.animation.new_scene()
                 char_gradient = graphics.Gradient(
-                    [self.gradient_stops[0], self.character_final_color_map[character]], 10
+                    self.gradient_stops[0], self.character_final_color_map[character], steps=10
                 )
                 gradient_scn.apply_gradient_to_symbols(char_gradient, character.input_symbol, self.args.gradient_frames)
                 character.animation.activate_scene(gradient_scn)

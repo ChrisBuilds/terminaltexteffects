@@ -1,84 +1,89 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import animation, easing, geometry, graphics, motion
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return SpotlightsEffect, SpotlightsEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "spotlights",
-        formatter_class=argtypes.CustomFormatter,
-        help="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
-        description="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
-        epilog=f"""{argtypes.EASING_EPILOG}
 
+@argclass(
+    name="spotlights",
+    formatter_class=argtypes.CustomFormatter,
+    help="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
+    description="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
+    epilog=f"""{argtypes.EASING_EPILOG}
+    
 Example: terminaltexteffects spotlights --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration 750 --search-speed-range 0.25-0.5 --spotlight-count 3""",
-    )
-    effect_parser.set_defaults(effect_class=SpotlightsEffect)
-    effect_parser.add_argument(
-        "--gradient-stops",
-        type=argtypes.color,
+)
+@dataclass
+class SpotlightsEffectArgs(ArgsDataClass):
+    gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--beam-width-ratio",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    beam_width_ratio: float = ArgField(
+        cmd_name="--beam-width-ratio",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=2.0,
-        metavar="(float > 0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Width of the beam of light as min(width, height) // n of the input text.",
-    )
-    effect_parser.add_argument(
-        "--beam-falloff",
-        type=argtypes.nonnegative_float,
+    )  # type: ignore[assignment]
+    beam_falloff: float = ArgField(
+        cmd_name="--beam-falloff",
+        type_parser=argtypes.NonNegativeFloat.type_parser,
         default=0.3,
-        metavar="(float >= 0)",
+        metavar=argtypes.NonNegativeFloat.METAVAR,
         help="Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width.",
-    )
-    effect_parser.add_argument(
-        "--search-duration",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    search_duration: int = ArgField(
+        cmd_name="--search-duration",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=750,
-        metavar="(int > 0)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Duration of the search phase, in animation steps, before the spotlights converge in the center.",
-    )
-    effect_parser.add_argument(
-        "--search-speed-range",
-        type=argtypes.float_range,
+    )  # type: ignore[assignment]
+    search_speed_range: tuple[float, float] = ArgField(
+        cmd_name="--search-speed-range",
+        type_parser=argtypes.PositiveFloatRange.type_parser,
         default=(0.25, 0.5),
-        metavar="(e.g. 0.25-0.5)",
+        metavar=argtypes.PositiveFloatRange.METAVAR,
         help="Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values.",
-    )
-    effect_parser.add_argument(
-        "--spotlight-count",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    spotlight_count: int = ArgField(
+        cmd_name="--spotlight-count",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=3,
-        metavar="(int > 0)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of spotlights to use.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return SpotlightsEffect
 
 
 class SpotlightsEffect:
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: SpotlightsEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -166,7 +171,7 @@ class SpotlightsEffect:
         self.illuminated_chars = chars_in_range
 
     def prepare_data(self) -> None:
-        base_gradient = graphics.Gradient(self.args.gradient_stops, self.args.gradient_steps)
+        base_gradient = graphics.Gradient(*self.args.gradient_stops, steps=self.args.gradient_steps)
         base_gradient_mapping = base_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, graphics.Gradient.Direction.VERTICAL
         )

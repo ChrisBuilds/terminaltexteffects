@@ -1,111 +1,117 @@
-import argparse
+import typing
+from dataclasses import dataclass
 from itertools import cycle
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return OrbittingVolleyEffect, OrbittingVolleyEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "orbittingvolley",
-        formatter_class=argtypes.CustomFormatter,
-        help="Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
-        description="Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
-        epilog=f"""{argtypes.EASING_EPILOG}
 
+@argclass(
+    name="orbittingvolley",
+    formatter_class=argtypes.CustomFormatter,
+    help="Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
+    description="Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
+    epilog=f"""{argtypes.EASING_EPILOG}
+    
 Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 12 --launcher-movement-speed 0.5 --character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE""",
-    )
-    effect_parser.set_defaults(effect_class=OrbittingVolleyEffect)
-    effect_parser.add_argument(
-        "--top-launcher-symbol",
-        type=argtypes.symbol,
+)
+@dataclass
+class OrbittingVolleyEffectArgs(ArgsDataClass):
+    top_launcher_symbol: str = ArgField(
+        cmd_name="--top-launcher-symbol",
+        type_parser=argtypes.Symbol.type_parser,
         default="█",
-        metavar="(single character)",
+        metavar=argtypes.Symbol.METAVAR,
         help="Symbol for the top launcher.",
-    )
-    effect_parser.add_argument(
-        "--right-launcher-symbol",
-        type=argtypes.symbol,
+    )  # type: ignore[assignment]
+    right_launcher_symbol: str = ArgField(
+        cmd_name="--right-launcher-symbol",
+        type_parser=argtypes.Symbol.type_parser,
         default="█",
-        metavar="(single character)",
+        metavar=argtypes.Symbol.METAVAR,
         help="Symbol for the right launcher.",
-    )
-    effect_parser.add_argument(
-        "--bottom-launcher-symbol",
-        type=argtypes.symbol,
+    )  # type: ignore[assignment]
+    bottom_launcher_symbol: str = ArgField(
+        cmd_name="--bottom-launcher-symbol",
+        type_parser=argtypes.Symbol.type_parser,
         default="█",
-        metavar="(single character)",
+        metavar=argtypes.Symbol.METAVAR,
         help="Symbol for the bottom launcher.",
-    )
-    effect_parser.add_argument(
-        "--left-launcher-symbol",
-        type=argtypes.symbol,
+    )  # type: ignore[assignment]
+    left_launcher_symbol: str = ArgField(
+        cmd_name="--left-launcher-symbol",
+        type_parser=argtypes.Symbol.type_parser,
         default="█",
-        metavar="(single character)",
+        metavar=argtypes.Symbol.METAVAR,
         help="Symbol for the left launcher.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--final-gradient-stops",
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--launcher-movement-speed",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    launcher_movement_speed: float = ArgField(
+        cmd_name="--launcher-movement-speed",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.5,
-        metavar="(float > 0)",
-        help="Speed of the ___.",
-    )
-    effect_parser.add_argument(
-        "--character-movement-speed",
-        type=argtypes.positive_float,
+        metavar=argtypes.PositiveFloat.METAVAR,
+        help="Orbitting speed of the launchers.",
+    )  # type: ignore[assignment]
+    character_movement_speed: float = ArgField(
+        cmd_name="--character-movement-speed",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=1,
-        metavar="(float > 0)",
-        help="Speed of the ___.",
-    )
-    effect_parser.add_argument(
-        "--volley-size",
-        type=argtypes.positive_float,
+        metavar=argtypes.PositiveFloat.METAVAR,
+        help="Speed of the launched characters.",
+    )  # type: ignore[assignment]
+    volley_size: float = ArgField(
+        cmd_name="--volley-size",
+        type_parser=argtypes.Ratio.type_parser,
         default=0.03,
-        metavar="(float > 0)",
-        help="Percent of total input characters each launcher will fire per volley. Auto lower limit of one character.",
-    )
-    effect_parser.add_argument(
-        "--launch-delay",
-        type=argtypes.nonnegative_int,
+        metavar=argtypes.Ratio.METAVAR,
+        help="Percent of total input characters each launcher will fire per volley. Lower limit of one character.",
+    )  # type: ignore[assignment]
+    launch_delay: int = ArgField(
+        cmd_name="--launch-delay",
+        type_parser=argtypes.NonNegativeInt.type_parser,
         default=50,
-        metavar="(int >= 0)",
+        metavar=argtypes.NonNegativeInt.METAVAR,
         help="Number of animation ticks to wait between volleys of characters.",
-    )
-    effect_parser.add_argument(
-        "--character-easing",
-        default="OUT_SINE",
-        type=argtypes.ease,
+    )  # type: ignore[assignment]
+    character_easing: typing.Callable = ArgField(
+        cmd_name=["--character-easing"],
+        default=easing.out_sine,
+        type_parser=argtypes.Ease.type_parser,
+        metavar=argtypes.Ease.METAVAR,
         help="Easing function to use for launched character movement.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return OrbittingVolleyEffect
 
 
 class Launcher:
-    def __init__(self, terminal: Terminal, args: argparse.Namespace, starting_edge_coord: Coord, symbol: str):
+    def __init__(self, terminal: Terminal, args: OrbittingVolleyEffectArgs, starting_edge_coord: Coord, symbol: str):
         self.terminal = terminal
         self.args = args
         self.character = self.terminal.add_character(symbol, starting_edge_coord)
@@ -137,12 +143,12 @@ class Launcher:
 
 
 class OrbittingVolleyEffect:
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: OrbittingVolleyEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
-        self.final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        self.final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
     def prepare_data(self) -> None:
         for character in self.terminal.get_characters():

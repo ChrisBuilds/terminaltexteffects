@@ -1,90 +1,95 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import argtypes, easing, geometry, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return FireworksEffect, FireworksEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "fireworks",
-        formatter_class=argtypes.CustomFormatter,
-        help="Characters launch and explode like fireworks and fall into place.",
-        description="fireworks | Characters explode like fireworks and fall into place.",
-        epilog="""Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere""",
-    )
-    effect_parser.set_defaults(effect_class=FireworksEffect)
-    effect_parser.add_argument(
-        "--explode-anywhere",
+
+@argclass(
+    name="fireworks",
+    formatter_class=argtypes.CustomFormatter,
+    help="Characters launch and explode like fireworks and fall into place.",
+    description="fireworks | Characters explode like fireworks and fall into place.",
+    epilog="""Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere""",
+)
+@dataclass
+class FireworksEffectArgs(ArgsDataClass):
+    explode_anywhere: bool = ArgField(
+        cmd_name="--explode-anywhere",
         action="store_true",
         default=False,
         help="If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text.",
-    )
-    effect_parser.add_argument(
-        "--firework-colors",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    firework_colors: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--firework-colors",
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated list of colors from which firework colors will be randomly selected.",
-    )
-    effect_parser.add_argument(
-        "--firework-symbol",
-        type=argtypes.symbol,
+    )  # type: ignore[assignment]
+    firework_symbol: str = ArgField(
+        cmd_name="--firework-symbol",
+        type_parser=argtypes.Symbol.type_parser,
         default="o",
-        metavar="(single character)",
+        metavar=argtypes.Symbol.METAVAR,
         help="Symbol to use for the firework shell.",
-    )
-    effect_parser.add_argument(
-        "--firework-volume",
-        type=argtypes.float_zero_to_one,
+    )  # type: ignore[assignment]
+    firework_volume: float = ArgField(
+        cmd_name="--firework-volume",
+        type_parser=argtypes.Ratio.type_parser,
         default=0.02,
-        metavar="(float 0 < n <= 1)",
+        metavar=argtypes.Ratio.METAVAR,
         help="Percent of total characters in each firework shell.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--final-gradient-stops",
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--launch-delay",
-        type=argtypes.nonnegative_int,
+    )  # type: ignore[assignment]
+    launch_delay: int = ArgField(
+        cmd_name="--launch-delay",
+        type_parser=argtypes.NonNegativeInt.type_parser,
         default=60,
-        metavar="(int >= 0)",
+        metavar=argtypes.NonNegativeInt.METAVAR,
         help="Number of animation steps to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.",
-    )
-    effect_parser.add_argument(
-        "--explode-distance",
+    )  # type: ignore[assignment]
+    explode_distance: float = ArgField(
+        cmd_name="--explode-distance",
         default=0.1,
-        type=argtypes.float_zero_to_one,
-        metavar="(float 0 < n <= 1)",
+        type_parser=argtypes.Ratio.type_parser,
+        metavar=argtypes.Ratio.METAVAR,
         help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return FireworksEffect
 
 
 class FireworksEffect:
     """Effect that launches characters up the screen where they explode like fireworks and fall into place."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: FireworksEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -147,7 +152,7 @@ class FireworksEffect:
             self.shells.append(firework_shell)
 
     def prepare_scenes(self) -> None:
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
@@ -167,7 +172,7 @@ class FireworksEffect:
                 bloom_scn.add_frame(character.input_symbol, 1, color=shell_color)
                 # fall scene
                 fall_scn = character.animation.new_scene()
-                fall_gradient = graphics.Gradient([shell_color, self.character_final_color_map[character]], 15)
+                fall_gradient = graphics.Gradient(shell_color, self.character_final_color_map[character], steps=15)
                 fall_scn.apply_gradient_to_symbols(fall_gradient, character.input_symbol, 15)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(

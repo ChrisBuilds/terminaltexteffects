@@ -1,5 +1,3 @@
-from argparse import Namespace
-
 from terminaltexteffects.effects import (
     effect_beams,
     effect_binarypath,
@@ -32,8 +30,7 @@ from terminaltexteffects.effects import (
     effect_waves,
     effect_wipe,
 )
-from terminaltexteffects.utils import easing, graphics
-from terminaltexteffects.utils.terminal import Terminal
+from terminaltexteffects.utils.terminal import Terminal, TerminalArgs
 
 t1 = ""
 t2 = "a"
@@ -61,447 +58,221 @@ t6 = """Tabs\tTabs\t\tTabs\t\t\tTabs"""
 test_inputs = [t1, t2, t3, t4, t5, t6]
 
 
-def make_args() -> Namespace:
-    args = Namespace()
-    args.no_color = False
-    args.no_wrap = False
-    args.xterm_colors = False
-    args.tab_width = 4
-    args.animation_rate = 0
-    args.movement_speed = 3
-    args.easing = easing.in_sine
-    args.gradient_stops = [10, 11, 12]
-    args.gradient_steps = 5
-    args.gradient_frames = 5
-    return args
+terminal_args = TerminalArgs()
+terminal_args.animation_rate = 0
 
 
 def test_spotlights_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.gradient_stops = ["8A008A", "00D1FF", "FFFFFF"]
-        args.gradient_steps = [12]
-        args.beam_width_ratio = 2.0
-        args.beam_falloff = 0.3
-        args.search_duration = 750
-        args.search_speed_range = (0.25, 0.5)
-        args.spotlight_count = 3
-        terminal = Terminal(input_data, args)
-        spotlights_effect = effect_spotlights.SpotlightsEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        spotlights_effect = effect_spotlights.SpotlightsEffect(terminal, effect_spotlights.SpotlightsEffectArgs())
         spotlights_effect.run()
 
 
 def test_orbittingvolley_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.top_launcher_symbol = "█"
-        args.right_launcher_symbol = "█"
-        args.bottom_launcher_symbol = "█"
-        args.left_launcher_symbol = "█"
-        args.final_gradient_stops = ["ffa51f", "ffa51f", "6177b3", "6177b3"]
-        args.final_gradient_steps = [6, 8, 10]
-        args.launcher_movement_speed = 0.5
-        args.character_movement_speed = 1
-        args.volley_size = 0.06
-        args.launch_delay = 1
-        args.character_easing = easing.out_sine
-        terminal = Terminal(input_data, args)
-        orbittingvolley_effect = effect_orbittingvolley.OrbittingVolleyEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        orbittingvolley_effect = effect_orbittingvolley.OrbittingVolleyEffect(
+            terminal, effect_orbittingvolley.OrbittingVolleyEffectArgs()
+        )
         orbittingvolley_effect.run()
 
 
 def test_overflow_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 6
-        args.overflow_gradient_stops = ["f2ebc0", "8dbfb3", "f2ebc0"]
-        args.overflow_cycles_range = (2, 4)
-        args.overflow_speed = 3
-        terminal = Terminal(input_data, args)
-        overflow_effect = effect_overflow.OverflowEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        overflow_effect = effect_overflow.OverflowEffect(terminal, effect_overflow.OverflowEffectArgs())
         overflow_effect.run()
 
 
 def test_beams_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.beam_row_symbols = "▂▁_"
-        args.beam_column_symbols = "▎▍▌"
-        args.beam_delay = 10
-        args.beam_row_speed_range = (10, 40)
-        args.beam_column_speed_range = (6, 10)
-        args.beam_gradient_stops = ["ffffff", "00D1FF", "8A008A"]
-        args.beam_gradient_steps = [2, 8]
-        args.beam_gradient_frames = 2
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 6
-        args.final_gradient_frames = 5
-        args.final_wipe_speed = 1
-        terminal = Terminal(input_data, args)
-        beams_effect = effect_beams.BeamsEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        beams_effect = effect_beams.BeamsEffect(terminal, effect_beams.BeamsEffectArgs())
         beams_effect.run()
 
 
 def test_synthgrid_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.grid_gradient_stops = ["ffffff", "000000"]
-        args.grid_gradient_steps = [12]
-        args.text_gradient_stops = ["8A008A", "00D1FF", "FFFFFF"]
-        args.text_gradient_steps = [12]
-        args.grid_row_symbol = "-"
-        args.grid_column_symbol = "|"
-        args.text_generation_symbols = ["a", "b", "c"]
-        args.max_active_blocks = 0.25
-        terminal = Terminal(input_data, args)
-        synthgrid_effect = effect_synthgrid.SynthGridEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        synthgrid_effect = effect_synthgrid.SynthGridEffect(terminal, effect_synthgrid.SynthGridEffectArgs())
         synthgrid_effect.run()
 
 
 def test_slide_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.grouping = "diagonal"
-        args.gradient_stops = ["8A008A", "00D1FF", "FFFFFF"]
-        args.gradient_steps = [12]
-        args.gradient_frames = 5
-        args.gradient_direction = graphics.Gradient.Direction.VERTICAL
-        args.gap = 1
-        args.merge = True
-        args.reverse_direction = False
-        args.easing = easing.out_quad
-        terminal = Terminal(input_data, args)
-        slide_effect = effect_slide.SlideEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        slide_effect = effect_slide.SlideEffect(terminal, effect_slide.SlideEffectArgs())
         slide_effect.run()
 
 
 def test_wipe_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.wipe_direction = "column_left_to_right"
-        args.gradient_stops = ["8A008A", "00D1FF", "FFFFFF"]
-        args.gradient_steps = [12]
-        args.gradient_frames = 5
-        args.wipe_delay = 0
-        terminal = Terminal(input_data, args)
-        wipe_effect = effect_wipe.WipeEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        wipe_effect = effect_wipe.WipeEffect(terminal, effect_wipe.WipeEffectArgs())
         wipe_effect.run()
 
 
 def test_binarypath_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.base_color = "265e3c"
-        args.binary_colors = ["044E29", "157e38", "45bf55", "95ed87"]
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 6
-        args.movement_speed = 1.0
-        args.active_binary_groups = 0.05
-        args.skip_final_wipe = False
-        terminal = Terminal(input_data, args)
-        binarypath_effect = effect_binarypath.BinaryPathEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        binarypath_effect = effect_binarypath.BinaryPathEffect(terminal, effect_binarypath.BinaryPathEffectArgs())
         binarypath_effect.run()
 
 
 def test_print_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 6
-        args.print_head_return_speed = 0.5
-        args.print_head_easing = easing.in_out_sine
-        args.print_speed = 1
-        terminal = Terminal(input_data, args)
-        print_effect = effect_print.PrintEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        print_effect = effect_print.PrintEffect(terminal, effect_print.PrintEffectArgs())
         print_effect.run()
 
 
 def test_waves_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.wave_gradient_stops = ["8A008A", "00D1FF", "FFFFFF", "00D1FF", "8A008A"]
-        args.wave_gradient_steps = 6
-        args.wave_symbols = "▁▂▃▄▅▆▇█▇▆▅▄▃▂▁"
-        args.wave_count = 6
-        args.wave_length = 2
-        args.wave_easing = easing.in_out_sine
-        terminal = Terminal(input_data, args)
-        waves_effect = effect_waves.WavesEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        waves_effect = effect_waves.WavesEffect(terminal, effect_waves.WavesEffectArgs())
         waves_effect.run()
 
 
 def test_vhstape_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.glitch_line_colors = ["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"]
-        args.glitch_wave_colors = ["ffffff", "ff0000", "00ff00", "0000ff", "ffffff"]
-        args.noise_colors = ["1e1e1f", "3c3b3d", "6d6c70", "a2a1a6", "cbc9cf", "ffffff"]
-        args.glitch_line_chance = 0.005
-        args.noise_chance = 0.004
-        args.total_glitch_time = 200
-        terminal = Terminal(input_data, args)
-        vhstape_effect = effect_vhstape.VHSTapeEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        vhstape_effect = effect_vhstape.VHSTapeEffect(terminal, effect_vhstape.VHSTapeEffectArgs())
         vhstape_effect.run()
 
 
 def test_rings_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.ring_colors = ["ff0000", "00ff00", "0000ff"]
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.ring_gap = 0.1
-        args.spin_duration = 10
-        args.spin_speed = (0.25, 1.0)
-        args.disperse_duration = 10
-        args.spin_disperse_cycles = 2
-        terminal = Terminal(input_data, args)
-        rings_effect = effect_rings.RingsEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        rings_effect = effect_rings.RingsEffect(terminal, effect_rings.RingsEffectArgs())
         rings_effect.run()
 
 
 def test_crumble_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        terminal = Terminal(input_data, args)
-        crumble_effect = effect_crumble.CrumbleEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        crumble_effect = effect_crumble.CrumbleEffect(terminal, effect_crumble.CrumbleEffectArgs())
         crumble_effect.run()
 
 
 def test_swarm_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.base_color = ["8A008A", "00D1FF", "FFFFFF"]
-        args.flash_color = "f2ea79"
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.swarm_size = 0.1
-        args.swarm_coordination = 0.8
-        args.swarm_area_count = [2, 4]
-        terminal = Terminal(input_data, args)
-        swarm_effect = effect_swarm.SwarmEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        swarm_effect = effect_swarm.SwarmEffect(terminal, effect_swarm.SwarmEffectArgs())
         swarm_effect.run()
 
 
 def test_errorcorrect_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.error_pairs = 0.2
-        args.swap_delay = 10
-        args.error_color = "e74c3c"
-        args.correct_color = "45bf55"
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.movement_speed = 0.5
-        terminal = Terminal(input_data, args)
-        errorcorrect_effect = effect_errorcorrect.ErrorCorrectEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        errorcorrect_effect = effect_errorcorrect.ErrorCorrectEffect(
+            terminal, effect_errorcorrect.ErrorCorrectEffectArgs()
+        )
         errorcorrect_effect.run()
 
 
 def test_middleout_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.starting_color = "ffffff"
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.expand_direction = "vertical"
-        args.center_movement_speed = 0.35
-        args.full_movement_speed = 0.35
-        args.center_easing = easing.in_out_sine
-        args.full_easing = easing.in_out_sine
-        terminal = Terminal(input_data, args)
-        middleout_effect = effect_middleout.MiddleoutEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        middleout_effect = effect_middleout.MiddleoutEffect(terminal, effect_middleout.MiddleoutEffectArgs())
         middleout_effect.run()
 
 
 def test_blackhole_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.star_colors = ["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c", "049dbf"]
-        args.blackhole_color = "ffffff"
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        terminal = Terminal(input_data, args)
-        blackhole_effect = effect_blackhole.BlackholeEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        blackhole_effect = effect_blackhole.BlackholeEffect(terminal, effect_blackhole.BlackholeEffectArgs())
         blackhole_effect.run()
 
 
 def test_bubbles_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.pop_color = "ff0000"
-        args.bubble_speed = 0.1
-        args.bubble_delay = 1
-        args.pop_condition = "row"
-        args.no_rainbow = False
-        terminal = Terminal(input_data, args)
-        bubbles_effect = effect_bubbles.BubblesEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        bubbles_effect = effect_bubbles.BubblesEffect(terminal, effect_bubbles.BubblesEffectArgs())
         bubbles_effect.run()
 
 
 def test_unstable_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.unstable_color = "ff9200"
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.explosion_ease = easing.out_expo
-        args.explosion_speed = 0.75
-        args.reassembly_ease = easing.out_expo
-        args.reassembly_speed = 0.75
-        terminal = Terminal(input_data, args)
-        unstable_effect = effect_unstable.UnstableEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        unstable_effect = effect_unstable.UnstableEffect(terminal, effect_unstable.UnstableEffectArgs())
         unstable_effect.run()
 
 
 def test_pour_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.pour_direction = effect_pour.PourDirection.DOWN
-        args.gap = 2
-        args.starting_color = "ffffff"
-        args.pour_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.pour_gradient_steps = 12
-        args.pour_gradient_frames = 15
-        terminal = Terminal(input_data, args)
-        pour_effect = effect_pour.PourEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        pour_effect = effect_pour.PourEffect(terminal, effect_pour.PourEffectArgs())
         pour_effect.run()
 
 
 def test_scattered_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.gradient_steps = 12
-        args.gradient_frames = 15
-        terminal = Terminal(input_data, args)
-        scattered_effect = effect_scattered.ScatteredEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        scattered_effect = effect_scattered.ScatteredEffect(terminal, effect_scattered.ScatteredEffectArgs())
         scattered_effect.run()
 
 
 def test_expand_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.final_gradient_frames = 5
-        terminal = Terminal(input_data, args)
-        expand_effect = effect_expand.ExpandEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        expand_effect = effect_expand.ExpandEffect(terminal, effect_expand.ExpandEffectArgs())
         expand_effect.run()
 
 
 def test_random_sequence_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.speed = 0.0001
-        args.starting_color = "000000"
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.final_gradient_frames = 5
-        terminal = Terminal(input_data, args)
-        random_sequence_effect = effect_random_sequence.RandomSequence(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        random_sequence_effect = effect_random_sequence.RandomSequence(
+            terminal, effect_random_sequence.RandomSequenceArgs()
+        )
         random_sequence_effect.run()
 
 
 def test_spray_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.spray_position = effect_spray.SprayPosition.SE
-        args.spray_volume = 0.005
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.movement_speed = (0.4, 1.0)
-        terminal = Terminal(input_data, args)
-        sparkler_effect = effect_spray.SprayEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        sparkler_effect = effect_spray.SprayEffect(terminal, effect_spray.SprayEffectArgs())
         sparkler_effect.run()
 
 
 def test_rain_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.rain_symbols = ["o", ".", ",", "*", "|"]
-        args.rain_colors = ["00315C", "004C8F", "0075DB", "3F91D9", "78B9F2", "9AC8F5", "B8D8F8", "E3EFFC"]
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.movement_speed = (0.1, 0.2)
-        terminal = Terminal(input_data, args)
-        rain_effect = effect_rain.RainEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        rain_effect = effect_rain.RainEffect(terminal, effect_rain.RainEffectArgs())
         rain_effect.run()
 
 
 def test_decrypt_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.ciphertext_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.ciphertext_gradient_steps = 12
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        terminal = Terminal(input_data, args)
-        decrypt_effect = effect_decrypt.DecryptEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        decrypt_effect = effect_decrypt.DecryptEffect(terminal, effect_decrypt.DecryptEffectArgs())
         decrypt_effect.run()
 
 
 def test_bouncyballs_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.ball_colors = ["fe0345", "03faf0", "34a00f"]
-        args.ball_symbols = ["o", "O", "0", "*", "."]
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.ball_delay = 5
-        terminal = Terminal(input_data, args)
-        bouncyballs_effect = effect_bouncyballs.BouncyBallsEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        bouncyballs_effect = effect_bouncyballs.BouncyBallsEffect(terminal, effect_bouncyballs.BouncyBallsEffectArgs())
         bouncyballs_effect.run()
 
 
 def test_verticalslice_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        terminal = Terminal(input_data, args)
-        verticalslice_effect = effect_verticalslice.VerticalSlice(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        verticalslice_effect = effect_verticalslice.VerticalSlice(terminal, effect_verticalslice.VerticalSliceArgs())
         verticalslice_effect.run()
 
 
 def test_burn_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.flame_color = "848484"
-        args.burned_color = "ff9600"
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        terminal = Terminal(input_data, args)
-        burn_effect = effect_burn.BurnEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        burn_effect = effect_burn.BurnEffect(terminal, effect_burn.BurnEffectArgs())
         burn_effect.run()
 
 
 def test_fireworks_effect() -> None:
     for input_data in test_inputs:
-        args = make_args()
-        args.firework_colors = ["fe0345", "03faf0", "34a00f"]
-        args.final_gradient_stops = ["8A008A", "00D1FF", "ffffff"]
-        args.final_gradient_steps = 12
-        args.explode_anywhere = False
-        args.firework_symbol = "⯏"
-        args.firework_volume = 0.08
-        args.launch_delay = 30
-        args.launch_easing = easing.out_expo
-        args.launch_speed = 0.2
-        args.explode_distance = 0.1
-        args.explode_easing = easing.out_quad
-        args.explode_speed = 0.3
-        args.fall_easing = easing.in_out_cubic
-        args.fall_speed = 0.4
-        terminal = Terminal(input_data, args)
-        fireworks_effect = effect_fireworks.FireworksEffect(terminal, args)
+        terminal = Terminal(input_data, terminal_args)
+        fireworks_effect = effect_fireworks.FireworksEffect(terminal, effect_fireworks.FireworksEffectArgs())
         fireworks_effect.run()

@@ -1,93 +1,96 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import argtypes, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return SynthGridEffect, SynthGridEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "synthgrid",
-        formatter_class=argtypes.CustomFormatter,
-        help="Create a grid which fills with characters dissolving into the final text.",
-        description="Create a grid which fills with characters dissolving into the final text.",
-        epilog="""Example: terminaltexteffects synthgrid --grid-gradient-stops 8A008A FFFFFF --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol │ --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1""",
-    )
-    effect_parser.set_defaults(effect_class=SynthGridEffect)
-    effect_parser.add_argument(
-        "--grid-gradient-stops",
-        type=argtypes.color,
+
+@argclass(
+    name="synthgrid",
+    formatter_class=argtypes.CustomFormatter,
+    help="Create a grid which fills with characters dissolving into the final text.",
+    description="Create a grid which fills with characters dissolving into the final text.",
+    epilog="""Example: terminaltexteffects synthgrid --grid-gradient-stops 8A008A FFFFFF --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol │ --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1""",
+)
+@dataclass
+class SynthGridEffectArgs(ArgsDataClass):
+    grid_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--grid-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["CC00CC", "ffffff"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("CC00CC", "ffffff"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the grid gradient.",
-    )
-    effect_parser.add_argument(
-        "--grid-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    grid_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--grid-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-
-    effect_parser.add_argument(
-        "--text-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    text_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--text-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the text gradient.",
-    )
-    effect_parser.add_argument(
-        "--text-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    text_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--text-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-
-    effect_parser.add_argument(
-        "--grid-row-symbol",
-        type=argtypes.symbol,
+    )  # type: ignore[assignment]
+    grid_row_symbol: str = ArgField(
+        cmd_name="--grid-row-symbol",
+        type_parser=argtypes.Symbol.type_parser,
         default="─",
-        metavar="(single character)",
+        metavar=argtypes.Symbol.METAVAR,
         help="Symbol to use for grid row lines.",
-    )
-    effect_parser.add_argument(
-        "--grid-column-symbol",
-        type=argtypes.symbol,
+    )  # type: ignore[assignment]
+    grid_column_symbol: str = ArgField(
+        cmd_name="--grid-column-symbol",
+        type_parser=argtypes.Symbol.type_parser,
         default="│",
-        metavar="(single character)",
+        metavar=argtypes.Symbol.METAVAR,
         help="Symbol to use for grid column lines.",
-    )
-    effect_parser.add_argument(
-        "--text-generation-symbols",
-        type=argtypes.symbol,
+    )  # type: ignore[assignment]
+    text_generation_symbols: tuple[str, ...] = ArgField(
+        cmd_name="--text-generation-symbols",
+        type_parser=argtypes.Symbol.type_parser,
         nargs="+",
-        default=["░", "▒", "▓"],
-        metavar="(characters)",
+        default=("░", "▒", "▓"),
+        metavar=argtypes.Symbol.METAVAR,
         help="Space separated, unquoted, list of characters for the text generation animation.",
-    )
-    effect_parser.add_argument(
-        "--max-active-blocks",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    max_active_blocks: float = ArgField(
+        cmd_name="--max-active-blocks",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.1,
-        metavar="(0 < n <= 1.0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return SynthGridEffect
 
 
 class GridLine:
-    def __init__(self, terminal: Terminal, args: argparse.Namespace, origin: Coord, direction: str):
+    def __init__(self, terminal: Terminal, args: SynthGridEffectArgs, origin: Coord, direction: str):
         self.terminal = terminal
         self.args = args
         self.origin = origin
@@ -96,7 +99,7 @@ class GridLine:
             self.grid_symbol = self.args.grid_row_symbol
         elif self.direction == "vertical":
             self.grid_symbol = self.args.grid_column_symbol
-        self.gradient = graphics.Gradient(self.args.grid_gradient_stops, self.args.grid_gradient_steps)
+        self.gradient = graphics.Gradient(*self.args.grid_gradient_stops, steps=self.args.grid_gradient_steps)
         self.characters: list[EffectCharacter] = []
         if direction == "horizontal":
             for column_index in range(self.terminal.output_area.left, self.terminal.output_area.right):
@@ -161,7 +164,7 @@ class GridLine:
 class SynthGridEffect:
     """Effect that creates a grid where blocks of characters dissolved into the input characters."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: SynthGridEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_groups: list[tuple[int, list[EffectCharacter]]] = []
@@ -234,7 +237,7 @@ class SynthGridEffect:
             self.grid_lines.append(
                 GridLine(self.terminal, self.args, Coord(column_index, self.terminal.output_area.bottom), "vertical")
             )
-        output_gradient = graphics.Gradient(self.args.text_gradient_stops, self.args.text_gradient_steps)
+        output_gradient = graphics.Gradient(*self.args.text_gradient_stops, steps=self.args.text_gradient_steps)
         if not row_indexes:
             row_indexes.append(self.terminal.output_area.top)
         else:

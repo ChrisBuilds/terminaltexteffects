@@ -1,118 +1,123 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return BeamsEffect, BeamsEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "beams",
-        formatter_class=argtypes.CustomFormatter,
-        help="Create beams which travel over the output area illuminating the characters behind them.",
-        description="Create beams which travel over the output area illuminating the characters behind them.",
-        epilog="""Example: terminaltexteffects beams --beam-row-symbols "▂▁_" --beam-column-symbols "▌▍▎▏" --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops ffffff 00D1FF 8A008A --final-gradient-steps 12 --final-gradient-frames 5 --final-wipe-speed 1""",
-    )
-    effect_parser.set_defaults(effect_class=BeamsEffect)
-    effect_parser.add_argument(
-        "--beam-row-symbols",
-        type=argtypes.symbol_multiple,
-        default="▂▁_",
-        metavar="(ASCII/UTF-8 character string)",
-        help="Symbols to use for the beam effect when moving along a row. Multi-character strings will be used in sequence to create an animation.",
-    )
-    effect_parser.add_argument(
-        "--beam-column-symbols",
-        type=argtypes.symbol_multiple,
-        default="▌▍▎▏",
-        metavar="(ASCII/UTF-8 character string)",
-        help="Symbols to use for the beam effect when moving along a column. Multi-character strings will be used in sequence to create an animation.",
-    )
-    effect_parser.add_argument(
-        "--beam-delay",
-        type=argtypes.positive_int,
+
+@argclass(
+    name="beams",
+    formatter_class=argtypes.CustomFormatter,
+    help="Create beams which travel over the output area illuminating the characters behind them.",
+    description="Create beams which travel over the output area illuminating the characters behind them.",
+    epilog="""Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops ffffff 00D1FF 8A008A --final-gradient-steps 12 --final-gradient-frames 5 --final-wipe-speed 1""",
+)
+@dataclass
+class BeamsEffectArgs(ArgsDataClass):
+    beam_row_symbols: tuple[str, ...] = ArgField(
+        cmd_name="--beam-row-symbols",
+        type_parser=argtypes.Symbol.type_parser,
+        default=("▂", "▁", "_"),
+        metavar=argtypes.Symbol.METAVAR,
+        help="Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation.",
+    )  # type: ignore[assignment]
+    beam_column_symbols: tuple[str, ...] = ArgField(
+        cmd_name="--beam-column-symbols",
+        type_parser=argtypes.Symbol.type_parser,
+        default=("▌", "▍", "▎", "▏"),
+        metavar=argtypes.Symbol.METAVAR,
+        help="Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation.",
+    )  # type: ignore[assignment]
+    beam_delay: int = ArgField(
+        cmd_name="--beam-delay",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=10,
-        metavar="(int > 0)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5).",
-    )
-    effect_parser.add_argument(
-        "--beam-row-speed-range",
-        type=argtypes.int_range,
-        default="10-40",
-        metavar="(int range e.g. 2-3)",
+    )  # type: ignore[assignment]
+    beam_row_speed_range: tuple[int, int] = ArgField(
+        cmd_name="--beam-row-speed-range",
+        type_parser=argtypes.IntRange.type_parser,
+        default=(10, 40),
+        metavar=argtypes.IntRange.METAVAR,
         help="Minimum speed of the beam when moving along a row.",
-    )
-    effect_parser.add_argument(
-        "--beam-column-speed-range",
-        type=argtypes.int_range,
-        default="6-10",
-        metavar="(int range e.g. 2-3)",
+    )  # type: ignore[assignment]
+    beam_column_speed_range: tuple[int, int] = ArgField(
+        cmd_name="--beam-column-speed-range",
+        type_parser=argtypes.IntRange.type_parser,
+        default=(6, 10),
+        metavar=argtypes.IntRange.METAVAR,
         help="Minimum speed of the beam when moving along a column.",
-    )
-    effect_parser.add_argument(
-        "--beam-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    beam_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--beam-gradient-stops",
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["ffffff", "00D1FF", "8A008A"],
+        default=("ffffff", "00D1FF", "8A008A"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors.",
-    )
-    effect_parser.add_argument(
-        "--beam-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    beam_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--beam-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[2, 8],
-        metavar="(int > 0)",
+        default=(2, 8),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
-    )
-    effect_parser.add_argument(
-        "--beam-gradient-frames",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    beam_gradient_frames: int = ArgField(
+        cmd_name="--beam-gradient-frames",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=2,
-        metavar="(int > 0)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--final-gradient-stops",
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "ffffff"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "ffffff"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int,] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-frames",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_frames: int = ArgField(
+        cmd_name="--final-gradient-frames",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=5,
-        metavar="(int > 0)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
-    )
-    effect_parser.add_argument(
-        "--final-wipe-speed",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_wipe_speed: int = ArgField(
+        cmd_name="--final-wipe-speed",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=1,
-        metavar="(int > 0)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Speed of the final wipe as measured in diagonal groups activated per frame.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return BeamsEffect
 
 
 class Group:
-    def __init__(self, characters: list[EffectCharacter], direction: str, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, characters: list[EffectCharacter], direction: str, terminal: Terminal, args: BeamsEffectArgs):
         self.characters = characters
         self.direction: str = direction
         self.terminal = terminal
@@ -151,7 +156,7 @@ class Group:
 class BeamsEffect:
     """Effect that creates beams which travel over the output area illuminated the characters behind them."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: BeamsEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_groups: list[Group] = []
@@ -159,14 +164,14 @@ class BeamsEffect:
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:  # testing
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters(fill_chars=True):
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
                 character.input_coord.row / self.terminal.output_area.top
             )
 
-        beam_gradient = graphics.Gradient(self.args.beam_gradient_stops, steps=self.args.beam_gradient_steps)
+        beam_gradient = graphics.Gradient(*self.args.beam_gradient_stops, steps=self.args.beam_gradient_steps)
         groups: list[Group] = []
         for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
             groups.append(Group(row, "row", self.terminal, self.args))
@@ -187,12 +192,10 @@ class BeamsEffect:
                 faded_color = character.animation.adjust_color_brightness(
                     self.character_final_color_map[character], 0.3
                 )
-                fade_gradient = graphics.Gradient([self.character_final_color_map[character], faded_color], steps=10)
+                fade_gradient = graphics.Gradient(self.character_final_color_map[character], faded_color, steps=10)
                 beam_row_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
                 beam_column_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
-                brighten_gradient = graphics.Gradient(
-                    [faded_color, self.character_final_color_map[character]], steps=10
-                )
+                brighten_gradient = graphics.Gradient(faded_color, self.character_final_color_map[character], steps=10)
                 brigthen_scn = character.animation.new_scene(id="brighten")
                 brigthen_scn.apply_gradient_to_symbols(
                     brighten_gradient, character.input_symbol, self.args.final_gradient_frames

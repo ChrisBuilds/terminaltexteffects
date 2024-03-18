@@ -1,85 +1,90 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import animation, easing, geometry, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return SwarmEffect, SwarmEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "swarm",
-        formatter_class=argtypes.CustomFormatter,
-        help="Characters are grouped into swarms and move around the terminal before settling into position.",
-        description="Characters are grouped into swarms and move around the terminal before settling into position.",
-        epilog="""Example: terminaltexteffects swarm --base-color 8A008A 00D1FF FFFFFF --flash-color f2ea79 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --swarm-size 0.1 --swarm-coordination 0.80 --swarm-area-count 2-4""",
-    )
-    effect_parser.set_defaults(effect_class=SwarmEffect)
-    effect_parser.add_argument(
-        "--base-color",
-        type=argtypes.color,
+
+@argclass(
+    name="swarm",
+    formatter_class=argtypes.CustomFormatter,
+    help="Characters are grouped into swarms and move around the terminal before settling into position.",
+    description="Characters are grouped into swarms and move around the terminal before settling into position.",
+    epilog="""Example: terminaltexteffects swarm --base-color 8A008A 00D1FF FFFFFF --flash-color f2ea79 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --swarm-size 0.1 --swarm-coordination 0.80 --swarm-area-count 2-4""",
+)
+@dataclass
+class SwarmEffectArgs(ArgsDataClass):
+    base_color: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--base-color"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the swarms",
-    )
-    effect_parser.add_argument(
-        "--flash-color",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    flash_color: graphics.Color = ArgField(
+        cmd_name=["--flash-color"],
+        type_parser=argtypes.Color.type_parser,
         default="f2ea79",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        metavar=argtypes.Color.METAVAR,
         help="Color for the character flash. Characters flash when moving.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name=["--final-gradient-steps"],
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--swarm-size",
-        type=argtypes.float_zero_to_one,
-        metavar="(float 0 < n <= 1)",
+    )  # type: ignore[assignment]
+    swarm_size: float = ArgField(
+        cmd_name="--swarm-size",
+        type_parser=argtypes.Ratio.type_parser,
+        metavar=argtypes.Ratio.METAVAR,
         default=0.1,
         help="Percent of total characters in each swarm.",
-    )
-    effect_parser.add_argument(
-        "--swarm-coordination",
-        type=argtypes.float_zero_to_one,
-        metavar="(float 0 < n <= 1)",
+    )  # type: ignore[assignment]
+    swarm_coordination: float = ArgField(
+        cmd_name="--swarm-coordination",
+        type_parser=argtypes.Ratio.type_parser,
+        metavar=argtypes.Ratio.METAVAR,
         default=0.80,
         help="Percent of characters in a swarm that move as a group.",
-    )
-    effect_parser.add_argument(
-        "--swarm-area-count",
-        type=argtypes.int_range,
-        metavar="(int range e.g. 2-3)",
-        default="2-4",
+    )  # type: ignore[assignment]
+    swarm_area_count: tuple[int, int] = ArgField(
+        cmd_name="--swarm-area-count",
+        type_parser=argtypes.IntRange.type_parser,
+        metavar=argtypes.IntRange.METAVAR,
+        default=(2, 4),
         help="Range of the number of areas where characters will swarm.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return SwarmEffect
 
 
 class SwarmEffect:
     """Characters behave with swarm characteristics before flying into position."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: SwarmEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -102,7 +107,7 @@ class SwarmEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by creating swarms of characters and setting waypoints and animations."""
         self.make_swarms()
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
@@ -110,7 +115,7 @@ class SwarmEffect:
             )
         flash_list = [self.args.flash_color for _ in range(10)]
         for swarm in self.swarms:
-            swarm_gradient = graphics.Gradient([random.choice(self.args.base_color), self.args.flash_color], 7)
+            swarm_gradient = graphics.Gradient(random.choice(self.args.base_color), self.args.flash_color, steps=7)
             swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
             swarm_area_coordinate_map: dict[Coord, list[Coord]] = {}
             swarm_spawn = self.terminal.output_area.random_coord(outside_scope=True)
@@ -172,7 +177,9 @@ class SwarmEffect:
                 input_path = character.motion.new_path(speed=0.3, ease=easing.in_out_quad)
                 input_path.new_waypoint(character.input_coord)
                 input_scn = character.animation.new_scene()
-                for step in graphics.Gradient([self.args.flash_color, self.character_final_color_map[character]], 10):
+                for step in graphics.Gradient(
+                    self.args.flash_color, self.character_final_color_map[character], steps=10
+                ):
                     input_scn.add_frame(character.input_symbol, 3, color=step)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.ACTIVATE_SCENE, input_scn

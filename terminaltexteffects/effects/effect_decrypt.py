@@ -1,57 +1,62 @@
-import argparse
 import random
+import typing
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import animation, argtypes, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return DecryptEffect, DecryptEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "decrypt",
-        help="Display a movie style decryption effect.",
-        description="decrypt | Movie style decryption effect.",
-        epilog="Example: terminaltexteffects decrypt --ciphertext-gradient-stops 8A008A 00D1FF FFFFFF --ciphertext-gradient-steps 12 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12",
-    )
-    effect_parser.set_defaults(effect_class=DecryptEffect)
-    effect_parser.add_argument(
-        "--ciphertext-gradient-stops",
-        type=argtypes.color,
+
+@argclass(
+    name="decrypt",
+    formatter_class=argtypes.CustomFormatter,
+    help="Display a movie style decryption effect.",
+    description="decrypt | Movie style decryption effect.",
+    epilog="Example: terminaltexteffects decrypt --ciphertext-gradient-stops 8A008A 00D1FF FFFFFF --ciphertext-gradient-steps 12 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12",
+)
+@dataclass
+class DecryptEffectArgs(ArgsDataClass):
+    ciphertext_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--ciphertext-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--ciphertext-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    ciphertext_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--ciphertext-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return DecryptEffect
 
 
 @dataclass
@@ -67,7 +72,7 @@ class DecryptChars:
 class DecryptEffect:
     """Effect that shows a movie style text decryption effect."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: DecryptEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -104,7 +109,7 @@ class DecryptEffect:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
             slow_decrypt_scene.add_frame(symbol, duration, color=self.character_cipher_text_map[character])
         discovered_scene = character.animation.new_scene(id="discovered")
-        discovered_gradient = graphics.Gradient(["ffffff", self.character_final_color_map[character]], 10)
+        discovered_gradient = graphics.Gradient("ffffff", self.character_final_color_map[character], steps=10)
         discovered_scene.apply_gradient_to_symbols(discovered_gradient, character.input_symbol, 20)
 
     def prepare_data_for_type_effect(self) -> None:
@@ -140,8 +145,10 @@ class DecryptEffect:
 
     def run(self) -> None:
         """Runs the effect."""
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
-        cipertext_gradient = graphics.Gradient(self.args.ciphertext_gradient_stops, self.args.ciphertext_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        cipertext_gradient = graphics.Gradient(
+            *self.args.ciphertext_gradient_stops, steps=self.args.ciphertext_gradient_steps
+        )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
                 character.input_coord.row / self.terminal.output_area.top

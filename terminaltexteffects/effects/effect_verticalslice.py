@@ -1,63 +1,67 @@
-import argparse
+import typing
+from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import argtypes, graphics
+from terminaltexteffects.utils import argtypes, easing, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return VerticalSlice, VerticalSliceArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "verticalslice",
-        formatter_class=argtypes.CustomFormatter,
-        help="Slices the input in half vertically and slides it into place from opposite directions.",
-        description="verticalslice | Slices the input in half vertically and slides it into place from opposite directions.",
-        epilog=f"""{argtypes.EASING_EPILOG}
-        
-Example: terminaltexteffects verticalslice --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5 --easing IN_OUT_EXPO""",
-    )
-    effect_parser.set_defaults(effect_class=VerticalSlice)
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+
+@argclass(
+    name="verticalslice",
+    formatter_class=argtypes.CustomFormatter,
+    help="Slices the input in half vertically and slides it into place from opposite directions.",
+    description="verticalslice | Slices the input in half vertically and slides it into place from opposite directions.",
+    epilog=f"""{argtypes.EASING_EPILOG}
+    
+Example: terminaltexteffects verticalslice --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5 --movement-easing IN_OUT_EXPO""",
+)
+@dataclass
+class VerticalSliceArgs(ArgsDataClass):
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-
-    effect_parser.add_argument(
-        "--movement-speed",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    movement_speed: float = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.5,
-        metavar="(float > 0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
-    )
-    effect_parser.add_argument(
-        "--easing",
-        default="IN_OUT_EXPO",
-        type=argtypes.ease,
+    )  # type: ignore[assignment]
+    movement_easing: easing.EasingFunction = ArgField(
+        cmd_name="--movement-easing",
+        type_parser=argtypes.Ease.type_parser,
+        default=easing.in_out_expo,
         help="Easing function to use for character movement.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return VerticalSlice
 
 
 class VerticalSlice:
     """Effect that slices the input in half vertically and slides it into place from opposite directions."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: VerticalSliceArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -69,7 +73,7 @@ class VerticalSlice:
         """Prepares the data for the effect by setting the left half to start at the top and the
         right half to start at the bottom, and creating rows consisting off halves from opposite
         input rows."""
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
 
         for character in self.terminal.get_characters():
             character.animation.set_appearance(
@@ -85,14 +89,18 @@ class VerticalSlice:
             left_half = [character for character in row if character.input_coord.column <= mid_point]
             for character in left_half:
                 character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
-                input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+                input_coord_path = character.motion.new_path(
+                    speed=self.args.movement_speed, ease=self.args.movement_easing
+                )
                 input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
             opposite_row = self.rows[-(row_index + 1)]
             right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
             for character in right_half:
                 character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.bottom))
-                input_coord_path = character.motion.new_path(speed=self.args.movement_speed, ease=self.args.easing)
+                input_coord_path = character.motion.new_path(
+                    speed=self.args.movement_speed, ease=self.args.movement_easing
+                )
                 input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
             new_row.extend(left_half)

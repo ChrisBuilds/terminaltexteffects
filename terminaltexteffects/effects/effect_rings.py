@@ -1,93 +1,105 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import easing, geometry, graphics, motion
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return RingsEffect, RingsEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "rings",
-        formatter_class=argtypes.CustomFormatter,
-        help="Characters are dispersed and form into spinning rings.",
-        description="Characters are dispersed and form into spinning rings.",
-        epilog="""Example: terminaltexteffects rings --ring-colors 8A008A 00D1FF FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 --disperse-duration 200 --spin-disperse-cycles 3""",
-    )
-    effect_parser.set_defaults(effect_class=RingsEffect)
-    effect_parser.add_argument(
-        "--ring-colors",
-        type=argtypes.color,
+
+@argclass(
+    name="rings",
+    formatter_class=argtypes.CustomFormatter,
+    help="Characters are dispersed and form into spinning rings.",
+    description="Characters are dispersed and form into spinning rings.",
+    epilog="""Example: terminaltexteffects rings --ring-colors 8A008A 00D1FF FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 --disperse-duration 200 --spin-disperse-cycles 3""",
+)
+@dataclass
+class RingsEffectArgs(ArgsDataClass):
+    ring_colors: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--ring-colors"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the rings.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name=["--final-gradient-steps"],
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--ring-gap",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+
+    ring_gap: float = ArgField(
+        cmd_name=["--ring-gap"],
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.1,
         help="Distance between rings as a percent of the smallest output area dimension.",
-    )
-    effect_parser.add_argument(
-        "--spin-duration",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+
+    spin_duration: int = ArgField(
+        cmd_name=["--spin-duration"],
+        type_parser=argtypes.PositiveInt.type_parser,
         default=200,
         help="Number of animation steps for each cycle of the spin phase.",
-    )
-    effect_parser.add_argument(
-        "--spin-speed",
-        type=argtypes.float_range,
+    )  # type: ignore[assignment]
+
+    spin_speed: tuple[float, float] = ArgField(
+        cmd_name=["--spin-speed"],
+        type_parser=argtypes.PositiveFloatRange.type_parser,
         default=(0.25, 1.0),
-        metavar="(float range e.g. 0.25-1.0)",
+        metavar=argtypes.PositiveFloatRange.METAVAR,
         help="Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring.",
-    )
-    effect_parser.add_argument(
-        "--disperse-duration",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+
+    disperse_duration: int = ArgField(
+        cmd_name=["--disperse-duration"],
+        type_parser=argtypes.PositiveInt.type_parser,
         default=200,
         help="Number of animation steps spent in the dispersed state between spinning cycles.",
-    )
-    effect_parser.add_argument(
-        "--spin-disperse-cycles",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+
+    spin_disperse_cycles: int = ArgField(
+        cmd_name=["--spin-disperse-cycles"],
+        type_parser=argtypes.PositiveInt.type_parser,
         default=3,
         help="Number of times the animation will cycles between spinning rings and dispersed characters.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return RingsEffect
 
 
 class Ring:
     def __init__(
         self,
-        args: argparse.Namespace,
+        args: RingsEffectArgs,
         radius: int,
         origin: Coord,
         ring_coords: list[Coord],
         ring_gap: int,
-        ring_color: str,
+        ring_color: graphics.Color,
         character_color_map: dict[EffectCharacter, graphics.Color],
     ):
         self.args = args
@@ -106,7 +118,7 @@ class Ring:
     def add_character(self, character: EffectCharacter, clockwise: int) -> None:
         # make gradient scene
         gradient_scn = character.animation.new_scene(id="gradient")
-        char_gradient = graphics.Gradient([self.character_color_map[character], self.ring_color], 8)
+        char_gradient = graphics.Gradient(self.character_color_map[character], self.ring_color, steps=8)
         gradient_scn.apply_gradient_to_symbols(char_gradient, character.input_symbol, 5)
 
         # make rotation waypoints
@@ -123,7 +135,7 @@ class Ring:
         self.character_last_ring_path[character] = ring_paths[0]
         # make disperse scene
         disperse_scn = character.animation.new_scene(is_looping=False, id="disperse")
-        disperse_gradient = graphics.Gradient([self.ring_color, self.character_color_map[character]], 8)
+        disperse_gradient = graphics.Gradient(self.ring_color, self.character_color_map[character], steps=8)
         disperse_scn.apply_gradient_to_symbols(disperse_gradient, character.input_symbol, 16)
         character.motion.chain_paths(ring_paths, loop=True)
         self.characters.append(character)
@@ -172,7 +184,7 @@ class Ring:
 class RingsEffect:
     """Effect that forms the characters into rings."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: RingsEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -187,7 +199,7 @@ class RingsEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by building rings and associated animations/waypoints."""
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
                 character.input_coord.row / self.terminal.output_area.top

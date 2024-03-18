@@ -1,90 +1,95 @@
-import argparse
 import random
+import typing
+from dataclasses import dataclass
 
 import terminaltexteffects.utils.argtypes as argtypes
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import easing, geometry, graphics
+from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
 
 
-def add_arguments(subparsers: argparse._SubParsersAction) -> None:
-    """Adds arguments to the subparser.
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return BubblesEffect, BubblesEffectArgs
 
-    Args:
-        subparser (argparse._SubParsersAction): subparser to add arguments to
-    """
-    effect_parser = subparsers.add_parser(
-        "bubbles",
-        formatter_class=argtypes.CustomFormatter,
-        help="Characters are formed into bubbles that float down and pop.",
-        description="Characters are formed into bubbles that float down and pop.",
-        epilog=f"""{argtypes.EASING_EPILOG}
 
+@argclass(
+    name="bubbles",
+    formatter_class=argtypes.CustomFormatter,
+    help="Characters are formed into bubbles that float down and pop.",
+    description="Characters are formed into bubbles that float down and pop.",
+    epilog=f"""{argtypes.EASING_EPILOG}
 Example: terminaltexteffects bubbles --no-rainbow --bubble-color 00ff00 --pop-color ff0000 --final-gradient-stops 00ff00 ff0000 0000ff --final-gradient-steps 12 --bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE""",
-    )
-    effect_parser.set_defaults(effect_class=BubblesEffect)
-    effect_parser.add_argument(
-        "--no-rainbow",
+)
+@dataclass
+class BubblesEffectArgs(ArgsDataClass):
+    no_rainbow: bool = ArgField(
+        cmd_name="--no-rainbow",
         action="store_true",
         help="If set, the bubbles will not be colored with a rainbow gradient.",
-    )
-    effect_parser.add_argument(
-        "--bubble-color",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    bubble_color: graphics.Color = ArgField(
+        cmd_name="--bubble-color",
+        type_parser=argtypes.Color.type_parser,
         default="ffffff",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        metavar=argtypes.Color.METAVAR,
         help="Color for the bubbles. Ignored if --no-rainbow is left as default False.",
-    )
-    effect_parser.add_argument(
-        "--pop-color",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    pop_color: graphics.Color = ArgField(
+        cmd_name="--pop-color",
+        type_parser=argtypes.Color.type_parser,
         default="ffffff",
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        metavar=argtypes.Color.METAVAR,
         help="Color for the spray emitted when a bubble pops.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-stops",
-        type=argtypes.color,
+    )  # type: ignore[assignment]
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argtypes.Color.type_parser,
         nargs="+",
-        default=["8A008A", "00D1FF", "FFFFFF"],
-        metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
+        default=("8A008A", "00D1FF", "FFFFFF"),
+        metavar=argtypes.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )
-    effect_parser.add_argument(
-        "--final-gradient-steps",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argtypes.PositiveInt.type_parser,
         nargs="+",
-        default=[12],
-        metavar="(int > 0)",
+        default=(12,),
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )
-    effect_parser.add_argument(
-        "--bubble-speed",
-        type=argtypes.positive_float,
+    )  # type: ignore[assignment]
+    bubble_speed: float = ArgField(
+        cmd_name="--bubble-speed",
+        type_parser=argtypes.PositiveFloat.type_parser,
         default=0.1,
-        metavar="(float > 0)",
+        metavar=argtypes.PositiveFloat.METAVAR,
         help="Speed of the floating bubbles. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
-    )
-    effect_parser.add_argument(
-        "--bubble-delay",
-        type=argtypes.positive_int,
+    )  # type: ignore[assignment]
+    bubble_delay: int = ArgField(
+        cmd_name="--bubble-delay",
+        type_parser=argtypes.PositiveInt.type_parser,
         default=50,
-        metavar="(int > 0)",
+        metavar=argtypes.PositiveInt.METAVAR,
         help="Number of animation steps between bubbles.",
-    )
-    effect_parser.add_argument(
-        "--pop-condition",
+    )  # type: ignore[assignment]
+    pop_condition: str = ArgField(
+        cmd_name="--pop-condition",
         default="row",
         choices=["row", "bottom", "anywhere"],
         help="Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal.",
-    )
-    effect_parser.add_argument(
-        "--easing",
-        default="IN_OUT_SINE",
-        type=argtypes.ease,
+    )  # type: ignore[assignment]
+    easing: typing.Callable = ArgField(
+        cmd_name=["--easing"],
+        default=easing.in_out_sine,
+        type_parser=argtypes.Ease.type_parser,
+        metavar=argtypes.Ease.METAVAR,
         help="Easing function to use for character movement after a bubble pops.",
-    )
+    )  # type: ignore[assignment]
+
+    @classmethod
+    def get_effect_class(cls):
+        return BubblesEffect
 
 
 class Bubble:
@@ -186,7 +191,7 @@ class Bubble:
 class BubblesEffect:
     """Effect that forms circles with the characters. Circles float down and pop into the characters."""
 
-    def __init__(self, terminal: Terminal, args: argparse.Namespace):
+    def __init__(self, terminal: Terminal, args: BubblesEffectArgs):
         self.terminal = terminal
         self.args = args
         self.pending_chars: list[EffectCharacter] = []
@@ -199,11 +204,11 @@ class BubblesEffect:
         blue = "487de7"
         indigo = "4b369d"
         violet = "70369d"
-        self.rainbow_gradient = graphics.Gradient([red, orange, yellow, green, blue, indigo, violet], 5)
+        self.rainbow_gradient = graphics.Gradient(red, orange, yellow, green, blue, indigo, violet, steps=5)
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
-        final_gradient = graphics.Gradient(self.args.final_gradient_stops, self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
                 character.input_coord.row / self.terminal.output_area.top
@@ -215,7 +220,7 @@ class BubblesEffect:
             pop_2_scene.add_frame("'", 20, color=self.args.pop_color)
             final_scene = character.animation.new_scene()
             char_final_gradient = graphics.Gradient(
-                [self.args.pop_color, self.character_final_color_map[character]], 10
+                self.args.pop_color, self.character_final_color_map[character], steps=10
             )
             final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
             character.event_handler.register_event(
