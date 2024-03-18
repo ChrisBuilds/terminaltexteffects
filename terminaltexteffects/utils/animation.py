@@ -3,7 +3,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from terminaltexteffects.utils import ansitools, colorterm, graphics, hexterm
+from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, hexterm
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects import base_character
@@ -123,14 +123,14 @@ class Scene:
         scene_id: str,
         is_looping: bool = False,
         sync: SyncMetric | None = None,
-        ease: typing.Callable | None = None,
+        ease: easing.EasingFunction | None = None,
         no_color: bool = False,
         use_xterm_colors: bool = False,
     ):
         self.scene_id = scene_id
         self.is_looping = is_looping
         self.sync: SyncMetric | None = sync
-        self.ease: typing.Callable | None = ease
+        self.ease: easing.EasingFunction | None = ease
         self.no_color = no_color
         self.use_xterm_colors = use_xterm_colors
         self.frames: list[Frame] = []
@@ -301,7 +301,7 @@ class Animation:
         *,
         is_looping: bool = False,
         sync: SyncMetric | None = None,
-        ease: typing.Callable | None = None,
+        ease: easing.EasingFunction | None = None,
         id: str = "",
     ) -> Scene:
         """Creates a new Scene and adds it to the Animation.
@@ -310,7 +310,7 @@ class Animation:
             id (str): Unique name for the scene. Used to query for the scene.
             is_looping (bool): Whether the scene should loop.
             sync (SyncMetric): The type of sync to use for the scene.
-            ease (typing.Callable): The easing function to use for the scene.
+            ease (easing.EasingFunction): The easing function to use for the scene.
 
         Returns:
             Scene: the new Scene
@@ -462,11 +462,11 @@ class Animation:
             return hexterm.hex_to_xterm(adjusted_color)
         return adjusted_color
 
-    def _ease_animation(self, easing_func: typing.Callable) -> float:
+    def _ease_animation(self, easing_func: easing.EasingFunction) -> float:
         """Returns the percentage of total distance that should be moved based on the easing function.
 
         Args:
-            easing_func (Callable): The easing function to use.
+            easing_func (easing.EasingFunction): The easing function to use.
 
         Returns:
             float: The percentage of total distance to move.

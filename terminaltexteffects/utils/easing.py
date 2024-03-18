@@ -1,4 +1,7 @@
 import math
+import typing
+
+EasingFunction: typing.TypeAlias = typing.Callable[[float], float]
 
 
 def in_sine(step_ratio: float) -> float:
