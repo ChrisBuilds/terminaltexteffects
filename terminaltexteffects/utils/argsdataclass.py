@@ -69,9 +69,42 @@ class ArgParserDescriptor:
 
 @dataclass
 class ArgsDataClass:
+    """
+    A dataclass that represents command-line arguments and provides methods for handling them.
+
+    This class provides a structured way to define and work with command-line arguments. It uses Python's built-in
+    dataclasses and the argparse module to parse command-line arguments and create an instance of the class from them.
+
+    Note:
+        This class does not define any fields itself. Instead, it is meant to be subclassed, with subclasses defining
+        their own fields to represent the command-line arguments they expect.
+    """
+
     @classmethod
     def from_parsed_args_mapping(cls, parsed_args: argparse.Namespace, arg_class=None):
-        # parsed_args.
+        """
+        Creates an instance of the ArgsDataClass from parsed command-line arguments.
+
+        This method takes a Namespace object, which is the result of parsing command-line arguments with argparse, and an
+        optional class to instantiate. If no class is provided, it uses the 'arg_class' attribute from the parsed_args.
+
+        It retrieves the signature of the __init__ method of the target class and iterates over its parameters. For each
+        parameter, it gets the corresponding value from the parsed_args. If the value is a list (which can happen if the
+        argument was defined with nargs="+" or nargs="*"), it converts the list to a tuple.
+
+        It then creates a new instance of the target class, passing the collected parameters as keyword arguments.
+
+        Args:
+            parsed_args (argparse.Namespace): The parsed command-line arguments.
+            arg_class (Optional[Type]): The class to instantiate. If None, uses 'arg_class' attribute from parsed_args.
+
+        Returns:
+            An instance of the target class, initialized with values from the parsed_args.
+
+        Note:
+            This method assumes that the names of the command-line arguments match the parameter names of the target class's
+            __init__ method. If this is not the case, it may not work as expected.
+        """
         if arg_class is None:
             arg_class = parsed_args.arg_class
 
@@ -90,7 +123,19 @@ class ArgsDataClass:
         return new_instance
 
     @classmethod
-    def get_All_fields(cls) -> dict[str, Field]:
+    def get_all_fields(cls) -> dict[str, Field]:
+        """
+        Retrieves all fields defined in the ArgsDataClass and returns them as a dictionary.
+
+        This method uses the `fields` function from the `dataclasses` module to get a list of all fields defined in the
+        ArgsDataClass. It then iterates over these fields, adding each one to a dictionary with the field's name as the key
+        and the field itself as the value.
+
+        Returns:
+            dict[str, Field]: A dictionary mapping field names to their corresponding Field objects. Each Field object
+                            contains information about the field, such as its name, type, and any default values or
+                            metadata it may have.
+        """
         fields_list = {}
         for f in fields(cls):
             fields_list[f.name] = f
@@ -98,8 +143,27 @@ class ArgsDataClass:
         return fields_list
 
     @classmethod
-    def add_args_to_parser(cls, parser):
-        args = cls.get_All_fields()
+    def add_args_to_parser(cls, parser: argparse.ArgumentParser):
+        """
+        Adds arguments to the provided parser based on the fields defined in the ArgsDataClass.
+
+        This method iterates over all fields in the ArgsDataClass. For each field, it checks if it has metadata.
+        If metadata is present, it creates an instance of FieldAdditionalMetaData using the metadata.
+        It then prepares a dictionary of argument descriptors, mapping field names to their corresponding values.
+        These descriptors are used to add an argument to the parser with the `add_argument` method.
+
+        Args:
+            parser (argparse.ArgumentParser): The parser to which arguments will be added. Each argument corresponds
+                                            to a field in the ArgsDataClass, and the argument's properties are
+                                            determined by the field's metadata.
+
+        Note:
+            The 'type_parser' field name is specially handled and mapped to 'type' in the argument descriptors.
+            The 'cmd_name' field is used as the name of the argument added to the parser. If 'cmd_name' is a string,
+            it is wrapped in a list before being passed to `add_argument`.
+            If a field has no metadata, it is skipped and no corresponding argument is added to the parser.
+        """
+        args = cls.get_all_fields()
         for arg in args.values():
             if not arg.metadata:
                 continue
@@ -133,8 +197,6 @@ class ArgsDataClass:
         new_parser = subparsers.add_parser(**vars(sub_parser_descriptor))
         new_parser.set_defaults(arg_class=cls)
         cls.add_args_to_parser(new_parser)
-
-    # arg_class_metadata:ArgParserDescriptor|None= None
 
 
 def argclass(name: str, formatter_class: typing.Any, help: str, description: str, epilog: str):
