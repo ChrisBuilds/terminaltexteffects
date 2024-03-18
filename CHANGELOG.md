@@ -17,8 +17,8 @@
  * graphics.Gradient, if printed, will show a colored spectrum and the description of its stops and steps.
  * The Scene class has a new method: apply_gradient_to_symbols(). This method will iterate over a list of symbols and apply the colors from a gradient to the symbols. A frame with the symbol will be added for each color starting from the last color used in the previous symbol, up to the the index determined by the ratio of the current symbol's index in the symbols list to the total length of the list. This method allows scenes to automatically create frames from a list of symbols and gradient of arbitrary length while ensuring every symbol and color is displayed.
  * On instatiation, Terminal creates EffectCharacters for every coordinate in the output area that does not have an input character. These EffectCharacters have the symbol " " and are stored in Terminal._fill_characters as well as added to Terminal.character_by_input_coord.
- * arg_validators.int_range will validate a range specified as "int-int" and return a tuple[int,int].
- * arg_validators.float_range will validate a range of floats specified as "float-float" and return a tuple[float, float].
+ * arg_validators.IntRange will validate a range specified as "int-int" and return a tuple[int,int].
+ * arg_validators.FloatRange will validate a range of floats specified as "float-float" and return a tuple[float, float].
  * character.animation.set_appearance(symbol, color) will set the character symbol in color directly. If a Scene is active, the appearance will be overwritten with the Scene frame on the next call to step_animation(). This method is intended for the occasion where a full scene isn't needed, or the appearance needs to be set based on conditions not compatible with Scenes or the EventHandler. For example, setting the color based on the terminal row. 
  * Terminal.CharacterSort enums moved to Terminal.CharacterGroup, Terminal.CharacterSort is now used for sorting and return a flat list of characters.
  * Terminal.CharacterSort has new sort methods, TOP_TO_BOTTOM_LEFT_TO_RIGHT, TOP_TO_BOTTOM_RIGHT_TO_LEFT, BOTTOM_TO_TOP_LEFT_TO_RIGHT, BOTTOM_TO_TOP_RIGHT_TO_LEFT, OUTSIDE_ROW_TO_MIDDLE, MIDDLE_ROW_TO_OUTSIDE
@@ -27,7 +27,8 @@
    an RGB hex string.
  * CTRL-C keyboard interrupt during a running effect will exit gracefully.
  * geometry.find_coords_in_circle() has been rewritten to find all coords which fall in an ellipse. The result is a circle due to the height/width ratio of terminal cells. This function now finds all terminal coordinates within the 'circle' rather than an arbitrary subset.
- 
+ * All command line arguments are typed allowing for more easily defined and tested effect args. 
+
 ### Changes
 #### Effects
  * All effects have been updated to use the latest API calls for improved performance.
@@ -55,6 +56,9 @@
  * Setting EffectCharacter visibility is now done via Terminal.set_character_visibility(). This enables the terminal to keep track of all visible characters without needing to iterate over all characters on every call to _update_terminal_state().
  * EventHandler.Action.SET_CHARACTER_VISIBILITY_STATE has been removed as visibilty state is handled by the Terminal. To enable visibility state changes through the event system, us a CALLBACK action with target EventHandler.Callback(terminal.set_character_visibility, True/False).
  * geometry.find_points_on_circle() num_points arg renamed to points_limit and new arg unique: bool, added to remove any duplicate Coords.
+ * The animation rate argument (-a, --animation-rate) has been removed from all effects and is handled as a terminal argument specified prior to the effect name.
+ * argtypes.py has been renamed arg_validators.py and all functions have been refactored into classes with a METAVAR class member and a type_parser method.
+ * easing.EasingFunction type alias used anywhere an easing function is accepted.
 
 ### Bug Fixes
 #### Effects
@@ -62,7 +66,7 @@
 
 #### Engine
  * Fixed division by zero error in geometry.find_coord_at_distance() when the origin coord and the target coord are the same.
- * Fixed gradient generating an extra color in the spectrum when the initial color pair was repeated. Ex: Gradient(['ffffff','000000','ffffff','000000], 5) would result in the third color 'ffffff' being added to the spectrum when it was already present as the end of the generation from '000000'->'ffffff'. 
+ * Fixed gradient generating an extra color in the spectrum when the initial color pair was repeated. Ex: Gradient('ffffff','000000','ffffff','000000, steps=5) would result in the third color 'ffffff' being added to the spectrum when it was already present as the end of the generation from '000000'->'ffffff'. 
 
 ## 0.6.0
 
