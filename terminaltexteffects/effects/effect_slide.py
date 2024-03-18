@@ -1,7 +1,7 @@
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import easing, geometry, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -14,10 +14,10 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="slide",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Slide characters into view from outside the terminal.",
     description="slide | Slide characters into view from outside the terminal, grouped by row, column, or diagonal.",
-    epilog=f"""{argtypes.EASING_EPILOG}
+    epilog=f"""{arg_validators.EASING_EPILOG}
     
 Example: terminaltexteffects slide --movement-speed 0.5 --grouping row --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --gradient-frames 10 --gradient-direction vertical --gap 3 --reverse-direction --movement-easing OUT_QUAD""",
 )
@@ -25,9 +25,9 @@ Example: terminaltexteffects slide --movement-speed 0.5 --grouping row --gradien
 class SlideEffectArgs(ArgsDataClass):
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
-        type_parser=argtypes.PositiveFloat.type_parser,
+        type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.5,
-        metavar=argtypes.PositiveFloat.METAVAR,
+        metavar=arg_validators.PositiveFloat.METAVAR,
         help="Speed of the characters.",
     )  # type: ignore[assignment]
     grouping: str = ArgField(
@@ -38,37 +38,37 @@ class SlideEffectArgs(ArgsDataClass):
     )  # type: ignore[assignment]
     gradient_stops: tuple[int | str, ...] = ArgField(
         cmd_name=["--gradient-stops"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     gradient_frames: int = ArgField(
         cmd_name="--gradient-frames",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         default=10,
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]
     gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--gradient-direction",
         default=graphics.Gradient.Direction.VERTICAL,
-        type_parser=argtypes.GradientDirection.type_parser,
+        type_parser=arg_validators.GradientDirection.type_parser,
         help="Direction of the gradient (vertical, horizontal, diagonal, center).",
     )  # type: ignore[assignment]
     gap: int = ArgField(
         cmd_name="--gap",
-        type_parser=argtypes.NonNegativeInt.type_parser,
+        type_parser=arg_validators.NonNegativeInt.type_parser,
         default=3,
-        metavar=argtypes.NonNegativeInt.METAVAR,
+        metavar=arg_validators.NonNegativeInt.METAVAR,
         help="Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect.",
     )  # type: ignore[assignment]
     reverse_direction: bool = ArgField(
@@ -84,8 +84,8 @@ class SlideEffectArgs(ArgsDataClass):
     movement_easing: easing.EasingFunction = ArgField(
         cmd_name=["--movement-easing"],
         default=easing.in_out_quad,
-        type_parser=argtypes.Ease.type_parser,
-        metavar=argtypes.Ease.METAVAR,
+        type_parser=arg_validators.Ease.type_parser,
+        metavar=arg_validators.Ease.METAVAR,
         help="Easing function to use for character movement.",
     )  # type: ignore[assignment]
 

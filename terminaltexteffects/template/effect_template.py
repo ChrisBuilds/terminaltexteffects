@@ -1,6 +1,6 @@
 import argparse
 
-import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.terminal import Terminal
@@ -14,24 +14,24 @@ def add_arguments(subparsers: argparse._SubParsersAction) -> None:
     """
     effect_parser = subparsers.add_parser(
         "effect_name",
-        formatter_class=argtypes.CustomFormatter,
+        formatter_class=arg_validators.CustomFormatter,
         help="effect_description",
         description="effect_description",
-        epilog=f"""{argtypes.EASING_EPILOG}
+        epilog=f"""{arg_validators.EASING_EPILOG}
 
 Example: effect_example""",
     )
     effect_parser.set_defaults(effect_class=NamedEffect)
     effect_parser.add_argument(
         "--color-single",
-        type=argtypes.color,
+        type=arg_validators.color,
         default=0,
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the ___.",
     )
     effect_parser.add_argument(
         "--color-list",
-        type=argtypes.color,
+        type=arg_validators.color,
         nargs="+",
         default=0,
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -39,14 +39,14 @@ Example: effect_example""",
     )
     effect_parser.add_argument(
         "--final-color",
-        type=argtypes.color,
+        type=arg_validators.color,
         default="ffffff",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the final character.",
     )
     effect_parser.add_argument(
         "--final-gradient-stops",
-        type=argtypes.color,
+        type=arg_validators.color,
         nargs="+",
         default=["8A008A", "00D1FF", "FFFFFF"],
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -54,7 +54,7 @@ Example: effect_example""",
     )
     effect_parser.add_argument(
         "--final-gradient-steps",
-        type=argtypes.positive_int,
+        type=arg_validators.positive_int,
         nargs="+",
         default=[12],
         metavar="(int > 0)",
@@ -62,14 +62,14 @@ Example: effect_example""",
     )
     effect_parser.add_argument(
         "--final-gradient-frames",
-        type=argtypes.positive_int,
+        type=arg_validators.positive_int,
         default=5,
         metavar="(int > 0)",
         help="Number of frames to display each gradient step.",
     )
     effect_parser.add_argument(
         "--movement-speed",
-        type=argtypes.positive_float,
+        type=arg_validators.positive_float,
         default=1,
         metavar="(float > 0)",
         help="Speed of the ___.",
@@ -77,7 +77,7 @@ Example: effect_example""",
     effect_parser.add_argument(
         "--easing",
         default="IN_OUT_SINE",
-        type=argtypes.ease,
+        type=arg_validators.ease,
         help="Easing function to use for character movement.",
     )
 

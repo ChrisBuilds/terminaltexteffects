@@ -3,7 +3,7 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import animation, argtypes, graphics
+from terminaltexteffects.utils import animation, arg_validators, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.terminal import Terminal
 
@@ -14,7 +14,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="decrypt",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Display a movie style decryption effect.",
     description="decrypt | Movie style decryption effect.",
     epilog="Example: terminaltexteffects decrypt --ciphertext-gradient-stops 8A008A 00D1FF FFFFFF --ciphertext-gradient-steps 12 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12",
@@ -23,34 +23,34 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 class DecryptEffectArgs(ArgsDataClass):
     ciphertext_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--ciphertext-gradient-stops"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     ciphertext_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--ciphertext-gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
 

@@ -2,7 +2,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import animation, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -15,10 +15,10 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="errorcorrect",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Some characters start in the wrong position and are corrected in sequence.",
     description="Some characters start in the wrong position and are corrected in sequence.",
-    epilog=f"""{argtypes.EASING_EPILOG}
+    epilog=f"""{arg_validators.EASING_EPILOG}
     
 Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c --correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5""",
 )
@@ -26,35 +26,35 @@ Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --er
 class ErrorCorrectEffectArgs(ArgsDataClass):
     error_pairs: float = ArgField(
         cmd_name="--error-pairs",
-        type_parser=argtypes.PositiveFloat.type_parser,
+        type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.1,
         metavar="(int > 0)",
         help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position.",
     )  # type: ignore[assignment]
     swap_delay: int = ArgField(
         cmd_name="--swap-delay",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         default=10,
         metavar="(int > 0)",
         help="Number of animation steps between swaps.",
     )  # type: ignore[assignment]
     error_color: graphics.Color = ArgField(
         cmd_name=["--error-color"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         default="e74c3c",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters that are in the wrong position.",
     )  # type: ignore[assignment]
     correct_color: graphics.Color = ArgField(
         cmd_name=["--correct-color"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         default="45bf55",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters once corrected, this is a gradient from error-color and fades to final-color.",
     )  # type: ignore[assignment]
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -62,7 +62,7 @@ class ErrorCorrectEffectArgs(ArgsDataClass):
     )  # type: ignore[assignment]
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
         metavar="(int > 0)",
@@ -70,7 +70,7 @@ class ErrorCorrectEffectArgs(ArgsDataClass):
     )  # type: ignore[assignment]
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
-        type_parser=argtypes.PositiveFloat.type_parser,
+        type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.5,
         metavar="(float > 0)",
         help="Speed of the characters while moving to the correct position. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",

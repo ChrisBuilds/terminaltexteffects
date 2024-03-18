@@ -2,7 +2,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -16,7 +16,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="overflow",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
     description="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
     epilog="""Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3""",
@@ -25,40 +25,40 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 class OverflowEffectArgs(ArgsDataClass):
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name=["--final-gradient-steps"],
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     overflow_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--overflow-gradient-stops"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("f2ebc0", "8dbfb3", "f2ebc0"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the overflow gradient.",
     )  # type: ignore[assignment]
     overflow_cycles_range: tuple[int, int] = ArgField(
         cmd_name=["--overflow-cycles-range"],
-        type_parser=argtypes.IntRange.type_parser,
+        type_parser=arg_validators.IntRange.type_parser,
         default=(2, 4),
-        metavar=argtypes.IntRange.METAVAR,
+        metavar=arg_validators.IntRange.METAVAR,
         help="Number of cycles to overflow the text.",
     )  # type: ignore[assignment]
     overflow_speed: int = ArgField(
         cmd_name=["--overflow-speed"],
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         default=3,
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Speed of the overflow effect.",
     )  # type: ignore[assignment]
 

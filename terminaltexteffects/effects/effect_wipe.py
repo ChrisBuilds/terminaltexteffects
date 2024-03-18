@@ -1,7 +1,7 @@
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -14,7 +14,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="wipe",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Wipes the text across the terminal to reveal characters.",
     description="Wipes the text across the terminal to reveal characters.",
     epilog="""Example: terminaltexteffects wipe --wipe-direction column_left_to_right --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --gradient-frames 5 --wipe-delay 0""",
@@ -38,32 +38,32 @@ class WipeEffectArgs(ArgsDataClass):
     )  # type: ignore[assignment]
     gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--gradient-stops",
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # type: ignore[assignment]
     gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     gradient_frames: int = ArgField(
         cmd_name="--gradient-frames",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         default=5,
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]
     wipe_delay: int = ArgField(
         cmd_name="--wipe-delay",
-        type_parser=argtypes.NonNegativeInt.type_parser,
+        type_parser=arg_validators.NonNegativeInt.type_parser,
         default=0,
-        metavar=argtypes.NonNegativeInt.METAVAR,
+        metavar=arg_validators.NonNegativeInt.METAVAR,
         help="Number of animation cycles to wait before adding the next character group. Increase, to slow down the effect.",
     )  # type: ignore[assignment]
 

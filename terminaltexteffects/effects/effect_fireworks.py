@@ -3,7 +3,7 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import argtypes, easing, geometry, graphics
+from terminaltexteffects.utils import arg_validators, easing, geometry, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
@@ -15,7 +15,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="fireworks",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Characters launch and explode like fireworks and fall into place.",
     description="fireworks | Characters explode like fireworks and fall into place.",
     epilog="""Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere""",
@@ -30,54 +30,54 @@ class FireworksEffectArgs(ArgsDataClass):
     )  # type: ignore[assignment]
     firework_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--firework-colors",
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated list of colors from which firework colors will be randomly selected.",
     )  # type: ignore[assignment]
     firework_symbol: str = ArgField(
         cmd_name="--firework-symbol",
-        type_parser=argtypes.Symbol.type_parser,
+        type_parser=arg_validators.Symbol.type_parser,
         default="o",
-        metavar=argtypes.Symbol.METAVAR,
+        metavar=arg_validators.Symbol.METAVAR,
         help="Symbol to use for the firework shell.",
     )  # type: ignore[assignment]
     firework_volume: float = ArgField(
         cmd_name="--firework-volume",
-        type_parser=argtypes.Ratio.type_parser,
+        type_parser=arg_validators.Ratio.type_parser,
         default=0.02,
-        metavar=argtypes.Ratio.METAVAR,
+        metavar=arg_validators.Ratio.METAVAR,
         help="Percent of total characters in each firework shell.",
     )  # type: ignore[assignment]
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     launch_delay: int = ArgField(
         cmd_name="--launch-delay",
-        type_parser=argtypes.NonNegativeInt.type_parser,
+        type_parser=arg_validators.NonNegativeInt.type_parser,
         default=60,
-        metavar=argtypes.NonNegativeInt.METAVAR,
+        metavar=arg_validators.NonNegativeInt.METAVAR,
         help="Number of animation steps to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.",
     )  # type: ignore[assignment]
     explode_distance: float = ArgField(
         cmd_name="--explode-distance",
         default=0.1,
-        type_parser=argtypes.Ratio.type_parser,
-        metavar=argtypes.Ratio.METAVAR,
+        type_parser=arg_validators.Ratio.type_parser,
+        metavar=arg_validators.Ratio.METAVAR,
         help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width.",
     )  # type: ignore[assignment]
 

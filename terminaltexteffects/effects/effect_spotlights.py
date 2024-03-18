@@ -2,7 +2,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import animation, easing, geometry, graphics, motion
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -16,10 +16,10 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="spotlights",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
     description="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
-    epilog=f"""{argtypes.EASING_EPILOG}
+    epilog=f"""{arg_validators.EASING_EPILOG}
     
 Example: terminaltexteffects spotlights --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration 750 --search-speed-range 0.25-0.5 --spotlight-count 3""",
 )
@@ -27,53 +27,53 @@ Example: terminaltexteffects spotlights --gradient-stops 8A008A 00D1FF FFFFFF --
 class SpotlightsEffectArgs(ArgsDataClass):
     gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--gradient-stops"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     beam_width_ratio: float = ArgField(
         cmd_name="--beam-width-ratio",
-        type_parser=argtypes.PositiveFloat.type_parser,
+        type_parser=arg_validators.PositiveFloat.type_parser,
         default=2.0,
-        metavar=argtypes.PositiveFloat.METAVAR,
+        metavar=arg_validators.PositiveFloat.METAVAR,
         help="Width of the beam of light as min(width, height) // n of the input text.",
     )  # type: ignore[assignment]
     beam_falloff: float = ArgField(
         cmd_name="--beam-falloff",
-        type_parser=argtypes.NonNegativeFloat.type_parser,
+        type_parser=arg_validators.NonNegativeFloat.type_parser,
         default=0.3,
-        metavar=argtypes.NonNegativeFloat.METAVAR,
+        metavar=arg_validators.NonNegativeFloat.METAVAR,
         help="Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width.",
     )  # type: ignore[assignment]
     search_duration: int = ArgField(
         cmd_name="--search-duration",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         default=750,
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Duration of the search phase, in animation steps, before the spotlights converge in the center.",
     )  # type: ignore[assignment]
     search_speed_range: tuple[float, float] = ArgField(
         cmd_name="--search-speed-range",
-        type_parser=argtypes.PositiveFloatRange.type_parser,
+        type_parser=arg_validators.PositiveFloatRange.type_parser,
         default=(0.25, 0.5),
-        metavar=argtypes.PositiveFloatRange.METAVAR,
+        metavar=arg_validators.PositiveFloatRange.METAVAR,
         help="Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values.",
     )  # type: ignore[assignment]
     spotlight_count: int = ArgField(
         cmd_name="--spotlight-count",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         default=3,
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of spotlights to use.",
     )  # type: ignore[assignment]
 

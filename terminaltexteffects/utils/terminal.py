@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum, auto
 
-import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import ansitools
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass
@@ -18,8 +18,8 @@ from terminaltexteffects.utils.geometry import Coord
 class TerminalArgs(ArgsDataClass):
     tab_width: int = ArgField(
         cmd_name=["--tab-width"],
-        type_parser=argtypes.PositiveInt.type_parser,
-        metavar=argtypes.PositiveInt.METAVAR,
+        type_parser=arg_validators.PositiveInt.type_parser,
+        metavar=arg_validators.PositiveInt.METAVAR,
         default=4,
         help="Number of spaces to use for a tab character.",
     )  # type: ignore[assignment]
@@ -39,7 +39,7 @@ class TerminalArgs(ArgsDataClass):
 
     animation_rate: float = ArgField(
         cmd_name=["-a", "--animation-rate"],
-        type_parser=argtypes.NonNegativeFloat.type_parser,
+        type_parser=arg_validators.NonNegativeFloat.type_parser,
         default=0.01,
         help="""Minimum time, in seconds, between animation steps. 
         This value does not normally need to be modified. 

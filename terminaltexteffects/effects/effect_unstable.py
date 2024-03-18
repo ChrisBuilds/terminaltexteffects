@@ -2,7 +2,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -16,10 +16,10 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="unstable",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.",
     description="unstable | Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.",
-    epilog=f"""{argtypes.EASING_EPILOG}
+    epilog=f"""{arg_validators.EASING_EPILOG}
     
     Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75""",
 )
@@ -27,51 +27,51 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 class UnstableEffectArgs(ArgsDataClass):
     unstable_color: graphics.Color = ArgField(
         cmd_name=["--unstable-color"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         default="ff9200",
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Color transitioned to as the characters become unstable.",
     )  # type: ignore[assignment]
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name=["--final-gradient-steps"],
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     explosion_ease: easing.EasingFunction = ArgField(
         cmd_name=["--explosion-ease"],
-        type_parser=argtypes.Ease.type_parser,
+        type_parser=arg_validators.Ease.type_parser,
         default=easing.out_expo,
         help="Easing function to use for character movement during the explosion.",
     )  # type: ignore[assignment]
     explosion_speed: float = ArgField(
         cmd_name=["--explosion-speed"],
-        type_parser=argtypes.PositiveFloat.type_parser,
+        type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.75,
-        metavar=argtypes.PositiveFloat.METAVAR,
+        metavar=arg_validators.PositiveFloat.METAVAR,
         help="Speed of characters during explosion. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
     )  # type: ignore[assignment]
     reassembly_ease: easing.EasingFunction = ArgField(
         cmd_name=["--reassembly-ease"],
-        type_parser=argtypes.Ease.type_parser,
+        type_parser=arg_validators.Ease.type_parser,
         default=easing.out_expo,
         help="Easing function to use for character reassembly.",
     )  # type: ignore[assignment]
     reassembly_speed: float = ArgField(
         cmd_name=["--reassembly-speed"],
-        type_parser=argtypes.PositiveFloat.type_parser,
+        type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.75,
-        metavar=argtypes.PositiveFloat.METAVAR,
+        metavar=arg_validators.PositiveFloat.METAVAR,
         help="Speed of characters during reassembly. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
     )  # type: ignore[assignment]
 

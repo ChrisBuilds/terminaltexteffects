@@ -3,7 +3,7 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import argtypes, graphics
+from terminaltexteffects.utils import arg_validators, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
@@ -15,7 +15,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="synthgrid",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Create a grid which fills with characters dissolving into the final text.",
     description="Create a grid which fills with characters dissolving into the final text.",
     epilog="""Example: terminaltexteffects synthgrid --grid-gradient-stops 8A008A FFFFFF --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol │ --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1""",
@@ -24,63 +24,63 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 class SynthGridEffectArgs(ArgsDataClass):
     grid_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--grid-gradient-stops"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("CC00CC", "ffffff"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the grid gradient.",
     )  # type: ignore[assignment]
     grid_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--grid-gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     text_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--text-gradient-stops"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the text gradient.",
     )  # type: ignore[assignment]
     text_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--text-gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     grid_row_symbol: str = ArgField(
         cmd_name="--grid-row-symbol",
-        type_parser=argtypes.Symbol.type_parser,
+        type_parser=arg_validators.Symbol.type_parser,
         default="─",
-        metavar=argtypes.Symbol.METAVAR,
+        metavar=arg_validators.Symbol.METAVAR,
         help="Symbol to use for grid row lines.",
     )  # type: ignore[assignment]
     grid_column_symbol: str = ArgField(
         cmd_name="--grid-column-symbol",
-        type_parser=argtypes.Symbol.type_parser,
+        type_parser=arg_validators.Symbol.type_parser,
         default="│",
-        metavar=argtypes.Symbol.METAVAR,
+        metavar=arg_validators.Symbol.METAVAR,
         help="Symbol to use for grid column lines.",
     )  # type: ignore[assignment]
     text_generation_symbols: tuple[str, ...] = ArgField(
         cmd_name="--text-generation-symbols",
-        type_parser=argtypes.Symbol.type_parser,
+        type_parser=arg_validators.Symbol.type_parser,
         nargs="+",
         default=("░", "▒", "▓"),
-        metavar=argtypes.Symbol.METAVAR,
+        metavar=arg_validators.Symbol.METAVAR,
         help="Space separated, unquoted, list of characters for the text generation animation.",
     )  # type: ignore[assignment]
     max_active_blocks: float = ArgField(
         cmd_name="--max-active-blocks",
-        type_parser=argtypes.PositiveFloat.type_parser,
+        type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.1,
-        metavar=argtypes.PositiveFloat.METAVAR,
+        metavar=arg_validators.PositiveFloat.METAVAR,
         help="Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time.",
     )  # type: ignore[assignment]
 

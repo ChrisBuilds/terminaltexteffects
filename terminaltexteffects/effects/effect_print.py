@@ -2,7 +2,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -16,10 +16,10 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="print",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
     description="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
-    epilog=f"""{argtypes.EASING_EPILOG}
+    epilog=f"""{arg_validators.EASING_EPILOG}
     
 Example: terminaltexteffects print --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 12 --print-head-return-speed 1.5 --print-speed 1 --print-head-easing IN_OUT_QUAD""",
 )
@@ -27,38 +27,38 @@ Example: terminaltexteffects print --final-gradient-stops 8A008A 00D1FF FFFFFF -
 class PrintEffectArgs(ArgsDataClass):
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name=["--final-gradient-steps"],
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     print_head_return_speed: float = ArgField(
         cmd_name=["--print-head-return-speed"],
-        type_parser=argtypes.PositiveFloat.type_parser,
+        type_parser=arg_validators.PositiveFloat.type_parser,
         default=1.5,
-        metavar=argtypes.PositiveFloat.METAVAR,
+        metavar=arg_validators.PositiveFloat.METAVAR,
         help="Speed of the print head when performing a carriage return.",
     )  # type: ignore[assignment]
     print_speed: int = ArgField(
         cmd_name=["--print-speed"],
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         default=1,
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Speed of the print head when printing characters.",
     )  # type: ignore[assignment]
     print_head_easing: typing.Callable = ArgField(
         cmd_name=["--print-head-easing"],
         default=easing.in_out_quad,
-        type_parser=argtypes.Ease.type_parser,
+        type_parser=arg_validators.Ease.type_parser,
         help="Easing function to use for print head movement.",
     )  # type: ignore[assignment]
 

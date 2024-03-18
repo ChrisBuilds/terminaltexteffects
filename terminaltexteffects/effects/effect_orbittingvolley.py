@@ -2,7 +2,7 @@ import typing
 from dataclasses import dataclass
 from itertools import cycle
 
-import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -16,10 +16,10 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="orbittingvolley",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
     description="Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
-    epilog=f"""{argtypes.EASING_EPILOG}
+    epilog=f"""{arg_validators.EASING_EPILOG}
     
 Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 12 --launcher-movement-speed 0.5 --character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE""",
 )
@@ -27,81 +27,81 @@ Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-l
 class OrbittingVolleyEffectArgs(ArgsDataClass):
     top_launcher_symbol: str = ArgField(
         cmd_name="--top-launcher-symbol",
-        type_parser=argtypes.Symbol.type_parser,
+        type_parser=arg_validators.Symbol.type_parser,
         default="█",
-        metavar=argtypes.Symbol.METAVAR,
+        metavar=arg_validators.Symbol.METAVAR,
         help="Symbol for the top launcher.",
     )  # type: ignore[assignment]
     right_launcher_symbol: str = ArgField(
         cmd_name="--right-launcher-symbol",
-        type_parser=argtypes.Symbol.type_parser,
+        type_parser=arg_validators.Symbol.type_parser,
         default="█",
-        metavar=argtypes.Symbol.METAVAR,
+        metavar=arg_validators.Symbol.METAVAR,
         help="Symbol for the right launcher.",
     )  # type: ignore[assignment]
     bottom_launcher_symbol: str = ArgField(
         cmd_name="--bottom-launcher-symbol",
-        type_parser=argtypes.Symbol.type_parser,
+        type_parser=arg_validators.Symbol.type_parser,
         default="█",
-        metavar=argtypes.Symbol.METAVAR,
+        metavar=arg_validators.Symbol.METAVAR,
         help="Symbol for the bottom launcher.",
     )  # type: ignore[assignment]
     left_launcher_symbol: str = ArgField(
         cmd_name="--left-launcher-symbol",
-        type_parser=argtypes.Symbol.type_parser,
+        type_parser=arg_validators.Symbol.type_parser,
         default="█",
-        metavar=argtypes.Symbol.METAVAR,
+        metavar=arg_validators.Symbol.METAVAR,
         help="Symbol for the left launcher.",
     )  # type: ignore[assignment]
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     launcher_movement_speed: float = ArgField(
         cmd_name="--launcher-movement-speed",
-        type_parser=argtypes.PositiveFloat.type_parser,
+        type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.5,
-        metavar=argtypes.PositiveFloat.METAVAR,
+        metavar=arg_validators.PositiveFloat.METAVAR,
         help="Orbitting speed of the launchers.",
     )  # type: ignore[assignment]
     character_movement_speed: float = ArgField(
         cmd_name="--character-movement-speed",
-        type_parser=argtypes.PositiveFloat.type_parser,
+        type_parser=arg_validators.PositiveFloat.type_parser,
         default=1,
-        metavar=argtypes.PositiveFloat.METAVAR,
+        metavar=arg_validators.PositiveFloat.METAVAR,
         help="Speed of the launched characters.",
     )  # type: ignore[assignment]
     volley_size: float = ArgField(
         cmd_name="--volley-size",
-        type_parser=argtypes.Ratio.type_parser,
+        type_parser=arg_validators.Ratio.type_parser,
         default=0.03,
-        metavar=argtypes.Ratio.METAVAR,
+        metavar=arg_validators.Ratio.METAVAR,
         help="Percent of total input characters each launcher will fire per volley. Lower limit of one character.",
     )  # type: ignore[assignment]
     launch_delay: int = ArgField(
         cmd_name="--launch-delay",
-        type_parser=argtypes.NonNegativeInt.type_parser,
+        type_parser=arg_validators.NonNegativeInt.type_parser,
         default=50,
-        metavar=argtypes.NonNegativeInt.METAVAR,
+        metavar=arg_validators.NonNegativeInt.METAVAR,
         help="Number of animation ticks to wait between volleys of characters.",
     )  # type: ignore[assignment]
     character_easing: typing.Callable = ArgField(
         cmd_name=["--character-easing"],
         default=easing.out_sine,
-        type_parser=argtypes.Ease.type_parser,
-        metavar=argtypes.Ease.METAVAR,
+        type_parser=arg_validators.Ease.type_parser,
+        metavar=arg_validators.Ease.METAVAR,
         help="Easing function to use for launched character movement.",
     )  # type: ignore[assignment]
 

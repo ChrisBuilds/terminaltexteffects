@@ -1,7 +1,7 @@
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argtypes as argtypes
+import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -14,10 +14,10 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="waves",
-    formatter_class=argtypes.CustomFormatter,
+    formatter_class=arg_validators.CustomFormatter,
     help="Waves travel across the terminal leaving behind the characters.",
     description="Waves travel across the terminal leaving behind the characters.",
-    epilog=f"""{argtypes.EASING_EPILOG}
+    epilog=f"""{arg_validators.EASING_EPILOG}
     
 Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▇ ▆ ▅ ▄ ▃ ▂ ▁ --wave-gradient-stops 8A008A 00D1FF FFFFFF 00D1FF 8A008A --wave-gradient-steps 6 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --wave-count 7 --wave-length 2 --wave-easing IN_OUT_SINE""",
 )
@@ -25,59 +25,59 @@ Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ �
 class WavesEffectArgs(ArgsDataClass):
     wave_symbols: tuple[str, ...] = ArgField(
         cmd_name="--wave-symbols",
-        type_parser=argtypes.Symbol.type_parser,
+        type_parser=arg_validators.Symbol.type_parser,
         default=("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█", "▇", "▆", "▅", "▄", "▃", "▂", "▁"),
-        metavar=argtypes.Symbol.METAVAR,
+        metavar=arg_validators.Symbol.METAVAR,
         help="Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an animation.",
     )  # type: ignore[assignment]
     wave_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--wave-gradient-stops",
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF", "00D1FF", "8A008A"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     wave_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--wave-gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(6,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
-        type_parser=argtypes.Color.type_parser,
+        type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argtypes.Color.METAVAR,
+        metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     wave_count: int = ArgField(
         cmd_name="--wave-count",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         default=7,
         help="Number of waves to generate. n > 0.",
     )  # type: ignore[assignment]
     wave_length: int = ArgField(
         cmd_name="--wave-length",
-        type_parser=argtypes.PositiveInt.type_parser,
+        type_parser=arg_validators.PositiveInt.type_parser,
         default=2,
-        metavar=argtypes.PositiveInt.METAVAR,
+        metavar=arg_validators.PositiveInt.METAVAR,
         help="The number of frames for each step of the wave. Higher wave-lengths will create a slower wave.",
     )  # type: ignore[assignment]
     wave_easing: easing.EasingFunction = ArgField(
         cmd_name="--wave-easing",
-        type_parser=argtypes.Ease.type_parser,
+        type_parser=arg_validators.Ease.type_parser,
         default=easing.in_out_sine,
         help="Easing function to use for wave travel.",
     )  # type: ignore[assignment]
