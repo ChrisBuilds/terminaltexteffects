@@ -47,6 +47,8 @@ class Gradient:
 
     def __init__(self, *stops: Color, steps: int | tuple[int, ...] = 1) -> None:
         self.stops = stops
+        if len(self.stops) < 1:
+            raise ValueError("At least one stop must be provided.")
         self.steps = steps
         self.spectrum: list[str] = self._generate(self.steps)
         self.index: int = 0
@@ -86,6 +88,9 @@ class Gradient:
         """
         if isinstance(steps, int):
             steps = (steps,)
+            for step in steps:
+                if step < 1:
+                    raise ValueError("Steps must be greater than 0.")
         spectrum: list[str] = []
         if len(self.stops) == 1:
             color = self.stops[0]
