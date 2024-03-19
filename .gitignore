@@ -168,3 +168,5 @@ testinput/*
 github_resources/*
 terminaltexteffects/effects/effect_test.py
 terminaltexteffects/effects/effect_dev.py
+*.png
+*.gv
