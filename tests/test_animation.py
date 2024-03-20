@@ -137,7 +137,7 @@ def test_animation_new_scene_without_id(character):
 def test_animation_query_scene(character):
     animation = character.animation
     scene = animation.new_scene(id="test_scene", is_looping=True)
-    assert animation.query_scene("test_scene") == scene
+    assert animation.query_scene("test_scene") is scene
 
 
 def test_animation_looping_active_scene_is_complete(character):
