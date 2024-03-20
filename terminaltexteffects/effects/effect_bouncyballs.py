@@ -29,7 +29,7 @@ class BouncyBallsEffectArgs(ArgsDataClass):
         type_parser=arg_validators.Color.type_parser,
         metavar=arg_validators.Color.METAVAR,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("d1f4a5", "96e2a4", "5acda9"),
         help="Space separated list of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random.",
     )  # type: ignore[assignment]
     ball_symbols: tuple[str, ...] = ArgField(
@@ -44,7 +44,7 @@ class BouncyBallsEffectArgs(ArgsDataClass):
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("f8ffae", "43c6ac"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -55,6 +55,13 @@ class BouncyBallsEffectArgs(ArgsDataClass):
         default=(12,),
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.CENTER,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
     ball_delay: int = ArgField(
         cmd_name="--ball-delay",
@@ -97,11 +104,11 @@ class BouncyBallsEffect:
         """Prepares the data for the effect by assigning colors and waypoints and
         organizing the characters by row."""
         final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
-
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+        )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             color = random.choice(self.args.ball_colors)
             symbol = random.choice(self.args.ball_symbols)
             ball_scene = character.animation.new_scene()
