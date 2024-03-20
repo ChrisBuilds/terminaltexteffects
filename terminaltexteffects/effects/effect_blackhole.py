@@ -43,7 +43,7 @@ class BlackholeEffectArgs(ArgsDataClass):
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("8A008A", "00D1FF", "ffffff"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -54,6 +54,13 @@ class BlackholeEffectArgs(ArgsDataClass):
         default=(12,),
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.DIAGONAL,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
 
     @classmethod
@@ -264,10 +271,11 @@ class BlackholeEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by creating the starfield, blackhole, and consumption scenes/waypoints."""
         final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+        )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         self.prepare_blackhole()
 
     def run(self) -> None:
