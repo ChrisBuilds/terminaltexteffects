@@ -47,8 +47,6 @@ def main():
             effect_class = effect_args.get_effect_class()
             effect = effect_class(terminal, effect_args)
             effect.run()
-        except Exception as e:
-            raise Exception(f"Error running effect: {e}")
         finally:
             sys.stdout.write(ansitools.SHOW_CURSOR())
 
