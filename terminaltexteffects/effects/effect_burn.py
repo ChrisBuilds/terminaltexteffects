@@ -52,6 +52,13 @@ class BurnEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.HORIZONTAL,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
+    )  # type: ignore[assignment]
 
     @classmethod
     def get_effect_class(cls):
@@ -80,11 +87,11 @@ class BurnEffect:
             "▀",
         ]
         final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+        )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
-
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         fire_gradient = graphics.Gradient("ffffff", self.args.flame_color, steps=12)
         burned_gradient = graphics.Gradient(self.args.flame_color, self.args.burned_color, steps=7)
         groups = {
@@ -105,13 +112,13 @@ class BurnEffect:
             g_start = 0
             for _, block in enumerate(vertical_build_order[:5]):
                 for color in fire_gradient.spectrum[g_start : g_start + 3]:
-                    construct_scn.add_frame(block, 30, color=color)
+                    construct_scn.add_frame(block, 20, color=color)
                 g_start += 2
 
             g_start = 0
             for _, block in enumerate(vertical_build_order[4:]):
                 for color in burned_gradient.spectrum[g_start : g_start + 3]:
-                    construct_scn.add_frame(block, 30, color=color)
+                    construct_scn.add_frame(block, 20, color=color)
                 g_start += 2
 
             construct_scn.add_frame(next_char.input_symbol, 1, color=self.character_final_color_map[next_char])
@@ -122,10 +129,11 @@ class BurnEffect:
         """Runs the effect."""
         self.prepare_data()
         while self.pending_chars or self.active_chars:
-            if self.pending_chars:
-                next_char = self.pending_chars.pop(0)
-                self.terminal.set_character_visibility(next_char, True)
-                self.active_chars.append(next_char)
+            for _ in range(random.randint(1, 2)):
+                if self.pending_chars:
+                    next_char = self.pending_chars.pop(0)
+                    self.terminal.set_character_visibility(next_char, True)
+                    self.active_chars.append(next_char)
 
             self.animate_chars()
 
