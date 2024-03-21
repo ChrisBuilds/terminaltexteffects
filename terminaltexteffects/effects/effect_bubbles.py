@@ -20,21 +20,22 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     help="Characters are formed into bubbles that float down and pop.",
     description="Characters are formed into bubbles that float down and pop.",
     epilog=f"""{arg_validators.EASING_EPILOG}
-Example: terminaltexteffects bubbles --no-rainbow --bubble-color 00ff00 --pop-color ff0000 --final-gradient-stops 00ff00 ff0000 0000ff --final-gradient-steps 12 --bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE""",
+Example: terminaltexteffects bubbles --bubble-colors 00ff00 --pop-color ff0000 --final-gradient-stops 00ff00 ff0000 0000ff --final-gradient-steps 12 --bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE""",
 )
 @dataclass
 class BubblesEffectArgs(ArgsDataClass):
-    no_rainbow: bool = ArgField(
-        cmd_name="--no-rainbow",
+    rainbow: bool = ArgField(
+        cmd_name="--rainbow",
         action="store_true",
-        help="If set, the bubbles will not be colored with a rainbow gradient.",
+        default=False,
+        help="If set, the bubbles will be colored with a rotating rainbow gradient.",
     )  # type: ignore[assignment]
-    bubble_color: graphics.Color = ArgField(
-        cmd_name="--bubble-color",
+    bubble_colors: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--bubble-colors",
         type_parser=arg_validators.Color.type_parser,
-        default="ffffff",
+        default=("a770ef", "cf8bf3", "fdb99b"),
         metavar=arg_validators.Color.METAVAR,
-        help="Color for the bubbles. Ignored if --no-rainbow is left as default False.",
+        help="Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as default False.",
     )  # type: ignore[assignment]
     pop_color: graphics.Color = ArgField(
         cmd_name="--pop-color",
@@ -47,7 +48,7 @@ class BubblesEffectArgs(ArgsDataClass):
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("a770ef", "fdb99b"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -59,6 +60,14 @@ class BubblesEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.CENTER,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
+    )  # type: ignore[assignment]
+
     bubble_speed: float = ArgField(
         cmd_name="--bubble-speed",
         type_parser=arg_validators.PositiveFloat.type_parser,
@@ -135,12 +144,7 @@ class Bubble:
         self.anchor_char.motion.activate_path(floor_path)
 
     def make_gradients(self) -> None:
-        if self.effect.args.no_rainbow:
-            for character in self.characters:
-                sheen_scene = character.animation.new_scene()
-                sheen_scene.add_frame(character.input_symbol, 1, color=self.effect.args.bubble_color)
-                character.animation.activate_scene(sheen_scene)
-        else:
+        if self.effect.args.rainbow:
             rainbow_gradient = list(self.effect.rainbow_gradient.spectrum)
             gradient_offset = 0
             for character in self.characters:
@@ -153,6 +157,13 @@ class Bubble:
                 character.animation.activate_scene(sheen_scene)
                 if character.animation.active_scene:
                     character.animation.active_scene.is_looping = True
+
+        else:
+            bubble_color = random.choice(self.effect.args.bubble_colors)
+            for character in self.characters:
+                sheen_scene = character.animation.new_scene()
+                sheen_scene.add_frame(character.input_symbol, 1, color=bubble_color)
+                character.animation.activate_scene(sheen_scene)
 
     def pop(self) -> None:
         char: EffectCharacter
@@ -209,10 +220,11 @@ class BubblesEffect:
 
     def prepare_data(self) -> None:
         final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+        )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             character.layer = 1
             pop_1_scene = character.animation.new_scene(id="pop_1")
             pop_2_scene = character.animation.new_scene()
