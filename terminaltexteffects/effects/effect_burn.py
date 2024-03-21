@@ -3,7 +3,7 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
-from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.terminal import Terminal
@@ -123,6 +123,13 @@ class BurnEffect:
 
             construct_scn.add_frame(next_char.input_symbol, 1, color=self.character_final_color_map[next_char])
             next_char.animation.activate_scene(construct_scn)
+            final_color_scn = next_char.animation.new_scene()
+            for color in graphics.Gradient(self.args.burned_color, self.character_final_color_map[next_char], steps=8):
+                final_color_scn.add_frame(next_char.input_symbol, 4, color=color)
+            next_char.event_handler.register_event(
+                EventHandler.Event.SCENE_COMPLETE, construct_scn, EventHandler.Action.ACTIVATE_SCENE, final_color_scn
+            )
+
             self.pending_chars.append(next_char)
 
     def run(self) -> None:
