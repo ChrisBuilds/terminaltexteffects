@@ -33,6 +33,8 @@
 #### Effects
  * All effects have been updated to use the latest API calls for improved performance.
  * All effects support gradients for the final appearance.
+ * All effects support gradient direction.
+ * All effects have had their default colors refreshed.
  * ErrorCorrect swap-delay lowered and error-pairs specification changed to percent float.
  * Rain effect supports character specification for rain drops and movement speed range for the rain drop falling speed.
  * Print effect uses the row final gradient color for the print head color.
@@ -45,6 +47,10 @@
  * Beams effect uses Animation.adjust_color_brightness() to lower the background character brightness and shows the lighter color when the beam passes by.
  * Crumble effect uses Animation.adjust_color_brightness() to set the weak and dust colors based on the final gradient.
  * Fireworks effect launch_delay argument has a +/- 0-50% randomness applied. 
+ * Bubbles effect --no-rainbow changed to --rainbow and default set to False.
+ * Bubbles effect --bubble-color changed to --bubble-colors. Bubble color is randomly chosen from the colors unless --rainbow is used.
+ * Burn effect burns faster with some randomness in speed.
+ * Burn effect final color fades in from the burned color.
 
 #### Engine
  * Geometry related methods have been removed from the motion class. They are now located at terminaltexteffects.utils.geometry as separate functions.
@@ -59,6 +65,10 @@
  * The animation rate argument (-a, --animation-rate) has been removed from all effects and is handled as a terminal argument specified prior to the effect name.
  * argtypes.py has been renamed arg_validators.py and all functions have been refactored into classes with a METAVAR class member and a type_parser method.
  * easing.EasingFunction type alias used anywhere an easing function is accepted.
+ * Exceptions raised are no longer caught in a except clause. Only a finally clause is used to restore the cursor. Tracebacks are useful.
+ 
+ #### Other
+ * More tests have been added.
 
 ### Bug Fixes
 #### Effects
