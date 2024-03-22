@@ -46,6 +46,14 @@ class ExpandEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.CENTER,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
+    )  # type: ignore[assignment]
+
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
         type_parser=arg_validators.PositiveFloat.type_parser,
@@ -78,11 +86,11 @@ class ExpandEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""
         final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+        )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
-
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for character in self.terminal.get_characters():
             character.motion.set_coordinate(self.terminal.output_area.center)
             input_coord_path = character.motion.new_path(
@@ -91,7 +99,6 @@ class ExpandEffect:
             )
             input_coord_path.new_waypoint(character.input_coord)
             self.terminal.set_character_visibility(character, True)
-            character.motion.activate_path(input_coord_path)
             self.active_chars.append(character)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED, input_coord_path, EventHandler.Action.SET_LAYER, 1
@@ -99,6 +106,7 @@ class ExpandEffect:
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
             )
+            character.motion.activate_path(input_coord_path)
             gradient_scn = character.animation.new_scene()
             gradient = graphics.Gradient(
                 final_gradient.spectrum[0], self.character_final_color_map[character], steps=10
