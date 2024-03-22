@@ -68,6 +68,14 @@ class ErrorCorrectEffectArgs(ArgsDataClass):
         metavar="(int > 0)",
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.VERTICAL,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
+    )  # type: ignore[assignment]
+
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
         type_parser=arg_validators.PositiveFloat.type_parser,
@@ -95,12 +103,11 @@ class ErrorCorrectEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by swapping positions and generating animations and waypoints."""
         final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
-
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+        )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
-
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for character in self.terminal.get_characters():
             spawn_scene = character.animation.new_scene()
             spawn_scene.add_frame(character.input_symbol, 1, color=self.character_final_color_map[character])
