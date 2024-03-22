@@ -21,27 +21,19 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 )
 @dataclass
 class DecryptEffectArgs(ArgsDataClass):
-    ciphertext_gradient_stops: tuple[graphics.Color, ...] = ArgField(
-        cmd_name=["--ciphertext-gradient-stops"],
+    ciphertext_colors: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--ciphertext-colors"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("008000", "00cb00", "00ff00"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
-    ciphertext_gradient_steps: tuple[int, ...] = ArgField(
-        cmd_name="--ciphertext-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
-        nargs="+",
-        default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("eda000",),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -79,7 +71,6 @@ class DecryptEffect:
         self.active_chars: list[EffectCharacter] = []
         self.encrypted_symbols: list[str] = []
         self.scenes: dict[str, animation.Scene] = {}
-        self.character_cipher_text_map: dict[EffectCharacter, graphics.Color] = {}
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
         self.make_encrypted_symbols()
@@ -96,9 +87,10 @@ class DecryptEffect:
 
     def make_decrypting_animation_scenes(self, character: EffectCharacter) -> None:
         fast_decrypt_scene = character.animation.new_scene(id="fast_decrypt")
+        color = random.choice(self.args.ciphertext_colors)
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
-            fast_decrypt_scene.add_frame(symbol, 3, color=self.character_cipher_text_map[character])
+            fast_decrypt_scene.add_frame(symbol, 3, color=color)
             duration = 3
         slow_decrypt_scene = character.animation.new_scene(id="slow_decrypt")
         for _ in range(random.randint(1, 15)):  # 1-15 longer duration units
@@ -107,7 +99,7 @@ class DecryptEffect:
                 duration = random.randrange(75, 225)  # wide long duration range reduces 'waves' in the animation
             else:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
-            slow_decrypt_scene.add_frame(symbol, duration, color=self.character_cipher_text_map[character])
+            slow_decrypt_scene.add_frame(symbol, duration, color=color)
         discovered_scene = character.animation.new_scene(id="discovered")
         discovered_gradient = graphics.Gradient("ffffff", self.character_final_color_map[character], steps=10)
         discovered_scene.apply_gradient_to_symbols(discovered_gradient, character.input_symbol, 20)
@@ -117,10 +109,10 @@ class DecryptEffect:
         for character in self.terminal.get_characters():
             typing_scene = character.animation.new_scene(id="typing")
             for block_char in ["▉", "▓", "▒", "░"]:
-                typing_scene.add_frame(block_char, 2, color=self.character_cipher_text_map[character])
+                typing_scene.add_frame(block_char, 2, color=random.choice(self.args.ciphertext_colors))
 
             typing_scene.add_frame(
-                random.choice(self.encrypted_symbols), 2, color=self.character_cipher_text_map[character]
+                random.choice(self.encrypted_symbols), 2, color=random.choice(self.args.ciphertext_colors)
             )
             self.pending_chars.append(character)
 
@@ -146,14 +138,8 @@ class DecryptEffect:
     def run(self) -> None:
         """Runs the effect."""
         final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
-        cipertext_gradient = graphics.Gradient(
-            *self.args.ciphertext_gradient_stops, steps=self.args.ciphertext_gradient_steps
-        )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
-            self.character_cipher_text_map[character] = cipertext_gradient.get_color_at_fraction(
                 character.input_coord.row / self.terminal.output_area.top
             )
 
