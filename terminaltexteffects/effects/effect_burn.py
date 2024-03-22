@@ -18,14 +18,22 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     formatter_class=arg_validators.CustomFormatter,
     help="Burns vertically in the output area.",
     description="burn | Burn the output area.",
-    epilog="Example: terminaltexteffects burn --burned-color 252525 --flame-color ff9600 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12",
+    epilog="Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12",
 )
 @dataclass
 class BurnEffectArgs(ArgsDataClass):
+    starting_color: graphics.Color = ArgField(
+        cmd_name="--starting-color",
+        type_parser=arg_validators.Color.type_parser,
+        default="837373",
+        metavar=arg_validators.Color.METAVAR,
+        help="Color of the characters before they start to burn.",
+    )  # type: ignore[assignment]
     burn_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--burn-colors"],
         type_parser=arg_validators.Color.type_parser,
         default=("ffffff", "fff75d", "fe650d", "8A003C", "510100"),
+        nargs="+",
         metavar=arg_validators.Color.METAVAR,
         help="Colors transitioned through as the characters burn.",
     )  # type: ignore[assignment]
@@ -102,7 +110,7 @@ class BurnEffect:
             keys = [key for key in groups.keys() if groups[key]]
             next_char = groups[random.choice(keys)].pop(0)
             self.terminal.set_character_visibility(next_char, True)
-            next_char.animation.set_appearance(next_char.input_symbol, color="837373")
+            next_char.animation.set_appearance(next_char.input_symbol, color=self.args.starting_color)
             burn_scn = next_char.animation.new_scene(id="burn")
             burn_scn.apply_gradient_to_symbols(fire_gradient, vertical_build_order, 12)
             final_color_scn = next_char.animation.new_scene()
