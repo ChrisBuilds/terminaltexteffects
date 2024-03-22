@@ -17,7 +17,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     formatter_class=arg_validators.CustomFormatter,
     help="Display a movie style decryption effect.",
     description="decrypt | Movie style decryption effect.",
-    epilog="Example: terminaltexteffects decrypt --ciphertext-gradient-stops 8A008A 00D1FF FFFFFF --ciphertext-gradient-steps 12 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12",
+    epilog="Example: terminaltexteffects decrypt --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12",
 )
 @dataclass
 class DecryptEffectArgs(ArgsDataClass):
@@ -27,7 +27,7 @@ class DecryptEffectArgs(ArgsDataClass):
         nargs="+",
         default=("008000", "00cb00", "00ff00"),
         metavar=arg_validators.Color.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the ciphertext. Color will be randomly selected for each character.",
     )  # type: ignore[assignment]
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
