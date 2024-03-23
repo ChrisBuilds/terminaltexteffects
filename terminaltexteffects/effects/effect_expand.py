@@ -49,7 +49,7 @@ class ExpandEffectArgs(ArgsDataClass):
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=arg_validators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.CENTER,
+        default=graphics.Gradient.Direction.VERTICAL,
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
