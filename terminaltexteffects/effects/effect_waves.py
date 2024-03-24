@@ -34,7 +34,7 @@ class WavesEffectArgs(ArgsDataClass):
         cmd_name="--wave-gradient-stops",
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF", "00D1FF", "8A008A"),
+        default=("f0ff65", "ffb102", "31a0d4", "ffb102", "f0ff65"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -50,7 +50,7 @@ class WavesEffectArgs(ArgsDataClass):
         cmd_name="--final-gradient-stops",
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("ffb102", "31a0d4", "f0ff65"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -61,6 +61,13 @@ class WavesEffectArgs(ArgsDataClass):
         default=(12,),
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.DIAGONAL,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
     wave_count: int = ArgField(
         cmd_name="--wave-count",
@@ -100,14 +107,12 @@ class WavesEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by creating the wave animations."""
         final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
-
-        for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
-
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+        )
         wave_gradient = graphics.Gradient(*self.args.wave_gradient_stops, steps=self.args.wave_gradient_steps)
         for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             wave_scn = character.animation.new_scene()
             wave_scn.ease = self.args.wave_easing
             for _ in range(self.args.wave_count):
