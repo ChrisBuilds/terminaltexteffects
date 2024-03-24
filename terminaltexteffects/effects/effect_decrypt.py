@@ -21,6 +21,13 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 )
 @dataclass
 class DecryptEffectArgs(ArgsDataClass):
+    typing_speed: int = ArgField(
+        cmd_name="--typing-speed",
+        type_parser=arg_validators.PositiveInt.type_parser,
+        default=1,
+        metavar=arg_validators.PositiveInt.METAVAR,
+        help="Number of characters typed per keystroke.",
+    )  # type: ignore[assignment]
     ciphertext_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--ciphertext-colors"],
         type_parser=arg_validators.Color.type_parser,
@@ -103,13 +110,13 @@ class DecryptEffect:
         for _ in range(random.randint(1, 15)):  # 1-15 longer duration units
             symbol = random.choice(self.encrypted_symbols)
             if random.randint(0, 100) <= 30:  # 30% chance of extra long duration
-                duration = random.randrange(75, 225)  # wide long duration range reduces 'waves' in the animation
+                duration = random.randrange(50, 125)  # wide long duration range reduces 'waves' in the animation
             else:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
             slow_decrypt_scene.add_frame(symbol, duration, color=color)
         discovered_scene = character.animation.new_scene(id="discovered")
         discovered_gradient = graphics.Gradient("ffffff", self.character_final_color_map[character], steps=10)
-        discovered_scene.apply_gradient_to_symbols(discovered_gradient, character.input_symbol, 20)
+        discovered_scene.apply_gradient_to_symbols(discovered_gradient, character.input_symbol, 8)
 
     def prepare_data_for_type_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
@@ -161,10 +168,12 @@ class DecryptEffect:
         while self.pending_chars or self.active_chars:
             if self.pending_chars:
                 if random.randint(0, 100) <= 75:
-                    next_character = self.pending_chars.pop(0)
-                    self.terminal.set_character_visibility(next_character, True)
-                    next_character.animation.activate_scene(next_character.animation.query_scene("typing"))
-                    self.active_chars.append(next_character)
+                    for _ in range(self.args.typing_speed):
+                        if self.pending_chars:
+                            next_character = self.pending_chars.pop(0)
+                            self.terminal.set_character_visibility(next_character, True)
+                            next_character.animation.activate_scene(next_character.animation.query_scene("typing"))
+                            self.active_chars.append(next_character)
             self.animate_chars()
             self.active_chars = [character for character in self.active_chars if character.is_active]
             self.terminal.print()
