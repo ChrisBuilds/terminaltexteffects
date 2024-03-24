@@ -43,7 +43,9 @@
  * Scattered effect gradient progresses from the first color to the row color.
  * Spray effect spray-volume is specified as a percent of the total number of characters and movement speed is a range.
  * Swarm effect swarm focus points algorithm changed to reduce long distances between points. 
- * Decrypt effect supports gradient specification for plaintext and multiple color specification for ciphertext
+ * Decrypt effect supports gradient specification for plaintext and multiple color specification for ciphertext.
+ * Decrypt effect has a --typing-speed arg to increase the speed of the initial text typing effect.
+ * Decrypt effect has had the decrypting speed increased.
  * Beams effect uses Animation.adjust_color_brightness() to lower the background character brightness and shows the lighter color when the beam passes by.
  * Crumble effect uses Animation.adjust_color_brightness() to set the weak and dust colors based on the final gradient.
  * Fireworks effect launch_delay argument has a +/- 0-50% randomness applied. 
