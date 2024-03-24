@@ -29,7 +29,7 @@ class PrintEffectArgs(ArgsDataClass):
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("02b8bd", "c1f0e3", "00ffa0"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -41,10 +41,17 @@ class PrintEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.DIAGONAL,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
+    )  # type: ignore[assignment]
     print_head_return_speed: float = ArgField(
         cmd_name=["--print-head-return-speed"],
         type_parser=arg_validators.PositiveFloat.type_parser,
-        default=1.5,
+        default=1.25,
         metavar=arg_validators.PositiveFloat.METAVAR,
         help="Speed of the print head when performing a carriage return.",
     )  # type: ignore[assignment]
@@ -68,7 +75,12 @@ class PrintEffectArgs(ArgsDataClass):
 
 
 class Row:
-    def __init__(self, characters: list[EffectCharacter], character_color: str | int, typing_head_color: str | int):
+    def __init__(
+        self,
+        characters: list[EffectCharacter],
+        character_final_color_map: dict[EffectCharacter, graphics.Color],
+        typing_head_color: str | int,
+    ):
         self.untyped_chars: list[EffectCharacter] = []
         self.typed_chars: list[EffectCharacter] = []
         blank_row_accounted = False
@@ -78,7 +90,7 @@ class Row:
                     continue
                 blank_row_accounted = True
             character.motion.set_coordinate(Coord(character.input_coord.column, 1))
-            color_gradient = graphics.Gradient(typing_head_color, character_color, steps=5)
+            color_gradient = graphics.Gradient(typing_head_color, character_final_color_map[character], steps=5)
             typed_animation = character.animation.new_scene()
             typed_animation.apply_gradient_to_symbols(color_gradient, ("█", "▓", "▒", "░", character.input_symbol), 5)
             character.animation.activate_scene(typed_animation)
@@ -112,14 +124,11 @@ class PrintEffect:
 
     def prepare_data(self) -> None:
         final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
-
-        for character in self.terminal.get_characters(
-            fill_chars=True, sort=Terminal.CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT
-        ):
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
-
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+        )
+        for character in self.terminal.get_characters(fill_chars=True):
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         input_rows = self.terminal.get_characters_grouped(
             grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True
         )
@@ -127,8 +136,8 @@ class PrintEffect:
             self.pending_rows.append(
                 Row(
                     input_row,
-                    self.character_final_color_map[input_row[0]],
-                    self.character_final_color_map[input_row[0]],
+                    self.character_final_color_map,
+                    self.character_final_color_map[input_row[-1]],
                 )
             )
 
