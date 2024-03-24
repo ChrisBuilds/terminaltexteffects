@@ -34,15 +34,6 @@ class RainEffectArgs(ArgsDataClass):
         default=("00315C", "004C8F", "0075DB", "3F91D9", "78B9F2", "9AC8F5", "B8D8F8", "E3EFFC"),
         help="List of colors for the rain drops. Colors are randomly chosen from the list.",
     )  # type: ignore[assignment]
-
-    final_color: graphics.Color = ArgField(
-        cmd_name=["--final-color"],
-        type_parser=arg_validators.Color.type_parser,
-        default="ffffff",
-        metavar=arg_validators.Color.METAVAR,
-        help="Color for the final character.",
-    )  # type: ignore[assignment]
-
     movement_speed: tuple[float, float] = ArgField(
         cmd_name="--movement-speed",
         type_parser=arg_validators.PositiveFloatRange.type_parser,
@@ -64,7 +55,7 @@ class RainEffectArgs(ArgsDataClass):
         cmd_name="--final-gradient-stops",
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("acb6e5", "74ebd5"),
+        default=("488bff", "b2e7de", "57eaf7"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -81,7 +72,7 @@ class RainEffectArgs(ArgsDataClass):
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=arg_validators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=graphics.Gradient.Direction.DIAGONAL,
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
