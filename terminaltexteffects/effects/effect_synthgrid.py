@@ -3,7 +3,7 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.utils import arg_validators, graphics
+from terminaltexteffects.utils import arg_validators, geometry, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.terminal import Terminal
@@ -38,6 +38,14 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    grid_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--grid-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.DIAGONAL,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the grid color.",
+    )  # type: ignore[assignment]
+
     text_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--text-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
@@ -54,6 +62,14 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    text_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--text-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.VERTICAL,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the text color.",
+    )  # type: ignore[assignment]
+
     grid_row_symbol: str = ArgField(
         cmd_name="--grid-row-symbol",
         type_parser=arg_validators.Symbol.type_parser,
@@ -90,7 +106,14 @@ class SynthGridEffectArgs(ArgsDataClass):
 
 
 class GridLine:
-    def __init__(self, terminal: Terminal, args: SynthGridEffectArgs, origin: Coord, direction: str):
+    def __init__(
+        self,
+        terminal: Terminal,
+        args: SynthGridEffectArgs,
+        origin: Coord,
+        direction: str,
+        grid_gradient_mapping: dict[geometry.Coord, graphics.Color],
+    ):
         self.terminal = terminal
         self.args = args
         self.origin = origin
@@ -99,16 +122,13 @@ class GridLine:
             self.grid_symbol = self.args.grid_row_symbol
         elif self.direction == "vertical":
             self.grid_symbol = self.args.grid_column_symbol
-        self.gradient = graphics.Gradient(*self.args.grid_gradient_stops, steps=self.args.grid_gradient_steps)
         self.characters: list[EffectCharacter] = []
         if direction == "horizontal":
             for column_index in range(self.terminal.output_area.left, self.terminal.output_area.right):
                 effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(
-                    self.grid_symbol,
-                    1,
-                    color=self.gradient.get_color_at_fraction(column_index / self.terminal.output_area.right),
+                    self.grid_symbol, 1, color=grid_gradient_mapping[geometry.Coord(column_index, origin.row)]
                 )
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
@@ -119,9 +139,7 @@ class GridLine:
                 effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(
-                    self.grid_symbol,
-                    1,
-                    color=self.gradient.get_color_at_fraction(row_index / self.terminal.output_area.top),
+                    self.grid_symbol, 1, color=grid_gradient_mapping[geometry.Coord(origin.column, row_index)]
                 )
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
@@ -182,12 +200,22 @@ class SynthGridEffect:
         return 4
 
     def prepare_data(self) -> None:
+        grid_gradient = graphics.Gradient(*self.args.grid_gradient_stops, steps=self.args.grid_gradient_steps)
+        grid_gradient_mapping = grid_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.grid_gradient_direction
+        )
+        text_gradient = graphics.Gradient(*self.args.text_gradient_stops, steps=self.args.text_gradient_steps)
+        text_gradient_mapping = text_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.text_gradient_direction
+        )
+
         self.grid_lines.append(
             GridLine(
                 self.terminal,
                 self.args,
                 Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
                 "horizontal",
+                grid_gradient_mapping,
             )
         )
         self.grid_lines.append(
@@ -196,6 +224,7 @@ class SynthGridEffect:
                 self.args,
                 Coord(self.terminal.output_area.left, self.terminal.output_area.top),
                 "horizontal",
+                grid_gradient_mapping,
             )
         )
         self.grid_lines.append(
@@ -204,6 +233,7 @@ class SynthGridEffect:
                 self.args,
                 Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
                 "vertical",
+                grid_gradient_mapping,
             )
         )
         self.grid_lines.append(
@@ -212,6 +242,7 @@ class SynthGridEffect:
                 self.args,
                 Coord(self.terminal.output_area.right, self.terminal.output_area.bottom),
                 "vertical",
+                grid_gradient_mapping,
             )
         )
         column_indexes: list[int] = []
@@ -228,16 +259,27 @@ class SynthGridEffect:
         ):
             row_indexes.append(row_index)
             self.grid_lines.append(
-                GridLine(self.terminal, self.args, Coord(self.terminal.output_area.left, row_index), "horizontal")
+                GridLine(
+                    self.terminal,
+                    self.args,
+                    Coord(self.terminal.output_area.left, row_index),
+                    "horizontal",
+                    grid_gradient_mapping,
+                )
             )
         for column_index in range(
             self.terminal.output_area.left + column_gap, self.terminal.output_area.right, max(column_gap, 1)
         ):
             column_indexes.append(column_index)
             self.grid_lines.append(
-                GridLine(self.terminal, self.args, Coord(column_index, self.terminal.output_area.bottom), "vertical")
+                GridLine(
+                    self.terminal,
+                    self.args,
+                    Coord(column_index, self.terminal.output_area.bottom),
+                    "vertical",
+                    grid_gradient_mapping,
+                )
             )
-        output_gradient = graphics.Gradient(*self.args.text_gradient_stops, steps=self.args.text_gradient_steps)
         if not row_indexes:
             row_indexes.append(self.terminal.output_area.top)
         else:
@@ -272,15 +314,9 @@ class SynthGridEffect:
                     dissolve_scn.add_frame(
                         random.choice(self.args.text_generation_symbols),
                         3,
-                        color=random.choice(output_gradient.spectrum),
+                        color=random.choice(text_gradient.spectrum),
                     )
-                dissolve_scn.add_frame(
-                    character.input_symbol,
-                    1,
-                    color=output_gradient.get_color_at_fraction(
-                        character.input_coord.row / self.terminal.output_area.top
-                    ),
-                )
+                dissolve_scn.add_frame(character.input_symbol, 1, color=text_gradient_mapping[character.input_coord])
                 character.animation.activate_scene(dissolve_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
