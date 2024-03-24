@@ -36,28 +36,35 @@ class WipeEffectArgs(ArgsDataClass):
         ],
         help="Direction the text will wipe.",
     )  # type: ignore[assignment]
-    gradient_stops: tuple[graphics.Color, ...] = ArgField(
-        cmd_name="--gradient-stops",
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name="--final_gradient-stops",
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("833ab4", "fd1d1d", "fcb045"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # type: ignore[assignment]
-    gradient_steps: tuple[int, ...] = ArgField(
-        cmd_name="--gradient-steps",
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final_gradient-steps",
         type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    gradient_frames: int = ArgField(
-        cmd_name="--gradient-frames",
+    final_gradient_frames: int = ArgField(
+        cmd_name="--final_gradient-frames",
         type_parser=arg_validators.PositiveInt.type_parser,
         default=5,
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
+    )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.VERTICAL,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
     wipe_delay: int = ArgField(
         cmd_name="--wipe-delay",
@@ -84,12 +91,12 @@ class WipeEffect:
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
     def prepare_data(self) -> None:
-        final_gradient = graphics.Gradient(*self.args.gradient_stops, steps=self.args.gradient_steps)
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+        )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
-
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         sort_map = {
             "column_left_to_right": self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             "column_right_to_left": self.terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
@@ -106,9 +113,11 @@ class WipeEffect:
                 wipe_gradient = graphics.Gradient(
                     final_gradient.spectrum[0],
                     self.character_final_color_map[character],
-                    steps=self.args.gradient_steps,
+                    steps=self.args.final_gradient_steps,
                 )
-                wipe_scn.apply_gradient_to_symbols(wipe_gradient, character.input_symbol, self.args.gradient_frames)
+                wipe_scn.apply_gradient_to_symbols(
+                    wipe_gradient, character.input_symbol, self.args.final_gradient_frames
+                )
                 character.animation.activate_scene(wipe_scn)
             self.pending_groups.append(group)
 
