@@ -27,7 +27,7 @@ class RingsEffectArgs(ArgsDataClass):
         cmd_name=["--ring-colors"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("ab48ff", "e7b2b2", "fffebd"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the rings.",
     )  # type: ignore[assignment]
@@ -36,7 +36,7 @@ class RingsEffectArgs(ArgsDataClass):
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("ab48ff", "e7b2b2", "fffebd"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -48,6 +48,14 @@ class RingsEffectArgs(ArgsDataClass):
         default=(12,),
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )  # type: ignore[assignment]
+
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.VERTICAL,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
 
     ring_gap: float = ArgField(
@@ -200,10 +208,11 @@ class RingsEffect:
     def prepare_data(self) -> None:
         """Prepares the data for the effect by building rings and associated animations/waypoints."""
         final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+        )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             start_scn = character.animation.new_scene()
             start_scn.add_frame(character.input_symbol, 1, color=self.character_final_color_map[character])
             home_path = character.motion.new_path(speed=0.8, ease=easing.out_quad, id="home")
