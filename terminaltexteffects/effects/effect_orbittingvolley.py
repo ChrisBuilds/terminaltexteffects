@@ -57,7 +57,7 @@ class OrbittingVolleyEffectArgs(ArgsDataClass):
         cmd_name="--final-gradient-stops",
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("FFA15C", "44D492"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -68,6 +68,13 @@ class OrbittingVolleyEffectArgs(ArgsDataClass):
         default=(12,),
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.CENTER,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
     launcher_movement_speed: float = ArgField(
         cmd_name="--launcher-movement-speed",
@@ -149,17 +156,21 @@ class OrbittingVolleyEffect:
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
         self.final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.final_gradient_coordinate_map: dict[Coord, graphics.Color] = (
+            self.final_gradient.build_coordinate_color_mapping(
+                self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+            )
+        )
 
     def prepare_data(self) -> None:
         for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = self.final_gradient_coordinate_map[character.input_coord]
             input_path = character.motion.new_path(
                 speed=self.args.character_movement_speed, ease=self.args.character_easing, id="input_path", layer=1
             )
             input_path.new_waypoint(character.input_coord)
-            character_height_ratio = character.input_coord.row / self.terminal.output_area.top
-            character.animation.set_appearance(
-                character.input_symbol, self.final_gradient.get_color_at_fraction(character_height_ratio)
-            )
+            character.animation.set_appearance(character.input_symbol, self.character_final_color_map[character])
 
     def set_launcher_coordinates(self, parent: Launcher, child: Launcher) -> None:
         """Sets the coordinates for the child launcher."""
@@ -175,9 +186,7 @@ class OrbittingVolleyEffect:
             child.character.motion.set_coordinate(
                 Coord(self.terminal.output_area.left, min(self.terminal.output_area.top, child_row))
             )
-        color = self.final_gradient.get_color_at_fraction(
-            child.character.motion.current_coord.row / self.terminal.output_area.top
-        )
+        color = self.final_gradient_coordinate_map[child.character.motion.current_coord]
         child.character.animation.set_appearance(child.character.input_symbol, color)
 
     def run(self) -> None:
@@ -225,6 +234,10 @@ class OrbittingVolleyEffect:
                 main_launcher.character.motion.set_coordinate(perimeter_path.waypoints[0].coord)
                 main_launcher.character.motion.activate_path(perimeter_path)
                 self.active_chars.append(main_launcher.character)
+            main_launcher.character.animation.set_appearance(
+                self.args.top_launcher_symbol,
+                self.final_gradient_coordinate_map[main_launcher.character.motion.current_coord],
+            )
             for launcher in launchers[1:]:
                 self.set_launcher_coordinates(main_launcher, launcher)
             if not delay:
