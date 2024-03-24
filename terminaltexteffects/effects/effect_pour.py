@@ -33,6 +33,13 @@ class PourEffectArgs(ArgsDataClass):
         choices=["up", "down", "left", "right"],
         help="Direction the text will pour.",
     )  # type: ignore[assignment]
+    pour_speed: int = ArgField(
+        cmd_name="--pour-speed",
+        type_parser=arg_validators.PositiveInt.type_parser,
+        default=1,
+        metavar=arg_validators.PositiveInt.METAVAR,
+        help="Number of characters poured in per tick. Increase to speed up the effect.",
+    )  # type: ignore[assignment]
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
         type_parser=arg_validators.PositiveFloat.type_parser,
@@ -54,27 +61,34 @@ class PourEffectArgs(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Color of the characters before the gradient starts.",
     )  # type: ignore[assignment]
-    pour_gradient_stops: tuple[graphics.Color, ...] = ArgField(
-        cmd_name=["--pour-gradient-stops"],
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    pour_gradient_steps: tuple[int, ...] = ArgField(
-        cmd_name=["--pour-gradient-steps"],
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name=["--final-gradient-steps"],
         type_parser=arg_validators.PositiveInt.type_parser,
         default=(12,),
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    pour_gradient_frames: int = ArgField(
-        cmd_name=["--pour-gradient-frames"],
+    final_gradient_frames: int = ArgField(
+        cmd_name=["--final-gradient-frames"],
         type_parser=arg_validators.PositiveInt.type_parser,
         default=15,
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
+    )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.VERTICAL,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
     easing: typing.Callable = ArgField(
         cmd_name="--easing",
@@ -113,13 +127,12 @@ class PourEffect:
 
     def prepare_data(self) -> None:
         """Prepares the data for the effect by sorting the characters by the pour direction."""
-        final_gradient = graphics.Gradient(*self.args.pour_gradient_stops, steps=self.args.pour_gradient_steps)
-
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+        )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
-            )
-
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         sort_map = {
             PourDirection.DOWN: Terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
             PourDirection.UP: Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
@@ -150,11 +163,11 @@ class PourEffect:
                 pour_gradient = graphics.Gradient(
                     self.args.starting_color,
                     self.character_final_color_map[character],
-                    steps=self.args.pour_gradient_steps,
+                    steps=self.args.final_gradient_steps,
                 )
                 pour_scn = character.animation.new_scene()
                 pour_scn.apply_gradient_to_symbols(
-                    pour_gradient, character.input_symbol, self.args.pour_gradient_frames
+                    pour_gradient, character.input_symbol, self.args.final_gradient_frames
                 )
                 character.animation.activate_scene(pour_scn)
             if i % 2 == 0:
@@ -174,9 +187,11 @@ class PourEffect:
                     current_group = self.pending_groups.pop(0)
             if current_group:
                 if not gap:
-                    next_character = current_group.pop(0)
-                    self.terminal.set_character_visibility(next_character, True)
-                    self.active_characters.append(next_character)
+                    for _ in range(self.args.pour_speed):
+                        if current_group:
+                            next_character = current_group.pop(0)
+                            self.terminal.set_character_visibility(next_character, True)
+                            self.active_characters.append(next_character)
                     gap = self.args.gap
                 else:
                     gap -= 1
