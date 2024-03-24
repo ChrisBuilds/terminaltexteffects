@@ -33,7 +33,7 @@ class BubblesEffectArgs(ArgsDataClass):
     bubble_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--bubble-colors",
         type_parser=arg_validators.Color.type_parser,
-        default=("a770ef", "cf8bf3", "fdb99b"),
+        default=("f100ff", "f0c1c1", "57eaf7"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as default False.",
     )  # type: ignore[assignment]
@@ -48,7 +48,7 @@ class BubblesEffectArgs(ArgsDataClass):
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("a770ef", "fdb99b"),
+        default=("57eaf7", "f0c1c1", "f100ff"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
