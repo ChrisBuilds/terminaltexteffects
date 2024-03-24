@@ -25,22 +25,30 @@ Example: terminaltexteffects spotlights --gradient-stops 8A008A 00D1FF FFFFFF --
 )
 @dataclass
 class SpotlightsEffectArgs(ArgsDataClass):
-    gradient_stops: tuple[graphics.Color, ...] = ArgField(
-        cmd_name=["--gradient-stops"],
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=("ab48ff", "e7b2b2", "fffebd"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    gradient_steps: tuple[int, ...] = ArgField(
-        cmd_name="--gradient-steps",
+    final_gradient_steps: tuple[int, ...] = ArgField(
+        cmd_name="--final-gradient-steps",
         type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=arg_validators.GradientDirection.type_parser,
+        default=graphics.Gradient.Direction.VERTICAL,
+        metavar=arg_validators.GradientDirection.METAVAR,
+        help="Direction of the gradient for the final color.",
+    )  # type: ignore[assignment]
+
     beam_width_ratio: float = ArgField(
         cmd_name="--beam-width-ratio",
         type_parser=arg_validators.PositiveFloat.type_parser,
@@ -171,12 +179,12 @@ class SpotlightsEffect:
         self.illuminated_chars = chars_in_range
 
     def prepare_data(self) -> None:
-        base_gradient = graphics.Gradient(*self.args.gradient_stops, steps=self.args.gradient_steps)
-        base_gradient_mapping = base_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, graphics.Gradient.Direction.VERTICAL
+        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
         )
         for character in self.terminal.get_characters():
-            color_bright = base_gradient_mapping[character.input_coord]
+            color_bright = final_gradient_mapping[character.input_coord]
             self.terminal.set_character_visibility(character, True)
             color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
             self.character_color_map[character] = (color_bright, color_dark)
