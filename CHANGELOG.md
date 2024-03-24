@@ -54,6 +54,7 @@
  * Burn effect burns faster with some randomness in speed.
  * Burn effect final color fades in from the burned color.
  * Burn effect characters are shown prior to burning using a starting_color arg.
+ * Pour effect has a --pour-speed argument.
 
 #### Engine
  * Geometry related methods have been removed from the motion class. They are now located at terminaltexteffects.utils.geometry as separate functions.
