@@ -18,13 +18,14 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     formatter_class=arg_validators.CustomFormatter,
     help="Create beams which travel over the output area illuminating the characters behind them.",
     description="Create beams which travel over the output area illuminating the characters behind them.",
-    epilog="""Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops ffffff 00D1FF 8A008A --final-gradient-steps 12 --final-gradient-frames 5 --final-wipe-speed 1""",
+    epilog="""Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical --final-wipe-speed 1""",
 )
 @dataclass
 class BeamsEffectArgs(ArgsDataClass):
     beam_row_symbols: tuple[str, ...] = ArgField(
         cmd_name="--beam-row-symbols",
         type_parser=arg_validators.Symbol.type_parser,
+        nargs="+",
         default=("▂", "▁", "_"),
         metavar=arg_validators.Symbol.METAVAR,
         help="Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation.",
@@ -32,6 +33,7 @@ class BeamsEffectArgs(ArgsDataClass):
     beam_column_symbols: tuple[str, ...] = ArgField(
         cmd_name="--beam-column-symbols",
         type_parser=arg_validators.Symbol.type_parser,
+        nargs="+",
         default=("▌", "▍", "▎", "▏"),
         metavar=arg_validators.Symbol.METAVAR,
         help="Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation.",
