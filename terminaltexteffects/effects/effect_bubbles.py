@@ -20,7 +20,8 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     help="Characters are formed into bubbles that float down and pop.",
     description="Characters are formed into bubbles that float down and pop.",
     epilog=f"""{arg_validators.EASING_EPILOG}
-Example: terminaltexteffects bubbles --bubble-colors 00ff00 --pop-color ff0000 --final-gradient-stops 00ff00 ff0000 0000ff --final-gradient-steps 12 --bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE""",
+
+Example: terminaltexteffects bubbles --bubble-colors d33aff 7395c4 43c2a7 02ff7f --pop-color ffffff --final-gradient-stops d33aff 02ff7f --final-gradient-steps 12 --final-gradient-direction diagonal --bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE""",
 )
 @dataclass
 class BubblesEffectArgs(ArgsDataClass):
@@ -33,7 +34,8 @@ class BubblesEffectArgs(ArgsDataClass):
     bubble_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--bubble-colors",
         type_parser=arg_validators.Color.type_parser,
-        default=("f100ff", "f0c1c1", "57eaf7"),
+        nargs="+",
+        default=("d33aff", "7395c4", "43c2a7", "02ff7f"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as default False.",
     )  # type: ignore[assignment]
@@ -48,7 +50,7 @@ class BubblesEffectArgs(ArgsDataClass):
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("57eaf7", "f0c1c1", "f100ff"),
+        default=("d33aff", "02ff7f"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -63,11 +65,10 @@ class BubblesEffectArgs(ArgsDataClass):
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=arg_validators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.CENTER,
+        default=graphics.Gradient.Direction.DIAGONAL,
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
-
     bubble_speed: float = ArgField(
         cmd_name="--bubble-speed",
         type_parser=arg_validators.PositiveFloat.type_parser,
