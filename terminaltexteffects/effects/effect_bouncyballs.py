@@ -20,7 +20,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     help="Characters are bouncy balls falling from the top of the output area.",
     description="bouncyball | Characters are bouncy balls falling from the top of the output area.",
     epilog=f"""{arg_validators.EASING_EPILOG}
-Example: terminaltexteffects bouncyballs --ball-colors 00ff00 ff0000 0000ff --ball-symbols "o" "*" "O" "0" "." --final-gradient-stops 00ff00 ff0000 0000ff --final-gradient-steps 12 --ball-delay 7 --movement-speed 0.25 --easing OUT_BOUNCE""",
+Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols o "*" O 0 . --final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal --ball-delay 7 --movement-speed 0.25 --easing OUT_BOUNCE""",
 )
 @dataclass
 class BouncyBallsEffectArgs(ArgsDataClass):
