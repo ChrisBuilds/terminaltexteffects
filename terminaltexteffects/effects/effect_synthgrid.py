@@ -18,7 +18,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     formatter_class=arg_validators.CustomFormatter,
     help="Create a grid which fills with characters dissolving into the final text.",
     description="Create a grid which fills with characters dissolving into the final text.",
-    epilog="""Example: terminaltexteffects synthgrid --grid-gradient-stops 8A008A FFFFFF --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol │ --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1""",
+    epilog="""Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol "│" --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1""",
 )
 @dataclass
 class SynthGridEffectArgs(ArgsDataClass):
@@ -45,7 +45,6 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the grid color.",
     )  # type: ignore[assignment]
-
     text_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--text-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
@@ -69,7 +68,6 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the text color.",
     )  # type: ignore[assignment]
-
     grid_row_symbol: str = ArgField(
         cmd_name="--grid-row-symbol",
         type_parser=arg_validators.Symbol.type_parser,
@@ -124,7 +122,7 @@ class GridLine:
             self.grid_symbol = self.args.grid_column_symbol
         self.characters: list[EffectCharacter] = []
         if direction == "horizontal":
-            for column_index in range(self.terminal.output_area.left, self.terminal.output_area.right):
+            for column_index in range(self.terminal.output_area.left, self.terminal.output_area.right + 1):
                 effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(
@@ -190,14 +188,25 @@ class SynthGridEffect:
         self.grid_lines: list[GridLine] = []
         self.group_tracker: dict[int, int] = {}
 
-    def find_even_gap(self, length: int) -> int:
-        length = length - 2
-        if length <= 0:
+    def find_even_gap(self, dimension: int) -> int:
+        """Find the closest even gap to 20% of the longest dimension.
+
+        Args:
+            dimension (int): The longest dimension.
+
+        Returns:
+            int: The gap that is closest to 20% of the dimension length.
+        """
+        potential_gaps: list[int] = []
+        dimension = dimension - 2
+        if dimension <= 0:
             return 0
-        for i in range(20, 4, -1):
-            if length % i <= 1:
-                return i
-        return 4
+        for i in range(dimension, 4, -1):
+            if dimension % i <= 1:
+                potential_gaps.append(i)
+        if not potential_gaps:
+            return 4
+        return min(potential_gaps, key=lambda x: abs(x - dimension // 5))
 
     def prepare_data(self) -> None:
         grid_gradient = graphics.Gradient(*self.args.grid_gradient_stops, steps=self.args.grid_gradient_steps)
@@ -257,6 +266,8 @@ class SynthGridEffect:
         for row_index in range(
             self.terminal.output_area.bottom + row_gap, self.terminal.output_area.top, max(row_gap, 1)
         ):
+            if self.terminal.output_area.top - row_index < 2:
+                continue
             row_indexes.append(row_index)
             self.grid_lines.append(
                 GridLine(
@@ -270,6 +281,8 @@ class SynthGridEffect:
         for column_index in range(
             self.terminal.output_area.left + column_gap, self.terminal.output_area.right, max(column_gap, 1)
         ):
+            if self.terminal.output_area.right - column_index < 2:
+                continue
             column_indexes.append(column_index)
             self.grid_lines.append(
                 GridLine(
@@ -280,14 +293,8 @@ class SynthGridEffect:
                     grid_gradient_mapping,
                 )
             )
-        if not row_indexes:
-            row_indexes.append(self.terminal.output_area.top)
-        else:
-            row_indexes.append(row_indexes[-1] + row_gap)
-        if not column_indexes:
-            column_indexes.append(self.terminal.output_area.right)
-        else:
-            column_indexes.append(column_indexes[-1] + column_gap)
+        row_indexes.append(self.terminal.output_area.top + 1)
+        column_indexes.append(self.terminal.output_area.right + 1)
         prev_row_index = 1
         for row_index in row_indexes:
             prev_column_index = 1
