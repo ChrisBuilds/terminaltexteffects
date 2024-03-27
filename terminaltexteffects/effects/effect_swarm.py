@@ -19,7 +19,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     formatter_class=arg_validators.CustomFormatter,
     help="Characters are grouped into swarms and move around the terminal before settling into position.",
     description="Characters are grouped into swarms and move around the terminal before settling into position.",
-    epilog="""Example: terminaltexteffects swarm --base-color 8A008A 00D1FF FFFFFF --flash-color f2ea79 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --swarm-size 0.1 --swarm-coordination 0.80 --swarm-area-count 2-4""",
+    epilog="""Example: terminaltexteffects swarm --base-color 31a0d4 --flash-color f2ea79 --final-gradient-stops 31b900 f0ff65 --final-gradient-steps 12 --swarm-size 0.1 --swarm-coordination 0.80 --swarm-area-count 2-4""",
 )
 @dataclass
 class SwarmEffectArgs(ArgsDataClass):

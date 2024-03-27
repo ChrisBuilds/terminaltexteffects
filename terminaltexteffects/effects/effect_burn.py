@@ -18,7 +18,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     formatter_class=arg_validators.CustomFormatter,
     help="Burns vertically in the output area.",
     description="burn | Burn the output area.",
-    epilog="Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12",
+    epilog="Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12",
 )
 @dataclass
 class BurnEffectArgs(ArgsDataClass):

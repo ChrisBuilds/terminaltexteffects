@@ -17,7 +17,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     formatter_class=arg_validators.CustomFormatter,
     help="Display a movie style decryption effect.",
     description="decrypt | Movie style decryption effect.",
-    epilog="Example: terminaltexteffects decrypt --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-direction vertical",
+    epilog="Example: terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical",
 )
 @dataclass
 class DecryptEffectArgs(ArgsDataClass):

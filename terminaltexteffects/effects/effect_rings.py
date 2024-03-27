@@ -19,7 +19,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     formatter_class=arg_validators.CustomFormatter,
     help="Characters are dispersed and form into spinning rings.",
     description="Characters are dispersed and form into spinning rings.",
-    epilog="""Example: terminaltexteffects rings --ring-colors 8A008A 00D1FF FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 --disperse-duration 200 --spin-disperse-cycles 3""",
+    epilog="""Example: terminaltexteffects rings --ring-colors ab48ff e7b2b2 fffebd --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 --disperse-duration 200 --spin-disperse-cycles 3""",
 )
 @dataclass
 class RingsEffectArgs(ArgsDataClass):

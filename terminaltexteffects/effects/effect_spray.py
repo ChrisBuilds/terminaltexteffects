@@ -22,8 +22,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     formatter_class=arg_validators.CustomFormatter,
     help="Draws the characters spawning at varying rates from a single point.",
     description="spray | Draws the characters spawning at varying rates from a single point.",
-    epilog=f"""{arg_validators.EASING_EPILOG}
-    
+    epilog=f"""{arg_validators.EASING_EPILOG}    
 Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 --movement-easing OUT_EXPO""",
 )
 @dataclass

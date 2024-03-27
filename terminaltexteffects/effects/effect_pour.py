@@ -22,8 +22,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     help="Pours the characters into position from the given direction.",
     description="pour | Pours the characters into position from the given direction.",
     epilog=f"""{arg_validators.EASING_EPILOG}
-    
-Example: terminaltexteffects pour --pour-direction down --movement-speed 0.2 --gap 1 --starting-color 8A008A --pour-gradient-stops 00D1FF FFFFFF --pour-gradient-steps 12 --pour-gradient-frames 25 --easing IN_QUAD""",
+Example: terminaltexteffects pour --pour-direction down --movement-speed 0.2 --gap 1 --starting-color FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF --easing IN_QUAD""",
 )
 @dataclass
 class PourEffectArgs(ArgsDataClass):
@@ -79,7 +78,7 @@ class PourEffectArgs(ArgsDataClass):
     final_gradient_frames: int = ArgField(
         cmd_name=["--final-gradient-frames"],
         type_parser=arg_validators.PositiveInt.type_parser,
-        default=15,
+        default=10,
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]

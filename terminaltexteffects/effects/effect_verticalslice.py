@@ -19,7 +19,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     description="verticalslice | Slices the input in half vertically and slides it into place from opposite directions.",
     epilog=f"""{arg_validators.EASING_EPILOG}
     
-Example: terminaltexteffects verticalslice --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5 --movement-easing IN_OUT_EXPO""",
+Example: terminaltexteffects verticalslice --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.15 --movement-easing IN_OUT_EXPO""",
 )
 @dataclass
 class VerticalSliceArgs(ArgsDataClass):
@@ -46,11 +46,10 @@ class VerticalSliceArgs(ArgsDataClass):
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
-
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
         type_parser=arg_validators.PositiveFloat.type_parser,
-        default=0.5,
+        default=0.15,
         metavar=arg_validators.PositiveFloat.METAVAR,
         help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
     )  # type: ignore[assignment]

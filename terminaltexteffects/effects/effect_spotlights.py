@@ -20,8 +20,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     help="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
     description="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
     epilog=f"""{arg_validators.EASING_EPILOG}
-    
-Example: terminaltexteffects spotlights --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration 750 --search-speed-range 0.25-0.5 --spotlight-count 3""",
+Example: terminaltexteffects spotlights --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration 750 --search-speed-range 0.25-0.5 --spotlight-count 3""",
 )
 @dataclass
 class SpotlightsEffectArgs(ArgsDataClass):
@@ -48,7 +47,6 @@ class SpotlightsEffectArgs(ArgsDataClass):
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
-
     beam_width_ratio: float = ArgField(
         cmd_name="--beam-width-ratio",
         type_parser=arg_validators.PositiveFloat.type_parser,

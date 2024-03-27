@@ -19,7 +19,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     formatter_class=arg_validators.CustomFormatter,
     help="Characters lose color and crumble into dust, vacuumed up, and reformed.",
     description="Characters lose color and crumble into dust, vacuumed up, and reformed.",
-    epilog="""Example: terminaltexteffects crumble --final-gradient-stops 19547b ffd89b --final-gradient-steps 12""",
+    epilog="""Example: terminaltexteffects crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal""",
 )
 @dataclass
 class CrumbleEffectArgs(ArgsDataClass):
@@ -27,7 +27,7 @@ class CrumbleEffectArgs(ArgsDataClass):
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
-        default=("19547b", "ffd89b"),
+        default=("5CE1FF", "FF8C00"),
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -70,11 +70,10 @@ class CrumbleEffect:
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        for character in self.terminal.get_characters():
             strengthen_flash_gradient = graphics.Gradient(self.character_final_color_map[character], "ffffff", steps=6)
             strengthen_gradient = graphics.Gradient("ffffff", self.character_final_color_map[character], steps=9)
-            weak_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.80)
-            dust_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.60)
+            weak_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.65)
+            dust_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.55)
             weaken_gradient = graphics.Gradient(weak_color, dust_color, steps=9)
             self.terminal.set_character_visibility(character, True)
             # set up initial and falling stage

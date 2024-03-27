@@ -17,8 +17,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     help="Move the characters into place from random starting locations.",
     description="scattered | Move the characters into place from random starting locations.",
     epilog=f"""{arg_validators.EASING_EPILOG}
-    
-Example: terminaltexteffects scattered --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK""",
+Example: terminaltexteffects scattered --final-gradient-stops ff9048 ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK""",
 )
 @dataclass
 class ScatteredEffectArgs(ArgsDataClass):

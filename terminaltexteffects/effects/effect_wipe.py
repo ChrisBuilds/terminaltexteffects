@@ -17,13 +17,13 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     formatter_class=arg_validators.CustomFormatter,
     help="Wipes the text across the terminal to reveal characters.",
     description="Wipes the text across the terminal to reveal characters.",
-    epilog="""Example: terminaltexteffects wipe --wipe-direction column_left_to_right --gradient-stops 8A008A 00D1FF FFFFFF --gradient-steps 12 --gradient-frames 5 --wipe-delay 0""",
+    epilog="""Example: terminaltexteffects wipe --wipe-direction diagonal_bottom_left_to_top_right --final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 5 --wipe-delay 0""",
 )
 @dataclass
 class WipeEffectArgs(ArgsDataClass):
     wipe_direction: str = ArgField(
         cmd_name="--wipe-direction",
-        default="column_left_to_right",
+        default="diagonal_bottom_left_to_top_right",
         choices=[
             "column_left_to_right",
             "column_right_to_left",
@@ -37,7 +37,7 @@ class WipeEffectArgs(ArgsDataClass):
         help="Direction the text will wipe.",
     )  # type: ignore[assignment]
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
-        cmd_name="--final_gradient-stops",
+        cmd_name="--final-gradient-stops",
         type_parser=arg_validators.Color.type_parser,
         nargs="+",
         default=("833ab4", "fd1d1d", "fcb045"),
@@ -45,7 +45,7 @@ class WipeEffectArgs(ArgsDataClass):
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # type: ignore[assignment]
     final_gradient_steps: tuple[int, ...] = ArgField(
-        cmd_name="--final_gradient-steps",
+        cmd_name="--final-gradient-steps",
         type_parser=arg_validators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
@@ -53,7 +53,7 @@ class WipeEffectArgs(ArgsDataClass):
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     final_gradient_frames: int = ArgField(
-        cmd_name="--final_gradient-frames",
+        cmd_name="--final-gradient-frames",
         type_parser=arg_validators.PositiveInt.type_parser,
         default=5,
         metavar=arg_validators.PositiveInt.METAVAR,
