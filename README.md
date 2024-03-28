@@ -116,6 +116,7 @@ Ex: ls -a | tte crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-st
 ```
 #### Beams
 ![beams_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/6bb98dac-688e-43c9-96aa-1a45f451d4cb)
+
 <details>
 <summary>tte beams -h</summary>
 <br>
