@@ -16,7 +16,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="wipe",
     formatter_class=arg_validators.CustomFormatter,
     help="Wipes the text across the terminal to reveal characters.",
-    description="Wipes the text across the terminal to reveal characters.",
+    description="wipe | Wipes the text across the terminal to reveal characters.",
     epilog="""Example: terminaltexteffects wipe --wipe-direction diagonal_bottom_left_to_top_right --final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 5 --wipe-delay 0""",
 )
 @dataclass

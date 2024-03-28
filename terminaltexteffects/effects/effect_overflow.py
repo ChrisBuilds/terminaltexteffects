@@ -18,7 +18,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="overflow",
     formatter_class=arg_validators.CustomFormatter,
     help="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
-    description="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
+    description="overflow | Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
     epilog="""Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3""",
 )
 @dataclass

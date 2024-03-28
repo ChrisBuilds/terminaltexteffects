@@ -17,7 +17,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="errorcorrect",
     formatter_class=arg_validators.CustomFormatter,
     help="Some characters start in the wrong position and are corrected in sequence.",
-    description="Some characters start in the wrong position and are corrected in sequence.",
+    description="errorcorrect | Some characters start in the wrong position and are corrected in sequence.",
     epilog=f"""{arg_validators.EASING_EPILOG}
     
 Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c --correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5""",

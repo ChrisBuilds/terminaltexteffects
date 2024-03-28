@@ -17,7 +17,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="synthgrid",
     formatter_class=arg_validators.CustomFormatter,
     help="Create a grid which fills with characters dissolving into the final text.",
-    description="Create a grid which fills with characters dissolving into the final text.",
+    description="synthgrid | Create a grid which fills with characters dissolving into the final text.",
     epilog="""Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol "│" --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1""",
 )
 @dataclass

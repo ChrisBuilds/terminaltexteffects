@@ -16,7 +16,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="waves",
     formatter_class=arg_validators.CustomFormatter,
     help="Waves travel across the terminal leaving behind the characters.",
-    description="Waves travel across the terminal leaving behind the characters.",
+    description="waves | Waves travel across the terminal leaving behind the characters.",
     epilog=f"""{arg_validators.EASING_EPILOG}
 Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▇ ▆ ▅ ▄ ▃ ▂ ▁ --wave-gradient-stops f0ff65 ffb102 31a0d4 ffb102 f0ff65 --wave-gradient-steps 6 --final-gradient-stops ffb102 31a0d4 f0ff65 --final-gradient-steps 12 --wave-count 7 --wave-length 2 --wave-easing IN_OUT_SINE""",
 )

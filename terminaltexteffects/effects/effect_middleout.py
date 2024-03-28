@@ -17,7 +17,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="middleout",
     formatter_class=arg_validators.CustomFormatter,
     help="Text expands in a single row or column in the middle of the output area then out.",
-    description="Text expands in a single row or column in the middle of the output area then out.",
+    description="middleout | Text expands in a single row or column in the middle of the output area then out.",
     epilog=f"""{arg_validators.EASING_EPILOG}
 Example: terminaltexteffects middleout --starting-color 8A008A --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical --center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE --full-easing IN_OUT_SINE""",
 )

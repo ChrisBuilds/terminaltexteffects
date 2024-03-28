@@ -18,7 +18,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="blackhole",
     formatter_class=arg_validators.CustomFormatter,
     help="Characters are consumed by a black hole and explode outwards.",
-    description="Characters are consumed by a black hole and explode outwards.",
+    description="blackhole | Characters are consumed by a black hole and explode outwards.",
     epilog="""Example: terminaltexteffects blackhole --star-colors ffcc0d ff7326 ff194d bf2669 702a8c 049dbf --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-direction vertical""",
 )
 @dataclass

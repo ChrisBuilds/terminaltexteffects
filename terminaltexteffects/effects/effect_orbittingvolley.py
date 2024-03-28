@@ -18,7 +18,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="orbittingvolley",
     formatter_class=arg_validators.CustomFormatter,
     help="Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
-    description="Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
+    description="orbittingvolley | Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
     epilog=f"""{arg_validators.EASING_EPILOG}
     
 Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 --launcher-movement-speed 0.5 --character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE""",

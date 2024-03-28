@@ -18,7 +18,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="crumble",
     formatter_class=arg_validators.CustomFormatter,
     help="Characters lose color and crumble into dust, vacuumed up, and reformed.",
-    description="Characters lose color and crumble into dust, vacuumed up, and reformed.",
+    description="crumble | Characters lose color and crumble into dust, vacuumed up, and reformed.",
     epilog="""Example: terminaltexteffects crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal""",
 )
 @dataclass
