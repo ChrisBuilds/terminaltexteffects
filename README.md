@@ -160,7 +160,7 @@ each effect. Check the effect help output to see arguments.
 </details>
 
 #### Binarypath
-
+![binarypath_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/99ad3946-c475-4743-93e2-cdfb2a7f558f)
 <details>
 <summary>tte binarypath -h</summary>
 <br>
@@ -185,9 +185,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects binarypath --final-gradient-stops 00d500 007500 --final-gradient-steps 12 --final-gradient-direction vertical --binary-colors 044E29 157e38 45bf55 95ed87 --movement-speed 1.0 --active-binary-groups 0.05
 </details>
 
-
 #### Blackhole
-
+![blackhole_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/877579d3-d353-4bed-9a95-d3ea7a53200a)
 <details>
 <summary>tte blackhole -h</summary>
 <br>
@@ -211,9 +210,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects blackhole --star-colors ffcc0d ff7326 ff194d bf2669 702a8c 049dbf --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-direction vertical
 </details>
 
-
 #### Bouncyballs
-
+![bouncyballs_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/84b12fd0-6e51-4661-bd09-407dad30023d)
 <details>
 <summary>tte bouncyballs -h</summary>
 <br>
@@ -266,7 +264,7 @@ each effect. Check the effect help output to see arguments.
 </details>
 
 #### Bubbles
-
+![bubbles_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/3f977398-35b7-4bc4-aef1-fb43838adcc3)
 <details>
 <summary>tte bubbles -h</summary>
 <br>
@@ -323,9 +321,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects bubbles --bubble-colors d33aff 7395c4 43c2a7 02ff7f --pop-color ffffff --final-gradient-stops d33aff 02ff7f --final-gradient-steps 12 --final-gradient-direction diagonal --bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE
 </details>
 
-
 #### Burn
-
+![burn_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/9770711a-ea68-48cc-947f-fb13c6613a2e)
 <details>
 <summary>tte burn -h</summary>
 <br>
@@ -348,9 +345,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12
 </details>
 
-
 #### Crumble
-
+![crumble_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/f9cdea9b-b695-41b7-b129-8288232cba13)
 <details>
 <summary>tte crumble -h</summary>
 <br>
@@ -369,9 +365,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal
 </details>
 
-
 #### Decrypt
-
+![decrypt_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/36c23e70-065d-4316-a09e-c2761882cbb3)
 <details>
 <summary>tte decrypt -h</summary>
 <br>
@@ -395,7 +390,7 @@ each effect. Check the effect help output to see arguments.
 </details>
 
 #### Errorcorrect
-
+![errorcorrect_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/a851d333-8fe2-4c12-9c45-536ed8ebbab8)
 <details>
 <summary>tte errorcorrect -h</summary>
 <br>
@@ -450,9 +445,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c --correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5
 </details>
 
-
 #### Expand
-
+![expand_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/21d1c374-9028-4546-a5d7-ee538488ee7b)
 <details>
 <summary>tte expand -h</summary>
 <br>
@@ -502,9 +496,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects expand --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 5 --movement-speed 0.35 --expand-easing IN_OUT_QUART
 </details>
 
-
 #### Fireworks
-
+![fireworks_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/da6a97b1-c4fd-4370-9852-9ddb8a494b55)
 <details>
 <summary>tte fireworks -h</summary>
 <br>
@@ -534,9 +527,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere
 </details>
 
-
 #### Middleout
-
+![middleout_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/d78e37f6-ccb1-4d3b-a07c-f021b6893fce)
 <details>
 <summary>tte middleout -h</summary>
 <br>
@@ -593,9 +585,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects middleout --starting-color 8A008A --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical --center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE --full-easing IN_OUT_SINE
 </details>
 
-
 #### Orbittingvolley
-
+![orbittingvolley_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/084038e5-9d49-4c7d-bf15-e989f541b15c)
 <details>
 <summary>tte orbittingvolley -h</summary>
 <br>
@@ -657,9 +648,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 --launcher-movement-speed 0.5 --character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE
 </details>
 
-
 #### Overflow
-
+![overflow_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/37da1088-ba15-4be9-9489-c387a6a55930)
 <details>
 <summary>tte overflow -h</summary>
 <br>
@@ -684,9 +674,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3
 </details>
 
-
 #### Pour
-
+![pour_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/145c2a4e-6b30-48c6-80a3-afb03edf7c22)
 <details>
 <summary>tte pour -h</summary>
 <br>
@@ -741,8 +730,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects pour --pour-direction down --movement-speed 0.2 --gap 1 --starting-color FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF --easing IN_QUAD
 </details>
 
-
 #### Print
+![print_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/5d902350-e5d3-400c-9496-119c88d40643)
 <details>
 <summary>tte print -h</summary>
 <br>
@@ -793,7 +782,7 @@ each effect. Check the effect help output to see arguments.
 </details>
 
 #### Rain
-
+![rain_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/7b8cf447-67b6-41e9-b354-07b3e5161d10)
 <details>
 <summary>tte rain -h</summary>
 <br>
@@ -845,8 +834,7 @@ each effect. Check the effect help output to see arguments.
 </details>
 
 #### RandomSequence
-
-
+![randomsequence_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/a2218f80-73b6-40ab-b2fb-49268cf9f890)
 <details>
 <summary>tte randomsequence -h</summary>
 <br>
@@ -870,10 +858,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects randomsequence --starting-color 000000 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 12 --speed 0.004
 </details>
 
-
 #### Rings
-
-
+![rings_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/cb7f6388-0f46-42f1-a2b3-6a267e9451f0)
 <details>
 <summary>tte rings -h</summary>
 <br>
@@ -903,10 +889,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects rings --ring-colors ab48ff e7b2b2 fffebd --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 --disperse-duration 200 --spin-disperse-cycles 3
 </details>
 
-
 #### Scattered
-
-
+![scattered_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/9948519d-0158-4ddf-ae3a-7d4eddb706d9)
 <details>
 <summary>tte scattered -h</summary>
 <br>
@@ -955,10 +939,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects scattered --final-gradient-stops ff9048 ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK
 </details>
 
-
 #### Slide
-
-
+![slide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/218e7218-e9ef-44de-b43b-5e824623a957)
 <details>
 <summary>tte slide -h</summary>
 <br>
@@ -1013,8 +995,7 @@ each effect. Check the effect help output to see arguments.
 </details>
 
 #### Spotlights
-
-
+![spotlights_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/4ab93725-0c8a-4bdf-af91-057338f4e007)
 <details>
 <summary>tte spotlights -h</summary>
 <br>
@@ -1067,10 +1048,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects spotlights --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration 750 --search-speed-range 0.25-0.5 --spotlight-count 3
 </details>
 
-
 #### Spray
-
-
+![spray_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/0be02197-11c3-44d0-9e7f-cd90caefa876)
 <details>
 <summary>tte spray -h</summary>
 <br>
@@ -1121,10 +1100,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 --movement-easing OUT_EXPO
 </details>
 
-
 #### Swarm
-
-
+![swarm_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/305e8390-a0fb-4edb-a541-7b52cef77c09)
 <details>
 <summary>tte swarm -h</summary>
 <br>
@@ -1153,10 +1130,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects swarm --base-color 31a0d4 --flash-color f2ea79 --final-gradient-stops 31b900 f0ff65 --final-gradient-steps 12 --swarm-size 0.1 --swarm-coordination 0.80 --swarm-area-count 2-4
 </details>
 
-
 #### Synthgrid
-
-
+![synthgrid_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/6d1bab16-0520-44fa-a508-8f92d7d3be9e)
 <details>
 <summary>tte synthgrid -h</summary>
 <br>
@@ -1188,10 +1163,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol "│" --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1
 </details>
 
-
 #### Unstable
-
-
+![unstable_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/29adb5bf-cd35-4d67-9ed4-fa73ebcb892d)
 <details>
 <summary>tte unstable -h</summary>
 <br>
@@ -1223,10 +1196,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol "│" --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1
 </details>
 
-
 #### Verticalslice
-
-
+![verticalslice_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2341a822-7fef-4ebf-9420-8272fff64082)
 <details>
 <summary>tte verticalslice -h</summary>
 <br>
@@ -1274,10 +1245,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects verticalslice --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.15 --movement-easing IN_OUT_EXPO
 </details>
 
-
 #### VHSTape
-
-
+![vhstape_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/720abbf4-f97d-4ce9-96ee-15ef973488d2)
 <details>
 <summary>tte vhstape -h</summary>
 <br>
@@ -1311,8 +1280,7 @@ each effect. Check the effect help output to see arguments.
 </details>
 
 #### Waves
-
-
+![waves_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ea9b04ca-e526-4c7e-b98d-a98a42f7137f)
 <details>
 <summary>tte waves -h</summary>
 <br>
@@ -1369,10 +1337,8 @@ each effect. Check the effect help output to see arguments.
     Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▇ ▆ ▅ ▄ ▃ ▂ ▁ --wave-gradient-stops f0ff65 ffb102 31a0d4 ffb102 f0ff65 --wave-gradient-steps 6 --final-gradient-stops ffb102 31a0d4 f0ff65 --final-gradient-steps 12 --wave-count 7 --wave-length 2 --wave-easing IN_OUT_SINE
 </details>
 
-
 #### Wipe
-
-
+![wipe_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/40b8c81e-6143-4839-af56-12e361651a0a)
 <details>
 <summary>tte wipe -h</summary>
 <br>
@@ -1395,7 +1361,6 @@ each effect. Check the effect help output to see arguments.
 
     Example: terminaltexteffects wipe --wipe-direction diagonal_bottom_left_to_top_right --final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 5 --wipe-delay 0
 </details>
-
 
 ## In-Development Preview
 Any effects shown below are in development and will be available in the next release.
