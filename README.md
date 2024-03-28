@@ -67,17 +67,21 @@ OR
 ```
 options:
   -h, --help            show this help message and exit
+  --tab-width (int > 0)
+                        Number of spaces to use for a tab character.
   --xterm-colors        Convert any colors specified in RBG hex to the closest XTerm-256 color.
   --no-color            Disable all colors in the effect.
-  --tab-width TAB_WIDTH
-                        Number of spaces to use for a tab character.
   --no-wrap             Disable wrapping of text.
+  -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
+                        Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
+                        no impact beyond a certain lower threshold due to the processing speed of your device.
 
 Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
-  {binarypath,blackhole,bouncyballs,bubbles,burn,crumble,decrypt,errorcorrect,expand,fireworks,middleout,pour,print,rain,randomsequence,rings,scattered,slide,spray,swarm,synthgrid,test,unstable,verticalslice,vhstape,waves,wipe}
+  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,crumble,decrypt,dev,errorcorrect,expand,fireworks,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slide,spotlights,spray,swarm,synthgrid,test,unstable,verticalslice,vhstape,waves,wipe}
                         Available Effects
+    beams               Create beams which travel over the output area illuminating the characters behind them.
     binarypath          Binary representations of each character move through the terminal towards the home coordinate of the character.
     blackhole           Characters are consumed by a black hole and explode outwards.
     bouncyballs         Characters are bouncy balls falling from the top of the output area.
@@ -89,6 +93,8 @@ Effect:
     expand              Expands the text from a single point.
     fireworks           Characters launch and explode like fireworks and fall into place.
     middleout           Text expands in a single row or column in the middle of the output area then out.
+    orbittingvolley     Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.
+    overflow            Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.
     pour                Pours the characters into position from the given direction.
     print               Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
     rain                Rain characters from the top of the output area.
@@ -96,6 +102,7 @@ Effect:
     rings               Characters are dispersed and form into spinning rings.
     scattered           Move the characters into place from random starting locations.
     slide               Slide characters into view from outside the terminal.
+    spotlights          Spotlights search the text area, illuminating characters, before converging in the center and expanding.
     spray               Draws the characters spawning at varying rates from a single point.
     swarm               Characters are grouped into swarms and move around the terminal before settling into position.
     synthgrid           Create a grid which fills with characters dissolving into the final text.
@@ -107,60 +114,127 @@ Effect:
 
 Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciphertext-color 00ff00 --plaintext-color ff0000 --final-color 0000ff
 ```
+#### Beams
 
+<details>
+<summary>tte beams -h</summary>
+<br>
+  beams | Create beams which travel over the output area illuminating the characters behind them.
 
+  options:
+    -h, --help            show this help message and exit
+    --beam-row-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                          Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation. (default: ('▂', '▁', '_'))
+    --beam-column-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                          Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation. (default: ('▌', '▍', '▎', '▏'))
+    --beam-delay (int > 0)
+                          Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5). (default: 10)
+    --beam-row-speed-range (hyphen separated int range e.g. '1-10')
+                          Minimum speed of the beam when moving along a row. (default: (10, 40))
+    --beam-column-speed-range (hyphen separated int range e.g. '1-10')
+                          Minimum speed of the beam when moving along a column. (default: (6, 10))
+    --beam-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                          Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors. (default: ('ffffff', '00D1FF', '8A008A'))
+    --beam-gradient-steps (int > 0) [(int > 0) ...]
+                          Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-
+                          stops. (default: (2, 8))
+    --beam-gradient-frames (int > 0)
+                          Number of frames to display each gradient step. (default: 2)
+    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                          Space separated, unquoted, list of colors for the wipe gradient. (default: ('8A008A', '00D1FF', 'ffffff'))
+    --final-gradient-steps (int > 0) [(int > 0) ...]
+                          Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-
+                          stops. (default: (12,))
+    --final-gradient-frames (int > 0)
+                          Number of frames to display each gradient step. (default: 5)
+    --final-gradient-direction (diagonal, horizontal, vertical, center)
+                          Direction of the gradient for the final color. (default: Direction.VERTICAL)
+    --final-wipe-speed (int > 0)
+                          Speed of the final wipe as measured in diagonal groups activated per frame. (default: 1)
+
+  Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical --final-wipe-speed 1
+</details>
 ## Examples
 Note: All effects support extensive customization via effect specific arguments. The examples shown below only represent the default settings for a given effect. 
 
-#### Fireworks
-![fireworks_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/e3788e25-758b-43e1-827f-42066fb29f91)
+#### Binarypath
+
 <details>
-<summary>tte fireworks -h</summary>
+<summary>tte binarypath -h</summary>
 <br>
-    fireworks | Characters explode like fireworks and fall into place.
+    binarypath | Binary representations of each character move through the terminal towards the home coordinate of the character.
 
     options:
       -h, --help            show this help message and exit
-      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
-                            Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
-                            no impact beyond a certain lower threshold due to the processing speed of your device. (default: 0.01)
-      --explode-anywhere    If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text. (default: False)
-      --firework-colors [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                            Space separated list of colors from which firework colors will be randomly selected. (default: ['88F7E2', '44D492', 'F5EB67', 'FFA15C', 'FA233E'])
-      --firework-symbol (single character)
-                            Symbol to use for the firework shell. (default: o)
-      --firework-volume (float 0 < n <= 1)
-                            Percent of total characters in each firework shell. (default: 0.02)
-      --final-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                            Color for the final character. (default: ffffff)
-      --launch-delay (int >= 0)
-                            Number of animation steps to wait between launching each firework shell. (default: 60)
-      --explode-distance (float 0 < n <= 1)
-                            Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width. (default: 0.1)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('00d500', '007500'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.CENTER)
+      --binary-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the binary characters. Character color is randomly assigned from this list. (default: ('044E29', '157e38', '45bf55', '95ed87'))
+      --movement-speed (float > 0)
+                            Speed of the binary groups as they travel around the terminal. (default: 1.0)
+      --active-binary-groups (0 <= float(n) <= 1)
+                            Maximum number of binary groups that are active at any given time. Lower this to improve performance. (default: 0.05)
 
-            
-    Example: terminaltexteffects fireworks -a 0.01 --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 2 --final-color ffffff --launch-delay 60 --explode-distance 10
+    Example: terminaltexteffects binarypath --final-gradient-stops 00d500 007500 --final-gradient-steps 12 --final-gradient-direction vertical --binary-colors 044E29 157e38 45bf55 95ed87 --movement-speed 1.0 --active-binary-groups 0.05
 </details>
 
-#### Rain
-![rain_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed94a21f-503d-46f3-8510-7a1e83b28314)
+
+#### Blackhole
+
 <details>
-<summary>tte rain -h</summary>
+<summary>tte blackhole -h</summary>
 <br>
-    rain | Rain characters from the top of the output area.
+    blackhole | Characters are consumed by a black hole and explode outwards.
 
     options:
       -h, --help            show this help message and exit
-      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
-                            Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
-                            no impact beyond a certain lower threshold due to the processing speed of your device. (default: 0.01)
-      --rain-colors [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                            List of colors for the rain drops. Colors are randomly chosen from the list. (default: 0)
-      --final-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                            Color for the final character. (default: ffffff)
+      --blackhole-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the stars that comprise the blackhole border. (default: ffffff)
+      --star-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            List of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color. (default: ('ffcc0d', 'ff7326', 'ff194d', 'bf2669',
+                            '702a8c', '049dbf'))
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('8A008A', '00D1FF', 'ffffff'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+
+    Example: terminaltexteffects blackhole --star-colors ffcc0d ff7326 ff194d bf2669 702a8c 049dbf --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-direction vertical
+</details>
+
+
+#### Bouncyballs
+
+<details>
+<summary>tte bouncyballs -h</summary>
+<br>
+    bouncyballs | Characters are bouncy balls falling from the top of the output area.
+
+    options:
+      -h, --help            show this help message and exit
+      --ball-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated list of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random. (default: ('d1f4a5', '96e2a4', '5acda9'))
+      --ball-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                            Space separated list of symbols to use for the balls. (default: ('*', 'o', 'O', '0', '.'))
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('f8ffae', '43c6ac'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+      --ball-delay (int >= 0)
+                            Number of animation steps between ball drops, increase to reduce ball drop rate. (default: 7)
       --movement-speed (float > 0)
-                            Falling speed of the rain drops. (default: 0.15)
-      --easing EASING       Easing function to use for character movement. (default: IN_QUART)
+                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.25)
+      --easing EASING       Easing function to use for character movement. (default: out_bounce)
 
         Easing
         ------
@@ -186,52 +260,39 @@ Note: All effects support extensive customization via effect specific arguments.
         
         Visit: https://easings.net/ for visualizations of the easing functions.
 
-            
-    Example: terminaltexteffects rain -a 0.01 --rain-colors 39 45 51 21
+    Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols o "*" O 0 . --final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal --ball-delay 7 --movement-speed 0.25 --easing OUT_BOUNCE
 </details>
 
-#### Decrypt
-![decrypt_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/586224f3-6a03-40ae-bdcf-067a6c96cbb5)
+#### Bubbles
+
 <details>
-<summary>tte decrypt -h</summary>
+<summary>tte bubbles -h</summary>
 <br>
-    decrypt | Movie style decryption effect.
+    bubbles | Characters are formed into bubbles that float down and pop.
 
     options:
       -h, --help            show this help message and exit
-      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
-                            Time to sleep between animation steps. Defaults to 0.003 seconds.
-      --ciphertext-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                            Color for the ciphertext. Defaults to 40
-      --plaintext-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                            Color for the plaintext. Defaults to 208.
-
-    Example: terminaltexteffects decrypt -a 0.003 --cipher-text-color 40 --plain-text-color 208
-</details>
-
-#### Spray
-![spray_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/d39b4caa-7393-4357-8e27-b0ef9dce756b)
-<details>
-<summary>tte spray -h</summary>
-<br>
-    spray | Draws the characters spawning at varying rates from a single point.
-
-    options:
-      -h, --help            show this help message and exit
-      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
-                            Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
-                            no impact beyond a certain lower threshold due to the processing speed of your device. (default: 0.01)
-      --spray-colors [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                            List of colors for the character spray. Colors are randomly chosen from the list. (default: 0)
-      --final-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                            Color for the final character. (default: ffffff)
-      --spray-position {n,ne,e,se,s,sw,w,nw,center}
-                            Position for the spray origin. (default: e)
-      --spray-volume (int > 0)
-                            Maximum number of characters to spray at a time. (default: 5)
-      --movement-speed (float > 0)
-                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.7)
-      --easing EASING       Easing function to use for character movement. (default: OUT_EXPO)
+      --rainbow             If set, the bubbles will be colored with a rotating rainbow gradient. (default: False)
+      --bubble-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as default False. (default: ('d33aff', '7395c4', '43c2a7', '02ff7f'))
+      --pop-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the spray emitted when a bubble pops. (default: ffffff)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('d33aff', '02ff7f'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+      --bubble-speed (float > 0)
+                            Speed of the floating bubbles. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.1)
+      --bubble-delay (int > 0)
+                            Number of animation steps between bubbles. (default: 50)
+      --pop-condition {row,bottom,anywhere}
+                            Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom
+                            row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal. (default: row)
+      --easing (Easing Function)
+                            Easing function to use for character movement after a bubble pops. (default: in_out_sine)
 
         Easing
         ------
@@ -257,99 +318,12 @@ Note: All effects support extensive customization via effect specific arguments.
         
         Visit: https://easings.net/ for visualizations of the easing functions.
 
-            
-    Example: terminaltexteffects spray -a 0.01 --spray-position center --spray-volume 5 --movement-speed 0.7 --easing OUT_EXPO --spray-colors 10 11 12 --final-color 0
+    Example: terminaltexteffects bubbles --bubble-colors d33aff 7395c4 43c2a7 02ff7f --pop-color ffffff --final-gradient-stops d33aff 02ff7f --final-gradient-steps 12 --final-gradient-direction diagonal --bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE
 </details>
 
-#### Scattered
-![scattered_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ddcf3c65-a91b-4e42-84fc-0c2508a85be5)
-<details>
-<summary>tte scattered -h</summary>
-<br>
-    scattered | Move the characters into place from random starting locations.
-
-    options:
-      -h, --help            show this help message and exit
-      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
-                            Time between animation steps. (default: 0.01)
-      --movement-speed (float > 0)
-                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.5)
-      --easing EASING       Easing function to use for character movement. (default: IN_OUT_BACK)
-
-        Easing
-        ------
-        Note: A prefix must be added to the function name.
-        
-        All easing functions support the following prefixes:
-            IN_  - Ease in
-            OUT_ - Ease out
-            IN_OUT_ - Ease in and out
-            
-        Easing Functions
-        ----------------
-        SINE   - Sine easing
-        QUAD   - Quadratic easing
-        CUBIC  - Cubic easing
-        QUART  - Quartic easing
-        QUINT  - Quintic easing
-        EXPO   - Exponential easing
-        CIRC   - Circular easing
-        BACK   - Back easing
-        ELASTIC - Elastic easing
-        BOUNCE - Bounce easing
-        
-        Visit: https://easings.net/ for visualizations of the easing functions.
-
-            
-    Example: terminaltexteffects scattered --movement-speed 0.5 --easing IN_OUT_BACK
-</details>
-
-#### Expand
-![expand_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/9b319e77-d2b7-489e-b59c-c87277ea1285)
-<details>
-<summary>tte expand -h</summary>
-<br>
-    expand | Expands the text from a single point.
-
-    options:
-      -h, --help            show this help message and exit
-      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
-                            Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
-                            no impact beyond a certain lower threshold due to the processing speed of your device. (default: 0.01)
-      --movement-speed (float > 0)
-                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.5)
-      --easing EASING       Easing function to use for character movement. (default: IN_OUT_QUART)
-
-        Easing
-        ------
-        Note: A prefix must be added to the function name.
-        
-        All easing functions support the following prefixes:
-            IN_  - Ease in
-            OUT_ - Ease out
-            IN_OUT_ - Ease in and out
-            
-        Easing Functions
-        ----------------
-        SINE   - Sine easing
-        QUAD   - Quadratic easing
-        CUBIC  - Cubic easing
-        QUART  - Quartic easing
-        QUINT  - Quintic easing
-        EXPO   - Exponential easing
-        CIRC   - Circular easing
-        BACK   - Back easing
-        ELASTIC - Elastic easing
-        BOUNCE - Bounce easing
-        
-        Visit: https://easings.net/ for visualizations of the easing functions.
-
-            
-    Example: terminaltexteffects expand -a 0.01 --movement-speed 0.5 --easing IN_OUT_QUART
-</details>
 
 #### Burn
-![burn_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ddc8ca36-4157-448b-b10d-573f108361c7)
+
 <details>
 <summary>tte burn -h</summary>
 <br>
@@ -357,35 +331,94 @@ Note: All effects support extensive customization via effect specific arguments.
 
     options:
       -h, --help            show this help message and exit
-      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
-                            Time between animation steps. Defaults to 0.03 seconds.
-      --burned-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                            Color faded toward as blocks burn. Defaults to 252525
-      --flame-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                            Color for the flame. Defaults to 0
-      --final-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                            Color for the final character. Will leave as system default if not provided.
+      --starting-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color of the characters before they start to burn. (default: 837373)
+      --burn-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Colors transitioned through as the characters burn. (default: ('ffffff', 'fff75d', 'fe650d', '8A003C', '510100'))
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('00c3ff', 'ffff1c'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
 
-    Example: terminaltexteffects burn -a 0.003 --flame-color ff9600 --burned-color 252525
+    Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12
 </details>
 
-#### Pour
-![pour_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/b67a0f36-a96c-4869-85f2-6850d15f6b71)
+
+#### Crumble
+
 <details>
-<summary>tte pour -h</summary>
+<summary>tte crumble -h</summary>
 <br>
-    pour | Pours the characters into position from the given direction.
+    crumble | Characters lose color and crumble into dust, vacuumed up, and reformed.
 
     options:
       -h, --help            show this help message and exit
-      -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
-                            Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
-                            no impact beyond a certain lower threshold due to the processing speed of your device. (default: 0.004)
-      --pour-direction {up,down,left,right}
-                            Direction the text will pour. (default: down)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('5CE1FF', 'FF8C00'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+
+    Example: terminaltexteffects crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal
+</details>
+
+
+#### Decrypt
+
+<details>
+<summary>tte decrypt -h</summary>
+<br>
+    decrypt | Movie style decryption effect.
+
+    options:
+      -h, --help            show this help message and exit
+      --typing-speed (int > 0)
+                            Number of characters typed per keystroke. (default: 1)
+      --ciphertext-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the ciphertext. Color will be randomly selected for each character. (default: ('008000', '00cb00', '00ff00'))
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('eda000',))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+
+    Example: terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical
+</details>
+
+#### Errorcorrect
+
+<details>
+<summary>tte errorcorrect -h</summary>
+<br>
+    errorcorrect | Some characters start in the wrong position and are corrected in sequence.
+
+    options:
+      -h, --help            show this help message and exit
+      --error-pairs (int > 0)
+                            Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position. (default: 0.1)
+      --swap-delay (int > 0)
+                            Number of animation steps between swaps. (default: 10)
+      --error-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the characters that are in the wrong position. (default: e74c3c)
+      --correct-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the characters once corrected, this is a gradient from error-color and fades to final-color. (default: 45bf55)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('8A008A', '00D1FF', 'FFFFFF'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
       --movement-speed (float > 0)
-                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.2)
-      --easing EASING       Easing function to use for character movement. (default: IN_QUAD)
+                            Speed of the characters while moving to the correct position. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the
+                            effect. (default: 0.5)
 
         Easing
         ------
@@ -411,79 +444,960 @@ Note: All effects support extensive customization via effect specific arguments.
         
         Visit: https://easings.net/ for visualizations of the easing functions.
 
-            
-    Example: terminaltexteffects pour -a 0.004 --pour-direction down
+        
+    Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c --correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5
 </details>
 
-#### Randomsequence
-![randomsequence_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/db4d04a2-bb9c-42de-8895-0ef1747ae6e8)
 
-#### Verticalslice
-![verticalslice_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/237e36c5-cb4e-4866-9a33-b7f27a2907dc)
+#### Expand
 
-#### Unstable
-![unstable_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2e4b6e51-2b65-4765-a41c-92542981c77c)
+<details>
+<summary>tte expand -h</summary>
+<br>
+    expand | Expands the text from a single point.
 
-#### Bubbles
-![bubbles_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/1ae892fb-0525-4308-8e0b-382e7c079cb2)
+    options:
+      -h, --help            show this help message and exit
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('8A008A', '00D1FF', 'FFFFFF'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-frames (int > 0)
+                            Number of frames to display each gradient step. (default: 5)
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --movement-speed (float > 0)
+                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.35)
+      --expand-easing EXPAND_EASING
+                            Easing function to use for character movement. (default: in_out_quart)
 
-#### Bouncyballs
-![bouncyballs_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/bb62112c-a6b7-466f-a7c8-ee66f528616b)
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+        
+    Example: terminaltexteffects expand --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 5 --movement-speed 0.35 --expand-easing IN_OUT_QUART
+</details>
+
+
+#### Fireworks
+
+<details>
+<summary>tte fireworks -h</summary>
+<br>
+    fireworks | Characters explode like fireworks and fall into place.
+
+    options:
+      -h, --help            show this help message and exit
+      --explode-anywhere    If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text. (default: False)
+      --firework-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated list of colors from which firework colors will be randomly selected. (default: ('88F7E2', '44D492', 'F5EB67', 'FFA15C', 'FA233E'))
+      --firework-symbol (ASCII/UTF-8 character)
+                            Symbol to use for the firework shell. (default: o)
+      --firework-volume (0 <= float(n) <= 1)
+                            Percent of total characters in each firework shell. (default: 0.02)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('8A008A', '00D1FF', 'FFFFFF'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.HORIZONTAL)
+      --launch-delay (int >= 0)
+                            Number of animation steps to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. (default: 60)
+      --explode-distance (0 <= float(n) <= 1)
+                            Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width. (default: 0.1)
+
+    Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere
+</details>
+
 
 #### Middleout
-![middleout_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/a69d4164-851e-4668-b2d0-8ee08e2dc5e3)
 
-#### Errorcorrect
-![errorcorrect_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/7e63d3f0-6e7f-4145-9886-fd54633896be)
+<details>
+<summary>tte middleout -h</summary>
+<br>
+    middleout | Text expands in a single row or column in the middle of the output area then out.
 
-#### Waves
-![waves_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ed057ac5-4cbb-4f8b-a47b-255574614965)
+    options:
+      -h, --help            show this help message and exit
+      --starting-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the initial text in the center of the output area. (default: ffffff)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('8A008A', '00D1FF', 'FFFFFF'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --expand-direction {vertical,horizontal}
+                            Direction the text will expand. (default: vertical)
+      --center-movement-speed (float > 0)
+                            Speed of the characters during the initial expansion of the center vertical/horiztonal line. Note: Speed effects the number of steps in the easing function. Adjust speed and animation
+                            rate separately to fine tune the effect. (default: 0.35)
+      --full-movement-speed (float > 0)
+                            Speed of the characters during the final full expansion. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the
+                            effect. (default: 0.35)
+      --center-easing CENTER_EASING
+                            Easing function to use for initial expansion. (default: in_out_sine)
+      --full-easing FULL_EASING
+                            Easing function to use for full expansion. (default: in_out_sine)
 
-#### Blackhole
-![blackhole_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/e8c9a3d5-6160-4cdb-9f3b-dc2d8a6a1a7f)
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
 
-#### Swarm
-![swarm_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/133a3e7d-b493-48c3-ace3-3848c89e6e39)
+    Example: terminaltexteffects middleout --starting-color 8A008A --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical --center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE --full-easing IN_OUT_SINE
+</details>
 
-#### Crumble
-![crumble_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/b052ff86-2920-4067-8a47-2713c43257cc)
 
-#### Rings
-![rings_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2d97ba47-bf85-4727-9257-45a5b2a9dddd)
+#### Orbittingvolley
 
-#### VHStape
-![vhstape_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ff11e292-4bfd-4989-ab81-1a624b2c0822)
+<details>
+<summary>tte orbittingvolley -h</summary>
+<br>
+    orbittingvolley | Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.
+
+    options:
+      -h, --help            show this help message and exit
+      --top-launcher-symbol (ASCII/UTF-8 character)
+                            Symbol for the top launcher. (default: █)
+      --right-launcher-symbol (ASCII/UTF-8 character)
+                            Symbol for the right launcher. (default: █)
+      --bottom-launcher-symbol (ASCII/UTF-8 character)
+                            Symbol for the bottom launcher. (default: █)
+      --left-launcher-symbol (ASCII/UTF-8 character)
+                            Symbol for the left launcher. (default: █)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('FFA15C', '44D492'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.CENTER)
+      --launcher-movement-speed (float > 0)
+                            Orbitting speed of the launchers. (default: 0.5)
+      --character-movement-speed (float > 0)
+                            Speed of the launched characters. (default: 1)
+      --volley-size (0 <= float(n) <= 1)
+                            Percent of total input characters each launcher will fire per volley. Lower limit of one character. (default: 0.03)
+      --launch-delay (int >= 0)
+                            Number of animation ticks to wait between volleys of characters. (default: 50)
+      --character-easing (Easing Function)
+                            Easing function to use for launched character movement. (default: out_sine)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+        
+    Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 --launcher-movement-speed 0.5 --character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE
+</details>
+
+
+#### Overflow
+
+<details>
+<summary>tte overflow -h</summary>
+<br>
+    overflow | Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.
+
+    options:
+      -h, --help            show this help message and exit
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('8A008A', '00D1FF', 'FFFFFF'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --overflow-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the overflow gradient. (default: ('f2ebc0', '8dbfb3', 'f2ebc0'))
+      --overflow-cycles-range (hyphen separated int range e.g. '1-10')
+                            Number of cycles to overflow the text. (default: (2, 4))
+      --overflow-speed (int > 0)
+                            Speed of the overflow effect. (default: 3)
+
+    Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3
+</details>
+
+
+#### Pour
+
+<details>
+<summary>tte pour -h</summary>
+<br>
+    pour | Pours the characters into position from the given direction.
+
+    options:
+      -h, --help            show this help message and exit
+      --pour-direction {up,down,left,right}
+                            Direction the text will pour. (default: down)
+      --pour-speed (int > 0)
+                            Number of characters poured in per tick. Increase to speed up the effect. (default: 1)
+      --movement-speed (float > 0)
+                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.2)
+      --gap (int >= 0)      Number of frames to wait between each character in the pour effect. Increase to slow down effect and create a more defined back and forth motion. (default: 1)
+      --starting-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color of the characters before the gradient starts. (default: ffffff)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color. (default: ('8A008A', '00D1FF',
+                            'FFFFFF'))
+      --final-gradient-steps (int > 0)
+                            Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-frames (int > 0)
+                            Number of frames to display each gradient step. (default: 10)
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --easing EASING       Easing function to use for character movement. (default: in_quad)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+    Example: terminaltexteffects pour --pour-direction down --movement-speed 0.2 --gap 1 --starting-color FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF --easing IN_QUAD
+</details>
+
 
 #### Print
-![print_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ff4fcb44-ebb9-4166-933b-8b0ad3d1810a)
+<details>
+<summary>tte print -h</summary>
+<br>
+    print | Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
 
-#### BinaryPath
-![binarypath_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/f3570ebe-108d-4b34-8766-a448c9ff8f53)
+    options:
+      -h, --help            show this help message and exit
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('02b8bd', 'c1f0e3', '00ffa0'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+      --print-head-return-speed (float > 0)
+                            Speed of the print head when performing a carriage return. (default: 1.25)
+      --print-speed (int > 0)
+                            Speed of the print head when printing characters. (default: 1)
+      --print-head-easing PRINT_HEAD_EASING
+                            Easing function to use for print head movement. (default: in_out_quad)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+        
+    Example: terminaltexteffects print --final-gradient-stops 02b8bd c1f0e3 00ffa0 --final-gradient-steps 12 --print-head-return-speed 1.25 --print-speed 1 --print-head-easing IN_OUT_QUAD
+</details>
+
+#### Rain
+
+<details>
+<summary>tte rain -h</summary>
+<br>
+    rain | Rain characters from the top of the output area.
+
+    options:
+      -h, --help            show this help message and exit
+      --rain-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            List of colors for the rain drops. Colors are randomly chosen from the list. (default: ('00315C', '004C8F', '0075DB', '3F91D9', '78B9F2', '9AC8F5', 'B8D8F8', 'E3EFFC'))
+      --movement-speed (hyphen separated float range e.g. '0.25-0.5')
+                            Falling speed range of the rain drops. (default: (0.1, 0.2))
+      --rain-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                            Space separated list of symbols to use for the rain drops. Symbols are randomly chosen from the list. (default: ('o', '.', ',', '*', '|'))
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('488bff', 'b2e7de', '57eaf7'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+      --easing (Easing Function)
+                            Easing function to use for character movement. (default: in_quart)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+    
+    Example: terminaltexteffects rain --rain-symbols o . , "*" "|" --rain-colors 00315C 004C8F 0075DB 3F91D9 78B9F2 9AC8F5 B8D8F8 E3EFFC --final-gradient-stops 488bff b2e7de 57eaf7 --final-gradient-steps 12 --movement-speed 0.1-0.2 --easing IN_QUART
+</details>
+
+#### RandomSequence
+
+
+<details>
+<summary>tte randomsequence -h</summary>
+<br>
+    randomsequence | Prints the input data in a random sequence.
+
+    options:
+      -h, --help            show this help message and exit
+      --starting-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color of the characters at spawn. (default: 000000)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('8A008A', '00D1FF', 'FFFFFF'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-frames (int > 0)
+                            Number of frames to display each gradient step. (default: 12)
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --speed (float > 0)   Speed of the animation as a percentage of the total number of characters. (default: 0.004)
+
+    Example: terminaltexteffects randomsequence --starting-color 000000 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 12 --speed 0.004
+</details>
+
+
+#### Rings
+
+
+<details>
+<summary>tte rings -h</summary>
+<br>
+    rings | Characters are dispersed and form into spinning rings.
+
+    options:
+      -h, --help            show this help message and exit
+      --ring-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the rings. (default: ('ab48ff', 'e7b2b2', 'fffebd'))
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('ab48ff', 'e7b2b2', 'fffebd'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --ring-gap RING_GAP   Distance between rings as a percent of the smallest output area dimension. (default: 0.1)
+      --spin-duration SPIN_DURATION
+                            Number of animation steps for each cycle of the spin phase. (default: 200)
+      --spin-speed (hyphen separated float range e.g. '0.25-0.5')
+                            Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring. (default: (0.25, 1.0))
+      --disperse-duration DISPERSE_DURATION
+                            Number of animation steps spent in the dispersed state between spinning cycles. (default: 200)
+      --spin-disperse-cycles SPIN_DISPERSE_CYCLES
+                            Number of times the animation will cycles between spinning rings and dispersed characters. (default: 3)
+
+    Example: terminaltexteffects rings --ring-colors ab48ff e7b2b2 fffebd --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 --disperse-duration 200 --spin-disperse-cycles 3
+</details>
+
+
+#### Scattered
+
+
+<details>
+<summary>tte scattered -h</summary>
+<br>
+    scattered | Move the characters into place from random starting locations.
+
+    options:
+      -h, --help            show this help message and exit
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color. (default: ('ff9048', 'ab9dff',
+                            'bdffea'))
+      --final-gradient-steps (int > 0)
+                            Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-frames (int > 0)
+                            Number of frames to display each gradient step. (default: 12)
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --movement-speed (float > 0)
+                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.5)
+      --movement-easing MOVEMENT_EASING
+                            Easing function to use for character movement. (default: in_out_back)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+    Example: terminaltexteffects scattered --final-gradient-stops ff9048 ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK
+</details>
+
 
 #### Slide
-![slide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/4b862b03-0f97-4e7d-a553-587372e0af27)
+
+
+<details>
+<summary>tte slide -h</summary>
+<br>
+    slide | Slide characters into view from outside the terminal, grouped by row, column, or diagonal.
+
+    options:
+      -h, --help            show this help message and exit
+      --movement-speed (float > 0)
+                            Speed of the characters. (default: 0.5)
+      --grouping {row,column,diagonal}
+                            Direction to group characters. (default: row)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color. (default: ('833ab4', 'fd1d1d',
+                            'fcb045'))
+      --final-gradient-steps (int > 0)
+                            Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-frames (int > 0)
+                            Number of frames to display each gradient step. (default: 10)
+      --final-gradient-direction FINAL_GRADIENT_DIRECTION
+                            Direction of the gradient (vertical, horizontal, diagonal, center). (default: Direction.VERTICAL)
+      --gap (int >= 0)      Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect. (default: 3)
+      --reverse-direction   Reverse the direction of the characters. (default: False)
+      --merge               Merge the character groups originating from either side of the terminal. (--reverse-direction is ignored when merging) (default: False)
+      --movement-easing (Easing Function)
+                            Easing function to use for character movement. (default: in_out_quad)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+    Example: terminaltexteffects slide --movement-speed 0.5 --grouping row --final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 10 --final-gradient-direction vertical --gap 3 --reverse-direction --merge --movement-easing OUT_QUAD
+</details>
+
+#### Spotlights
+
+
+<details>
+<summary>tte spotlights -h</summary>
+<br>
+    spotlights | Spotlights search the text area, illuminating characters, before converging in the center and expanding.
+
+    options:
+      -h, --help            show this help message and exit
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('ab48ff', 'e7b2b2', 'fffebd'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --beam-width-ratio (float > 0)
+                            Width of the beam of light as min(width, height) // n of the input text. (default: 2.0)
+      --beam-falloff (float >= 0)
+                            Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width. (default: 0.3)
+      --search-duration (int > 0)
+                            Duration of the search phase, in animation steps, before the spotlights converge in the center. (default: 750)
+      --search-speed-range (hyphen separated float range e.g. '0.25-0.5')
+                            Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values. (default: (0.25, 0.5))
+      --spotlight-count (int > 0)
+                            Number of spotlights to use. (default: 3)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+    Example: terminaltexteffects spotlights --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration 750 --search-speed-range 0.25-0.5 --spotlight-count 3
+</details>
+
+
+#### Spray
+
+
+<details>
+<summary>tte spray -h</summary>
+<br>
+    spray | Draws the characters spawning at varying rates from a single point.
+
+    options:
+      -h, --help            show this help message and exit
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('8A008A', '00D1FF', 'FFFFFF'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --spray-position {n,ne,e,se,s,sw,w,nw,center}
+                            Position for the spray origin. (default: e)
+      --spray-volume (float > 0)
+                            Number of characters to spray per tick as a percent of the total number of characters. (default: 0.005)
+      --movement-speed (hyphen separated float range e.g. '0.25-0.5')
+                            Movement speed of the characters. (default: (0.4, 1.0))
+      --movement-easing MOVEMENT_EASING
+                            Easing function to use for character movement. (default: out_expo)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+        
+    Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 --movement-easing OUT_EXPO
+</details>
+
+
+#### Swarm
+
+
+<details>
+<summary>tte swarm -h</summary>
+<br>
+    swarm | Characters are grouped into swarms and move around the terminal before settling into position.
+
+    options:
+      -h, --help            show this help message and exit
+      --base-color (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the swarms (default: ('31a0d4',))
+      --flash-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color for the character flash. Characters flash when moving. (default: f2ea79)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('31b900', 'f0ff65'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.HORIZONTAL)
+      --swarm-size (0 <= float(n) <= 1)
+                            Percent of total characters in each swarm. (default: 0.1)
+      --swarm-coordination (0 <= float(n) <= 1)
+                            Percent of characters in a swarm that move as a group. (default: 0.8)
+      --swarm-area-count (hyphen separated int range e.g. '1-10')
+                            Range of the number of areas where characters will swarm. (default: (2, 4))
+
+    Example: terminaltexteffects swarm --base-color 31a0d4 --flash-color f2ea79 --final-gradient-stops 31b900 f0ff65 --final-gradient-steps 12 --swarm-size 0.1 --swarm-coordination 0.80 --swarm-area-count 2-4
+</details>
+
+
+#### Synthgrid
+
+
+<details>
+<summary>tte synthgrid -h</summary>
+<br>
+    synthgrid | Create a grid which fills with characters dissolving into the final text.
+
+    options:
+      -h, --help            show this help message and exit
+      --grid-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the grid gradient. (default: ('CC00CC', 'ffffff'))
+      --grid-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --grid-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the grid color. (default: Direction.DIAGONAL)
+      --text-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the text gradient. (default: ('8A008A', '00D1FF', 'FFFFFF'))
+      --text-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --text-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the text color. (default: Direction.VERTICAL)
+      --grid-row-symbol (ASCII/UTF-8 character)
+                            Symbol to use for grid row lines. (default: ─)
+      --grid-column-symbol (ASCII/UTF-8 character)
+                            Symbol to use for grid column lines. (default: │)
+      --text-generation-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                            Space separated, unquoted, list of characters for the text generation animation. (default: ('░', '▒', '▓'))
+      --max-active-blocks (float > 0)
+                            Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time. (default: 0.1)
+
+    Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol "│" --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1
+</details>
+
+
+#### Unstable
+
+
+<details>
+<summary>tte unstable -h</summary>
+<br>
+    synthgrid | Create a grid which fills with characters dissolving into the final text.
+
+    options:
+      -h, --help            show this help message and exit
+      --grid-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the grid gradient. (default: ('CC00CC', 'ffffff'))
+      --grid-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --grid-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the grid color. (default: Direction.DIAGONAL)
+      --text-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the text gradient. (default: ('8A008A', '00D1FF', 'FFFFFF'))
+      --text-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --text-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the text color. (default: Direction.VERTICAL)
+      --grid-row-symbol (ASCII/UTF-8 character)
+                            Symbol to use for grid row lines. (default: ─)
+      --grid-column-symbol (ASCII/UTF-8 character)
+                            Symbol to use for grid column lines. (default: │)
+      --text-generation-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                            Space separated, unquoted, list of characters for the text generation animation. (default: ('░', '▒', '▓'))
+      --max-active-blocks (float > 0)
+                            Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time. (default: 0.1)
+
+    Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol "│" --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1
+</details>
+
+
+#### Verticalslice
+
+
+<details>
+<summary>tte verticalslice -h</summary>
+<br>
+    verticalslice | Slices the input in half vertically and slides it into place from opposite directions.
+
+    options:
+      -h, --help            show this help message and exit
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('8A008A', '00D1FF', 'FFFFFF'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --movement-speed (float > 0)
+                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.15)
+      --movement-easing MOVEMENT_EASING
+                            Easing function to use for character movement. (default: in_out_expo)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+        
+    Example: terminaltexteffects verticalslice --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.15 --movement-easing IN_OUT_EXPO
+</details>
+
+
+#### VHSTape
+
+
+<details>
+<summary>tte vhstape -h</summary>
+<br>
+    vhstape | Lines of characters glitch left and right and lose detail like an old VHS tape.
+
+    options:
+      -h, --help            show this help message and exit
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('ab48ff', 'e7b2b2', 'fffebd'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --glitch-line-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors are applied in order as an animation. (default: ('ffffff', 'ff0000', '00ff00',
+                            '0000ff', 'ffffff'))
+      --glitch-wave-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation. (default: ('ffffff', 'ff0000',
+                            '00ff00', '0000ff', 'ffffff'))
+      --noise-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the characters during the noise phase. (default: ('1e1e1f', '3c3b3d', '6d6c70', 'a2a1a6', 'cbc9cf', 'ffffff'))
+      --glitch-line-chance (0 <= float(n) <= 1)
+                            Chance that a line will glitch on any given frame. (default: 0.05)
+      --noise-chance (0 <= float(n) <= 1)
+                            Chance that all characters will experience noise on any given frame. (default: 0.004)
+      --total-glitch-time (int > 0)
+                            Total time, animation steps, that the glitching phase will last. (default: 1000)
+
+    Example: terminaltexteffects vhstape --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --glitch-line-colors ffffff ff0000 00ff00 0000ff ffffff --glitch-wave-colors ffffff ff0000 00ff00 0000ff ffffff --noise-colors 1e1e1f 3c3b3d 6d6c70 a2a1a6 cbc9cf ffffff --glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000
+</details>
+
+#### Waves
+
+
+<details>
+<summary>tte waves -h</summary>
+<br>
+    waves | Waves travel across the terminal leaving behind the characters.
+
+    options:
+      -h, --help            show this help message and exit
+      --wave-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                            Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an animation. (default: ('▁', '▂', '▃', '▄', '▅', '▆', '▇', '█', '▇', '▆', '▅', '▄',
+                            '▃', '▂', '▁'))
+      --wave-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('f0ff65', 'ffb102', '31a0d4', 'ffb102', 'f0ff65'))
+      --wave-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (6,))
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('ffb102', '31a0d4', 'f0ff65'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+      --wave-count WAVE_COUNT
+                            Number of waves to generate. n > 0. (default: 7)
+      --wave-length (int > 0)
+                            The number of frames for each step of the wave. Higher wave-lengths will create a slower wave. (default: 2)
+      --wave-easing WAVE_EASING
+                            Easing function to use for wave travel. (default: in_out_sine)
+
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+    Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▇ ▆ ▅ ▄ ▃ ▂ ▁ --wave-gradient-stops f0ff65 ffb102 31a0d4 ffb102 f0ff65 --wave-gradient-steps 6 --final-gradient-stops ffb102 31a0d4 f0ff65 --final-gradient-steps 12 --wave-count 7 --wave-length 2 --wave-easing IN_OUT_SINE
+</details>
+
 
 #### Wipe
-![wipe_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/8d7821c5-0e11-4a5e-a61a-9684fb0ddcd8)
 
-#### SynthGrid
-![synthgrid_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ebd8d3f1-c8b0-4de9-81ad-b70dde5a07b4)
+
+<details>
+<summary>tte wipe -h</summary>
+<br>
+    wipe | Wipes the text across the terminal to reveal characters.
+
+    options:
+      -h, --help            show this help message and exit
+      --wipe-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left}
+                            Direction the text will wipe. (default: diagonal_bottom_left_to_top_right)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the wipe gradient. (default: ('833ab4', 'fd1d1d', 'fcb045'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+      --final-gradient-frames (int > 0)
+                            Number of frames to display each gradient step. (default: 5)
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --wipe-delay (int >= 0)
+                            Number of animation cycles to wait before adding the next character group. Increase, to slow down the effect. (default: 0)
+
+    Example: terminaltexteffects wipe --wipe-direction diagonal_bottom_left_to_top_right --final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 5 --wipe-delay 0
+</details>
 
 
 ## In-Development Preview
 Any effects shown below are in development and will be available in the next release.
 
-#### Beams
-![beams_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/2768489f-755e-4460-92f7-bccc8b83a026)
-
-#### Overflow
-![overflow_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/83bc225f-926b-4ddd-bbf0-777c601ba244)
-
-#### OrbittingVolley
-![orbittingvolley_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/705a2c7a-4eda-4bb3-91c0-beccc1713c4d)
-
-#### Spotlights
-![spotlights_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/98f32186-c0bc-4eab-bd1f-f2c6a74ff171)
 
 ## Latest Release Notes
 
