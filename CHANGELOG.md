@@ -4,6 +4,26 @@
 
 ### New Features
 #### Effects
+
+#### Engine
+
+### Changes
+#### Effects
+
+#### Engine
+ 
+ #### Other
+
+### Bug Fixes
+#### Effects
+
+#### Engine
+
+
+## 0.7.0
+
+### New Features
+#### Effects
  * Beams. Light beams travel across the output area and illuminate the characters behind them.
  * Overflow. The input text is scrambled by row and repeated randomly, scrolling up the terminal, before eventually displaying in the correct order.
  * OrbitingVolley. Characters fire from launcher which orbit output area.
