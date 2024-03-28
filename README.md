@@ -32,13 +32,17 @@
 ![synthgrid_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/6d1bab16-0520-44fa-a508-8f92d7d3be9e)
 
 
-TerminalTextEffects is a collection of visual effects that run inline in the terminal. The underlying visual effect framework supports the following:
-* Xterm 256 color and RBG hex color support                 
-* Color gradients                                           
-* Runs inline, preserving terminal state and workflow       
-* Dynamic character movement with motion easing             
-* Dynamic animations with symbol and color changes and animation easing          
-* Effect customization through command line arguments 
+TerminalTextEffects is a collection of visual effects that run inline in the terminal. The underlying visual effect engine supports the following:
+* Xterm 256 / RGB hex color support
+* Complex character movement via Paths, Waypoints, and
+  motion easing.
+* Complex animations via Scenes with symbol/color changes,
+  layers, easing, and Path synced progression.
+* Event handling for Path/Scene state changes with 
+  custom callback support and many pre-defined actions.
+* Variable stop/step color gradient generation. 
+* Extensive effect customization via per-effect arguments.
+* Runs inline, preserving terminal state and workflow.
 
 ## Requirements
 
