@@ -114,9 +114,12 @@ Effect:
 
 Ex: ls -a | tte crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal
 ```
+## Examples
+Note: All effects support extensive customization via effect specific arguments. The examples shown below only represent one possible variant of 
+each effect. Check the effect help output to see arguments.
+
 #### Beams
 ![beams_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/6bb98dac-688e-43c9-96aa-1a45f451d4cb)
-
 <details>
 <summary>tte beams -h</summary>
 <br>
@@ -154,11 +157,7 @@ Ex: ls -a | tte crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-st
                             Speed of the final wipe as measured in diagonal groups activated per frame. (default: 1)
 
     Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical --final-wipe-speed 1
-
 </details>
-
-## Examples
-Note: All effects support extensive customization via effect specific arguments. The examples shown below only represent the default settings for a given effect. 
 
 #### Binarypath
 
