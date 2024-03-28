@@ -1378,7 +1378,7 @@ Any effects shown below are in development and will be available in the next rel
 #### Effects
  * Beams. Light beams travel across the output area and illuminate the characters behind them.
  * Overflow. The input text is scrambled by row and repeated randomly, scrolling up the terminal, before eventually displaying in the correct order.
- * OrbitingVolley. Characters fire from launcher which orbit output area.
+ * OrbittingVolley. Characters fire from launchers which orbit the output area.
  * Spotlights. Spotlights search the text area, illuminating characters, before converging in the center and expanding.
 
 #### Engine
