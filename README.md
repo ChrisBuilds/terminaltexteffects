@@ -120,42 +120,41 @@ Ex: ls -a | tte crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-st
 <details>
 <summary>tte beams -h</summary>
 <br>
-```
-  beams | Create beams which travel over the output area illuminating the characters behind them.
+    beams | Create beams which travel over the output area illuminating the characters behind them.
 
-  options:
-    -h, --help            show this help message and exit
-    --beam-row-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
-                          Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation. (default: ('▂', '▁', '_'))
-    --beam-column-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
-                          Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation. (default: ('▌', '▍', '▎', '▏'))
-    --beam-delay (int > 0)
-                          Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5). (default: 10)
-    --beam-row-speed-range (hyphen separated int range e.g. '1-10')
-                          Minimum speed of the beam when moving along a row. (default: (10, 40))
-    --beam-column-speed-range (hyphen separated int range e.g. '1-10')
-                          Minimum speed of the beam when moving along a column. (default: (6, 10))
-    --beam-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                          Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors. (default: ('ffffff', '00D1FF', '8A008A'))
-    --beam-gradient-steps (int > 0) [(int > 0) ...]
-                          Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-
-                          stops. (default: (2, 8))
-    --beam-gradient-frames (int > 0)
-                          Number of frames to display each gradient step. (default: 2)
-    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                          Space separated, unquoted, list of colors for the wipe gradient. (default: ('8A008A', '00D1FF', 'ffffff'))
-    --final-gradient-steps (int > 0) [(int > 0) ...]
-                          Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-
-                          stops. (default: (12,))
-    --final-gradient-frames (int > 0)
-                          Number of frames to display each gradient step. (default: 5)
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
-                          Direction of the gradient for the final color. (default: Direction.VERTICAL)
-    --final-wipe-speed (int > 0)
-                          Speed of the final wipe as measured in diagonal groups activated per frame. (default: 1)
+    options:
+      -h, --help            show this help message and exit
+      --beam-row-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                            Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation. (default: ('▂', '▁', '_'))
+      --beam-column-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                            Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation. (default: ('▌', '▍', '▎', '▏'))
+      --beam-delay (int > 0)
+                            Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5). (default: 10)
+      --beam-row-speed-range (hyphen separated int range e.g. '1-10')
+                            Minimum speed of the beam when moving along a row. (default: (10, 40))
+      --beam-column-speed-range (hyphen separated int range e.g. '1-10')
+                            Minimum speed of the beam when moving along a column. (default: (6, 10))
+      --beam-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors. (default: ('ffffff', '00D1FF', '8A008A'))
+      --beam-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-
+                            stops. (default: (2, 8))
+      --beam-gradient-frames (int > 0)
+                            Number of frames to display each gradient step. (default: 2)
+      --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the wipe gradient. (default: ('8A008A', '00D1FF', 'ffffff'))
+      --final-gradient-steps (int > 0) [(int > 0) ...]
+                            Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-
+                            stops. (default: (12,))
+      --final-gradient-frames (int > 0)
+                            Number of frames to display each gradient step. (default: 5)
+      --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+      --final-wipe-speed (int > 0)
+                            Speed of the final wipe as measured in diagonal groups activated per frame. (default: 1)
 
-  Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical --final-wipe-speed 1
-```
+    Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical --final-wipe-speed 1
+
 </details>
 
 ## Examples
