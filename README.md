@@ -264,7 +264,7 @@ each effect. Check the effect help output to see arguments.
 </details>
 
 #### Bubbles
-![bubbles_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/3f977398-35b7-4bc4-aef1-fb43838adcc3)
+![bubbles_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/5a616538-7936-4f55-b2ff-28e6c4179fce)
 <details>
 <summary>tte bubbles -h</summary>
 <br>
