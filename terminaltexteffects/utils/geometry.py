@@ -28,23 +28,23 @@ class Coord:
     row: int
 
 
-def find_coords_on_circle(origin: Coord, radius: int, points_limit: int = 0, unique: bool = True) -> list[Coord]:
+def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, unique: bool = True) -> list[Coord]:
     """Finds points on a circle.
 
     Args:
         origin (Coord): origin of the circle
         radius (int): radius of the circle
-        num_points (int): number of points to find, if 0, the number of points is calculated based on the circumference of the circle
+        coords_limit (int): limit the number of coords returned, if 0, the number of points is calculated based on the circumference of the circle
         unique (bool): whether to remove duplicate points. Defaults to True.
 
     Returns:
         list (Coord): list of Coord points on the circle
     """
     points = []
-    if not points_limit:
-        points_limit = round(2 * math.pi * radius)
-    for i in range(points_limit):
-        angle = 2 * math.pi * i / points_limit
+    if not coords_limit:
+        coords_limit = round(2 * math.pi * radius)
+    for i in range(coords_limit):
+        angle = 2 * math.pi * i / coords_limit
         x = origin.column + radius * math.cos(angle)
         # correct for terminal character height/width ratio by doubling the x distance from origin
         x_diff = x - origin.column
