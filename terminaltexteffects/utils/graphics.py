@@ -2,6 +2,7 @@
 
 import itertools
 import typing
+from collections.abc import Iterator
 from enum import Enum, auto
 
 from terminaltexteffects.utils import colorterm, geometry, hexterm
@@ -181,17 +182,8 @@ class Gradient:
 
         return gradient_mapping
 
-    def __iter__(self) -> "Gradient":
-        self.index = 0
-        return self
-
-    def __next__(self) -> str:
-        if self.index < len(self.spectrum):
-            color = self.spectrum[self.index]
-            self.index += 1
-            return color
-        else:
-            raise StopIteration
+    def __iter__(self) -> Iterator[str]:
+        yield from self.spectrum
 
     def __len__(self) -> int:
         return len(self.spectrum)
