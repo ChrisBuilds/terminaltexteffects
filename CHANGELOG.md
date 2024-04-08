@@ -11,7 +11,7 @@
 #### Effects
 
 #### Engine
- 
+ * graphics.Gradient ```__iter___()``` refactored to return a generator. No longer improperly implements the iterator protocol by resetting index in ```___iter__()```. 
  #### Other
 
 ### Bug Fixes
