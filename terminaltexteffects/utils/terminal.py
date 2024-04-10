@@ -487,17 +487,36 @@ class Terminal:
         else:
             self.visible_characters.discard(character)
 
-    def print(self):
-        """Prints the current terminal state to stdout while preserving the cursor position."""
+    def get_formatted_output_string(self) -> str:
+        """Get the formatted output string based on the current terminal state.
+
+        This method updates the internal terminal representation state before returning the formatted output string.
+
+        Returns:
+            str: The formatted output string.
+        """
         self._update_terminal_state()
+        return "\n".join(self.terminal_state[::-1])
+
+    def print(self, output_string: str):
+        """Prints the current terminal state to stdout while preserving the cursor position.
+
+        Args:
+            output_string (str): The string to be printed.
+
+        Notes:
+            This method includes animation timing to control the rate at which the output is printed.
+            If the time since the last print is less than the animation rate, the method will sleep for the remaining time
+            to ensure a consistent animation speed.
+
+        """
         time_since_last_print = time.time() - self.last_time_printed
         if time_since_last_print < self.animation_rate:
             time.sleep(self.animation_rate - time_since_last_print)
-        output = "\n".join(self.terminal_state[::-1])
         sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
         sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.output_area.top))
         sys.stdout.write(ansitools.MOVE_CURSOR_TO_COLUMN(1))
-        sys.stdout.write(output)
+        sys.stdout.write(output_string)
         sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
         sys.stdout.flush()
         self.last_time_printed = time.time()
