@@ -142,7 +142,7 @@ class Terminal:
         OUTSIDE_ROW_TO_MIDDLE = auto()
         MIDDLE_ROW_TO_OUTSIDE = auto()
 
-    def __init__(self, input_data: str, args: TerminalArgs):
+    def __init__(self, input_data: str, args: TerminalArgs = TerminalArgs()):
         self.input_data = input_data.replace("\t", " " * args.tab_width)
         self.args = args
         self.width, self.height = self._get_terminal_dimensions()
