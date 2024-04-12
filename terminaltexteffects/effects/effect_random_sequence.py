@@ -1,16 +1,17 @@
 import random
 import typing
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils import graphics
+from terminaltexteffects.utils import exceptions, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.terminal import Terminal
+from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return RandomSequence, RandomSequenceArgs
+    return RandomSequence, RandomSequenceConfig
 
 
 @argclass(
@@ -21,7 +22,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     epilog="Example: terminaltexteffects randomsequence --starting-color 000000 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 12 --speed 0.004",
 )
 @dataclass
-class RandomSequenceArgs(ArgsDataClass):
+class RandomSequenceConfig(ArgsDataClass):
     starting_color: graphics.Color = ArgField(
         cmd_name=["--starting-color"],
         type_parser=arg_validators.Color.type_parser,
@@ -75,38 +76,46 @@ class RandomSequenceArgs(ArgsDataClass):
 class RandomSequence:
     """Prints the input data in a random sequence."""
 
-    def __init__(self, terminal: Terminal, args: RandomSequenceArgs):
+    def __init__(
+        self,
+        input_data: str,
+        effect_config: RandomSequenceConfig = RandomSequenceConfig(),
+        terminal_config: TerminalConfig = TerminalConfig(),
+    ):
         """Initializes the effect.
 
         Args:
             terminal (Terminal): Terminal object.
             args (argparse.Namespace): Arguments from argparse.
         """
-        self.terminal = terminal
-        self.args = args
+        self.terminal = Terminal(input_data, terminal_config)
+        self.config = effect_config
+        self.built = False
         self.pending_chars: list[EffectCharacter] = []
         self.active_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
-    def prepare_data(self) -> None:
-        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             self.terminal.set_character_visibility(character, False)
             gradient_scn = character.animation.new_scene()
-            gradient = graphics.Gradient(self.args.starting_color, self.character_final_color_map[character], steps=7)
-            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.args.final_gradient_frames)
+            gradient = graphics.Gradient(self.config.starting_color, self.character_final_color_map[character], steps=7)
+            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.config.final_gradient_frames)
             character.animation.activate_scene(gradient_scn)
             self.pending_chars.append(character)
+        self.built = True
 
-    def run(self) -> None:
+    def __iter__(self) -> Iterator[str]:
         """Runs the effect."""
-        self.prepare_data()
+        if not self.built:
+            raise exceptions.EffectNotBuiltError("Effect must be built before running.")
         random.shuffle(self.pending_chars)
-        characters_per_tick = max(int(self.args.speed * len(self.terminal._input_characters)), 1)
+        characters_per_tick = max(int(self.config.speed * len(self.terminal._input_characters)), 1)
         while self.pending_chars or self.active_chars:
             for _ in range(characters_per_tick):
                 if self.pending_chars:
@@ -114,7 +123,8 @@ class RandomSequence:
                     self.terminal.set_character_visibility(self.next_char, True)
                     self.active_chars.append(self.next_char)
             self.animate_chars()
-            self.terminal.print()
+            yield self.terminal.get_formatted_output_string()
+
             self.active_chars = [character for character in self.active_chars if character.is_active]
 
     def animate_chars(self) -> None:
