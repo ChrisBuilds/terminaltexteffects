@@ -30,7 +30,7 @@ from terminaltexteffects.effects import (
     effect_waves,
     effect_wipe,
 )
-from terminaltexteffects.utils.terminal import Terminal, TerminalArgs
+from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 t1 = ""
 t2 = "a"
@@ -58,7 +58,7 @@ t6 = """Tabs\tTabs\t\tTabs\t\t\tTabs"""
 test_inputs = [t1, t2, t3, t4, t5, t6]
 
 
-TERMARGS = TerminalArgs()
+TERMARGS = TerminalConfig()
 TERMARGS.animation_rate = 0
 
 
@@ -189,7 +189,7 @@ def test_random_sequence_effect() -> None:
     for input_data in test_inputs:
         terminal = Terminal(input_data, TERMARGS)
         random_sequence_effect = effect_random_sequence.RandomSequence(
-            terminal, effect_random_sequence.RandomSequenceArgs()
+            terminal, effect_random_sequence.RandomSequenceConfig()
         )
         random_sequence_effect.run()
 
@@ -279,7 +279,7 @@ def test_wipe_effect() -> None:
 
 
 def test_terminal_xterm_colors() -> None:
-    terminal_args = TerminalArgs()
+    terminal_args = TerminalConfig()
     terminal_args.xterm_colors = True
     terminal_args.animation_rate = 0
     for input_data in test_inputs:
@@ -289,7 +289,7 @@ def test_terminal_xterm_colors() -> None:
 
 
 def test_terminal_no_color() -> None:
-    terminal_args = TerminalArgs()
+    terminal_args = TerminalConfig()
     terminal_args.no_color = True
     terminal_args.animation_rate = 0
     for input_data in test_inputs:
