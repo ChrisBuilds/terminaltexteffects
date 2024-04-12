@@ -7,7 +7,7 @@ import terminaltexteffects.effects
 import terminaltexteffects.utils.ansitools as ansitools
 import terminaltexteffects.utils.terminal as term
 from terminaltexteffects.utils.argsdataclass import ArgsDataClass
-from terminaltexteffects.utils.terminal import TerminalArgs
+from terminaltexteffects.utils.terminal import TerminalConfig
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
         epilog="Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciphertext-color 00ff00 --plaintext-color ff0000 --final-color 0000ff",
     )
 
-    TerminalArgs.add_args_to_parser(parser)
+    TerminalConfig.add_args_to_parser(parser)
 
     subparsers = parser.add_subparsers(
         title="Effect",
@@ -41,12 +41,13 @@ def main():
         print("NO INPUT.")
     else:
         try:
-            terminal_args = TerminalArgs.from_parsed_args_mapping(args, TerminalArgs)
-            terminal = term.Terminal(input_data, terminal_args)
+            terminal_args = TerminalConfig.from_parsed_args_mapping(args, TerminalConfig)
             effect_args = ArgsDataClass.from_parsed_args_mapping(args)
             effect_class = effect_args.get_effect_class()
-            effect = effect_class(terminal, effect_args)
-            effect.run()
+            effect = effect_class(input_data, effect_args, terminal_args)
+            effect.build()
+            for frame in effect.run():
+                effect.terminal.print(frame)
         finally:
             sys.stdout.write(ansitools.SHOW_CURSOR())
 
