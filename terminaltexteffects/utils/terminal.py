@@ -15,7 +15,7 @@ from terminaltexteffects.utils.geometry import Coord
 
 
 @dataclass
-class TerminalArgs(ArgsDataClass):
+class TerminalConfig(ArgsDataClass):
     tab_width: int = ArgField(
         cmd_name=["--tab-width"],
         type_parser=arg_validators.PositiveInt.type_parser,
@@ -142,12 +142,12 @@ class Terminal:
         OUTSIDE_ROW_TO_MIDDLE = auto()
         MIDDLE_ROW_TO_OUTSIDE = auto()
 
-    def __init__(self, input_data: str, args: TerminalArgs = TerminalArgs()):
-        self.input_data = input_data.replace("\t", " " * args.tab_width)
-        self.args = args
+    def __init__(self, input_data: str, config: TerminalConfig = TerminalConfig()):
+        self.input_data = input_data.replace("\t", " " * config.tab_width)
+        self.config = config
         self.width, self.height = self._get_terminal_dimensions()
         self.next_character_id = 0
-        self._input_characters = self._decompose_input(args.xterm_colors, args.no_color)
+        self._input_characters = self._decompose_input(config.xterm_colors, config.no_color)
         self._added_characters: list[EffectCharacter] = []
         self.input_width = max([character.input_coord.column for character in self._input_characters])
         self.input_height = max([character.input_coord.row for character in self._input_characters])
@@ -163,7 +163,7 @@ class Terminal:
         }
         self._fill_characters = self._make_fill_characters()
         self.visible_characters: set[EffectCharacter] = set()
-        self.animation_rate = args.animation_rate
+        self.animation_rate = config.animation_rate
         self.last_time_printed = time.time()
         self._update_terminal_state()
 
@@ -236,7 +236,7 @@ class Terminal:
         if not self.input_data.strip():
             self.input_data = "No Input."
         lines = self.input_data.splitlines()
-        formatted_lines = self._wrap_lines(lines) if not self.args.no_wrap else [line[: self.width] for line in lines]
+        formatted_lines = self._wrap_lines(lines) if not self.config.no_wrap else [line[: self.width] for line in lines]
         input_height = len(formatted_lines)
         input_characters = []
         for row, line in enumerate(formatted_lines):
@@ -278,8 +278,8 @@ class Terminal:
             EffectCharacter: the character that was added
         """
         character = EffectCharacter(self.next_character_id, symbol, coord.column, coord.row)
-        character.animation.use_xterm_colors = self.args.xterm_colors
-        character.animation.no_color = self.args.no_color
+        character.animation.use_xterm_colors = self.config.xterm_colors
+        character.animation.no_color = self.config.no_color
         self._added_characters.append(character)
         self.next_character_id += 1
         return character
