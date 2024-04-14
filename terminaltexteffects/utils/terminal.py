@@ -48,6 +48,12 @@ class TerminalConfig(ArgsDataClass):
         processing speed of your device.""",
     )  # type: ignore[assignment]
 
+    handle_output: bool = ArgField(
+        cmd_name=["--handle-output"],
+        default=False,
+        help="Handle output of the effect. If False, the terminal will not print the effect output or modify the terminal state.",
+    )  # type: ignore[assignment]
+
 
 @dataclass
 class OutputArea:
