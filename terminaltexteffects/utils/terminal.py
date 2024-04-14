@@ -24,7 +24,7 @@ class TerminalConfig(ArgsDataClass):
         no_color (bool): Disable all colors in the effect.
         no_wrap (int): Disable wrapping of text.
         animation_rate (float): Minimum time, in seconds, between animation steps.
-        use_terminal_dimensions (bool): Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions."""
+        use_terminal_dimensions (bool): Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal width."""
 
     tab_width: int = ArgField(
         cmd_name=["--tab-width"],
@@ -66,9 +66,9 @@ class TerminalConfig(ArgsDataClass):
     use_terminal_dimensions: bool = ArgField(
         cmd_name=["--use-terminal-dimensions"],
         default=False,
-        help="Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions.",
+        help="Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal width.",
     )  # type: ignore[assignment]
-    "bool : Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions."
+    "bool : Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal width."
 
 
 @dataclass
