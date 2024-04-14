@@ -48,10 +48,10 @@ class TerminalConfig(ArgsDataClass):
         processing speed of your device.""",
     )  # type: ignore[assignment]
 
-    handle_output: bool = ArgField(
-        cmd_name=["--handle-output"],
+    use_terminal_dimensions: bool = ArgField(
+        cmd_name=["--use-terminal-dimensions"],
         default=False,
-        help="Handle output of the effect. If False, the terminal will not print the effect output or modify the terminal state.",
+        help="Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions.",
     )  # type: ignore[assignment]
 
 
@@ -151,7 +151,11 @@ class Terminal:
     def __init__(self, input_data: str, config: TerminalConfig = TerminalConfig()):
         self.input_data = input_data.replace("\t", " " * config.tab_width)
         self.config = config
-        self.width, self.height = self._get_terminal_dimensions()
+        if self.config.use_terminal_dimensions:
+            self.width, self.height = self._get_terminal_dimensions()
+        else:
+            self.width = max([len(line) for line in self.input_data.splitlines()])
+            self.height = len(self.input_data.splitlines()) + 1
         self.next_character_id = 0
         self._input_characters = self._decompose_input(config.xterm_colors, config.no_color)
         self._added_characters: list[EffectCharacter] = []
@@ -172,8 +176,6 @@ class Terminal:
         self.animation_rate = config.animation_rate
         self.last_time_printed = time.time()
         self._update_terminal_state()
-
-        self._prep_outputarea()
 
     def _get_terminal_dimensions(self) -> tuple[int, int]:
         """Gets the terminal dimensions.
@@ -303,10 +305,14 @@ class Terminal:
         terminal_state = ["".join(row) for row in rows]
         self.terminal_state = terminal_state
 
-    def _prep_outputarea(self) -> None:
-        """Prepares the terminal for the effect by adding empty lines above."""
+    def prep_outputarea(self) -> None:
+        """Prepares the terminal for the effect by adding empty lines and hiding the cursor."""
         sys.stdout.write(ansitools.HIDE_CURSOR())
         print("\n" * self.output_area.top)
+
+    def restore_cursor(self) -> None:
+        """Restores the cursor to its original position."""
+        sys.stdout.write(ansitools.SHOW_CURSOR())
 
     def get_characters(
         self,
@@ -504,11 +510,12 @@ class Terminal:
         self._update_terminal_state()
         return "\n".join(self.terminal_state[::-1])
 
-    def print(self, output_string: str):
+    def print(self, output_string: str, *, enforce_animation_rate: bool = True):
         """Prints the current terminal state to stdout while preserving the cursor position.
 
         Args:
             output_string (str): The string to be printed.
+            enforce_animation_rate (bool, optional): Whether to enforce the animation rate. Defaults to True.
 
         Notes:
             This method includes animation timing to control the rate at which the output is printed.
@@ -516,9 +523,10 @@ class Terminal:
             to ensure a consistent animation speed.
 
         """
-        time_since_last_print = time.time() - self.last_time_printed
-        if time_since_last_print < self.animation_rate:
-            time.sleep(self.animation_rate - time_since_last_print)
+        if enforce_animation_rate:
+            time_since_last_print = time.time() - self.last_time_printed
+            if time_since_last_print < self.animation_rate:
+                time.sleep(self.animation_rate - time_since_last_print)
         sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
         sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.output_area.top))
         sys.stdout.write(ansitools.MOVE_CURSOR_TO_COLUMN(1))
