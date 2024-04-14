@@ -16,6 +16,16 @@ from terminaltexteffects.utils.geometry import Coord
 
 @dataclass
 class TerminalConfig(ArgsDataClass):
+    """Configuration for the terminal.
+
+    Attributes:
+        tab_width (int): Number of spaces to use for a tab character.
+        xterm_colors (bool): Convert any colors specified in RBG hex to the closest XTerm-256 color.
+        no_color (bool): Disable all colors in the effect.
+        no_wrap (int): Disable wrapping of text.
+        animation_rate (float): Minimum time, in seconds, between animation steps.
+        use_terminal_dimensions (bool): Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions."""
+
     tab_width: int = ArgField(
         cmd_name=["--tab-width"],
         type_parser=arg_validators.PositiveInt.type_parser,
@@ -23,6 +33,7 @@ class TerminalConfig(ArgsDataClass):
         default=4,
         help="Number of spaces to use for a tab character.",
     )  # type: ignore[assignment]
+    "int : Number of spaces to use for a tab character."
 
     xterm_colors: bool = ArgField(
         cmd_name=["--xterm-colors"],
@@ -30,12 +41,15 @@ class TerminalConfig(ArgsDataClass):
         action="store_true",
         help="Convert any colors specified in RBG hex to the closest XTerm-256 color.",
     )  # type: ignore[assignment]
+    "bool : Convert any colors specified in RBG hex to the closest XTerm-256 color."
 
     no_color: bool = ArgField(
         cmd_name=["--no-color"], default=False, action="store_true", help="Disable all colors in the effect."
     )  # type: ignore[assignment]
+    "bool : Disable all colors in the effect."
 
     no_wrap: int = ArgField(cmd_name="--no-wrap", default=False, action="store_true", help="Disable wrapping of text.")  # type: ignore[assignment]
+    "bool : Disable wrapping of text."
 
     animation_rate: float = ArgField(
         cmd_name=["-a", "--animation-rate"],
@@ -47,12 +61,14 @@ class TerminalConfig(ArgsDataClass):
         This will have no impact beyond a certain lower threshold due to the 
         processing speed of your device.""",
     )  # type: ignore[assignment]
+    "float : Minimum time, in seconds, between animation steps."
 
     use_terminal_dimensions: bool = ArgField(
         cmd_name=["--use-terminal-dimensions"],
         default=False,
         help="Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions.",
     )  # type: ignore[assignment]
+    "bool : Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions."
 
 
 @dataclass
