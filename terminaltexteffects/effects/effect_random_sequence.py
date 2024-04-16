@@ -41,6 +41,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Color of the characters at spawn.",
     )  # type: ignore[assignment]
+
     "graphics.Color : Color of the characters at spawn."
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -50,6 +51,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
+
     "tuple[graphics.Color, ...] : Tuple of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color."
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -59,6 +61,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
     final_gradient_frames: int = ArgField(
         cmd_name=["--final-gradient-frames"],
@@ -67,6 +70,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]
+
     "int : Number of frames to display each gradient step."
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -75,6 +79,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
+
     "graphics.Gradient.Direction : Direction of the gradient for the final color."
     speed: float = ArgField(
         cmd_name=["--speed"],
@@ -83,6 +88,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.PositiveFloat.METAVAR,
         help="Speed of the animation as a percentage of the total number of characters to reveal in each tick.",
     )  # type: ignore[assignment]
+
     "float : Speed of the animation as a percentage of the total number of characters to reveal in each tick."
 
     @classmethod

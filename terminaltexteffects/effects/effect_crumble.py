@@ -1,28 +1,36 @@
 import random
 import typing
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.base_effect import BaseEffect
 from terminaltexteffects.utils import animation, easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal
+from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return CrumbleEffect, CrumbleEffectArgs
+    return CrumbleEffect, EffectConfig
 
 
 @argclass(
     name="crumble",
-    formatter_class=arg_validators.CustomFormatter,
     help="Characters lose color and crumble into dust, vacuumed up, and reformed.",
     description="crumble | Characters lose color and crumble into dust, vacuumed up, and reformed.",
     epilog="""Example: terminaltexteffects crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal""",
 )
 @dataclass
-class CrumbleEffectArgs(ArgsDataClass):
+class EffectConfig(ArgsDataClass):
+    """Configuration for the Crumble effect.
+
+    Attributes:
+        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the final color."""
+
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
@@ -31,6 +39,8 @@ class CrumbleEffectArgs(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
+    "tuple[graphics.Color, ...] : Tuple of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color."
+
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
         type_parser=arg_validators.PositiveInt.type_parser,
@@ -39,6 +49,8 @@ class CrumbleEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=arg_validators.GradientDirection.type_parser,
@@ -46,34 +58,51 @@ class CrumbleEffectArgs(ArgsDataClass):
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
+    "graphics.Gradient.Direction : Direction of the gradient for the final color."
 
     @classmethod
     def get_effect_class(cls):
         return CrumbleEffect
 
 
-class CrumbleEffect:
+class CrumbleEffect(BaseEffect):
     """Characters crumble into dust before being vacuumed up and rebuilt."""
 
-    def __init__(self, terminal: Terminal, args: CrumbleEffectArgs):
-        self.terminal = terminal
-        self.args = args
-        self.pending_chars: list[EffectCharacter] = []
-        self.active_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+    def __init__(
+        self,
+        input_data: str,
+        effect_config: EffectConfig = EffectConfig(),
+        terminal_config: TerminalConfig = TerminalConfig(),
+    ):
+        """Initializes the effect.
 
-    def prepare_data(self) -> None:
+        Args:
+            input_data (str): The input data to apply the effect to.
+            effect_config (EffectConfig): The configuration for the effect.
+            terminal_config (TerminalConfig): The configuration for the terminal.
+        """
+        self.terminal = Terminal(input_data, terminal_config)
+        self.config = effect_config
+        self._built = False
+        self._pending_chars: list[EffectCharacter] = []
+        self._active_chars: list[EffectCharacter] = []
+        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+
+    def build(self) -> None:
         """Prepares the data for the effect by registering events and building scenes/waypoints."""
-        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        self._pending_chars.clear()
+        self._active_chars.clear()
+        self._character_final_color_map.clear()
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            strengthen_flash_gradient = graphics.Gradient(self.character_final_color_map[character], "ffffff", steps=6)
-            strengthen_gradient = graphics.Gradient("ffffff", self.character_final_color_map[character], steps=9)
-            weak_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.65)
-            dust_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.55)
+            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            strengthen_flash_gradient = graphics.Gradient(self._character_final_color_map[character], "ffffff", steps=6)
+            strengthen_gradient = graphics.Gradient("ffffff", self._character_final_color_map[character], steps=9)
+            weak_color = character.animation.adjust_color_brightness(self._character_final_color_map[character], 0.65)
+            dust_color = character.animation.adjust_color_brightness(self._character_final_color_map[character], 0.55)
             weaken_gradient = graphics.Gradient(weak_color, dust_color, steps=9)
             self.terminal.set_character_visibility(character, True)
             # set up initial and falling stage
@@ -126,13 +155,20 @@ class CrumbleEffect:
                 EventHandler.Action.ACTIVATE_SCENE,
                 strengthen_scn,
             )
-            self.pending_chars.append(character)
+            self._pending_chars.append(character)
+        self._built = True
 
-    def run(self) -> None:
+    @property
+    def built(self) -> bool:
+        """Returns True if the effect has been built."""
+        return self._built
+
+    def __iter__(self) -> Iterator[str]:
         """Runs the effect."""
         # Prepare data for the effect
-        self.prepare_data()
-        random.shuffle(self.pending_chars)
+        if not self._built:
+            self.build()
+        random.shuffle(self._pending_chars)
         fall_delay = 20
         max_fall_delay = 20
         min_fall_delay = 15
@@ -141,19 +177,19 @@ class CrumbleEffect:
         stage = "falling"
         unvacuumed_chars = list(self.terminal._input_characters)
         random.shuffle(unvacuumed_chars)
-        self.terminal.print()
+        yield self.terminal.get_formatted_output_string()
         while stage != "complete":
             if stage == "falling":
-                if self.pending_chars:
+                if self._pending_chars:
                     if fall_delay == 0:
                         # Determine the size of the next group of falling characters
                         fall_group_size = random.randint(1, fall_group_maxsize)
                         # Add the next group of falling characters to the animating characters list
                         for _ in range(fall_group_size):
-                            if self.pending_chars:
-                                next_char = self.pending_chars.pop(0)
+                            if self._pending_chars:
+                                next_char = self._pending_chars.pop(0)
                                 next_char.animation.activate_scene(next_char.animation.query_scene("weaken"))
-                                self.active_chars.append(next_char)
+                                self._active_chars.append(next_char)
                         # Reset the fall delay and adjust the fall group size and delay range
                         fall_delay = random.randint(min_fall_delay, max_fall_delay)
                         if random.randint(1, 10) > 4:  # 60% chance to modify the fall delay and group size
@@ -162,7 +198,7 @@ class CrumbleEffect:
                             max_fall_delay = max(0, max_fall_delay - 1)
                     else:
                         fall_delay -= 1
-                if not self.pending_chars and not self.active_chars:
+                if not self._pending_chars and not self._active_chars:
                     stage = "vacuuming"
             elif stage == "vacuuming":
                 if unvacuumed_chars:
@@ -170,24 +206,25 @@ class CrumbleEffect:
                         if unvacuumed_chars:
                             next_char = unvacuumed_chars.pop(0)
                             next_char.motion.activate_path(next_char.motion.query_path("top"))
-                            self.active_chars.append(next_char)
-                if not self.active_chars:
+                            self._active_chars.append(next_char)
+                if not self._active_chars:
                     stage = "resetting"
 
             elif stage == "resetting":
                 if not reset:
                     for character in self.terminal.get_characters():
                         character.motion.activate_path(character.motion.query_path("input"))
-                        self.active_chars.append(character)
+                        self._active_chars.append(character)
                     reset = True
-                if not self.active_chars:
+                if not self._active_chars:
                     stage = "complete"
 
-            self.terminal.print()
-            self.animate_chars()
-            self.active_chars = [character for character in self.active_chars if character.is_active]
+            yield self.terminal.get_formatted_output_string()
+            self._animate_chars()
+            self._active_chars = [character for character in self._active_chars if character.is_active]
+        self._built = False
 
-    def animate_chars(self) -> None:
+    def _animate_chars(self) -> None:
         """Animates the characters by calling the tick method."""
-        for character in self.active_chars:
+        for character in self._active_chars:
             character.tick()

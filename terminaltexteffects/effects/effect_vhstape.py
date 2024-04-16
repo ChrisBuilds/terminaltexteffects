@@ -1,5 +1,6 @@
 import random
 import typing
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
@@ -7,22 +8,34 @@ from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import animation, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal
+from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return VHSTapeEffect, VHSTapeEffectArgs
+    return VHSTapeEffect, EffectConfig
 
 
 @argclass(
     name="vhstape",
-    formatter_class=arg_validators.CustomFormatter,
     help="Lines of characters glitch left and right and lose detail like an old VHS tape.",
     description="vhstape | Lines of characters glitch left and right and lose detail like an old VHS tape.",
     epilog="""Example: terminaltexteffects vhstape --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --glitch-line-colors ffffff ff0000 00ff00 0000ff ffffff --glitch-wave-colors ffffff ff0000 00ff00 0000ff ffffff --noise-colors 1e1e1f 3c3b3d 6d6c70 a2a1a6 cbc9cf ffffff --glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000""",
 )
 @dataclass
-class VHSTapeEffectArgs(ArgsDataClass):
+class EffectConfig(ArgsDataClass):
+    """Configuration for the VHSTape effect.
+
+    Attributes:
+        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the final color.
+        glitch_line_colors (tuple[graphics.Color, ...]): Tuple of colors for the characters when a single line is glitching. Colors are applied in order as an animation.
+        glitch_wave_colors (tuple[graphics.Color, ...]): Tuple of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.
+        noise_colors (tuple[graphics.Color, ...]): Tuple of colors for the characters during the noise phase.
+        glitch_line_chance (float): Chance that a line will glitch on any given frame.
+        noise_chance (float): Chance that all characters will experience noise on any given frame.
+        total_glitch_time (int): Total time, animation steps, that the glitching phase will last."""
+
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
@@ -31,6 +44,8 @@ class VHSTapeEffectArgs(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
+    "tuple[graphics.Color, ...] : Tuple of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color."
+
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
         type_parser=arg_validators.PositiveInt.type_parser,
@@ -39,6 +54,8 @@ class VHSTapeEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=arg_validators.GradientDirection.type_parser,
@@ -46,6 +63,8 @@ class VHSTapeEffectArgs(ArgsDataClass):
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
+    "graphics.Gradient.Direction : Direction of the gradient for the final color."
+
     glitch_line_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--glitch-line-colors",
         type_parser=arg_validators.Color.type_parser,
@@ -54,6 +73,8 @@ class VHSTapeEffectArgs(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors are applied in order as an animation.",
     )  # type: ignore[assignment]
+    "tuple[graphics.Color, ...] : Tuple of colors for the characters when a single line is glitching. Colors are applied in order as an animation."
+
     glitch_wave_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--glitch-wave-colors",
         type_parser=arg_validators.Color.type_parser,
@@ -62,6 +83,8 @@ class VHSTapeEffectArgs(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.",
     )  # type: ignore[assignment]
+    "tuple[graphics.Color, ...] : Tuple of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation."
+
     noise_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--noise-colors",
         type_parser=arg_validators.Color.type_parser,
@@ -70,6 +93,8 @@ class VHSTapeEffectArgs(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the characters during the noise phase.",
     )  # type: ignore[assignment]
+    "tuple[graphics.Color, ...] : Tuple of colors for the characters during the noise phase."
+
     glitch_line_chance: float = ArgField(
         cmd_name="--glitch-line-chance",
         type_parser=arg_validators.Ratio.type_parser,
@@ -77,6 +102,8 @@ class VHSTapeEffectArgs(ArgsDataClass):
         metavar=arg_validators.Ratio.METAVAR,
         help="Chance that a line will glitch on any given frame.",
     )  # type: ignore[assignment]
+    "float : Chance that a line will glitch on any given frame."
+
     noise_chance: float = ArgField(
         cmd_name="--noise-chance",
         type_parser=arg_validators.Ratio.type_parser,
@@ -84,6 +111,8 @@ class VHSTapeEffectArgs(ArgsDataClass):
         metavar=arg_validators.Ratio.METAVAR,
         help="Chance that all characters will experience noise on any given frame.",
     )  # type: ignore[assignment]
+    "float : Chance that all characters will experience noise on any given frame."
+
     total_glitch_time: int = ArgField(
         cmd_name="--total-glitch-time",
         type_parser=arg_validators.PositiveInt.type_parser,
@@ -91,13 +120,14 @@ class VHSTapeEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Total time, animation steps, that the glitching phase will last.",
     )  # type: ignore[assignment]
+    "int : Total time, animation steps, that the glitching phase will last."
 
     @classmethod
     def get_effect_class(cls):
         return VHSTapeEffect
 
 
-class Line:
+class _Line:
     """
     Represents a line of characters with various effects.
 
@@ -123,7 +153,7 @@ class Line:
     def __init__(
         self,
         characters: list[EffectCharacter],
-        args: VHSTapeEffectArgs,
+        args: EffectConfig,
         character_final_color_map: dict[EffectCharacter, graphics.Color],
     ) -> None:
         self.characters = characters
@@ -268,49 +298,60 @@ class Line:
 class VHSTapeEffect:
     """
     Represents a VHS tape effect for terminal text.
-
-    Attributes:
-        terminal (Terminal): The terminal object.
-        args (VHSTapeEffectArgs): The command-line arguments.
-        pending_chars (list[EffectCharacter]): The list of pending effect characters.
-        animating_chars (list[EffectCharacter]): The list of animating effect characters.
-        lines (dict[int, Line]): The dictionary of lines indexed by row index.
-        active_glitch_wave_top (int | None): The top row index of the active glitch wave, or None if no active wave.
-        active_glitch_wave_lines (list[Line]): The list of lines in the active glitch wave.
-        active_glitch_lines (list[Line]): The list of active glitch lines.
     """
 
-    def __init__(self, terminal: Terminal, args: VHSTapeEffectArgs):
-        self.terminal = terminal
-        self.args = args
-        self.pending_chars: list[EffectCharacter] = []
-        self.active_chars: list[EffectCharacter] = []
-        self.lines: dict[int, Line] = {}
-        self.active_glitch_wave_top: int | None = None
-        self.active_glitch_wave_lines: list[Line] = []
-        self.active_glitch_lines: list[Line] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+    def __init__(
+        self,
+        input_data: str,
+        effect_config: EffectConfig = EffectConfig(),
+        terminal_config: TerminalConfig = TerminalConfig(),
+    ):
+        """Initializes the effect.
 
-    def prepare_data(self) -> None:
+        Args:
+            input_data (str): The input data to apply the effect to.
+            effect_config (EffectConfig): The configuration for the effect.
+            terminal_config (TerminalConfig): The configuration for the terminal.
+        """
+        self.terminal = Terminal(input_data, terminal_config)
+        self.args = effect_config
+        self._built = False
+        self._pending_chars: list[EffectCharacter] = []
+        self._active_chars: list[EffectCharacter] = []
+        self._lines: dict[int, _Line] = {}
+        self._active_glitch_wave_top: int | None = None
+        self._active_glitch_wave_lines: list[_Line] = []
+        self._active_glitch_lines: list[_Line] = []
+        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+
+    def build(self) -> None:
+        self._pending_chars.clear()
+        self._active_chars.clear()
+        self._lines.clear()
+        self._active_glitch_wave_top = None
+        self._active_glitch_wave_lines.clear()
+        self._active_glitch_lines.clear()
+        self._character_final_color_map.clear()
         final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for row_index, characters in enumerate(
             self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP)
         ):
-            self.lines[row_index] = Line(characters, self.args, self.character_final_color_map)
+            self._lines[row_index] = _Line(characters, self.args, self._character_final_color_map)
         for character in self.terminal.get_characters():
             self.terminal.set_character_visibility(character, True)
             character.animation.activate_scene(character.animation.query_scene("base"))
+        self._built = True
 
-    def glitch_wave(self) -> None:
-        if not self.active_glitch_wave_top:
+    def _glitch_wave(self) -> None:
+        if not self._active_glitch_wave_top:
             if self.terminal.output_area.top >= 3:
                 # choose a wave top index in the top half of the output area or at least 3 rows up
-                self.active_glitch_wave_top = random.randint(
+                self._active_glitch_wave_top = random.randint(
                     max((3, round(self.terminal.output_area.top * 0.5))), self.terminal.output_area.top
                 )
             else:
@@ -318,8 +359,8 @@ class VHSTapeEffect:
                 return
 
         # if all lines have completed movement, proceed to move/restore wave
-        if all(line.line_movement_complete() for line in self.active_glitch_wave_lines):
-            if self.active_glitch_wave_lines:
+        if all(line.line_movement_complete() for line in self._active_glitch_wave_lines):
+            if self._active_glitch_wave_lines:
                 # only move 30% of the time
                 if random.random() < 0.3:
                     # if moving, only move up 10% of the time
@@ -329,107 +370,117 @@ class VHSTapeEffect:
                         wave_top_delta = -1
                 else:
                     wave_top_delta = 0
-                self.active_glitch_wave_top += wave_top_delta
+                self._active_glitch_wave_top += wave_top_delta
                 # clamp wave top to output area
-                self.active_glitch_wave_top = max(2, min(self.active_glitch_wave_top, self.terminal.output_area.top))
+                self._active_glitch_wave_top = max(2, min(self._active_glitch_wave_top, self.terminal.output_area.top))
             # get the lines for the wave
-            new_wave_lines: list[Line] = []
-            for line_index in range(self.active_glitch_wave_top - 2, self.active_glitch_wave_top + 1):
-                if line_index in self.lines:
-                    new_wave_lines.append(self.lines[line_index])
+            new_wave_lines: list[_Line] = []
+            for line_index in range(self._active_glitch_wave_top - 2, self._active_glitch_wave_top + 1):
+                if line_index in self._lines:
+                    new_wave_lines.append(self._lines[line_index])
 
             # restore any lines that are no longer part of the wave
-            for line in self.active_glitch_wave_lines:
+            for line in self._active_glitch_wave_lines:
                 if line not in new_wave_lines:
                     line.restore()
-                    self.active_chars.extend(line.characters)
-            self.active_glitch_wave_lines = new_wave_lines
+                    self._active_chars.extend(line.characters)
+            self._active_glitch_wave_lines = new_wave_lines
 
-            if self.active_glitch_wave_top < 3:
+            if self._active_glitch_wave_top < 3:
                 # wave at bottom, restore lines
-                for line in self.active_glitch_wave_lines:
+                for line in self._active_glitch_wave_lines:
                     line.restore()
-                    self.active_chars.extend(line.characters)
-                self.active_glitch_wave_top = None
-                self.active_glitch_wave_lines = []
+                    self._active_chars.extend(line.characters)
+                self._active_glitch_wave_top = None
+                self._active_glitch_wave_lines = []
 
             else:
                 for line, path_id in zip(
-                    self.active_glitch_wave_lines, ("glitch_wave_mid", "glitch_wave_end", "glitch_wave_mid")
+                    self._active_glitch_wave_lines, ("glitch_wave_mid", "glitch_wave_end", "glitch_wave_mid")
                 ):
                     line.activate_path(path_id)
-                    self.active_chars.extend(line.characters)
+                    self._active_chars.extend(line.characters)
 
-    def run(self) -> None:
+    @property
+    def built(self) -> bool:
+        """Returns True if the effect has been built."""
+        return self._built
+
+    def __iter__(self) -> Iterator[str]:
         """Runs the effect."""
-        self.prepare_data()
+        if not self._built:
+            self.build()
 
-        self.terminal.print()
+        yield self.terminal.get_formatted_output_string()
         glitching_steps_elapsed = 0
         phase = "glitching"
-        to_redraw = list(self.lines.values())
+        to_redraw = list(self._lines.values())
         redrawing = False
-        while phase != "complete" or self.active_chars:
+        while phase != "complete" or self._active_chars:
             if phase == "glitching":
                 # Check if all active glitch wave lines have completed their movement, if so move the wave
-                if not self.active_glitch_wave_lines or all(
-                    line.line_movement_complete() for line in self.active_glitch_wave_lines
+                if not self._active_glitch_wave_lines or all(
+                    line.line_movement_complete() for line in self._active_glitch_wave_lines
                 ):
-                    self.glitch_wave()
+                    self._glitch_wave()
                 # Remove completed glitch lines from active glitch lines
-                self.active_glitch_lines = [
-                    line for line in self.active_glitch_lines if not line.line_movement_complete()
+                self._active_glitch_lines = [
+                    line for line in self._active_glitch_lines if not line.line_movement_complete()
                 ]
                 # Randomly add new glitch lines
-                if random.random() < self.args.glitch_line_chance and len(self.active_glitch_lines) < 3:
-                    glitch_line: Line = random.choice(list(self.lines.values()))
-                    if glitch_line not in self.active_glitch_wave_lines and glitch_line not in self.active_glitch_lines:
+                if random.random() < self.args.glitch_line_chance and len(self._active_glitch_lines) < 3:
+                    glitch_line: _Line = random.choice(list(self._lines.values()))
+                    if (
+                        glitch_line not in self._active_glitch_wave_lines
+                        and glitch_line not in self._active_glitch_lines
+                    ):
                         glitch_line.set_hold_time(random.randint(30, 120))
-                        self.active_glitch_lines.append(glitch_line)
+                        self._active_glitch_lines.append(glitch_line)
                         glitch_line.glitch()
-                        self.active_chars.extend(glitch_line.characters)
+                        self._active_chars.extend(glitch_line.characters)
                 # Randomly add noise to all lines
                 if random.random() < self.args.noise_chance:
-                    for line in self.lines.values():
+                    for line in self._lines.values():
                         line.snow()
-                        if line not in self.active_glitch_wave_lines and line not in self.active_glitch_lines:
-                            self.active_chars.extend(line.characters)
+                        if line not in self._active_glitch_wave_lines and line not in self._active_glitch_lines:
+                            self._active_chars.extend(line.characters)
                 glitching_steps_elapsed += 1
                 # Check if glitching time has reached the total glitch time
                 if glitching_steps_elapsed >= self.args.total_glitch_time:
                     # Restore glitch wave lines
-                    for line in self.active_glitch_wave_lines:
+                    for line in self._active_glitch_wave_lines:
                         line.restore()
                     # Restore glitch lines
-                    for line in self.active_glitch_lines:
+                    for line in self._active_glitch_lines:
                         line.restore()
                     phase = "noise"
 
             elif phase == "noise":
                 # Activate final snow animation for all characters
-                if not self.active_chars:
+                if not self._active_chars:
                     for character in self.terminal.get_characters():
                         character.animation.activate_scene(character.animation.query_scene("final_snow"))
-                        self.active_chars.append(character)
+                        self._active_chars.append(character)
                     phase = "redraw"
 
             elif phase == "redraw":
                 # Redraw lines one by one
-                if redrawing or not self.active_chars:
+                if redrawing or not self._active_chars:
                     redrawing = True
                     if to_redraw:
                         next_line = to_redraw.pop()
                         for character in next_line.characters:
                             character.animation.activate_scene(character.animation.query_scene("final_redraw"))
-                            self.active_chars.append(character)
+                            self._active_chars.append(character)
                     else:
                         phase = "complete"
-            self.animate_chars()
-            self.terminal.print()
+            self._animate_chars()
+            yield self.terminal.get_formatted_output_string()
 
-            self.active_chars = [character for character in self.active_chars if character.is_active]
+            self._active_chars = [character for character in self._active_chars if character.is_active]
+        self._built = False
 
-    def animate_chars(self) -> None:
+    def _animate_chars(self) -> None:
         """Animates the characters by calling the tick method on all active characters."""
-        for character in self.active_chars:
+        for character in self._active_chars:
             character.tick()

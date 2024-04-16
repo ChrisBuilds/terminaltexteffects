@@ -1,26 +1,36 @@
 import random
 import typing
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.base_effect import BaseEffect
 from terminaltexteffects.utils import animation, arg_validators, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.terminal import Terminal
+from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return DecryptEffect, DecryptEffectArgs
+    return DecryptEffect, EffectConfig
 
 
 @argclass(
     name="decrypt",
-    formatter_class=arg_validators.CustomFormatter,
     help="Display a movie style decryption effect.",
     description="decrypt | Movie style decryption effect.",
     epilog="Example: terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical",
 )
 @dataclass
-class DecryptEffectArgs(ArgsDataClass):
+class EffectConfig(ArgsDataClass):
+    """Configuration for the Decrypt effect.
+
+    Attributes:
+        typing_speed (int): Number of characters typed per keystroke.
+        ciphertext_colors (tuple[graphics.Color, ...]): Colors for the ciphertext. Color will be randomly selected for each character.
+        final_gradient_stops (tuple[graphics.Color, ...]): Colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...]): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the final color."""
+
     typing_speed: int = ArgField(
         cmd_name="--typing-speed",
         type_parser=arg_validators.PositiveInt.type_parser,
@@ -28,6 +38,8 @@ class DecryptEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of characters typed per keystroke.",
     )  # type: ignore[assignment]
+    "int : Number of characters typed per keystroke."
+
     ciphertext_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--ciphertext-colors"],
         type_parser=arg_validators.Color.type_parser,
@@ -36,6 +48,8 @@ class DecryptEffectArgs(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the ciphertext. Color will be randomly selected for each character.",
     )  # type: ignore[assignment]
+    "tuple[graphics.Color, ...] : Colors for the ciphertext. Color will be randomly selected for each character."
+
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
@@ -44,6 +58,8 @@ class DecryptEffectArgs(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
+    "tuple[graphics.Color, ...] : Colors for the character gradient. If only one color is provided, the characters will be displayed in that color."
+
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
         type_parser=arg_validators.PositiveInt.type_parser,
@@ -52,6 +68,8 @@ class DecryptEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    "tuple[int, ...] : Number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=arg_validators.GradientDirection.type_parser,
@@ -59,6 +77,7 @@ class DecryptEffectArgs(ArgsDataClass):
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
+    "graphics.Gradient.Direction : Direction of the gradient for the final color."
 
     @classmethod
     def get_effect_class(cls):
@@ -66,7 +85,7 @@ class DecryptEffectArgs(ArgsDataClass):
 
 
 @dataclass
-class DecryptChars:
+class _DecryptChars:
     """Various decimal utf-8 character ranges."""
 
     keyboard = list(range(33, 127))
@@ -75,33 +94,46 @@ class DecryptChars:
     misc = list(range(174, 452))
 
 
-class DecryptEffect:
+class DecryptEffect(BaseEffect):
     """Effect that shows a movie style text decryption effect."""
 
-    def __init__(self, terminal: Terminal, args: DecryptEffectArgs):
-        self.terminal = terminal
-        self.args = args
-        self.pending_chars: list[EffectCharacter] = []
-        self.active_chars: list[EffectCharacter] = []
+    def __init__(
+        self,
+        input_data: str,
+        effect_config: EffectConfig = EffectConfig(),
+        terminal_config: TerminalConfig = TerminalConfig(),
+    ):
+        """Initializes the effect.
+
+        Args:
+            input_data (str): The input data to apply the effect to.
+            effect_config (EffectConfig): The configuration for the effect.
+            terminal_config (TerminalConfig): The configuration for the terminal.
+        """
+        self.terminal = Terminal(input_data, terminal_config)
+        self.config = effect_config
+        self._built = False
+        self._pending_chars: list[EffectCharacter] = []
+        self._active_chars: list[EffectCharacter] = []
         self.encrypted_symbols: list[str] = []
-        self.scenes: dict[str, animation.Scene] = {}
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._scenes: dict[str, animation.Scene] = {}
+        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
 
         self.make_encrypted_symbols()
 
     def make_encrypted_symbols(self) -> None:
-        for n in DecryptChars.keyboard:
+        for n in _DecryptChars.keyboard:
             self.encrypted_symbols.append(chr(n))
-        for n in DecryptChars.blocks:
+        for n in _DecryptChars.blocks:
             self.encrypted_symbols.append(chr(n))
-        for n in DecryptChars.box_drawing:
+        for n in _DecryptChars.box_drawing:
             self.encrypted_symbols.append(chr(n))
-        for n in DecryptChars.misc:
+        for n in _DecryptChars.misc:
             self.encrypted_symbols.append(chr(n))
 
     def make_decrypting_animation_scenes(self, character: EffectCharacter) -> None:
         fast_decrypt_scene = character.animation.new_scene(id="fast_decrypt")
-        color = random.choice(self.args.ciphertext_colors)
+        color = random.choice(self.config.ciphertext_colors)
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
             fast_decrypt_scene.add_frame(symbol, 3, color=color)
@@ -115,7 +147,7 @@ class DecryptEffect:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
             slow_decrypt_scene.add_frame(symbol, duration, color=color)
         discovered_scene = character.animation.new_scene(id="discovered")
-        discovered_gradient = graphics.Gradient("ffffff", self.character_final_color_map[character], steps=10)
+        discovered_gradient = graphics.Gradient("ffffff", self._character_final_color_map[character], steps=10)
         discovered_scene.apply_gradient_to_symbols(discovered_gradient, character.input_symbol, 8)
 
     def prepare_data_for_type_effect(self) -> None:
@@ -123,12 +155,12 @@ class DecryptEffect:
         for character in self.terminal.get_characters():
             typing_scene = character.animation.new_scene(id="typing")
             for block_char in ["▉", "▓", "▒", "░"]:
-                typing_scene.add_frame(block_char, 2, color=random.choice(self.args.ciphertext_colors))
+                typing_scene.add_frame(block_char, 2, color=random.choice(self.config.ciphertext_colors))
 
             typing_scene.add_frame(
-                random.choice(self.encrypted_symbols), 2, color=random.choice(self.args.ciphertext_colors)
+                random.choice(self.encrypted_symbols), 2, color=random.choice(self.config.ciphertext_colors)
             )
-            self.pending_chars.append(character)
+            self._pending_chars.append(character)
 
     def prepare_data_for_decrypt_effect(self) -> None:
         """Prepares the data for the effect by building the animation for each character."""
@@ -147,44 +179,76 @@ class DecryptEffect:
                 character.animation.query_scene("discovered"),
             )
             character.animation.activate_scene(character.animation.query_scene("fast_decrypt"))
-            self.active_chars.append(character)
+            self._active_chars.append(character)
 
-    def run(self) -> None:
+    def build(self) -> None:
+        """Builds the effect."""
+        self._pending_chars.clear()
+        self._active_chars.clear()
+        self._character_final_color_map.clear()
+        self._scenes.clear()
+        self.prepare_data_for_type_effect()
+        self.prepare_data_for_decrypt_effect()
+        self._built = True
+
+    @property
+    def built(self) -> bool:
+        """Returns True if the effect has been built."""
+        return self._built
+
+    def __iter__(self) -> Iterator[str]:
         """Runs the effect."""
-        final_gradient = graphics.Gradient(*self.args.final_gradient_stops, steps=self.args.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.args.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        self.prepare_data_for_type_effect()
-        self.run_type_effect()
-        self.prepare_data_for_decrypt_effect()
-        self.run_decryption_effect()
-
-    def run_type_effect(self) -> None:
-        """Runs the typing out the characters effect."""
-        self.terminal.print()
-        while self.pending_chars or self.active_chars:
-            if self.pending_chars:
+            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        yield self.terminal.get_formatted_output_string()
+        while self._pending_chars or self._active_chars:
+            if self._pending_chars:
                 if random.randint(0, 100) <= 75:
-                    for _ in range(self.args.typing_speed):
-                        if self.pending_chars:
-                            next_character = self.pending_chars.pop(0)
+                    for _ in range(self.config.typing_speed):
+                        if self._pending_chars:
+                            next_character = self._pending_chars.pop(0)
                             self.terminal.set_character_visibility(next_character, True)
                             next_character.animation.activate_scene(next_character.animation.query_scene("typing"))
-                            self.active_chars.append(next_character)
-            self.animate_chars()
-            self.active_chars = [character for character in self.active_chars if character.is_active]
-            self.terminal.print()
+                            self._active_chars.append(next_character)
+            self._animate_chars()
+            self._active_chars = [character for character in self._active_chars if character.is_active]
+            yield self.terminal.get_formatted_output_string()
 
-    def run_decryption_effect(self) -> None:
-        while self.active_chars:
-            self.animate_chars()
-            self.active_chars = [character for character in self.active_chars if character.is_active]
-            self.terminal.print()
+        while self._active_chars:
+            self._animate_chars()
+            self._active_chars = [character for character in self._active_chars if character.is_active]
+            yield self.terminal.get_formatted_output_string()
 
-    def animate_chars(self) -> None:
+        # self.run_type_effect()
+        # self.run_decryption_effect()
+
+    # def run_type_effect(self) -> None:
+    #     """Runs the typing out the characters effect."""
+    #     yield self.terminal.get_formatted_output_string()
+    #     while self._pending_chars or self._active_chars:
+    #         if self._pending_chars:
+    #             if random.randint(0, 100) <= 75:
+    #                 for _ in range(self.config.typing_speed):
+    #                     if self._pending_chars:
+    #                         next_character = self._pending_chars.pop(0)
+    #                         self.terminal.set_character_visibility(next_character, True)
+    #                         next_character.animation.activate_scene(next_character.animation.query_scene("typing"))
+    #                         self._active_chars.append(next_character)
+    #         self._animate_chars()
+    #         self._active_chars = [character for character in self._active_chars if character.is_active]
+    #         yield self.terminal.get_formatted_output_string()
+
+    # def run_decryption_effect(self) -> None:
+    #     while self._active_chars:
+    #         self._animate_chars()
+    #         self._active_chars = [character for character in self._active_chars if character.is_active]
+    #         yield self.terminal.get_formatted_output_string()
+
+    def _animate_chars(self) -> None:
         """Animates the characters by calling the tween method and printing the characters to the terminal."""
-        for character in self.active_chars:
+        for character in self._active_chars:
             character.tick()

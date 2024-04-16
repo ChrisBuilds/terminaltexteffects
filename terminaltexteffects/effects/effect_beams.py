@@ -49,6 +49,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.Symbol.METAVAR,
         help="Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation.",
     )  # type: ignore[assignment]
+
     "tuple[str, ...] : Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation."
 
     beam_column_symbols: tuple[str, ...] = ArgField(
@@ -59,6 +60,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.Symbol.METAVAR,
         help="Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation.",
     )  # type: ignore[assignment]
+
     "tuple[str, ...] : Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation."
 
     beam_delay: int = ArgField(
@@ -68,6 +70,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5).",
     )  # type: ignore[assignment]
+
     "int : Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5)."
 
     beam_row_speed_range: tuple[int, int] = ArgField(
@@ -77,6 +80,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.IntRange.METAVAR,
         help="Speed range of the beam when moving along a row.",
     )  # type: ignore[assignment]
+
     "tuple[int, int] : Speed range of the beam when moving along a row."
 
     beam_column_speed_range: tuple[int, int] = ArgField(
@@ -86,6 +90,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.IntRange.METAVAR,
         help="Speed range of the beam when moving along a column.",
     )  # type: ignore[assignment]
+
     "tuple[int, int] : Speed range of the beam when moving along a column."
 
     beam_gradient_stops: tuple[graphics.Color, ...] = ArgField(
@@ -96,6 +101,7 @@ class EffectConfig(ArgsDataClass):
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors.",
     )  # type: ignore[assignment]
+
     "tuple[graphics.Color, ...] : Tuple of colors for the beam, a gradient will be created between the colors."
 
     beam_gradient_steps: tuple[int, ...] = ArgField(
@@ -106,6 +112,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
     )  # type: ignore[assignment]
+
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
 
     beam_gradient_frames: int = ArgField(
@@ -115,6 +122,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]
+
     "int : Number of frames to display each gradient step."
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
@@ -125,6 +133,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # type: ignore[assignment]
+
     "tuple[graphics.Color, ...] : Tuple of colors for the wipe gradient."
 
     final_gradient_steps: tuple[int,] = ArgField(
@@ -135,6 +144,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
     )  # type: ignore[assignment]
+
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
 
     final_gradient_frames: int = ArgField(
@@ -144,6 +154,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]
+
     "int : Number of frames to display each gradient step."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
@@ -153,6 +164,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the final color.",
     )  # type: ignore[assignment]
+
     "graphics.Gradient.Direction : Direction of the gradient for the final color."
 
     final_wipe_speed: int = ArgField(
@@ -162,6 +174,7 @@ class EffectConfig(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Speed of the final wipe as measured in diagonal groups activated per frame.",
     )  # type: ignore[assignment]
+
     "int : Speed of the final wipe as measured in diagonal groups activated per frame."
 
     @classmethod
@@ -279,7 +292,8 @@ class BeamsEffect(BaseEffect):
         return self._built
 
     def __iter__(self) -> Iterator[str]:
-        self.build()
+        if not self._built:
+            self.build()
         active_groups: list[_Group] = []
         delay = 0
         phase = "beams"
@@ -320,13 +334,13 @@ class BeamsEffect(BaseEffect):
                 else:
                     phase = "complete"
             yield self.terminal.get_formatted_output_string()
-            self.animate_chars()
+            self._animate_chars()
 
             self._active_chars = [character for character in self._active_chars if character.is_active]
         yield self.terminal.get_formatted_output_string()
         self._built = False
 
-    def animate_chars(self) -> None:
+    def _animate_chars(self) -> None:
         """Animates the characters by calling the tick method on all active characters."""
         for character in self._active_chars:
             character.tick()

@@ -1,27 +1,41 @@
 import random
 import typing
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import arg_validators, geometry, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal
+from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return SynthGridEffect, SynthGridEffectArgs
+    return SynthGridEffect, EffectConfig
 
 
 @argclass(
     name="synthgrid",
-    formatter_class=arg_validators.CustomFormatter,
     help="Create a grid which fills with characters dissolving into the final text.",
     description="synthgrid | Create a grid which fills with characters dissolving into the final text.",
     epilog="""Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol "│" --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1""",
 )
 @dataclass
-class SynthGridEffectArgs(ArgsDataClass):
+class EffectConfig(ArgsDataClass):
+    """Configuration for the SynthGrid effect.
+
+    Attributes:
+        grid_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the grid gradient.
+        grid_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        grid_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the grid color.
+        text_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the text gradient.
+        text_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        text_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the text color.
+        grid_row_symbol (str): Symbol to use for grid row lines.
+        grid_column_symbol (str): Symbol to use for grid column lines.
+        text_generation_symbols (tuple[str, ...]): Tuple of characters for the text generation animation.
+        max_active_blocks (float): Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time."""
+
     grid_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--grid-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
@@ -30,6 +44,8 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the grid gradient.",
     )  # type: ignore[assignment]
+    "tuple[graphics.Color, ...] : Tuple of colors for the grid gradient."
+
     grid_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--grid-gradient-steps",
         type_parser=arg_validators.PositiveInt.type_parser,
@@ -38,6 +54,8 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+
     grid_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--grid-gradient-direction",
         type_parser=arg_validators.GradientDirection.type_parser,
@@ -45,6 +63,8 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the grid color.",
     )  # type: ignore[assignment]
+    "graphics.Gradient.Direction : Direction of the gradient for the grid color."
+
     text_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--text-gradient-stops"],
         type_parser=arg_validators.Color.type_parser,
@@ -53,6 +73,8 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the text gradient.",
     )  # type: ignore[assignment]
+    "tuple[graphics.Color, ...] : Tuple of colors for the text gradient."
+
     text_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--text-gradient-steps",
         type_parser=arg_validators.PositiveInt.type_parser,
@@ -61,6 +83,8 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+
     text_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--text-gradient-direction",
         type_parser=arg_validators.GradientDirection.type_parser,
@@ -68,6 +92,8 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.GradientDirection.METAVAR,
         help="Direction of the gradient for the text color.",
     )  # type: ignore[assignment]
+    "graphics.Gradient.Direction : Direction of the gradient for the text color."
+
     grid_row_symbol: str = ArgField(
         cmd_name="--grid-row-symbol",
         type_parser=arg_validators.Symbol.type_parser,
@@ -75,6 +101,8 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.Symbol.METAVAR,
         help="Symbol to use for grid row lines.",
     )  # type: ignore[assignment]
+    "str : Symbol to use for grid row lines."
+
     grid_column_symbol: str = ArgField(
         cmd_name="--grid-column-symbol",
         type_parser=arg_validators.Symbol.type_parser,
@@ -82,6 +110,8 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.Symbol.METAVAR,
         help="Symbol to use for grid column lines.",
     )  # type: ignore[assignment]
+    "str : Symbol to use for grid column lines."
+
     text_generation_symbols: tuple[str, ...] = ArgField(
         cmd_name="--text-generation-symbols",
         type_parser=arg_validators.Symbol.type_parser,
@@ -90,6 +120,8 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.Symbol.METAVAR,
         help="Space separated, unquoted, list of characters for the text generation animation.",
     )  # type: ignore[assignment]
+    "tuple[str, ...] : Tuple of characters for the text generation animation."
+
     max_active_blocks: float = ArgField(
         cmd_name="--max-active-blocks",
         type_parser=arg_validators.PositiveFloat.type_parser,
@@ -97,6 +129,7 @@ class SynthGridEffectArgs(ArgsDataClass):
         metavar=arg_validators.PositiveFloat.METAVAR,
         help="Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time.",
     )  # type: ignore[assignment]
+    "float : Maximum percentage of blocks to have active at any given time."
 
     @classmethod
     def get_effect_class(cls):
@@ -107,7 +140,7 @@ class GridLine:
     def __init__(
         self,
         terminal: Terminal,
-        args: SynthGridEffectArgs,
+        args: EffectConfig,
         origin: Coord,
         direction: str,
         grid_gradient_mapping: dict[geometry.Coord, graphics.Color],
@@ -180,13 +213,26 @@ class GridLine:
 class SynthGridEffect:
     """Effect that creates a grid where blocks of characters dissolved into the input characters."""
 
-    def __init__(self, terminal: Terminal, args: SynthGridEffectArgs):
-        self.terminal = terminal
-        self.args = args
-        self.pending_groups: list[tuple[int, list[EffectCharacter]]] = []
-        self.active_chars: list[EffectCharacter] = []
-        self.grid_lines: list[GridLine] = []
-        self.group_tracker: dict[int, int] = {}
+    def __init__(
+        self,
+        input_data: str,
+        effect_config: EffectConfig = EffectConfig(),
+        terminal_config: TerminalConfig = TerminalConfig(),
+    ):
+        """Initializes the effect.
+
+        Args:
+            input_data (str): The input data to apply the effect to.
+            effect_config (EffectConfig): The configuration for the effect.
+            terminal_config (TerminalConfig): The configuration for the terminal.
+        """
+        self.terminal = Terminal(input_data, terminal_config)
+        self.config = effect_config
+        self._built = False
+        self._pending_groups: list[tuple[int, list[EffectCharacter]]] = []
+        self._active_chars: list[EffectCharacter] = []
+        self._grid_lines: list[GridLine] = []
+        self._group_tracker: dict[int, int] = {}
 
     def find_even_gap(self, dimension: int) -> int:
         """Find the closest even gap to 20% of the longest dimension.
@@ -208,47 +254,51 @@ class SynthGridEffect:
             return 4
         return min(potential_gaps, key=lambda x: abs(x - dimension // 5))
 
-    def prepare_data(self) -> None:
-        grid_gradient = graphics.Gradient(*self.args.grid_gradient_stops, steps=self.args.grid_gradient_steps)
+    def build(self) -> None:
+        self._pending_groups.clear()
+        self._active_chars.clear()
+        self._grid_lines.clear()
+        self._group_tracker.clear()
+        grid_gradient = graphics.Gradient(*self.config.grid_gradient_stops, steps=self.config.grid_gradient_steps)
         grid_gradient_mapping = grid_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.args.grid_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.grid_gradient_direction
         )
-        text_gradient = graphics.Gradient(*self.args.text_gradient_stops, steps=self.args.text_gradient_steps)
+        text_gradient = graphics.Gradient(*self.config.text_gradient_stops, steps=self.config.text_gradient_steps)
         text_gradient_mapping = text_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.args.text_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.text_gradient_direction
         )
 
-        self.grid_lines.append(
+        self._grid_lines.append(
             GridLine(
                 self.terminal,
-                self.args,
+                self.config,
                 Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
                 "horizontal",
                 grid_gradient_mapping,
             )
         )
-        self.grid_lines.append(
+        self._grid_lines.append(
             GridLine(
                 self.terminal,
-                self.args,
+                self.config,
                 Coord(self.terminal.output_area.left, self.terminal.output_area.top),
                 "horizontal",
                 grid_gradient_mapping,
             )
         )
-        self.grid_lines.append(
+        self._grid_lines.append(
             GridLine(
                 self.terminal,
-                self.args,
+                self.config,
                 Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
                 "vertical",
                 grid_gradient_mapping,
             )
         )
-        self.grid_lines.append(
+        self._grid_lines.append(
             GridLine(
                 self.terminal,
-                self.args,
+                self.config,
                 Coord(self.terminal.output_area.right, self.terminal.output_area.bottom),
                 "vertical",
                 grid_gradient_mapping,
@@ -269,10 +319,10 @@ class SynthGridEffect:
             if self.terminal.output_area.top - row_index < 2:
                 continue
             row_indexes.append(row_index)
-            self.grid_lines.append(
+            self._grid_lines.append(
                 GridLine(
                     self.terminal,
-                    self.args,
+                    self.config,
                     Coord(self.terminal.output_area.left, row_index),
                     "horizontal",
                     grid_gradient_mapping,
@@ -284,10 +334,10 @@ class SynthGridEffect:
             if self.terminal.output_area.right - column_index < 2:
                 continue
             column_indexes.append(column_index)
-            self.grid_lines.append(
+            self._grid_lines.append(
                 GridLine(
                     self.terminal,
-                    self.args,
+                    self.config,
                     Coord(column_index, self.terminal.output_area.bottom),
                     "vertical",
                     grid_gradient_mapping,
@@ -310,16 +360,16 @@ class SynthGridEffect:
                     if coord in self.terminal.character_by_input_coord:
                         characters_in_block.append(self.terminal.character_by_input_coord[coord])
                 if characters_in_block:
-                    self.pending_groups.append((len(self.pending_groups), characters_in_block))
+                    self._pending_groups.append((len(self._pending_groups), characters_in_block))
                 prev_column_index = column_index
             prev_row_index = row_index
-        for group_number, group in self.pending_groups:
-            self.group_tracker[group_number] = 0
+        for group_number, group in self._pending_groups:
+            self._group_tracker[group_number] = 0
             for character in group:
                 dissolve_scn = character.animation.new_scene()
                 for _ in range(random.randint(15, 30)):
                     dissolve_scn.add_frame(
-                        random.choice(self.args.text_generation_symbols),
+                        random.choice(self.config.text_generation_symbols),
                         3,
                         color=random.choice(text_gradient.spectrum),
                     )
@@ -331,55 +381,63 @@ class SynthGridEffect:
                     EventHandler.Action.CALLBACK,
                     EventHandler.Callback(self.update_group_tracker, group_number),
                 )
-        random.shuffle(self.pending_groups)
+        random.shuffle(self._pending_groups)
+        self._built = True
 
     def update_group_tracker(self, character: EffectCharacter, *args) -> None:
-        self.group_tracker[args[0]] -= 1
+        self._group_tracker[args[0]] -= 1
 
-    def run(self) -> None:
+    @property
+    def built(self) -> bool:
+        """Returns True if the effect has been built."""
+        return self._built
+
+    def __iter__(self) -> Iterator[str]:
         """Runs the effect."""
-        self.prepare_data()
+        if not self._built:
+            self.build()
         phase = "grid_expand"
-        total_group_count = len(self.pending_groups)
+        total_group_count = len(self._pending_groups)
         if not total_group_count:
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, True)
-                self.active_chars.append(character)
+                self._active_chars.append(character)
         active_groups: int = 0
-        while self.pending_groups or self.active_chars or phase != "complete":
+        while self._pending_groups or self._active_chars or phase != "complete":
             if phase == "grid_expand":
-                if not all([grid_line.is_extended() for grid_line in self.grid_lines]):
-                    for grid_line in self.grid_lines:
+                if not all([grid_line.is_extended() for grid_line in self._grid_lines]):
+                    for grid_line in self._grid_lines:
                         if not grid_line.is_extended():
                             grid_line.extend()
                 else:
                     phase = "add_chars"
             elif phase == "add_chars":
-                if self.pending_groups and active_groups < total_group_count * self.args.max_active_blocks:
-                    group_number, next_group = self.pending_groups.pop(0)
+                if self._pending_groups and active_groups < total_group_count * self.config.max_active_blocks:
+                    group_number, next_group = self._pending_groups.pop(0)
                     for char in next_group:
                         self.terminal.set_character_visibility(char, True)
-                        self.active_chars.append(char)
-                        self.group_tracker[group_number] += 1
-                if not self.pending_groups and not self.active_chars and not active_groups:
+                        self._active_chars.append(char)
+                        self._group_tracker[group_number] += 1
+                if not self._pending_groups and not self._active_chars and not active_groups:
                     phase = "collapse"
             elif phase == "collapse":
-                if not all([grid_line.is_collapsed() for grid_line in self.grid_lines]):
-                    for grid_line in self.grid_lines:
+                if not all([grid_line.is_collapsed() for grid_line in self._grid_lines]):
+                    for grid_line in self._grid_lines:
                         if not grid_line.is_collapsed():
                             grid_line.collapse()
                 else:
                     phase = "complete"
-            self.terminal.print()
-            self.animate_chars()
+            yield self.terminal.get_formatted_output_string()
+            self._animate_chars()
 
-            self.active_chars = [character for character in self.active_chars if character.is_active]
+            self._active_chars = [character for character in self._active_chars if character.is_active]
             active_groups = 0
-            for _, active_count in self.group_tracker.items():
+            for _, active_count in self._group_tracker.items():
                 if active_count:
                     active_groups += 1
+        self._built = False
 
-    def animate_chars(self) -> None:
+    def _animate_chars(self) -> None:
         """Animates the characters by calling the tick method on all active characters."""
-        for character in self.active_chars:
+        for character in self._active_chars:
             character.tick()
