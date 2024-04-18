@@ -1,38 +1,51 @@
 from abc import ABC, abstractmethod
-from collections.abc import Iterator
-from typing import Any
+from contextlib import contextmanager
 
 from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
-class BaseEffect(ABC):
-    """Base class for all effects."""
+class BaseEffectIterator(ABC):
+    """Base iterator class for all effects."""
+
+    def __init__(self, input_data: str, terminal_config: TerminalConfig):
+        self._terminal = Terminal(input_data, terminal_config)
+
+    def __iter__(self) -> "BaseEffectIterator":
+        return self
 
     @abstractmethod
-    def __init__(self, input_data: str, effect_config: Any, terminal_config: TerminalConfig):
+    def __next__(self) -> str:
+        raise NotImplementedError
+
+
+class BaseEffect(ABC):
+    """Base iterable class for all effects."""
+
+    def __init__(self, input_data: str, terminal_config: TerminalConfig | None = None):
         """Initialize the effect with the input data.
 
         Args:
             input_data (str): Data to apply the effect to.
-            effect_config (ArgsDataClass): Configuration for the effect.
-            terminal_config (TerminalConfig): Configuration for the terminal.
+            terminal_config (TerminalConfig | None): Configuration for the terminal.
         """
         self.input_data = input_data
-        self.config = effect_config
-        self.terminal = Terminal(input_data, terminal_config)
+        if terminal_config is None:
+            self.terminal_config = TerminalConfig()
+        else:
+            self.terminal_config = terminal_config
 
     @abstractmethod
-    def build(self) -> None:
-        """(re)Build the effect."""
-        pass
+    def __iter__(self) -> BaseEffectIterator:
+        raise NotImplementedError
 
-    @property
-    @abstractmethod
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        pass
-
-    @abstractmethod
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect and yields the output frames as strings."""
-        pass
+    @contextmanager
+    def terminal_output(self):
+        """Context manager for terminal output. Prepares the terminal for output and restores it after."""
+        terminal = Terminal(self.input_data, self.terminal_config)
+        try:
+            terminal.prep_outputarea()
+            yield terminal
+        except:  # noqa: E722
+            raise
+        finally:
+            terminal.restore_cursor()

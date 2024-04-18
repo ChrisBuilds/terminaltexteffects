@@ -1,14 +1,13 @@
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.base_effect import BaseEffect
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
+from terminaltexteffects.utils.terminal import TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -96,73 +95,68 @@ class EffectConfig(ArgsDataClass):
         return RandomSequence
 
 
+class RandomSequenceIterator(BaseEffectIterator):
+    def __init__(self, input_data: str, effect_config: EffectConfig, terminal_config: TerminalConfig):
+        super().__init__(input_data, terminal_config)
+        self.starting_color = effect_config.starting_color
+        self.final_gradient_stops = effect_config.final_gradient_stops
+        self.final_gradient_steps = effect_config.final_gradient_steps
+        self.final_gradient_frames = effect_config.final_gradient_frames
+        self.final_gradient_direction = effect_config.final_gradient_direction
+        self.speed = effect_config.speed
+
+        self._pending_chars: list[EffectCharacter] = []
+        self._active_chars: list[EffectCharacter] = []
+        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._characters_per_tick = max(int(effect_config.speed * len(self._terminal._input_characters)), 1)
+        self._build()
+
+    def _build(self) -> None:
+        final_gradient = graphics.Gradient(*self.final_gradient_stops, steps=self.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self._terminal.output_area.top, self._terminal.output_area.right, self.final_gradient_direction
+        )
+        for character in self._terminal.get_characters():
+            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            self._terminal.set_character_visibility(character, False)
+            gradient_scn = character.animation.new_scene()
+            gradient = graphics.Gradient(self.starting_color, self._character_final_color_map[character], steps=7)
+            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.final_gradient_frames)
+            character.animation.activate_scene(gradient_scn)
+            self._pending_chars.append(character)
+        random.shuffle(self._pending_chars)
+
+    def __next__(self) -> str:
+        while self._pending_chars or self._active_chars:
+            for _ in range(self._characters_per_tick):
+                if self._pending_chars:
+                    next_char = self._pending_chars.pop()
+                    self._terminal.set_character_visibility(next_char, True)
+                    self._active_chars.append(next_char)
+            for character in self._active_chars:
+                character.tick()
+            next_frame = self._terminal.get_formatted_output_string()
+
+            self._active_chars = [character for character in self._active_chars if character.is_active]
+            return next_frame
+        raise StopIteration
+
+
 class RandomSequence(BaseEffect):
-    """Prints the input data in a random sequence."""
+    """Prints the input data in a random sequence, one character at a time."""
 
     def __init__(
         self,
         input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
+        effect_config: EffectConfig | None = None,
+        terminal_config: TerminalConfig | None = None,
     ):
-        """Initializes the effect.
+        super().__init__(input_data, terminal_config)
+        if effect_config is None:
+            self.effect_config = EffectConfig()
+        else:
+            self.effect_config = effect_config
 
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-
-    def build(self) -> None:
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
-        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
-        )
-        for character in self.terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            self.terminal.set_character_visibility(character, False)
-            gradient_scn = character.animation.new_scene()
-            gradient = graphics.Gradient(
-                self.config.starting_color, self._character_final_color_map[character], steps=7
-            )
-            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.config.final_gradient_frames)
-            character.animation.activate_scene(gradient_scn)
-            self._pending_chars.append(character)
-        self._built = True
-
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> RandomSequenceIterator:
         """Runs the effect."""
-        if not self._built:
-            self.build()
-        random.shuffle(self._pending_chars)
-        characters_per_tick = max(int(self.config.speed * len(self.terminal._input_characters)), 1)
-        while self._pending_chars or self._active_chars:
-            for _ in range(characters_per_tick):
-                if self._pending_chars:
-                    next_char = self._pending_chars.pop()
-                    self.terminal.set_character_visibility(next_char, True)
-                    self._active_chars.append(next_char)
-            self._animate_chars()
-            yield self.terminal.get_formatted_output_string()
-
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-        self._built = False
-
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method."""
-        for character in self._active_chars:
-            character.tick()
+        return RandomSequenceIterator(self.input_data, self.effect_config, self.terminal_config)
