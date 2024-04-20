@@ -7,7 +7,6 @@ from terminaltexteffects.base_character import EffectCharacter
 from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.terminal import TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -95,33 +94,28 @@ class EffectConfig(ArgsDataClass):
         return RandomSequence
 
 
-class RandomSequenceIterator(BaseEffectIterator):
-    def __init__(self, input_data: str, effect_config: EffectConfig, terminal_config: TerminalConfig):
-        super().__init__(input_data, terminal_config)
-        self.starting_color = effect_config.starting_color
-        self.final_gradient_stops = effect_config.final_gradient_stops
-        self.final_gradient_steps = effect_config.final_gradient_steps
-        self.final_gradient_frames = effect_config.final_gradient_frames
-        self.final_gradient_direction = effect_config.final_gradient_direction
-        self.speed = effect_config.speed
-
+class RandomSequenceIterator(BaseEffectIterator[EffectConfig]):
+    def __init__(self, effect: "RandomSequence"):
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._characters_per_tick = max(int(effect_config.speed * len(self._terminal._input_characters)), 1)
+        self._characters_per_tick = max(int(self._config.speed * len(self._terminal._input_characters)), 1)
         self._build()
 
     def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self.final_gradient_stops, steps=self.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
         for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             self._terminal.set_character_visibility(character, False)
             gradient_scn = character.animation.new_scene()
-            gradient = graphics.Gradient(self.starting_color, self._character_final_color_map[character], steps=7)
-            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.final_gradient_frames)
+            gradient = graphics.Gradient(
+                self._config.starting_color, self._character_final_color_map[character], steps=7
+            )
+            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self._config.final_gradient_frames)
             character.animation.activate_scene(gradient_scn)
             self._pending_chars.append(character)
         random.shuffle(self._pending_chars)
@@ -142,21 +136,11 @@ class RandomSequenceIterator(BaseEffectIterator):
         raise StopIteration
 
 
-class RandomSequence(BaseEffect):
+class RandomSequence(BaseEffect[EffectConfig]):
     """Prints the input data in a random sequence, one character at a time."""
 
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig | None = None,
-        terminal_config: TerminalConfig | None = None,
-    ):
-        super().__init__(input_data, terminal_config)
-        if effect_config is None:
-            self.effect_config = EffectConfig()
-        else:
-            self.effect_config = effect_config
+    _config_cls = EffectConfig
+    _iterator_cls = RandomSequenceIterator
 
-    def __iter__(self) -> RandomSequenceIterator:
-        """Runs the effect."""
-        return RandomSequenceIterator(self.input_data, self.effect_config, self.terminal_config)
+    def __init__(self, input_data: str):
+        super().__init__(input_data)
