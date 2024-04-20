@@ -1,14 +1,28 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from copy import deepcopy
+from typing import Generic, TypeVar
 
+from terminaltexteffects.utils.argsdataclass import ArgsDataClass
 from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
+T = TypeVar("T", bound=ArgsDataClass)
 
-class BaseEffectIterator(ABC):
-    """Base iterator class for all effects."""
 
-    def __init__(self, input_data: str, terminal_config: TerminalConfig):
-        self._terminal = Terminal(input_data, terminal_config)
+class BaseEffectIterator(ABC, Generic[T]):
+    """Base iterator class for all effects.
+
+    Args:
+        effect (BaseEffect): Effect to apply to the input data.
+
+    Attributes:
+        _config (T): Configuration for the effect.
+        _terminal (Terminal): Terminal to use for output.
+    """
+
+    def __init__(self, effect: "BaseEffect") -> None:
+        self._config: T = deepcopy(effect.effect_config)
+        self._terminal = Terminal(effect.input_data, deepcopy(effect.terminal_config))
 
     def __iter__(self) -> "BaseEffectIterator":
         return self
@@ -18,10 +32,22 @@ class BaseEffectIterator(ABC):
         raise NotImplementedError
 
 
-class BaseEffect(ABC):
+class BaseEffect(ABC, Generic[T]):
     """Base iterable class for all effects."""
 
-    def __init__(self, input_data: str, terminal_config: TerminalConfig | None = None):
+    @property
+    @abstractmethod
+    def _config_cls(self) -> type[T]:
+        """Effect configuration class as a subclass of ArgsDataClass."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def _iterator_cls(self) -> type[BaseEffectIterator]:
+        """Effect iterator class as a subclass of BaseEffectIterator."""
+        raise NotImplementedError
+
+    def __init__(self, input_data: str):
         """Initialize the effect with the input data.
 
         Args:
@@ -29,14 +55,11 @@ class BaseEffect(ABC):
             terminal_config (TerminalConfig | None): Configuration for the terminal.
         """
         self.input_data = input_data
-        if terminal_config is None:
-            self.terminal_config = TerminalConfig()
-        else:
-            self.terminal_config = terminal_config
+        self.effect_config = self._config_cls()
+        self.terminal_config = TerminalConfig()
 
-    @abstractmethod
     def __iter__(self) -> BaseEffectIterator:
-        raise NotImplementedError
+        return self._iterator_cls(self)
 
     @contextmanager
     def terminal_output(self):
