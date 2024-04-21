@@ -1,19 +1,18 @@
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.base_effect import BaseEffect
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return BinaryPathEffect, EffectConfig
+    return BinaryPath, BinaryPathConfig
 
 
 @argclass(
@@ -23,7 +22,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     epilog="""Example: terminaltexteffects binarypath --final-gradient-stops 00d500 007500 --final-gradient-steps 12 --final-gradient-direction vertical --binary-colors 044E29 157e38 45bf55 95ed87 --movement-speed 1.0 --active-binary-groups 0.05""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class BinaryPathConfig(ArgsDataClass):
     """Configuration for the BinaryPath effect.
 
     Attributes:
@@ -99,7 +98,7 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return BinaryPathEffect
+        return BinaryPath
 
 
 class _BinaryRepresentation:
@@ -132,53 +131,42 @@ class _BinaryRepresentation:
         self.character.animation.activate_scene(self.character.animation.query_scene("collapse_scn"))
 
 
-class BinaryPathEffect(BaseEffect):
-    """Effect that decodes characters into their binary form. Characters travel from outside the output area towards their input coordinate,
-    moving at right angles."""
-
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig, optional): Configuration for the effect. Defaults to EffectConfig().
-            terminal_config (TerminalConfig, optional): Configuration for the terminal. Defaults to TerminalConfig().
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
+    def __init__(self, effect: "BinaryPath") -> None:
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._pending_binary_representations: list[_BinaryRepresentation] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-
-    def build(self) -> None:
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        self._pending_binary_representations.clear()
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
-        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+        self._last_frame_provided = False
+        self._active_binary_reps: list[_BinaryRepresentation] = []
+        self._complete = False
+        self._phase = "travel"
+        self._final_wipe_chars = self._terminal.get_characters_grouped(
+            grouping=self._terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT
         )
-        for character in self.terminal.get_characters():
+        self._max_active_binary_groups: int = 0
+
+        self._build()
+
+    def _build(self) -> None:
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+        )
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
-        for character in self.terminal.get_characters():
-            bin_rep = _BinaryRepresentation(character, self.terminal)
+        for character in self._terminal.get_characters():
+            bin_rep = _BinaryRepresentation(character, self._terminal)
             for binary_char in bin_rep.binary_string:
-                bin_rep.binary_characters.append(self.terminal.add_character(binary_char, Coord(0, 0)))
+                bin_rep.binary_characters.append(self._terminal.add_character(binary_char, Coord(0, 0)))
                 bin_rep.pending_binary_characters.append(bin_rep.binary_characters[-1])
             self._pending_binary_representations.append(bin_rep)
 
         for bin_rep in self._pending_binary_representations:
             path_coords: list[Coord] = []
-            starting_coord = self.terminal.output_area.random_coord(outside_scope=True)
+            starting_coord = self._terminal.output_area.random_coord(outside_scope=True)
             path_coords.append(starting_coord)
             last_orientation = random.choice(("col", "row"))
             while path_coords[-1] != bin_rep.character.input_coord:
@@ -202,7 +190,7 @@ class BinaryPathEffect(BaseEffect):
                         last_coord.column,
                         last_coord.row
                         + (
-                            random.randint(1, min(max_row_distance, max(10, int(self.terminal.input_width * 0.2))))
+                            random.randint(1, min(max_row_distance, max(10, int(self._terminal.input_width * 0.2))))
                             * row_direction
                         ),
                     )
@@ -223,16 +211,16 @@ class BinaryPathEffect(BaseEffect):
             path_coords.append(final_coord)
             for bin_effectchar in bin_rep.binary_characters:
                 bin_effectchar.motion.set_coordinate(path_coords[0])
-                digital_path = bin_effectchar.motion.new_path(speed=self.config.movement_speed)
+                digital_path = bin_effectchar.motion.new_path(speed=self._config.movement_speed)
                 for coord in path_coords:
                     digital_path.new_waypoint(coord)
                 bin_effectchar.motion.activate_path(digital_path)
                 bin_effectchar.layer = 1
                 color_scn = bin_effectchar.animation.new_scene()
-                color_scn.add_frame(bin_effectchar.symbol, 1, color=random.choice(self.config.binary_colors))
+                color_scn.add_frame(bin_effectchar.symbol, 1, color=random.choice(self._config.binary_colors))
                 bin_effectchar.animation.activate_scene(color_scn)
 
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             collapse_scn = character.animation.new_scene(ease=easing.in_quad, id="collapse_scn")
             dim_color = character.animation.adjust_color_brightness(self._character_final_color_map[character], 0.5)
             dim_gradient = graphics.Gradient("ffffff", dim_color, steps=10)
@@ -241,68 +229,69 @@ class BinaryPathEffect(BaseEffect):
             brighten_scn = character.animation.new_scene(id="brighten_scn")
             brighten_gradient = graphics.Gradient(dim_color, self._character_final_color_map[character], steps=10)
             brighten_scn.apply_gradient_to_symbols(brighten_gradient, character.input_symbol, 2)
-        self._built = True
-
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        active_binary_reps: list[_BinaryRepresentation] = []
-        complete = False
-        phase = "travel"
-        final_wipe_chars = self.terminal.get_characters_grouped(
-            grouping=self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT
+        self._max_active_binary_groups = max(
+            1, int(self._config.active_binary_groups * len(self._pending_binary_representations))
         )
-        max_active_binary_groups = max(
-            1, int(self.config.active_binary_groups * len(self._pending_binary_representations))
-        )
-        while not complete or self._active_chars:
-            if phase == "travel":
-                while len(active_binary_reps) < max_active_binary_groups and self._pending_binary_representations:
+
+    def __next__(self) -> str:
+        if not self._complete or self._active_chars:
+            if self._phase == "travel":
+                while (
+                    len(self._active_binary_reps) < self._max_active_binary_groups
+                    and self._pending_binary_representations
+                ):
                     next_binary_rep = self._pending_binary_representations.pop(
                         random.randrange(len(self._pending_binary_representations))
                     )
                     next_binary_rep.is_active = True
-                    active_binary_reps.append(next_binary_rep)
+                    self._active_binary_reps.append(next_binary_rep)
 
-                if active_binary_reps:
-                    for active_rep in active_binary_reps:
+                if self._active_binary_reps:
+                    for active_rep in self._active_binary_reps:
                         if active_rep.pending_binary_characters:
                             next_char = active_rep.pending_binary_characters.pop(0)
                             self._active_chars.append(next_char)
-                            self.terminal.set_character_visibility(next_char, True)
+                            self._terminal.set_character_visibility(next_char, True)
                         elif active_rep.travel_complete():
                             active_rep.deactivate()
                             active_rep.activate_source_character()
                             self._active_chars.append(active_rep.character)
 
-                    active_binary_reps = [binary_rep for binary_rep in active_binary_reps if binary_rep.is_active]
+                    self._active_binary_reps = [
+                        binary_rep for binary_rep in self._active_binary_reps if binary_rep.is_active
+                    ]
 
                 if not self._active_chars:
-                    phase = "wipe"
+                    self._phase = "wipe"
 
-            if phase == "wipe":
-                if final_wipe_chars:
-                    next_group = final_wipe_chars.pop(0)
+            if self._phase == "wipe":
+                if self._final_wipe_chars:
+                    next_group = self._final_wipe_chars.pop(0)
                     for character in next_group:
                         character.animation.activate_scene(character.animation.query_scene("brighten_scn"))
-                        self.terminal.set_character_visibility(character, True)
+                        self._terminal.set_character_visibility(character, True)
                         self._active_chars.append(character)
                 else:
-                    complete = True
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
+                    self._complete = True
+            next_frame = self._terminal.get_formatted_output_string()
+            for character in self._active_chars:
+                character.tick()
 
             self._active_chars = [character for character in self._active_chars if character.is_active]
-        yield self.terminal.get_formatted_output_string()
-        self._built = False
+            return next_frame
+        elif not self._last_frame_provided:
+            self._last_frame_provided = True
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method on all active characters."""
-        for character in self._active_chars:
-            character.tick()
+
+class BinaryPath(BaseEffect):
+    """Effect that decodes characters into their binary form. Characters travel from outside the output area towards their input coordinate,
+    moving at right angles."""
+
+    _config_cls = BinaryPathConfig
+    _iterator_cls = BinaryPathIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)
