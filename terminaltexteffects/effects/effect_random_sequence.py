@@ -10,7 +10,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return RandomSequence, EffectConfig
+    return RandomSequence, RainEffectConfig
 
 
 @argclass(
@@ -20,7 +20,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     epilog="Example: terminaltexteffects randomsequence --starting-color 000000 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 12 --speed 0.004",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class RainEffectConfig(ArgsDataClass):
     """Configuration for the RandomSequence effect.
 
     Attributes:
@@ -94,7 +94,7 @@ class EffectConfig(ArgsDataClass):
         return RandomSequence
 
 
-class RandomSequenceIterator(BaseEffectIterator[EffectConfig]):
+class RandomSequenceIterator(BaseEffectIterator[RainEffectConfig]):
     def __init__(self, effect: "RandomSequence") -> None:
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
@@ -136,10 +136,10 @@ class RandomSequenceIterator(BaseEffectIterator[EffectConfig]):
         raise StopIteration
 
 
-class RandomSequence(BaseEffect[EffectConfig]):
+class RandomSequence(BaseEffect[RainEffectConfig]):
     """Prints the input data in a random sequence, one character at a time."""
 
-    _config_cls = EffectConfig
+    _config_cls = RainEffectConfig
     _iterator_cls = RandomSequenceIterator
 
     def __init__(self, input_data: str) -> None:
