@@ -1,18 +1,17 @@
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.base_effect import BaseEffect
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return BeamsEffect, EffectConfig
+    return Beams, BeamsConfig
 
 
 @argclass(
@@ -22,7 +21,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     epilog="""Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical --final-wipe-speed 1""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class BeamsConfig(ArgsDataClass):
     """Configuration for the Beams effect.
 
     Attributes:
@@ -179,97 +178,84 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return BeamsEffect
+        return Beams
 
 
-class _Group:
-    def __init__(self, characters: list[EffectCharacter], direction: str, terminal: Terminal, args: EffectConfig):
-        self.characters = characters
-        self.direction: str = direction
-        self.terminal = terminal
-        direction_speed_range = {
-            "row": (args.beam_row_speed_range[0], args.beam_row_speed_range[1]),
-            "column": (args.beam_column_speed_range[0], args.beam_column_speed_range[1]),
-        }
-        self.speed = random.randint(direction_speed_range[direction][0], direction_speed_range[direction][1]) * 0.1
-        self.next_character_counter: float = 0
-        if self.direction == "row":
-            self.characters.sort(key=lambda character: character.input_coord.column)
-        elif self.direction == "column":
-            self.characters.sort(key=lambda character: character.input_coord.row)
-        if random.choice([True, False]):
-            self.characters.reverse()
+class BeamsIterator(BaseEffectIterator[BeamsConfig]):
+    class _Group:
+        def __init__(self, characters: list[EffectCharacter], direction: str, terminal: Terminal, args: BeamsConfig):
+            self.characters = characters
+            self.direction: str = direction
+            self.terminal = terminal
+            direction_speed_range = {
+                "row": (args.beam_row_speed_range[0], args.beam_row_speed_range[1]),
+                "column": (args.beam_column_speed_range[0], args.beam_column_speed_range[1]),
+            }
+            self.speed = random.randint(direction_speed_range[direction][0], direction_speed_range[direction][1]) * 0.1
+            self.next_character_counter: float = 0
+            if self.direction == "row":
+                self.characters.sort(key=lambda character: character.input_coord.column)
+            elif self.direction == "column":
+                self.characters.sort(key=lambda character: character.input_coord.row)
+            if random.choice([True, False]):
+                self.characters.reverse()
 
-    def increment_next_character_counter(self) -> None:
-        self.next_character_counter += self.speed
+        def increment_next_character_counter(self) -> None:
+            self.next_character_counter += self.speed
 
-    def get_next_character(self) -> EffectCharacter | None:
-        self.next_character_counter -= 1
-        next_character = self.characters.pop(0)
-        if next_character.animation.active_scene:
-            next_character.animation.active_scene.reset_scene()
-            return_value = None
-        else:
-            self.terminal.set_character_visibility(next_character, True)
-            return_value = next_character
-        next_character.animation.activate_scene(next_character.animation.query_scene("beam_" + self.direction))
-        return return_value
+        def get_next_character(self) -> EffectCharacter | None:
+            self.next_character_counter -= 1
+            next_character = self.characters.pop(0)
+            if next_character.animation.active_scene:
+                next_character.animation.active_scene.reset_scene()
+                return_value = None
+            else:
+                self.terminal.set_character_visibility(next_character, True)
+                return_value = next_character
+            next_character.animation.activate_scene(next_character.animation.query_scene("beam_" + self.direction))
+            return return_value
 
-    def complete(self) -> bool:
-        return not self.characters
+        def complete(self) -> bool:
+            return not self.characters
 
-
-class BeamsEffect(BaseEffect):
-    """Effect that creates beams which travel over the output area illuminated the characters behind them."""
-
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig, optional): The configuration of the effect. Defaults to EffectConfig().
-            terminal_config (TerminalConfig, optional): The configuration of the terminal. Defaults to TerminalConfig().
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
-        self._pending_groups: list[_Group] = []
+    def __init__(self, effect: "Beams") -> None:
+        super().__init__(effect)
+        self._pending_groups: list[BeamsIterator._Group] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-
-    def build(self) -> None:
-        self._pending_groups.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
-        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+        self.active_groups: list[BeamsIterator._Group] = []
+        self.delay = 0
+        self.phase = "beams"
+        self.final_wipe_groups = self._terminal.get_characters_grouped(
+            Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
         )
-        for character in self.terminal.get_characters(fill_chars=True):
+        self._build()
+
+    def _build(self) -> None:
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+        )
+        for character in self._terminal.get_characters(fill_chars=True):
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
-        beam_gradient = graphics.Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
-        groups: list[_Group] = []
-        for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
-            groups.append(_Group(row, "row", self.terminal, self.config))
-        for column in self.terminal.get_characters_grouped(
+        beam_gradient = graphics.Gradient(*self._config.beam_gradient_stops, steps=self._config.beam_gradient_steps)
+        groups: list[BeamsIterator._Group] = []
+        for row in self._terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
+            groups.append(BeamsIterator._Group(row, "row", self._terminal, self._config))
+        for column in self._terminal.get_characters_grouped(
             Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, fill_chars=True
         ):
-            groups.append(_Group(column, "column", self.terminal, self.config))
+            groups.append(BeamsIterator._Group(column, "column", self._terminal, self._config))
         for group in groups:
             for character in group.characters:
                 beam_row_scn = character.animation.new_scene(id="beam_row")
                 beam_column_scn = character.animation.new_scene(id="beam_column")
                 beam_row_scn.apply_gradient_to_symbols(
-                    beam_gradient, self.config.beam_row_symbols, self.config.beam_gradient_frames
+                    beam_gradient, self._config.beam_row_symbols, self._config.beam_gradient_frames
                 )
                 beam_column_scn.apply_gradient_to_symbols(
-                    beam_gradient, self.config.beam_column_symbols, self.config.beam_gradient_frames
+                    beam_gradient, self._config.beam_column_symbols, self._config.beam_gradient_frames
                 )
                 faded_color = character.animation.adjust_color_brightness(
                     self._character_final_color_map[character], 0.3
@@ -280,37 +266,23 @@ class BeamsEffect(BaseEffect):
                 brighten_gradient = graphics.Gradient(faded_color, self._character_final_color_map[character], steps=10)
                 brigthen_scn = character.animation.new_scene(id="brighten")
                 brigthen_scn.apply_gradient_to_symbols(
-                    brighten_gradient, character.input_symbol, self.config.final_gradient_frames
+                    brighten_gradient, character.input_symbol, self._config.final_gradient_frames
                 )
         self._pending_groups = groups
         random.shuffle(self._pending_groups)
-        self._built = True
 
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        if not self._built:
-            self.build()
-        active_groups: list[_Group] = []
-        delay = 0
-        phase = "beams"
-        final_wipe_groups = self.terminal.get_characters_grouped(
-            Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
-        )
-        while phase != "complete" or self._active_chars:
-            if phase == "beams":
-                if not delay:
+    def __next__(self) -> str:
+        if self.phase != "complete" or self._active_chars:
+            if self.phase == "beams":
+                if not self.delay:
                     if self._pending_groups:
                         for _ in range(random.randint(1, 5)):
                             if self._pending_groups:
-                                active_groups.append(self._pending_groups.pop(0))
-                    delay = self.config.beam_delay
+                                self.active_groups.append(self._pending_groups.pop(0))
+                    self.delay = self._config.beam_delay
                 else:
-                    delay -= 1
-                for group in active_groups:
+                    self.delay -= 1
+                for group in self.active_groups:
                     group.increment_next_character_counter()
                     if int(group.next_character_counter) > 1:
                         for _ in range(int(group.next_character_counter)):
@@ -318,29 +290,35 @@ class BeamsEffect(BaseEffect):
                                 next_char = group.get_next_character()
                                 if next_char:
                                     self._active_chars.append(next_char)
-                active_groups = [group for group in active_groups if not group.complete()]
-                if not self._pending_groups and not active_groups and not self._active_chars:
-                    phase = "final_wipe"
-            elif phase == "final_wipe":
-                if final_wipe_groups:
-                    for _ in range(self.config.final_wipe_speed):
-                        if not final_wipe_groups:
+                self.active_groups = [group for group in self.active_groups if not group.complete()]
+                if not self._pending_groups and not self.active_groups and not self._active_chars:
+                    self.phase = "final_wipe"
+            elif self.phase == "final_wipe":
+                if self.final_wipe_groups:
+                    for _ in range(self._config.final_wipe_speed):
+                        if not self.final_wipe_groups:
                             break
-                        next_group = final_wipe_groups.pop(0)
+                        next_group = self.final_wipe_groups.pop(0)
                         for character in next_group:
                             character.animation.activate_scene(character.animation.query_scene("brighten"))
-                            self.terminal.set_character_visibility(character, True)
+                            self._terminal.set_character_visibility(character, True)
                             self._active_chars.append(character)
                 else:
-                    phase = "complete"
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
-
+                    self.phase = "complete"
+            next_frame = self._terminal.get_formatted_output_string()
+            for character in self._active_chars:
+                character.tick()
             self._active_chars = [character for character in self._active_chars if character.is_active]
-        yield self.terminal.get_formatted_output_string()
-        self._built = False
+            return next_frame
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method on all active characters."""
-        for character in self._active_chars:
-            character.tick()
+
+class Beams(BaseEffect[BeamsConfig]):
+    """Effect that creates beams which travel over the output area illuminated the characters behind them."""
+
+    _config_cls = BeamsConfig
+    _iterator_cls = BeamsIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)
