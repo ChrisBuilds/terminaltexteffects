@@ -38,18 +38,16 @@ def main():
     if not input_data.strip():
         print("NO INPUT.")
     else:
-        try:
-            terminal_config = TerminalConfig._from_parsed_args_mapping(args, TerminalConfig)
-            effect_config = ArgsDataClass._from_parsed_args_mapping(args)
-            effect_class = effect_config.get_effect_class()
-            terminal_config.use_terminal_dimensions = True
-            effect = effect_class(input_data, effect_config, terminal_config)
-            effect.build()
-            effect.terminal.prep_outputarea()
+        terminal_config = TerminalConfig._from_parsed_args_mapping(args, TerminalConfig)
+        effect_config = ArgsDataClass._from_parsed_args_mapping(args)
+        effect_class = effect_config.get_effect_class()
+        terminal_config.use_terminal_dimensions = True
+        effect = effect_class(input_data)
+        effect.effect_config = effect_config
+        effect.terminal_config = terminal_config
+        with effect.terminal_output() as terminal:
             for frame in effect:
-                effect.terminal.print(frame)
-        finally:
-            effect.terminal.restore_cursor()
+                terminal.print(frame)
 
 
 if __name__ == "__main__":
