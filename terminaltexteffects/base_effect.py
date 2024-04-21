@@ -47,7 +47,7 @@ class BaseEffect(ABC, Generic[T]):
         """Effect iterator class as a subclass of BaseEffectIterator."""
         raise NotImplementedError
 
-    def __init__(self, input_data: str):
+    def __init__(self, input_data: str) -> None:
         """Initialize the effect with the input data.
 
         Args:
