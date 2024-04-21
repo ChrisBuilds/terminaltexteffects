@@ -95,7 +95,7 @@ class EffectConfig(ArgsDataClass):
 
 
 class RandomSequenceIterator(BaseEffectIterator[EffectConfig]):
-    def __init__(self, effect: "RandomSequence"):
+    def __init__(self, effect: "RandomSequence") -> None:
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
@@ -121,7 +121,7 @@ class RandomSequenceIterator(BaseEffectIterator[EffectConfig]):
         random.shuffle(self._pending_chars)
 
     def __next__(self) -> str:
-        while self._pending_chars or self._active_chars:
+        if self._pending_chars or self._active_chars:
             for _ in range(self._characters_per_tick):
                 if self._pending_chars:
                     next_char = self._pending_chars.pop()
@@ -142,5 +142,5 @@ class RandomSequence(BaseEffect[EffectConfig]):
     _config_cls = EffectConfig
     _iterator_cls = RandomSequenceIterator
 
-    def __init__(self, input_data: str):
+    def __init__(self, input_data: str) -> None:
         super().__init__(input_data)
