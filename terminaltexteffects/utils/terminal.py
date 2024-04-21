@@ -169,18 +169,21 @@ class Terminal:
         OUTSIDE_ROW_TO_MIDDLE = auto()
         MIDDLE_ROW_TO_OUTSIDE = auto()
 
-    def __init__(self, input_data: str, config: TerminalConfig = TerminalConfig()):
-        self.input_data = input_data.replace("\t", " " * config.tab_width)
-        if not self.input_data:
-            self.input_data = "No Input."
-        self.config = config
+    def __init__(self, input_data: str, config: TerminalConfig | None = None):
+        if config is None:
+            self.config = TerminalConfig()
+        else:
+            self.config = config
+        if not input_data:
+            input_data = "No Input."
+        self.input_data = input_data.replace("\t", " " * self.config.tab_width)
         if self.config.use_terminal_dimensions:
             self.width, self.height = self._get_terminal_dimensions()
         else:
             self.width = max([len(line) for line in self.input_data.splitlines()])
             self.height = len(self.input_data.splitlines()) + 1
         self.next_character_id = 0
-        self._input_characters = self._decompose_input(config.xterm_colors, config.no_color)
+        self._input_characters = self._decompose_input(self.config.xterm_colors, self.config.no_color)
         self._added_characters: list[EffectCharacter] = []
         self.input_width = max([character.input_coord.column for character in self._input_characters])
         self.input_height = max([character.input_coord.row for character in self._input_characters])
@@ -196,7 +199,7 @@ class Terminal:
         }
         self._fill_characters = self._make_fill_characters()
         self.visible_characters: set[EffectCharacter] = set()
-        self.animation_rate = config.animation_rate
+        self.animation_rate = self.config.animation_rate
         self.last_time_printed = time.time()
         self._update_terminal_state()
 
