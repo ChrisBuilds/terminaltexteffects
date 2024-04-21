@@ -54,15 +54,11 @@ class TerminalConfig(ArgsDataClass):
     no_wrap: int = ArgField(cmd_name="--no-wrap", default=False, action="store_true", help="Disable wrapping of text.")  # type: ignore[assignment]
     "bool : Disable wrapping of text."
 
-    animation_rate: float = ArgField(
-        cmd_name=["-a", "--animation-rate"],
-        type_parser=arg_validators.NonNegativeFloat.type_parser,
-        default=0.01,
-        help="""Minimum time, in seconds, between animation steps. 
-        This value does not normally need to be modified. 
-        Use this to increase the playback speed of all aspects of the effect. 
-        This will have no impact beyond a certain lower threshold due to the 
-        processing speed of your device.""",
+    frame_rate: float = ArgField(
+        cmd_name="--frame-rate",
+        type_parser=arg_validators.PositiveInt.type_parser,
+        default=100,
+        help="""Target frame rate for the animation.""",
     )  # type: ignore[assignment]
 
     "float : Minimum time, in seconds, between animation steps."
@@ -199,7 +195,7 @@ class Terminal:
         }
         self._fill_characters = self._make_fill_characters()
         self.visible_characters: set[EffectCharacter] = set()
-        self.animation_rate = self.config.animation_rate
+        self.frame_rate = self.config.frame_rate
         self.last_time_printed = time.time()
         self._update_terminal_state()
 
@@ -537,23 +533,24 @@ class Terminal:
         output_string = "\n".join(self.terminal_state[::-1])
         return output_string
 
-    def print(self, output_string: str, *, enforce_animation_rate: bool = True):
+    def print(self, output_string: str, *, enforce_frame_rate: bool = True):
         """Prints the current terminal state to stdout while preserving the cursor position.
 
         Args:
             output_string (str): The string to be printed.
-            enforce_animation_rate (bool, optional): Whether to enforce the animation rate. Defaults to True.
+            enforce_frame_rate (bool, optional): Whether to enforce the frame rate set in the terminal config. Defaults to True.
 
         Notes:
-            This method includes animation timing to control the rate at which the output is printed.
-            If the time since the last print is less than the animation rate, the method will sleep for the remaining time
+            This method includes animation timing to control the frame rate.
+            If the time since the last print is less than required to limit the frame rate, the method will sleep for the remaining time
             to ensure a consistent animation speed.
 
         """
-        if enforce_animation_rate:
+        if enforce_frame_rate:
+            frame_delay = 1 / self.frame_rate
             time_since_last_print = time.time() - self.last_time_printed
-            if time_since_last_print < self.animation_rate:
-                time.sleep(self.animation_rate - time_since_last_print)
+            if time_since_last_print < frame_delay:
+                time.sleep(frame_delay - time_since_last_print)
         sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
         sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.output_area.top))
         sys.stdout.write(ansitools.MOVE_CURSOR_TO_COLUMN(1))
