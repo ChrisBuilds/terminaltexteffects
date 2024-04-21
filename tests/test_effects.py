@@ -66,7 +66,7 @@ def test_beams_effect() -> None:
     for input_data in test_inputs:
         terminal_config = TerminalConfig()
         terminal_config.animation_rate = 0
-        effect = effect_beams.BeamsEffect(input_data, terminal_config=terminal_config)
+        effect = effect_beams.Beams(input_data, terminal_config=terminal_config)
         for _ in effect:
             pass
 
