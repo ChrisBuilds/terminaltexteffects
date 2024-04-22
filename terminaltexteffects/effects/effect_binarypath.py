@@ -101,45 +101,44 @@ class BinaryPathConfig(ArgsDataClass):
         return BinaryPath
 
 
-class _BinaryRepresentation:
-    def __init__(self, character: EffectCharacter, terminal: Terminal):
-        self.character = character
-        self.terminal = terminal
-        self.binary_string = format(ord(self.character.symbol), "08b")
-        self.binary_characters: list[EffectCharacter] = []
-        self.pending_binary_characters: list[EffectCharacter] = []
-        self.input_coord = self.character.input_coord
-        self.is_active = False
-
-    def travel_complete(self) -> bool:
-        """Determines if the binary representation has completed its travel, meaning all binary characters have reached their input coordinate.
-
-        Returns:
-            bool: True if the binary representation has completed its travel, False otherwise.
-        """
-        return all(bin_char.motion.current_coord == self.input_coord for bin_char in self.binary_characters)
-
-    def deactivate(self) -> None:
-        """Deactivates the binary representation by deactivating all binary characters."""
-        for bin_char in self.binary_characters:
-            self.terminal.set_character_visibility(bin_char, False)
-        self.is_active = False
-
-    def activate_source_character(self) -> None:
-        """Activates the source character of the binary representation."""
-        self.terminal.set_character_visibility(self.character, True)
-        self.character.animation.activate_scene(self.character.animation.query_scene("collapse_scn"))
-
-
 class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
+    class _BinaryRepresentation:
+        def __init__(self, character: EffectCharacter, terminal: Terminal):
+            self.character = character
+            self.terminal = terminal
+            self.binary_string = format(ord(self.character.symbol), "08b")
+            self.binary_characters: list[EffectCharacter] = []
+            self.pending_binary_characters: list[EffectCharacter] = []
+            self.input_coord = self.character.input_coord
+            self.is_active = False
+
+        def travel_complete(self) -> bool:
+            """Determines if the binary representation has completed its travel, meaning all binary characters have reached their input coordinate.
+
+            Returns:
+                bool: True if the binary representation has completed its travel, False otherwise.
+            """
+            return all(bin_char.motion.current_coord == self.input_coord for bin_char in self.binary_characters)
+
+        def deactivate(self) -> None:
+            """Deactivates the binary representation by deactivating all binary characters."""
+            for bin_char in self.binary_characters:
+                self.terminal.set_character_visibility(bin_char, False)
+            self.is_active = False
+
+        def activate_source_character(self) -> None:
+            """Activates the source character of the binary representation."""
+            self.terminal.set_character_visibility(self.character, True)
+            self.character.animation.activate_scene(self.character.animation.query_scene("collapse_scn"))
+
     def __init__(self, effect: "BinaryPath") -> None:
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
-        self._pending_binary_representations: list[_BinaryRepresentation] = []
+        self._pending_binary_representations: list[BinaryPathIterator._BinaryRepresentation] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
         self._last_frame_provided = False
-        self._active_binary_reps: list[_BinaryRepresentation] = []
+        self._active_binary_reps: list[BinaryPathIterator._BinaryRepresentation] = []
         self._complete = False
         self._phase = "travel"
         self._final_wipe_chars = self._terminal.get_characters_grouped(
@@ -158,7 +157,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
         for character in self._terminal.get_characters():
-            bin_rep = _BinaryRepresentation(character, self._terminal)
+            bin_rep = BinaryPathIterator._BinaryRepresentation(character, self._terminal)
             for binary_char in bin_rep.binary_string:
                 bin_rep.binary_characters.append(self._terminal.add_character(binary_char, Coord(0, 0)))
                 bin_rep.pending_binary_characters.append(bin_rep.binary_characters[-1])
