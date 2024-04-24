@@ -1,18 +1,18 @@
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
+from terminaltexteffects.utils.terminal import Terminal
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return OverflowEffect, EffectConfig
+    return Overflow, OverflowConfig
 
 
 @argclass(
@@ -22,7 +22,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     epilog="""Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class OverflowConfig(ArgsDataClass):
     """Configuration for the Overflow effect.
 
     Attributes:
@@ -92,134 +92,118 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return OverflowEffect
+        return Overflow
 
 
-class Row:
-    def __init__(self, characters: list[EffectCharacter], final: bool = False) -> None:
-        self.characters = characters
-        self.current_index = 0
-        self.final = final
+class OverflowIterator(BaseEffectIterator[OverflowConfig]):
+    class _Row:
+        def __init__(self, characters: list[EffectCharacter], final: bool = False) -> None:
+            self.characters = characters
+            self.current_index = 0
+            self.final = final
 
-    def move_up(self) -> None:
-        for character in self.characters:
-            current_row = character.motion.current_coord.row
-            character.motion.set_coordinate(Coord(character.motion.current_coord.column, current_row + 1))
+        def move_up(self) -> None:
+            for character in self.characters:
+                current_row = character.motion.current_coord.row
+                character.motion.set_coordinate(Coord(character.motion.current_coord.column, current_row + 1))
 
-    def setup(self) -> None:
-        for character in self.characters:
-            character.motion.set_coordinate(Coord(character.input_coord.column, 0))
+        def setup(self) -> None:
+            for character in self.characters:
+                character.motion.set_coordinate(Coord(character.input_coord.column, 0))
 
-    def set_color(self, color: int | str) -> None:
-        for character in self.characters:
-            character.animation.set_appearance(character.input_symbol, color)
+        def set_color(self, color: int | str) -> None:
+            for character in self.characters:
+                character.animation.set_appearance(character.input_symbol, color)
 
-
-class OverflowEffect:
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+    def __init__(self, effect: "Overflow"):
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
-        self._pending_rows: list[Row] = []
-        self._active_rows: list[Row] = []
+        self._pending_rows: list[OverflowIterator._Row] = []
+        self._active_rows: list[OverflowIterator._Row] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def build(self) -> None:
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        self._pending_rows.clear()
-        self._active_rows.clear()
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+    def _build(self) -> None:
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters(fill_chars=True):
+        for character in self._terminal.get_characters(fill_chars=True):
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        lower_range, upper_range = self.config.overflow_cycles_range
-        rows = self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
+        lower_range, upper_range = self._config.overflow_cycles_range
+        rows = self._terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
         if upper_range > 0:
             for _ in range(random.randint(lower_range, upper_range)):
                 random.shuffle(rows)
                 for row in rows:
                     copied_characters = [
-                        self.terminal.add_character(character.input_symbol, character.input_coord) for character in row
+                        self._terminal.add_character(character.input_symbol, character.input_coord) for character in row
                     ]
-                    self._pending_rows.append(Row(copied_characters))
+                    self._pending_rows.append(OverflowIterator._Row(copied_characters))
         # add rows in correct order to the end of self.pending_rows
-        for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
-            next_row = Row(row)
+        for row in self._terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
+            next_row = OverflowIterator._Row(row)
             for character in next_row.characters:
                 character.animation.set_appearance(character.symbol, self._character_final_color_map[character])
             next_row.set_color(
-                final_gradient.get_color_at_fraction(row[0].input_coord.row / self.terminal.output_area.top)
+                final_gradient.get_color_at_fraction(row[0].input_coord.row / self._terminal.output_area.top)
             )
-            self._pending_rows.append(Row(row, final=True))
-        self._built = True
-
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        delay = 0
-        g = graphics.Gradient(
-            *self.config.overflow_gradient_stops,
-            steps=max((self.terminal.output_area.top // max(1, len(self.config.overflow_gradient_stops) - 1)), 1),
+            self._pending_rows.append(OverflowIterator._Row(row, final=True))
+        self._delay = 0
+        self._overflow_gradient = graphics.Gradient(
+            *self._config.overflow_gradient_stops,
+            steps=max((self._terminal.output_area.top // max(1, len(self._config.overflow_gradient_stops) - 1)), 1),
         )
 
-        while self._pending_rows:
-            if not delay:
-                for _ in range(random.randint(1, self.config.overflow_speed)):
+    def __next__(self) -> str:
+        if self._pending_rows:
+            if not self._delay:
+                for _ in range(random.randint(1, self._config.overflow_speed)):
                     if self._pending_rows:
                         for row in self._active_rows:
                             row.move_up()
                             if not row.final:
                                 row.set_color(
-                                    g.spectrum[min(row.characters[0].motion.current_coord.row, len(g.spectrum) - 1)]
+                                    self._overflow_gradient.spectrum[
+                                        min(
+                                            row.characters[0].motion.current_coord.row,
+                                            len(self._overflow_gradient.spectrum) - 1,
+                                        )
+                                    ]
                                 )
                         next_row = self._pending_rows.pop(0)
                         next_row.setup()
                         next_row.move_up()
                         if not next_row.final:
-                            next_row.set_color(g.spectrum[0])
+                            next_row.set_color(self._overflow_gradient.spectrum[0])
                         for character in next_row.characters:
-                            self.terminal.set_character_visibility(character, True)
+                            self._terminal.set_character_visibility(character, True)
                         self._active_rows.append(next_row)
-                delay = random.randint(0, 3)
+                self._delay = random.randint(0, 3)
 
             else:
-                delay -= 1
+                self._delay -= 1
             self._active_rows = [
                 row
                 for row in self._active_rows
-                if row.characters[0].motion.current_coord.row <= self.terminal.output_area.top
+                if row.characters[0].motion.current_coord.row <= self._terminal.output_area.top
             ]
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
+            for character in self._active_chars:
+                character.tick()
+            next_frame = self._terminal.get_formatted_output_string()
 
             self._active_chars = [character for character in self._active_chars if character.is_active]
-        self._built = False
+            return next_frame
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method on all active characters."""
-        for character in self._active_chars:
-            character.tick()
+
+class Overflow(BaseEffect[OverflowConfig]):
+    """Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered."""
+
+    _config_cls = OverflowConfig
+    _iterator_cls = OverflowIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

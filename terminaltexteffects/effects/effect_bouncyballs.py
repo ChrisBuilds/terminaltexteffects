@@ -1,19 +1,17 @@
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.base_effect import BaseEffect
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return BouncyBallsEffect, EffectConfig
+    return BouncyBalls, BouncyBallsConfig
 
 
 @argclass(
@@ -24,7 +22,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols o "*" O 0 . --final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal --ball-delay 7 --movement-speed 0.25 --easing OUT_BOUNCE""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class BouncyBallsConfig(ArgsDataClass):
     """Configuration for the BouncyBalls effect.
 
     Attributes:
@@ -104,7 +102,7 @@ class EffectConfig(ArgsDataClass):
     "float : Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect."
 
     movement_easing: easing.EasingFunction = ArgField(
-        cmd_name="--easing",
+        cmd_name="--movement-easing",
         type_parser=arg_validators.Ease.type_parser,
         default=easing.out_bounce,
         help="Easing function to use for character movement.",
@@ -113,58 +111,41 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return BouncyBallsEffect
+        return BouncyBalls
 
 
-class BouncyBallsEffect(BaseEffect):
+class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
     """Effect that displays the text as bouncy balls falling from the top of the output area."""
 
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+    def __init__(self, effect: "BouncyBalls"):
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._group_by_row: dict[int, list[EffectCharacter | None]] = {}
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def build(self) -> None:
+    def _build(self) -> None:
         """Prepares the data for the effect by assigning colors and waypoints and
         organizing the characters by row."""
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        self._group_by_row.clear()
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            color = random.choice(self.config.ball_colors)
-            symbol = random.choice(self.config.ball_symbols)
+            color = random.choice(self._config.ball_colors)
+            symbol = random.choice(self._config.ball_symbols)
             ball_scene = character.animation.new_scene()
             ball_scene.add_frame(symbol, 1, color=color)
             final_scene = character.animation.new_scene()
             char_final_gradient = graphics.Gradient(color, self._character_final_color_map[character], steps=10)
             final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
             character.motion.set_coordinate(
-                Coord(character.input_coord.column, int(self.terminal.output_area.top * random.uniform(1.0, 1.5)))
+                Coord(character.input_coord.column, int(self._terminal.output_area.top * random.uniform(1.0, 1.5)))
             )
             input_coord_path = character.motion.new_path(
-                speed=self.config.movement_speed, ease=self.config.movement_easing
+                speed=self._config.movement_speed, ease=self._config.movement_easing
             )
             input_coord_path.new_waypoint(character.input_coord)
             character.motion.activate_path(input_coord_path)
@@ -180,41 +161,40 @@ class BouncyBallsEffect(BaseEffect):
             if character.input_coord.row not in self._group_by_row:
                 self._group_by_row[character.input_coord.row] = []
             self._group_by_row[character.input_coord.row].append(character)
-        self._built = True
-
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
         self._pending_chars.clear()
-        ball_delay = 0
-        while self._group_by_row or self._active_chars or self._pending_chars:
+        self.ball_delay = 0
+
+    def __next__(self) -> str:
+        """Runs the effect."""
+        if self._group_by_row or self._active_chars or self._pending_chars:
             if not self._pending_chars and self._group_by_row:
                 self._pending_chars.extend(self._group_by_row.pop(min(self._group_by_row.keys())))  # type: ignore
             if self._pending_chars:
-                if ball_delay == 0:
+                if self.ball_delay == 0:
                     for _ in range(random.randint(2, 6)):
                         if self._pending_chars:
                             next_character = self._pending_chars.pop(random.randint(0, len(self._pending_chars) - 1))
-                            self.terminal.set_character_visibility(next_character, True)
+                            self._terminal.set_character_visibility(next_character, True)
                             self._active_chars.append(next_character)
                         else:
                             break
-                    ball_delay = self.config.ball_delay
+                    self.ball_delay = self._config.ball_delay
                 else:
-                    ball_delay -= 1
+                    self.ball_delay -= 1
 
-            self._animate_chars()
+            for character in self._active_chars:
+                character.tick()
             self._active_chars = [character for character in self._active_chars if character.is_active]
-            yield self.terminal.get_formatted_output_string()
-        self._built = False
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method."""
-        for character in self._active_chars:
-            character.tick()
+
+class BouncyBalls(BaseEffect[BouncyBallsConfig]):
+    """Effect that displays the text as bouncy balls falling from the top of the output area."""
+
+    _config_cls = BouncyBallsConfig
+    _iterator_cls = BouncyBallsIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

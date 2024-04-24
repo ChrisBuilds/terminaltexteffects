@@ -1,18 +1,16 @@
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.base_effect import BaseEffect
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return BurnEffect, EffectConfig
+    return Burn, BurnConfig
 
 
 @argclass(
@@ -22,7 +20,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     epilog="Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class BurnConfig(ArgsDataClass):
     """Configuration for the Burn effect.
 
     Attributes:
@@ -82,37 +80,21 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return BurnEffect
+        return Burn
 
 
-class BurnEffect(BaseEffect):
+class BurnIterator(BaseEffectIterator[BurnConfig]):
     """Effect that burns up the screen."""
 
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+    def __init__(self, effect: "Burn"):
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def build(self) -> None:
+    def _build(self) -> None:
         """Prepares the data for the effect by building the burn animation and organizing the data into columns."""
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
         vertical_build_order = [
             "'",
             ".",
@@ -124,17 +106,17 @@ class BurnEffect(BaseEffect):
             "▝",
             ".",
         ]
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        fire_gradient = graphics.Gradient(*self.config.burn_colors, steps=10)
+        fire_gradient = graphics.Gradient(*self._config.burn_colors, steps=10)
         groups = {
             column_index: column
             for column_index, column in enumerate(
-                self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
+                self._terminal.get_characters_grouped(grouping=self._terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
             )
         }
 
@@ -144,8 +126,8 @@ class BurnEffect(BaseEffect):
         while groups_remaining(groups):
             keys = [key for key in groups.keys() if groups[key]]
             next_char = groups[random.choice(keys)].pop(0)
-            self.terminal.set_character_visibility(next_char, True)
-            next_char.animation.set_appearance(next_char.input_symbol, color=self.config.starting_color)
+            self._terminal.set_character_visibility(next_char, True)
+            next_char.animation.set_appearance(next_char.input_symbol, color=self._config.starting_color)
             burn_scn = next_char.animation.new_scene(id="burn")
             burn_scn.apply_gradient_to_symbols(fire_gradient, vertical_build_order, 12)
             final_color_scn = next_char.animation.new_scene()
@@ -158,18 +140,9 @@ class BurnEffect(BaseEffect):
             )
 
             self._pending_chars.append(next_char)
-        self._built = True
 
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        while self._pending_chars or self._active_chars:
+    def __next__(self) -> str:
+        if self._pending_chars or self._active_chars:
             for _ in range(random.randint(2, 4)):
                 if self._pending_chars:
                     next_char = self._pending_chars.pop(0)
@@ -177,13 +150,20 @@ class BurnEffect(BaseEffect):
                     # self.terminal.set_character_visibility(next_char, True)
                     self._active_chars.append(next_char)
 
-            self._animate_chars()
+            for character in self._active_chars:
+                character.animation.step_animation()
 
             self._active_chars = [character for character in self._active_chars if character.is_active]
-            yield self.terminal.get_formatted_output_string()
-        self._built = False
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method."""
-        for character in self._active_chars:
-            character.animation.step_animation()
+
+class Burn(BaseEffect[BurnConfig]):
+    """Effect that burns up the screen."""
+
+    _config_cls = BurnConfig
+    _iterator_cls = BurnIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

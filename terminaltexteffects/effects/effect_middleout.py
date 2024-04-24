@@ -1,17 +1,16 @@
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return MiddleoutEffect, EffectConfig
+    return MiddleOut, MiddleOutConfig
 
 
 @argclass(
@@ -22,7 +21,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 Example: terminaltexteffects middleout --starting-color 8A008A --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical --center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE --full-easing IN_OUT_SINE""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class MiddleOutConfig(ArgsDataClass):
     """Configuration for the Middleout effect.
 
     Attributes:
@@ -115,98 +114,79 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return MiddleoutEffect
+        return MiddleOut
 
 
-class MiddleoutEffect:
-    """Effect that expands a single row and column followed by the rest of the output area"""
-
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
+    def __init__(self, effect: "MiddleOut"):
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._phase = "center"
+        self._build()
 
-    def build(self) -> None:
-        """Prepares the data for the effect."""
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+    def _build(self) -> None:
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            character.motion.set_coordinate(self.terminal.output_area.center)
+            character.motion.set_coordinate(self._terminal.output_area.center)
             # setup waypoints
-            if self.config.expand_direction == "vertical":
+            if self._config.expand_direction == "vertical":
                 column = character.input_coord.column
-                row = self.terminal.output_area.center_row
+                row = self._terminal.output_area.center_row
             else:
-                column = self.terminal.output_area.center_column
+                column = self._terminal.output_area.center_column
                 row = character.input_coord.row
             center_path = character.motion.new_path(
-                speed=self.config.center_movement_speed, ease=self.config.center_easing
+                speed=self._config.center_movement_speed, ease=self._config.center_easing
             )
             center_path.new_waypoint(Coord(column, row))
             full_path = character.motion.new_path(
-                id="full", speed=self.config.full_movement_speed, ease=self.config.full_easing
+                id="full", speed=self._config.full_movement_speed, ease=self._config.full_easing
             )
             full_path.new_waypoint(character.input_coord, id="full")
 
             # setup scenes
             full_scene = character.animation.new_scene(id="full")
             full_gradient = graphics.Gradient(
-                self.config.starting_color, self._character_final_color_map[character], steps=10
+                self._config.starting_color, self._character_final_color_map[character], steps=10
             )
             full_scene.apply_gradient_to_symbols(full_gradient, character.input_symbol, 10)
 
             # initialize character state
             character.motion.activate_path(center_path)
-            character.animation.set_appearance(character.input_symbol, self.config.starting_color)
-            self.terminal.set_character_visibility(character, True)
+            character.animation.set_appearance(character.input_symbol, self._config.starting_color)
+            self._terminal.set_character_visibility(character, True)
             self._active_chars.append(character)
-        self._built = True
 
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        final = False
-        while self._pending_chars or self._active_chars:
-            if all([character.motion.active_path is None for character in self._active_chars]):
-                final = True
+    def __next__(self) -> str:
+        if self._active_chars:
+            if (
+                all([character.motion.active_path is None for character in self._active_chars])
+                and self._phase == "center"
+            ):
                 for character in self._active_chars:
                     character.motion.activate_path(character.motion.query_path("full"))
                     character.animation.activate_scene(character.animation.query_scene("full"))
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
-            if final:
+                self._phase = "full"
+            for character in self._active_chars:
+                character.tick()
+            if self._phase == "full":
                 self._active_chars = [character for character in self._active_chars if character.is_active]
-        self._built = False
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method."""
-        for character in self._active_chars:
-            character.tick()
+
+class MiddleOut(BaseEffect[MiddleOutConfig]):
+    """Text expands in a single row or column in the middle of the output area then out."""
+
+    _config_cls = MiddleOutConfig
+    _iterator_cls = MiddleOutIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

@@ -1,16 +1,15 @@
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return ExpandEffect, EffectConfig
+    return Expand, ExpandConfig
 
 
 @argclass(
@@ -22,7 +21,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 Example: terminaltexteffects expand --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 5 --movement-speed 0.35 --expand-easing IN_OUT_QUART""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class ExpandConfig(ArgsDataClass):
     """Configuration for the Expand effect.
 
     Attributes:
@@ -90,52 +89,39 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return ExpandEffect
+        return Expand
 
 
-class ExpandEffect:
+class ExpandIterator(BaseEffectIterator[ExpandConfig]):
     """Effect that draws the characters expanding from a single point."""
 
     def __init__(
         self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
+        effect: "Expand",
     ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def build(self) -> None:
+    def _build(self) -> None:
         """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""
 
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        for character in self.terminal.get_characters():
-            character.motion.set_coordinate(self.terminal.output_area.center)
+        for character in self._terminal.get_characters():
+            character.motion.set_coordinate(self._terminal.output_area.center)
             input_coord_path = character.motion.new_path(
-                speed=self.config.movement_speed,
-                ease=self.config.expand_easing,
+                speed=self._config.movement_speed,
+                ease=self._config.expand_easing,
             )
             input_coord_path.new_waypoint(character.input_coord)
-            self.terminal.set_character_visibility(character, True)
+            self._terminal.set_character_visibility(character, True)
             self._active_chars.append(character)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED, input_coord_path, EventHandler.Action.SET_LAYER, 1
@@ -148,26 +134,25 @@ class ExpandEffect:
             gradient = graphics.Gradient(
                 final_gradient.spectrum[0], self._character_final_color_map[character], steps=10
             )
-            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.config.final_gradient_frames)
+            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self._config.final_gradient_frames)
             character.animation.activate_scene(gradient_scn)
-        self._built = True
 
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
+    def __next__(self) -> str:
         """Runs the effect."""
-        if not self._built:
-            self.build()
-        yield self.terminal.get_formatted_output_string()
-        while self._active_chars:
-            self._animate_chars()
+        if self._active_chars:
+            for character in self._active_chars:
+                character.tick()
             self._active_chars = [character for character in self._active_chars if character.is_active]
-            yield self.terminal.get_formatted_output_string()
-        self._built = False
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        for character in self._active_chars:
-            character.tick()
+
+class Expand(BaseEffect[ExpandConfig]):
+    """Effect that draws the characters expanding from a single point."""
+
+    _config_cls = ExpandConfig
+    _iterator_cls = ExpandIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

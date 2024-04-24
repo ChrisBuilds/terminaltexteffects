@@ -1,19 +1,17 @@
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.base_effect import BaseEffect
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import animation, easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return CrumbleEffect, EffectConfig
+    return Crumble, CrumbleConfig
 
 
 @argclass(
@@ -23,7 +21,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     epilog="""Example: terminaltexteffects crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class CrumbleConfig(ArgsDataClass):
     """Configuration for the Crumble effect.
 
     Attributes:
@@ -62,49 +60,33 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return CrumbleEffect
+        return Crumble
 
 
-class CrumbleEffect(BaseEffect):
+class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
     """Characters crumble into dust before being vacuumed up and rebuilt."""
 
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
+    def __init__(self, effect: "Crumble"):
+        super().__init__(effect)
 
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def build(self) -> None:
-        """Prepares the data for the effect by registering events and building scenes/waypoints."""
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+    def _build(self) -> None:
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             strengthen_flash_gradient = graphics.Gradient(self._character_final_color_map[character], "ffffff", steps=6)
             strengthen_gradient = graphics.Gradient("ffffff", self._character_final_color_map[character], steps=9)
             weak_color = character.animation.adjust_color_brightness(self._character_final_color_map[character], 0.65)
             dust_color = character.animation.adjust_color_brightness(self._character_final_color_map[character], 0.55)
             weaken_gradient = graphics.Gradient(weak_color, dust_color, steps=9)
-            self.terminal.set_character_visibility(character, True)
+            self._terminal.set_character_visibility(character, True)
             # set up initial and falling stage
             initial_scn = character.animation.new_scene()
             initial_scn.add_frame(character.input_symbol, 1, color=weak_color)
@@ -113,14 +95,14 @@ class CrumbleEffect(BaseEffect):
                 speed=0.2,
                 ease=easing.out_bounce,
             )
-            fall_path.new_waypoint(Coord(character.input_coord.column, self.terminal.output_area.bottom))
+            fall_path.new_waypoint(Coord(character.input_coord.column, self._terminal.output_area.bottom))
             weaken_scn = character.animation.new_scene(id="weaken")
             weaken_scn.apply_gradient_to_symbols(weaken_gradient, character.input_symbol, 6)
 
             top_path = character.motion.new_path(id="top", speed=0.5, ease=easing.out_quint)
             top_path.new_waypoint(
-                Coord(character.input_coord.column, self.terminal.output_area.top),
-                bezier_control=Coord(self.terminal.output_area.center_column, self.terminal.output_area.center_row),
+                Coord(character.input_coord.column, self._terminal.output_area.top),
+                bezier_control=Coord(self._terminal.output_area.center_column, self._terminal.output_area.center_row),
             )
             # set up reset stage
             input_path = character.motion.new_path(id="input", speed=0.3)
@@ -156,34 +138,23 @@ class CrumbleEffect(BaseEffect):
                 strengthen_scn,
             )
             self._pending_chars.append(character)
-        self._built = True
-
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        # Prepare data for the effect
-        if not self._built:
-            self.build()
         random.shuffle(self._pending_chars)
-        fall_delay = 20
-        max_fall_delay = 20
-        min_fall_delay = 15
-        reset = False
-        fall_group_maxsize = 1
-        stage = "falling"
-        unvacuumed_chars = list(self.terminal._input_characters)
-        random.shuffle(unvacuumed_chars)
-        yield self.terminal.get_formatted_output_string()
-        while stage != "complete":
-            if stage == "falling":
+        self.fall_delay = 20
+        self.max_fall_delay = 20
+        self.min_fall_delay = 15
+        self.reset = False
+        self.fall_group_maxsize = 1
+        self.stage = "falling"
+        self.unvacuumed_chars = list(self._terminal._input_characters)
+        random.shuffle(self.unvacuumed_chars)
+
+    def __next__(self) -> str:
+        if self.stage != "complete":
+            if self.stage == "falling":
                 if self._pending_chars:
-                    if fall_delay == 0:
+                    if self.fall_delay == 0:
                         # Determine the size of the next group of falling characters
-                        fall_group_size = random.randint(1, fall_group_maxsize)
+                        fall_group_size = random.randint(1, self.fall_group_maxsize)
                         # Add the next group of falling characters to the animating characters list
                         for _ in range(fall_group_size):
                             if self._pending_chars:
@@ -191,40 +162,48 @@ class CrumbleEffect(BaseEffect):
                                 next_char.animation.activate_scene(next_char.animation.query_scene("weaken"))
                                 self._active_chars.append(next_char)
                         # Reset the fall delay and adjust the fall group size and delay range
-                        fall_delay = random.randint(min_fall_delay, max_fall_delay)
+                        self.fall_delay = random.randint(self.min_fall_delay, self.max_fall_delay)
                         if random.randint(1, 10) > 4:  # 60% chance to modify the fall delay and group size
-                            fall_group_maxsize += 1
-                            min_fall_delay = max(0, min_fall_delay - 1)
-                            max_fall_delay = max(0, max_fall_delay - 1)
+                            self.fall_group_maxsize += 1
+                            self.min_fall_delay = max(0, self.min_fall_delay - 1)
+                            self.max_fall_delay = max(0, self.max_fall_delay - 1)
                     else:
-                        fall_delay -= 1
+                        self.fall_delay -= 1
                 if not self._pending_chars and not self._active_chars:
-                    stage = "vacuuming"
-            elif stage == "vacuuming":
-                if unvacuumed_chars:
+                    self.stage = "vacuuming"
+            elif self.stage == "vacuuming":
+                if self.unvacuumed_chars:
                     for _ in range(random.randint(3, 10)):
-                        if unvacuumed_chars:
-                            next_char = unvacuumed_chars.pop(0)
+                        if self.unvacuumed_chars:
+                            next_char = self.unvacuumed_chars.pop(0)
                             next_char.motion.activate_path(next_char.motion.query_path("top"))
                             self._active_chars.append(next_char)
                 if not self._active_chars:
-                    stage = "resetting"
+                    self.stage = "resetting"
 
-            elif stage == "resetting":
-                if not reset:
-                    for character in self.terminal.get_characters():
+            elif self.stage == "resetting":
+                if not self.reset:
+                    for character in self._terminal.get_characters():
                         character.motion.activate_path(character.motion.query_path("input"))
                         self._active_chars.append(character)
-                    reset = True
+                    self.reset = True
                 if not self._active_chars:
-                    stage = "complete"
+                    self.stage = "complete"
 
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
+            next_frame = self._terminal.get_formatted_output_string()
+            for character in self._active_chars:
+                character.tick()
             self._active_chars = [character for character in self._active_chars if character.is_active]
-        self._built = False
+            return next_frame
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method."""
-        for character in self._active_chars:
-            character.tick()
+
+class Crumble(BaseEffect[CrumbleConfig]):
+    """Characters crumble into dust before being vacuumed up and rebuilt."""
+
+    _config_cls = CrumbleConfig
+    _iterator_cls = CrumbleIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)
