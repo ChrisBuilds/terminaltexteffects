@@ -127,16 +127,19 @@ effect.terminal_config.ignore_terminal_dimensions = True
 
 ```markdown
 options:
-  -h, --help            show this help message and exit
+-h, --help            show this help message and exit
   --tab-width (int > 0)
-                        Number of spaces to use for a tab character.
-  --xterm-colors        Convert any colors specified in RBG hex to the closest XTerm-256 color.
-  --no-color            Disable all colors in the effect.
-  --no-wrap             Disable wrapping of text.
-  -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
-                        Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
-                        no impact beyond a certain lower threshold due to the processing speed of your device.
-
+                        Number of spaces to use for a tab character. (default: 4)
+  --xterm-colors        Convert any colors specified in RBG hex to the closest XTerm-256 color. (default: False)
+  --no-color            Disable all colors in the effect. (default: False)
+  --wrap-text           Wrap text wider than the output area width. (default: False)
+  --frame-rate FRAME_RATE
+                        Target frame rate for the animation. (default: 100)
+  --terminal-dimensions TERMINAL_DIMENSIONS TERMINAL_DIMENSIONS
+                        Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal
+                        width. (default: (0, 0))
+  --ignore-terminal-dimensions
+                        Ignore the terminal dimensions and use the input data dimensions for the output area. (default: False)
 Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
