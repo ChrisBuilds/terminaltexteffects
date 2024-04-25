@@ -58,278 +58,248 @@ t6 = """Tabs\tTabs\t\tTabs\t\t\tTabs"""
 test_inputs = [t1, t2, t3, t4, t5, t6]
 
 
-TERMARGS = TerminalConfig()
-TERMARGS.frame_rate = 0
+terminal_config = TerminalConfig()
+terminal_config.frame_rate = 0
+terminal_config.use_terminal_dimensions = False
 
 
 def test_beams_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_beams.Beams(input_data, terminal_config=terminal_config)
+        effect = effect_beams.Beams(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_binarypath_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_binarypath.BinaryPath(input_data, terminal_config=terminal_config)
+        effect = effect_binarypath.BinaryPath(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_blackhole_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_blackhole.BlackholeEffect(input_data, terminal_config=terminal_config)
+        effect = effect_blackhole.Blackhole(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_bouncyballs_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_bouncyballs.BouncyBallsEffect(input_data, terminal_config=terminal_config)
+        effect = effect_bouncyballs.BouncyBalls(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_bubbles_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_bubbles.BubblesEffect(input_data, terminal_config=terminal_config)
+        effect = effect_bubbles.Bubbles(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_burn_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_burn.BurnEffect(input_data, terminal_config=terminal_config)
+        effect = effect_burn.Burn(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_crumble_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_crumble.CrumbleEffect(input_data, terminal_config=terminal_config)
+        effect = effect_crumble.Crumble(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_decrypt_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_decrypt.DecryptEffect(input_data, terminal_config=terminal_config)
+        effect = effect_decrypt.Decrypt(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_errorcorrect_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_errorcorrect.ErrorCorrectEffect(input_data, terminal_config=terminal_config)
+        effect = effect_errorcorrect.ErrorCorrect(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_expand_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_expand.ExpandEffect(input_data, terminal_config=terminal_config)
+        effect = effect_expand.Expand(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_fireworks_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_fireworks.FireworksEffect(input_data, terminal_config=terminal_config)
+        effect = effect_fireworks.Fireworks(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_middleout_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_middleout.MiddleoutEffect(input_data, terminal_config=terminal_config)
+        effect = effect_middleout.MiddleOut(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_orbittingvolley_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_orbittingvolley.OrbittingVolleyEffect(input_data, terminal_config=terminal_config)
+        effect = effect_orbittingvolley.OrbittingVolley(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_overflow_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_overflow.OverflowEffect(input_data, terminal_config=terminal_config)
+        effect = effect_overflow.Overflow(input_data)
         for _ in effect:
             pass
 
 
 def test_pour_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_pour.PourEffect(input_data, terminal_config=terminal_config)
+        effect = effect_pour.Pour(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_print_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_print.PrintEffect(input_data, terminal_config=terminal_config)
+        effect = effect_print.Print(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_rain_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_rain.RainEffect(input_data, terminal_config=terminal_config)
+        effect = effect_rain.Rain(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
-def test_random_sequence_effect() -> None:
+def test_randomsequence_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_random_sequence.RandomSequence(input_data, terminal_config=terminal_config)
+        effect = effect_random_sequence.RandomSequence(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_rings_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_rings.RingsEffect(input_data, terminal_config=terminal_config)
+        effect = effect_rings.Rings(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_scattered_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_scattered.ScatteredEffect(input_data, terminal_config=terminal_config)
+        effect = effect_scattered.Scattered(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_slide_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_slide.SlideEffect(input_data, terminal_config=terminal_config)
+        effect = effect_slide.Slide(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_spotlights_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_spotlights.SpotlightsEffect(input_data, terminal_config=terminal_config)
+        effect = effect_spotlights.Spotlights(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_spray_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_spray.SprayEffect(input_data, terminal_config=terminal_config)
+        effect = effect_spray.Spray(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_swarm_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_swarm.SwarmEffect(input_data, terminal_config=terminal_config)
+        effect = effect_swarm.Swarm(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_synthgrid_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_synthgrid.SynthGridEffect(input_data, terminal_config=terminal_config)
+        effect = effect_synthgrid.SynthGrid(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_unstable_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_unstable.UnstableEffect(input_data, terminal_config=terminal_config)
+        effect = effect_unstable.Unstable(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_verticalslice_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_verticalslice.VerticalSlice(input_data, terminal_config=terminal_config)
+        effect = effect_verticalslice.VerticalSlice(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_vhstape_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_vhstape.VHSTapeEffect(input_data, terminal_config=terminal_config)
+        effect = effect_vhstape.VHSTape(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_waves_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_waves.WavesEffect(input_data, terminal_config=terminal_config)
+        effect = effect_waves.Waves(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_wipe_effect() -> None:
     for input_data in test_inputs:
-        terminal_config = TerminalConfig()
-        terminal_config.frame_rate = 0
-        effect = effect_wipe.WipeEffect(input_data, terminal_config=terminal_config)
+        effect = effect_wipe.Wipe(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
-            pass
+            ...
 
 
 def test_terminal_xterm_colors() -> None:
@@ -337,7 +307,10 @@ def test_terminal_xterm_colors() -> None:
         terminal_config = TerminalConfig()
         terminal_config.frame_rate = 0
         terminal_config.xterm_colors = True
-        effect = effect_wipe.WipeEffect(input_data, terminal_config=terminal_config)
+        terminal_config.frame_rate = 0
+        terminal_config.use_terminal_dimensions = False
+        effect = effect_wipe.Wipe(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
             pass
 
@@ -347,6 +320,8 @@ def test_terminal_no_color() -> None:
         terminal_config = TerminalConfig()
         terminal_config.frame_rate = 0
         terminal_config.no_color = True
-        effect = effect_wipe.WipeEffect(input_data, terminal_config=terminal_config)
+        terminal_config.use_terminal_dimensions = False
+        effect = effect_wipe.Wipe(input_data)
+        effect.terminal_config = terminal_config
         for _ in effect:
             pass
