@@ -20,7 +20,7 @@
 * [About](#tte)
 * [Requirements](#requirements)
 * [Installation](#installation)
-* [Usage](#usage)
+* [Usage](#usage-\(application\))
 * [Options](#options)
 * [Examples](#examples)
 * [In-Development Preview](#in-development-preview)
