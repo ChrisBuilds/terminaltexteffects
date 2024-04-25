@@ -20,7 +20,8 @@
 * [About](#tte)
 * [Requirements](#requirements)
 * [Installation](#installation)
-* [Usage](#usage-\(application\))
+* [Usage (Application)](#application)
+* [Usage (Library)](#library)
 * [Options](#options)
 * [Examples](#examples)
 * [In-Development Preview](#in-development-preview)
@@ -56,7 +57,9 @@ Note: Windows Terminal performance is slow for some effects.
 OR
 ```pipx install terminaltexteffects```
 
-## Usage (application)
+## Usage
+
+### Application
 
 ```cat your_text | tte <effect> [options]```
 
@@ -67,7 +70,7 @@ OR
 * Use ```<effect> -h``` to view options for a specific effect, such as color or movement direction.
   * Ex: ```tte decrypt -h```
 
-## Usage (library)
+### Library
 
 All effects are iterators which return a string representing the current frame. Basic usage is as simple as importing the effect, instantiating it with the input text, and iterating over the effect.
 
