@@ -48,7 +48,7 @@ class ArgField(Field):
         help: str,
         type_parser: typing.Callable | None = None,
         metavar: str | None = None,
-        nargs: str | None = None,
+        nargs: str | int | None = None,
         action: str | None = None,
         required: bool = False,
         choices: list[str | int] | None = None,
@@ -83,7 +83,7 @@ class ArgField(Field):
         cmd_name: str | list[str]
         type_parser: typing.Any | None = None
         metavar: str | None = None
-        nargs: str | None = None
+        nargs: str | int | None = None
         help: str | None = None
         action: str | None = None
         required: bool = False
