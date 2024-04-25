@@ -1,14 +1,22 @@
 # Change Log
 
+---
+
 ## Unreleased
 
+---
+
 ### New Features (unreleased)
+
+---
 
 #### New Effects (unreleased)
 
 #### New Engine Features (unreleased)
 
 ### Changes (unreleased)
+
+---
 
 #### Effects Changes (unreleased)
 
@@ -23,11 +31,15 @@
 
 ### Bug Fixes (unreleased)
 
+---
+
 #### Effects Fixes (unreleased)
 
 #### Engine Fixes (unreleased)
 
 ## 0.7.0
+
+---
 
 ### New Features
 
