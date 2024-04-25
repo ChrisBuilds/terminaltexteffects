@@ -51,8 +51,10 @@ class TerminalConfig(ArgsDataClass):
 
     "bool : Disable all colors in the effect."
 
-    no_wrap: int = ArgField(cmd_name="--no-wrap", default=False, action="store_true", help="Disable wrapping of text.")  # type: ignore[assignment]
-    "bool : Disable wrapping of text."
+    wrap_text: int = ArgField(
+        cmd_name="--wrap-text", default=False, action="store_true", help="Wrap text wider than the output area width."
+    )  # type: ignore[assignment]
+    "bool : Wrap text wider than the output area width."
 
     frame_rate: float = ArgField(
         cmd_name="--frame-rate",
@@ -63,13 +65,23 @@ class TerminalConfig(ArgsDataClass):
 
     "float : Minimum time, in seconds, between animation steps."
 
-    use_terminal_dimensions: bool = ArgField(
-        cmd_name=["--use-terminal-dimensions"],
-        default=False,
+    terminal_dimensions: tuple[int, int] = ArgField(
+        cmd_name=["--terminal-dimensions"],
+        type_parser=arg_validators.TerminalDimensions.type_parser,
+        nargs=2,
+        default=(0, 0),
         help="Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal width.",
     )  # type: ignore[assignment]
 
-    "bool : Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal width."
+    "tuple(int,int) : Terminal dimensions as (width, height), if set to (0,0) the terminal dimensions are detected automatically."
+
+    ignore_terminal_dimensions: bool = ArgField(
+        cmd_name=["--ignore-terminal-dimensions"],
+        default=False,
+        action="store_true",
+        help="Ignore the terminal dimensions and use the input data dimensions for the output area.",
+    )  # type: ignore[assignment]
+    "bool : Ignore the terminal dimensions and use the input data dimensions for the output area."
 
 
 @dataclass
@@ -173,8 +185,10 @@ class Terminal:
         if not input_data:
             input_data = "No Input."
         self.input_data = input_data.replace("\t", " " * self.config.tab_width)
-        if self.config.use_terminal_dimensions:
+        if self.config.terminal_dimensions == (0, 0) and not self.config.ignore_terminal_dimensions:
             self.width, self.height = self._get_terminal_dimensions()
+        elif self.config.terminal_dimensions != (0, 0):
+            self.width, self.height = self.config.terminal_dimensions
         else:
             self.width = max([len(line) for line in self.input_data.splitlines()])
             self.height = len(self.input_data.splitlines()) + 1
@@ -266,7 +280,7 @@ class Terminal:
         if not self.input_data.strip():
             self.input_data = "No Input."
         lines = self.input_data.splitlines()
-        formatted_lines = self._wrap_lines(lines) if not self.config.no_wrap else [line[: self.width] for line in lines]
+        formatted_lines = self._wrap_lines(lines) if self.config.wrap_text else [line[: self.width] for line in lines]
         input_height = len(formatted_lines)
         input_characters = []
         for row, line in enumerate(formatted_lines):
