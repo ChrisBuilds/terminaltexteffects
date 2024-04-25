@@ -215,6 +215,40 @@ class Symbol:
             )
 
 
+class TerminalDimensions:
+    """Argument type for terminal dimensions.
+
+    Terminal dimensions are a pair of non-negative integers separated by a space. Ex: 80 24
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not a valid terminal dimension.
+    """
+
+    METAVAR = "(width height)"
+
+    @staticmethod
+    def type_parser(arg: str) -> int:
+        """Validates that the given argument is a valid terminal dimension.
+
+        Args:
+            arg (str): argument to validate
+
+        Returns:
+            tuple[int,int]: validated terminal dimension
+        """
+        try:
+            dimension = int(arg)
+            if dimension < 0:
+                raise argparse.ArgumentTypeError(
+                    f"invalid terminal dimensions: '{arg}' is not a valid terminal dimension. Must be >= 0."
+                )
+            return dimension
+        except ValueError:
+            raise argparse.ArgumentTypeError(
+                f"invalid terminal dimensions: '{arg}' is not a valid terminal dimension. Must be >= 0."
+            )
+
+
 class PositiveInt:
     """Argument type for positive integers.
 
