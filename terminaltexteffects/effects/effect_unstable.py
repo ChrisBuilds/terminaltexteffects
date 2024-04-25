@@ -1,18 +1,17 @@
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return UnstableEffect, EffectConfig
+    return Unstable, UnstableConfig
 
 
 @argclass(
@@ -24,7 +23,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class UnstableConfig(ArgsDataClass):
     """Configuration for the Unstable effect.
 
     Attributes:
@@ -112,73 +111,53 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return UnstableEffect
+        return Unstable
 
 
-class UnstableEffect:
+class UnstableIterator(BaseEffectIterator[UnstableConfig]):
     """Effect that spawns characters jumbled, explodes them to the edge of the output area,
     then reassembles them in the correct layout."""
 
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+    def __init__(self, effect: "Unstable") -> None:
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._jumbled_coords: dict[EffectCharacter, Coord] = dict()
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def build(self) -> None:
-        """Prepares the data for the effect by jumbling the character positions and
-        choosing a location on the perimeter of the output area for the character to travel
-        after exploding. Creates all waypoints and scenes for the characters."""
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._jumbled_coords.clear()
-        self._character_final_color_map.clear()
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+    def _build(self) -> None:
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        character_coords = [character.input_coord for character in self.terminal.get_characters()]
-        for character in self.terminal.get_characters():
+        character_coords = [character.input_coord for character in self._terminal.get_characters()]
+        for character in self._terminal.get_characters():
             pos = random.randint(0, 3)
             match pos:
                 case 0:
-                    col = self.terminal.output_area.left
-                    row = random.randint(1, self.terminal.output_area.top)
+                    col = self._terminal.output_area.left
+                    row = random.randint(1, self._terminal.output_area.top)
                 case 1:
-                    col = self.terminal.output_area.right
-                    row = random.randint(1, self.terminal.output_area.top)
+                    col = self._terminal.output_area.right
+                    row = random.randint(1, self._terminal.output_area.top)
                 case 2:
-                    col = random.randint(1, self.terminal.output_area.right)
-                    row = self.terminal.output_area.bottom
+                    col = random.randint(1, self._terminal.output_area.right)
+                    row = self._terminal.output_area.bottom
                 case 3:
-                    col = random.randint(1, self.terminal.output_area.right)
-                    row = self.terminal.output_area.top
+                    col = random.randint(1, self._terminal.output_area.right)
+                    row = self._terminal.output_area.top
             jumbled_coord = character_coords.pop(random.randint(0, len(character_coords) - 1))
             self._jumbled_coords[character] = jumbled_coord
             character.motion.set_coordinate(jumbled_coord)
-            explosion_path = character.motion.new_path(id="explosion", speed=1.25, ease=self.config.explosion_ease)
+            explosion_path = character.motion.new_path(id="explosion", speed=1.25, ease=self._config.explosion_ease)
             explosion_path.new_waypoint(Coord(col, row))
-            reassembly_path = character.motion.new_path(id="reassembly", speed=0.75, ease=self.config.reassembly_ease)
+            reassembly_path = character.motion.new_path(id="reassembly", speed=0.75, ease=self._config.reassembly_ease)
             reassembly_path.new_waypoint(character.input_coord)
             unstable_gradient = graphics.Gradient(
-                self._character_final_color_map[character], self.config.unstable_color, steps=25
+                self._character_final_color_map[character], self._config.unstable_color, steps=25
             )
             rumble_scn = character.animation.new_scene(id="rumble")
             rumble_scn.apply_gradient_to_symbols(
@@ -187,88 +166,95 @@ class UnstableEffect:
                 10,
             )
             final_color = graphics.Gradient(
-                self.config.unstable_color, self._character_final_color_map[character], steps=12
+                self._config.unstable_color, self._character_final_color_map[character], steps=12
             )
             final_scn = character.animation.new_scene(id="final")
             final_scn.apply_gradient_to_symbols(final_color, character.input_symbol, 5)
             character.animation.activate_scene(rumble_scn)
-            self.terminal.set_character_visibility(character, True)
-        self._built = True
+            self._terminal.set_character_visibility(character, True)
+        self._explosion_hold_time = 50
+        self.phase = "rumble"
+        self._max_rumble_steps = 250
+        self._current_rumble_steps = 0
+        self._rumble_mod_delay = 20
 
-    def _move_all_to_waypoint(self, path_id) -> Iterator[str]:
-        for character in self.terminal.get_characters():
-            if path_id == "reassembly":
-                character.animation.activate_scene(character.animation.query_scene("final"))
-            self._active_chars.append(character)
-            character.motion.activate_path(character.motion.query_path(path_id))
-        while self._active_chars:
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
-            if path_id == "reassembly":
+    def __next__(self) -> str:
+        next_frame = None
+        if self.phase == "rumble":
+            if self._current_rumble_steps < self._max_rumble_steps:
+                if self._current_rumble_steps > 30 and self._current_rumble_steps % self._rumble_mod_delay == 0:
+                    row_offset = random.choice([-1, 0, 1])
+                    column_offset = random.choice([-1, 0, 1])
+                    for character in self._terminal.get_characters():
+                        character.motion.set_coordinate(
+                            Coord(
+                                character.motion.current_coord.column + column_offset,
+                                character.motion.current_coord.row + row_offset,
+                            )
+                        )
+                        character.animation.step_animation()
+                    next_frame = self._terminal.get_formatted_output_string()
+                    for character in self._terminal.get_characters():
+                        character.motion.set_coordinate(self._jumbled_coords[character])
+                    self._rumble_mod_delay -= 1
+                    self._rumble_mod_delay = max(self._rumble_mod_delay, 1)
+                else:
+                    for character in self._terminal.get_characters():
+                        character.animation.step_animation()
+                    next_frame = self._terminal.get_formatted_output_string()
+
+                self._current_rumble_steps += 1
+            else:
+                self.phase = "explosion"
+                for character in self._terminal.get_characters():
+                    character.motion.activate_path(character.motion.query_path("explosion"))
+                self._active_chars = [character for character in self._terminal.get_characters()]
+
+        if self.phase == "explosion":
+            if self._active_chars:
+                for character in self._active_chars:
+                    character.tick()
                 self._active_chars = [
                     character
                     for character in self._active_chars
-                    if not character.motion.current_coord == character.motion.query_path(path_id).waypoints[0].coord
+                    if not character.motion.current_coord == character.motion.query_path("explosion").waypoints[0].coord
+                ]
+                next_frame = self._terminal.get_formatted_output_string()
+
+            elif self._explosion_hold_time:
+                for character in self._active_chars:
+                    character.tick()
+                self._explosion_hold_time -= 1
+                next_frame = self._terminal.get_formatted_output_string()
+            else:
+                self.phase = "reassembly"
+                for character in self._terminal.get_characters():
+                    character.animation.activate_scene(character.animation.query_scene("final"))
+                    self._active_chars.append(character)
+                    character.motion.activate_path(character.motion.query_path("reassembly"))
+
+        if self.phase == "reassembly":
+            if self._active_chars:
+                for character in self._active_chars:
+                    character.tick()
+                self._active_chars = [
+                    character
+                    for character in self._active_chars
+                    if not character.motion.current_coord
+                    == character.motion.query_path("reassembly").waypoints[0].coord
                     or not character.animation.active_scene_is_complete()
                 ]
-            else:
-                self._active_chars = [
-                    character
-                    for character in self._active_chars
-                    if not character.motion.current_coord == character.motion.query_path(path_id).waypoints[0].coord
-                ]
+                next_frame = self._terminal.get_formatted_output_string()
 
-    def _rumble(self) -> Iterator[str]:
-        max_rumble_steps = 250
-        current_rumble_steps = 0
-        rumble_mod_delay = 20
-        while current_rumble_steps < max_rumble_steps:
-            if current_rumble_steps > 30 and current_rumble_steps % rumble_mod_delay == 0:
-                row_offset = random.choice([-1, 0, 1])
-                column_offset = random.choice([-1, 0, 1])
-                for character in self.terminal.get_characters():
-                    character.motion.set_coordinate(
-                        Coord(
-                            character.motion.current_coord.column + column_offset,
-                            character.motion.current_coord.row + row_offset,
-                        )
-                    )
-                    character.animation.step_animation()
-                yield self.terminal.get_formatted_output_string()
-                for character in self.terminal.get_characters():
-                    character.motion.set_coordinate(self._jumbled_coords[character])
-                rumble_mod_delay -= 1
-                rumble_mod_delay = max(rumble_mod_delay, 1)
-            else:
-                for character in self.terminal.get_characters():
-                    character.animation.step_animation()
-                yield self.terminal.get_formatted_output_string()
+        if next_frame is not None:
+            return next_frame
+        else:
+            raise StopIteration
 
-            current_rumble_steps += 1
 
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
+class Unstable(BaseEffect[UnstableConfig]):
+    _config_cls = UnstableConfig
+    _iterator_cls = UnstableIterator
 
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        explosion_hold_time = 50
-        for frame in self._rumble():
-            yield frame
-
-        for frame in self._move_all_to_waypoint("explosion"):
-            yield frame
-
-        while explosion_hold_time:
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
-            explosion_hold_time -= 1
-        self._move_all_to_waypoint("reassembly")
-
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method."""
-        for character in self._active_chars:
-            character.tick()
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

@@ -1,18 +1,17 @@
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import animation, easing, geometry, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return SwarmEffect, EffectConfig
+    return Swarm, SwarmConfig
 
 
 @argclass(
@@ -22,7 +21,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     epilog="""Example: terminaltexteffects swarm --base-color 31a0d4 --flash-color f2ea79 --final-gradient-stops 31b900 f0ff65 --final-gradient-steps 12 --swarm-size 0.1 --swarm-coordination 0.80 --swarm-area-count 2-4""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class SwarmConfig(ArgsDataClass):
     """Configuration for the Swarm effect.
 
     Attributes:
@@ -112,35 +111,25 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return SwarmEffect
+        return Swarm
 
 
-class SwarmEffect:
+class SwarmIterator(BaseEffectIterator[SwarmConfig]):
     """Characters behave with swarm characteristics before flying into position."""
 
     def __init__(
         self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+        effect: "Swarm",
+    ) -> None:
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._swarms: list[list[EffectCharacter]] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def make_swarms(self, swarm_size: int) -> None:
-        unswarmed_characters = list(self.terminal._input_characters[::-1])
+    def _make_swarms(self, swarm_size: int) -> None:
+        unswarmed_characters = list(self._terminal._input_characters[::-1])
         while unswarmed_characters:
             new_swarm: list[EffectCharacter] = []
             for _ in range(swarm_size):
@@ -150,44 +139,41 @@ class SwarmEffect:
                     break
             self._swarms.append(new_swarm)
 
-    def build(self) -> None:
-        """Prepares the data for the effect by creating swarms of characters and setting waypoints and animations."""
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        self._swarms.clear()
-        swarm_size: int = max(round(len(self.terminal._input_characters) * self.config.swarm_size), 1)
-        self.make_swarms(swarm_size)
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+    def _build(self) -> None:
+        swarm_size: int = max(round(len(self._terminal._input_characters) * self._config.swarm_size), 1)
+        self._make_swarms(swarm_size)
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        flash_list = [self.config.flash_color for _ in range(10)]
+        flash_list = [self._config.flash_color for _ in range(10)]
         for swarm in self._swarms:
-            swarm_gradient = graphics.Gradient(random.choice(self.config.base_color), self.config.flash_color, steps=7)
+            swarm_gradient = graphics.Gradient(
+                random.choice(self._config.base_color), self._config.flash_color, steps=7
+            )
             swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
             swarm_area_coordinate_map: dict[Coord, list[Coord]] = {}
-            swarm_spawn = self.terminal.output_area.random_coord(outside_scope=True)
+            swarm_spawn = self._terminal.output_area.random_coord(outside_scope=True)
             swarm_areas: list[Coord] = []
-            swarm_area_count = random.randint(self.config.swarm_area_count[0], self.config.swarm_area_count[1])
+            swarm_area_count = random.randint(self._config.swarm_area_count[0], self._config.swarm_area_count[1])
             # create areas where characters will swarm
             last_focus_coord = swarm_spawn
-            radius = max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 2, 1)
+            radius = max(min(self._terminal.output_area.right, self._terminal.output_area.top) // 2, 1)
             while len(swarm_areas) < swarm_area_count:
                 potential_focus_coords = geometry.find_coords_on_circle(last_focus_coord, radius)
                 random.shuffle(potential_focus_coords)
                 for coord in potential_focus_coords:
-                    if self.terminal.output_area.coord_is_in_output_area(coord):
+                    if self._terminal.output_area.coord_is_in_output_area(coord):
                         next_focus_coord = coord
                         break
                 else:
-                    next_focus_coord = self.terminal.output_area.random_coord()
+                    next_focus_coord = self._terminal.output_area.random_coord()
                 swarm_areas.append(next_focus_coord)
                 swarm_area_coordinate_map[last_focus_coord] = geometry.find_coords_in_circle(
                     last_focus_coord,
-                    max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 6, 1) * 2,
+                    max(min(self._terminal.output_area.right, self._terminal.output_area.top) // 6, 1) * 2,
                 )
                 last_focus_coord = next_focus_coord
 
@@ -229,7 +215,7 @@ class SwarmEffect:
                 input_path.new_waypoint(character.input_coord)
                 input_scn = character.animation.new_scene()
                 for step in graphics.Gradient(
-                    self.config.flash_color, self._character_final_color_map[character], steps=10
+                    self._config.flash_color, self._character_final_color_map[character], steps=10
                 ):
                     input_scn.add_frame(character.input_symbol, 3, color=step)
                 character.event_handler.register_event(
@@ -242,50 +228,49 @@ class SwarmEffect:
                     EventHandler.Event.PATH_ACTIVATED, input_path, EventHandler.Action.ACTIVATE_SCENE, flash_scn
                 )
                 character.motion.chain_paths(list(character.motion.paths.values()))
-        self._built = True
+        self._call_next = False
+        self._active_swarm_area = "0_swarm_area"
+        self._current_swarm = self._swarms.pop()
 
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        call_next = True
-        active_swarm_area = "0_swarm_area"
-        while self._swarms or self._active_chars:
-            if self._swarms and call_next:
-                call_next = False
-                current_swarm = self._swarms.pop()
-                active_swarm_area = "0_swarm_area"
-                for character in current_swarm:
+    def __next__(self) -> str:
+        if self._swarms or self._active_chars:
+            if self._swarms and self._call_next:
+                self._call_next = False
+                self._current_swarm = self._swarms.pop()
+                self._active_swarm_area = "0_swarm_area"
+                for character in self._current_swarm:
                     character.motion.activate_path(character.motion.query_path("0_swarm_area"))
-                    self.terminal.set_character_visibility(character, True)
+                    self._terminal.set_character_visibility(character, True)
                     self._active_chars.append(character)
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
-            if len(self._active_chars) < len(current_swarm):
-                call_next = True
-            if current_swarm:
-                for character in current_swarm:
+            for character in self._active_chars:
+                character.tick()
+            if len(self._active_chars) < len(self._current_swarm):
+                self._call_next = True
+            if self._current_swarm:
+                for character in self._current_swarm:
                     if (
                         character.motion.active_path
-                        and character.motion.active_path.path_id != active_swarm_area
+                        and character.motion.active_path.path_id != self._active_swarm_area
                         and "swarm_area" in character.motion.active_path.path_id
-                        and int(character.motion.active_path.path_id[0]) > int(active_swarm_area[0])
+                        and int(character.motion.active_path.path_id[0]) > int(self._active_swarm_area[0])
                     ):
-                        active_swarm_area = character.motion.active_path.path_id
-                        for other in current_swarm:
-                            if other is not character and random.random() < self.config.swarm_coordination:
-                                other.motion.activate_path(other.motion.paths[active_swarm_area])
+                        self._active_swarm_area = character.motion.active_path.path_id
+                        for other in self._current_swarm:
+                            if other is not character and random.random() < self._config.swarm_coordination:
+                                other.motion.activate_path(other.motion.paths[self._active_swarm_area])
                         break
 
             self._active_chars = [character for character in self._active_chars if character.is_active]
-        self._built = False
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method."""
-        for character in self._active_chars:
-            character.tick()
+
+class Swarm(BaseEffect[SwarmConfig]):
+    """Characters are grouped into swarms and move around the terminal before settling into position."""
+
+    _config_cls = SwarmConfig
+    _iterator_cls = SwarmIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

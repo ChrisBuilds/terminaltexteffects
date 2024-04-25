@@ -1,18 +1,17 @@
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import animation, easing, geometry, graphics, motion
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return SpotlightsEffect, EffectConfig
+    return Spotlights, SpotlightsConfig
 
 
 @argclass(
@@ -23,7 +22,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 Example: terminaltexteffects spotlights --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration 750 --search-speed-range 0.25-0.5 --spotlight-count 3""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class SpotlightsConfig(ArgsDataClass):
     """Configuration for the Spotlights effect.
 
     Attributes:
@@ -113,78 +112,65 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return SpotlightsEffect
+        return Spotlights
 
 
-class SpotlightsEffect:
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
+    def __init__(self, effect: "Spotlights") -> None:
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._illuminated_chars: set[EffectCharacter] = set()
         self._character_color_map: dict[EffectCharacter, tuple[graphics.Color, graphics.Color]] = {}  # (bright, dark)
+        self._build()
 
-    def make_spotlights(self, num_spotlights: int) -> list[EffectCharacter]:
+    def _make_spotlights(self, num_spotlights: int) -> list[EffectCharacter]:
         spotlights: list[EffectCharacter] = []
-        minimum_distance = self.terminal.output_area.right // 4
+        minimum_distance = self._terminal.output_area.right // 4
         for _ in range(num_spotlights):
-            spotlight = self.terminal.add_character("O", self.terminal.output_area.random_coord(outside_scope=True))
+            spotlight = self._terminal.add_character("O", self._terminal.output_area.random_coord(outside_scope=True))
             spotlights.append(spotlight)
 
             spotlight_target_coords: list[Coord] = []
-            last_coord = self.terminal.output_area.random_coord()
+            last_coord = self._terminal.output_area.random_coord()
             spotlight_target_coords.append(last_coord)
             for _ in range(10):
-                next_coord = self.find_coord_at_minimum_distance(last_coord, minimum_distance)
+                next_coord = self._find_coord_at_minimum_distance(last_coord, minimum_distance)
                 spotlight_target_coords.append(next_coord)
                 last_coord = next_coord
 
             paths: list[motion.Path] = []
             for coord in spotlight_target_coords:
                 path = spotlight.motion.new_path(
-                    speed=random.uniform(self.config.search_speed_range[0], self.config.search_speed_range[1]),
+                    speed=random.uniform(self._config.search_speed_range[0], self._config.search_speed_range[1]),
                     ease=easing.in_out_quad,
                     id=str(len(paths)),
                 )
-                path.new_waypoint(coord, bezier_control=self.terminal.output_area.random_coord(outside_scope=True))
+                path.new_waypoint(coord, bezier_control=self._terminal.output_area.random_coord(outside_scope=True))
                 paths.append(path)
             spotlight.motion.chain_paths(paths, loop=True)
 
             path = spotlight.motion.new_path(speed=0.5, ease=easing.in_out_sine, id="center")
-            path.new_waypoint(self.terminal.output_area.center)
+            path.new_waypoint(self._terminal.output_area.center)
 
         return spotlights
 
-    def find_coord_at_minimum_distance(self, origin_coord: Coord, minimum_distance: int) -> Coord:
+    def _find_coord_at_minimum_distance(self, origin_coord: Coord, minimum_distance: int) -> Coord:
         coord_found = False
         while not coord_found:
-            coord = self.terminal.output_area.random_coord()
+            coord = self._terminal.output_area.random_coord()
             distance = geometry.find_length_of_line(origin_coord, coord)
             if distance >= minimum_distance:
                 coord_found = True
         return coord
 
-    def illuminate_chars(self, range: int) -> None:
+    def _illuminate_chars(self, range: int) -> None:
         coords_in_range: list[Coord] = []
         for spotlight in self._spotlights:
             coords_in_range.extend(geometry.find_coords_in_circle(spotlight.motion.current_coord, range))
         chars_in_range: set[EffectCharacter] = set()
         for coord in coords_in_range:
-            character = self.terminal.get_character_by_input_coord(coord)
+            character = self._terminal.get_character_by_input_coord(coord)
             if character and character.symbol != " ":
                 chars_in_range.add(character)
         chars_no_longer_in_range = self._illuminated_chars - chars_in_range
@@ -204,9 +190,9 @@ class SpotlightsEffect:
                 ]
             )
 
-            if distance > range * (1 - self.config.beam_falloff):
+            if distance > range * (1 - self._config.beam_falloff):
                 brightness_factor = max(
-                    1 - (distance - range * (1 - self.config.beam_falloff)) / (range * self.config.beam_falloff), 0.2
+                    1 - (distance - range * (1 - self._config.beam_falloff)) / (range * self._config.beam_falloff), 0.2
                 )
                 adjusted_color = animation.Animation.adjust_color_brightness(
                     self._character_color_map[character][0], brightness_factor
@@ -216,64 +202,64 @@ class SpotlightsEffect:
             character.animation.set_appearance(character.input_symbol, adjusted_color)
         self._illuminated_chars = chars_in_range
 
-    def build(self) -> None:
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_color_map.clear()
-        self._illuminated_chars.clear()
-        self._spotlights: list[EffectCharacter] = self.make_spotlights(self.config.spotlight_count)
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+    def _build(self) -> None:
+        self._spotlights: list[EffectCharacter] = self._make_spotlights(self._config.spotlight_count)
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             color_bright = final_gradient_mapping[character.input_coord]
-            self.terminal.set_character_visibility(character, True)
+            self._terminal.set_character_visibility(character, True)
             color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
             self._character_color_map[character] = (color_bright, color_dark)
             character.animation.set_appearance(character.input_symbol, color_dark)
-        self._built = True
-
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        illuminate_range = int(
-            max(min(self.terminal.output_area.right, self.terminal.output_area.top) // self.config.beam_width_ratio, 1)
+        self._illuminate_range = int(
+            max(
+                min(self._terminal.output_area.right, self._terminal.output_area.top) // self._config.beam_width_ratio,
+                1,
+            )
         )
-        search_duration = self.config.search_duration
-        searching = True
-        complete = False
+        self._search_duration = self._config.search_duration
+        self._searching = True
+        self._complete = False
         for spotlight in self._spotlights:
             spotlight_path_start = spotlight.motion.query_path("0")
             spotlight.motion.activate_path(spotlight_path_start)
             self._active_chars.append(spotlight)
-        while not complete:
-            self.illuminate_chars(illuminate_range)
-            if searching:
-                search_duration -= 1
-                if not search_duration:
+
+    def __next__(self) -> str:
+        if not self._complete:
+            self._illuminate_chars(self._illuminate_range)
+            if self._searching:
+                self._search_duration -= 1
+                if not self._search_duration:
                     for spotlight in self._spotlights:
                         spotlight_path_center = spotlight.motion.query_path("center")
                         spotlight.motion.activate_path(spotlight_path_center)
-                    searching = False
+                    self._searching = False
             if not any([spotlight.motion.active_path for spotlight in self._spotlights]):
                 while len(self._spotlights) > 1:
                     self._spotlights.pop()
-                illuminate_range += 1
-                if illuminate_range > max(self.terminal.output_area.right, self.terminal.output_area.top) // 1.5:
-                    complete = True
+                self._illuminate_range += 1
+                if (
+                    self._illuminate_range
+                    > max(self._terminal.output_area.right, self._terminal.output_area.top) // 1.5
+                ):
+                    self._complete = True
 
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
-        self._built = False
+            for character in self._active_chars:
+                character.tick()
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method on all active characters."""
-        for character in self._active_chars:
-            character.tick()
+
+class Spotlights(BaseEffect[SpotlightsConfig]):
+    """Spotlights search the text area, illuminating characters, before converging in the center and expanding."""
+
+    _config_cls = SpotlightsConfig
+    _iterator_cls = SpotlightsIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

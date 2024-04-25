@@ -1,12 +1,11 @@
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 @argclass(
@@ -89,60 +88,38 @@ class EffectConfig(ArgsDataClass):
         return NamedEffect
 
 
-class NamedEffect:
-    """Effect that ___."""
-
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+class NamedEffectIterator(BaseEffectIterator[EffectConfig]):
+    def __init__(self, effect: "NamedEffect") -> None:
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def build(self) -> None:
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
-        for character in self.terminal.get_characters():
+    def _build(self) -> None:
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
+                character.input_coord.row / self._terminal.output_area.top
             )
 
             # do something with the data if needed (sort, adjust positions, etc)
-        self._built = True
 
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
+    def __next__(self) -> str:
+        if self._pending_chars or self._active_chars:
+            # perform effect logic
+            for character in self._active_chars:
+                character.tick()
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        while self._pending_chars or self._active_chars:
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
 
-            self._active_chars = [character for character in self._active_chars if character.is_active]
+class NamedEffect(BaseEffect[EffectConfig]):
+    """Effect description."""
 
-        self._built = False
+    _config_cls = EffectConfig
+    _iterator_cls = NamedEffectIterator
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method on all active characters."""
-        for character in self._active_chars:
-            character.tick()
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

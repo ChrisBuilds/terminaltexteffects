@@ -1,16 +1,15 @@
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return WipeEffect, EffectConfig
+    return Wipe, WipeConfig
 
 
 @argclass(
@@ -20,7 +19,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     epilog="""Example: terminaltexteffects wipe --wipe-direction diagonal_bottom_left_to_top_right --final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 5 --wipe-delay 0""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class WipeConfig(ArgsDataClass):
     """Configuration for the Wipe effect.
 
     Attributes:
@@ -97,95 +96,76 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return WipeEffect
+        return Wipe
 
 
-class WipeEffect:
+class WipeIterator(BaseEffectIterator[WipeConfig]):
     """Effect that performs a wipe across the terminal to reveal characters."""
 
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+    def __init__(self, effect: "Wipe") -> None:
+        super().__init__(effect)
         self._pending_groups: list[list[EffectCharacter]] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def build(self) -> None:
-        self._pending_groups.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        direction = self.config.wipe_direction
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+    def _build(self) -> None:
+        direction = self._config.wipe_direction
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         sort_map = {
-            "column_left_to_right": self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-            "column_right_to_left": self.terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
-            "row_top_to_bottom": self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
-            "row_bottom_to_top": self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
-            "diagonal_top_left_to_bottom_right": self.terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
-            "diagonal_bottom_left_to_top_right": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
-            "diagonal_top_right_to_bottom_left": self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
-            "diagonal_bottom_right_to_top_left": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+            "column_left_to_right": self._terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            "column_right_to_left": self._terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            "row_top_to_bottom": self._terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            "row_bottom_to_top": self._terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
+            "diagonal_top_left_to_bottom_right": self._terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            "diagonal_bottom_left_to_top_right": self._terminal.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+            "diagonal_top_right_to_bottom_left": self._terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+            "diagonal_bottom_right_to_top_left": self._terminal.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         }
-        for group in self.terminal.get_characters_grouped(sort_map[direction]):
+        for group in self._terminal.get_characters_grouped(sort_map[direction]):
             for character in group:
                 wipe_scn = character.animation.new_scene()
                 wipe_gradient = graphics.Gradient(
                     final_gradient.spectrum[0],
                     self._character_final_color_map[character],
-                    steps=self.config.final_gradient_steps,
+                    steps=self._config.final_gradient_steps,
                 )
                 wipe_scn.apply_gradient_to_symbols(
-                    wipe_gradient, character.input_symbol, self.config.final_gradient_frames
+                    wipe_gradient, character.input_symbol, self._config.final_gradient_frames
                 )
                 character.animation.activate_scene(wipe_scn)
             self._pending_groups.append(group)
-        self._built = True
+        self._wipe_delay = self._config.wipe_delay
 
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        wipe_delay = self.config.wipe_delay
-        while self._pending_groups or self._active_chars:
-            if not wipe_delay:
+    def __next__(self) -> str:
+        if self._pending_groups or self._active_chars:
+            if not self._wipe_delay:
                 if self._pending_groups:
                     next_group = self._pending_groups.pop(0)
                     for character in next_group:
-                        self.terminal.set_character_visibility(character, True)
+                        self._terminal.set_character_visibility(character, True)
                         self._active_chars.append(character)
-                wipe_delay = self.config.wipe_delay
+                self._wipe_delay = self._config.wipe_delay
             else:
-                wipe_delay -= 1
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
-
+                self._wipe_delay -= 1
+            for character in self._active_chars:
+                character.tick()
             self._active_chars = [character for character in self._active_chars if character.is_active]
-        self._built = False
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method on all active characters."""
-        for character in self._active_chars:
-            character.tick()
+
+class Wipe(BaseEffect[WipeConfig]):
+    """Effect that performs a wipe across the terminal to reveal characters."""
+
+    _config_cls = WipeConfig
+    _iterator_cls = WipeIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

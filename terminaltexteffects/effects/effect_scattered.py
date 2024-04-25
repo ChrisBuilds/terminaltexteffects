@@ -1,16 +1,15 @@
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import arg_validators, easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return ScatteredEffect, EffectConfig
+    return Scattered, ScatteredConfig
 
 
 @argclass(
@@ -21,7 +20,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 Example: terminaltexteffects scattered --final-gradient-stops ff9048 ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class ScatteredConfig(ArgsDataClass):
     """Configuration for the effect.
 
     Attributes:
@@ -72,7 +71,7 @@ class EffectConfig(ArgsDataClass):
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
         type_parser=arg_validators.PositiveFloat.type_parser,
-        default=0.5,
+        default=0.3,
         metavar=arg_validators.PositiveFloat.METAVAR,
         help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
     )  # type: ignore[assignment]
@@ -88,49 +87,32 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return ScatteredEffect
+        return Scattered
 
 
-class ScatteredEffect:
+class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
     """Effect that moves the characters into position from random starting locations."""
 
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+    def __init__(self, effect: "Scattered") -> None:
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def build(self) -> None:
-        """Prepares the data for the effect by scattering the characters within range of the input width and height."""
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+    def _build(self) -> None:
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            if self.terminal.output_area.right < 2 or self.terminal.output_area.top < 2:
+            if self._terminal.output_area.right < 2 or self._terminal.output_area.top < 2:
                 character.motion.set_coordinate(Coord(1, 1))
             else:
-                character.motion.set_coordinate(self.terminal.output_area.random_coord())
+                character.motion.set_coordinate(self._terminal.output_area.random_coord())
             input_coord_path = character.motion.new_path(
-                speed=self.config.movement_speed, ease=self.config.movement_easing
+                speed=self._config.movement_speed, ease=self._config.movement_easing
             )
             input_coord_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
@@ -140,34 +122,36 @@ class ScatteredEffect:
                 EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
             )
             character.motion.activate_path(input_coord_path)
-            self.terminal.set_character_visibility(character, True)
+            self._terminal.set_character_visibility(character, True)
             gradient_scn = character.animation.new_scene()
             char_gradient = graphics.Gradient(
                 final_gradient.spectrum[0], self._character_final_color_map[character], steps=10
             )
             gradient_scn.apply_gradient_to_symbols(
-                char_gradient, character.input_symbol, self.config.final_gradient_frames
+                char_gradient, character.input_symbol, self._config.final_gradient_frames
             )
             character.animation.activate_scene(gradient_scn)
             self._active_chars.append(character)
-        self._built = True
+        self._initial_hold_frames = 25
 
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        yield self.terminal.get_formatted_output_string()
-        while self._pending_chars or self._active_chars:
-            self._animate_chars()
+    def __next__(self) -> str:
+        if self._pending_chars or self._active_chars:
+            if self._initial_hold_frames:
+                self._initial_hold_frames -= 1
+                return self._terminal.get_formatted_output_string()
+            for character in self._active_chars:
+                character.tick()
             self._active_chars = [character for character in self._active_chars if character.is_active]
-            yield self.terminal.get_formatted_output_string()
-        self._built = False
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        for character in self._active_chars:
-            character.tick()
+
+class Scattered(BaseEffect[ScatteredConfig]):
+    """Effect that moves the characters into position from random starting locations."""
+
+    _config_cls = ScatteredConfig
+    _iterator_cls = ScatteredIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

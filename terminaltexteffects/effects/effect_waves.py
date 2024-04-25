@@ -1,16 +1,15 @@
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return WavesEffect, EffectConfig
+    return Waves, WavesConfig
 
 
 @argclass(
@@ -21,7 +20,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▇ ▆ ▅ ▄ ▃ ▂ ▁ --wave-gradient-stops f0ff65 ffb102 31a0d4 ffb102 f0ff65 --wave-gradient-steps 6 --final-gradient-stops ffb102 31a0d4 f0ff65 --final-gradient-steps 12 --wave-count 7 --wave-length 2 --wave-easing IN_OUT_SINE""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class WavesConfig(ArgsDataClass):
     """Configuration for the Waves effect.
 
     Attributes:
@@ -119,88 +118,69 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return WavesEffect
+        return Waves
 
 
-class WavesEffect:
+class WavesIterator(BaseEffectIterator[WavesConfig]):
     """Effect that creates waves that travel across the terminal, leaving behind the characters."""
 
-    def __init__(
-        self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+    def __init__(self, effect: "Waves") -> None:
+        super().__init__(effect)
         self._pending_columns: list[list[EffectCharacter]] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def build(self) -> None:
-        """Prepares the data for the effect by creating the wave animations."""
-        self._pending_columns.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+    def _build(self) -> None:
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        wave_gradient = graphics.Gradient(*self.config.wave_gradient_stops, steps=self.config.wave_gradient_steps)
-        for character in self.terminal.get_characters():
+        wave_gradient = graphics.Gradient(*self._config.wave_gradient_stops, steps=self._config.wave_gradient_steps)
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             wave_scn = character.animation.new_scene()
-            wave_scn.ease = self.config.wave_easing
-            for _ in range(self.config.wave_count):
+            wave_scn.ease = self._config.wave_easing
+            for _ in range(self._config.wave_count):
                 wave_scn.apply_gradient_to_symbols(
-                    wave_gradient, self.config.wave_symbols, duration=self.config.wave_length
+                    wave_gradient, self._config.wave_symbols, duration=self._config.wave_length
                 )
             final_scn = character.animation.new_scene()
             for step in graphics.Gradient(
                 wave_gradient.spectrum[-1],
                 self._character_final_color_map[character],
-                steps=self.config.final_gradient_steps,
+                steps=self._config.final_gradient_steps,
             ):
                 final_scn.add_frame(character.input_symbol, 10, color=step)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, wave_scn, EventHandler.Action.ACTIVATE_SCENE, final_scn
             )
             character.animation.activate_scene(wave_scn)
-        for column in self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT):
+        for column in self._terminal.get_characters_grouped(
+            grouping=self._terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT
+        ):
             self._pending_columns.append(column)
-        self._built = True
 
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        while self._pending_columns or self._active_chars:
+    def __next__(self) -> str:
+        if self._pending_columns or self._active_chars:
             if self._pending_columns:
                 next_column = self._pending_columns.pop(0)
                 for character in next_column:
-                    self.terminal.set_character_visibility(character, True)
+                    self._terminal.set_character_visibility(character, True)
                     self._active_chars.append(character)
-            yield self.terminal.get_formatted_output_string()
-            self._animate_chars()
-
+            for character in self._active_chars:
+                character.tick()
             self._active_chars = [character for character in self._active_chars if character.is_active]
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-        self._built = False
 
-    def _animate_chars(self) -> None:
-        """Animates the characters by calling the tick method on all active characters."""
-        for character in self._active_chars:
-            character.tick()
+class Waves(BaseEffect[WavesConfig]):
+    """Effect that creates waves that travel across the terminal, leaving behind the characters."""
+
+    _config_cls = WavesConfig
+    _iterator_cls = WavesIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)

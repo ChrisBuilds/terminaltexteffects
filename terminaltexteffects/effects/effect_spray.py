@@ -2,20 +2,19 @@
 
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum, auto
 
 import terminaltexteffects.utils.arg_validators as arg_validators
 from terminaltexteffects.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    return SprayEffect, EffectConfig
+    return Spray, SprayConfig
 
 
 @argclass(
@@ -26,7 +25,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 --movement-easing OUT_EXPO""",
 )
 @dataclass
-class EffectConfig(ArgsDataClass):
+class SprayConfig(ArgsDataClass):
     """Configuration for the Spray effect.
 
     Attributes:
@@ -103,85 +102,78 @@ class EffectConfig(ArgsDataClass):
 
     @classmethod
     def get_effect_class(cls):
-        return SprayEffect
+        return Spray
 
 
-class SprayPosition(Enum):
-    """Position for the spray origin."""
+class SprayIterator(BaseEffectIterator[SprayConfig]):
+    class _SprayPosition(Enum):
+        """Position for the spray origin."""
 
-    N = auto()
-    NE = auto()
-    E = auto()
-    SE = auto()
-    S = auto()
-    SW = auto()
-    W = auto()
-    NW = auto()
-    CENTER = auto()
-
-
-class SprayEffect:
-    """Effect that draws the characters spawning at varying rates from a single point."""
+        N = auto()
+        NE = auto()
+        E = auto()
+        SE = auto()
+        S = auto()
+        SW = auto()
+        W = auto()
+        NW = auto()
+        CENTER = auto()
 
     def __init__(
         self,
-        input_data: str,
-        effect_config: EffectConfig = EffectConfig(),
-        terminal_config: TerminalConfig = TerminalConfig(),
-    ):
-        """Initializes the effect.
-
-        Args:
-            input_data (str): The input data to apply the effect to.
-            effect_config (EffectConfig): The configuration for the effect.
-            terminal_config (TerminalConfig): The configuration for the terminal.
-        """
-        self.terminal = Terminal(input_data, terminal_config)
-        self.config = effect_config
-        self._built = False
+        effect: "Spray",
+    ) -> None:
+        super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self._build()
 
-    def build(self) -> None:
-        """Prepares the data for the effect by starting all of the characters from a point based on SparklerPosition."""
-        self._pending_chars.clear()
-        self._active_chars.clear()
-        self._character_final_color_map.clear()
+    def _build(self) -> None:
         self._spray_position = {
-            "n": SprayPosition.N,
-            "ne": SprayPosition.NE,
-            "e": SprayPosition.E,
-            "se": SprayPosition.SE,
-            "s": SprayPosition.S,
-            "sw": SprayPosition.SW,
-            "w": SprayPosition.W,
-            "nw": SprayPosition.NW,
-            "center": SprayPosition.CENTER,
-        }.get(self.config.spray_position, SprayPosition.E)
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+            "n": SprayIterator._SprayPosition.N,
+            "ne": SprayIterator._SprayPosition.NE,
+            "e": SprayIterator._SprayPosition.E,
+            "se": SprayIterator._SprayPosition.SE,
+            "s": SprayIterator._SprayPosition.S,
+            "sw": SprayIterator._SprayPosition.SW,
+            "w": SprayIterator._SprayPosition.W,
+            "nw": SprayIterator._SprayPosition.NW,
+            "center": SprayIterator._SprayPosition.CENTER,
+        }.get(self._config.spray_position, SprayIterator._SprayPosition.E)
+        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
         )
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         spray_origin_map = {
-            SprayPosition.CENTER: (self.terminal.output_area.center),
-            SprayPosition.N: Coord(self.terminal.output_area.right // 2, self.terminal.output_area.top),
-            SprayPosition.NW: Coord(self.terminal.output_area.left, self.terminal.output_area.top),
-            SprayPosition.W: Coord(self.terminal.output_area.left, self.terminal.output_area.top // 2),
-            SprayPosition.SW: Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
-            SprayPosition.S: Coord(self.terminal.output_area.right // 2, self.terminal.output_area.bottom),
-            SprayPosition.SE: Coord(self.terminal.output_area.right - 1, self.terminal.output_area.bottom),
-            SprayPosition.E: Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top // 2),
-            SprayPosition.NE: Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top),
+            SprayIterator._SprayPosition.CENTER: (self._terminal.output_area.center),
+            SprayIterator._SprayPosition.N: Coord(
+                self._terminal.output_area.right // 2, self._terminal.output_area.top
+            ),
+            SprayIterator._SprayPosition.NW: Coord(self._terminal.output_area.left, self._terminal.output_area.top),
+            SprayIterator._SprayPosition.W: Coord(self._terminal.output_area.left, self._terminal.output_area.top // 2),
+            SprayIterator._SprayPosition.SW: Coord(self._terminal.output_area.left, self._terminal.output_area.bottom),
+            SprayIterator._SprayPosition.S: Coord(
+                self._terminal.output_area.right // 2, self._terminal.output_area.bottom
+            ),
+            SprayIterator._SprayPosition.SE: Coord(
+                self._terminal.output_area.right - 1, self._terminal.output_area.bottom
+            ),
+            SprayIterator._SprayPosition.E: Coord(
+                self._terminal.output_area.right - 1, self._terminal.output_area.top // 2
+            ),
+            SprayIterator._SprayPosition.NE: Coord(
+                self._terminal.output_area.right - 1, self._terminal.output_area.top
+            ),
         }
 
-        for character in self.terminal.get_characters():
+        for character in self._terminal.get_characters():
             character.motion.set_coordinate(spray_origin_map[self._spray_position])
             input_coord_path = character.motion.new_path(
-                speed=random.uniform(self.config.movement_speed[0], self.config.movement_speed[1]),
-                ease=self.config.movement_easing,
+                speed=random.uniform(self._config.movement_speed[0], self._config.movement_speed[1]),
+                ease=self._config.movement_easing,
             )
             input_coord_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
@@ -199,31 +191,30 @@ class SprayEffect:
             character.motion.activate_path(input_coord_path)
             self._pending_chars.append(character)
         random.shuffle(self._pending_chars)
-        self._built = True
+        self._volume = max(int(len(self._pending_chars) * self._config.spray_volume), 1)
 
-    @property
-    def built(self) -> bool:
-        """Returns True if the effect has been built."""
-        return self._built
-
-    def __iter__(self) -> Iterator[str]:
-        """Runs the effect."""
-        if not self._built:
-            self.build()
-        volume = max(int(len(self._pending_chars) * self.config.spray_volume), 1)
-        while self._pending_chars or self._active_chars:
+    def __next__(self) -> str:
+        if self._pending_chars or self._active_chars:
             if self._pending_chars:
-                for _ in range(random.randint(1, volume)):
+                for _ in range(random.randint(1, self._volume)):
                     if self._pending_chars:
                         next_character = self._pending_chars.pop()
-                        self.terminal.set_character_visibility(next_character, True)
+                        self._terminal.set_character_visibility(next_character, True)
                         self._active_chars.append(next_character)
 
-            self._animate_chars()
-            yield self.terminal.get_formatted_output_string()
+            for character in self._active_chars:
+                character.tick()
             self._active_chars = [character for character in self._active_chars if character.is_active]
-        self._built = False
+            return self._terminal.get_formatted_output_string()
+        else:
+            raise StopIteration
 
-    def _animate_chars(self) -> None:
-        for character in self._active_chars:
-            character.tick()
+
+class Spray(BaseEffect[SprayConfig]):
+    """Effect that draws the characters spawning at varying rates from a single point."""
+
+    _config_cls = SprayConfig
+    _iterator_cls = SprayIterator
+
+    def __init__(self, input_data: str) -> None:
+        super().__init__(input_data)
