@@ -14,6 +14,10 @@
 
 #### New Engine Features (unreleased)
 
+* Library support: TTE effects are now importable. All effects are iterators that return strings for each frame of the output. See README for more information.
+* Terminal: New terminal argument (--terminal-dimensions) allows specification of the terminal dimensions without relying on auto-detection. Especially useful in cases where TTE is being used as a library in non-terminal or TUI contexts.
+* Terminal: New terminal argument (--ignore-terminal-dimensions) causes the output area dimensions to match the input data dimensions without regard to the terminal.
+
 ### Changes (unreleased)
 
 ---
@@ -26,6 +30,17 @@
 #### Engine Changes (unreleased)
 
 * graphics.Gradient ```__iter___()``` refactored to return a generator. No longer improperly implements the iterator protocol by resetting index in ```___iter__()```.
+* Terminal: Argument --animation-rate is now --frame-rate and is specified as a target frames per second.
+* Terminal: Argument --no-wrap is now --wrap-text and defaults to False.
+* Terminal: If a terminal object is instantiated without a TerminalConfig passed, it will instantiate a new TerminalConfig.
+* Terminal: Terminal.get_formatted_output_string() will return a string representing the current frame.
+* Terminal: Terminal.print() will print the frame to the terminal and handle cursor position. The optional argument (enforce_frame_rate: bool = True) determines if the frame rate set at Terminal.config.frame_rate is enforced. If set to False, the print will occur without delay.
+* New argument validator for terminal dimensions (arg_validators.TerminalDeminsions).
+* New module base_effect.py:
+* base_effect.BaseEffect:
+  * This is an abstract class which forms the base iterable for all effects and provides the terminal_output() context manager.
+* base_effect.BaseEffectIterator:
+  * This is an abstract class which provides the functionality to enable iteration over effects.
 
 #### Other Changes (unreleased)
 
