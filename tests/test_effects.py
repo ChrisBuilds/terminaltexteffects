@@ -60,7 +60,7 @@ test_inputs = [t1, t2, t3, t4, t5, t6]
 
 terminal_config = TerminalConfig()
 terminal_config.frame_rate = 0
-terminal_config.use_terminal_dimensions = False
+terminal_config.ignore_terminal_dimensions = True
 
 
 def test_beams_effect() -> None:
@@ -308,7 +308,7 @@ def test_terminal_xterm_colors() -> None:
         terminal_config.frame_rate = 0
         terminal_config.xterm_colors = True
         terminal_config.frame_rate = 0
-        terminal_config.use_terminal_dimensions = False
+        terminal_config.ignore_terminal_dimensions = True
         effect = effect_wipe.Wipe(input_data)
         effect.terminal_config = terminal_config
         for _ in effect:
@@ -320,7 +320,7 @@ def test_terminal_no_color() -> None:
         terminal_config = TerminalConfig()
         terminal_config.frame_rate = 0
         terminal_config.no_color = True
-        terminal_config.use_terminal_dimensions = False
+        terminal_config.ignore_terminal_dimensions = True
         effect = effect_wipe.Wipe(input_data)
         effect.terminal_config = terminal_config
         for _ in effect:
