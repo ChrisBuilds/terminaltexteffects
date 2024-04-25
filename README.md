@@ -108,6 +108,16 @@ for frame in effect:
     ...
 ```
 
+For use cases where the terminal dimensions cannot be automatically discovered or you would like to manually define the dimensions, the ```effect.terminal_config``` can be configured as follows:
+
+```python
+effect.terminal_config.ignore_terminal_dimensions = True # output area dimensions are based on the input data
+```
+
+```python
+effect.terminal_config.terminal_dimensions = (80, 24) # width, height
+```
+
 ## Options
 
 ```markdown
