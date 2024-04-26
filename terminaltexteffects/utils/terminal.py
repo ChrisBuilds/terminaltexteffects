@@ -15,7 +15,17 @@ from terminaltexteffects.utils.geometry import Coord
 
 
 @dataclass
-class TerminalArgs(ArgsDataClass):
+class TerminalConfig(ArgsDataClass):
+    """Configuration for the terminal.
+
+    Attributes:
+        tab_width (int): Number of spaces to use for a tab character.
+        xterm_colors (bool): Convert any colors specified in RBG hex to the closest XTerm-256 color.
+        no_color (bool): Disable all colors in the effect.
+        no_wrap (int): Disable wrapping of text.
+        animation_rate (float): Minimum time, in seconds, between animation steps.
+        use_terminal_dimensions (bool): Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal width."""
+
     tab_width: int = ArgField(
         cmd_name=["--tab-width"],
         type_parser=arg_validators.PositiveInt.type_parser,
@@ -24,6 +34,8 @@ class TerminalArgs(ArgsDataClass):
         help="Number of spaces to use for a tab character.",
     )  # type: ignore[assignment]
 
+    "int : Number of spaces to use for a tab character."
+
     xterm_colors: bool = ArgField(
         cmd_name=["--xterm-colors"],
         default=False,
@@ -31,22 +43,45 @@ class TerminalArgs(ArgsDataClass):
         help="Convert any colors specified in RBG hex to the closest XTerm-256 color.",
     )  # type: ignore[assignment]
 
+    "bool : Convert any colors specified in RBG hex to the closest XTerm-256 color."
+
     no_color: bool = ArgField(
         cmd_name=["--no-color"], default=False, action="store_true", help="Disable all colors in the effect."
     )  # type: ignore[assignment]
 
-    no_wrap: int = ArgField(cmd_name="--no-wrap", default=False, action="store_true", help="Disable wrapping of text.")  # type: ignore[assignment]
+    "bool : Disable all colors in the effect."
 
-    animation_rate: float = ArgField(
-        cmd_name=["-a", "--animation-rate"],
-        type_parser=arg_validators.NonNegativeFloat.type_parser,
-        default=0.01,
-        help="""Minimum time, in seconds, between animation steps. 
-        This value does not normally need to be modified. 
-        Use this to increase the playback speed of all aspects of the effect. 
-        This will have no impact beyond a certain lower threshold due to the 
-        processing speed of your device.""",
+    wrap_text: int = ArgField(
+        cmd_name="--wrap-text", default=False, action="store_true", help="Wrap text wider than the output area width."
     )  # type: ignore[assignment]
+    "bool : Wrap text wider than the output area width."
+
+    frame_rate: float = ArgField(
+        cmd_name="--frame-rate",
+        type_parser=arg_validators.PositiveInt.type_parser,
+        default=100,
+        help="""Target frame rate for the animation.""",
+    )  # type: ignore[assignment]
+
+    "float : Minimum time, in seconds, between animation steps."
+
+    terminal_dimensions: tuple[int, int] = ArgField(
+        cmd_name=["--terminal-dimensions"],
+        type_parser=arg_validators.TerminalDimensions.type_parser,
+        nargs=2,
+        default=(0, 0),
+        help="Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal width.",
+    )  # type: ignore[assignment]
+
+    "tuple(int,int) : Terminal dimensions as (width, height), if set to (0,0) the terminal dimensions are detected automatically."
+
+    ignore_terminal_dimensions: bool = ArgField(
+        cmd_name=["--ignore-terminal-dimensions"],
+        default=False,
+        action="store_true",
+        help="Ignore the terminal dimensions and use the input data dimensions for the output area.",
+    )  # type: ignore[assignment]
+    "bool : Ignore the terminal dimensions and use the input data dimensions for the output area."
 
 
 @dataclass
@@ -142,12 +177,23 @@ class Terminal:
         OUTSIDE_ROW_TO_MIDDLE = auto()
         MIDDLE_ROW_TO_OUTSIDE = auto()
 
-    def __init__(self, input_data: str, args: TerminalArgs):
-        self.input_data = input_data.replace("\t", " " * args.tab_width)
-        self.args = args
-        self.width, self.height = self._get_terminal_dimensions()
+    def __init__(self, input_data: str, config: TerminalConfig | None = None):
+        if config is None:
+            self.config = TerminalConfig()
+        else:
+            self.config = config
+        if not input_data:
+            input_data = "No Input."
+        self.input_data = input_data.replace("\t", " " * self.config.tab_width)
+        if self.config.ignore_terminal_dimensions:
+            self.width = max([len(line) for line in self.input_data.splitlines()])
+            self.height = len(self.input_data.splitlines()) + 1
+        elif self.config.terminal_dimensions == (0, 0):
+            self.width, self.height = self._get_terminal_dimensions()
+        else:
+            self.width, self.height = self.config.terminal_dimensions
         self.next_character_id = 0
-        self._input_characters = self._decompose_input(args.xterm_colors, args.no_color)
+        self._input_characters = self._decompose_input(self.config.xterm_colors, self.config.no_color)
         self._added_characters: list[EffectCharacter] = []
         self.input_width = max([character.input_coord.column for character in self._input_characters])
         self.input_height = max([character.input_coord.row for character in self._input_characters])
@@ -163,11 +209,9 @@ class Terminal:
         }
         self._fill_characters = self._make_fill_characters()
         self.visible_characters: set[EffectCharacter] = set()
-        self.animation_rate = args.animation_rate
+        self.frame_rate = self.config.frame_rate
         self.last_time_printed = time.time()
         self._update_terminal_state()
-
-        self._prep_outputarea()
 
     def _get_terminal_dimensions(self) -> tuple[int, int]:
         """Gets the terminal dimensions.
@@ -236,7 +280,7 @@ class Terminal:
         if not self.input_data.strip():
             self.input_data = "No Input."
         lines = self.input_data.splitlines()
-        formatted_lines = self._wrap_lines(lines) if not self.args.no_wrap else [line[: self.width] for line in lines]
+        formatted_lines = self._wrap_lines(lines) if self.config.wrap_text else [line[: self.width] for line in lines]
         input_height = len(formatted_lines)
         input_characters = []
         for row, line in enumerate(formatted_lines):
@@ -278,8 +322,8 @@ class Terminal:
             EffectCharacter: the character that was added
         """
         character = EffectCharacter(self.next_character_id, symbol, coord.column, coord.row)
-        character.animation.use_xterm_colors = self.args.xterm_colors
-        character.animation.no_color = self.args.no_color
+        character.animation.use_xterm_colors = self.config.xterm_colors
+        character.animation.no_color = self.config.no_color
         self._added_characters.append(character)
         self.next_character_id += 1
         return character
@@ -297,10 +341,14 @@ class Terminal:
         terminal_state = ["".join(row) for row in rows]
         self.terminal_state = terminal_state
 
-    def _prep_outputarea(self) -> None:
-        """Prepares the terminal for the effect by adding empty lines above."""
+    def prep_outputarea(self) -> None:
+        """Prepares the terminal for the effect by adding empty lines and hiding the cursor."""
         sys.stdout.write(ansitools.HIDE_CURSOR())
         print("\n" * self.output_area.top)
+
+    def restore_cursor(self) -> None:
+        """Restores the cursor visibility."""
+        sys.stdout.write(ansitools.SHOW_CURSOR())
 
     def get_characters(
         self,
@@ -487,17 +535,40 @@ class Terminal:
         else:
             self.visible_characters.discard(character)
 
-    def print(self):
-        """Prints the current terminal state to stdout while preserving the cursor position."""
+    def get_formatted_output_string(self) -> str:
+        """Get the formatted output string based on the current terminal state.
+
+        This method updates the internal terminal representation state before returning the formatted output string.
+
+        Returns:
+            str: The formatted output string.
+        """
         self._update_terminal_state()
-        time_since_last_print = time.time() - self.last_time_printed
-        if time_since_last_print < self.animation_rate:
-            time.sleep(self.animation_rate - time_since_last_print)
-        output = "\n".join(self.terminal_state[::-1])
+        output_string = "\n".join(self.terminal_state[::-1])
+        return output_string
+
+    def print(self, output_string: str, *, enforce_frame_rate: bool = True):
+        """Prints the current terminal state to stdout while preserving the cursor position.
+
+        Args:
+            output_string (str): The string to be printed.
+            enforce_frame_rate (bool, optional): Whether to enforce the frame rate set in the terminal config. Defaults to True.
+
+        Notes:
+            This method includes animation timing to control the frame rate.
+            If the time since the last print is less than required to limit the frame rate, the method will sleep for the remaining time
+            to ensure a consistent animation speed.
+
+        """
+        if enforce_frame_rate:
+            frame_delay = 1 / self.frame_rate
+            time_since_last_print = time.time() - self.last_time_printed
+            if time_since_last_print < frame_delay:
+                time.sleep(frame_delay - time_since_last_print)
         sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
         sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.output_area.top))
         sys.stdout.write(ansitools.MOVE_CURSOR_TO_COLUMN(1))
-        sys.stdout.write(output)
+        sys.stdout.write(output_string)
         sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
         sys.stdout.flush()
         self.last_time_printed = time.time()

@@ -1,13 +1,11 @@
 import argparse
 import importlib
 import pkgutil
-import sys
 
 import terminaltexteffects.effects
-import terminaltexteffects.utils.ansitools as ansitools
 import terminaltexteffects.utils.terminal as term
 from terminaltexteffects.utils.argsdataclass import ArgsDataClass
-from terminaltexteffects.utils.terminal import TerminalArgs
+from terminaltexteffects.utils.terminal import TerminalConfig
 
 
 def main():
@@ -17,7 +15,7 @@ def main():
         epilog="Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciphertext-color 00ff00 --plaintext-color ff0000 --final-color 0000ff",
     )
 
-    TerminalArgs.add_args_to_parser(parser)
+    TerminalConfig._add_args_to_parser(parser)
 
     subparsers = parser.add_subparsers(
         title="Effect",
@@ -33,22 +31,23 @@ def main():
 
         if hasattr(module, "get_effect_and_args"):
             effect_class, args_class = tuple[any, ArgsDataClass](module.get_effect_and_args())
-            args_class.add_to_args_subparsers(subparsers)
+            args_class._add_to_args_subparsers(subparsers)
 
     args = parser.parse_args()
     input_data = term.Terminal.get_piped_input()
     if not input_data.strip():
         print("NO INPUT.")
     else:
-        try:
-            terminal_args = TerminalArgs.from_parsed_args_mapping(args, TerminalArgs)
-            terminal = term.Terminal(input_data, terminal_args)
-            effect_args = ArgsDataClass.from_parsed_args_mapping(args)
-            effect_class = effect_args.get_effect_class()
-            effect = effect_class(terminal, effect_args)
-            effect.run()
-        finally:
-            sys.stdout.write(ansitools.SHOW_CURSOR())
+        terminal_config = TerminalConfig._from_parsed_args_mapping(args, TerminalConfig)
+        effect_config = ArgsDataClass._from_parsed_args_mapping(args)
+        effect_class = effect_config.get_effect_class()
+        terminal_config.use_terminal_dimensions = True
+        effect = effect_class(input_data)
+        effect.effect_config = effect_config
+        effect.terminal_config = terminal_config
+        with effect.terminal_output() as terminal:
+            for frame in effect:
+                terminal.print(frame)
 
 
 if __name__ == "__main__":

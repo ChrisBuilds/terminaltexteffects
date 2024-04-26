@@ -3,6 +3,8 @@ import inspect
 import typing
 from dataclasses import MISSING, Field, dataclass, fields
 
+from terminaltexteffects.utils.arg_validators import CustomFormatter
+
 
 class ArgField(Field):
     """
@@ -46,7 +48,7 @@ class ArgField(Field):
         help: str,
         type_parser: typing.Callable | None = None,
         metavar: str | None = None,
-        nargs: str | None = None,
+        nargs: str | int | None = None,
         action: str | None = None,
         required: bool = False,
         choices: list[str | int] | None = None,
@@ -81,7 +83,7 @@ class ArgField(Field):
         cmd_name: str | list[str]
         type_parser: typing.Any | None = None
         metavar: str | None = None
-        nargs: str | None = None
+        nargs: str | int | None = None
         help: str | None = None
         action: str | None = None
         required: bool = False
@@ -95,7 +97,6 @@ class ArgParserDescriptor:
     """
 
     name: str
-    formatter_class: typing.Any
     help: str
     description: str
     epilog: str
@@ -115,7 +116,7 @@ class ArgsDataClass:
     """
 
     @classmethod
-    def from_parsed_args_mapping(cls, parsed_args: argparse.Namespace, arg_class=None):
+    def _from_parsed_args_mapping(cls, parsed_args: argparse.Namespace, arg_class=None):
         """
         Creates an instance of the ArgsDataClass from parsed command-line arguments.
 
@@ -157,7 +158,7 @@ class ArgsDataClass:
         return new_instance
 
     @classmethod
-    def get_all_fields(cls) -> dict[str, Field]:
+    def _get_all_fields(cls) -> dict[str, Field]:
         """
         Retrieves all fields defined in the ArgsDataClass and returns them as a dictionary.
 
@@ -177,7 +178,7 @@ class ArgsDataClass:
         return fields_list
 
     @classmethod
-    def add_args_to_parser(cls, parser: argparse.ArgumentParser):
+    def _add_args_to_parser(cls, parser: argparse.ArgumentParser):
         """
         Adds arguments to the provided parser based on the fields defined in the ArgsDataClass.
 
@@ -197,7 +198,7 @@ class ArgsDataClass:
             it is wrapped in a list before being passed to `add_argument`.
             If a field has no metadata, it is skipped and no corresponding argument is added to the parser.
         """
-        arg_fields = cls.get_all_fields()
+        arg_fields = cls._get_all_fields()
         for arg in arg_fields.values():
             if not arg.metadata:
                 continue
@@ -218,9 +219,10 @@ class ArgsDataClass:
                 arg_descriptor[attr_name] = value
 
             parser.add_argument(*additional_metadata.cmd_name, **arg_descriptor, default=arg.default)
+        parser.formatter_class = CustomFormatter
 
     @classmethod
-    def add_to_args_subparsers(cls, subparsers: argparse._SubParsersAction):
+    def _add_to_args_subparsers(cls, subparsers: argparse._SubParsersAction):
         """Adds arguments to the subparser.
 
         Args:
@@ -230,24 +232,21 @@ class ArgsDataClass:
         sub_parser_descriptor = getattr(cls, "arg_class_metadata")
         new_parser = subparsers.add_parser(**vars(sub_parser_descriptor))
         new_parser.set_defaults(arg_class=cls)
-        cls.add_args_to_parser(new_parser)
+        cls._add_args_to_parser(new_parser)
 
 
-def argclass(name: str, formatter_class: typing.Any, help: str, description: str, epilog: str):
+def argclass(name: str, help: str, description: str, epilog: str):
     """Decorator for providing required metadata to an "ArgDataClass"
 
     Args:
         name (str): name for parser or subparser
-        formatter_class (any): formatter function for parser or subparser
         help (str): help string for parser or subparser
         description (str): description string for parser or subparser
         epilog (str): epilog string for parser or subparser
     """
 
     def decorator(cls):
-        cls.arg_class_metadata = ArgParserDescriptor(
-            name=name, formatter_class=formatter_class, help=help, description=description, epilog=epilog
-        )
+        cls.arg_class_metadata = ArgParserDescriptor(name=name, help=help, description=description, epilog=epilog)
         return cls
 
     return decorator

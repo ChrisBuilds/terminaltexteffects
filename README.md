@@ -13,14 +13,15 @@
   </p>
 </p>
 
-[![PyPI - Version](https://img.shields.io/pypi/v/terminaltexteffects?style=flat&color=green)](http://pypi.org/project/terminaltexteffects/ "![PyPI - Version](https://img.shields.io/pypi/v/terminaltexteffects?style=flat&color=green)")  ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/terminaltexteffects) [![Python Bytes](https://img.shields.io/badge/Python_Bytes-377-D7F9FF?logo=applepodcasts&labelColor=blue)](https://youtu.be/eWnYlxOREu4?t=1549) ![License](https://img.shields.io/github/license/ChrisBuilds/terminaltexteffects)
+[![PyPI - Version](https://img.shields.io/pypi/v/terminaltexteffects?style=flat&color=green)](http://pypi.org/project/terminaltexteffects/ "![PyPI - Version](https://img.shields.io/pypi/v/terminaltexteffects?style=flat&color=green)")  ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/terminaltexteffects) ![License](https://img.shields.io/github/license/ChrisBuilds/terminaltexteffects)
 
 ## Table Of Contents
 
 * [About](#tte)
 * [Requirements](#requirements)
 * [Installation](#installation)
-* [Usage](#usage)
+* [Usage (Application)](#application)
+* [Usage (Library)](#library)
 * [Options](#options)
 * [Examples](#examples)
 * [In-Development Preview](#in-development-preview)
@@ -58,6 +59,8 @@ OR
 
 ## Usage
 
+### Application
+
 ```cat your_text | tte <effect> [options]```
 
 OR
@@ -67,20 +70,76 @@ OR
 * Use ```<effect> -h``` to view options for a specific effect, such as color or movement direction.
   * Ex: ```tte decrypt -h```
 
+### Library
+
+All effects are iterators which return a string representing the current frame. Basic usage is as simple as importing the effect, instantiating it with the input text, and iterating over the effect.
+
+```python
+from terminaltexteffects.effects import effect_rain
+
+effect = effect_rain.Rain("your text here")
+
+for frame in effect:
+    # do something with the string
+    ...
+```
+
+In the event you want to allow TTE to handle the terminal setup/teardown, cursor positioning, and animation frame rate, a terminal_output() context manager is available.
+
+```python
+from terminaltexteffects.effects import effect_rain
+
+effect = effect_rain.Rain("your text here")
+with effect.terminal_output() as terminal:
+    for frame in effect:
+        terminal.print(frame)
+```
+
+All command line arguments are available within each effect via the `effect.effect_config` and `effect.terminal_config` attributes.
+
+```python
+from terminaltexteffects.effects import effect_rain
+
+effect = effect_rain.Rain("your text here")
+
+effect.effect_config.rain_colors = ("ff0000","00ff00","0000ff")
+effect.terminal_config.tab_width = 2
+effect.terminal_config.wrap_text = False
+
+for frame in effect:
+    # do something with the string
+    ...
+```
+
+For use cases where the terminal dimensions cannot be automatically discovered or you would like to manually define the dimensions, the ```effect.terminal_config``` can be configured as follows:
+
+```python
+effect.terminal_config.terminal_dimensions = (80, 24) # width, height
+```
+
+If you would like to ignore terminal dimensions altogether and base the output dimensions solely on the input data:
+
+```python
+effect.terminal_config.ignore_terminal_dimensions = True
+```
+
 ## Options
 
-```
+```markdown
 options:
-  -h, --help            show this help message and exit
+-h, --help            show this help message and exit
   --tab-width (int > 0)
-                        Number of spaces to use for a tab character.
-  --xterm-colors        Convert any colors specified in RBG hex to the closest XTerm-256 color.
-  --no-color            Disable all colors in the effect.
-  --no-wrap             Disable wrapping of text.
-  -a ANIMATION_RATE, --animation-rate ANIMATION_RATE
-                        Minimum time, in seconds, between animation steps. This value does not normally need to be modified. Use this to increase the playback speed of all aspects of the effect. This will have
-                        no impact beyond a certain lower threshold due to the processing speed of your device.
-
+                        Number of spaces to use for a tab character. (default: 4)
+  --xterm-colors        Convert any colors specified in RBG hex to the closest XTerm-256 color. (default: False)
+  --no-color            Disable all colors in the effect. (default: False)
+  --wrap-text           Wrap text wider than the output area width. (default: False)
+  --frame-rate FRAME_RATE
+                        Target frame rate for the animation. (default: 100)
+  --terminal-dimensions TERMINAL_DIMENSIONS TERMINAL_DIMENSIONS
+                        Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal
+                        width. (default: (0, 0))
+  --ignore-terminal-dimensions
+                        Ignore the terminal dimensions and use the input data dimensions for the output area. (default: False)
 Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
@@ -120,7 +179,7 @@ Effect:
 Ex: ls -a | tte crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal
 ```
 
-## Examples
+### Examples
 
 Note: All effects support extensive customization via effect specific arguments. The examples shown below only represent one possible variant of
 each effect. Check the effect help output to see arguments.
@@ -1405,97 +1464,52 @@ Any effects shown below are in development and will be available in the next rel
 
 ## Latest Release Notes
 
-## 0.7.0
+## 0.8.0
 
-### New Features
+---
 
-#### Effects
+### New Features (0.8.0)
 
-* Beams. Light beams travel across the output area and illuminate the characters behind them.
-* Overflow. The input text is scrambled by row and repeated randomly, scrolling up the terminal, before eventually displaying in the correct order.
-* OrbittingVolley. Characters fire from launchers which orbit the output area.
-* Spotlights. Spotlights search the text area, illuminating characters, before converging in the center and expanding.
+---
 
-#### Engine
+#### New Engine Features (0.8.0)
 
-* Gradients now support multiple step specification to control the distance between each stop pair. For example:
-   graphics.Gradient(RED, BLUE, YELLOW, steps=(2,5)) results in a spectrum of RED -> (1 step) -> BLUE -> (4 steps) -> YELLOW
-* graphics.Gradient.get_color_at_fraction(fraction: float) will return a color at the given fraction of the spectrum when provided a float between 0 and 1, inclusive. This can be used to match the color to a ratio/ For example, the character height in the terminal.
-* graphics.Gradient.build_coordinate_color_mapping() will map gradient colors to coordinates in the terminal and supports a Gradient.Direction argument to enable gradients in the following directions: horizontal, vertical, diagonal, center
-* graphics.Gradient, if printed, will show a colored spectrum and the description of its stops and steps.
-* The Scene class has a new method: apply_gradient_to_symbols(). This method will iterate over a list of symbols and apply the colors from a gradient to the symbols. A frame with the symbol will be added for each color starting from the last color used in the previous symbol, up to the the index determined by the ratio of the current symbol's index in the symbols list to the total length of the list. This method allows scenes to automatically create frames from a list of symbols and gradient of arbitrary length while ensuring every symbol and color is displayed.
-* On instatiation, Terminal creates EffectCharacters for every coordinate in the output area that does not have an input character. These EffectCharacters have the symbol " " and are stored in Terminal._fill_characters as well as added to Terminal.character_by_input_coord.
-* arg_validators.IntRange will validate a range specified as "int-int" and return a tuple[int,int].
-* arg_validators.FloatRange will validate a range of floats specified as "float-float" and return a tuple[float, float].
-* character.animation.set_appearance(symbol, color) will set the character symbol and color directly. If a Scene is active, the appearance will be overwritten with the Scene frame on the next call to step_animation(). This method is intended for the occasion where a full scene isn't needed, or the appearance needs to be set based on conditions not compatible with Scenes or the EventHandler. For example, setting the color based on the terminal row.
-* Terminal.CharacterSort enums moved to Terminal.CharacterGroup, Terminal.CharacterSort is now used for sorting and return a flat list of characters.
-* Terminal.CharacterSort has new sort methods, TOP_TO_BOTTOM_LEFT_TO_RIGHT, TOP_TO_BOTTOM_RIGHT_TO_LEFT, BOTTOM_TO_TOP_LEFT_TO_RIGHT, BOTTOM_TO_TOP_RIGHT_TO_LEFT, OUTSIDE_ROW_TO_MIDDLE, MIDDLE_ROW_TO_OUTSIDE
-* New Terminal.CharacterGroup options, CENTER_TO_OUTSIDE_DIAMONDS and OUTSIDE_TO_CENTER_DIAMONS
-* graphics.Animation.adjust_color_brightness(color: graphics.Color, brightness: float) will convert the color to HSL, adjust the brightness to the given level, and return
-   an RGB hex string.
-* CTRL-C keyboard interrupt during a running effect will exit gracefully.
-* geometry.find_coords_in_circle() has been rewritten to find all coords which fall in an ellipse. The result is a circle due to the height/width ratio of terminal cells. This function now finds all terminal coordinates within the 'circle' rather than an arbitrary subset.
-* All command line arguments are typed allowing for more easily defined and tested effect args.
+* Library support: TTE effects are now importable. All effects are iterators that return strings for each frame of the output. See README for more information.
+* Terminal: New terminal argument (--terminal-dimensions) allows specification of the terminal dimensions without relying on auto-detection. Especially useful in cases where TTE is being used as a library in non-terminal or TUI contexts.
+* Terminal: New terminal argument (--ignore-terminal-dimensions) causes the output area dimensions to match the input data dimensions without regard to the terminal.
 
-### Changes
+### Changes (0.8.0)
 
-#### Effects
+---
 
-* All effects have been updated to use the latest API calls for improved performance.
-* All effects support gradients for the final appearance.
-* All effects support gradient direction.
-* All effects have had their default colors refreshed.
-* ErrorCorrect swap-delay lowered and error-pairs specification changed to percent float.
-* Rain effect supports character specification for rain drops and movement speed range for the rain drop falling speed.
-* Print effect uses the row final gradient color for the print head color.
-* RandomSequence effect accepts a starting color and a speed.
-* Rings effect prepares faster. Ring colors are set in order of appearance in the ring-colors argument. Ring spin speed is configurable. Rings with less than 25% visible characters based on radius are no longer generated. Ring gap is set as a percent of the smallest output area dimension.
-* Scattered effect gradient progresses from the first color to the row color.
-* Spray effect spray-volume is specified as a percent of the total number of characters and movement speed is a range.
-* Swarm effect swarm focus points algorithm changed to reduce long distances between points.
-* Decrypt effect supports gradient specification for plaintext and multiple color specification for ciphertext.
-* Decrypt effect has a --typing-speed arg to increase the speed of the initial text typing effect.
-* Decrypt effect has had the decrypting speed increased.
-* Beams effect uses Animation.adjust_color_brightness() to lower the background character brightness and shows the lighter color when the beam passes by.
-* Crumble effect uses Animation.adjust_color_brightness() to set the weak and dust colors based on the final gradient.
-* Fireworks effect launch_delay argument has a +/- 0-50% randomness applied.
-* Bubbles effect --no-rainbow changed to --rainbow and default set to False.
-* Bubbles effect --bubble-color changed to --bubble-colors. Bubble color is randomly chosen from the colors unless --rainbow is used.
-* Burn effect burns faster with some randomness in speed.
-* Burn effect final color fades in from the burned color.
-* Burn effect characters are shown prior to burning using a starting_color arg.
-* Pour effect has a --pour-speed argument.
+#### Effects Changes (0.8.0)
 
-#### Engine
+* Scattered. Holds scrambled text at the start for a few frames.
+* Scattered. Lowered default movement-speed from 0.5 to 0.3.
 
-* Geometry related methods have been removed from the motion class. They are now located at terminaltexteffects.utils.geometry as separate functions.
-* The Coord() object definition has been moved from the motion module to the geometry module.
-* Terminal.add_character() takes a geometry.Coord() argument to set the character's input_coordinate.
-* EffectCharacters have a unique ID set by the Terminal on instatiation. As a result, all EffectCharacters should be created using Terminal.add_character().
-* EffectCharacters added by the effect are stored in Terminal._added_characters.
-* Retrieving EffectCharacters from the terminal should no longer be done via accessing the lists of characters [_added_characters, _fill_characters, _input_characters], but should be retrieved via Terminal.get_characters() and Terminal.get_characters_sorted().
-* Setting EffectCharacter visibility is now done via Terminal.set_character_visibility(). This enables the terminal to keep track of all visible characters without needing to iterate over all characters on every call to _update_terminal_state().
-* EventHandler.Action.SET_CHARACTER_VISIBILITY_STATE has been removed as visibilty state is handled by the Terminal. To enable visibility state changes through the event system, use a CALLBACK action with target EventHandler.Callback(terminal.set_character_visibility, True/False).
-* geometry.find_coords_on_circle() num_points arg renamed to points_limit and new arg unique: bool, added to remove any duplicate Coords.
-* The animation rate argument (-a, --animation-rate) has been removed from all effects and is handled as a terminal argument specified prior to the effect name.
-* argtypes.py has been renamed arg_validators.py and all functions have been refactored into classes with a METAVAR class member and a type_parser method.
-* easing.EasingFunction type alias used anywhere an easing function is accepted.
-* Exceptions raised are no longer caught in a except clause. Only a finally clause is used to restore the cursor. Tracebacks are useful.
+#### Engine Changes (0.8.0)
 
-#### Other
+* graphics.Gradient ```__iter___()``` refactored to return a generator. No longer improperly implements the iterator protocol by resetting index in ```___iter__()```.
+* Terminal: Argument --animation-rate is now --frame-rate and is specified as a target frames per second.
+* Terminal: Argument --no-wrap is now --wrap-text and defaults to False.
+* Terminal: If a terminal object is instantiated without a TerminalConfig passed, it will instantiate a new TerminalConfig.
+* Terminal: Terminal.get_formatted_output_string() will return a string representing the current frame.
+* Terminal: Terminal.print() will print the frame to the terminal and handle cursor position. The optional argument (enforce_frame_rate: bool = True) determines if the frame rate set at Terminal.config.frame_rate is enforced. If set to False, the print will occur without delay.
+* New argument validator for terminal dimensions (arg_validators.TerminalDeminsions).
+* New module base_effect.py:
+* base_effect.BaseEffect:
+  * This is an abstract class which forms the base iterable for all effects and provides the terminal_output() context manager.
+* base_effect.BaseEffectIterator:
+  * This is an abstract class which provides the functionality to enable iteration over effects.
 
-* More tests have been added.
+### Bug Fixes (0.8.0)
 
-### Bug Fixes
+---
 
-#### Effects
+#### Engine Fixes (0.8.0)
 
-* All effects with command line options that accept variable length arguments which require at least 1 argument will present an error message when the option is called with 0 arguments.
-
-#### Engine
-
-* Fixed division by zero error in geometry.find_coord_at_distance() when the origin coord and the target coord are the same.
-* Fixed gradient generating an extra color in the spectrum when the initial color pair was repeated. Ex: Gradient('ffffff','000000','ffffff','000000, steps=5) would result in the third color 'ffffff' being added to the spectrum when it was already present as the end of the generation from '000000'->'ffffff'.
+* Fixed Argfield nargs type from str to str | int.
+* Implemented custom formatter into argsdataclass.py argument parsing.
 
 ## License
 
