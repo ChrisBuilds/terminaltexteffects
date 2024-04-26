@@ -185,13 +185,13 @@ class Terminal:
         if not input_data:
             input_data = "No Input."
         self.input_data = input_data.replace("\t", " " * self.config.tab_width)
-        if self.config.terminal_dimensions == (0, 0) and not self.config.ignore_terminal_dimensions:
-            self.width, self.height = self._get_terminal_dimensions()
-        elif self.config.terminal_dimensions != (0, 0):
-            self.width, self.height = self.config.terminal_dimensions
-        else:
+        if self.config.ignore_terminal_dimensions:
             self.width = max([len(line) for line in self.input_data.splitlines()])
             self.height = len(self.input_data.splitlines()) + 1
+        elif self.config.terminal_dimensions == (0, 0):
+            self.width, self.height = self._get_terminal_dimensions()
+        else:
+            self.width, self.height = self.config.terminal_dimensions
         self.next_character_id = 0
         self._input_characters = self._decompose_input(self.config.xterm_colors, self.config.no_color)
         self._added_characters: list[EffectCharacter] = []
