@@ -14,20 +14,48 @@
 
 #### New Engine Features (unreleased)
 
-* Library support: TTE effects are now importable. All effects are iterators that return strings for each frame of the output. See README for more information.
-* Terminal: New terminal argument (--terminal-dimensions) allows specification of the terminal dimensions without relying on auto-detection. Especially useful in cases where TTE is being used as a library in non-terminal or TUI contexts.
-* Terminal: New terminal argument (--ignore-terminal-dimensions) causes the output area dimensions to match the input data dimensions without regard to the terminal.
-
 ### Changes (unreleased)
 
 ---
 
 #### Effects Changes (unreleased)
 
+#### Engine Changes (unreleased)
+
+#### Other Changes (unreleased)
+
+### Bug Fixes (unreleased)
+
+---
+
+#### Effects Fixes (unreleased)
+
+#### Engine Fixes (unreleased)
+
+## 0.8.0
+
+---
+
+### New Features (0.8.0)
+
+---
+
+#### New Engine Features (0.8.0)
+
+* Library support: TTE effects are now importable. All effects are iterators that return strings for each frame of the output. See README for more information.
+* Terminal: New terminal argument (--terminal-dimensions) allows specification of the terminal dimensions without relying on auto-detection. Especially useful in cases where TTE is being used as a library in non-terminal or TUI contexts.
+* Terminal: New terminal argument (--ignore-terminal-dimensions) causes the output area dimensions to match the input data dimensions without regard to the terminal.
+
+### Changes (0.8.0)
+
+---
+
+#### Effects Changes (0.8.0)
+
 * Scattered. Holds scrambled text at the start for a few frames.
 * Scattered. Lowered default movement-speed from 0.5 to 0.3.
 
-#### Engine Changes (unreleased)
+#### Engine Changes (0.8.0)
 
 * graphics.Gradient ```__iter___()``` refactored to return a generator. No longer improperly implements the iterator protocol by resetting index in ```___iter__()```.
 * Terminal: Argument --animation-rate is now --frame-rate and is specified as a target frames per second.
@@ -42,15 +70,14 @@
 * base_effect.BaseEffectIterator:
   * This is an abstract class which provides the functionality to enable iteration over effects.
 
-#### Other Changes (unreleased)
-
-### Bug Fixes (unreleased)
+### Bug Fixes (0.8.0)
 
 ---
 
-#### Effects Fixes (unreleased)
+#### Engine Fixes (0.8.0)
 
-#### Engine Fixes (unreleased)
+* Fixed Argfield nargs type from str to str | int.
+* Implemented custom formatter into argsdataclass.py argument parsing.
 
 ## 0.7.0
 
