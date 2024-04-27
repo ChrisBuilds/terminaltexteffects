@@ -1,3 +1,36 @@
+"""This module contains base classes for all effects.
+
+Base classes from which all effects should inherit. These classes define the basic structure for an effect and establish the
+effect iterator interface as well as the effect configuration and terminal configuration.
+
+Classes:
+    BaseEffectIterator(Generic[T]): An abstract base class that defines the basic structure for an iterator
+        that applies a certain effect to the input data. Provides initilization for the effect configuration and terminal
+        as well as the `__iter__` method.
+
+    BaseEffect(Generic[T]): An abstract base class that defines the basic structure for an effect. Provides the `__iter__`
+        method and a context manager for terminal output.
+
+Usage Example:
+
+    class MyEffectIterator(BaseEffectIterator[MyEffectConfig]):
+        def __init__(self, effect: "MyEffect") -> None:
+            super().__init__(effect)
+            # Custom initialization code here
+
+        def __next__(self) -> str:
+            # Custom iteration code here
+            return next_frame
+
+    class MyEffect(BaseEffect[MyEffectConfig]):
+        _config_cls = MyEffectConfig
+        _iterator_cls = MyEffectIterator
+
+        def __init__(self, input_data: str) -> None:
+            super().__init__(input_data)
+
+"""
+
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from copy import deepcopy
@@ -21,6 +54,11 @@ class BaseEffectIterator(ABC, Generic[T]):
     """
 
     def __init__(self, effect: "BaseEffect") -> None:
+        """Initialize the iterator with the Effect.
+
+        Args:
+            effect (BaseEffect): Effect to apply to the input data.
+        """
         self._config: T = deepcopy(effect.effect_config)
         self._terminal = Terminal(effect.input_data, deepcopy(effect.terminal_config))
 
@@ -33,7 +71,15 @@ class BaseEffectIterator(ABC, Generic[T]):
 
 
 class BaseEffect(ABC, Generic[T]):
-    """Base iterable class for all effects."""
+    """Base iterable class for all effects.
+
+    Base class for all effects. Provides the `__iter__` method and a context manager for terminal output.
+
+    Attributes:
+        input_data (str): Data to apply the effect to.
+        effect_config (T): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     @property
     @abstractmethod
@@ -52,7 +98,6 @@ class BaseEffect(ABC, Generic[T]):
 
         Args:
             input_data (str): Data to apply the effect to.
-            terminal_config (TerminalConfig | None): Configuration for the terminal.
         """
         self.input_data = input_data
         self.effect_config = self._config_cls()
@@ -63,7 +108,14 @@ class BaseEffect(ABC, Generic[T]):
 
     @contextmanager
     def terminal_output(self):
-        """Context manager for terminal output. Prepares the terminal for output and restores it after."""
+        """Context manager for terminal output. Prepares the terminal for output and restores it after.
+
+        Yields:
+            terminal (Terminal): Terminal object for output.
+
+        Raises:
+            Exception: Any exception that occurs within the context manager.
+        """
         terminal = Terminal(self.input_data, self.terminal_config)
         try:
             terminal.prep_outputarea()
