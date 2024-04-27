@@ -1,0 +1,14 @@
+site_name: TerminalTextEffects Docs
+
+theme:
+  name: material
+
+plugins:
+  - mkdocstrings
+
+nav:
+  - TerminalTextEffects Docs: index.md
+  - tutorials.md
+  - How-To Guides: how-to-guides.md
+  - reference.md
+  - explanation.md
