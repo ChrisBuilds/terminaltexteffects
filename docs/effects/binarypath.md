@@ -1,6 +1,6 @@
 # Binarypath
 
-![Demo](../img/binarypath_demo.gif)
+![Demo](../img/effects_demos/binarypath_demo.gif)
 
 ## Quick Start
 
