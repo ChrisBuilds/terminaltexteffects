@@ -2,13 +2,30 @@ site_name: TerminalTextEffects Docs
 
 theme:
   name: material
+  palette:
+    scheme: slate
+  features:
+    - content.code.copy
+    - content.code.annotate
 
 plugins:
   - mkdocstrings
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
 
 nav:
   - TerminalTextEffects Docs: index.md
   - tutorials.md
   - How-To Guides: how-to-guides.md
-  - reference.md
+  - Effects:
+    - effects/beams.md
+    - effects/binarypath.md
+    - reference.md
   - explanation.md
