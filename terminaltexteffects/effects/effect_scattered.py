@@ -25,9 +25,9 @@ class ScatteredConfig(ArgsDataClass):
 
     Attributes:
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the final color.
+        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
         movement_speed (float): Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.
         movement_easing (easing.EasingFunction): Easing function to use for character movement."""
 
@@ -64,9 +64,9 @@ class ScatteredConfig(ArgsDataClass):
         type_parser=arg_validators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
         metavar=arg_validators.GradientDirection.METAVAR,
-        help="Direction of the gradient for the final color.",
+        help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the gradient for the final color."
+    "graphics.Gradient.Direction : Direction of the final gradient."
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",

@@ -31,9 +31,9 @@ class BubblesConfig(ArgsDataClass):
         rainbow (bool): If set, the bubbles will be colored with a rotating rainbow gradient.
         bubble_colors (tuple[graphics.Color, ...]): Tuple of colors for the bubbles. Ignored if --no-rainbow is left as default False.
         pop_color (graphics.Color): Color for the spray emitted when a bubble pops.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the final color.
+        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
         bubble_speed (float): Speed of the floating bubbles. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.
         bubble_delay (int): Number of animation steps between bubbles.
         pop_condition (str): Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal.
@@ -75,7 +75,7 @@ class BubblesConfig(ArgsDataClass):
         metavar=arg_validators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color."
+    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
@@ -92,9 +92,9 @@ class BubblesConfig(ArgsDataClass):
         type_parser=arg_validators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.DIAGONAL,
         metavar=arg_validators.GradientDirection.METAVAR,
-        help="Direction of the gradient for the final color.",
+        help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the gradient for the final color."
+    "graphics.Gradient.Direction : Direction of the final gradient."
 
     bubble_speed: float = ArgField(
         cmd_name="--bubble-speed",

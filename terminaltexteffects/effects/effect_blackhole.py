@@ -1,3 +1,13 @@
+"""
+Creates a blackhole in a starfield, consumes the stars, explodes the input data back into position.
+
+Classes:
+    BlackholeConfig: Configuration for the Blackhole effect.
+    Blackhole: Creates a blackhole in a starfield, consumes the stars, explodes the input data back into position.
+    BlackholeIterator: Iterator for the Blackhole effect. Does not normally need to be called directly.
+
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -27,9 +37,9 @@ class BlackholeConfig(ArgsDataClass):
     Attributes:
         blackhole_color (graphics.Color): Color for the stars that comprise the blackhole border.
         star_colors (tuple[graphics.Color, ...]): Tuple of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the final color."""
+        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient."""
 
     blackhole_color: graphics.Color = ArgField(
         cmd_name=["--blackhole-color"],
@@ -61,7 +71,7 @@ class BlackholeConfig(ArgsDataClass):
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
 
-    "tuple[graphics.Color, ...] : Tuple of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color."
+    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -79,10 +89,10 @@ class BlackholeConfig(ArgsDataClass):
         type_parser=arg_validators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.DIAGONAL,
         metavar=arg_validators.GradientDirection.METAVAR,
-        help="Direction of the gradient for the final color.",
+        help="Direction of the final gradient.",
     )  # type: ignore[assignment]
 
-    "graphics.Gradient.Direction : Direction of the gradient for the final color."
+    "graphics.Gradient.Direction : Direction of the final gradient."
 
     @classmethod
     def get_effect_class(cls):
@@ -288,7 +298,6 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             self._active_chars.append(character)
 
     def _build(self) -> None:
-        """Prepares the data for the effect by creating the starfield, blackhole, and consumption scenes/waypoints."""
         final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
@@ -304,7 +313,6 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         self.awaiting_blackhole_chars = list(self._blackhole_chars)
 
     def __next__(self) -> str:
-        """Runs the effect."""
         if self._active_chars or self.phase != "complete":
             if self.phase == "forming":
                 if self.awaiting_blackhole_chars:
@@ -364,10 +372,20 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
 
 
 class Blackhole(BaseEffect[BlackholeConfig]):
-    """Effect that creates a blackhole in a starfield, consumes the stars, and explodes the input characters out to position."""
+    """Creates a blackhole in a starfield, consumes the stars, explodes the input data back into position.
+
+    Attributes:
+        effect_config (BlackholeConfig): Configuration for the Blackhole effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = BlackholeConfig
     _iterator_cls = BlackholeIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initializes the Blackhole effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the Blackhole effect.
+        """
         super().__init__(input_data)

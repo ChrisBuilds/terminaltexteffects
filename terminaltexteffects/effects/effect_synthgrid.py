@@ -26,10 +26,10 @@ class SynthGridConfig(ArgsDataClass):
 
     Attributes:
         grid_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the grid gradient.
-        grid_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        grid_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         grid_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the grid color.
         text_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the text gradient.
-        text_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        text_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         text_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the text color.
         grid_row_symbol (str): Symbol to use for grid row lines.
         grid_column_symbol (str): Symbol to use for grid column lines.

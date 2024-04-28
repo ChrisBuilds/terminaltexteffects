@@ -45,7 +45,7 @@ class BeamsConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the wipe gradient.
         final_gradient_steps (tuple[int,]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the final color.
+        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
         final_wipe_speed (int): Speed of the final wipe as measured in diagonal groups activated per frame. Valid values are n > 0.
     """
 
@@ -170,10 +170,10 @@ class BeamsConfig(ArgsDataClass):
         type_parser=arg_validators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
         metavar=arg_validators.GradientDirection.METAVAR,
-        help="Direction of the gradient for the final color.",
+        help="Direction of the final gradient.",
     )  # type: ignore[assignment]
 
-    "graphics.Gradient.Direction : Direction of the gradient for the final color."
+    "graphics.Gradient.Direction : Direction of the final gradient."
 
     final_wipe_speed: int = ArgField(
         cmd_name="--final-wipe-speed",
@@ -327,8 +327,8 @@ class Beams(BaseEffect[BeamsConfig]):
     """Creates beams which travel over the output area illuminating the characters.
 
     Attributes:
-        effect_config (BeamsConfig): Effect configuration for the Beams effect.
-        terminal_config (TerminalConfig): Terminal configuration.
+        effect_config (BeamsConfig): Configuration for the Beams effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
     """
 
     _config_cls = BeamsConfig
