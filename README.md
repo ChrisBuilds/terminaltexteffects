@@ -219,7 +219,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-frames (int > 0)
                             Number of frames to display each gradient step. (default: 5)
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --final-wipe-speed (int > 0)
                             Speed of the final wipe as measured in diagonal groups activated per frame. (default: 1)
 
@@ -242,7 +242,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.CENTER)
+                            Direction of the final gradient. (default: Direction.CENTER)
       --binary-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                             Space separated, unquoted, list of colors for the binary characters. Character color is randomly assigned from this list. (default: ('044E29', '157e38', '45bf55', '95ed87'))
       --movement-speed (float > 0)
@@ -274,7 +274,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+                            Direction of the final gradient. (default: Direction.DIAGONAL)
 
     Example: terminaltexteffects blackhole --star-colors ffcc0d ff7326 ff194d bf2669 702a8c 049dbf --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-direction vertical
 </details>
@@ -299,7 +299,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+                            Direction of the final gradient. (default: Direction.DIAGONAL)
       --ball-delay (int >= 0)
                             Number of animation steps between ball drops, increase to reduce ball drop rate. (default: 7)
       --movement-speed (float > 0)
@@ -354,7 +354,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+                            Direction of the final gradient. (default: Direction.DIAGONAL)
       --bubble-speed (float > 0)
                             Speed of the floating bubbles. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.1)
       --bubble-delay (int > 0)
@@ -412,7 +412,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
 
     Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12
 </details>
@@ -433,7 +433,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+                            Direction of the final gradient. (default: Direction.DIAGONAL)
 
     Example: terminaltexteffects crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal
 </details>
@@ -458,7 +458,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
 
     Example: terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical
 </details>
@@ -487,7 +487,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --movement-speed (float > 0)
                             Speed of the characters while moving to the correct position. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the
                             effect. (default: 0.5)
@@ -538,7 +538,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-frames (int > 0)
                             Number of frames to display each gradient step. (default: 5)
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --movement-speed (float > 0)
                             Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.35)
       --expand-easing EXPAND_EASING
@@ -595,7 +595,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.HORIZONTAL)
+                            Direction of the final gradient. (default: Direction.HORIZONTAL)
       --launch-delay (int >= 0)
                             Number of animation steps to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. (default: 60)
       --explode-distance (0 <= float(n) <= 1)
@@ -622,7 +622,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --expand-direction {vertical,horizontal}
                             Direction the text will expand. (default: vertical)
       --center-movement-speed (float > 0)
@@ -687,7 +687,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.CENTER)
+                            Direction of the final gradient. (default: Direction.CENTER)
       --launcher-movement-speed (float > 0)
                             Orbitting speed of the launchers. (default: 0.5)
       --character-movement-speed (float > 0)
@@ -743,7 +743,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --overflow-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                             Space separated, unquoted, list of colors for the overflow gradient. (default: ('f2ebc0', '8dbfb3', 'f2ebc0'))
       --overflow-cycles-range (hyphen separated int range e.g. '1-10')
@@ -781,7 +781,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-frames (int > 0)
                             Number of frames to display each gradient step. (default: 10)
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --easing EASING       Easing function to use for character movement. (default: in_quad)
 
         Easing
@@ -827,7 +827,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+                            Direction of the final gradient. (default: Direction.DIAGONAL)
       --print-head-return-speed (float > 0)
                             Speed of the print head when performing a carriage return. (default: 1.25)
       --print-speed (int > 0)
@@ -885,7 +885,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+                            Direction of the final gradient. (default: Direction.DIAGONAL)
       --easing (Easing Function)
                             Easing function to use for character movement. (default: in_quart)
 
@@ -936,7 +936,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-frames (int > 0)
                             Number of frames to display each gradient step. (default: 12)
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --speed (float > 0)   Speed of the animation as a percentage of the total number of characters. (default: 0.004)
 
     Example: terminaltexteffects randomsequence --starting-color 000000 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 12 --speed 0.004
@@ -960,7 +960,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --ring-gap RING_GAP   Distance between rings as a percent of the smallest output area dimension. (default: 0.1)
       --spin-duration SPIN_DURATION
                             Number of animation steps for each cycle of the spin phase. (default: 200)
@@ -992,7 +992,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-frames (int > 0)
                             Number of frames to display each gradient step. (default: 12)
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --movement-speed (float > 0)
                             Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.5)
       --movement-easing MOVEMENT_EASING
@@ -1097,7 +1097,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --beam-width-ratio (float > 0)
                             Width of the beam of light as min(width, height) // n of the input text. (default: 2.0)
       --beam-falloff (float >= 0)
@@ -1152,7 +1152,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --spray-position {n,ne,e,se,s,sw,w,nw,center}
                             Position for the spray origin. (default: e)
       --spray-volume (float > 0)
@@ -1209,7 +1209,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.HORIZONTAL)
+                            Direction of the final gradient. (default: Direction.HORIZONTAL)
       --swarm-size (0 <= float(n) <= 1)
                             Percent of total characters in each swarm. (default: 0.1)
       --swarm-coordination (0 <= float(n) <= 1)
@@ -1304,7 +1304,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --movement-speed (float > 0)
                             Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.15)
       --movement-easing MOVEMENT_EASING
@@ -1354,7 +1354,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --glitch-line-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                             Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors are applied in order as an animation. (default: ('ffffff', 'ff0000', '00ff00',
                             '0000ff', 'ffffff'))
@@ -1397,7 +1397,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.DIAGONAL)
+                            Direction of the final gradient. (default: Direction.DIAGONAL)
       --wave-count WAVE_COUNT
                             Number of waves to generate. n > 0. (default: 7)
       --wave-length (int > 0)
@@ -1451,7 +1451,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-frames (int > 0)
                             Number of frames to display each gradient step. (default: 5)
       --final-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the final color. (default: Direction.VERTICAL)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
       --wipe-delay (int >= 0)
                             Number of animation cycles to wait before adding the next character group. Increase, to slow down the effect. (default: 0)
 
