@@ -27,5 +27,6 @@ nav:
   - Effects:
     - effects/beams.md
     - effects/binarypath.md
+    - effects/blackhole.md
     - reference.md
   - explanation.md
