@@ -1,3 +1,12 @@
+"""
+Creates beams which travel over the output area illuminating the characters.
+
+Classes:
+    Beams: Creates beams which travel over the output area illuminating the characters.
+    BeamsConfig: Configuration for the Beams effect.
+    BeamsIterator: Iterates over the Beams effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -27,17 +36,17 @@ class BeamsConfig(ArgsDataClass):
     Attributes:
         beam_row_symbols (tuple[str, ...]): Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation.
         beam_column_symbols (tuple[str, ...]): Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation.
-        beam_delay (int): Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5).
-        beam_row_speed_range (tuple[int, int]): Speed range of the beam when moving along a row.
-        beam_column_speed_range (tuple[int, int]): Speed range of the beam when moving along a column.
+        beam_delay (int): Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5). Valid values are n > 0.
+        beam_row_speed_range (tuple[int, int]): Speed range of the beam when moving along a row. Valid values are n > 0.
+        beam_column_speed_range (tuple[int, int]): Speed range of the beam when moving along a column. Valid values are n > 0.
         beam_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the beam, a gradient will be created between the colors.
-        beam_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
-        beam_gradient_frames (int): Number of frames to display each gradient step.
+        beam_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
+        beam_gradient_frames (int): Number of frames to display each gradient step. Valid values are n > 0.
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the wipe gradient.
-        final_gradient_steps (tuple[int,]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
+        final_gradient_steps (tuple[int,]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the final color.
-        final_wipe_speed (int): Speed of the final wipe as measured in diagonal groups activated per frame.
+        final_wipe_speed (int): Speed of the final wipe as measured in diagonal groups activated per frame. Valid values are n > 0.
     """
 
     beam_row_symbols: tuple[str, ...] = ArgField(
@@ -223,10 +232,10 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         self._pending_groups: list[BeamsIterator._Group] = []
         self._active_chars: list[EffectCharacter] = []
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self.active_groups: list[BeamsIterator._Group] = []
-        self.delay = 0
-        self.phase = "beams"
-        self.final_wipe_groups = self._terminal.get_characters_grouped(
+        self._active_groups: list[BeamsIterator._Group] = []
+        self._delay = 0
+        self._phase = "beams"
+        self._final_wipe_groups = self._terminal.get_characters_grouped(
             Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
         )
         self._build()
@@ -272,17 +281,17 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         random.shuffle(self._pending_groups)
 
     def __next__(self) -> str:
-        if self.phase != "complete" or self._active_chars:
-            if self.phase == "beams":
-                if not self.delay:
+        if self._phase != "complete" or self._active_chars:
+            if self._phase == "beams":
+                if not self._delay:
                     if self._pending_groups:
                         for _ in range(random.randint(1, 5)):
                             if self._pending_groups:
-                                self.active_groups.append(self._pending_groups.pop(0))
-                    self.delay = self._config.beam_delay
+                                self._active_groups.append(self._pending_groups.pop(0))
+                    self._delay = self._config.beam_delay
                 else:
-                    self.delay -= 1
-                for group in self.active_groups:
+                    self._delay -= 1
+                for group in self._active_groups:
                     group.increment_next_character_counter()
                     if int(group.next_character_counter) > 1:
                         for _ in range(int(group.next_character_counter)):
@@ -290,21 +299,21 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                                 next_char = group.get_next_character()
                                 if next_char:
                                     self._active_chars.append(next_char)
-                self.active_groups = [group for group in self.active_groups if not group.complete()]
-                if not self._pending_groups and not self.active_groups and not self._active_chars:
-                    self.phase = "final_wipe"
-            elif self.phase == "final_wipe":
-                if self.final_wipe_groups:
+                self._active_groups = [group for group in self._active_groups if not group.complete()]
+                if not self._pending_groups and not self._active_groups and not self._active_chars:
+                    self._phase = "final_wipe"
+            elif self._phase == "final_wipe":
+                if self._final_wipe_groups:
                     for _ in range(self._config.final_wipe_speed):
-                        if not self.final_wipe_groups:
+                        if not self._final_wipe_groups:
                             break
-                        next_group = self.final_wipe_groups.pop(0)
+                        next_group = self._final_wipe_groups.pop(0)
                         for character in next_group:
                             character.animation.activate_scene(character.animation.query_scene("brighten"))
                             self._terminal.set_character_visibility(character, True)
                             self._active_chars.append(character)
                 else:
-                    self.phase = "complete"
+                    self._phase = "complete"
             next_frame = self._terminal.get_formatted_output_string()
             for character in self._active_chars:
                 character.tick()
@@ -315,10 +324,19 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
 
 
 class Beams(BaseEffect[BeamsConfig]):
-    """Effect that creates beams which travel over the output area illuminated the characters behind them."""
+    """Creates beams which travel over the output area illuminating the characters.
+
+    Attributes:
+        effect_config (BeamsConfig): Effect configuration for the Beams effect.
+        terminal_config (TerminalConfig): Terminal configuration.
+    """
 
     _config_cls = BeamsConfig
     _iterator_cls = BeamsIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the Beams effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the Beams effect."""
         super().__init__(input_data)
