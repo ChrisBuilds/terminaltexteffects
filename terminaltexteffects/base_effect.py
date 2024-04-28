@@ -76,7 +76,7 @@ class BaseEffect(ABC, Generic[T]):
     Base class for all effects. Provides the `__iter__` method and a context manager for terminal output.
 
     Attributes:
-        input_data (str): Data to apply the effect to.
+        input_data (str): Text to which the effect will be applied.
         effect_config (T): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
     """
@@ -97,7 +97,7 @@ class BaseEffect(ABC, Generic[T]):
         """Initialize the effect with the input data.
 
         Args:
-            input_data (str): Data to apply the effect to.
+            input_data (str): Text to which the effect will be applied.
         """
         self.input_data = input_data
         self.effect_config = self._config_cls()
