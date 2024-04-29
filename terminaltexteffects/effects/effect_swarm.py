@@ -1,3 +1,11 @@
+"""Characters are grouped into swarms and move around the terminal before settling into position.
+
+Classes:
+    Swarm: Characters are grouped into swarms and move around the terminal before settling into position.
+    SwarmConfig: Configuration for the Swarm effect.
+    SwarmIterator: Effect iterator for the Swarm effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -30,9 +38,9 @@ class SwarmConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        swarm_size (float): Percent of total characters in each swarm.
-        swarm_coordination (float): Percent of characters in a swarm that move as a group.
-        swarm_area_count (tuple[int, int]): Range of the number of areas where characters will swarm."""
+        swarm_size (float): Percent of total characters in each swarm. Valid values are 0 < n <= 1.
+        swarm_coordination (float): Percent of characters in a swarm that move as a group. Valid values are 0 < n <= 1.
+        swarm_area_count (tuple[int, int]): Range of the number of areas where characters will swarm. Valid values are n > 0."""
 
     base_color: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--base-color"],
@@ -115,8 +123,6 @@ class SwarmConfig(ArgsDataClass):
 
 
 class SwarmIterator(BaseEffectIterator[SwarmConfig]):
-    """Characters behave with swarm characteristics before flying into position."""
-
     def __init__(
         self,
         effect: "Swarm",
@@ -267,10 +273,19 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
 
 
 class Swarm(BaseEffect[SwarmConfig]):
-    """Characters are grouped into swarms and move around the terminal before settling into position."""
+    """Characters are grouped into swarms and move around the terminal before settling into position.
+
+    Attributes:
+        effect_config (SwarmConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = SwarmConfig
     _iterator_cls = SwarmIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

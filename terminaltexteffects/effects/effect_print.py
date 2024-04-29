@@ -1,3 +1,11 @@
+"""Prints the input data one line at at time with a carriage return and line feed.
+
+Classes:
+    Print: Prints the input data one line at at time with a carriage return and line feed.
+    PrintConfig: Configuration for the Print effect.
+    PrintIterator: Effect iterator for the Print effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -94,50 +102,49 @@ class PrintConfig(ArgsDataClass):
         return Print
 
 
-class _Row:
-    def __init__(
-        self,
-        characters: list[EffectCharacter],
-        character_final_color_map: dict[EffectCharacter, graphics.Color],
-        typing_head_color: str | int,
-    ):
-        self.untyped_chars: list[EffectCharacter] = []
-        self.typed_chars: list[EffectCharacter] = []
-        blank_row_accounted = False
-        for character in characters:
-            if character.input_symbol == " ":
-                if blank_row_accounted:
-                    continue
-                blank_row_accounted = True
-            character.motion.set_coordinate(Coord(character.input_coord.column, 1))
-            color_gradient = graphics.Gradient(typing_head_color, character_final_color_map[character], steps=5)
-            typed_animation = character.animation.new_scene()
-            typed_animation.apply_gradient_to_symbols(color_gradient, ("█", "▓", "▒", "░", character.input_symbol), 5)
-            character.animation.activate_scene(typed_animation)
-            self.untyped_chars.append(character)
-
-    def move_up(self):
-        for character in self.typed_chars:
-            current_row = character.motion.current_coord.row
-            character.motion.set_coordinate(Coord(character.motion.current_coord.column, current_row + 1))
-
-    def type_char(self) -> EffectCharacter | None:
-        if self.untyped_chars:
-            next_char = self.untyped_chars.pop(0)
-            self.typed_chars.append(next_char)
-            return next_char
-        return None
-
-
 class PrintIterator(BaseEffectIterator[PrintConfig]):
-    """Effect that moves a print head across the screen, printing characters, before performing a line feed and carriage return."""
+    class _Row:
+        def __init__(
+            self,
+            characters: list[EffectCharacter],
+            character_final_color_map: dict[EffectCharacter, graphics.Color],
+            typing_head_color: str | int,
+        ):
+            self.untyped_chars: list[EffectCharacter] = []
+            self.typed_chars: list[EffectCharacter] = []
+            blank_row_accounted = False
+            for character in characters:
+                if character.input_symbol == " ":
+                    if blank_row_accounted:
+                        continue
+                    blank_row_accounted = True
+                character.motion.set_coordinate(Coord(character.input_coord.column, 1))
+                color_gradient = graphics.Gradient(typing_head_color, character_final_color_map[character], steps=5)
+                typed_animation = character.animation.new_scene()
+                typed_animation.apply_gradient_to_symbols(
+                    color_gradient, ("█", "▓", "▒", "░", character.input_symbol), 5
+                )
+                character.animation.activate_scene(typed_animation)
+                self.untyped_chars.append(character)
+
+        def move_up(self):
+            for character in self.typed_chars:
+                current_row = character.motion.current_coord.row
+                character.motion.set_coordinate(Coord(character.motion.current_coord.column, current_row + 1))
+
+        def type_char(self) -> EffectCharacter | None:
+            if self.untyped_chars:
+                next_char = self.untyped_chars.pop(0)
+                self.typed_chars.append(next_char)
+                return next_char
+            return None
 
     def __init__(self, effect: "Print"):
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
         self._active_chars: list[EffectCharacter] = []
-        self._pending_rows: list[_Row] = []
-        self._processed_rows: list[_Row] = []
+        self._pending_rows: list[PrintIterator._Row] = []
+        self._processed_rows: list[PrintIterator._Row] = []
         self._typing_head = self._terminal.add_character("█", Coord(1, 1))
         self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
         self._build()
@@ -156,13 +163,13 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         )
         for input_row in input_rows:
             self._pending_rows.append(
-                _Row(
+                PrintIterator._Row(
                     input_row,
                     self._character_final_color_map,
                     self._character_final_color_map[input_row[-1]],
                 )
             )
-        self._current_row: _Row = self._pending_rows.pop(0)
+        self._current_row: PrintIterator._Row = self._pending_rows.pop(0)
         self._typing = True
         self._delay = 0
         self._last_column = 0
@@ -225,10 +232,19 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
 
 
 class Print(BaseEffect[PrintConfig]):
-    """Prints the input data in a pouring fashion, one character at a time."""
+    """Prints the input data one line at at time with a carriage return and line feed.
+
+    Attributes:
+        effect_config (PrintConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal
+    """
 
     _config_cls = PrintConfig
     _iterator_cls = PrintIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

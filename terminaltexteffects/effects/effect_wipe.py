@@ -1,3 +1,11 @@
+"""Performs a wipe across the terminal to reveal characters.
+
+Classes:
+    Wipe: Performs a wipe across the terminal to reveal characters.
+    WipeConfig: Configuration for the Wipe effect.
+    WipeIterator: Effect iterator for the Wipe effect. Does not normally need to be called directly.
+"""
+
 import typing
 from dataclasses import dataclass
 
@@ -28,7 +36,7 @@ class WipeConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        wipe_delay (int): Number of animation cycles to wait before adding the next character group. Increase, to slow down the effect."""
+        wipe_delay (int): Number of frames to wait before adding the next character group. Increase, to slow down the effect. Valid values are n >= 0."""
 
     wipe_direction: str = ArgField(
         cmd_name="--wipe-direction",
@@ -90,9 +98,9 @@ class WipeConfig(ArgsDataClass):
         type_parser=arg_validators.NonNegativeInt.type_parser,
         default=0,
         metavar=arg_validators.NonNegativeInt.METAVAR,
-        help="Number of animation cycles to wait before adding the next character group. Increase, to slow down the effect.",
+        help="Number of frames to wait before adding the next character group. Increase, to slow down the effect.",
     )  # type: ignore[assignment]
-    "int : Number of animation cycles to wait before adding the next character group. Increase, to slow down the effect."
+    "int : Number of frames to wait before adding the next character group. Increase, to slow down the effect."
 
     @classmethod
     def get_effect_class(cls):
@@ -100,8 +108,6 @@ class WipeConfig(ArgsDataClass):
 
 
 class WipeIterator(BaseEffectIterator[WipeConfig]):
-    """Effect that performs a wipe across the terminal to reveal characters."""
-
     def __init__(self, effect: "Wipe") -> None:
         super().__init__(effect)
         self._pending_groups: list[list[EffectCharacter]] = []
@@ -162,10 +168,19 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
 
 
 class Wipe(BaseEffect[WipeConfig]):
-    """Effect that performs a wipe across the terminal to reveal characters."""
+    """Performs a wipe across the terminal to reveal characters.
+
+    Attributes:
+        effect_config (WipeConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = WipeConfig
     _iterator_cls = WipeIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

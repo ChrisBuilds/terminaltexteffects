@@ -1,3 +1,11 @@
+"""Slide characters into view from outside the terminal.
+
+Classes:
+    Slide: Slide characters into view from outside the terminal.
+    SlideConfig: Configuration for the Slide effect.
+    SlideIterator: Effect iterator for the Slide effect. Does not normally need to be called directly.
+"""
+
 import typing
 from dataclasses import dataclass
 
@@ -24,13 +32,13 @@ class SlideConfig(ArgsDataClass):
     """Configuration for the Slide effect.
 
     Attributes:
-        movement_speed (float): Speed of the characters.
-        grouping (str): Direction to group characters.
+        movement_speed (float): Speed of the characters. Valid values are n > 0.
+        grouping (str): Direction to group characters. Valid values are 'row', 'column', 'diagonal'.
         final_gradient_stops (tuple[int | str, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient.
-        gap (int): Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect.
+        gap (int): Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect. Valid values are n >= 0.
         reverse_direction (bool): Reverse the direction of the characters.
         merge (bool): Merge the character groups originating"""
 
@@ -125,8 +133,6 @@ class SlideConfig(ArgsDataClass):
 
 
 class SlideIterator(BaseEffectIterator[SlideConfig]):
-    """Effect that slides characters into view from outside the terminal. Characters are grouped by column, row, or diagonal."""
-
     def __init__(self, effect: "Slide") -> None:
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
@@ -243,10 +249,19 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
 
 
 class Slide(BaseEffect[SlideConfig]):
-    """Effect that slides characters into view from outside the terminal. Characters are grouped by column, row, or diagonal."""
+    """Slides characters into view from outside the terminal.
+
+    Attributes:
+        effect_config (SlideConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = SlideConfig
     _iterator_cls = SlideIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

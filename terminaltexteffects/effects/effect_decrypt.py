@@ -1,3 +1,11 @@
+"""Movie style text decryption effect.
+
+Classes:
+    Decrypt: Movie style text decryption effect.
+    DecryptConfig: Configuration for the Decrypt effect.
+    DecryptIterator: Iterates over the Decrypt effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -83,12 +91,8 @@ class DecryptConfig(ArgsDataClass):
 
 
 class DecryptIterator(BaseEffectIterator[DecryptConfig]):
-    """Effect that shows a movie style text decryption effect."""
-
     @dataclass
     class _DecryptChars:
-        """Various decimal utf-8 character ranges."""
-
         keyboard = list(range(33, 127))
         blocks = list(range(9608, 9632))
         box_drawing = list(range(9472, 9599))
@@ -137,7 +141,6 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
         discovered_scene.apply_gradient_to_symbols(discovered_gradient, character.input_symbol, 8)
 
     def _prepare_data_for_type_effect(self) -> None:
-        """Prepares the data for the effect by building the animation for each character."""
         for character in self._terminal.get_characters():
             typing_scene = character.animation.new_scene(id="typing")
             for block_char in ["▉", "▓", "▒", "░"]:
@@ -149,7 +152,6 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
             self._typing_pending_chars.append(character)
 
     def _prepare_data_for_decrypt_effect(self) -> None:
-        """Prepares the data for the effect by building the animation for each character."""
         for character in self._terminal.get_characters():
             self._make_decrypting_animation_scenes(character)
             character.event_handler.register_event(
@@ -168,7 +170,6 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
             self._decrypting_pending_chars.append(character)
 
     def _build(self) -> None:
-        """Builds the effect."""
         final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
@@ -212,12 +213,22 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
 
 
 class Decrypt(BaseEffect[DecryptConfig]):
-    """Effect that shows a movie style text decryption effect."""
+    """Movie style text decryption effect.
+
+    Attributes:
+        effect_config (DecryptConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+
+    """
 
     _config_cls = DecryptConfig
     _iterator_cls = DecryptIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)
 
     def __iter__(self) -> DecryptIterator:

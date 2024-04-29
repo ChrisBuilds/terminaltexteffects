@@ -1,3 +1,11 @@
+"""Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.
+
+Classes:
+    OrbittingVolley: Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.
+    OrbittingVolleyConfig: Configuration for the OrbittingVolley effect.
+    OrbittingVolleyIterator: Effect iterator for OrbittingVolley. Does not normally need to be called directly.
+"""
+
 import typing
 from dataclasses import dataclass
 from itertools import cycle
@@ -35,10 +43,10 @@ class OrbittingVolleyConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        launcher_movement_speed (float): Orbitting speed of the launchers.
-        character_movement_speed (float): Speed of the launched characters.
-        volley_size (float): Percent of total input characters each launcher will fire per volley. Lower limit of one character.
-        launch_delay (int): Number of animation ticks to wait between volleys of characters.
+        launcher_movement_speed (float): Orbitting speed of the launchers. Valid values are n > 0.
+        character_movement_speed (float): Speed of the launched characters. Valid values are n > 0.
+        volley_size (float): Percent of total input characters each launcher will fire per volley. Lower limit of one character. Valid values are 0 < n <= 1.
+        launch_delay (int): Number of animation ticks to wait between volleys of characters. Valid values are n >= 0.
         character_easing (typing.Callable): Easing function to use for launched character movement."""
 
     top_launcher_symbol: str = ArgField(
@@ -253,7 +261,6 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
         self._delay = 0
 
     def _set_launcher_coordinates(self, parent: _Launcher, child: _Launcher) -> None:
-        """Sets the coordinates for the child launcher."""
         parent_progress = parent.character.motion.current_coord.column / self._terminal.output_area.right
         if child.character.input_coord == Coord(self._terminal.output_area.right, self._terminal.output_area.top):
             child_row = self._terminal.output_area.top - int((self._terminal.output_area.top * parent_progress))
@@ -311,10 +318,19 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
 
 
 class OrbittingVolley(BaseEffect[OrbittingVolleyConfig]):
-    """Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out."""
+    """Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.
+
+    Attributes:
+        effect_config (OrbittingVolleyConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = OrbittingVolleyConfig
     _iterator_cls = OrbittingVolleyIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

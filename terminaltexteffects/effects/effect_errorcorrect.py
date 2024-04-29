@@ -1,3 +1,11 @@
+"""Swaps characters from an incorrect initial position to the correct position.
+
+Classes:
+    ErrorCorrect: Swaps characters from an incorrect initial position to the correct position.
+    ErrorCorrectConfig: Configuration for the ErrorCorrect effect.
+    ErrorCorrectIterator: Iterates over the effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -26,14 +34,14 @@ class ErrorCorrectConfig(ArgsDataClass):
     """Configuration for the ErrorCorrect effect.
 
     Attributes:
-        error_pairs (float): Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position.
-        swap_delay (int): Number of animation steps between swaps.
+        error_pairs (float): Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position. Valid values are 0 < n <= 1.0.
+        swap_delay (int): Number of frames between swaps. Valid values are n >= 0.
         error_color (graphics.Color): Color for the characters that are in the wrong position.
         correct_color (graphics.Color): Color for the characters once corrected, this is a gradient from error-color and fades to final-color.
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        movement_speed (float): Speed of the characters while moving to the correct position. Note: Speed effects the number of steps in the easing function."""
+        movement_speed (float): Speed of the characters while moving to the correct position. Valid values are n > 0."""
 
     error_pairs: float = ArgField(
         cmd_name="--error-pairs",
@@ -49,9 +57,9 @@ class ErrorCorrectConfig(ArgsDataClass):
         type_parser=arg_validators.PositiveInt.type_parser,
         default=10,
         metavar="(int > 0)",
-        help="Number of animation steps between swaps.",
+        help="Number of frames between swaps.",
     )  # type: ignore[assignment]
-    "int : Number of animation steps between swaps."
+    "int : Number of frames between swaps."
 
     error_color: graphics.Color = ArgField(
         cmd_name=["--error-color"],
@@ -105,9 +113,9 @@ class ErrorCorrectConfig(ArgsDataClass):
         type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.5,
         metavar="(float > 0)",
-        help="Speed of the characters while moving to the correct position. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Speed of the characters while moving to the correct position. ",
     )  # type: ignore[assignment]
-    "float : Speed of the characters while moving to the correct position. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect."
+    "float : Speed of the characters while moving to the correct position. "
 
     @classmethod
     def get_effect_class(cls):
@@ -115,8 +123,6 @@ class ErrorCorrectConfig(ArgsDataClass):
 
 
 class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
-    """Effect that swaps characters from an incorrect initial position to the correct position."""
-
     def __init__(self, effect: "ErrorCorrect") -> None:
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
@@ -127,7 +133,6 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
         self._build()
 
     def _build(self) -> None:
-        """Prepares the data for the effect by swapping positions and generating animations and waypoints."""
         final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
@@ -242,10 +247,19 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
 
 
 class ErrorCorrect(BaseEffect[ErrorCorrectConfig]):
-    """Effect that swaps characters from an incorrect initial position to the correct position."""
+    """Swaps characters from an incorrect initial position to the correct position.
+
+    Attributes:
+        effect_config (ErrorCorrectConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = ErrorCorrectConfig
     _iterator_cls = ErrorCorrectIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

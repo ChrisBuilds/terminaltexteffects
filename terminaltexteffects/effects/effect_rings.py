@@ -1,3 +1,11 @@
+"""Characters are dispersed and form into spinning rings.
+
+Classes:
+    Rings: Characters are dispersed and form into spinning rings.
+    RingsConfig: Configuration for the Rings effect.
+    RingsIterator: Iterates over the effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -29,11 +37,11 @@ class RingsConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        ring_gap (float): Distance between rings as a percent of the smallest output area dimension.
-        spin_duration (int): Number of animation steps for each cycle of the spin phase.
-        spin_speed (tuple[float, float]): Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring.
-        disperse_duration (int): Number of animation steps spent in the dispersed state between spinning cycles.
-        spin_disperse_cycles (int): Number of times the animation will cycles between spinning rings and dispersed characters.
+        ring_gap (float): Distance between rings as a percent of the smallest output area dimension. Valid values are 0 < n <= 1.
+        spin_duration (int): Number of frames for each cycle of the spin phase. Valid values are n >= 0.
+        spin_speed (tuple[float, float]): Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring. Valid values are n > 0.
+        disperse_duration (int): Number of frames spent in the dispersed state between spinning cycles. Valid values are n >= 0.
+        spin_disperse_cycles (int): Number of times the animation will cycle between spinning rings and dispersed characters. Valid values are n > 0.
     """
 
     ring_colors: tuple[graphics.Color, ...] = ArgField(
@@ -91,10 +99,10 @@ class RingsConfig(ArgsDataClass):
         cmd_name=["--spin-duration"],
         type_parser=arg_validators.PositiveInt.type_parser,
         default=200,
-        help="Number of animation steps for each cycle of the spin phase.",
+        help="Number of frames for each cycle of the spin phase.",
     )  # type: ignore[assignment]
 
-    "int : Number of animation steps for each cycle of the spin phase."
+    "int : Number of frames for each cycle of the spin phase."
 
     spin_speed: tuple[float, float] = ArgField(
         cmd_name=["--spin-speed"],
@@ -110,10 +118,10 @@ class RingsConfig(ArgsDataClass):
         cmd_name=["--disperse-duration"],
         type_parser=arg_validators.PositiveInt.type_parser,
         default=200,
-        help="Number of animation steps spent in the dispersed state between spinning cycles.",
+        help="Number of frames spent in the dispersed state between spinning cycles.",
     )  # type: ignore[assignment]
 
-    "int : Number of animation steps spent in the dispersed state between spinning cycles."
+    "int : Number of frames spent in the dispersed state between spinning cycles."
 
     spin_disperse_cycles: int = ArgField(
         cmd_name=["--spin-disperse-cycles"],
@@ -181,15 +189,6 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             self.characters.append(character)
 
         def make_disperse_waypoints(self, character: EffectCharacter, origin: Coord) -> motion.Path:
-            """Make the Path for the character to follow when the ring disperses.
-
-            Args:
-                character (EffectCharacter): Character to disperse.
-                origin (Coord): Origin coordinate for the character.
-
-            Returns:
-                motion.Path: the Path to follow.
-            """
             disperse_coords = geometry.find_coords_in_rect(origin, self.ring_gap)
             character.motion.paths.pop("disperse", None)
             disperse_path = character.motion.new_path(speed=0.1, loop=True, id="disperse")
@@ -198,7 +197,6 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             return disperse_path
 
         def disperse(self) -> None:
-            """Disperse the characters from the ring."""
             for character in self.characters:
                 if character.motion.active_path is not None:
                     self.character_last_ring_path[character] = character.motion.active_path
@@ -382,10 +380,19 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
 
 
 class Rings(BaseEffect[RingsConfig]):
-    """Characters are dispersed and form into spinning rings."""
+    """Characters are dispersed and form into spinning rings.
+
+    Attributes:
+        effect_config (RingsConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = RingsConfig
     _iterator_cls = RingsIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

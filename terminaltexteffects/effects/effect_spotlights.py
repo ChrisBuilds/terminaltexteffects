@@ -1,3 +1,11 @@
+"""Spotlights search the text area, illuminating characters, before converging in the center and expanding.
+
+Classes:
+    Spotlights: Spotlights search the text area, illuminating characters, before converging in the center and expanding.
+    SpotlightsConfig: Configuration for the Spotlights effect.
+    SpotlightsIterator: Effect iterator for the Spotlights effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -29,11 +37,11 @@ class SpotlightsConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        beam_width_ratio (float): Width of the beam of light as min(width, height) // n of the input text.
-        beam_falloff (float): Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width.
-        search_duration (int): Duration of the search phase, in animation steps, before the spotlights converge in the center.
-        search_speed_range (tuple[float, float]): Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values.
-        spotlight_count (int): Number of spotlights to use.
+        beam_width_ratio (float): Width of the beam of light as min(width, height) // n of the input text. Valid values are n > 0.
+        beam_falloff (float): Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width. Valid values are 0 <= n <= 1.
+        search_duration (int): Duration of the search phase, in frames, before the spotlights converge in the center. Valid values are n > 0.
+        search_speed_range (tuple[float, float]): Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values. Valid values are n > 0.
+        spotlight_count (int): Number of spotlights to use. Valid values are n > 0.
     """
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
@@ -88,9 +96,9 @@ class SpotlightsConfig(ArgsDataClass):
         type_parser=arg_validators.PositiveInt.type_parser,
         default=750,
         metavar=arg_validators.PositiveInt.METAVAR,
-        help="Duration of the search phase, in animation steps, before the spotlights converge in the center.",
+        help="Duration of the search phase, in frames, before the spotlights converge in the center.",
     )  # type: ignore[assignment]
-    "int : Duration of the search phase, in animation steps, before the spotlights converge in the center."
+    "int : Duration of the search phase, in frames, before the spotlights converge in the center."
 
     search_speed_range: tuple[float, float] = ArgField(
         cmd_name="--search-speed-range",
@@ -256,10 +264,19 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
 
 
 class Spotlights(BaseEffect[SpotlightsConfig]):
-    """Spotlights search the text area, illuminating characters, before converging in the center and expanding."""
+    """Spotlights search the text area, illuminating characters, before converging in the center and expanding.
+
+    Attributes:
+        effect_config (SpotlightsConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = SpotlightsConfig
     _iterator_cls = SpotlightsIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

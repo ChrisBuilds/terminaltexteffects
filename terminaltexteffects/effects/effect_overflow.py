@@ -1,3 +1,11 @@
+"""Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.
+
+Classes:
+    Overflow: Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.
+    OverflowConfig: Configuration for the Overflow effect.
+    OverflowIterator: Iterates over the effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -30,8 +38,8 @@ class OverflowConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
         overflow_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the overflow gradient.
-        overflow_cycles_range (tuple[int, int]): Lower and upper range of the number of cycles to overflow the text.
-        overflow_speed (int): Speed of the overflow effect."""
+        overflow_cycles_range (tuple[int, int]): Lower and upper range of the number of cycles to overflow the text. Valid values are n >= 0.
+        overflow_speed (int): Speed of the overflow effect. Valid values are n > 0."""
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -200,10 +208,19 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
 
 
 class Overflow(BaseEffect[OverflowConfig]):
-    """Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered."""
+    """Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.
+
+    Attributes:
+        effect_config (OverflowConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = OverflowConfig
     _iterator_cls = OverflowIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

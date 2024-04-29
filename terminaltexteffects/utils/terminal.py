@@ -23,7 +23,7 @@ class TerminalConfig(ArgsDataClass):
         xterm_colors (bool): Convert any colors specified in RBG hex to the closest XTerm-256 color.
         no_color (bool): Disable all colors in the effect.
         no_wrap (int): Disable wrapping of text.
-        animation_rate (float): Minimum time, in seconds, between animation steps.
+        animation_rate (float): Minimum time, in seconds, between frames.
         use_terminal_dimensions (bool): Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal width."""
 
     tab_width: int = ArgField(
@@ -63,7 +63,7 @@ class TerminalConfig(ArgsDataClass):
         help="""Target frame rate for the animation.""",
     )  # type: ignore[assignment]
 
-    "float : Minimum time, in seconds, between animation steps."
+    "float : Minimum time, in seconds, between frames."
 
     terminal_dimensions: tuple[int, int] = ArgField(
         cmd_name=["--terminal-dimensions"],

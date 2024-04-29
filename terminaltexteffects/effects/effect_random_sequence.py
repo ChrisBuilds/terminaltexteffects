@@ -1,3 +1,11 @@
+"""Prints the input data in a random sequence, one character at a time.
+
+Classes:
+    RandomSequence: Prints the input data in a random sequence.
+    RandomSequenceConfig: Configuration for the RandomSequence effect.
+    RandomSequenceIterator: Iterator for the RandomSequence effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -29,7 +37,7 @@ class RandomSequenceConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        speed (float): Speed of the animation as a percentage of the total number of characters to reveal in each tick.
+        speed (float): Speed of the animation as a percentage of the total number of characters to reveal in each tick. Valid values are 0 < n <= 1.
     """
 
     starting_color: graphics.Color = ArgField(
@@ -137,10 +145,19 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
 
 
 class RandomSequence(BaseEffect[RandomSequenceConfig]):
-    """Prints the input data in a random sequence, one character at a time."""
+    """Prints the input data in a random sequence, one character at a time.
+
+    Attributes:
+        effect_config (PourConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = RandomSequenceConfig
     _iterator_cls = RandomSequenceIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

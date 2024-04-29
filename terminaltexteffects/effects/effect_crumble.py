@@ -1,3 +1,12 @@
+"""Characters crumble into dust before being vacuumed up and reformed.
+
+Classes:
+    Crumble: Characters crumble into dust before being vacuumed up and reformed.
+    CrumbleConfig: Configuration for the Crumble effect.
+    CrumbleIterator: Iterates over the Crumble effect. Does not normally need to be called directly.
+
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -64,8 +73,6 @@ class CrumbleConfig(ArgsDataClass):
 
 
 class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
-    """Characters crumble into dust before being vacuumed up and rebuilt."""
-
     def __init__(self, effect: "Crumble"):
         super().__init__(effect)
 
@@ -200,10 +207,19 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
 
 
 class Crumble(BaseEffect[CrumbleConfig]):
-    """Characters crumble into dust before being vacuumed up and rebuilt."""
+    """Characters crumble into dust before being vacuumed up and reformed.
+
+    Attributes:
+        effect_config (CrumbleConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = CrumbleConfig
     _iterator_cls = CrumbleIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

@@ -1,4 +1,10 @@
-"""Effect that draws the characters spawning at varying rates from a single point."""
+"""Sprays the characters from a single point.
+
+Classes:
+    Spray: Sprays the characters from a single point.
+    SprayConfig: Configuration for the Spray effect.
+    SprayIterator: Iterates over the effect. Does not normally need to be called directly.
+"""
 
 import random
 import typing
@@ -32,9 +38,9 @@ class SprayConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        spray_position (str): Position for the spray origin.
-        spray_volume (float): Number of characters to spray per tick as a percent of the total number of characters.
-        movement_speed (tuple[float, float]): Movement speed of the characters.
+        spray_position (str): Position for the spray origin. Valid values are n, ne, e, se, s, sw, w, nw, center.
+        spray_volume (float): Number of characters to spray per tick as a percent of the total number of characters. Valid values are 0 < n <= 1.
+        movement_speed (tuple[float, float]): Movement speed of the characters. Valid values are n > 0.
         movement_easing (typing.Callable): Easing function to use for character movement."""
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
@@ -107,8 +113,6 @@ class SprayConfig(ArgsDataClass):
 
 class SprayIterator(BaseEffectIterator[SprayConfig]):
     class _SprayPosition(Enum):
-        """Position for the spray origin."""
-
         N = auto()
         NE = auto()
         E = auto()
@@ -211,10 +215,19 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
 
 
 class Spray(BaseEffect[SprayConfig]):
-    """Effect that draws the characters spawning at varying rates from a single point."""
+    """Sprays the characters from a single point.
+
+    Attributes:
+        effect_config (SprayConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = SprayConfig
     _iterator_cls = SprayIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

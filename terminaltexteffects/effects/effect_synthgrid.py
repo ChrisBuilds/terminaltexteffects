@@ -1,3 +1,11 @@
+"""Create a grid which fills with characters dissolving into the final text.
+
+Classes:
+    SynthGrid: Create a grid which fills with characters dissolving into the final text.
+    SynthGridConfig: Configuration for the SynthGrid effect.
+    SynthGridIterator: Iterates over the effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -34,7 +42,7 @@ class SynthGridConfig(ArgsDataClass):
         grid_row_symbol (str): Symbol to use for grid row lines.
         grid_column_symbol (str): Symbol to use for grid column lines.
         text_generation_symbols (tuple[str, ...]): Tuple of characters for the text generation animation.
-        max_active_blocks (float): Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time."""
+        max_active_blocks (float): Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time. Valid values are 0 < n <= 1."""
 
     grid_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--grid-gradient-stops"],
@@ -211,8 +219,6 @@ class _GridLine:
 
 
 class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
-    """Effect that creates a grid where blocks of characters dissolved into the input characters."""
-
     def __init__(self, effect: "SynthGrid") -> None:
         super().__init__(effect)
         self._pending_groups: list[tuple[int, list[EffectCharacter]]] = []
@@ -418,10 +424,19 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
 
 
 class SynthGrid(BaseEffect[SynthGridConfig]):
-    """Effect that creates a grid where blocks of characters dissolved into the input characters."""
+    """Create a grid which fills with characters dissolving into the final text.
+
+    Attributes:
+        effect_config (SynthGridConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = SynthGridConfig
     _iterator_cls = SynthGridIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

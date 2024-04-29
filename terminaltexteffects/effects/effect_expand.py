@@ -1,3 +1,11 @@
+"""Characters expand from the center.
+
+Classes:
+    Expand: Characters expand from the center.
+    ExpandConfig: Configuration for the Expand effect.
+    ExpandIterator: Iterates over the effect. Does not normally need to be called directly.
+"""
+
 import typing
 from dataclasses import dataclass
 
@@ -29,7 +37,7 @@ class ExpandConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        movement_speed (float): Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.
+        movement_speed (float): Movement speed of the characters.
         expand_easing (typing.Callable): Easing function to use for character movement."""
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
@@ -75,9 +83,9 @@ class ExpandConfig(ArgsDataClass):
         type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.35,
         metavar=arg_validators.PositiveFloat.METAVAR,
-        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Movement speed of the characters. ",
     )  # type: ignore[assignment]
-    "float : Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect."
+    "float : Movement speed of the characters. "
 
     expand_easing: easing.EasingFunction = ArgField(
         cmd_name="--expand-easing",
@@ -93,8 +101,6 @@ class ExpandConfig(ArgsDataClass):
 
 
 class ExpandIterator(BaseEffectIterator[ExpandConfig]):
-    """Effect that draws the characters expanding from a single point."""
-
     def __init__(
         self,
         effect: "Expand",
@@ -106,8 +112,6 @@ class ExpandIterator(BaseEffectIterator[ExpandConfig]):
         self._build()
 
     def _build(self) -> None:
-        """Prepares the data for the effect by starting all of the characters from a point in the middle of the input data."""
-
         final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
@@ -138,7 +142,6 @@ class ExpandIterator(BaseEffectIterator[ExpandConfig]):
             character.animation.activate_scene(gradient_scn)
 
     def __next__(self) -> str:
-        """Runs the effect."""
         if self._active_chars:
             for character in self._active_chars:
                 character.tick()
@@ -149,10 +152,20 @@ class ExpandIterator(BaseEffectIterator[ExpandConfig]):
 
 
 class Expand(BaseEffect[ExpandConfig]):
-    """Effect that draws the characters expanding from a single point."""
+    """Characters expand from the center.
+
+    Attributes:
+        effect_config (ExpandConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+
+    """
 
     _config_cls = ExpandConfig
     _iterator_cls = ExpandIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

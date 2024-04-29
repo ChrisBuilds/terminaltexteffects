@@ -1,3 +1,12 @@
+"""Characters fall from the top of the output area as bouncy balls before settling into place.
+
+Classes:
+    BouncyBalls: Characters fall from the top of the output area as bouncy balls before settling into place.
+    BouncyBallsConfig: Configuration for the BouncyBalls effect.
+    BouncyBallsIterator: Iterator for the BouncyBalls effect. Does not normally need to be called directly.
+
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -31,8 +40,8 @@ class BouncyBallsConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        ball_delay (int): Number of animation steps between ball drops, increase to reduce ball drop rate.
-        movement_speed (float): Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.
+        ball_delay (int): Number of frames between ball drops, increase to reduce ball drop rate. Valid values are n > 0.
+        movement_speed (float): Movement speed of the characters.  Valid values are n > 0.
         easing (typing.Callable): Easing function to use for character movement."""
 
     ball_colors: tuple[graphics.Color, ...] = ArgField(
@@ -88,18 +97,18 @@ class BouncyBallsConfig(ArgsDataClass):
         type_parser=arg_validators.NonNegativeInt.type_parser,
         default=7,
         metavar=arg_validators.NonNegativeInt.METAVAR,
-        help="Number of animation steps between ball drops, increase to reduce ball drop rate.",
+        help="Number of frames between ball drops, increase to reduce ball drop rate.",
     )  # type: ignore[assignment]
-    "int : Number of animation steps between ball drops, increase to reduce ball drop rate."
+    "int : Number of frames between ball drops, increase to reduce ball drop rate."
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
         type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.25,
         metavar=arg_validators.PositiveFloat.METAVAR,
-        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Movement speed of the characters. ",
     )  # type: ignore[assignment]
-    "float : Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect."
+    "float : Movement speed of the characters. "
 
     movement_easing: easing.EasingFunction = ArgField(
         cmd_name="--movement-easing",
@@ -115,8 +124,6 @@ class BouncyBallsConfig(ArgsDataClass):
 
 
 class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
-    """Effect that displays the text as bouncy balls falling from the top of the output area."""
-
     def __init__(self, effect: "BouncyBalls"):
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
@@ -126,8 +133,6 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
         self._build()
 
     def _build(self) -> None:
-        """Prepares the data for the effect by assigning colors and waypoints and
-        organizing the characters by row."""
         final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
@@ -165,7 +170,6 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
         self.ball_delay = 0
 
     def __next__(self) -> str:
-        """Runs the effect."""
         if self._group_by_row or self._active_chars or self._pending_chars:
             if not self._pending_chars and self._group_by_row:
                 self._pending_chars.extend(self._group_by_row.pop(min(self._group_by_row.keys())))  # type: ignore
@@ -191,10 +195,19 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
 
 
 class BouncyBalls(BaseEffect[BouncyBallsConfig]):
-    """Effect that displays the text as bouncy balls falling from the top of the output area."""
+    """Characters fall from the top of the output area as bouncy balls before settling into place.
+
+    Attributes:
+        effect_config (BouncyBallsConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = BouncyBallsConfig
     _iterator_cls = BouncyBallsIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

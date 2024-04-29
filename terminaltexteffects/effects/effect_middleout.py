@@ -1,3 +1,12 @@
+"""Text expands in a single row or column in the middle of the output area then out.
+
+Classes:
+    MiddleOut: Text expands in a single row or column in the middle of the output area then out.
+    MiddleOutConfig: Configuration for the Middleout effect.
+    MiddleOutIterator: Iterates over the effect's frames. Does not normally need to be called directly.
+
+"""
+
 import typing
 from dataclasses import dataclass
 
@@ -29,8 +38,8 @@ class MiddleOutConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        expand_direction (str): Direction the text will expand.
-        center_movement_speed (float): Speed of the characters during the initial expansion of the center vertical/horiztonal"""
+        expand_direction (str): Direction the text will expand. Choices: vertical, horizontal.
+        center_movement_speed (float): Speed of the characters during the initial expansion of the center vertical/horiztonal. Valid values are n > 0."""
 
     starting_color: graphics.Color = ArgField(
         cmd_name="--starting-color",
@@ -83,18 +92,18 @@ class MiddleOutConfig(ArgsDataClass):
         type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.35,
         metavar=arg_validators.PositiveFloat.METAVAR,
-        help="Speed of the characters during the initial expansion of the center vertical/horiztonal line. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Speed of the characters during the initial expansion of the center vertical/horiztonal line. ",
     )  # type: ignore[assignment]
-    "float : Speed of the characters during the initial expansion of the center vertical/horiztonal line. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect."
+    "float : Speed of the characters during the initial expansion of the center vertical/horiztonal line. "
 
     full_movement_speed: float = ArgField(
         cmd_name="--full-movement-speed",
         type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.35,
         metavar=arg_validators.PositiveFloat.METAVAR,
-        help="Speed of the characters during the final full expansion. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Speed of the characters during the final full expansion. ",
     )  # type: ignore[assignment]
-    "float : Speed of the characters during the final full expansion. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect."
+    "float : Speed of the characters during the final full expansion. "
 
     center_easing: easing.EasingFunction = ArgField(
         cmd_name="--center-easing",
@@ -183,10 +192,19 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
 
 
 class MiddleOut(BaseEffect[MiddleOutConfig]):
-    """Text expands in a single row or column in the middle of the output area then out."""
+    """Text expands in a single row or column in the middle of the output area then out.
+
+    Attributes:
+        effect_config (MiddleOutConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = MiddleOutConfig
     _iterator_cls = MiddleOutIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

@@ -1,3 +1,11 @@
+"""Waves travel across the terminal leaving behind the characters.
+
+Classes:
+    Waves: Creates waves that travel across the terminal, leaving behind the characters.
+    WavesConfig: Configuration for the Waves effect.
+    WavesIterator: Iterates over the effect. Does not normally need to be called directly.
+"""
+
 import typing
 from dataclasses import dataclass
 
@@ -30,7 +38,7 @@ class WavesConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        wave_count (int): Number of waves to generate. n > 0."""
+        wave_count (int): Number of waves to generate. Valid values are n > 0."""
 
     wave_symbols: tuple[str, ...] = ArgField(
         cmd_name="--wave-symbols",
@@ -122,8 +130,6 @@ class WavesConfig(ArgsDataClass):
 
 
 class WavesIterator(BaseEffectIterator[WavesConfig]):
-    """Effect that creates waves that travel across the terminal, leaving behind the characters."""
-
     def __init__(self, effect: "Waves") -> None:
         super().__init__(effect)
         self._pending_columns: list[list[EffectCharacter]] = []
@@ -177,10 +183,19 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
 
 
 class Waves(BaseEffect[WavesConfig]):
-    """Effect that creates waves that travel across the terminal, leaving behind the characters."""
+    """Creates waves that travel across the terminal, leaving behind the characters.
+
+    Attributes:
+        effect_config (ExpandConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = WavesConfig
     _iterator_cls = WavesIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

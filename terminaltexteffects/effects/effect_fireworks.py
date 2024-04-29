@@ -1,3 +1,11 @@
+"""Launches characters up the screen where they explode like fireworks and fall into place.
+
+Classes:
+    Fireworks: Characters explode like fireworks and fall into place.
+    FireworksConfig: Configuration for the Fireworks effect.
+    FireworksIterator: Iterates over the effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -27,12 +35,12 @@ class FireworksConfig(ArgsDataClass):
         explode_anywhere (bool): If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text.
         firework_colors (tuple[graphics.Color, ...]): Tuple of colors from which firework colors will be randomly selected.
         firework_symbol (str): Symbol to use for the firework shell.
-        firework_volume (float): Percent of total characters in each firework shell.
+        firework_volume (float): Percent of total characters in each firework shell. Valid values are 0 < n <= 1.
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        launch_delay (int): Number of animation steps to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.
-        explode_distance (float): Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width."""
+        launch_delay (int): Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. Valid values are n >= 0.
+        explode_distance (float): Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width. Valid values are 0 < n <= 1."""
 
     explode_anywhere: bool = ArgField(
         cmd_name="--explode-anywhere",
@@ -104,9 +112,9 @@ class FireworksConfig(ArgsDataClass):
         type_parser=arg_validators.NonNegativeInt.type_parser,
         default=60,
         metavar=arg_validators.NonNegativeInt.METAVAR,
-        help="Number of animation steps to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.",
+        help="Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.",
     )  # type: ignore[assignment]
-    "int : Number of animation steps to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value."
+    "int : Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value."
 
     explode_distance: float = ArgField(
         cmd_name="--explode-distance",
@@ -123,8 +131,6 @@ class FireworksConfig(ArgsDataClass):
 
 
 class FireworksIterator(BaseEffectIterator[FireworksConfig]):
-    """Effect that launches characters up the screen where they explode like fireworks and fall into place."""
-
     def __init__(self, effect: "Fireworks"):
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
@@ -225,7 +231,6 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 )
 
     def _build(self) -> None:
-        """Prepares the data for the effect by building the firework shells and scenes."""
         self.prepare_waypoints()
         self.prepare_scenes()
 
@@ -249,10 +254,20 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
 
 
 class Fireworks(BaseEffect[FireworksConfig]):
-    """Effect that launches characters up the screen where they explode like fireworks and fall into place."""
+    """Launches characters up the screen where they explode like fireworks and fall into place.
+
+    Attributes:
+        effect_config (FireworksConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+
+    """
 
     _config_cls = FireworksConfig
     _iterator_cls = FireworksIterator
 
     def __init__(self, input_data: str):
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

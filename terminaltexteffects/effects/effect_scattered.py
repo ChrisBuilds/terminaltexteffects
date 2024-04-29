@@ -1,3 +1,11 @@
+"""Text is scattered across the output area and moves into position.
+
+Classes:
+    Scattered: Move the characters into place from random starting locations.
+    ScatteredConfig: Configuration for the Scattered effect.
+    ScatteredIterator: Effect iterator for the effect. Does not normally need to be called directly.
+"""
+
 import typing
 from dataclasses import dataclass
 
@@ -14,8 +22,8 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="scattered",
-    help="Move the characters into place from random starting locations.",
-    description="scattered | Move the characters into place from random starting locations.",
+    help="Text is scattered across the output area and moves into position.",
+    description="scattered | Text is scattered across the output area and moves into position.",
     epilog=f"""{arg_validators.EASING_EPILOG}
 Example: terminaltexteffects scattered --final-gradient-stops ff9048 ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK""",
 )
@@ -28,7 +36,7 @@ class ScatteredConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        movement_speed (float): Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.
+        movement_speed (float): Movement speed of the characters. Valid values are n > 0.
         movement_easing (easing.EasingFunction): Easing function to use for character movement."""
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
@@ -73,9 +81,9 @@ class ScatteredConfig(ArgsDataClass):
         type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.3,
         metavar=arg_validators.PositiveFloat.METAVAR,
-        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Movement speed of the characters. ",
     )  # type: ignore[assignment]
-    "float : Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect."
+    "float : Movement speed of the characters. "
 
     movement_easing: easing.EasingFunction = ArgField(
         cmd_name="--movement-easing",
@@ -91,8 +99,6 @@ class ScatteredConfig(ArgsDataClass):
 
 
 class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
-    """Effect that moves the characters into position from random starting locations."""
-
     def __init__(self, effect: "Scattered") -> None:
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
@@ -148,10 +154,19 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
 
 
 class Scattered(BaseEffect[ScatteredConfig]):
-    """Effect that moves the characters into position from random starting locations."""
+    """Text is scattered across the output area and moves into position.
+
+    Attributes:
+        effect_config (ScatteredConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = ScatteredConfig
     _iterator_cls = ScatteredIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

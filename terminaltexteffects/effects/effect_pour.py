@@ -1,4 +1,10 @@
-"""Effect that pours the characters into position from the top, bottom, left, or right."""
+"""Pours the characters back and forth from the top, bottom, left, or right.
+
+Classes:
+    Pour: Pours the characters back and forth from the top, bottom, left, or right.
+    PourConfig: Configuration for the Pour effect.
+    PourIterator: Iterates over the frames of the Pour effect. Does not normally need to be called directly.
+"""
 
 import typing
 from dataclasses import dataclass
@@ -29,10 +35,10 @@ class PourConfig(ArgsDataClass):
     """Configuration for the Pour effect.
 
     Attributes:
-        pour_direction (str): Direction the text will pour.
-        pour_speed (int): Number of characters poured in per tick. Increase to speed up the effect.
-        movement_speed (float): Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.
-        gap (int): Number of frames to wait between each character in the pour effect. Increase to slow down effect and create a more defined back and forth motion.
+        pour_direction (str): Direction the text will pour. Valid values are "up", "down", "left", and "right".
+        pour_speed (int): Number of characters poured in per tick. Increase to speed up the effect. Valid values are n > 0.
+        movement_speed (float): Movement speed of the characters. Valid values are n > 0.
+        gap (int): Number of frames to wait between each character in the pour effect. Increase to slow down effect and create a more defined back and forth motion. Valid values are n >= 0.
         starting_color (graphics.Color): Color of the characters before the gradient starts.
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
@@ -62,7 +68,7 @@ class PourConfig(ArgsDataClass):
         type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.2,
         metavar=arg_validators.PositiveFloat.METAVAR,
-        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Movement speed of the characters. ",
     )  # type: ignore[assignment]
     "float : Movement speed of the characters."
 
@@ -134,14 +140,13 @@ class PourConfig(ArgsDataClass):
         return Pour
 
 
-class PourDirection(Enum):
-    UP = auto()
-    DOWN = auto()
-    LEFT = auto()
-    RIGHT = auto()
-
-
 class PourIterator(BaseEffectIterator[PourConfig]):
+    class PourDirection(Enum):
+        UP = auto()
+        DOWN = auto()
+        LEFT = auto()
+        RIGHT = auto()
+
     def __init__(self, effect: "Pour") -> None:
         super().__init__(effect)
         self._pending_groups: list[list[EffectCharacter]] = []
@@ -151,11 +156,11 @@ class PourIterator(BaseEffectIterator[PourConfig]):
 
     def _build(self) -> None:
         self._pour_direction = {
-            "down": PourDirection.DOWN,
-            "up": PourDirection.UP,
-            "left": PourDirection.LEFT,
-            "right": PourDirection.RIGHT,
-        }.get(self._config.pour_direction, PourDirection.DOWN)
+            "down": PourIterator.PourDirection.DOWN,
+            "up": PourIterator.PourDirection.UP,
+            "left": PourIterator.PourDirection.LEFT,
+            "right": PourIterator.PourDirection.RIGHT,
+        }.get(self._config.pour_direction, PourIterator.PourDirection.DOWN)
         final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
@@ -163,24 +168,24 @@ class PourIterator(BaseEffectIterator[PourConfig]):
         for character in self._terminal.get_characters():
             self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         sort_map = {
-            PourDirection.DOWN: Terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
-            PourDirection.UP: Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
-            PourDirection.LEFT: Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-            PourDirection.RIGHT: Terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            PourIterator.PourDirection.DOWN: Terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
+            PourIterator.PourDirection.UP: Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            PourIterator.PourDirection.LEFT: Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            PourIterator.PourDirection.RIGHT: Terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
         }
         groups = self._terminal.get_characters_grouped(grouping=sort_map[self._pour_direction])
         for i, group in enumerate(groups):
             for character in group:
                 self._terminal.set_character_visibility(character, False)
-                if self._pour_direction == PourDirection.DOWN:
+                if self._pour_direction == PourIterator.PourDirection.DOWN:
                     character.motion.set_coordinate(Coord(character.input_coord.column, self._terminal.output_area.top))
-                elif self._pour_direction == PourDirection.UP:
+                elif self._pour_direction == PourIterator.PourDirection.UP:
                     character.motion.set_coordinate(
                         Coord(character.input_coord.column, self._terminal.output_area.bottom)
                     )
-                elif self._pour_direction == PourDirection.LEFT:
+                elif self._pour_direction == PourIterator.PourDirection.LEFT:
                     character.motion.set_coordinate(Coord(self._terminal.output_area.right, character.input_coord.row))
-                elif self._pour_direction == PourDirection.RIGHT:
+                elif self._pour_direction == PourIterator.PourDirection.RIGHT:
                     character.motion.set_coordinate(Coord(self._terminal.output_area.left, character.input_coord.row))
                 input_coord_path = character.motion.new_path(
                     speed=self._config.movement_speed,
@@ -231,10 +236,19 @@ class PourIterator(BaseEffectIterator[PourConfig]):
 
 
 class Pour(BaseEffect[PourConfig]):
-    """Effect that pours the characters into position from the top, bottom, left, or right."""
+    """Pours the characters back and forth from the top, bottom, left, or right.
+
+    Attributes:
+        effect_config (PourConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = PourConfig
     _iterator_cls = PourIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

@@ -1,3 +1,12 @@
+"""Characters are ignited and burn up the screen.
+
+Classes:
+    Burn: Characters are ignited and burn up the screen.
+    BurnConfig: Configuration for the Burn effect.
+    BurnIterator: Iterates over the Burn effect. Does not normally need to be called directly.
+
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -84,8 +93,6 @@ class BurnConfig(ArgsDataClass):
 
 
 class BurnIterator(BaseEffectIterator[BurnConfig]):
-    """Effect that burns up the screen."""
-
     def __init__(self, effect: "Burn"):
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
@@ -94,7 +101,6 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
         self._build()
 
     def _build(self) -> None:
-        """Prepares the data for the effect by building the burn animation and organizing the data into columns."""
         vertical_build_order = [
             "'",
             ".",
@@ -160,10 +166,19 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
 
 
 class Burn(BaseEffect[BurnConfig]):
-    """Effect that burns up the screen."""
+    """Characters are ignited and burn up the screen.
+
+    Attributes:
+        effect_config (BurnConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = BurnConfig
     _iterator_cls = BurnIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

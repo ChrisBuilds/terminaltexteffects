@@ -91,7 +91,7 @@ class Path:
         speed (float): speed > 0
         ease (easing.EasingFunction | None): easing function for character movement. Defaults to None.
         layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
-        hold_time (int): number of animation steps to hold the character at the end of the path. Defaults to 0.
+        hold_time (int): number of frames to hold the character at the end of the path. Defaults to 0.
         loop (bool): Whether the path should loop back to the beginning. Default is False.
     """
 
@@ -280,7 +280,7 @@ class Motion:
             speed (float): speed
             ease (easing.EasingFunction | None): easing function for character movement. Defaults to None.
             layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
-            hold_time (int): number of animation steps to hold the character at the end of the path. Defaults to 0.
+            hold_time (int): number of frames to hold the character at the end of the path. Defaults to 0.
             loop (bool): whether the path should loop. Defaults to False.
 
         Returns:

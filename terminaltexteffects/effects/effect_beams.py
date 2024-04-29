@@ -327,7 +327,7 @@ class Beams(BaseEffect[BeamsConfig]):
     """Creates beams which travel over the output area illuminating the characters.
 
     Attributes:
-        effect_config (BeamsConfig): Configuration for the Beams effect.
+        effect_config (BeamsConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
     """
 
@@ -335,8 +335,8 @@ class Beams(BaseEffect[BeamsConfig]):
     _iterator_cls = BeamsIterator
 
     def __init__(self, input_data: str) -> None:
-        """Initialize the Beams effect with the provided input data.
+        """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the Beams effect."""
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

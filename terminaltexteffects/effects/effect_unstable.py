@@ -1,3 +1,11 @@
+"""Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.
+
+Classes:
+    Unstable: Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.
+    UnstableConfig: Configuration for the Unstable effect.
+    UnstableIterator: Effect iterator for the Unstable effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -32,9 +40,9 @@ class UnstableConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
         explosion_ease (easing.EasingFunction): Easing function to use for character movement during the explosion.
-        explosion_speed (float): Speed of characters during explosion. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.
+        explosion_speed (float): Speed of characters during explosion. Valid values are n > 0.
         reassembly_ease (easing.EasingFunction): Easing function to use for character reassembly.
-        reassembly_speed (float): Speed of characters during reassembly.
+        reassembly_speed (float): Speed of characters during reassembly. Valid values are n > 0.
     """
 
     unstable_color: graphics.Color = ArgField(
@@ -88,9 +96,9 @@ class UnstableConfig(ArgsDataClass):
         type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.75,
         metavar=arg_validators.PositiveFloat.METAVAR,
-        help="Speed of characters during explosion. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Speed of characters during explosion. ",
     )  # type: ignore[assignment]
-    "float : Speed of characters during explosion. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect."
+    "float : Speed of characters during explosion. "
 
     reassembly_ease: easing.EasingFunction = ArgField(
         cmd_name=["--reassembly-ease"],
@@ -105,7 +113,7 @@ class UnstableConfig(ArgsDataClass):
         type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.75,
         metavar=arg_validators.PositiveFloat.METAVAR,
-        help="Speed of characters during reassembly. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Speed of characters during reassembly. ",
     )  # type: ignore[assignment]
     "float : Speed of characters during reassembly."
 
@@ -115,9 +123,6 @@ class UnstableConfig(ArgsDataClass):
 
 
 class UnstableIterator(BaseEffectIterator[UnstableConfig]):
-    """Effect that spawns characters jumbled, explodes them to the edge of the output area,
-    then reassembles them in the correct layout."""
-
     def __init__(self, effect: "Unstable") -> None:
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
@@ -253,8 +258,19 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
 
 
 class Unstable(BaseEffect[UnstableConfig]):
+    """Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.
+
+    Attributes:
+        effect_config (UnstableConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
+
     _config_cls = UnstableConfig
     _iterator_cls = UnstableIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

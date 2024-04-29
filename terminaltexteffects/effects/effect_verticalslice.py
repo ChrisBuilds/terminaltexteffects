@@ -1,3 +1,11 @@
+"""Slices the input in half vertically and slides it into place from opposite directions.
+
+Classes:
+    VerticalSlice: Slices the input in half vertically and slides it into place from opposite directions.
+    VerticalSliceConfig: Configuration for the VerticalSlice effect.
+    VerticalSliceIterator: Effect iterator for the effect. Does not normally need to be called directly.
+"""
+
 import typing
 from dataclasses import dataclass
 
@@ -28,7 +36,7 @@ class VerticalSliceConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        movement_speed (float): Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.
+        movement_speed (float): Movement speed of the characters. Valid values are n > 0.
         movement_easing (easing.EasingFunction): Easing function to use for character movement.
     """
 
@@ -66,9 +74,9 @@ class VerticalSliceConfig(ArgsDataClass):
         type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.15,
         metavar=arg_validators.PositiveFloat.METAVAR,
-        help="Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Movement speed of the characters. ",
     )  # type: ignore[assignment]
-    "float : Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect."
+    "float : Movement speed of the characters. "
 
     movement_easing: easing.EasingFunction = ArgField(
         cmd_name="--movement-easing",
@@ -84,8 +92,6 @@ class VerticalSliceConfig(ArgsDataClass):
 
 
 class VerticalSliceIterator(BaseEffectIterator[VerticalSliceConfig]):
-    """Effect that slices the input in half vertically and slides it into place from opposite directions."""
-
     def __init__(self, effect: "VerticalSlice") -> None:
         super().__init__(effect)
         self._pending_chars: list[EffectCharacter] = []
@@ -148,10 +154,19 @@ class VerticalSliceIterator(BaseEffectIterator[VerticalSliceConfig]):
 
 
 class VerticalSlice(BaseEffect[VerticalSliceConfig]):
-    """Effect that slices the input in half vertically and slides it into place from opposite directions."""
+    """Slices the input in half vertically and slides it into place from opposite directions.
+
+    Attributes:
+        effect_config (VerticalSliceConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = VerticalSliceConfig
     _iterator_cls = VerticalSliceIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

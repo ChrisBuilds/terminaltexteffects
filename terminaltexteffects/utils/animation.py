@@ -94,7 +94,7 @@ class Frame:
     """A Frame is a CharacterVisual with a duration.
     Args:
         character_visual (CharacterVisual): a CharacterVisual object
-        duration (int): the number of animation steps to use the Frame
+        duration (int): the number of frames to use the Frame
     """
 
     character_visual: CharacterVisual
@@ -159,7 +159,7 @@ class Scene:
         Args:
             symbol (str): the symbol to show
             color (str | int): color code
-            duration (int): the number of animation steps to use the Frame
+            duration (int): the number of frames to use the Frame
             BOLD (bool): bold mode
             DIM (bool): dim mode
             ITALIC (bool): italic mode

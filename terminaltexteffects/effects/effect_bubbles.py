@@ -1,3 +1,11 @@
+"""Forms bubbles with the characters. Bubbles float down and pop.
+
+Classes:
+    Bubbles: Forms bubbles with the characters. Bubbles float down and pop.
+    BubblesConfig: Configuration for the Bubbles effect.
+    BubblesIterator: Iterates over the Bubbles effect. Does not normally need to be called directly.
+"""
+
 import random
 import typing
 from dataclasses import dataclass
@@ -34,8 +42,8 @@ class BubblesConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        bubble_speed (float): Speed of the floating bubbles. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.
-        bubble_delay (int): Number of animation steps between bubbles.
+        bubble_speed (float): Speed of the floating bubbles. Valid values are n > 0.
+        bubble_delay (int): Number of frames between bubbles. Valid values are n >= 0.
         pop_condition (str): Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal.
         easing (typing.Callable): Easing function to use for character movement after a bubble pops.
     """
@@ -101,18 +109,18 @@ class BubblesConfig(ArgsDataClass):
         type_parser=arg_validators.PositiveFloat.type_parser,
         default=0.1,
         metavar=arg_validators.PositiveFloat.METAVAR,
-        help="Speed of the floating bubbles. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect.",
+        help="Speed of the floating bubbles. ",
     )  # type: ignore[assignment]
-    "float : Speed of the floating bubbles. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect."
+    "float : Speed of the floating bubbles. "
 
     bubble_delay: int = ArgField(
         cmd_name="--bubble-delay",
         type_parser=arg_validators.PositiveInt.type_parser,
         default=50,
         metavar=arg_validators.PositiveInt.METAVAR,
-        help="Number of animation steps between bubbles.",
+        help="Number of frames between bubbles.",
     )  # type: ignore[assignment]
-    "int : Number of animation steps between bubbles."
+    "int : Number of frames between bubbles."
 
     pop_condition: str = ArgField(
         cmd_name="--pop-condition",
@@ -137,8 +145,6 @@ class BubblesConfig(ArgsDataClass):
 
 
 class BubblesIterator(BaseEffectIterator[BubblesConfig]):
-    """Effect that forms circles with the characters. Circles float down and pop into the characters."""
-
     class _Bubble:
         def __init__(
             self,
@@ -341,10 +347,19 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
 
 
 class Bubbles(BaseEffect[BubblesConfig]):
-    """Effect that forms circles with the characters. Circles float down and pop into the characters."""
+    """Forms bubbles with the characters. Bubbles float down and pop.
+
+    Attributes:
+        effect_config (BubblesConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
 
     _config_cls = BubblesConfig
     _iterator_cls = BubblesIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)

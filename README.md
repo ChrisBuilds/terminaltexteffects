@@ -59,6 +59,8 @@ OR
 
 ## Usage
 
+View the [Docs](https://chrisbuilds.github.io/terminaltexteffects/).
+
 ### Application
 
 ```cat your_text | tte <effect> [options]```
@@ -301,9 +303,9 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-direction (diagonal, horizontal, vertical, center)
                             Direction of the final gradient. (default: Direction.DIAGONAL)
       --ball-delay (int >= 0)
-                            Number of animation steps between ball drops, increase to reduce ball drop rate. (default: 7)
+                            Number of frames between ball drops, increase to reduce ball drop rate. (default: 7)
       --movement-speed (float > 0)
-                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.25)
+                            Movement speed of the characters.  (default: 0.25)
       --easing EASING       Easing function to use for character movement. (default: out_bounce)
 
         Easing
@@ -356,9 +358,9 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-direction (diagonal, horizontal, vertical, center)
                             Direction of the final gradient. (default: Direction.DIAGONAL)
       --bubble-speed (float > 0)
-                            Speed of the floating bubbles. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.1)
+                            Speed of the floating bubbles.  (default: 0.1)
       --bubble-delay (int > 0)
-                            Number of animation steps between bubbles. (default: 50)
+                            Number of frames between bubbles. (default: 50)
       --pop-condition {row,bottom,anywhere}
                             Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom
                             row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal. (default: row)
@@ -476,7 +478,7 @@ each effect. Check the effect help output to see arguments.
       --error-pairs (int > 0)
                             Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position. (default: 0.1)
       --swap-delay (int > 0)
-                            Number of animation steps between swaps. (default: 10)
+                            Number of frames between swaps. (default: 10)
       --error-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                             Color for the characters that are in the wrong position. (default: e74c3c)
       --correct-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
@@ -489,7 +491,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-direction (diagonal, horizontal, vertical, center)
                             Direction of the final gradient. (default: Direction.VERTICAL)
       --movement-speed (float > 0)
-                            Speed of the characters while moving to the correct position. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the
+                            Speed of the characters while moving to the correct position. Valid values are n > 0. Adjust speed and animation rate separately to fine tune the
                             effect. (default: 0.5)
 
         Easing
@@ -540,7 +542,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-direction (diagonal, horizontal, vertical, center)
                             Direction of the final gradient. (default: Direction.VERTICAL)
       --movement-speed (float > 0)
-                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.35)
+                            Movement speed of the characters.  (default: 0.35)
       --expand-easing EXPAND_EASING
                             Easing function to use for character movement. (default: in_out_quart)
 
@@ -597,7 +599,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-direction (diagonal, horizontal, vertical, center)
                             Direction of the final gradient. (default: Direction.HORIZONTAL)
       --launch-delay (int >= 0)
-                            Number of animation steps to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. (default: 60)
+                            Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. (default: 60)
       --explode-distance (0 <= float(n) <= 1)
                             Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width. (default: 0.1)
 
@@ -769,7 +771,7 @@ each effect. Check the effect help output to see arguments.
       --pour-speed (int > 0)
                             Number of characters poured in per tick. Increase to speed up the effect. (default: 1)
       --movement-speed (float > 0)
-                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.2)
+                            Movement speed of the characters.  (default: 0.2)
       --gap (int >= 0)      Number of frames to wait between each character in the pour effect. Increase to slow down effect and create a more defined back and forth motion. (default: 1)
       --starting-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                             Color of the characters before the gradient starts. (default: ffffff)
@@ -963,11 +965,11 @@ each effect. Check the effect help output to see arguments.
                             Direction of the final gradient. (default: Direction.VERTICAL)
       --ring-gap RING_GAP   Distance between rings as a percent of the smallest output area dimension. (default: 0.1)
       --spin-duration SPIN_DURATION
-                            Number of animation steps for each cycle of the spin phase. (default: 200)
+                            Number of frames for each cycle of the spin phase. (default: 200)
       --spin-speed (hyphen separated float range e.g. '0.25-0.5')
                             Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring. (default: (0.25, 1.0))
       --disperse-duration DISPERSE_DURATION
-                            Number of animation steps spent in the dispersed state between spinning cycles. (default: 200)
+                            Number of frames spent in the dispersed state between spinning cycles. (default: 200)
       --spin-disperse-cycles SPIN_DISPERSE_CYCLES
                             Number of times the animation will cycles between spinning rings and dispersed characters. (default: 3)
 
@@ -994,7 +996,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-direction (diagonal, horizontal, vertical, center)
                             Direction of the final gradient. (default: Direction.VERTICAL)
       --movement-speed (float > 0)
-                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.5)
+                            Movement speed of the characters.  (default: 0.5)
       --movement-easing MOVEMENT_EASING
                             Easing function to use for character movement. (default: in_out_back)
 
@@ -1103,7 +1105,7 @@ each effect. Check the effect help output to see arguments.
       --beam-falloff (float >= 0)
                             Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width. (default: 0.3)
       --search-duration (int > 0)
-                            Duration of the search phase, in animation steps, before the spotlights converge in the center. (default: 750)
+                            Duration of the search phase, in frames, before the spotlights converge in the center. (default: 750)
       --search-speed-range (hyphen separated float range e.g. '0.25-0.5')
                             Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values. (default: (0.25, 0.5))
       --spotlight-count (int > 0)
@@ -1306,7 +1308,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-direction (diagonal, horizontal, vertical, center)
                             Direction of the final gradient. (default: Direction.VERTICAL)
       --movement-speed (float > 0)
-                            Movement speed of the characters. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the effect. (default: 0.15)
+                            Movement speed of the characters.  (default: 0.15)
       --movement-easing MOVEMENT_EASING
                             Easing function to use for character movement. (default: in_out_expo)
 
@@ -1368,7 +1370,7 @@ each effect. Check the effect help output to see arguments.
       --noise-chance (0 <= float(n) <= 1)
                             Chance that all characters will experience noise on any given frame. (default: 0.004)
       --total-glitch-time (int > 0)
-                            Total time, animation steps, that the glitching phase will last. (default: 1000)
+                            Total time, frames, that the glitching phase will last. (default: 1000)
 
     Example: terminaltexteffects vhstape --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --glitch-line-colors ffffff ff0000 00ff00 0000ff ffffff --glitch-wave-colors ffffff ff0000 00ff00 0000ff ffffff --noise-colors 1e1e1f 3c3b3d 6d6c70 a2a1a6 cbc9cf ffffff --glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000
 </details>
@@ -1453,7 +1455,7 @@ each effect. Check the effect help output to see arguments.
       --final-gradient-direction (diagonal, horizontal, vertical, center)
                             Direction of the final gradient. (default: Direction.VERTICAL)
       --wipe-delay (int >= 0)
-                            Number of animation cycles to wait before adding the next character group. Increase, to slow down the effect. (default: 0)
+                            Number of frames to wait before adding the next character group. Increase, to slow down the effect. (default: 0)
 
     Example: terminaltexteffects wipe --wipe-direction diagonal_bottom_left_to_top_right --final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 5 --wipe-delay 0
 </details>

@@ -1,4 +1,11 @@
-"""Creates a rain effect where characters fall from the top of the terminal."""
+"""Rain characters from the top of the output area.
+
+Classes:
+    Rain: Rain characters from the top of the output area.
+    RainConfig: Configuration for the Rain effect.
+    RainIterator: Iterator for the Rain effect. Does not normally need to be called directly.
+
+"""
 
 import random
 import typing
@@ -29,7 +36,7 @@ class RainConfig(ArgsDataClass):
 
     Attributes:
         rain_colors (tuple[graphics.Color, ...]): Tuple of colors for the rain drops. Colors are randomly chosen from the tuple.
-        movement_speed (tuple[float, float]): Falling speed range of the rain drops.
+        movement_speed (tuple[float, float]): Falling speed range of the rain drops. Valid values are n > 0.
         rain_symbols (tuple[str, ...]): Tuple of symbols to use for the rain drops. Symbols are randomly chosen from the tuple.
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
@@ -118,7 +125,6 @@ class RainIterator(BaseEffectIterator[RainConfig]):
         self._build()
 
     def _build(self) -> None:
-        """Prepares the data for the effect by setting all characters y position to the input height and sorting by target y."""
         final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
@@ -178,8 +184,19 @@ class RainIterator(BaseEffectIterator[RainConfig]):
 
 
 class Rain(BaseEffect[RainConfig]):
+    """Rain characters from the top of the output area.
+
+    Attributes:
+        effect_config (PourConfig): Configuration for the effect.
+        terminal_config (TerminalConfig): Configuration for the terminal.
+    """
+
     _config_cls = RainConfig
     _iterator_cls = RainIterator
 
     def __init__(self, input_data: str) -> None:
+        """Initialize the effect with the provided input data.
+
+        Args:
+            input_data (str): The input data to use for the effect."""
         super().__init__(input_data)
