@@ -1,0 +1,1965 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../rain/">
+      
+      
+        <link rel="next" href="../rings/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.19">
+    
+    
+      
+        <title>RandomSequence - TerminalTextEffects Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.66ac8b77.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#randomsequence" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="TerminalTextEffects Docs" class="md-header__button md-logo" aria-label="TerminalTextEffects Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            TerminalTextEffects Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              RandomSequence
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="TerminalTextEffects Docs" class="md-nav__button md-logo" aria-label="TerminalTextEffects Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    TerminalTextEffects Docs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TerminalTextEffects Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to-guides/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How-To Guides
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Effects
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Effects
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../beams/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Beams
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../binarypath/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Binarypath
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../blackhole/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Blackhole
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bouncyballs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BouncyBalls
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bubbles/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bubbles
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../burn/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Burn
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../crumble/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Crumble
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decrypt/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Decrypt
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../errorcorrect/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ErrorCorrect
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../expand/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Expand
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fireworks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Fireworks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../middleout/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MiddleOut
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../orbittingvolley/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OrbittingVolley
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overflow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pour/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pour
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../print/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Print
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rain/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    RandomSequence
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    RandomSequence
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Start
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      effect_random_sequence
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      RandomSequence
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RandomSequence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequence.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __init__
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      RandomSequenceConfig
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RandomSequenceConfig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_direction" class="md-nav__link">
+    <span class="md-ellipsis">
+      final_gradient_direction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      final_gradient_frames
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      final_gradient_steps
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_stops" class="md-nav__link">
+    <span class="md-ellipsis">
+      final_gradient_stops
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.speed" class="md-nav__link">
+    <span class="md-ellipsis">
+      speed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.starting_color" class="md-nav__link">
+    <span class="md-ellipsis">
+      starting_color
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rings/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scattered/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scattered
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../slide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Slide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spotlights/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Spotlights
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spray/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Spray
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../swarm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Swarm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../synthgrid/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SynthGrid
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../unstable/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Unstable
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../verticalslice/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    VerticalSlice
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vhstape/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    VHSTape
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../waves/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Waves
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../wipe/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wipe
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Explanation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Start
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      effect_random_sequence
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      RandomSequence
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RandomSequence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequence.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __init__
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      RandomSequenceConfig
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RandomSequenceConfig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_direction" class="md-nav__link">
+    <span class="md-ellipsis">
+      final_gradient_direction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      final_gradient_frames
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      final_gradient_steps
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_stops" class="md-nav__link">
+    <span class="md-ellipsis">
+      final_gradient_stops
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.speed" class="md-nav__link">
+    <span class="md-ellipsis">
+      speed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.starting_color" class="md-nav__link">
+    <span class="md-ellipsis">
+      starting_color
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="randomsequence">RandomSequence</h1>
+<p><img alt="Demo" src="../../img/effects_demos/randomsequence_demo.gif" /></p>
+<h2 id="quick-start">Quick Start</h2>
+<div class="language-py highlight"><span class="filename">randomsequence.py</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">terminaltexteffects.effects.effect_random_sequence</span> <span class="kn">import</span> <span class="n">RandomSequence</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">effect</span> <span class="o">=</span> <span class="n">RandomSequence</span><span class="p">(</span><span class="s2">&quot;YourTextHere&quot;</span><span class="p">)</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">with</span> <span class="n">effect</span><span class="o">.</span><span class="n">terminal_output</span><span class="p">()</span> <span class="k">as</span> <span class="n">terminal</span><span class="p">:</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">effect</span><span class="p">:</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        <span class="n">terminal</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+</span></code></pre></div>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="terminaltexteffects.effects.effect_random_sequence"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Prints the input data in a random sequence, one character at a time.</p>
+
+
+
+  <p><span class="doc-section-title">Classes:</span></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr class="doc-section-item">
+          <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_random_sequence.RandomSequence" href="#terminaltexteffects.effects.effect_random_sequence.RandomSequence">RandomSequence</a></code></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Prints the input data in a random sequence.</p>
+            </div>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig" href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig">RandomSequenceConfig</a></code></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Configuration for the RandomSequence effect.</p>
+            </div>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code><span title="terminaltexteffects.effects.effect_random_sequence.RandomSequenceIterator">RandomSequenceIterator</span></code></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Iterator for the RandomSequence effect. Does not normally need to be called directly.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="terminaltexteffects.effects.effect_random_sequence.RandomSequence" class="doc doc-heading">
+          <code>RandomSequence</code>
+
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="terminaltexteffects.base_effect.BaseEffect" href="../../reference/#terminaltexteffects.base_effect.BaseEffect">BaseEffect</a>[<a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig" href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig">RandomSequenceConfig</a>]</code></p>
+
+  
+      <p>Prints the input data in a random sequence, one character at a time.</p>
+
+
+
+  <p><span class="doc-section-title">Attributes:</span></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr class="doc-section-item">
+          <td><code><span title="terminaltexteffects.effects.effect_random_sequence.RandomSequence.effect_config">effect_config</span></code></td>
+          <td>
+                <code>PourConfig</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Configuration for the effect.</p>
+            </div>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code><span title="terminaltexteffects.effects.effect_random_sequence.RandomSequence.terminal_config">terminal_config</span></code></td>
+          <td>
+                <code>TerminalConfig</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Configuration for the terminal.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+            <details class="quote">
+              <summary>Source code in <code>terminaltexteffects/effects/effect_random_sequence.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-147">147</a></span>
+<span class="normal"><a href="#__codelineno-0-148">148</a></span>
+<span class="normal"><a href="#__codelineno-0-149">149</a></span>
+<span class="normal"><a href="#__codelineno-0-150">150</a></span>
+<span class="normal"><a href="#__codelineno-0-151">151</a></span>
+<span class="normal"><a href="#__codelineno-0-152">152</a></span>
+<span class="normal"><a href="#__codelineno-0-153">153</a></span>
+<span class="normal"><a href="#__codelineno-0-154">154</a></span>
+<span class="normal"><a href="#__codelineno-0-155">155</a></span>
+<span class="normal"><a href="#__codelineno-0-156">156</a></span>
+<span class="normal"><a href="#__codelineno-0-157">157</a></span>
+<span class="normal"><a href="#__codelineno-0-158">158</a></span>
+<span class="normal"><a href="#__codelineno-0-159">159</a></span>
+<span class="normal"><a href="#__codelineno-0-160">160</a></span>
+<span class="normal"><a href="#__codelineno-0-161">161</a></span>
+<span class="normal"><a href="#__codelineno-0-162">162</a></span>
+<span class="normal"><a href="#__codelineno-0-163">163</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-147"><a id="__codelineno-0-147" name="__codelineno-0-147"></a><span class="k">class</span> <span class="nc">RandomSequence</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">RandomSequenceConfig</span><span class="p">]):</span>
+</span><span id="__span-0-148"><a id="__codelineno-0-148" name="__codelineno-0-148"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Prints the input data in a random sequence, one character at a time.</span>
+</span><span id="__span-0-149"><a id="__codelineno-0-149" name="__codelineno-0-149"></a>
+</span><span id="__span-0-150"><a id="__codelineno-0-150" name="__codelineno-0-150"></a><span class="sd">    Attributes:</span>
+</span><span id="__span-0-151"><a id="__codelineno-0-151" name="__codelineno-0-151"></a><span class="sd">        effect_config (PourConfig): Configuration for the effect.</span>
+</span><span id="__span-0-152"><a id="__codelineno-0-152" name="__codelineno-0-152"></a><span class="sd">        terminal_config (TerminalConfig): Configuration for the terminal.</span>
+</span><span id="__span-0-153"><a id="__codelineno-0-153" name="__codelineno-0-153"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-154"><a id="__codelineno-0-154" name="__codelineno-0-154"></a>
+</span><span id="__span-0-155"><a id="__codelineno-0-155" name="__codelineno-0-155"></a>    <span class="n">_config_cls</span> <span class="o">=</span> <span class="n">RandomSequenceConfig</span>
+</span><span id="__span-0-156"><a id="__codelineno-0-156" name="__codelineno-0-156"></a>    <span class="n">_iterator_cls</span> <span class="o">=</span> <span class="n">RandomSequenceIterator</span>
+</span><span id="__span-0-157"><a id="__codelineno-0-157" name="__codelineno-0-157"></a>
+</span><span id="__span-0-158"><a id="__codelineno-0-158" name="__codelineno-0-158"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-159"><a id="__codelineno-0-159" name="__codelineno-0-159"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the effect with the provided input data.</span>
+</span><span id="__span-0-160"><a id="__codelineno-0-160" name="__codelineno-0-160"></a>
+</span><span id="__span-0-161"><a id="__codelineno-0-161" name="__codelineno-0-161"></a><span class="sd">        Args:</span>
+</span><span id="__span-0-162"><a id="__codelineno-0-162" name="__codelineno-0-162"></a><span class="sd">            input_data (str): The input data to use for the effect.&quot;&quot;&quot;</span>
+</span><span id="__span-0-163"><a id="__codelineno-0-163" name="__codelineno-0-163"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+</span></code></pre></div></td></tr></table></div>
+            </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="terminaltexteffects.effects.effect_random_sequence.RandomSequence.__init__" class="doc doc-heading">
+          <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Initialize the effect with the provided input data.</p>
+
+
+
+  <p><span class="doc-section-title">Parameters:</span></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr class="doc-section-item">
+          <td><code>input_data</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The input data to use for the effect.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+          <details class="quote">
+            <summary>Source code in <code>terminaltexteffects/effects/effect_random_sequence.py</code></summary>
+            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-158">158</a></span>
+<span class="normal"><a href="#__codelineno-0-159">159</a></span>
+<span class="normal"><a href="#__codelineno-0-160">160</a></span>
+<span class="normal"><a href="#__codelineno-0-161">161</a></span>
+<span class="normal"><a href="#__codelineno-0-162">162</a></span>
+<span class="normal"><a href="#__codelineno-0-163">163</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-158"><a id="__codelineno-0-158" name="__codelineno-0-158"></a><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-159"><a id="__codelineno-0-159" name="__codelineno-0-159"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the effect with the provided input data.</span>
+</span><span id="__span-0-160"><a id="__codelineno-0-160" name="__codelineno-0-160"></a>
+</span><span id="__span-0-161"><a id="__codelineno-0-161" name="__codelineno-0-161"></a><span class="sd">    Args:</span>
+</span><span id="__span-0-162"><a id="__codelineno-0-162" name="__codelineno-0-162"></a><span class="sd">        input_data (str): The input data to use for the effect.&quot;&quot;&quot;</span>
+</span><span id="__span-0-163"><a id="__codelineno-0-163" name="__codelineno-0-163"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+</span></code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig" class="doc doc-heading">
+          <code>RandomSequenceConfig</code>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="terminaltexteffects.utils.argsdataclass.ArgsDataClass">ArgsDataClass</span></code></p>
+
+  
+      <p>Configuration for the RandomSequence effect.</p>
+
+
+
+  <p><span class="doc-section-title">Attributes:</span></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr class="doc-section-item">
+          <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.starting_color" href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.starting_color">starting_color</a></code></td>
+          <td>
+                <code><span title="terminaltexteffects.utils.graphics.Color">Color</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Color of the characters at spawn.</p>
+            </div>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_stops" href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_stops">final_gradient_stops</a></code></td>
+          <td>
+                <code>tuple[<span title="terminaltexteffects.utils.graphics.Color">Color</span>, ...]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</p>
+            </div>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_steps" href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_steps">final_gradient_steps</a></code></td>
+          <td>
+                <code>tuple[int, ...]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n &gt; 0.</p>
+            </div>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_frames" href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_frames">final_gradient_frames</a></code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Number of frames to display each gradient step.</p>
+            </div>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_direction" href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_direction">final_gradient_direction</a></code></td>
+          <td>
+                <code><span title="terminaltexteffects.utils.graphics.Gradient.Direction">Direction</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Direction of the final gradient.</p>
+            </div>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.speed" href="#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.speed">speed</a></code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Speed of the animation as a percentage of the total number of characters to reveal in each tick. Valid values are 0 &lt; n &lt;= 1.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+            <details class="quote">
+              <summary>Source code in <code>terminaltexteffects/effects/effect_random_sequence.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-24"> 24</a></span>
+<span class="normal"><a href="#__codelineno-0-25"> 25</a></span>
+<span class="normal"><a href="#__codelineno-0-26"> 26</a></span>
+<span class="normal"><a href="#__codelineno-0-27"> 27</a></span>
+<span class="normal"><a href="#__codelineno-0-28"> 28</a></span>
+<span class="normal"><a href="#__codelineno-0-29"> 29</a></span>
+<span class="normal"><a href="#__codelineno-0-30"> 30</a></span>
+<span class="normal"><a href="#__codelineno-0-31"> 31</a></span>
+<span class="normal"><a href="#__codelineno-0-32"> 32</a></span>
+<span class="normal"><a href="#__codelineno-0-33"> 33</a></span>
+<span class="normal"><a href="#__codelineno-0-34"> 34</a></span>
+<span class="normal"><a href="#__codelineno-0-35"> 35</a></span>
+<span class="normal"><a href="#__codelineno-0-36"> 36</a></span>
+<span class="normal"><a href="#__codelineno-0-37"> 37</a></span>
+<span class="normal"><a href="#__codelineno-0-38"> 38</a></span>
+<span class="normal"><a href="#__codelineno-0-39"> 39</a></span>
+<span class="normal"><a href="#__codelineno-0-40"> 40</a></span>
+<span class="normal"><a href="#__codelineno-0-41"> 41</a></span>
+<span class="normal"><a href="#__codelineno-0-42"> 42</a></span>
+<span class="normal"><a href="#__codelineno-0-43"> 43</a></span>
+<span class="normal"><a href="#__codelineno-0-44"> 44</a></span>
+<span class="normal"><a href="#__codelineno-0-45"> 45</a></span>
+<span class="normal"><a href="#__codelineno-0-46"> 46</a></span>
+<span class="normal"><a href="#__codelineno-0-47"> 47</a></span>
+<span class="normal"><a href="#__codelineno-0-48"> 48</a></span>
+<span class="normal"><a href="#__codelineno-0-49"> 49</a></span>
+<span class="normal"><a href="#__codelineno-0-50"> 50</a></span>
+<span class="normal"><a href="#__codelineno-0-51"> 51</a></span>
+<span class="normal"><a href="#__codelineno-0-52"> 52</a></span>
+<span class="normal"><a href="#__codelineno-0-53"> 53</a></span>
+<span class="normal"><a href="#__codelineno-0-54"> 54</a></span>
+<span class="normal"><a href="#__codelineno-0-55"> 55</a></span>
+<span class="normal"><a href="#__codelineno-0-56"> 56</a></span>
+<span class="normal"><a href="#__codelineno-0-57"> 57</a></span>
+<span class="normal"><a href="#__codelineno-0-58"> 58</a></span>
+<span class="normal"><a href="#__codelineno-0-59"> 59</a></span>
+<span class="normal"><a href="#__codelineno-0-60"> 60</a></span>
+<span class="normal"><a href="#__codelineno-0-61"> 61</a></span>
+<span class="normal"><a href="#__codelineno-0-62"> 62</a></span>
+<span class="normal"><a href="#__codelineno-0-63"> 63</a></span>
+<span class="normal"><a href="#__codelineno-0-64"> 64</a></span>
+<span class="normal"><a href="#__codelineno-0-65"> 65</a></span>
+<span class="normal"><a href="#__codelineno-0-66"> 66</a></span>
+<span class="normal"><a href="#__codelineno-0-67"> 67</a></span>
+<span class="normal"><a href="#__codelineno-0-68"> 68</a></span>
+<span class="normal"><a href="#__codelineno-0-69"> 69</a></span>
+<span class="normal"><a href="#__codelineno-0-70"> 70</a></span>
+<span class="normal"><a href="#__codelineno-0-71"> 71</a></span>
+<span class="normal"><a href="#__codelineno-0-72"> 72</a></span>
+<span class="normal"><a href="#__codelineno-0-73"> 73</a></span>
+<span class="normal"><a href="#__codelineno-0-74"> 74</a></span>
+<span class="normal"><a href="#__codelineno-0-75"> 75</a></span>
+<span class="normal"><a href="#__codelineno-0-76"> 76</a></span>
+<span class="normal"><a href="#__codelineno-0-77"> 77</a></span>
+<span class="normal"><a href="#__codelineno-0-78"> 78</a></span>
+<span class="normal"><a href="#__codelineno-0-79"> 79</a></span>
+<span class="normal"><a href="#__codelineno-0-80"> 80</a></span>
+<span class="normal"><a href="#__codelineno-0-81"> 81</a></span>
+<span class="normal"><a href="#__codelineno-0-82"> 82</a></span>
+<span class="normal"><a href="#__codelineno-0-83"> 83</a></span>
+<span class="normal"><a href="#__codelineno-0-84"> 84</a></span>
+<span class="normal"><a href="#__codelineno-0-85"> 85</a></span>
+<span class="normal"><a href="#__codelineno-0-86"> 86</a></span>
+<span class="normal"><a href="#__codelineno-0-87"> 87</a></span>
+<span class="normal"><a href="#__codelineno-0-88"> 88</a></span>
+<span class="normal"><a href="#__codelineno-0-89"> 89</a></span>
+<span class="normal"><a href="#__codelineno-0-90"> 90</a></span>
+<span class="normal"><a href="#__codelineno-0-91"> 91</a></span>
+<span class="normal"><a href="#__codelineno-0-92"> 92</a></span>
+<span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
+<span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
+<span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
+<span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
+<span class="normal"><a href="#__codelineno-0-97"> 97</a></span>
+<span class="normal"><a href="#__codelineno-0-98"> 98</a></span>
+<span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
+<span class="normal"><a href="#__codelineno-0-100">100</a></span>
+<span class="normal"><a href="#__codelineno-0-101">101</a></span>
+<span class="normal"><a href="#__codelineno-0-102">102</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="nd">@argclass</span><span class="p">(</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;randomsequence&quot;</span><span class="p">,</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Prints the input data in a random sequence.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;randomsequence | Prints the input data in a random sequence.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">epilog</span><span class="o">=</span><span class="s2">&quot;Example: terminaltexteffects randomsequence --starting-color 000000 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 12 --speed 0.004&quot;</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="p">)</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="nd">@dataclass</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="k">class</span> <span class="nc">RandomSequenceConfig</span><span class="p">(</span><span class="n">ArgsDataClass</span><span class="p">):</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for the RandomSequence effect.</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">    Attributes:</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">        starting_color (graphics.Color): Color of the characters at spawn.</span>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n &gt; 0.</span>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        final_gradient_frames (int): Number of frames to display each gradient step.</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        speed (float): Speed of the animation as a percentage of the total number of characters to reveal in each tick. Valid values are 0 &lt; n &lt;= 1.</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="n">starting_color</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--starting-color&quot;</span><span class="p">],</span>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;000000&quot;</span><span class="p">,</span>
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Color of the characters at spawn.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50"></a>
+</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="s2">&quot;graphics.Color : Color of the characters at spawn.&quot;</span>
+</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">graphics</span><span class="o">.</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--final-gradient-stops&quot;</span><span class="p">],</span>
+</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
+</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;8A008A&quot;</span><span class="p">,</span> <span class="s2">&quot;00D1FF&quot;</span><span class="p">,</span> <span class="s2">&quot;FFFFFF&quot;</span><span class="p">),</span>
+</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60"></a>
+</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="s2">&quot;tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.&quot;</span>
+</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--final-gradient-steps&quot;</span><span class="p">],</span>
+</span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
+</span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,),</span>
+</span><span id="__span-0-67"><a id="__codelineno-0-67" name="__codelineno-0-67"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-70"><a id="__codelineno-0-70" name="__codelineno-0-70"></a>
+</span><span id="__span-0-71"><a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="s2">&quot;tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span>
+</span><span id="__span-0-72"><a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="n">final_gradient_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-73"><a id="__codelineno-0-73" name="__codelineno-0-73"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--final-gradient-frames&quot;</span><span class="p">],</span>
+</span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a>        <span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+</span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of frames to display each gradient step.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a>
+</span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>    <span class="s2">&quot;int : Number of frames to display each gradient step.&quot;</span>
+</span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-direction&quot;</span><span class="p">,</span>
+</span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a>        <span class="n">default</span><span class="o">=</span><span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">,</span>
+</span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Direction of the final gradient.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-87"><a id="__codelineno-0-87" name="__codelineno-0-87"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a>
+</span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a>    <span class="s2">&quot;graphics.Gradient.Direction : Direction of the final gradient.&quot;</span>
+</span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a>    <span class="n">speed</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--speed&quot;</span><span class="p">],</span>
+</span><span id="__span-0-92"><a id="__codelineno-0-92" name="__codelineno-0-92"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>        <span class="n">default</span><span class="o">=</span><span class="mf">0.004</span><span class="p">,</span>
+</span><span id="__span-0-94"><a id="__codelineno-0-94" name="__codelineno-0-94"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Speed of the animation as a percentage of the total number of characters to reveal in each tick.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>
+</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="s2">&quot;float : Speed of the animation as a percentage of the total number of characters to reveal in each tick.&quot;</span>
+</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a>
+</span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="k">def</span> <span class="nf">get_effect_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a>        <span class="k">return</span> <span class="n">RandomSequence</span>
+</span></code></pre></div></td></tr></table></div>
+            </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_direction" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-direction&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Direction of the final gradient.&#39;</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>graphics.Gradient.Direction : Direction of the final gradient.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_frames" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">final_gradient_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--final-gradient-frames&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Number of frames to display each gradient step.&#39;</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>int : Number of frames to display each gradient step.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_steps" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--final-gradient-steps&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&#39;</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.final_gradient_stops" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">graphics</span><span class="o">.</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--final-gradient-stops&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;8A008A&#39;</span><span class="p">,</span> <span class="s1">&#39;00D1FF&#39;</span><span class="p">,</span> <span class="s1">&#39;FFFFFF&#39;</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&#39;</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.speed" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">speed</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--speed&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.004</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Speed of the animation as a percentage of the total number of characters to reveal in each tick.&#39;</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>float : Speed of the animation as a percentage of the total number of characters to reveal in each tick.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig.starting_color" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">starting_color</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--starting-color&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;000000&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">arg_validators</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Color of the characters at spawn.&#39;</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>graphics.Color : Color of the characters at spawn.</p>
+  </div>
+
+</div>
+
+
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.dd8806f2.min.js"></script>
+      
+    
+  </body>
+</html>
