@@ -1,4 +1,8 @@
-"""Classes for storing and manipulating character graphics."""
+"""Classes for storing and manipulating character graphics.
+
+Classes:
+    Gradient: A Gradient is a list of RGB hex color strings transitioning from one color to another.
+"""
 
 import itertools
 import typing
@@ -29,10 +33,6 @@ class Gradient:
     The step count includes the stop for each pair. Total number of colors in the resulting gradient spectrum is the sum of the steps between
     each pair of stops plus 1.
 
-    Args:
-        *stops (Color): RGB hex color strings or XTerm-256 color codes. Each stop will have steps number of frames between it and the next stop.
-        steps tuple[int, ...] | int: Number of steps from the start to the end stop. If multiple steps are given, steps and stops will be paired.
-
     Attributes:
         spectrum (list[str]): List (length=sum(steps) + 1) of RGB hex color strings
 
@@ -47,14 +47,33 @@ class Gradient:
         DIAGONAL = auto()
 
     def __init__(self, *stops: Color, steps: int | tuple[int, ...] = 1) -> None:
-        self.stops = stops
-        if len(self.stops) < 1:
-            raise ValueError("At least one stop must be provided.")
-        self.steps = steps
-        self.spectrum: list[str] = self._generate(self.steps)
-        self.index: int = 0
+        """
+        Initializes a Graphics object.
 
-    def get_color_at_fraction(self, fraction: float) -> Color:
+        Args:
+            stops (Color): Variable number of Color objects representing the color stops.
+            steps (int | tuple[int, ...], optional): Number of steps or a tuple of step values for generating the spectrum. Defaults to 1.
+
+        Raises:
+            ValueError: If no color stops are provided.
+
+        Attributes:
+            stops (tuple[Color]): Tuple of Color objects representing the color stops.
+            steps (int | tuple[int, ...]): Number of steps or a tuple of step values for generating the spectrum.
+            spectrum (list[str]): List of strings representing the generated spectrum.
+            index (int): Current index of the spectrum.
+
+        Returns:
+            None
+        """
+        self._stops = stops
+        if len(self._stops) < 1:
+            raise ValueError("At least one stop must be provided.")
+        self._steps = steps
+        self.spectrum: list[str] = self._generate(self._steps)
+        self._index: int = 0
+
+    def get_color_at_fraction(self, fraction: float) -> str:
         """Returns the color at a fraction of the gradient.
 
         Args:
@@ -93,14 +112,14 @@ class Gradient:
                 if step < 1:
                     raise ValueError("Steps must be greater than 0.")
         spectrum: list[str] = []
-        if len(self.stops) == 1:
-            color = self.stops[0]
+        if len(self._stops) == 1:
+            color = self._stops[0]
             if isinstance(color, int):
                 color = hexterm.xterm_to_hex(color)
             for _ in range(steps[0]):
                 spectrum.append(color)
             return spectrum
-        color_pairs = list(itertools.pairwise(self.stops))
+        color_pairs = list(itertools.pairwise(self._stops))
         steps = steps[: len(color_pairs)]
         for color_pair, steps in itertools.zip_longest(color_pairs, steps, fillvalue=steps[-1]):
             start, end = color_pair
@@ -143,6 +162,8 @@ class Gradient:
         self, max_row: int, max_column: int, direction: "Gradient.Direction"
     ) -> dict[geometry.Coord, Color]:
         """Builds a mapping of coordinates to colors based on the gradient and a direction.
+
+        For example, a vertical gradient will have the same color for each column in a row. When applied across all characters in the output area, the gradient will be visible as a vertical gradient.
 
         Args:
             max_row (int): The maximum row value.
@@ -190,4 +211,4 @@ class Gradient:
 
     def __str__(self) -> str:
         color_blocks = [f"{colorterm.fg(color)}█{colorterm.RESET}" for color in self.spectrum]
-        return f"Gradient: Stops({self.stops}), Steps({self.steps})\n" + "".join(color_blocks)
+        return f"Gradient: Stops({self._stops}), Steps({self._steps})\n" + "".join(color_blocks)

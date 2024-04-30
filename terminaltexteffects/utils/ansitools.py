@@ -1,4 +1,6 @@
-"""This file contains ANSI escape codes for terminal formatting."""
+"""This module provides a collection of functions that generate ANSI escape codes for various terminal formatting effects.
+These escape codes can be used to modify the appearance of text in a terminal.
+"""
 
 
 def DEC_SAVE_CURSOR_POSITION() -> str:
