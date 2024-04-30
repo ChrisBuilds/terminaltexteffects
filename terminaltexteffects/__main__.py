@@ -3,9 +3,9 @@ import importlib
 import pkgutil
 
 import terminaltexteffects.effects
-import terminaltexteffects.utils.terminal as term
+import terminaltexteffects.engine.terminal as term
+from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.argsdataclass import ArgsDataClass
-from terminaltexteffects.utils.terminal import TerminalConfig
 
 
 def main():
