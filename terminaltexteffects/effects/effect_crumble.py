@@ -41,10 +41,10 @@ class CrumbleConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("5CE1FF", "FF8C00"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."

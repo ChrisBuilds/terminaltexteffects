@@ -47,19 +47,19 @@ class UnstableConfig(ArgsDataClass):
 
     unstable_color: graphics.Color = ArgField(
         cmd_name=["--unstable-color"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         default="ff9200",
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Color transitioned to as the characters become unstable.",
     )  # type: ignore[assignment]
     "graphics.Color : Color transitioned to as the characters become unstable."
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."

@@ -45,29 +45,29 @@ class SwarmConfig(ArgsDataClass):
 
     base_color: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--base-color"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("31a0d4",),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the swarms",
     )  # type: ignore[assignment]
     """tuple[graphics.Color, ...] : Tuple of colors for the swarms"""
 
     flash_color: graphics.Color = ArgField(
         cmd_name=["--flash-color"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         default="f2ea79",
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Color for the character flash. Characters flash when moving.",
     )  # type: ignore[assignment]
     """graphics.Color : Color for the character flash. Characters flash when moving."""
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("31b900", "f0ff65"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."

@@ -44,9 +44,9 @@ class BlackholeConfig(ArgsDataClass):
 
     blackhole_color: graphics.Color = ArgField(
         cmd_name=["--blackhole-color"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         default="ffffff",
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Color for the stars that comprise the blackhole border.",
     )  # type: ignore[assignment]
 
@@ -54,10 +54,10 @@ class BlackholeConfig(ArgsDataClass):
 
     star_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--star-colors"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c", "049dbf"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="List of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color.",
     )  # type: ignore[assignment]
 
@@ -65,10 +65,10 @@ class BlackholeConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "ffffff"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
 

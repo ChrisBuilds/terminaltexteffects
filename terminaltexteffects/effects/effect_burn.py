@@ -41,29 +41,29 @@ class BurnConfig(ArgsDataClass):
 
     starting_color: graphics.Color = ArgField(
         cmd_name="--starting-color",
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         default="837373",
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Color of the characters before they start to burn.",
     )  # type: ignore[assignment]
     "graphics.Color : Color of the characters before they start to burn."
 
     burn_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--burn-colors"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         default=("ffffff", "fff75d", "fe650d", "8A003C", "510100"),
         nargs="+",
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Colors transitioned through as the characters burn.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Colors transitioned through as the characters burn."
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("00c3ff", "ffff1c"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."

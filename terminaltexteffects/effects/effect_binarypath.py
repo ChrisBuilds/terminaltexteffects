@@ -45,10 +45,10 @@ class BinaryPathConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("00d500", "007500"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
 
@@ -77,10 +77,10 @@ class BinaryPathConfig(ArgsDataClass):
 
     binary_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--binary-colors"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("044E29", "157e38", "45bf55", "95ed87"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the binary characters. Character color is randomly assigned from this list.",
     )  # type: ignore[assignment]
 

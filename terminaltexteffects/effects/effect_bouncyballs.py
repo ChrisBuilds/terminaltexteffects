@@ -46,8 +46,8 @@ class BouncyBallsConfig(ArgsDataClass):
 
     ball_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--ball-colors"],
-        type_parser=argvalidators.Color.type_parser,
-        metavar=argvalidators.Color.METAVAR,
+        type_parser=argvalidators.ColorArg.type_parser,
+        metavar=argvalidators.ColorArg.METAVAR,
         nargs="+",
         default=("d1f4a5", "96e2a4", "5acda9"),
         help="Space separated list of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random.",
@@ -66,10 +66,10 @@ class BouncyBallsConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("f8ffae", "43c6ac"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."

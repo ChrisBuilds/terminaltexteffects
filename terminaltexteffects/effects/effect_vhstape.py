@@ -46,10 +46,10 @@ class VHSTapeConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("ab48ff", "e7b2b2", "fffebd"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
@@ -75,30 +75,30 @@ class VHSTapeConfig(ArgsDataClass):
 
     glitch_line_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--glitch-line-colors",
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("ffffff", "ff0000", "00ff00", "0000ff", "ffffff"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors are applied in order as an animation.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the characters when a single line is glitching. Colors are applied in order as an animation."
 
     glitch_wave_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--glitch-wave-colors",
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("ffffff", "ff0000", "00ff00", "0000ff", "ffffff"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation."
 
     noise_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--noise-colors",
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("1e1e1f", "3c3b3d", "6d6c70", "a2a1a6", "cbc9cf", "ffffff"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters during the noise phase.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the characters during the noise phase."

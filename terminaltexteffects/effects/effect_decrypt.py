@@ -49,20 +49,20 @@ class DecryptConfig(ArgsDataClass):
 
     ciphertext_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--ciphertext-colors"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("008000", "00cb00", "00ff00"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the ciphertext. Color will be randomly selected for each character.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Colors for the ciphertext. Color will be randomly selected for each character."
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("eda000",),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Colors for the character gradient. If only one color is provided, the characters will be displayed in that color."

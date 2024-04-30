@@ -46,10 +46,10 @@ class SynthGridConfig(ArgsDataClass):
 
     grid_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--grid-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("CC00CC", "ffffff"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the grid gradient.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the grid gradient."
@@ -75,10 +75,10 @@ class SynthGridConfig(ArgsDataClass):
 
     text_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--text-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the text gradient.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the text gradient."

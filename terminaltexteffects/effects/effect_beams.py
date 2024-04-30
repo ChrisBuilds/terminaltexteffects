@@ -103,7 +103,7 @@ class BeamsConfig(ArgsDataClass):
 
     beam_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--beam-gradient-stops",
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("ffffff", "00D1FF", "8A008A"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -135,10 +135,10 @@ class BeamsConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "ffffff"),
-        metavar=argvalidators.Color.METAVAR,
+        metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # type: ignore[assignment]
 

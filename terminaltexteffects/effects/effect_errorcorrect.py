@@ -64,7 +64,7 @@ class ErrorCorrectConfig(ArgsDataClass):
 
     error_color: graphics.Color = ArgField(
         cmd_name=["--error-color"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         default="e74c3c",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters that are in the wrong position.",
@@ -73,7 +73,7 @@ class ErrorCorrectConfig(ArgsDataClass):
 
     correct_color: graphics.Color = ArgField(
         cmd_name=["--correct-color"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         default="45bf55",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters once corrected, this is a gradient from error-color and fades to final-color.",
@@ -82,7 +82,7 @@ class ErrorCorrectConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.Color.type_parser,
+        type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
