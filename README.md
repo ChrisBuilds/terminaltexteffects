@@ -1497,7 +1497,7 @@ Any effects shown below are in development and will be available in the next rel
 * Terminal: If a terminal object is instantiated without a TerminalConfig passed, it will instantiate a new TerminalConfig.
 * Terminal: Terminal.get_formatted_output_string() will return a string representing the current frame.
 * Terminal: Terminal.print() will print the frame to the terminal and handle cursor position. The optional argument (enforce_frame_rate: bool = True) determines if the frame rate set at Terminal.config.frame_rate is enforced. If set to False, the print will occur without delay.
-* New argument validator for terminal dimensions (arg_validators.TerminalDeminsions).
+* New argument validator for terminal dimensions (argvalidators.TerminalDeminsions).
 * New module base_effect.py:
 * base_effect.BaseEffect:
   * This is an abstract class which forms the base iterable for all effects and provides the terminal_output() context manager.
