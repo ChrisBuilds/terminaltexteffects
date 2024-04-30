@@ -4,7 +4,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from terminaltexteffects.utils import animation, motion
+from terminaltexteffects.engine import animation, motion
 from terminaltexteffects.utils.geometry import Coord
 
 

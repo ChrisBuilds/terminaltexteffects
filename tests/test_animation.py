@@ -1,8 +1,8 @@
 import pytest
 
 import terminaltexteffects.utils.easing as easing
-from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.utils.animation import CharacterVisual, Frame, Scene, SyncMetric
+from terminaltexteffects.engine.animation import CharacterVisual, Frame, Scene, SyncMetric
+from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.utils.graphics import Gradient
 
 

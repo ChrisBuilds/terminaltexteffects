@@ -6,7 +6,7 @@ from enum import Enum, auto
 from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, hexterm
 
 if typing.TYPE_CHECKING:
-    from terminaltexteffects import base_character
+    from terminaltexteffects.engine import base_character
 
 
 class SyncMetric(Enum):

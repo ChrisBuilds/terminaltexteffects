@@ -12,11 +12,11 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
-from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.engine.terminal import Terminal
 from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.terminal import Terminal
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:

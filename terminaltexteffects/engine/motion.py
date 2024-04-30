@@ -5,7 +5,7 @@ from terminaltexteffects.utils import easing, geometry
 from terminaltexteffects.utils.geometry import Coord
 
 if typing.TYPE_CHECKING:
-    from terminaltexteffects import base_character
+    from terminaltexteffects.engine import base_character
 
 
 @dataclass

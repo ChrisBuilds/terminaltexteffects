@@ -36,8 +36,8 @@ from contextlib import contextmanager
 from copy import deepcopy
 from typing import Generic, TypeVar
 
+from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.utils.argsdataclass import ArgsDataClass
-from terminaltexteffects.utils.terminal import Terminal, TerminalConfig
 
 T = TypeVar("T", bound=ArgsDataClass)
 

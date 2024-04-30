@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 import terminaltexteffects.utils.arg_validators as arg_validators
-from terminaltexteffects.base_character import EffectCharacter
+from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.utils import ansitools
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass
 from terminaltexteffects.utils.geometry import Coord

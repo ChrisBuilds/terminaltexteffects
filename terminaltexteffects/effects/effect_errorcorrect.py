@@ -11,9 +11,10 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
-from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import animation, graphics
+from terminaltexteffects.engine import animation
+from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 

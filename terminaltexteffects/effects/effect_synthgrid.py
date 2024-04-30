@@ -10,12 +10,12 @@ import random
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.engine.terminal import Terminal
 from terminaltexteffects.utils import arg_validators, geometry, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.terminal import Terminal
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:

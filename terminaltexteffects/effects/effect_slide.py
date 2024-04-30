@@ -10,8 +10,8 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.arg_validators as arg_validators
-from terminaltexteffects.base_character import EffectCharacter
-from terminaltexteffects.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, geometry, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 

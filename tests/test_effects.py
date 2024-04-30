@@ -30,7 +30,7 @@ from terminaltexteffects.effects import (
     effect_waves,
     effect_wipe,
 )
-from terminaltexteffects.utils.terminal import TerminalConfig
+from terminaltexteffects.engine.terminal import TerminalConfig
 
 t1 = ""
 t2 = "a"
