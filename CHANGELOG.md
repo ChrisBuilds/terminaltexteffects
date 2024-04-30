@@ -63,7 +63,7 @@
 * Terminal: If a terminal object is instantiated without a TerminalConfig passed, it will instantiate a new TerminalConfig.
 * Terminal: Terminal.get_formatted_output_string() will return a string representing the current frame.
 * Terminal: Terminal.print() will print the frame to the terminal and handle cursor position. The optional argument (enforce_frame_rate: bool = True) determines if the frame rate set at Terminal.config.frame_rate is enforced. If set to False, the print will occur without delay.
-* New argument validator for terminal dimensions (arg_validators.TerminalDeminsions).
+* New argument validator for terminal dimensions (argvalidators.TerminalDeminsions).
 * New module base_effect.py:
 * base_effect.BaseEffect:
   * This is an abstract class which forms the base iterable for all effects and provides the terminal_output() context manager.
@@ -101,8 +101,8 @@
 * graphics.Gradient, if printed, will show a colored spectrum and the description of its stops and steps.
 * The Scene class has a new method: apply_gradient_to_symbols(). This method will iterate over a list of symbols and apply the colors from a gradient to the symbols. A frame with the symbol will be added for each color starting from the last color used in the previous symbol, up to the the index determined by the ratio of the current symbol's index in the symbols list to the total length of the list. This method allows scenes to automatically create frames from a list of symbols and gradient of arbitrary length while ensuring every symbol and color is displayed.
 * On instatiation, Terminal creates EffectCharacters for every coordinate in the output area that does not have an input character. These EffectCharacters have the symbol " " and are stored in Terminal._fill_characters as well as added to Terminal.character_by_input_coord.
-* arg_validators.IntRange will validate a range specified as "int-int" and return a tuple[int,int].
-* arg_validators.FloatRange will validate a range of floats specified as "float-float" and return a tuple[float, float].
+* argvalidators.IntRange will validate a range specified as "int-int" and return a tuple[int,int].
+* argvalidators.FloatRange will validate a range of floats specified as "float-float" and return a tuple[float, float].
 * character.animation.set_appearance(symbol, color) will set the character symbol and color directly. If a Scene is active, the appearance will be overwritten with the Scene frame on the next call to step_animation(). This method is intended for the occasion where a full scene isn't needed, or the appearance needs to be set based on conditions not compatible with Scenes or the EventHandler. For example, setting the color based on the terminal row.
 * Terminal.CharacterSort enums moved to Terminal.CharacterGroup, Terminal.CharacterSort is now used for sorting and return a flat list of characters.
 * Terminal.CharacterSort has new sort methods, TOP_TO_BOTTOM_LEFT_TO_RIGHT, TOP_TO_BOTTOM_RIGHT_TO_LEFT, BOTTOM_TO_TOP_LEFT_TO_RIGHT, BOTTOM_TO_TOP_RIGHT_TO_LEFT, OUTSIDE_ROW_TO_MIDDLE, MIDDLE_ROW_TO_OUTSIDE
@@ -154,7 +154,7 @@
 * EventHandler.Action.SET_CHARACTER_VISIBILITY_STATE has been removed as visibilty state is handled by the Terminal. To enable visibility state changes through the event system, use a CALLBACK action with target EventHandler.Callback(terminal.set_character_visibility, True/False).
 * geometry.find_coords_on_circle() num_points arg renamed to points_limit and new arg unique: bool, added to remove any duplicate Coords.
 * The animation rate argument (-a, --animation-rate) has been removed from all effects and is handled as a terminal argument specified prior to the effect name.
-* argtypes.py has been renamed arg_validators.py and all functions have been refactored into classes with a METAVAR class member and a type_parser method.
+* argtypes.py has been renamed argvalidators.py and all functions have been refactored into classes with a METAVAR class member and a type_parser method.
 * easing.EasingFunction type alias used anywhere an easing function is accepted.
 * Exceptions raised are no longer caught in a except clause. Only a finally clause is used to restore the cursor. Tracebacks are useful.
 
