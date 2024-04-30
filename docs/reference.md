@@ -1,1 +1,0 @@
-::: terminaltexteffects.base_effect
