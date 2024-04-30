@@ -6,7 +6,7 @@ It includes a custom formatter for argparse, which combines the features of
 
 Classes:
     CustomFormatter: A custom formatter for argparse that combines the features of
-      `argparse.ArgumentDefaultsHelpFormatter` and `argparse.RawDescriptionHelpFormatter`.
+        `argparse.ArgumentDefaultsHelpFormatter` and `argparse.RawDescriptionHelpFormatter`.
     GradientDirection: Argument type for gradient directions.
     Color: Argument type for color values.
     PositiveFloatRange: Argument type for float ranges.
@@ -61,6 +61,223 @@ EASING_EPILOG = """\
 """
 
 
+class PositiveInt:
+    """Argument type for positive integers.
+
+    int(n) > 0
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not a positive integer.
+    """
+
+    METAVAR = "(int > 0)"
+
+    @staticmethod
+    def type_parser(arg: str) -> int:
+        """Validates that the given argument is a positive integer. n > 0.
+
+        Args:
+            arg (str): argument to validate
+
+        Returns:
+            int: validated positive integer
+        """
+        if int(arg) > 0:
+            return int(arg)
+        else:
+            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not > 0.")
+
+
+class NonNegativeInt:
+    """Validates that the given argument is a nonnegative integer. n >= 0.
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not in range.
+    """
+
+    METAVAR = "(int >= 0)"
+
+    @staticmethod
+    def type_parser(arg: str) -> int:
+        """Validates that the given argument is a nonnegative integer. n >= 0.
+
+        Args:
+            arg (str): argument to validate
+
+        Raises:
+            argparse.ArgumentTypeError: Value is not in range.
+
+        Returns:
+            int: validated gap value
+        """
+        if int(arg) < 0:
+            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' Argument must be int >= 0.")
+        return int(arg)
+
+
+class IntRange:
+    """Argument type for integer ranges.
+
+    Integer ranges are a pair of integers separated by a hyphen. Ex: 1-10
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not a valid range of integers.
+    """
+
+    METAVAR = "(hyphen separated int range e.g. '1-10')"
+
+    @staticmethod
+    def type_parser(arg: str) -> tuple[int, int]:
+        """Validates that the given argument is a valid range of integers n > 0.
+
+        Args:
+            arg (str): argument to validate
+
+        Returns:
+            tuple[int,int]: validated range
+        """
+        try:
+            start, end = map(int, arg.split("-"))
+            if start <= 0:
+                raise argparse.ArgumentTypeError(
+                    f"invalid range: '{arg}' is not a valid range of ints. Must be start > 0. Ex: 1-10"
+                )
+            if start > end:
+                raise argparse.ArgumentTypeError(
+                    f"invalid range: '{arg}' is not a valid range of ints. Must be start <= end. Ex: 1-10"
+                )
+            return start, end
+        except ValueError:
+            raise argparse.ArgumentTypeError(
+                f"invalid range: '{arg}' is not a valid range. Must be start-end. Ex: 1-10"
+            )
+
+
+class PositiveFloat:
+    """Validates that the given argument is a positive float. n > 0.
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not in range.
+    """
+
+    METAVAR = "(float > 0)"
+
+    @staticmethod
+    def type_parser(arg: str) -> float:
+        """Validates that the given argument is a positive float. n > 0.
+
+        Args:
+            arg (str): argument to validate
+
+        Raises:
+            argparse.ArgumentTypeError: value is not in range.
+
+        Returns:
+            float: validated positive float
+        """
+        if float(arg) > 0:
+            return float(arg)
+        else:
+            raise argparse.ArgumentTypeError(
+                f"invalid value: '{arg}' is not a valid value. Argument must be a float > 0."
+            )
+
+
+class NonNegativeFloat:
+    """Validates that the given argument is a valid animationrate value. n >= 0.
+
+    Raises:
+        argparse.ArgumentTypeError: Argument value is not in range.
+    """
+
+    METAVAR = "(float >= 0)"
+
+    @staticmethod
+    def type_parser(arg: str) -> float:
+        """Validates that the given argument is a valid animationrate value. n >= 0.
+
+        Args:
+            arg (str): argument to validate
+
+        Raises:
+            argparse.ArgumentTypeError: Argument value is not in range.
+
+        Returns:
+            float: validated value
+        """
+        if float(arg) < 0:
+            raise argparse.ArgumentTypeError(f"invalid argument value: '{arg}' is out of range. Must be float >= 0.")
+        return float(arg)
+
+
+class PositiveFloatRange:
+    """Argument type for float ranges.
+
+    Float ranges are a pair of positive floats separated by a hyphen. Ex: 0.1-1.0
+
+    Raises:
+        argparse.ArgumentTypeError: Value is a valid range of floats.
+    """
+
+    METAVAR = "(hyphen separated float range e.g. '0.25-0.5')"
+
+    @staticmethod
+    def type_parser(arg: str) -> tuple[float, float]:
+        """Validates that the given argument is a valid range of floats n >= 0.
+
+        Args:
+            arg (str): argument to validate
+
+        Returns:
+            tuple[float,float]: validated range
+        """
+        try:
+            start, end = map(float, arg.split("-"))
+            if start > end:
+                raise argparse.ArgumentTypeError(
+                    f"invalid range: '{arg}' is not a valid range of floats. Must be start <= end. Ex: 0.1-1.0"
+                )
+            elif start == 0 or end == 0:
+                raise argparse.ArgumentTypeError(
+                    f"invalid range: '{arg}' is not a valid range of floats. Must be start > 0. Ex: 0.1-1.0"
+                )
+            return start, end
+        except ValueError:
+            raise argparse.ArgumentTypeError(
+                f"invalid range: '{arg}' is not a valid range. Must be start-end. Ex: 0.1-1.0"
+            )
+
+
+class Ratio:
+    """Validates that the given argument is a valid float value between zero and one.
+
+    0 <= float(n) <= 1
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not in range.
+    """
+
+    METAVAR = "(0 <= float(n) <= 1)"
+
+    @staticmethod
+    def type_parser(arg: str) -> float:
+        """Validates that the given argument is a valid float value between zero and one.
+
+        Args:
+            arg (str): argument to validate
+
+        Raises:
+            argparse.ArgumentTypeError: Value is not in range.
+
+        Returns:
+            float: validated float value
+        """
+        if 0 <= float(arg) <= 1:
+            return float(arg)
+        else:
+            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a float >= 0 and <= 1. Example: 0.5")
+
+
 class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
     """Custom formatter for argparse that combines ArgumentDefaultsHelpFormatter and RawDescriptionHelpFormatter."""
 
@@ -103,7 +320,7 @@ class GradientDirection:
             )
 
 
-class Color:
+class ColorArg:
     """Argument type for color values.
 
     Color values can be either an XTerm color value (0-255) or an RGB hex value (000000-ffffff).
@@ -139,82 +356,6 @@ class Color:
             if not xterm_min <= int(arg) <= xterm_max:
                 raise argparse.ArgumentTypeError(f"invalid color value: {arg} is not a valid xterm color (0-255).")
             return int(arg)
-
-
-class PositiveFloatRange:
-    """Argument type for float ranges.
-
-    Float ranges are a pair of positive floats separated by a hyphen. Ex: 0.1-1.0
-
-    Raises:
-        argparse.ArgumentTypeError: Value is a valid range of floats.
-    """
-
-    METAVAR = "(hyphen separated float range e.g. '0.25-0.5')"
-
-    @staticmethod
-    def type_parser(arg: str) -> tuple[float, float]:
-        """Validates that the given argument is a valid range of floats n >= 0.
-
-        Args:
-            arg (str): argument to validate
-
-        Returns:
-            tuple[float,float]: validated range
-        """
-        try:
-            start, end = map(float, arg.split("-"))
-            if start > end:
-                raise argparse.ArgumentTypeError(
-                    f"invalid range: '{arg}' is not a valid range of floats. Must be start <= end. Ex: 0.1-1.0"
-                )
-            elif start == 0 or end == 0:
-                raise argparse.ArgumentTypeError(
-                    f"invalid range: '{arg}' is not a valid range of floats. Must be start > 0. Ex: 0.1-1.0"
-                )
-            return start, end
-        except ValueError:
-            raise argparse.ArgumentTypeError(
-                f"invalid range: '{arg}' is not a valid range. Must be start-end. Ex: 0.1-1.0"
-            )
-
-
-class IntRange:
-    """Argument type for integer ranges.
-
-    Integer ranges are a pair of integers separated by a hyphen. Ex: 1-10
-
-    Raises:
-        argparse.ArgumentTypeError: Value is not a valid range of integers.
-    """
-
-    METAVAR = "(hyphen separated int range e.g. '1-10')"
-
-    @staticmethod
-    def type_parser(arg: str) -> tuple[int, int]:
-        """Validates that the given argument is a valid range of integers n > 0.
-
-        Args:
-            arg (str): argument to validate
-
-        Returns:
-            tuple[int,int]: validated range
-        """
-        try:
-            start, end = map(int, arg.split("-"))
-            if start <= 0:
-                raise argparse.ArgumentTypeError(
-                    f"invalid range: '{arg}' is not a valid range of ints. Must be start > 0. Ex: 1-10"
-                )
-            if start > end:
-                raise argparse.ArgumentTypeError(
-                    f"invalid range: '{arg}' is not a valid range of ints. Must be start <= end. Ex: 1-10"
-                )
-            return start, end
-        except ValueError:
-            raise argparse.ArgumentTypeError(
-                f"invalid range: '{arg}' is not a valid range. Must be start-end. Ex: 1-10"
-            )
 
 
 class Symbol:
@@ -278,33 +419,6 @@ class TerminalDimensions:
             )
 
 
-class PositiveInt:
-    """Argument type for positive integers.
-
-    int(n) > 0
-
-    Raises:
-        argparse.ArgumentTypeError: Value is not a positive integer.
-    """
-
-    METAVAR = "(int > 0)"
-
-    @staticmethod
-    def type_parser(arg: str) -> int:
-        """Validates that the given argument is a positive integer. n > 0.
-
-        Args:
-            arg (str): argument to validate
-
-        Returns:
-            int: validated positive integer
-        """
-        if int(arg) > 0:
-            return int(arg)
-        else:
-            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not > 0.")
-
-
 class Ease:
     """Argument type for easing functions.
 
@@ -366,120 +480,6 @@ class Ease:
             return easing_func_map[arg.lower()]
         except KeyError:
             raise argparse.ArgumentTypeError(f"invalid ease value: '{arg}' is not a valid ease.")
-
-
-class Ratio:
-    """Validates that the given argument is a valid float value between zero and one.
-
-    0 <= float(n) <= 1
-
-    Raises:
-        argparse.ArgumentTypeError: Value is not in range.
-    """
-
-    METAVAR = "(0 <= float(n) <= 1)"
-
-    @staticmethod
-    def type_parser(arg: str) -> float:
-        """Validates that the given argument is a valid float value between zero and one.
-
-        Args:
-            arg (str): argument to validate
-
-        Raises:
-            argparse.ArgumentTypeError: Value is not in range.
-
-        Returns:
-            float: validated float value
-        """
-        if 0 <= float(arg) <= 1:
-            return float(arg)
-        else:
-            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a float >= 0 and <= 1. Example: 0.5")
-
-
-class PositiveFloat:
-    """Validates that the given argument is a positive float. n > 0.
-
-    Raises:
-        argparse.ArgumentTypeError: Value is not in range.
-    """
-
-    METAVAR = "(float > 0)"
-
-    @staticmethod
-    def type_parser(arg: str) -> float:
-        """Validates that the given argument is a positive float. n > 0.
-
-        Args:
-            arg (str): argument to validate
-
-        Raises:
-            argparse.ArgumentTypeError: value is not in range.
-
-        Returns:
-            float: validated positive float
-        """
-        if float(arg) > 0:
-            return float(arg)
-        else:
-            raise argparse.ArgumentTypeError(
-                f"invalid value: '{arg}' is not a valid value. Argument must be a float > 0."
-            )
-
-
-class NonNegativeInt:
-    """Validates that the given argument is a nonnegative integer. n >= 0.
-
-    Raises:
-        argparse.ArgumentTypeError: Value is not in range.
-    """
-
-    METAVAR = "(int >= 0)"
-
-    @staticmethod
-    def type_parser(arg: str) -> int:
-        """Validates that the given argument is a nonnegative integer. n >= 0.
-
-        Args:
-            arg (str): argument to validate
-
-        Raises:
-            argparse.ArgumentTypeError: Value is not in range.
-
-        Returns:
-            int: validated gap value
-        """
-        if int(arg) < 0:
-            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' Argument must be int >= 0.")
-        return int(arg)
-
-
-class NonNegativeFloat:
-    """Validates that the given argument is a valid animationrate value. n >= 0.
-
-    Raises:
-        argparse.ArgumentTypeError: Argument value is not in range.
-    """
-
-    METAVAR = "(float >= 0)"
-
-    @staticmethod
-    def type_parser(arg: str) -> float:
-        """Validates that the given argument is a valid animationrate value. n >= 0.
-
-        Args:
-            arg (str): argument to validate
-
-        Raises:
-            argparse.ArgumentTypeError: Argument value is not in range.
-
-        Returns:
-            float: validated value
-        """
-        if float(arg) < 0:
-            raise argparse.ArgumentTypeError(f"invalid argument value: '{arg}' is out of range. Must be float >= 0.")
-        return float(arg)
 
 
 def is_ascii_or_utf8(s: str) -> bool:
