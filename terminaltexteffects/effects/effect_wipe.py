@@ -9,7 +9,7 @@ Classes:
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import graphics
@@ -57,47 +57,47 @@ class WipeConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("833ab4", "fd1d1d", "fcb045"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the wipe gradient."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=5,
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]
     "int : Number of frames to display each gradient step."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."
 
     wipe_delay: int = ArgField(
         cmd_name="--wipe-delay",
-        type_parser=arg_validators.NonNegativeInt.type_parser,
+        type_parser=argvalidators.NonNegativeInt.type_parser,
         default=0,
-        metavar=arg_validators.NonNegativeInt.METAVAR,
+        metavar=argvalidators.NonNegativeInt.METAVAR,
         help="Number of frames to wait before adding the next character group. Increase, to slow down the effect.",
     )  # type: ignore[assignment]
     "int : Number of frames to wait before adding the next character group. Increase, to slow down the effect."

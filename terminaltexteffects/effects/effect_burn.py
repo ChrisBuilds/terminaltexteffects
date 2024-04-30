@@ -11,7 +11,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import graphics
@@ -41,48 +41,48 @@ class BurnConfig(ArgsDataClass):
 
     starting_color: graphics.Color = ArgField(
         cmd_name="--starting-color",
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         default="837373",
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Color of the characters before they start to burn.",
     )  # type: ignore[assignment]
     "graphics.Color : Color of the characters before they start to burn."
 
     burn_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--burn-colors"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         default=("ffffff", "fff75d", "fe650d", "8A003C", "510100"),
         nargs="+",
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Colors transitioned through as the characters burn.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Colors transitioned through as the characters burn."
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("00c3ff", "ffff1c"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name=["--final-gradient-steps"],
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."

@@ -10,7 +10,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine import motion
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
@@ -47,10 +47,10 @@ class RingsConfig(ArgsDataClass):
 
     ring_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--ring-colors"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("ab48ff", "e7b2b2", "fffebd"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the rings.",
     )  # type: ignore[assignment]
 
@@ -58,10 +58,10 @@ class RingsConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("ab48ff", "e7b2b2", "fffebd"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
 
@@ -69,10 +69,10 @@ class RingsConfig(ArgsDataClass):
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name=["--final-gradient-steps"],
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
 
@@ -80,9 +80,9 @@ class RingsConfig(ArgsDataClass):
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
 
@@ -90,7 +90,7 @@ class RingsConfig(ArgsDataClass):
 
     ring_gap: float = ArgField(
         cmd_name=["--ring-gap"],
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.1,
         help="Distance between rings as a percent of the smallest output area dimension.",
     )  # type: ignore[assignment]
@@ -98,7 +98,7 @@ class RingsConfig(ArgsDataClass):
     "float : Distance between rings as a percent of the smallest output area dimension."
     spin_duration: int = ArgField(
         cmd_name=["--spin-duration"],
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=200,
         help="Number of frames for each cycle of the spin phase.",
     )  # type: ignore[assignment]
@@ -107,9 +107,9 @@ class RingsConfig(ArgsDataClass):
 
     spin_speed: tuple[float, float] = ArgField(
         cmd_name=["--spin-speed"],
-        type_parser=arg_validators.PositiveFloatRange.type_parser,
+        type_parser=argvalidators.PositiveFloatRange.type_parser,
         default=(0.25, 1.0),
-        metavar=arg_validators.PositiveFloatRange.METAVAR,
+        metavar=argvalidators.PositiveFloatRange.METAVAR,
         help="Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring.",
     )  # type: ignore[assignment]
 
@@ -117,7 +117,7 @@ class RingsConfig(ArgsDataClass):
 
     disperse_duration: int = ArgField(
         cmd_name=["--disperse-duration"],
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=200,
         help="Number of frames spent in the dispersed state between spinning cycles.",
     )  # type: ignore[assignment]
@@ -126,7 +126,7 @@ class RingsConfig(ArgsDataClass):
 
     spin_disperse_cycles: int = ArgField(
         cmd_name=["--spin-disperse-cycles"],
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=3,
         help="Number of times the animation will cycles between spinning rings and dispersed characters.",
     )  # type: ignore[assignment]

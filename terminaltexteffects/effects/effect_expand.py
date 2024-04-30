@@ -9,7 +9,7 @@ Classes:
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
@@ -24,7 +24,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="expand",
     help="Expands the text from a single point.",
     description="expand | Expands the text from a single point.",
-    epilog=f"""{arg_validators.EASING_EPILOG}
+    epilog=f"""{argvalidators.EASING_EPILOG}
     
 Example: terminaltexteffects expand --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 5 --movement-speed 0.35 --expand-easing IN_OUT_QUART""",
 )
@@ -42,47 +42,47 @@ class ExpandConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=5,
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]
     "int : Number of frames to display each gradient step."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.35,
-        metavar=arg_validators.PositiveFloat.METAVAR,
+        metavar=argvalidators.PositiveFloat.METAVAR,
         help="Movement speed of the characters. ",
     )  # type: ignore[assignment]
     "float : Movement speed of the characters. "
@@ -90,7 +90,7 @@ class ExpandConfig(ArgsDataClass):
     expand_easing: easing.EasingFunction = ArgField(
         cmd_name="--expand-easing",
         default=easing.in_out_quart,
-        type_parser=arg_validators.Ease.type_parser,
+        type_parser=argvalidators.Ease.type_parser,
         help="Easing function to use for character movement.",
     )  # type: ignore[assignment]
     "easing.EasingFunction : Easing function to use for character movement."

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import arg_validators, easing, graphics
+from terminaltexteffects.utils import argvalidators, easing, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 
@@ -24,7 +24,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="scattered",
     help="Text is scattered across the output area and moves into position.",
     description="scattered | Text is scattered across the output area and moves into position.",
-    epilog=f"""{arg_validators.EASING_EPILOG}
+    epilog=f"""{argvalidators.EASING_EPILOG}
 Example: terminaltexteffects scattered --final-gradient-stops ff9048 ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK""",
 )
 @dataclass
@@ -41,46 +41,46 @@ class ScatteredConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("ff9048", "ab9dff", "bdffea"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=12,
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]
     "int : Number of frames to display each gradient step."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.3,
-        metavar=arg_validators.PositiveFloat.METAVAR,
+        metavar=argvalidators.PositiveFloat.METAVAR,
         help="Movement speed of the characters. ",
     )  # type: ignore[assignment]
     "float : Movement speed of the characters. "
@@ -88,7 +88,7 @@ class ScatteredConfig(ArgsDataClass):
     movement_easing: easing.EasingFunction = ArgField(
         cmd_name="--movement-easing",
         default=easing.in_out_back,
-        type_parser=arg_validators.Ease.type_parser,
+        type_parser=argvalidators.Ease.type_parser,
         help="Easing function to use for character movement.",
     )  # type: ignore[assignment]
     "easing.EasingFunction : Easing function to use for character movement."

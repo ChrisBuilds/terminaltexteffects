@@ -3,7 +3,7 @@ import inspect
 import typing
 from dataclasses import MISSING, Field, dataclass, fields
 
-from terminaltexteffects.utils.arg_validators import CustomFormatter
+from terminaltexteffects.utils.argvalidators import CustomFormatter
 
 
 class ArgField(Field):

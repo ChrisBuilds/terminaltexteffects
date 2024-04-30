@@ -11,7 +11,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
@@ -27,7 +27,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="bouncyballs",
     help="Characters are bouncy balls falling from the top of the output area.",
     description="bouncyballs | Characters are bouncy balls falling from the top of the output area.",
-    epilog=f"""{arg_validators.EASING_EPILOG}
+    epilog=f"""{argvalidators.EASING_EPILOG}
 Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols o "*" O 0 . --final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal --ball-delay 7 --movement-speed 0.25 --easing OUT_BOUNCE""",
 )
 @dataclass
@@ -46,8 +46,8 @@ class BouncyBallsConfig(ArgsDataClass):
 
     ball_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--ball-colors"],
-        type_parser=arg_validators.Color.type_parser,
-        metavar=arg_validators.Color.METAVAR,
+        type_parser=argvalidators.Color.type_parser,
+        metavar=argvalidators.Color.METAVAR,
         nargs="+",
         default=("d1f4a5", "96e2a4", "5acda9"),
         help="Space separated list of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random.",
@@ -56,63 +56,63 @@ class BouncyBallsConfig(ArgsDataClass):
 
     ball_symbols: tuple[str, ...] = ArgField(
         cmd_name="--ball-symbols",
-        type_parser=arg_validators.Symbol.type_parser,
+        type_parser=argvalidators.Symbol.type_parser,
         nargs="+",
         default=("*", "o", "O", "0", "."),
-        metavar=arg_validators.Symbol.METAVAR,
+        metavar=argvalidators.Symbol.METAVAR,
         help="Space separated list of symbols to use for the balls.",
     )  # type: ignore[assignment]
     "tuple[str, ...] : Tuple of symbols to use for the balls."
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("f8ffae", "43c6ac"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name=["--final-gradient-steps"],
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.DIAGONAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."
     ball_delay: int = ArgField(
         cmd_name="--ball-delay",
-        type_parser=arg_validators.NonNegativeInt.type_parser,
+        type_parser=argvalidators.NonNegativeInt.type_parser,
         default=7,
-        metavar=arg_validators.NonNegativeInt.METAVAR,
+        metavar=argvalidators.NonNegativeInt.METAVAR,
         help="Number of frames between ball drops, increase to reduce ball drop rate.",
     )  # type: ignore[assignment]
     "int : Number of frames between ball drops, increase to reduce ball drop rate."
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.25,
-        metavar=arg_validators.PositiveFloat.METAVAR,
+        metavar=argvalidators.PositiveFloat.METAVAR,
         help="Movement speed of the characters. ",
     )  # type: ignore[assignment]
     "float : Movement speed of the characters. "
 
     movement_easing: easing.EasingFunction = ArgField(
         cmd_name="--movement-easing",
-        type_parser=arg_validators.Ease.type_parser,
+        type_parser=argvalidators.Ease.type_parser,
         default=easing.out_bounce,
         help="Easing function to use for character movement.",
     )  # type: ignore[assignment]

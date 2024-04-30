@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
-from terminaltexteffects.utils import arg_validators, geometry, graphics
+from terminaltexteffects.utils import argvalidators, geometry, graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 
@@ -46,95 +46,95 @@ class SynthGridConfig(ArgsDataClass):
 
     grid_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--grid-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("CC00CC", "ffffff"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the grid gradient.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the grid gradient."
 
     grid_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--grid-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     grid_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--grid-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.DIAGONAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the gradient for the grid color.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the gradient for the grid color."
 
     text_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--text-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the text gradient.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the text gradient."
 
     text_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--text-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     text_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--text-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the gradient for the text color.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the gradient for the text color."
 
     grid_row_symbol: str = ArgField(
         cmd_name="--grid-row-symbol",
-        type_parser=arg_validators.Symbol.type_parser,
+        type_parser=argvalidators.Symbol.type_parser,
         default="─",
-        metavar=arg_validators.Symbol.METAVAR,
+        metavar=argvalidators.Symbol.METAVAR,
         help="Symbol to use for grid row lines.",
     )  # type: ignore[assignment]
     "str : Symbol to use for grid row lines."
 
     grid_column_symbol: str = ArgField(
         cmd_name="--grid-column-symbol",
-        type_parser=arg_validators.Symbol.type_parser,
+        type_parser=argvalidators.Symbol.type_parser,
         default="│",
-        metavar=arg_validators.Symbol.METAVAR,
+        metavar=argvalidators.Symbol.METAVAR,
         help="Symbol to use for grid column lines.",
     )  # type: ignore[assignment]
     "str : Symbol to use for grid column lines."
 
     text_generation_symbols: tuple[str, ...] = ArgField(
         cmd_name="--text-generation-symbols",
-        type_parser=arg_validators.Symbol.type_parser,
+        type_parser=argvalidators.Symbol.type_parser,
         nargs="+",
         default=("░", "▒", "▓"),
-        metavar=arg_validators.Symbol.METAVAR,
+        metavar=argvalidators.Symbol.METAVAR,
         help="Space separated, unquoted, list of characters for the text generation animation.",
     )  # type: ignore[assignment]
     "tuple[str, ...] : Tuple of characters for the text generation animation."
 
     max_active_blocks: float = ArgField(
         cmd_name="--max-active-blocks",
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.1,
-        metavar=arg_validators.PositiveFloat.METAVAR,
+        metavar=argvalidators.PositiveFloat.METAVAR,
         help="Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time.",
     )  # type: ignore[assignment]
     "float : Maximum percentage of blocks to have active at any given time."

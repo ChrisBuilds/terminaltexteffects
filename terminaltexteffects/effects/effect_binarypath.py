@@ -12,7 +12,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
@@ -45,10 +45,10 @@ class BinaryPathConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("00d500", "007500"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
 
@@ -56,10 +56,10 @@ class BinaryPathConfig(ArgsDataClass):
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name=["--final-gradient-steps"],
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
 
@@ -67,9 +67,9 @@ class BinaryPathConfig(ArgsDataClass):
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.CENTER,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
 
@@ -77,10 +77,10 @@ class BinaryPathConfig(ArgsDataClass):
 
     binary_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--binary-colors"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("044E29", "157e38", "45bf55", "95ed87"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the binary characters. Character color is randomly assigned from this list.",
     )  # type: ignore[assignment]
 
@@ -88,9 +88,9 @@ class BinaryPathConfig(ArgsDataClass):
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=1.0,
-        metavar=arg_validators.PositiveFloat.METAVAR,
+        metavar=argvalidators.PositiveFloat.METAVAR,
         help="Speed of the binary groups as they travel around the terminal.",
     )  # type: ignore[assignment]
 
@@ -98,9 +98,9 @@ class BinaryPathConfig(ArgsDataClass):
 
     active_binary_groups: float = ArgField(
         cmd_name="--active-binary-groups",
-        type_parser=arg_validators.Ratio.type_parser,
+        type_parser=argvalidators.Ratio.type_parser,
         default=0.05,
-        metavar=arg_validators.Ratio.METAVAR,
+        metavar=argvalidators.Ratio.METAVAR,
         help="Maximum number of binary groups that are active at any given time as a percentage of the total number of binary groups. Lower this to improve performance.",
     )  # type: ignore[assignment]
 

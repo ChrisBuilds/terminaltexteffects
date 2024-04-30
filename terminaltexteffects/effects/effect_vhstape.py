@@ -10,7 +10,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine import animation
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
@@ -46,86 +46,86 @@ class VHSTapeConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("ab48ff", "e7b2b2", "fffebd"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."
 
     glitch_line_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--glitch-line-colors",
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("ffffff", "ff0000", "00ff00", "0000ff", "ffffff"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors are applied in order as an animation.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the characters when a single line is glitching. Colors are applied in order as an animation."
 
     glitch_wave_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--glitch-wave-colors",
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("ffffff", "ff0000", "00ff00", "0000ff", "ffffff"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation."
 
     noise_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--noise-colors",
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("1e1e1f", "3c3b3d", "6d6c70", "a2a1a6", "cbc9cf", "ffffff"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the characters during the noise phase.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the characters during the noise phase."
 
     glitch_line_chance: float = ArgField(
         cmd_name="--glitch-line-chance",
-        type_parser=arg_validators.Ratio.type_parser,
+        type_parser=argvalidators.Ratio.type_parser,
         default=0.05,
-        metavar=arg_validators.Ratio.METAVAR,
+        metavar=argvalidators.Ratio.METAVAR,
         help="Chance that a line will glitch on any given frame.",
     )  # type: ignore[assignment]
     "float : Chance that a line will glitch on any given frame."
 
     noise_chance: float = ArgField(
         cmd_name="--noise-chance",
-        type_parser=arg_validators.Ratio.type_parser,
+        type_parser=argvalidators.Ratio.type_parser,
         default=0.004,
-        metavar=arg_validators.Ratio.METAVAR,
+        metavar=argvalidators.Ratio.METAVAR,
         help="Chance that all characters will experience noise on any given frame.",
     )  # type: ignore[assignment]
     "float : Chance that all characters will experience noise on any given frame."
 
     total_glitch_time: int = ArgField(
         cmd_name="--total-glitch-time",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=1000,
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Total time, frames, that the glitching phase will last.",
     )  # type: ignore[assignment]
     "int : Total time, frames, that the glitching phase will last."

@@ -10,7 +10,7 @@ Classes:
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
@@ -26,7 +26,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="middleout",
     help="Text expands in a single row or column in the middle of the output area then out.",
     description="middleout | Text expands in a single row or column in the middle of the output area then out.",
-    epilog=f"""{arg_validators.EASING_EPILOG}
+    epilog=f"""{argvalidators.EASING_EPILOG}
 Example: terminaltexteffects middleout --starting-color 8A008A --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical --center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE --full-easing IN_OUT_SINE""",
 )
 @dataclass
@@ -43,38 +43,38 @@ class MiddleOutConfig(ArgsDataClass):
 
     starting_color: graphics.Color = ArgField(
         cmd_name="--starting-color",
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         default="ffffff",
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Color for the initial text in the center of the output area.",
     )  # type: ignore[assignment]
     "graphics.Color : Color for the initial text in the center of the output area."
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."
@@ -89,18 +89,18 @@ class MiddleOutConfig(ArgsDataClass):
 
     center_movement_speed: float = ArgField(
         cmd_name="--center-movement-speed",
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.35,
-        metavar=arg_validators.PositiveFloat.METAVAR,
+        metavar=argvalidators.PositiveFloat.METAVAR,
         help="Speed of the characters during the initial expansion of the center vertical/horiztonal line. ",
     )  # type: ignore[assignment]
     "float : Speed of the characters during the initial expansion of the center vertical/horiztonal line. "
 
     full_movement_speed: float = ArgField(
         cmd_name="--full-movement-speed",
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.35,
-        metavar=arg_validators.PositiveFloat.METAVAR,
+        metavar=argvalidators.PositiveFloat.METAVAR,
         help="Speed of the characters during the final full expansion. ",
     )  # type: ignore[assignment]
     "float : Speed of the characters during the final full expansion. "
@@ -108,7 +108,7 @@ class MiddleOutConfig(ArgsDataClass):
     center_easing: easing.EasingFunction = ArgField(
         cmd_name="--center-easing",
         default=easing.in_out_sine,
-        type_parser=arg_validators.Ease.type_parser,
+        type_parser=argvalidators.Ease.type_parser,
         help="Easing function to use for initial expansion.",
     )  # type: ignore[assignment]
     "easing.EasingFunction : Easing function to use for initial expansion."
@@ -116,7 +116,7 @@ class MiddleOutConfig(ArgsDataClass):
     full_easing: easing.EasingFunction = ArgField(
         cmd_name="--full-easing",
         default=easing.in_out_sine,
-        type_parser=arg_validators.Ease.type_parser,
+        type_parser=argvalidators.Ease.type_parser,
         help="Easing function to use for full expansion.",
     )  # type: ignore[assignment]
     "easing.EasingFunction : Easing function to use for full expansion."

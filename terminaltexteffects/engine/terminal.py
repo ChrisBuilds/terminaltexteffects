@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum, auto
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.utils import ansitools
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass
@@ -28,8 +28,8 @@ class TerminalConfig(ArgsDataClass):
 
     tab_width: int = ArgField(
         cmd_name=["--tab-width"],
-        type_parser=arg_validators.PositiveInt.type_parser,
-        metavar=arg_validators.PositiveInt.METAVAR,
+        type_parser=argvalidators.PositiveInt.type_parser,
+        metavar=argvalidators.PositiveInt.METAVAR,
         default=4,
         help="Number of spaces to use for a tab character.",
     )  # type: ignore[assignment]
@@ -58,7 +58,7 @@ class TerminalConfig(ArgsDataClass):
 
     frame_rate: float = ArgField(
         cmd_name="--frame-rate",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=100,
         help="""Target frame rate for the animation.""",
     )  # type: ignore[assignment]
@@ -67,7 +67,7 @@ class TerminalConfig(ArgsDataClass):
 
     terminal_dimensions: tuple[int, int] = ArgField(
         cmd_name=["--terminal-dimensions"],
-        type_parser=arg_validators.TerminalDimensions.type_parser,
+        type_parser=argvalidators.TerminalDimensions.type_parser,
         nargs=2,
         default=(0, 0),
         help="Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal width.",

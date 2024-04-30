@@ -10,7 +10,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine import animation
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
@@ -26,7 +26,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="errorcorrect",
     help="Some characters start in the wrong position and are corrected in sequence.",
     description="errorcorrect | Some characters start in the wrong position and are corrected in sequence.",
-    epilog=f"""{arg_validators.EASING_EPILOG}
+    epilog=f"""{argvalidators.EASING_EPILOG}
     
 Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c --correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5""",
 )
@@ -46,7 +46,7 @@ class ErrorCorrectConfig(ArgsDataClass):
 
     error_pairs: float = ArgField(
         cmd_name="--error-pairs",
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.1,
         metavar="(int > 0)",
         help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position.",
@@ -55,7 +55,7 @@ class ErrorCorrectConfig(ArgsDataClass):
 
     swap_delay: int = ArgField(
         cmd_name="--swap-delay",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=10,
         metavar="(int > 0)",
         help="Number of frames between swaps.",
@@ -64,7 +64,7 @@ class ErrorCorrectConfig(ArgsDataClass):
 
     error_color: graphics.Color = ArgField(
         cmd_name=["--error-color"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         default="e74c3c",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters that are in the wrong position.",
@@ -73,7 +73,7 @@ class ErrorCorrectConfig(ArgsDataClass):
 
     correct_color: graphics.Color = ArgField(
         cmd_name=["--correct-color"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         default="45bf55",
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters once corrected, this is a gradient from error-color and fades to final-color.",
@@ -82,7 +82,7 @@ class ErrorCorrectConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -92,7 +92,7 @@ class ErrorCorrectConfig(ArgsDataClass):
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
         metavar="(int > 0)",
@@ -102,16 +102,16 @@ class ErrorCorrectConfig(ArgsDataClass):
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.5,
         metavar="(float > 0)",
         help="Speed of the characters while moving to the correct position. ",

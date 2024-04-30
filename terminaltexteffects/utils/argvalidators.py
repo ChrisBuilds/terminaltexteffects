@@ -1,3 +1,32 @@
+"""
+This module provides command line argument validators and METAVARs for consistent type parsing and help output.
+
+It includes a custom formatter for argparse, which combines the features of
+`argparse.ArgumentDefaultsHelpFormatter` and `argparse.RawDescriptionHelpFormatter`.
+
+Classes:
+    CustomFormatter: A custom formatter for argparse that combines the features of
+      `argparse.ArgumentDefaultsHelpFormatter` and `argparse.RawDescriptionHelpFormatter`.
+    GradientDirection: Argument type for gradient directions.
+    Color: Argument type for color values.
+    PositiveFloatRange: Argument type for float ranges.
+    IntRange: Argument type for integer ranges.
+    Symbol: Argument type for single ASCII/UTF-8 characters.
+    TerminalDimensions: Argument type for terminal dimensions.
+    PositiveInt: Argument type for positive integers.
+    Ease: Argument type for easing functions.
+    Ratio: Argument type for float values between zero and one.
+    PositiveFloat: Argument type for positive floats.
+    NonNegativeInt: Argument type for nonnegative integers.
+    NonNegativeFloat: Argument type for nonnegative floats.
+
+Functions:
+    is_ascii_or_utf8: Tests if the given string is either ASCII or UTF-8.
+
+Constants:
+    EASING_EPILOG (str): A detailed description of the easing functions supported.
+"""
+
 import argparse
 import typing
 

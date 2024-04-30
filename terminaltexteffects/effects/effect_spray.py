@@ -11,7 +11,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import easing, graphics
@@ -27,7 +27,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="spray",
     help="Draws the characters spawning at varying rates from a single point.",
     description="spray | Draws the characters spawning at varying rates from a single point.",
-    epilog=f"""{arg_validators.EASING_EPILOG}    
+    epilog=f"""{argvalidators.EASING_EPILOG}    
 Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 --movement-easing OUT_EXPO""",
 )
 @dataclass
@@ -45,29 +45,29 @@ class SprayConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "FFFFFF"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name=["--final-gradient-steps"],
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."
@@ -82,25 +82,25 @@ class SprayConfig(ArgsDataClass):
 
     spray_volume: float = ArgField(
         cmd_name="--spray-volume",
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.005,
-        metavar=arg_validators.PositiveFloat.METAVAR,
+        metavar=argvalidators.PositiveFloat.METAVAR,
         help="Number of characters to spray per tick as a percent of the total number of characters.",
     )  # type: ignore[assignment]
     "float : Number of characters to spray per tick as a percent of the total number of characters."
 
     movement_speed: tuple[float, float] = ArgField(
         cmd_name="--movement-speed",
-        type_parser=arg_validators.PositiveFloatRange.type_parser,
+        type_parser=argvalidators.PositiveFloatRange.type_parser,
         default=(0.4, 1.0),
-        metavar=arg_validators.PositiveFloatRange.METAVAR,
+        metavar=argvalidators.PositiveFloatRange.METAVAR,
         help="Movement speed of the characters.",
     )  # type: ignore[assignment]
     "tuple[float, float] : Movement speed of the characters."
 
     movement_easing: easing.EasingFunction = ArgField(
         cmd_name="--movement-easing",
-        type_parser=arg_validators.Ease.type_parser,
+        type_parser=argvalidators.Ease.type_parser,
         default=easing.out_expo,
         help="Easing function to use for character movement.",
     )  # type: ignore[assignment]

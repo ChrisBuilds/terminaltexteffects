@@ -10,7 +10,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
@@ -27,7 +27,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="bubbles",
     help="Characters are formed into bubbles that float down and pop.",
     description="bubbles | Characters are formed into bubbles that float down and pop.",
-    epilog=f"""{arg_validators.EASING_EPILOG}
+    epilog=f"""{argvalidators.EASING_EPILOG}
 
 Example: terminaltexteffects bubbles --bubble-colors d33aff 7395c4 43c2a7 02ff7f --pop-color ffffff --final-gradient-stops d33aff 02ff7f --final-gradient-steps 12 --final-gradient-direction diagonal --bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE""",
 )
@@ -58,66 +58,66 @@ class BubblesConfig(ArgsDataClass):
 
     bubble_colors: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--bubble-colors",
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("d33aff", "7395c4", "43c2a7", "02ff7f"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as default False.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the bubbles. Ignored if --no-rainbow is left as default False."
 
     pop_color: graphics.Color = ArgField(
         cmd_name="--pop-color",
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         default="ffffff",
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Color for the spray emitted when a bubble pops.",
     )  # type: ignore[assignment]
     "graphics.Color : Color for the spray emitted when a bubble pops."
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("d33aff", "02ff7f"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.DIAGONAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."
 
     bubble_speed: float = ArgField(
         cmd_name="--bubble-speed",
-        type_parser=arg_validators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.1,
-        metavar=arg_validators.PositiveFloat.METAVAR,
+        metavar=argvalidators.PositiveFloat.METAVAR,
         help="Speed of the floating bubbles. ",
     )  # type: ignore[assignment]
     "float : Speed of the floating bubbles. "
 
     bubble_delay: int = ArgField(
         cmd_name="--bubble-delay",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=50,
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames between bubbles.",
     )  # type: ignore[assignment]
     "int : Number of frames between bubbles."
@@ -133,8 +133,8 @@ class BubblesConfig(ArgsDataClass):
     movement_easing: easing.EasingFunction = ArgField(
         cmd_name=["--movement-easing"],
         default=easing.in_out_sine,
-        type_parser=arg_validators.Ease.type_parser,
-        metavar=arg_validators.Ease.METAVAR,
+        type_parser=argvalidators.Ease.type_parser,
+        metavar=argvalidators.Ease.METAVAR,
         help="Easing function to use for character movement after a bubble pops.",
     )  # type: ignore[assignment]
     "easing.EasingFunction : Easing function to use for character movement after a bubble pops."

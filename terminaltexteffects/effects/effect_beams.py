@@ -11,7 +11,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.arg_validators as arg_validators
+import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
@@ -51,10 +51,10 @@ class BeamsConfig(ArgsDataClass):
 
     beam_row_symbols: tuple[str, ...] = ArgField(
         cmd_name="--beam-row-symbols",
-        type_parser=arg_validators.Symbol.type_parser,
+        type_parser=argvalidators.Symbol.type_parser,
         nargs="+",
         default=("▂", "▁", "_"),
-        metavar=arg_validators.Symbol.METAVAR,
+        metavar=argvalidators.Symbol.METAVAR,
         help="Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation.",
     )  # type: ignore[assignment]
 
@@ -62,10 +62,10 @@ class BeamsConfig(ArgsDataClass):
 
     beam_column_symbols: tuple[str, ...] = ArgField(
         cmd_name="--beam-column-symbols",
-        type_parser=arg_validators.Symbol.type_parser,
+        type_parser=argvalidators.Symbol.type_parser,
         nargs="+",
         default=("▌", "▍", "▎", "▏"),
-        metavar=arg_validators.Symbol.METAVAR,
+        metavar=argvalidators.Symbol.METAVAR,
         help="Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation.",
     )  # type: ignore[assignment]
 
@@ -73,9 +73,9 @@ class BeamsConfig(ArgsDataClass):
 
     beam_delay: int = ArgField(
         cmd_name="--beam-delay",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=10,
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5).",
     )  # type: ignore[assignment]
 
@@ -83,9 +83,9 @@ class BeamsConfig(ArgsDataClass):
 
     beam_row_speed_range: tuple[int, int] = ArgField(
         cmd_name="--beam-row-speed-range",
-        type_parser=arg_validators.IntRange.type_parser,
+        type_parser=argvalidators.IntRange.type_parser,
         default=(10, 40),
-        metavar=arg_validators.IntRange.METAVAR,
+        metavar=argvalidators.IntRange.METAVAR,
         help="Speed range of the beam when moving along a row.",
     )  # type: ignore[assignment]
 
@@ -93,9 +93,9 @@ class BeamsConfig(ArgsDataClass):
 
     beam_column_speed_range: tuple[int, int] = ArgField(
         cmd_name="--beam-column-speed-range",
-        type_parser=arg_validators.IntRange.type_parser,
+        type_parser=argvalidators.IntRange.type_parser,
         default=(6, 10),
-        metavar=arg_validators.IntRange.METAVAR,
+        metavar=argvalidators.IntRange.METAVAR,
         help="Speed range of the beam when moving along a column.",
     )  # type: ignore[assignment]
 
@@ -103,7 +103,7 @@ class BeamsConfig(ArgsDataClass):
 
     beam_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--beam-gradient-stops",
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("ffffff", "00D1FF", "8A008A"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -114,10 +114,10 @@ class BeamsConfig(ArgsDataClass):
 
     beam_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--beam-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(2, 8),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
     )  # type: ignore[assignment]
 
@@ -125,9 +125,9 @@ class BeamsConfig(ArgsDataClass):
 
     beam_gradient_frames: int = ArgField(
         cmd_name="--beam-gradient-frames",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=2,
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]
 
@@ -135,10 +135,10 @@ class BeamsConfig(ArgsDataClass):
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
-        type_parser=arg_validators.Color.type_parser,
+        type_parser=argvalidators.Color.type_parser,
         nargs="+",
         default=("8A008A", "00D1FF", "ffffff"),
-        metavar=arg_validators.Color.METAVAR,
+        metavar=argvalidators.Color.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # type: ignore[assignment]
 
@@ -146,10 +146,10 @@ class BeamsConfig(ArgsDataClass):
 
     final_gradient_steps: tuple[int,] = ArgField(
         cmd_name="--final-gradient-steps",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
     )  # type: ignore[assignment]
 
@@ -157,9 +157,9 @@ class BeamsConfig(ArgsDataClass):
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=5,
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step.",
     )  # type: ignore[assignment]
 
@@ -167,9 +167,9 @@ class BeamsConfig(ArgsDataClass):
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        type_parser=arg_validators.GradientDirection.type_parser,
+        type_parser=argvalidators.GradientDirection.type_parser,
         default=graphics.Gradient.Direction.VERTICAL,
-        metavar=arg_validators.GradientDirection.METAVAR,
+        metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
 
@@ -177,9 +177,9 @@ class BeamsConfig(ArgsDataClass):
 
     final_wipe_speed: int = ArgField(
         cmd_name="--final-wipe-speed",
-        type_parser=arg_validators.PositiveInt.type_parser,
+        type_parser=argvalidators.PositiveInt.type_parser,
         default=1,
-        metavar=arg_validators.PositiveInt.METAVAR,
+        metavar=argvalidators.PositiveInt.METAVAR,
         help="Speed of the final wipe as measured in diagonal groups activated per frame.",
     )  # type: ignore[assignment]
 
