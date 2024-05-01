@@ -9,7 +9,7 @@ import typing
 from collections.abc import Iterator
 from enum import Enum, auto
 
-from terminaltexteffects.utils import colorterm, geometry, hexterm
+from terminaltexteffects.utils import ansitools, colorterm, geometry, hexterm
 
 if typing.TYPE_CHECKING:
     pass
@@ -210,5 +210,5 @@ class Gradient:
         return len(self.spectrum)
 
     def __str__(self) -> str:
-        color_blocks = [f"{colorterm.fg(color)}█{colorterm.RESET}" for color in self.spectrum]
+        color_blocks = [f"{colorterm.fg(color)}█{ansitools.RESET_ALL()}" for color in self.spectrum]
         return f"Gradient: Stops({self._stops}), Steps({self._steps})\n" + "".join(color_blocks)
