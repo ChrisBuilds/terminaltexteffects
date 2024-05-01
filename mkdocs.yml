@@ -28,7 +28,9 @@ nav:
     - Engine:
       - Utils:
         - engine/utils/ansitools.md
+        - engine/utils/argsdataclass.md
         - engine/utils/argvalidators.md
+        - engine/utils/colorterm.md
         - engine/utils/gradient.md
     - Effects:
       - effects/beams.md
@@ -61,5 +63,4 @@ nav:
       - effects/vhstape.md
       - effects/waves.md
       - effects/wipe.md
-      - reference.md
   - explanation.md
