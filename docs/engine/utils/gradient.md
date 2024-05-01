@@ -1,5 +1,7 @@
 # Gradient
 
+*Module*: `terminaltexteffects.utils.graphics`
+
 ## Basic Usage
 
 ```python
