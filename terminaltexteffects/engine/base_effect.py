@@ -10,25 +10,6 @@ Classes:
 
     BaseEffect(Generic[T]): An abstract base class that defines the basic structure for an effect. Provides the `__iter__`
         method and a context manager for terminal output.
-
-Usage Example:
-
-    class MyEffectIterator(BaseEffectIterator[MyEffectConfig]):
-        def __init__(self, effect: "MyEffect") -> None:
-            super().__init__(effect)
-            # Custom initialization code here
-
-        def __next__(self) -> str:
-            # Custom iteration code here
-            return next_frame
-
-    class MyEffect(BaseEffect[MyEffectConfig]):
-        _config_cls = MyEffectConfig
-        _iterator_cls = MyEffectIterator
-
-        def __init__(self, input_data: str) -> None:
-            super().__init__(input_data)
-
 """
 
 from abc import ABC, abstractmethod
