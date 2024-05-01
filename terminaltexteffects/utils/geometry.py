@@ -1,15 +1,19 @@
 """
 This module provides utility functions for geometric calculations and operations.
 
+The purpose of these functions is to find terminal coordinates that fall within certain regions or along certain paths. These functions are
+used by effects to enable more complex animations and movement paths.
+
 Functions:
-- find_coords_on_circle: Finds points on a circle given the origin, radius, and number of points.
-- find_coords_in_circle: Finds coordinates within an ellipse given the center and major axis length.
-- find_coords_in_rect: Finds coordinates within a rectangle given the origin and distance.
-- find_coord_at_distance: Finds the coordinate at a given distance along a line defined by two coordinates.
-- find_coord_on_bezier_curve: Finds points on a quadratic or cubic bezier curve.
-- find_coord_on_line: Finds points on a line.
-- find_length_of_bezier_curve: Finds the length of a quadratic or cubic bezier curve.
-- find_length_of_line: Finds the length of a line intersecting two coordinates.
+    find_coords_on_circle: Finds points on a circle given the origin, radius, and number of points.
+    find_coords_in_circle: Finds coordinates within an ellipse given the center and major axis length.
+    find_coords_in_rect: Finds coordinates within a rectangle given the origin and distance.
+    find_coord_at_distance: Finds the coordinate at a given distance along a line defined by two coordinates.
+    find_coord_on_bezier_curve: Finds points on a quadratic or cubic bezier curve.
+    find_coord_on_line: Finds points on a line.
+    find_length_of_bezier_curve: Finds the length of a quadratic or cubic bezier curve.
+    find_length_of_line: Finds the length of a line intersecting two coordinates.
+    find_normalized_distance_from_center: Returns the normalized distance from the center of the OutputArea.
 """
 
 import math

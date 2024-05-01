@@ -1,470 +1,505 @@
+"""This module contains functions for easing calculations.
+
+Functions:
+    in_sine: Ease in using a sine function.
+    out_sine: Ease out using a sine function.
+    in_out_sine: Ease in/out using a sine function.
+    in_quad: Ease in using a quadratic function.
+    out_quad: Ease out using a quadratic function.
+    in_out_quad: Ease in/out using a quadratic function.
+    in_cubic: Ease in using a cubic function.
+    out_cubic: Ease out using a cubic function.
+    in_out_cubic: Ease in/out using a cubic function.
+    in_quart: Ease in using a quartic function.
+    out_quart: Ease out using a quartic function.
+    in_out_quart: Ease in/out using a quartic function.
+    in_quint: Ease in using a quintic function.
+    out_quint: Ease out using a quintic function.
+    in_out_quint: Ease in/out using a quintic function.
+    in_expo: Ease in using an exponential function.
+    out_expo: Ease out using an exponential function.
+    in_out_expo: Ease in/out using an exponential function.
+    in_circ: Ease in using a circular function.
+    out_circ: Ease out using a circular function.
+    in_out_circ: Ease in/out using a circular function.
+    in_back: Ease in using a back function.
+    out_back: Ease out using a back function.
+    in_out_back: Ease in/out using a back function.
+    in_elastic: Ease in using an elastic function.
+    out_elastic: Ease out using an elastic function.
+    in_out_elastic: Ease in/out using an elastic function.
+    in_bounce: Ease in using a bounce function.
+    out_bounce: Ease out using a bounce function.
+    in_out_bounce: Ease in/out using a bounce function.
+"""
+
 import math
 import typing
 
 EasingFunction: typing.TypeAlias = typing.Callable[[float], float]
 
 
-def in_sine(step_ratio: float) -> float:
+def in_sine(progress_ratio: float) -> float:
     """
     Ease in using a sine function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    return 1 - math.cos((step_ratio * math.pi) / 2)
+    return 1 - math.cos((progress_ratio * math.pi) / 2)
 
 
-def out_sine(step_ratio: float) -> float:
+def out_sine(progress_ratio: float) -> float:
     """
     Ease out using a sine function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    return math.sin((step_ratio * math.pi) / 2)
+    return math.sin((progress_ratio * math.pi) / 2)
 
 
-def in_out_sine(step_ratio: float) -> float:
+def in_out_sine(progress_ratio: float) -> float:
     """
     Ease in/out using a sine function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
 
-    return -(math.cos(math.pi * step_ratio) - 1) / 2
+    return -(math.cos(math.pi * progress_ratio) - 1) / 2
 
 
-def in_quad(step_ratio: float) -> float:
+def in_quad(progress_ratio: float) -> float:
     """
     Ease in using a quadratic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
 
-    return step_ratio**2
+    return progress_ratio**2
 
 
-def out_quad(step_ratio: float) -> float:
+def out_quad(progress_ratio: float) -> float:
     """
     Ease out using a quadratic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
 
     """
-    return 1 - (1 - step_ratio) * (1 - step_ratio)
+    return 1 - (1 - progress_ratio) * (1 - progress_ratio)
 
 
-def in_out_quad(step_ratio: float) -> float:
+def in_out_quad(progress_ratio: float) -> float:
     """
     Ease in/out using a quadratic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
 
     """
-    if step_ratio < 0.5:
-        return 2 * step_ratio**2
+    if progress_ratio < 0.5:
+        return 2 * progress_ratio**2
     else:
-        return 1 - (-2 * step_ratio + 2) ** 2 / 2
+        return 1 - (-2 * progress_ratio + 2) ** 2 / 2
 
 
-def in_cubic(step_ratio: float) -> float:
+def in_cubic(progress_ratio: float) -> float:
     """
     Ease in using a cubic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    return step_ratio**3
+    return progress_ratio**3
 
 
-def out_cubic(step_ratio: float) -> float:
+def out_cubic(progress_ratio: float) -> float:
     """
     Ease out using a cubic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    return 1 - (1 - step_ratio) ** 3
+    return 1 - (1 - progress_ratio) ** 3
 
 
-def in_out_cubic(step_ratio: float) -> float:
+def in_out_cubic(progress_ratio: float) -> float:
     """
     Ease in/out using a cubic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the
         character
     """
-    if step_ratio < 0.5:
-        return 4 * step_ratio**3
+    if progress_ratio < 0.5:
+        return 4 * progress_ratio**3
     else:
-        return 1 - (-2 * step_ratio + 2) ** 3 / 2
+        return 1 - (-2 * progress_ratio + 2) ** 3 / 2
 
 
-def in_quart(step_ratio: float) -> float:
+def in_quart(progress_ratio: float) -> float:
     """
     Ease in using a quartic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 representing the percentage
         of the current waypoint speed to apply to the character
     """
-    return step_ratio**4
+    return progress_ratio**4
 
 
-def out_quart(step_ratio: float) -> float:
+def out_quart(progress_ratio: float) -> float:
     """
     Ease out using a quartic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    return 1 - (1 - step_ratio) ** 4
+    return 1 - (1 - progress_ratio) ** 4
 
 
-def in_out_quart(step_ratio: float) -> float:
+def in_out_quart(progress_ratio: float) -> float:
     """
     Ease in/out using a quartic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    if step_ratio < 0.5:
-        return 8 * step_ratio**4
+    if progress_ratio < 0.5:
+        return 8 * progress_ratio**4
     else:
-        return 1 - (-2 * step_ratio + 2) ** 4 / 2
+        return 1 - (-2 * progress_ratio + 2) ** 4 / 2
 
 
-def in_quint(step_ratio: float) -> float:
+def in_quint(progress_ratio: float) -> float:
     """
     Ease in using a quintic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    return step_ratio**5
+    return progress_ratio**5
 
 
-def out_quint(step_ratio: float) -> float:
+def out_quint(progress_ratio: float) -> float:
     """
     Ease out using a quintic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    return 1 - (1 - step_ratio) ** 5
+    return 1 - (1 - progress_ratio) ** 5
 
 
-def in_out_quint(step_ratio: float) -> float:
+def in_out_quint(progress_ratio: float) -> float:
     """
     Ease in/out using a quintic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    if step_ratio < 0.5:
-        return 16 * step_ratio**5
+    if progress_ratio < 0.5:
+        return 16 * progress_ratio**5
     else:
-        return 1 - (-2 * step_ratio + 2) ** 5 / 2
+        return 1 - (-2 * progress_ratio + 2) ** 5 / 2
 
 
-def in_expo(step_ratio: float) -> float:
+def in_expo(progress_ratio: float) -> float:
     """
     Ease in using an exponential function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    if step_ratio == 0:
+    if progress_ratio == 0:
         return 0
     else:
-        return 2 ** (10 * step_ratio - 10)
+        return 2 ** (10 * progress_ratio - 10)
 
 
-def out_expo(step_ratio: float) -> float:
+def out_expo(progress_ratio: float) -> float:
     """
     Ease out using an exponential function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    if step_ratio == 1:
+    if progress_ratio == 1:
         return 1
     else:
-        return 1 - 2 ** (-10 * step_ratio)
+        return 1 - 2 ** (-10 * progress_ratio)
 
 
-def in_out_expo(step_ratio: float) -> float:
+def in_out_expo(progress_ratio: float) -> float:
     """
     Ease in/out using an exponential function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    if step_ratio == 0:
+    if progress_ratio == 0:
         return 0
-    elif step_ratio == 1:
+    elif progress_ratio == 1:
         return 1
-    elif step_ratio < 0.5:
-        return 2 ** (20 * step_ratio - 10) / 2
+    elif progress_ratio < 0.5:
+        return 2 ** (20 * progress_ratio - 10) / 2
     else:
-        return (2 - 2 ** (-20 * step_ratio + 10)) / 2
+        return (2 - 2 ** (-20 * progress_ratio + 10)) / 2
 
 
-def in_circ(step_ratio: float) -> float:
+def in_circ(progress_ratio: float) -> float:
     """
     Ease in using a circular function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    return 1 - math.sqrt(1 - step_ratio**2)
+    return 1 - math.sqrt(1 - progress_ratio**2)
 
 
-def out_circ(step_ratio: float) -> float:
+def out_circ(progress_ratio: float) -> float:
     """
     Ease out using a circular function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    return math.sqrt(1 - (step_ratio - 1) ** 2)
+    return math.sqrt(1 - (progress_ratio - 1) ** 2)
 
 
-def in_out_circ(step_ratio: float) -> float:
+def in_out_circ(progress_ratio: float) -> float:
     """
     Ease in/out using a circular function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    if step_ratio < 0.5:
-        return (1 - math.sqrt(1 - (2 * step_ratio) ** 2)) / 2
+    if progress_ratio < 0.5:
+        return (1 - math.sqrt(1 - (2 * progress_ratio) ** 2)) / 2
     else:
-        return (math.sqrt(1 - (-2 * step_ratio + 2) ** 2) + 1) / 2
+        return (math.sqrt(1 - (-2 * progress_ratio + 2) ** 2) + 1) / 2
 
 
-def in_back(step_ratio: float) -> float:
+def in_back(progress_ratio: float) -> float:
     """
     Ease in using a back function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
     c1 = 1.70158
     c3 = c1 + 1
-    return c3 * step_ratio**3 - c1 * step_ratio**2
+    return c3 * progress_ratio**3 - c1 * progress_ratio**2
 
 
-def out_back(step_ratio: float) -> float:
+def out_back(progress_ratio: float) -> float:
     """
     Ease out using a back function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
     c1 = 1.70158
     c3 = c1 + 1
-    return 1 + c3 * (step_ratio - 1) ** 3 + c1 * (step_ratio - 1) ** 2
+    return 1 + c3 * (progress_ratio - 1) ** 3 + c1 * (progress_ratio - 1) ** 2
 
 
-def in_out_back(step_ratio: float) -> float:
+def in_out_back(progress_ratio: float) -> float:
     """
     Ease in/out using a back function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
     c1 = 1.70158
     c2 = c1 * 1.525
-    if step_ratio < 0.5:
-        return ((2 * step_ratio) ** 2 * ((c2 + 1) * 2 * step_ratio - c2)) / 2
+    if progress_ratio < 0.5:
+        return ((2 * progress_ratio) ** 2 * ((c2 + 1) * 2 * progress_ratio - c2)) / 2
     else:
-        return ((2 * step_ratio - 2) ** 2 * ((c2 + 1) * (step_ratio * 2 - 2) + c2) + 2) / 2
+        return ((2 * progress_ratio - 2) ** 2 * ((c2 + 1) * (progress_ratio * 2 - 2) + c2) + 2) / 2
 
 
-def in_elastic(step_ratio: float) -> float:
+def in_elastic(progress_ratio: float) -> float:
     """
     Ease in using an elastic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
 
     c4 = (2 * math.pi) / 3
-    if step_ratio == 0:
+    if progress_ratio == 0:
         return 0
-    elif step_ratio == 1:
+    elif progress_ratio == 1:
         return 1
     else:
-        return -(2 ** (10 * step_ratio - 10)) * math.sin((step_ratio * 10 - 10.75) * c4)
+        return -(2 ** (10 * progress_ratio - 10)) * math.sin((progress_ratio * 10 - 10.75) * c4)
 
 
-def out_elastic(step_ratio: float) -> float:
+def out_elastic(progress_ratio: float) -> float:
     """
     Ease out using an elastic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
     """
     c4 = (2 * math.pi) / 3
-    if step_ratio == 0:
+    if progress_ratio == 0:
         return 0
-    elif step_ratio == 1:
+    elif progress_ratio == 1:
         return 1
     else:
-        return 2 ** (-10 * step_ratio) * math.sin((step_ratio * 10 - 0.75) * c4) + 1
+        return 2 ** (-10 * progress_ratio) * math.sin((progress_ratio * 10 - 0.75) * c4) + 1
 
 
-def in_out_elastic(step_ratio: float) -> float:
+def in_out_elastic(progress_ratio: float) -> float:
     """
     Ease in/out using an elastic function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
     """
     c5 = (2 * math.pi) / 4.5
-    if step_ratio == 0:
+    if progress_ratio == 0:
         return 0
-    elif step_ratio == 1:
+    elif progress_ratio == 1:
         return 1
-    elif step_ratio < 0.5:
-        return -(2 ** (20 * step_ratio - 10) * math.sin((20 * step_ratio - 11.125) * c5)) / 2
+    elif progress_ratio < 0.5:
+        return -(2 ** (20 * progress_ratio - 10) * math.sin((20 * progress_ratio - 11.125) * c5)) / 2
     else:
-        return (2 ** (-20 * step_ratio + 10) * math.sin((20 * step_ratio - 11.125) * c5)) / 2 + 1
+        return (2 ** (-20 * progress_ratio + 10) * math.sin((20 * progress_ratio - 11.125) * c5)) / 2 + 1
 
 
-def in_bounce(step_ratio: float) -> float:
+def in_bounce(progress_ratio: float) -> float:
     """
     Ease in using a bounce function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
     """
-    return 1 - out_bounce(1 - step_ratio)
+    return 1 - out_bounce(1 - progress_ratio)
 
 
-def out_bounce(step_ratio: float) -> float:
+def out_bounce(progress_ratio: float) -> float:
     """
     Ease out using a bounce function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
     n1 = 7.5625
     d1 = 2.75
-    if step_ratio < 1 / d1:
-        return n1 * step_ratio**2
-    elif step_ratio < 2 / d1:
-        return n1 * (step_ratio - 1.5 / d1) ** 2 + 0.75
-    elif step_ratio < 2.5 / d1:
-        return n1 * (step_ratio - 2.25 / d1) ** 2 + 0.9375
+    if progress_ratio < 1 / d1:
+        return n1 * progress_ratio**2
+    elif progress_ratio < 2 / d1:
+        return n1 * (progress_ratio - 1.5 / d1) ** 2 + 0.75
+    elif progress_ratio < 2.5 / d1:
+        return n1 * (progress_ratio - 2.25 / d1) ** 2 + 0.9375
     else:
-        return n1 * (step_ratio - 2.625 / d1) ** 2 + 0.984375
+        return n1 * (progress_ratio - 2.625 / d1) ** 2 + 0.984375
 
 
-def in_out_bounce(step_ratio: float) -> float:
+def in_out_bounce(progress_ratio: float) -> float:
     """
     Ease in/out using a bounce function.
 
     Args:
-        step_ratio (float): the ratio of the current step to the maximum steps
+        progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percent of the inter waypoint distance to travel
+        float: 0 <= n <= 1 eased value
     """
-    if step_ratio < 0.5:
-        return (1 - out_bounce(1 - 2 * step_ratio)) / 2
+    if progress_ratio < 0.5:
+        return (1 - out_bounce(1 - 2 * progress_ratio)) / 2
     else:
-        return (1 + out_bounce(2 * step_ratio - 1)) / 2
+        return (1 + out_bounce(2 * progress_ratio - 1)) / 2

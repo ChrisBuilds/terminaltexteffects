@@ -1,6 +1,10 @@
-#!/usr/bin/python3
+"""This module contains a list of all XTerm-256 color codes and functions to convert between RGB Hex color strings and XTerm-256 color codes.
 
-"""Convert between RGB Hex color strings and XTerm-256 color codes."""
+Functions:
+    hex_to_xterm: Convert RGB Hex colors to their closest XTerm-256 color.
+    xterm_to_hex: Convert XTerm-256 color codes to RGB Hex colors.
+    is_valid_color: Check if the input is a valid RGB Hex color code.
+"""
 
 xterm_to_hex_map = {
     0: "#000000",
