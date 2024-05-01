@@ -1,3 +1,21 @@
+"""
+This module defines classes and functions designed to work with the argparse library and enable typed arguments to support interacting with terminaltexteffects as both a command line tool and a library.
+
+The ArgField class extends the built-in Field class to include additional metadata specific to command-line arguments.
+This metadata includes the command-line argument name, help text, type parser, metavar, nargs, action, required status,
+and choices.
+
+The ArgParserDescriptor dataclass contains required attributes to call the "add_parser()" method of the _argparse._SubParsersAction class.
+
+The ArgsDataClass dataclass represents command-line arguments and provides methods for handling them. It does not define any fields itself but is meant to be subclassed, with subclasses defining their own fields to represent the command-line arguments they expect.
+
+Classes:
+    ArgField: A subclass of the dataclasses.Field class that represents a command-line argument.
+    ArgParserDescriptor: A dataclass that contains required attributes to call "add_parser()" method of the _argparse._SubParsersAction" class.
+    ArgsDataClass: A dataclass that represents command-line arguments and provides methods for handling them.
+
+"""
+
 import argparse
 import inspect
 import typing

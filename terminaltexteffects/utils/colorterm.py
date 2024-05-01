@@ -1,19 +1,14 @@
-"""Converts xterm color codes and hex colors into ANSI escape sequences."""
-
-RESET = "\x1b[0m"
+"""This module converts xterm color codes and hex colors into ANSI escape sequences."""
 
 
 def _hex_to_int(hex_color: str) -> list[int]:
-    """
-    Convert a hex color string into a list of ints.
+    """Converts a hex color string into a list of integers.
 
-    Parameters
-    ----------
-    hex_color : str : Hex color string. '#' is optional.
+    Args:
+        hex_color (str): Hex color string. '#' is optional.
 
-    Returns
-    -------
-    List[int] : [RED, GREEN, BLUE] list of color integers
+    Returns:
+        list[int]: A list of integers [RED, GREEN, BLUE] representing the color in RGB format.
     """
     hex_color = hex_color.strip("#")
     ints = [int(hex_color[i : i + 2], 16) for i in range(0, 6, 2)]
@@ -21,18 +16,18 @@ def _hex_to_int(hex_color: str) -> list[int]:
 
 
 def _color(color_code: str | int, location: int) -> str:
-    """
-    Returns an ANSI escape sequence to color the foreground/background of text following the returned sequence.
-    Parameters
-    ----------
-    color_code : Union[str, int]
-    location : int
+    """Returns an ANSI escape sequence to color the foreground/background of text. This is a helper function for fg() and bg().
 
-    Returns
-    -------
-    str
-    """
+    Args:
+        color_code (str | int): The color code to be converted.
+        location (int): The location to apply the color.
 
+    Returns:
+        str: The ANSI escape sequence for the color.
+
+    Raises:
+        ValueError: If the color code is not in the range 000000 -> FFFFFF or 0 -> 255.
+    """
     if isinstance(color_code, str):
         color_ints = _hex_to_int(color_code)
         sequence = f"\x1b[{location};2;{color_ints[0]};{color_ints[1]};{color_ints[2]}m"
@@ -50,30 +45,30 @@ def _color(color_code: str | int, location: int) -> str:
 
 
 def fg(color_code: str | int) -> str:
-    """Returns an ANSI escape sequence to color the foreground of text following the returned sequence.
+    """
+    Sets the foreground color of the terminal text.
 
-    Parameters
-    ----------
-    color_code : Union[str, int] : Hex color string or xterm color int 0 <= n <= 255
+    Args:
+        color_code (str | int): The value to set the foreground color, as a hex string or X-Term 256 color code.
 
-    Returns
-    -------
-    str : ANSI escape sequence
+    Returns:
+        str: The ANSI escape sequence to set the foreground color.
+
     """
     sequence = _color(color_code, 38)
     return sequence
 
 
 def bg(color_code: str | int) -> str:
-    """Returns an ANSI escape sequence to color the background of text following the returned sequence.
+    """
+    Sets the background color of the terminal text.
 
-    Parameters
-    ----------
-    color_code : Union[str, int] : Hex color string or xterm color int 0 <= n <= 255
+    Args:
+        color_code (str | int): The value to set the background color, as a hex string or X-Term 256 color code.
 
-    Returns
-    -------
-    str : ANSI escape sequence
+    Returns:
+        str: The ANSI escape sequence to set the background color.
+
     """
     sequence = _color(color_code, 48)
     return sequence
