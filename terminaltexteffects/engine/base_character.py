@@ -12,7 +12,7 @@ class EventHandler:
     """Register and handle events related to a character.
 
     Events related to character state changes (e.g. waypoint reached) can be registered with the EventHandler.
-    When an event is triggered, the EventHandler will take the specified action (e.g. activate a waypoint).
+    When an event is triggered, the EventHandler will take the specified action (e.g. activate a Path).
     The EventHandler is used by the EffectCharacter class to handle events related to the character.
 
     Attributes:
@@ -21,13 +21,17 @@ class EventHandler:
             The key is a tuple of the event and the subject_id (waypoint id/scene id).
             The value is a list of tuples of the action and the action target (waypoint id/scene id).
         layer (int): The layer of the character. The layer determines the order in which characters are printed.
+
+    Note:
+        SEGMENT_ENTERED/EXITED events will trigger the first time the character enters or exits a segment.
+        If looping, each loop will trigger the event, but not backwards motion as is possible with the bounce easing functions.
     """
 
     def __init__(self, character: "EffectCharacter"):
         """Initializes the instance with the EffectCharacter object.
 
         Args:
-            character (EffectCharacter): The character that the EventHandler is handling events for.
+            character (EffectCharacter): The character for which the EventHandler is handling events.
         """
         self.character = character
         self.layer: int = 0
@@ -44,8 +48,7 @@ class EventHandler:
     class Event(Enum):
         """An Event that can be registered with the EventHandler.
 
-        An Event is triggered when a character reaches a waypoint or an animation scene is activated. Register
-        Events with the EventHandler using the register_event method of the EventHandler class.
+        Register Events with the EventHandler using the register_event method of the EventHandler class.
 
         Attributes:
             SEGMENT_ENTERED (Event): A path segment has been entered.
@@ -95,15 +98,18 @@ class EventHandler:
 
         Register callback actions with the EventHandler using the register_event method of the EventHandler class.
 
-        Attributes:
-            callback (typing.Callable): The callback function to call.
-            args (tuple[typing.Any,...]): A tuple of arguments to pass to the callback function. The first argument will be the character, followed by any additional arguments.
         """
 
         callback: typing.Callable
         args: tuple[typing.Any, ...]
 
         def __init__(self, callback: typing.Callable, *args: typing.Any):
+            """Initializes the instance with the callback function and arguments.
+
+            Args:
+                callback (typing.Callable): The callback function to call.
+                args (tuple[typing.Any,...]): A tuple of arguments to pass to the callback function. The first argument will be the character, followed by any additional arguments.
+            """
             self.callback = callback
             self.args = args
 
@@ -121,6 +127,10 @@ class EventHandler:
             caller (animation.Scene | motion.Waypoint | motion.Path): The object that triggers the event.
             action (Action): The action to take when the event is triggered.
             target (animation.Scene | motion.Waypoint | motion.Path | int | Coord | Callback): The target of the action.
+
+        Example:
+            Register an event to activate a scene when a Path is complete:
+            `event_handler.register_event(EventHandler.Event.PATH_COMPLETE, some_path, EventHandler.Action.ACTIVATE_SCENE, some_scene)`
         """
         new_event = (event, caller)
         new_action = (action, target)
@@ -128,7 +138,7 @@ class EventHandler:
             self.registered_events[new_event] = list()
         self.registered_events[new_event].append(new_action)
 
-    def handle_event(self, event: Event, caller: animation.Scene | motion.Waypoint | motion.Path) -> None:
+    def _handle_event(self, event: Event, caller: animation.Scene | motion.Waypoint | motion.Path) -> None:
         """Handles an event by taking the specified action.
 
         Args:
@@ -154,20 +164,28 @@ class EventHandler:
 
 class EffectCharacter:
     """
-    A class representing a single character from the input data.
+    A class representing a single character from the input data. EffectCharacters are managed by the Terminal and are used
+    to apply animations and effects to individual characters.
+
+    Add an EffectCharacter to the Terminal using the add_character method of the Terminal class.
+
+    Methods:
+        tick: Progress the character's animation and motion by one step.
 
     Attributes:
         input_symbol (str): The symbol for the character in the input data.
         input_coord (Coord): The coordinate of the character in the input data.
         symbol (str): The current symbol for the character, determined by the animation units.
+        character_id (int): The unique ID of the character, generated by the Terminal.
         animation (graphics.Animation): The animation object that controls the character's appearance.
         motion (motion.Motion): The motion object that controls the character's movement.
         event_handler (EventHandler): The event handler object that handles events related to the character.
         is_visible (bool): Whether the character is currently visible and should be printed to the terminal.
+        layer (int): The layer of the character. The layer determines the order in which characters are printed.
     """
 
     def __init__(self, character_id: int, symbol: str, input_column: int, input_row: int):
-        """Initializes the instance with the input values and the Terminal object.
+        """Initializes the character instance with the character ID, symbol, and input coordinates.
 
         Args:
             character_id (int): The unique ID of the character, generated by the Terminal.

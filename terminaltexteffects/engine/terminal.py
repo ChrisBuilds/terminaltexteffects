@@ -1,4 +1,10 @@
-"""A module for managing the terminal state and output."""
+"""A module for managing the terminal state and output.
+
+Classes:
+    TerminalConfig: Configuration for the terminal.
+    OutputArea: Represents the output area in the terminal. The output area is the area defined by the dimensions of the input data, unless specified otherwise in the TerminalConfig.
+    Terminal: A class for managing the terminal state and output.
+"""
 
 import random
 import shutil
@@ -22,9 +28,11 @@ class TerminalConfig(ArgsDataClass):
         tab_width (int): Number of spaces to use for a tab character.
         xterm_colors (bool): Convert any colors specified in RBG hex to the closest XTerm-256 color.
         no_color (bool): Disable all colors in the effect.
-        no_wrap (int): Disable wrapping of text.
-        animation_rate (float): Minimum time, in seconds, between frames.
-        use_terminal_dimensions (bool): Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal width."""
+        wrap_text (bool): Wrap text wider than the output area width.
+        frame_rate (float): Target frame rate for the animation.
+        terminal_dimensions (tuple[int, int]): Terminal dimensions as (width, height), if set to (0,0) the terminal dimensions are detected automatically.
+        ignore_terminal_dimensions (bool): Ignore the terminal dimensions and use the input data dimensions for the output area.
+    """
 
     tab_width: int = ArgField(
         cmd_name=["--tab-width"],
@@ -86,13 +94,28 @@ class TerminalConfig(ArgsDataClass):
 
 @dataclass
 class OutputArea:
-    """A class for storing the output area of an effect.
+    """Represents the output area in the terminal. The output area is the area defined
+    by the dimensions of the input data, unless specified otherwise in the TerminalConfig.
+
+    This class provides methods for working with the output area, such as checking if a coordinate is within the output area,
+    getting random coordinates within the output area, and getting a random coordinate outside the output area.
 
     Args:
         top (int): top row of the output area
         right (int): right column of the output area
         bottom (int): bottom row of the output area. Defaults to 1.
         left (int): left column of the output area. Defaults to 1.
+
+    Attributes:
+        center_row (int): row of the center of the output area
+        center_column (int): column of the center of the output area
+        center (Coord): coordinate of the center of the output area
+
+    Methods:
+        coord_is_in_output_area(coord: Coord) -> bool: Checks whether a coordinate is within the output area.
+        random_column() -> int: Get a random column position within the output area.
+        random_row() -> int: Get a random row position within the output area.
+        random_coord(outside_scope=False) -> Coord: Get a random coordinate within or outside the output area.
 
     """
 
@@ -150,10 +173,41 @@ class OutputArea:
 
 
 class Terminal:
-    """A class for managing the terminal state and output."""
+    """A class for managing the terminal state and output.
+
+    Attributes:
+        config (TerminalConfig): Configuration for the terminal.
+        output_area (OutputArea): The output area in the terminal.
+        character_by_input_coord (dict[Coord, EffectCharacter]): A dictionary of characters by their input coordinates.
+
+    Methods:
+        get_piped_input() -> str: Gets the piped input from stdin.
+        prep_outputarea(): Prepares the terminal for the effect by adding empty lines and hiding the cursor.
+        restore_cursor(): Restores the cursor visibility.
+        get_characters(input_characters: bool = True, fill_chars: bool = False, added_chars: bool = False, sort: CharacterSort = CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT) -> list[EffectCharacter]: Get a list of all EffectCharacters in the terminal with an optional sort.
+        get_characters_grouped(grouping: CharacterGroup = CharacterGroup.ROW_TOP_TO_BOTTOM, input_characters: bool = True, fill_chars: bool = False, added_chars: bool = False) -> list[list[EffectCharacter]]: Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping.
+        get_character_by_input_coord(coord: Coord) -> EffectCharacter | None: Get an EffectCharacter by its input coordinates.
+        set_character_visibility(character: EffectCharacter, is_visible: bool): Set the visibility of a character.
+        get_formatted_output_string() -> str: Get the formatted output string based on the current terminal state.
+        print(output_string: str, enforce_frame_rate: bool = True): Prints the current terminal state to stdout while preserving the cursor position.
+
+    """
 
     class CharacterGroup(Enum):
-        """An enum for grouping characters."""
+        """An enum specifying character groupings.
+
+        Attributes:
+            COLUMN_LEFT_TO_RIGHT: Group characters by column from left to right.
+            COLUMN_RIGHT_TO_LEFT: Group characters by column from right to left.
+            ROW_TOP_TO_BOTTOM: Group characters by row from top to bottom.
+            ROW_BOTTOM_TO_TOP: Group characters by row from bottom to top.
+            DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT: Group characters by diagonal from top left to bottom right.
+            DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT: Group characters by diagonal from bottom left to top right.
+            DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT: Group characters by diagonal from top right to bottom left.
+            DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT: Group characters by diagonal from bottom right to top left.
+            CENTER_TO_OUTSIDE_DIAMONDS: Group characters by distance from the center to the outside in diamond shapes.
+            OUTSIDE_TO_CENTER_DIAMONDS: Group characters by distance from the outside to the center in diamond shapes.
+        """
 
         COLUMN_LEFT_TO_RIGHT = auto()
         COLUMN_RIGHT_TO_LEFT = auto()
@@ -167,7 +221,17 @@ class Terminal:
         OUTSIDE_TO_CENTER_DIAMONDS = auto()
 
     class CharacterSort(Enum):
-        """An enum for sorting characters."""
+        """An enum for specifying character sorts.
+
+        Attributes:
+            RANDOM: Random order.
+            TOP_TO_BOTTOM_LEFT_TO_RIGHT: Top to bottom, left to right.
+            TOP_TO_BOTTOM_RIGHT_TO_LEFT: Top to bottom, right to left.
+            BOTTOM_TO_TOP_LEFT_TO_RIGHT: Bottom to top, left to right.
+            BOTTOM_TO_TOP_RIGHT_TO_LEFT: Bottom to top, right to left.
+            OUTSIDE_ROW_TO_MIDDLE: Outside row to middle.
+            MIDDLE_ROW_TO_OUTSIDE: Middle row to outside.
+        """
 
         RANDOM = auto()
         TOP_TO_BOTTOM_LEFT_TO_RIGHT = auto()
@@ -178,26 +242,32 @@ class Terminal:
         MIDDLE_ROW_TO_OUTSIDE = auto()
 
     def __init__(self, input_data: str, config: TerminalConfig | None = None):
+        """Initializes the Terminal object.
+
+        Args:
+            input_data (str): The input data to be displayed in the terminal.
+            config (TerminalConfig, optional): Configuration for the terminal. Defaults to None.
+        """
         if config is None:
             self.config = TerminalConfig()
         else:
             self.config = config
         if not input_data:
             input_data = "No Input."
-        self.input_data = input_data.replace("\t", " " * self.config.tab_width)
+        self._input_data = input_data.replace("\t", " " * self.config.tab_width)
         if self.config.ignore_terminal_dimensions:
-            self.width = max([len(line) for line in self.input_data.splitlines()])
-            self.height = len(self.input_data.splitlines()) + 1
+            self._width = max([len(line) for line in self._input_data.splitlines()])
+            self._height = len(self._input_data.splitlines()) + 1
         elif self.config.terminal_dimensions == (0, 0):
-            self.width, self.height = self._get_terminal_dimensions()
+            self._width, self._height = self._get_terminal_dimensions()
         else:
-            self.width, self.height = self.config.terminal_dimensions
-        self.next_character_id = 0
+            self._width, self._height = self.config.terminal_dimensions
+        self._next_character_id = 0
         self._input_characters = self._decompose_input(self.config.xterm_colors, self.config.no_color)
         self._added_characters: list[EffectCharacter] = []
-        self.input_width = max([character.input_coord.column for character in self._input_characters])
-        self.input_height = max([character.input_coord.row for character in self._input_characters])
-        self.output_area = OutputArea(min(self.height - 1, self.input_height), self.input_width)
+        self._input_width = max([character.input_coord.column for character in self._input_characters])
+        self._input_height = max([character.input_coord.row for character in self._input_characters])
+        self.output_area = OutputArea(min(self._height - 1, self._input_height), self._input_width)
         self._input_characters = [
             character
             for character in self._input_characters
@@ -208,9 +278,9 @@ class Terminal:
             (character.input_coord): character for character in self._input_characters
         }
         self._fill_characters = self._make_fill_characters()
-        self.visible_characters: set[EffectCharacter] = set()
-        self.frame_rate = self.config.frame_rate
-        self.last_time_printed = time.time()
+        self._visible_characters: set[EffectCharacter] = set()
+        self._frame_rate = self.config.frame_rate
+        self._last_time_printed = time.time()
         self._update_terminal_state()
 
     def _get_terminal_dimensions(self) -> tuple[int, int]:
@@ -257,9 +327,9 @@ class Terminal:
         """
         wrapped_lines = []
         for line in lines:
-            while len(line) > self.width:
-                wrapped_lines.append(line[: self.width])
-                line = line[self.width :]
+            while len(line) > self._width:
+                wrapped_lines.append(line[: self._width])
+                line = line[self._width :]
             wrapped_lines.append(line)
         return wrapped_lines
 
@@ -277,20 +347,20 @@ class Terminal:
             list[Character]: list of EffectCharacter objects
         """
         formatted_lines = []
-        if not self.input_data.strip():
-            self.input_data = "No Input."
-        lines = self.input_data.splitlines()
-        formatted_lines = self._wrap_lines(lines) if self.config.wrap_text else [line[: self.width] for line in lines]
+        if not self._input_data.strip():
+            self._input_data = "No Input."
+        lines = self._input_data.splitlines()
+        formatted_lines = self._wrap_lines(lines) if self.config.wrap_text else [line[: self._width] for line in lines]
         input_height = len(formatted_lines)
         input_characters = []
         for row, line in enumerate(formatted_lines):
             for column, symbol in enumerate(line):
                 if symbol != " ":
-                    character = EffectCharacter(self.next_character_id, symbol, column + 1, input_height - row)
+                    character = EffectCharacter(self._next_character_id, symbol, column + 1, input_height - row)
                     character.animation.use_xterm_colors = use_xterm_colors
                     character.animation.no_color = no_color
                     input_characters.append(character)
-                    self.next_character_id += 1
+                    self._next_character_id += 1
         return input_characters
 
     def _make_fill_characters(self) -> list[EffectCharacter]:
@@ -305,10 +375,10 @@ class Terminal:
             for column in range(1, self.output_area.right + 1):
                 coord = Coord(column, row)
                 if coord not in self.character_by_input_coord:
-                    fill_char = EffectCharacter(self.next_character_id, " ", column, row)
+                    fill_char = EffectCharacter(self._next_character_id, " ", column, row)
                     fill_characters.append(fill_char)
                     self.character_by_input_coord[coord] = fill_char
-                    self.next_character_id += 1
+                    self._next_character_id += 1
         return fill_characters
 
     def add_character(self, symbol: str, coord: Coord) -> EffectCharacter:
@@ -321,11 +391,11 @@ class Terminal:
         Returns:
             EffectCharacter: the character that was added
         """
-        character = EffectCharacter(self.next_character_id, symbol, coord.column, coord.row)
+        character = EffectCharacter(self._next_character_id, symbol, coord.column, coord.row)
         character.animation.use_xterm_colors = self.config.xterm_colors
         character.animation.no_color = self.config.no_color
         self._added_characters.append(character)
-        self.next_character_id += 1
+        self._next_character_id += 1
         return character
 
     def _update_terminal_state(self):
@@ -333,7 +403,7 @@ class Terminal:
         of all visible characters.
         """
         rows = [[" " for _ in range(self.output_area.right)] for _ in range(self.output_area.top)]
-        for character in sorted(self.visible_characters, key=lambda c: c.layer):
+        for character in sorted(self._visible_characters, key=lambda c: c.layer):
             row = character.motion.current_coord.row - 1
             column = character.motion.current_coord.column - 1
             if 0 <= row < self.output_area.top and 0 <= column < self.output_area.right:
@@ -531,9 +601,9 @@ class Terminal:
         """
         character._is_visible = is_visible
         if is_visible:
-            self.visible_characters.add(character)
+            self._visible_characters.add(character)
         else:
-            self.visible_characters.discard(character)
+            self._visible_characters.discard(character)
 
     def get_formatted_output_string(self) -> str:
         """Get the formatted output string based on the current terminal state.
@@ -561,8 +631,8 @@ class Terminal:
 
         """
         if enforce_frame_rate:
-            frame_delay = 1 / self.frame_rate
-            time_since_last_print = time.time() - self.last_time_printed
+            frame_delay = 1 / self._frame_rate
+            time_since_last_print = time.time() - self._last_time_printed
             if time_since_last_print < frame_delay:
                 time.sleep(frame_delay - time_since_last_print)
         sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
@@ -571,4 +641,4 @@ class Terminal:
         sys.stdout.write(output_string)
         sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
         sys.stdout.flush()
-        self.last_time_printed = time.time()
+        self._last_time_printed = time.time()

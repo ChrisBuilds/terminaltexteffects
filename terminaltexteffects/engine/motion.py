@@ -1,3 +1,12 @@
+"""This module provides classes and methods for managing and manipulating character motion.
+
+Classes:
+    Waypoint: A Waypoint comprises a coordinate, speed, and, optionally, bezier control point(s).
+    Segment: A segment of a path consisting of two waypoints and the distance between them.
+    Path: Represents a path consisting of multiple waypoints for motion.
+    Motion: Motion class for managing the movement of a character.
+"""
+
 import typing
 from dataclasses import dataclass
 
@@ -10,12 +19,12 @@ if typing.TYPE_CHECKING:
 
 @dataclass
 class Waypoint:
-    """A coordinate, speed, and bezier control point(s).
+    """A Waypoint comprises a coordinate, speed, and, optionally, bezier control point(s).
 
     Args:
         waypoint_id (str): unique identifier for the waypoint
         coord (Coord): coordinate
-        bezier_control (Coord | None): coordinate of the control point for a bezier curve. Defaults to None.
+        bezier_control (tuple[Coord, ...] | Coord | None): coordinate of the control point for a bezier curve. Defaults to None.
     """
 
     waypoint_id: str
@@ -39,10 +48,14 @@ class Waypoint:
 class Segment:
     """A segment of a path consisting of two waypoints and the distance between them.
 
-    Args:
+    Attributes:
         start (Waypoint): start waypoint
         end (Waypoint): end waypoint
         distance (float): distance between the start and end waypoints
+
+    Methods:
+        get_coord_on_segment(distance_factor: float) -> Coord:
+            Returns the coordinate at the given distance along the segment.
     """
 
     start: Waypoint
@@ -93,6 +106,14 @@ class Path:
         layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
         hold_time (int): number of frames to hold the character at the end of the path. Defaults to 0.
         loop (bool): Whether the path should loop back to the beginning. Default is False.
+
+    Methods:
+        new_waypoint(coord: Coord, bezier_control: tuple[Coord, ...] | Coord | None = None, id: str = "") -> Waypoint:
+            Creates a new Waypoint and appends adds it to the Path.
+        query_waypoint(waypoint_id: str) -> Waypoint:
+            Returns the waypoint with the given waypoint_id.
+        step(event_handler: base_character.EventHandler) -> Coord:
+            Progresses to the next step along the path and returns the coordinate at that step.
     """
 
     path_id: str
@@ -187,7 +208,18 @@ class Path:
         return waypoint
 
     def step(self, event_handler: "base_character.EventHandler") -> Coord:
-        """Progresses to the next step along the path and returns the coordinate at that step."""
+        """
+        Progresses to the next step along the path and returns the coordinate at that step.
+
+        This method is called by the Motion.move() method. It calculates the next coordinate based on the current step,
+        total distance, bezier control points, and the easing function if provided. It also handles the triggering of segment enter and exit events.
+
+        Args:
+            event_handler (base_character.EventHandler): The EventHandler for the character.
+
+        Returns:
+            Coord: The next coordinate on the path.
+        """
         if not self.max_steps or self.current_step >= self.max_steps or not self.total_distance:
             # if the path has zero distance or there are no more steps, return the coordinate of the final waypoint in the path
             return self.segments[-1].end.coord
@@ -205,12 +237,12 @@ class Path:
                 active_segment = segment
                 if not segment.enter_event_triggered:
                     segment.enter_event_triggered = True
-                    event_handler.handle_event(event_handler.Event.SEGMENT_ENTERED, segment.end)
+                    event_handler._handle_event(event_handler.Event.SEGMENT_ENTERED, segment.end)
                 break
             distance_to_travel -= segment.distance
             if not segment.exit_event_triggered:
                 segment.exit_event_triggered = True
-                event_handler.handle_event(event_handler.Event.SEGMENT_EXITED, segment.end)
+                event_handler._handle_event(event_handler.Event.SEGMENT_EXITED, segment.end)
         else:  # if the distance_to_travel is further than the last waypoint, preserve the distance from the start of the final segment
             active_segment = self.segments[-1]
             distance_to_travel += active_segment.distance
@@ -243,8 +275,37 @@ class Path:
 
 
 class Motion:
+    """Motion class for managing the movement of a character.
+
+    Attributes:
+        paths (dict[str, Path]): dictionary of paths
+        character (base_character.EffectCharacter): The EffectCharacter to move.
+        current_coord (Coord): current coordinate
+        previous_coord (Coord): previous coordinate
+        active_path (Path | None): active path
+
+    Methods:
+        set_coordinate(coord: Coord) -> None:
+            Sets the current coordinate to the given coordinate.
+        new_path(speed: float = 1, ease: easing.EasingFunction | None = None, layer: int | None = None, hold_time: int = 0, loop: bool = False, id: str = "") -> Path:
+            Creates a new Path and adds it to the Motion.paths dictionary with the path_id as key.
+        query_path(path_id: str) -> Path:
+            Returns the path with the given path_id.
+        movement_is_complete() -> bool:
+            Returns whether the character has an active path.
+        chain_paths(paths: list[Path], loop=False):
+            Creates a chain of paths by registering activation events for each path such
+            that paths[n] activates paths[n+1] when reached. If loop is True, paths[-1] activates
+            paths[0] when reached.
+        activate_path(path: Path) -> None:
+            Activates the first waypoint in the path.
+        deactivate_path(path: Path) -> None:
+            Unsets the current path if the current path is path.
+        move() -> None:
+            Moves the character one step closer to the target position based on an easing function if present, otherwise linearly."""
+
     def __init__(self, character: "base_character.EffectCharacter"):
-        """Motion class for managing the movement of a character.
+        """Initializes the Motion object with the given EffectCharacter.
 
         Args:
             character (base_character.EffectCharacter): The EffectCharacter to move.
@@ -276,12 +337,15 @@ class Motion:
         """Creates a new Path and adds it to the Motion.paths dictionary with the path_id as key.
 
         Args:
-            path_id (str): Unique identifier for the path. Used to query for the path.
-            speed (float): speed
-            ease (easing.EasingFunction | None): easing function for character movement. Defaults to None.
-            layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
-            hold_time (int): number of frames to hold the character at the end of the path. Defaults to 0.
-            loop (bool): whether the path should loop. Defaults to False.
+            speed (float, optional): speed > 0. Defaults to 1.
+            ease (easing.EasingFunction | None, optional): easing function for character movement. Defaults to None.
+            layer (int | None, optional): layer to move the character to, if None, layer is unchanged. Defaults to None.
+            hold_time (int, optional): number of frames to hold the character at the end of the path. Defaults to 0.
+            loop (bool, optional): Whether the path should loop back to the beginning. Default is False.
+            id (str, optional): Unique identifier for the path. Used to query for the path. Defaults to "".
+
+        Raises:
+            ValueError: If a path with the provided id already exists.
 
         Returns:
             Path: The new path.
@@ -316,20 +380,20 @@ class Motion:
         return path
 
     def movement_is_complete(self) -> bool:
-        """Returns whether the character has reached the final coordinate and moved the requisite number of steps.
+        """Returns whether the character has an active path.
 
         Returns:
-            bool: True if the character has reached the final coordinate and has taken the maximum number of steps, False otherwise.
+            bool: True if the character has no active path, False otherwise.
         """
         if self.active_path is None:
             return True
         return False
 
-    def _get_easing_factor(self, easing_func: typing.Callable) -> float:
+    def _get_easing_factor(self, easing_func: easing.EasingFunction) -> float:
         """Returns the percentage of total distance that should be moved based on the easing function.
 
         Args:
-            easing_func (Callable): The easing function to use.
+            easing_func (easing.EasingFunction): The easing function to use.
 
         Returns:
             float: The percentage of total distance to move.
@@ -368,10 +432,20 @@ class Motion:
             )
 
     def activate_path(self, path: Path) -> None:
-        """Activates the first waypoint in the path.
+        """
+        Activates the first waypoint in the given path and updates the path's properties accordingly.
+
+        This method sets the active path to the given path, calculates the distance to the first waypoint,
+        and updates the total distance of the path. If the path has an origin segment, it removes it from
+        the segments list and subtracts its distance from the total distance. Then, it creates a new origin
+        segment from the current coordinate to the first waypoint and inserts it at the beginning of the segments list.
+
+        The method also resets the current step, hold time remaining, and max steps of the path based on the total distance
+        and speed. It ensures that the enter and exit events for each segment are not triggered. If the path has a layer,
+        it sets the character's layer to it. Finally, it triggers the PATH_ACTIVATED event for the character.
 
         Args:
-            path (Path): the Path to activate
+            path (Path): The path to activate.
         """
         self.active_path = path
         first_waypoint = self.active_path.waypoints[0]
@@ -400,10 +474,10 @@ class Motion:
             segment.exit_event_triggered = False
         if self.active_path.layer is not None:
             self.character.layer = self.active_path.layer
-        self.character.event_handler.handle_event(self.character.event_handler.Event.PATH_ACTIVATED, self.active_path)
+        self.character.event_handler._handle_event(self.character.event_handler.Event.PATH_ACTIVATED, self.active_path)
 
     def deactivate_path(self, path: Path) -> None:
-        """Unsets the current path if the current path is path.
+        """Set the active path to None if the active path is the given path.
 
         Args:
             path (Path): the Path to deactivate
@@ -412,7 +486,22 @@ class Motion:
             self.active_path = None
 
     def move(self) -> None:
-        """Moves the character one step closer to the target position based on an easing function if present, otherwise linearly."""
+        """
+        Moves the character along the active path.
+
+        The character's current coordinate is updated to the next step in the active path. If the active path is completed,
+        an event is triggered based on whether the path is set to loop or not. If the path is set to loop, the path is
+        deactivated and then reactivated to start from the beginning. If not, the path is simply deactivated and a
+        PATH_COMPLETE event is triggered.
+
+        If the path has a hold time, the character will pause at the end of the path for the specified duration. During
+        this hold time, a PATH_HOLDING event is triggered on the first frame, and the hold time is decremented on each
+        subsequent frame until it reaches zero.
+
+        If there is no active path or if the active path has no segments, the character does not move.
+
+        The character's previous coordinate is preserved before moving to allow for clearing the location in the terminal.
+        """
         # preserve previous coordinate to allow for clearing the location in the terminal
         self.previous_coord = Coord(self.current_coord.column, self.current_coord.row)
 
@@ -421,7 +510,7 @@ class Motion:
         self.current_coord = self.active_path.step(self.character.event_handler)
         if self.active_path.current_step == self.active_path.max_steps:
             if self.active_path.hold_time and self.active_path.hold_time_remaining == self.active_path.hold_time:
-                self.character.event_handler.handle_event(
+                self.character.event_handler._handle_event(
                     self.character.event_handler.Event.PATH_HOLDING, self.active_path
                 )
                 self.active_path.hold_time_remaining -= 1
@@ -436,6 +525,6 @@ class Motion:
             else:
                 self.completed_path = self.active_path
                 self.deactivate_path(self.active_path)
-                self.character.event_handler.handle_event(
+                self.character.event_handler._handle_event(
                     self.character.event_handler.Event.PATH_COMPLETE, self.completed_path
                 )

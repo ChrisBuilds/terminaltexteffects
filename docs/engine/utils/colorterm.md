@@ -1,5 +1,5 @@
 # ColorTerm
 
-*Module*: terminaltexteffects.utils.colorterm
+*Module*: `terminaltexteffects.utils.colorterm`
 
 ::: terminaltexteffects.utils.colorterm

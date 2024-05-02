@@ -25,9 +25,6 @@ class SyncMetric(Enum):
 class CharacterVisual:
     """A class for storing symbol, color, and terminal graphical modes for the character.
 
-    Supported graphical modes:
-    bold, dim, italic, underline, blink, inverse, hidden, strike
-
     Args:
         symbol (str): the symbol to show
         bold (bool): bold mode
@@ -67,7 +64,7 @@ class CharacterVisual:
         self.strike = False
 
     def format_symbol(self) -> None:
-        """Formats the symbol for printing."""
+        """Formats the symbol for printing by applying ANSI sequences for any active modes and color."""
         formatting_string = ""
         if self.bold:
             formatting_string += ansitools.APPLY_BOLD()
@@ -92,6 +89,7 @@ class CharacterVisual:
 @dataclass
 class Frame:
     """A Frame is a CharacterVisual with a duration.
+
     Args:
         character_visual (CharacterVisual): a CharacterVisual object
         duration (int): the number of frames to use the Frame
@@ -106,14 +104,14 @@ class Frame:
 
 
 class Scene:
-    """A Scene is a list of Frames.
+    """A Scene is a collection of Frames that can be played in sequence. Scenes can be looped and synced to movement.
 
-    Args:
-        scene_id (str): unique ID for the Scene
-        is_looping (bool): whether the Scene should loop
-        sync (SyncMetric): the sync metric to use
-        no_color (bool): whether to disable color
-        use_xterm_colors (bool): whether to use XTerm-256 colors
+    Methods:
+        add_frame: Adds a Frame to the Scene.
+        activate: Activates the Scene.
+        get_next_symbol: Returns the next symbol in the Scene.
+        apply_gradient_to_symbols: Applies a gradient effect to a sequence of symbols.
+        reset_scene: Resets the Scene.
     """
 
     xterm_color_map: dict[str, int] = {}
@@ -127,6 +125,16 @@ class Scene:
         no_color: bool = False,
         use_xterm_colors: bool = False,
     ):
+        """Initializes a Scene.
+
+        Args:
+            scene_id (str): the ID of the Scene
+            is_looping (bool, optional): Whether the Scene should loop. Defaults to False.
+            sync (SyncMetric | None, optional): The type of sync to use for the Scene. Defaults to None.
+            ease (easing.EasingFunction | None, optional): The easing function to use for the Scene. Defaults to None.
+            no_color (bool, optional): Whether to colors should be ignored. Defaults to False.
+            use_xterm_colors (bool, optional): Whether to convert all colors to XTerm-256 colors. Defaults to False.
+        """
         self.scene_id = scene_id
         self.is_looping = is_looping
         self.sync: SyncMetric | None = sync
@@ -154,20 +162,21 @@ class Scene:
         hidden=False,
         strike=False,
     ) -> None:
-        """Adds a Frame to the Scene.
+        """Adds a Frame to the Scene with the given symbol, duration, color, and graphical modes.
 
         Args:
             symbol (str): the symbol to show
             color (str | int): color code
             duration (int): the number of frames to use the Frame
-            BOLD (bool): bold mode
-            DIM (bool): dim mode
-            ITALIC (bool): italic mode
-            UNDERLINE (bool): underline mode
-            BLINK (bool): blink mode
-            REVERSE (bool): reverse mode
-            HIDDEN (bool): hidden mode
-            STRIKE (bool): strike mode
+            color (str | int | None, optional): the color to show. Defaults to None.
+            bold (bool, optional): bold mode. Defaults to False.
+            dim (bool, optional): dim mode. Defaults to False.
+            italic (bool, optional): italic mode. Defaults to False.
+            underline (bool, optional): underline mode. Defaults to False.
+            blink (bool, optional): blink mode. Defaults to False.
+            reverse (bool, optional): reverse mode. Defaults to False.
+            hidden (bool, optional): hidden mode. Defaults to False.
+            strike (bool, optional): strike mode. Defaults to False.
         """
         if not self.no_color and color is not None:
             if self.use_xterm_colors and isinstance(color, str):
@@ -200,7 +209,10 @@ class Scene:
             self.easing_total_steps += 1
 
     def activate(self) -> str:
-        """Activates the Scene.
+        """Activates the Scene by returning the first frame symbol. Called by the Animation object when the Scene is activated.
+
+        Raises:
+            ValueError: if the Scene has no sequences
 
         Returns:
             str: the next symbol in the Scene
@@ -211,10 +223,15 @@ class Scene:
             raise ValueError("Scene has no sequences.")
 
     def get_next_symbol(self) -> str:
-        """Returns the next symbol in the Scene.
+        """
+        This method is used to get the next symbol in the Scene. It first retrieves the current sequence from the frames list.
+        It then increments the 'frames_played' attribute of the current sequence. If the 'frames_played' equals the 'duration'
+        of the current sequence, it resets 'frames_played' to 0 and moves the current sequence from the frames list to the
+        'played_frames' list. If the Scene is set to loop and all frames have been played, it refills the frames list with the
+        sequences from 'played_frames' and clears 'played_frames'. Finally, it returns the symbol of the current sequence.
 
         Returns:
-            str: the next symbol in the Scene
+            str: The symbol of the current sequence in the Scene.
         """
 
         current_sequence = self.frames[0]
@@ -540,7 +557,7 @@ class Animation:
                     self.active_scene.reset_scene()
                     self.active_scene = None
 
-                self.character.event_handler.handle_event(
+                self.character.event_handler._handle_event(
                     self.character.event_handler.Event.SCENE_COMPLETE, completed_scene
                 )
 
@@ -553,7 +570,7 @@ class Animation:
         self.active_scene = scene
         self.active_scene_current_step = 0
         self.character.symbol = self.active_scene.activate()
-        self.character.event_handler.handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, scene)
+        self.character.event_handler._handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, scene)
 
     def deactivate_scene(self, scene: Scene) -> None:
         """Deactivates a scene.

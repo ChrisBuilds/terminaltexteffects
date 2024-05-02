@@ -26,12 +26,31 @@ nav:
   - How-To Guides: how-to-guides.md
   - Reference:
     - Engine:
+      - engine/baseeffect.md
+      - engine/basecharacter.md
+      - engine/eventhandler.md
+      - Animation:
+        - engine/animation/animation.md
+        - engine/animation/charactervisual.md
+        - engine/animation/frame.md
+        - engine/animation/scene.md
+      - Motion:
+        - engine/motion/waypoint.md
+        - engine/motion/segment.md
+        - engine/motion/path.md
+      - Terminal:
+        - engine/terminal/terminal.md
+        - engine/terminal/terminalconfig.md
+        - engine/terminal/outputarea.md
       - Utils:
         - engine/utils/ansitools.md
         - engine/utils/argsdataclass.md
         - engine/utils/argvalidators.md
         - engine/utils/colorterm.md
+        - engine/utils/easing.md
+        - engine/utils/geometry.md
         - engine/utils/gradient.md
+        - engine/utils/hexterm.md
     - Effects:
       - effects/beams.md
       - effects/binarypath.md

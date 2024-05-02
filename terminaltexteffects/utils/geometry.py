@@ -220,8 +220,7 @@ def find_length_of_line(coord1: Coord, coord2: Coord, double_row_diff: bool = Fa
     Args:
         coord1 (Coord): first coordinate.
         coord2 (Coord): second coordinate.
-        double_row_diff (bool, optional): whether to double the row difference to account for terminal character height/width ratio. Defaults to
-        False.
+        double_row_diff (bool, optional): whether to double the row difference to account for terminal character height/width ratio. Defaults to False.
 
     Returns:
         float: length of the line
