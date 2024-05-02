@@ -23,6 +23,8 @@ markdown_extensions:
 nav:
   - TerminalTextEffects Docs: index.md
   - tutorials.md
+  - installation.md
+  - quickstart.md
   - How-To Guides: how-to-guides.md
   - Reference:
     - Engine:
