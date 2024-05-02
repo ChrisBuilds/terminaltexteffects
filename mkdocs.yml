@@ -31,10 +31,12 @@ nav:
       - engine/eventhandler.md
       - Animation:
         - engine/animation/animation.md
+        - engine/animation/syncmetric.md
         - engine/animation/charactervisual.md
         - engine/animation/frame.md
         - engine/animation/scene.md
       - Motion:
+        - engine/motion/motion.md
         - engine/motion/waypoint.md
         - engine/motion/segment.md
         - engine/motion/path.md
