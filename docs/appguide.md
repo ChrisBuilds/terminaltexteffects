@@ -1,10 +1,8 @@
-# Quickstart
+# Application Guide
 
-## Application Quickstart
+When used as a system application, TerminalTextEffects will produce animations on text passed via STDIN. Often, passing data to TTE occurs via pipes or redirection.
 
-When used as a system application, TerminalTextEffects will produce animations on text passed via stdin. Often, passing data to TTE occurs via pipes or redirection.
-
-### Application Invocation Examples
+## Invocation Examples
 
 ```bash title="Piping directory listing output through TTE"
 ls -latr | tte slide
@@ -14,7 +12,7 @@ ls -latr | tte slide
 tte slide < your_file
 ```
 
-### Application Configuration
+## Configuration
 
 TTE has many global terminal configuration options as well as effect-specific configuration options available via command-line arguments.
 
@@ -41,3 +39,18 @@ The example below will pass the output of the `ls` command to TTE with the follo
 ```bash title="TTE argument specification example"
 ls | tte --wrap-text --tab-width 4 slide --merge --movement-speed 2 --grouping column
 ```
+
+## Example Usage
+
+On shell launch using screenfetch
+
+```bash title="Shell Fetch"
+screenfetch -N | tte slide --merge
+```
+
+![fetch_demo](./img/application_demos/fetch_example.gif)
+
+!!! note
+
+    Fetch applications which utilize terminal sequences for color/formatting will not work with TTE. 
+    Check if your fetch application has a raw output switch.

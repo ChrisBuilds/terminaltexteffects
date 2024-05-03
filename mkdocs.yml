@@ -1,4 +1,9 @@
 site_name: TerminalTextEffects Docs
+site_description: TerminalTextEffects Documentation
+site_author: ChrisBuilds
+repo_url: https://github.com/ChrisBuilds/terminaltexteffects
+docs_dir: docs
+
 
 theme:
   name: material
@@ -12,6 +17,7 @@ plugins:
   - mkdocstrings
 
 markdown_extensions:
+  - admonition
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -21,11 +27,10 @@ markdown_extensions:
   - pymdownx.superfences
 
 nav:
-  - TerminalTextEffects Docs: index.md
-  - tutorials.md
-  - installation.md
-  - quickstart.md
-  - How-To Guides: how-to-guides.md
+  - Welcome!: index.md
+  - How to install & use TTE:
+    - Install: installation.md
+    - Application Usage: appguide.md
   - Reference:
     - Engine:
       - engine/baseeffect.md
@@ -86,4 +91,3 @@ nav:
       - effects/vhstape.md
       - effects/waves.md
       - effects/wipe.md
-  - explanation.md
