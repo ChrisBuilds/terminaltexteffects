@@ -20,6 +20,12 @@ TerminalTextEffects (TTE) is a terminal visual effects engine. TTE can be instal
 
 ## Getting Started
 
-Whether you want to use TTE as a system application or a library in your own program, getting started is easy. Check the installation and usage guides below.
+TTE can be used as a system application or as a Python library. To get started, visit the installation and usage guides below.
 
 [Installation Guide](./installation.md){ .md-button } [Application Usage](./appguide.md){ .md-button } [Library Usage](./libguide.md){ .md-button }
+
+## Effects Library
+
+TTE includes a growing library of built-in effects. Visit the showroom to see examples of each effect.
+
+[Effects Showroom](./showroom.md){ .md-button }

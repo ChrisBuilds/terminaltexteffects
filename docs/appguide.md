@@ -1,6 +1,6 @@
 # Application Guide
 
-When used as a system application, TerminalTextEffects will produce animations on text passed via STDIN. Often, passing data to TTE occurs via pipes or redirection.
+When used as a system application, TerminalTextEffects will produce animations on text passed to stdin. Often, passing data to TTE occurs via pipes or redirection.
 
 ## Invocation Examples
 

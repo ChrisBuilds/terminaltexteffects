@@ -27,6 +27,7 @@ markdown_extensions:
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
+  - pymdownx.details
   - attr_list
 
 nav:
@@ -35,6 +36,7 @@ nav:
     - Install: installation.md
     - Application Usage: appguide.md
     - Library Usage: libguide.md
+  - Effects Showroom: showroom.md
   - Reference:
     - Engine:
       - engine/baseeffect.md
