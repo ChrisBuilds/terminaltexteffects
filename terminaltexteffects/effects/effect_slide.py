@@ -34,7 +34,7 @@ class SlideConfig(ArgsDataClass):
     Attributes:
         movement_speed (float): Speed of the characters. Valid values are n > 0.
         grouping (str): Direction to group characters. Valid values are 'row', 'column', 'diagonal'.
-        final_gradient_stops (tuple[int | str, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient.
@@ -51,15 +51,15 @@ class SlideConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "float : Speed of the characters."
 
-    grouping: str = ArgField(
+    grouping: typing.Literal["row", "column", "diagonal"] = ArgField(
         cmd_name="--grouping",
         default="row",
         choices=["row", "column", "diagonal"],
         help="Direction to group characters.",
     )  # type: ignore[assignment]
-    "str : Direction to group characters."
+    "str : Direction to group characters. Valid values are Literal['row', 'column', 'diagonal']."
 
-    final_gradient_stops: tuple[int | str, ...] = ArgField(
+    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
@@ -67,7 +67,7 @@ class SlideConfig(ArgsDataClass):
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[int | str, ...] : Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[graphics.Color, ...] : Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--final-gradient-steps",

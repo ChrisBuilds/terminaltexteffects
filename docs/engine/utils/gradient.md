@@ -14,3 +14,7 @@ for color in rgb:
 ```
 
 ::: terminaltexteffects.utils.graphics.Gradient
+
+### Color TypeAlias
+
+::: terminaltexteffects.utils.graphics.Color

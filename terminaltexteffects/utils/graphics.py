@@ -15,6 +15,7 @@ if typing.TYPE_CHECKING:
     pass
 
 Color: typing.TypeAlias = int | str
+"Colors are either XTerm-256 color codes (int 0 -> 255) or RGB hex color strings (000000 -> ffffff)."
 
 
 class Gradient:

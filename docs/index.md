@@ -1,17 +1,25 @@
-# Welcome to MkDocs
+# Intro to TTE
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+![title_blackhole](./img/application_demos/shadow_title_blackhole.gif)
 
-## Commands
+## What is TTE?
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+TerminalTextEffects (TTE) is a terminal visual effects engine. TTE can be installed as a system application to produce effects in your terminal, or as a Python library to enable effects within your Python scripts/applications. TTE includes a growing library of built-in effects which showcase the engine's features. These features include:
+  
+  * Xterm 256 / RGB hex color support
+  * Complex character movement via Paths, Waypoints, and
+   motion easing, with support for quadratic/cubic bezier curves.
+  * Complex animations via Scenes with symbol/color changes,
+    layers, easing, and Path synced progression.
+  * Variable stop/step color gradient generation.
+  * Event handling for Path/Scene state changes with
+    custom callback support and many pre-defined actions.
+  * Effect customization exposed through a typed effect configuration
+  dataclass that is automatically handled as CLI arguments.
+  * Runs inline, preserving terminal state and workflow.
 
-## Project layout
+## Getting Started
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+Whether you want to use TTE as a system application or a library in your own program, getting started is easy. Check the installation and usage guides below.
+
+[Installation Guide](./installation.md){ .md-button } [Application Usage](./appguide.md){ .md-button } [Library Usage](./libguide.md){ .md-button }

@@ -4,13 +4,17 @@ When used as a system application, TerminalTextEffects will produce animations o
 
 ## Invocation Examples
 
-```bash title="Piping directory listing output through TTE"
-ls -latr | tte slide
-```
+=== "Piping"
 
-```bash title="Redirecting a file through TTE"
-tte slide < your_file
-```
+    ```bash title="Piping directory listing output through TTE"
+    ls -latr | tte slide
+    ```
+
+=== "Redirection"
+
+    ```bash title="Redirecting a file through TTE"
+    tte slide < your_file
+    ```
 
 ## Configuration
 
@@ -26,12 +30,12 @@ Using the `-h` argument in place of the global_options or effect_options will pr
 
 The example below will pass the output of the `ls` command to TTE with the following options:
 
-* Global options:
+* *Global* options:
     - Text will be wrapped if wider than the terminal.
     - Tabs will be replaced with 4 spaces.
 
-* Effect options:
-    - Use the slide effect.
+* *Effect* options:
+    - Use the [slide](./effects/slide.md) effect.
     - Merge the groups.
     - Set movement-speed to 2.
     - Group by column.
@@ -42,7 +46,7 @@ ls | tte --wrap-text --tab-width 4 slide --merge --movement-speed 2 --grouping c
 
 ## Example Usage
 
-On shell launch using screenfetch
+Animate fetch output on shell launch using screenfetch:
 
 ```bash title="Shell Fetch"
 screenfetch -N | tte slide --merge
