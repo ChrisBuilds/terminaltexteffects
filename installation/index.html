@@ -304,9 +304,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#library-instllation-using-pip" class="md-nav__link">
+  <a href="#library-installation-using-pip" class="md-nav__link">
     <span class="md-ellipsis">
-      Library instllation using Pip
+      Library installation using Pip
     </span>
   </a>
   
@@ -333,6 +333,27 @@
   
   <span class="md-ellipsis">
     Application Usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../libguide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Library Usage
   </span>
   
 
@@ -1798,9 +1819,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#library-instllation-using-pip" class="md-nav__link">
+  <a href="#library-installation-using-pip" class="md-nav__link">
     <span class="md-ellipsis">
-      Library instllation using Pip
+      Library installation using Pip
     </span>
   </a>
   
@@ -1826,12 +1847,21 @@
 
 <h1 id="installation">Installation</h1>
 <p>TerminalTextEffects can be installed as a system application using pipx or as a library using pip.</p>
-<p>When installed as an application, TerminalTextEffects can be called from the shell to produce effects on any input piped to stdin. Usages include invocation on shell launch, aliasing commands to pass output through TTE, and SSH login animations.</p>
 <h2 id="system-application-using-pipx">System Application using Pipx</h2>
+<p>When installed as an application, TerminalTextEffects can be called from the shell to produce effects on any input piped to stdin. Usages include invocation on shell launch, aliasing commands to pass output through TTE, and SSH login animations.</p>
+<p>Pipx is the easiest way to make TTE available in your shell.</p>
 <p><code>pipx install terminaltexteffects</code></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If pipx is unavailable, you can install via <code>pip</code> and run TTE by calling the python binary with the module argument.</p>
+<div class="language-bash highlight"><span class="filename">ls redirection</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ls<span class="w"> </span>-latr<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>terminaltexteffects
+</span></code></pre></div>
+</div>
+<p><a class="md-button" href="../appguide/">Application Usage</a></p>
+<h2 id="library-installation-using-pip">Library installation using Pip</h2>
 <p>When installed as a library, TerminalTextEffects can be imported to produce animations in your Python applications.</p>
-<h2 id="library-instllation-using-pip">Library instllation using Pip</h2>
 <p><code>pip install terminaltexteffects</code></p>
+<p><a class="md-button" href="../libguide/">Library Usage</a></p>
 
 
 

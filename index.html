@@ -73,6 +73,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#intro-to-tte" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -191,6 +196,19 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Intro to TTE
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="." class="md-nav__link md-nav__link--active">
         
@@ -201,6 +219,43 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-tte" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is TTE?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      Getting Started
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -274,6 +329,27 @@
   
   <span class="md-ellipsis">
     Application Usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="libguide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Library Usage
   </span>
   
 
@@ -1720,6 +1796,34 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-tte" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is TTE?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      Getting Started
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -1737,9 +1841,26 @@
   
 
 
-  <h1>Intro to TTE</h1>
-
+<h1 id="intro-to-tte">Intro to TTE</h1>
 <p><img alt="title_blackhole" src="img/application_demos/shadow_title_blackhole.gif" /></p>
+<h2 id="what-is-tte">What is TTE?</h2>
+<p>TerminalTextEffects (TTE) is a terminal visual effects engine. TTE can be installed as a system application to produce effects in your terminal, or as a Python library to enable effects within your Python scripts/applications. TTE includes a growing library of built-in effects which showcase the engine's features. These features include:</p>
+<ul>
+<li>Xterm 256 / RGB hex color support</li>
+<li>Complex character movement via Paths, Waypoints, and
+   motion easing, with support for quadratic/cubic bezier curves.</li>
+<li>Complex animations via Scenes with symbol/color changes,
+    layers, easing, and Path synced progression.</li>
+<li>Variable stop/step color gradient generation.</li>
+<li>Event handling for Path/Scene state changes with
+    custom callback support and many pre-defined actions.</li>
+<li>Effect customization exposed through a typed effect configuration
+  dataclass that is automatically handled as CLI arguments.</li>
+<li>Runs inline, preserving terminal state and workflow.</li>
+</ul>
+<h2 id="getting-started">Getting Started</h2>
+<p>Whether you want to use TTE as a system application or a library in your own program, getting started is easy. Check the installation and usage guides below.</p>
+<p><a class="md-button" href="installation/">Installation Guide</a> <a class="md-button" href="appguide/">Application Usage</a> <a class="md-button" href="libguide/">Library Usage</a></p>
 
 
 

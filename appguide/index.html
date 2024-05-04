@@ -16,7 +16,7 @@
         <link rel="prev" href="../installation/">
       
       
-        <link rel="next" href="../engine/baseeffect/">
+        <link rel="next" href="../libguide/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -346,6 +346,27 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../libguide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Library Usage
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -1845,10 +1866,18 @@
 <h1 id="application-guide">Application Guide</h1>
 <p>When used as a system application, TerminalTextEffects will produce animations on text passed via STDIN. Often, passing data to TTE occurs via pipes or redirection.</p>
 <h2 id="invocation-examples">Invocation Examples</h2>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Piping</label><label for="__tabbed_1_2">Redirection</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
 <div class="language-bash highlight"><span class="filename">Piping directory listing output through TTE</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ls<span class="w"> </span>-latr<span class="w"> </span><span class="p">|</span><span class="w"> </span>tte<span class="w"> </span>slide
 </span></code></pre></div>
+</div>
+<div class="tabbed-block">
 <div class="language-bash highlight"><span class="filename">Redirecting a file through TTE</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tte<span class="w"> </span>slide<span class="w"> </span>&lt;<span class="w"> </span>your_file
 </span></code></pre></div>
+</div>
+</div>
+</div>
 <h2 id="configuration">Configuration</h2>
 <p>TTE has many global terminal configuration options as well as effect-specific configuration options available via command-line arguments.</p>
 <p>Terminal configuration options should be specified prior to providing the effect name. The basic format is as follows:</p>
@@ -1858,16 +1887,16 @@
 <p>The example below will pass the output of the <code>ls</code> command to TTE with the following options:</p>
 <ul>
 <li>
-<p>Global options:</p>
+<p><em>Global</em> options:</p>
 <ul>
 <li>Text will be wrapped if wider than the terminal.</li>
 <li>Tabs will be replaced with 4 spaces.</li>
 </ul>
 </li>
 <li>
-<p>Effect options:</p>
+<p><em>Effect</em> options:</p>
 <ul>
-<li>Use the slide effect.</li>
+<li>Use the <a href="../effects/slide/">slide</a> effect.</li>
 <li>Merge the groups.</li>
 <li>Set movement-speed to 2.</li>
 <li>Group by column.</li>
@@ -1877,7 +1906,7 @@
 <div class="language-bash highlight"><span class="filename">TTE argument specification example</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ls<span class="w"> </span><span class="p">|</span><span class="w"> </span>tte<span class="w"> </span>--wrap-text<span class="w"> </span>--tab-width<span class="w"> </span><span class="m">4</span><span class="w"> </span>slide<span class="w"> </span>--merge<span class="w"> </span>--movement-speed<span class="w"> </span><span class="m">2</span><span class="w"> </span>--grouping<span class="w"> </span>column
 </span></code></pre></div>
 <h2 id="example-usage">Example Usage</h2>
-<p>On shell launch using screenfetch</p>
+<p>Animate fetch output on shell launch using screenfetch:</p>
 <div class="language-bash highlight"><span class="filename">Shell Fetch</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>screenfetch<span class="w"> </span>-N<span class="w"> </span><span class="p">|</span><span class="w"> </span>tte<span class="w"> </span>slide<span class="w"> </span>--merge
 </span></code></pre></div>
 <p><img alt="fetch_demo" src="../img/application_demos/fetch_example.gif" /></p>
