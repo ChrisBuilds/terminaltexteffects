@@ -32,6 +32,26 @@
 
 #### Engine Fixes (unreleased)
 
+## 0.9.0
+
+---
+
+### New Features (0.9.0)
+
+---
+
+#### New Engine Features (0.9.0)
+
+* Linear easing function added.
+
+### Changes (0.9.0)
+
+---
+
+#### Other Changes (0.9.0)
+
+* Major re-organization of the codebase and significant documentation changes and additions.
+
 ## 0.8.0
 
 ---
