@@ -73,6 +73,8 @@ OR
 * Use ```<effect> -h``` to view options for a specific effect, such as color or movement direction.
   * Ex: ```tte decrypt -h```
 
+For more information, view the [Application Usage Guide](https://chrisbuilds.github.io/terminaltexteffects/appguide/).
+
 ### Library
 
 All effects are iterators which return a string representing the current frame. Basic usage is as simple as importing the effect, instantiating it with the input text, and iterating over the effect.
@@ -97,6 +99,8 @@ with effect.terminal_output() as terminal:
     for frame in effect:
         terminal.print(frame)
 ```
+
+For more information, view the [Library Usage Guide](https://chrisbuilds.github.io/terminaltexteffects/libguide/).
 
 ## Options
 
@@ -154,10 +158,11 @@ Effect:
 Ex: ls -a | tte crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal
 ```
 
-### Examples
+### Effect Showcase
 
-Note: All effects support extensive customization via effect specific arguments. The examples shown below only represent one possible variant of
-each effect. Check the effect help output to see arguments.
+Note: Below you'll find a subset of the built-in effects.
+
+View all of the effects and related information in the [Effects Showroom](https://chrisbuilds.github.io/terminaltexteffects/showroom/).
 
 #### Beams
 
