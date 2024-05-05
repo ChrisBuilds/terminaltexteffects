@@ -64,45 +64,11 @@ View the [Docs](https://chrisbuilds.github.io/terminaltexteffects/).
 
 ### Application
 
-```cat your_text | tte <effect> [options]```
+#### Options
 
-OR
+<details>
 
-```cat your_text | python -m terminaltexteffects <effect> [options]```
-
-* Use ```<effect> -h``` to view options for a specific effect, such as color or movement direction.
-  * Ex: ```tte decrypt -h```
-
-For more information, view the [Application Usage Guide](https://chrisbuilds.github.io/terminaltexteffects/appguide/).
-
-### Library
-
-All effects are iterators which return a string representing the current frame. Basic usage is as simple as importing the effect, instantiating it with the input text, and iterating over the effect.
-
-```python
-from terminaltexteffects.effects import effect_rain
-
-effect = effect_rain.Rain("your text here")
-
-for frame in effect:
-    # do something with the string
-    ...
-```
-
-In the event you want to allow TTE to handle the terminal setup/teardown, cursor positioning, and animation frame rate, a terminal_output() context manager is available.
-
-```python
-from terminaltexteffects.effects import effect_rain
-
-effect = effect_rain.Rain("your text here")
-with effect.terminal_output() as terminal:
-    for frame in effect:
-        terminal.print(frame)
-```
-
-For more information, view the [Library Usage Guide](https://chrisbuilds.github.io/terminaltexteffects/libguide/).
-
-## Options
+<summary>TTE Command Line Options</summary>
 
 ```markdown
 options:
@@ -157,6 +123,45 @@ Effect:
 
 Ex: ls -a | tte crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal
 ```
+
+</details>
+```cat your_text | tte <effect> [options]```
+
+OR
+
+```cat your_text | python -m terminaltexteffects <effect> [options]```
+
+* Use ```<effect> -h``` to view options for a specific effect, such as color or movement direction.
+  * Ex: ```tte decrypt -h```
+
+For more information, view the [Application Usage Guide](https://chrisbuilds.github.io/terminaltexteffects/appguide/).
+
+### Library
+
+All effects are iterators which return a string representing the current frame. Basic usage is as simple as importing the effect, instantiating it with the input text, and iterating over the effect.
+
+```python
+from terminaltexteffects.effects import effect_rain
+
+effect = effect_rain.Rain("your text here")
+
+for frame in effect:
+    # do something with the string
+    ...
+```
+
+In the event you want to allow TTE to handle the terminal setup/teardown, cursor positioning, and animation frame rate, a terminal_output() context manager is available.
+
+```python
+from terminaltexteffects.effects import effect_rain
+
+effect = effect_rain.Rain("your text here")
+with effect.terminal_output() as terminal:
+    for frame in effect:
+        terminal.print(frame)
+```
+
+For more information, view the [Library Usage Guide](https://chrisbuilds.github.io/terminaltexteffects/libguide/).
 
 ### Effect Showcase
 
