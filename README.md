@@ -60,7 +60,7 @@ OR
 
 ## Usage
 
-View the [Docs](https://chrisbuilds.github.io/terminaltexteffects/).
+View the [![Docs]((https://gist.github.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/docs.svg)](https://chrisbuilds.github.io/terminaltexteffects/).
 
 ### Application
 
