@@ -62,7 +62,7 @@ OR
 
 View the [Docs](https://chrisbuilds.github.io/terminaltexteffects/).
 
-### Application
+### Application Quickstart
 
 #### Options
 
@@ -125,6 +125,7 @@ Ex: ls -a | tte crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-st
 ```
 
 </details>
+
 ```cat your_text | tte <effect> [options]```
 
 OR
@@ -136,7 +137,7 @@ OR
 
 For more information, view the [Application Usage Guide](https://chrisbuilds.github.io/terminaltexteffects/appguide/).
 
-### Library
+### Library Quickstart
 
 All effects are iterators which return a string representing the current frame. Basic usage is as simple as importing the effect, instantiating it with the input text, and iterating over the effect.
 
