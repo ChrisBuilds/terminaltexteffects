@@ -1,6 +1,7 @@
 """This module contains functions for easing calculations.
 
 Functions:
+    linear: Linear easing function.
     in_sine: Ease in using a sine function.
     out_sine: Ease out using a sine function.
     in_out_sine: Ease in/out using a sine function.
@@ -38,6 +39,19 @@ import typing
 
 EasingFunction: typing.TypeAlias = typing.Callable[[float], float]
 "EasingFunctions are Callable[[float], float] functions that take a float between 0 and 1 and return a float between 0 and 1."
+
+
+def linear(progress_ratio: float) -> float:
+    """
+    Linear easing function.
+
+    Args:
+        progress_ratio (float): the ratio of the current step to the maximum steps
+
+    Returns:
+        float: 0 <= n <= 1 eased value
+    """
+    return progress_ratio
 
 
 def in_sine(progress_ratio: float) -> float:

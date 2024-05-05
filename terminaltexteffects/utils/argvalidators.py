@@ -37,7 +37,7 @@ from terminaltexteffects.utils.graphics import Gradient
 EASING_EPILOG = """\
     Easing
     ------
-    Note: A prefix must be added to the function name.
+    Note: A prefix must be added to the function name (except LINEAR).
     
     All easing functions support the following prefixes:
         IN_  - Ease in
@@ -46,6 +46,7 @@ EASING_EPILOG = """\
         
     Easing Functions
     ----------------
+    LINEAR - Linear easing
     SINE   - Sine easing
     QUAD   - Quadratic easing
     CUBIC  - Cubic easing
@@ -444,6 +445,7 @@ class Ease:
             Ease: validated ease value
         """
         easing_func_map = {
+            "linear": easing.linear,
             "in_sine": easing.in_sine,
             "out_sine": easing.out_sine,
             "in_out_sine": easing.in_out_sine,
