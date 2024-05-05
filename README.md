@@ -1262,33 +1262,54 @@ each effect. Check the effect help output to see arguments.
 <details>
 <summary>tte unstable -h</summary>
 <br>
-    synthgrid | Create a grid which fills with characters dissolving into the final text.
+    unstable | Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.
 
     options:
-      -h, --help            show this help message and exit
-      --grid-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                            Space separated, unquoted, list of colors for the grid gradient. (default: ('CC00CC', 'ffffff'))
-      --grid-gradient-steps (int > 0) [(int > 0) ...]
+    -h, --help            show this help message and exit
+    --unstable-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                            Color transitioned to as the characters become unstable. (default: ff9200)
+    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            (default: ('8A008A', '00D1FF', 'FFFFFF'))
+    --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-      --grid-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the grid color. (default: Direction.DIAGONAL)
-      --text-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                            Space separated, unquoted, list of colors for the text gradient. (default: ('8A008A', '00D1FF', 'FFFFFF'))
-      --text-gradient-steps (int > 0) [(int > 0) ...]
-                            Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-      --text-gradient-direction (diagonal, horizontal, vertical, center)
-                            Direction of the gradient for the text color. (default: Direction.VERTICAL)
-      --grid-row-symbol (ASCII/UTF-8 character)
-                            Symbol to use for grid row lines. (default: ─)
-      --grid-column-symbol (ASCII/UTF-8 character)
-                            Symbol to use for grid column lines. (default: │)
-      --text-generation-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
-                            Space separated, unquoted, list of characters for the text generation animation. (default: ('░', '▒', '▓'))
-      --max-active-blocks (float > 0)
-                            Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time. (default: 0.1)
+    --final-gradient-direction (diagonal, horizontal, vertical, center)
+                            Direction of the final gradient. (default: Direction.VERTICAL)
+    --explosion-ease EXPLOSION_EASE
+                            Easing function to use for character movement during the explosion. (default: out_expo)
+    --explosion-speed (float > 0)
+                            Speed of characters during explosion. (default: 0.75)
+    --reassembly-ease REASSEMBLY_EASE
+                            Easing function to use for character reassembly. (default: out_expo)
+    --reassembly-speed (float > 0)
+                            Speed of characters during reassembly. (default: 0.75)
 
-    Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol "│" --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1
-</details>
+        Easing
+        ------
+        Note: A prefix must be added to the function name.
+        
+        All easing functions support the following prefixes:
+            IN_  - Ease in
+            OUT_ - Ease out
+            IN_OUT_ - Ease in and out
+            
+        Easing Functions
+        ----------------
+        SINE   - Sine easing
+        QUAD   - Quadratic easing
+        CUBIC  - Cubic easing
+        QUART  - Quartic easing
+        QUINT  - Quintic easing
+        EXPO   - Exponential easing
+        CIRC   - Circular easing
+        BACK   - Back easing
+        ELASTIC - Elastic easing
+        BOUNCE - Bounce easing
+        
+        Visit: https://easings.net/ for visualizations of the easing functions.
+
+        
+        Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75</details>
 
 #### Verticalslice
 
