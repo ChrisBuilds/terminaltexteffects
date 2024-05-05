@@ -1310,6 +1310,7 @@ each effect. Check the effect help output to see arguments.
 
         
     Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75</details>
+</details>
 
 #### Verticalslice
 
