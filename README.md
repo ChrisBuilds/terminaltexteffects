@@ -20,7 +20,7 @@
 * [About](#tte)
 * [Requirements](#requirements)
 * [Installation](#installation)
-* [Usage (Application)](#application)
+* [Usage (Application)](#application-quickstart)
 * [Usage (Library)](#library)
 * [Options](#options)
 * [Examples](#examples)
