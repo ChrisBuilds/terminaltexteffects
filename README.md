@@ -60,7 +60,7 @@ OR
 
 ## Usage
 
-View the [Docs](https://chrisbuilds.github.io/terminaltexteffects/).
+View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for a full installation and usage guide.
 
 ### Application Quickstart
 
