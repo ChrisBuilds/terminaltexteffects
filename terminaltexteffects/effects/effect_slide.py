@@ -33,14 +33,15 @@ class SlideConfig(ArgsDataClass):
 
     Attributes:
         movement_speed (float): Speed of the characters. Valid values are n > 0.
-        grouping (str): Direction to group characters. Valid values are 'row', 'column', 'diagonal'.
+        grouping (typing.Literal["row", "column", "diagonal"]): Direction to group characters. Valid values are 'row', 'column', 'diagonal'.
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient.
         gap (int): Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect. Valid values are n >= 0.
         reverse_direction (bool): Reverse the direction of the characters.
-        merge (bool): Merge the character groups originating"""
+        merge (bool): Merge the character groups originating.
+        movement_easing (easing.EasingFunction): Easing function to use for character movement."""
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
@@ -57,7 +58,7 @@ class SlideConfig(ArgsDataClass):
         choices=["row", "column", "diagonal"],
         help="Direction to group characters.",
     )  # type: ignore[assignment]
-    "str : Direction to group characters. Valid values are Literal['row', 'column', 'diagonal']."
+    "typing.Literal['row', 'column', 'diagonal'] : Direction to group characters. Valid values are Literal['row', 'column', 'diagonal']."
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],

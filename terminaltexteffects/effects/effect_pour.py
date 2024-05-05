@@ -44,15 +44,15 @@ class PourConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...]): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        easing (typing.Callable): Easing function to use for character movement."""
+        easing (easing.EasingFunction): Easing function to use for character movement."""
 
-    pour_direction: str = ArgField(
+    pour_direction: typing.Literal["up", "down", "left", "right"] = ArgField(
         cmd_name=["--pour-direction"],
         default="down",
         choices=["up", "down", "left", "right"],
         help="Direction the text will pour.",
     )  # type: ignore[assignment]
-    "str : Direction the text will pour."
+    "typing.Literal['up', 'down', 'left', 'right'] : Direction the text will pour."
 
     pour_speed: int = ArgField(
         cmd_name="--pour-speed",

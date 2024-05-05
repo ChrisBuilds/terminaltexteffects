@@ -40,7 +40,7 @@ class PrintConfig(ArgsDataClass):
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
         print_head_return_speed (float): Speed of the print head when performing a carriage return.
         print_speed (int): Speed of the print head when printing characters.
-        print_head_easing (typing.Callable): Easing function to use for print head movement."""
+        print_head_easing (easing.EasingFunction): Easing function to use for print head movement."""
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],

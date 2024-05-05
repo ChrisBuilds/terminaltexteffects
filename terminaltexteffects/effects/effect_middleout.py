@@ -38,8 +38,11 @@ class MiddleOutConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        expand_direction (str): Direction the text will expand. Choices: vertical, horizontal.
-        center_movement_speed (float): Speed of the characters during the initial expansion of the center vertical/horiztonal. Valid values are n > 0."""
+        expand_direction (typing.Literal["vertical", "horizontal"]): Direction the text will expand. Choices: vertical, horizontal.
+        center_movement_speed (float): Speed of the characters during the initial expansion of the center vertical/horiztonal. Valid values are n > 0.
+        full_movement_speed (float): Speed of the characters during the final full expansion. Valid values are n > 0.
+        center_easing (easing.EasingFunction): Easing function to use for initial expansion.
+        full_easing (easing.EasingFunction): Easing function to use for full expansion."""
 
     starting_color: graphics.Color = ArgField(
         cmd_name="--starting-color",
@@ -79,7 +82,7 @@ class MiddleOutConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."
 
-    expand_direction: str = ArgField(
+    expand_direction: typing.Literal["vertical", "horizontal"] = ArgField(
         cmd_name="--expand-direction",
         default="vertical",
         choices=["vertical", "horizontal"],

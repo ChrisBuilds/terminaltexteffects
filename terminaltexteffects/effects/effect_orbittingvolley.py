@@ -47,7 +47,7 @@ class OrbittingVolleyConfig(ArgsDataClass):
         character_movement_speed (float): Speed of the launched characters. Valid values are n > 0.
         volley_size (float): Percent of total input characters each launcher will fire per volley. Lower limit of one character. Valid values are 0 < n <= 1.
         launch_delay (int): Number of animation ticks to wait between volleys of characters. Valid values are n >= 0.
-        character_easing (typing.Callable): Easing function to use for launched character movement."""
+        character_easing (easing.EasingFunction): Easing function to use for launched character movement."""
 
     top_launcher_symbol: str = ArgField(
         cmd_name="--top-launcher-symbol",

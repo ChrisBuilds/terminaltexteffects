@@ -38,10 +38,10 @@ class SprayConfig(ArgsDataClass):
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        spray_position (str): Position for the spray origin. Valid values are n, ne, e, se, s, sw, w, nw, center.
+        spray_position (typing.Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"]): Position for the spray origin. Valid values are n, ne, e, se, s, sw, w, nw, center.
         spray_volume (float): Number of characters to spray per tick as a percent of the total number of characters. Valid values are 0 < n <= 1.
         movement_speed (tuple[float, float]): Movement speed of the characters. Valid values are n > 0.
-        movement_easing (typing.Callable): Easing function to use for character movement."""
+        movement_easing (easing.EasingFunction): Easing function to use for character movement."""
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -72,13 +72,13 @@ class SprayConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "graphics.Gradient.Direction : Direction of the final gradient."
 
-    spray_position: str = ArgField(
+    spray_position: typing.Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"] = ArgField(
         cmd_name="--spray-position",
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"],
         default="e",
         help="Position for the spray origin.",
     )  # type: ignore[assignment]
-    "str : Position for the spray origin."
+    "typing.Literal['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw', 'center'] : Position for the spray origin."
 
     spray_volume: float = ArgField(
         cmd_name="--spray-volume",

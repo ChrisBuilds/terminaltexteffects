@@ -38,7 +38,7 @@ class ExpandConfig(ArgsDataClass):
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
         movement_speed (float): Movement speed of the characters.
-        expand_easing (typing.Callable): Easing function to use for character movement."""
+        expand_easing (easing.EasingFunction): Easing function to use for character movement."""
 
     final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],

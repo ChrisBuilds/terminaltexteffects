@@ -44,7 +44,7 @@ class BubblesConfig(ArgsDataClass):
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
         bubble_speed (float): Speed of the floating bubbles. Valid values are n > 0.
         bubble_delay (int): Number of frames between bubbles. Valid values are n >= 0.
-        pop_condition (str): Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal.
+        pop_condition (typing.Literal["row", "bottom", "anywhere"]): Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal.
         easing (typing.Callable): Easing function to use for character movement after a bubble pops.
     """
 
@@ -122,13 +122,13 @@ class BubblesConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : Number of frames between bubbles."
 
-    pop_condition: str = ArgField(
+    pop_condition: typing.Literal["row", "bottom", "anywhere"] = ArgField(
         cmd_name="--pop-condition",
         default="row",
         choices=["row", "bottom", "anywhere"],
         help="Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal.",
     )  # type: ignore[assignment]
-    "str : Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal."
+    "typing.Literal['row', 'bottom', 'anywhere'] : Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal."
 
     movement_easing: easing.EasingFunction = ArgField(
         cmd_name=["--movement-easing"],

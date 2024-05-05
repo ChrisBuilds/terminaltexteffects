@@ -37,6 +37,7 @@ import math
 import typing
 
 EasingFunction: typing.TypeAlias = typing.Callable[[float], float]
+"EasingFunctions are Callable[[float], float] functions that take a float between 0 and 1 and return a float between 0 and 1."
 
 
 def in_sine(progress_ratio: float) -> float:
