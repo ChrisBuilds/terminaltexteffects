@@ -19,6 +19,11 @@ plugins:
 markdown_extensions:
   - admonition
   - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.highlight:
@@ -36,6 +41,9 @@ nav:
     - Install: installation.md
     - Application Usage: appguide.md
     - Library Usage: libguide.md
+  - Effect Building Guide:
+    - effectguide/effectguide.md
+    - effectguide/effectguide_lesson0.md
   - Effects Showroom: showroom.md
   - Reference:
     - Engine:
