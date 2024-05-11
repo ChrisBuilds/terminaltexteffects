@@ -30,7 +30,8 @@ class TerminalConfig(ArgsDataClass):
         no_color (bool): Disable all colors in the effect.
         wrap_text (bool): Wrap text wider than the output area width.
         frame_rate (float): Target frame rate for the animation.
-        terminal_dimensions (tuple[int, int]): Terminal dimensions as (width, height), if set to (0,0) the terminal dimensions are detected automatically.
+        terminal_width (int): Terminal width, if set to 0 the terminal width is detected automatically.
+        terminal_height (int): Terminal height, if set to 0 the terminal height is detected automatically.
         ignore_terminal_dimensions (bool): Ignore the terminal dimensions and use the input data dimensions for the output area.
     """
 
