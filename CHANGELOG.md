@@ -20,15 +20,7 @@
 
 #### Effects Changes (unreleased)
 
-* All effects have been updated to use the new `update()` method and `frame` property of
-  `base_effect.BaseEffectIterator`. See Engine Changes for more info.
-
 #### Engine Changes (unreleased)
-
-* `base_effect.BaseEffectIterator` now has an `update()` method which calls the `tick()` method of all active characters
-  and manages the `active_characters` list.
-* `base_effect.BaseEffectIterator` has a `frame` property which calls `Terminal.get_formatted_output_string()` and
-  returns the string.
 
 #### Other Changes (unreleased)
 
@@ -39,6 +31,51 @@
 #### Effects Fixes (unreleased)
 
 #### Engine Fixes (unreleased)
+
+---
+
+## 0.9.1
+
+---
+
+### New Features (0.9.1)
+
+---
+
+#### New Engine Features (0.9.1)
+
+* Terminal dimension auto-detection supports automatically detecting a single dimensions.
+
+### Changes (0.9.1)
+
+---
+
+#### Effects Changes (0.9.1)
+
+* All effects have been updated to use the new `update()` method and `frame` property of
+  `base_effect.BaseEffectIterator`. See Engine Changes for more info.
+
+#### Engine Changes (0.9.1)
+
+* `base_effect.BaseEffectIterator` now has an `update()` method which calls the `tick()` method of all active characters
+  and manages the `active_characters` list.
+* `base_effect.BaseEffectIterator` has a `frame` property which calls `Terminal.get_formatted_output_string()` and
+  returns the string.
+* `TerminalConfig.terminal_dimensions` has been split into `TerminalConfig.terminal_width` and
+  `TerminalConfig.terminal_height` to simply the command line argument for dimensions and make it more obvious which
+  dimensions is being specified when interacting with `effect.terminal_config`.
+
+#### Other Changes (0.9.1)
+
+* Updated help output for `--terminal-dimensions` argument.
+
+### Bug Fixes (0.9.1)
+
+---
+
+#### Engine Fixes (0.9.1)
+
+* Fixed division by zero error when the terminal height was set to 1.
 
 ## 0.9.0
 
