@@ -118,59 +118,56 @@ class WipeConfig(ArgsDataClass):
 class WipeIterator(BaseEffectIterator[WipeConfig]):
     def __init__(self, effect: "Wipe") -> None:
         super().__init__(effect)
-        self._pending_groups: list[list[EffectCharacter]] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_groups: list[list[EffectCharacter]] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
-        direction = self._config.wipe_direction
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        direction = self.config.wipe_direction
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         sort_map = {
-            "column_left_to_right": self._terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-            "column_right_to_left": self._terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
-            "row_top_to_bottom": self._terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
-            "row_bottom_to_top": self._terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
-            "diagonal_top_left_to_bottom_right": self._terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
-            "diagonal_bottom_left_to_top_right": self._terminal.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
-            "diagonal_top_right_to_bottom_left": self._terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
-            "diagonal_bottom_right_to_top_left": self._terminal.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+            "column_left_to_right": self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            "column_right_to_left": self.terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            "row_top_to_bottom": self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            "row_bottom_to_top": self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
+            "diagonal_top_left_to_bottom_right": self.terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            "diagonal_bottom_left_to_top_right": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+            "diagonal_top_right_to_bottom_left": self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+            "diagonal_bottom_right_to_top_left": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         }
-        for group in self._terminal.get_characters_grouped(sort_map[direction]):
+        for group in self.terminal.get_characters_grouped(sort_map[direction]):
             for character in group:
                 wipe_scn = character.animation.new_scene()
                 wipe_gradient = graphics.Gradient(
                     final_gradient.spectrum[0],
-                    self._character_final_color_map[character],
-                    steps=self._config.final_gradient_steps,
+                    self.character_final_color_map[character],
+                    steps=self.config.final_gradient_steps,
                 )
                 wipe_scn.apply_gradient_to_symbols(
-                    wipe_gradient, character.input_symbol, self._config.final_gradient_frames
+                    wipe_gradient, character.input_symbol, self.config.final_gradient_frames
                 )
                 character.animation.activate_scene(wipe_scn)
-            self._pending_groups.append(group)
-        self._wipe_delay = self._config.wipe_delay
+            self.pending_groups.append(group)
+        self._wipe_delay = self.config.wipe_delay
 
     def __next__(self) -> str:
-        if self._pending_groups or self._active_chars:
+        if self.pending_groups or self.active_characters:
             if not self._wipe_delay:
-                if self._pending_groups:
-                    next_group = self._pending_groups.pop(0)
+                if self.pending_groups:
+                    next_group = self.pending_groups.pop(0)
                     for character in next_group:
-                        self._terminal.set_character_visibility(character, True)
-                        self._active_chars.append(character)
-                self._wipe_delay = self._config.wipe_delay
+                        self.terminal.set_character_visibility(character, True)
+                        self.active_characters.append(character)
+                self._wipe_delay = self.config.wipe_delay
             else:
                 self._wipe_delay -= 1
-            for character in self._active_chars:
-                character.tick()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

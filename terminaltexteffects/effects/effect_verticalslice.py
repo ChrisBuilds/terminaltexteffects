@@ -94,61 +94,58 @@ class VerticalSliceConfig(ArgsDataClass):
 class VerticalSliceIterator(BaseEffectIterator[VerticalSliceConfig]):
     def __init__(self, effect: "VerticalSlice") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._new_rows: list[list[EffectCharacter]] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.new_rows: list[list[EffectCharacter]] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             character.animation.set_appearance(
                 character.input_symbol,
-                self._character_final_color_map[character],
+                self.character_final_color_map[character],
             )
 
-        self.rows = self._terminal.get_characters_grouped(grouping=self._terminal.CharacterGroup.ROW_BOTTOM_TO_TOP)
+        self.rows = self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP)
         lengths = [max([c.input_coord.column for c in row]) for row in self.rows]
         mid_point = sum(lengths) // len(lengths) // 2
         for row_index, row in enumerate(self.rows):
             new_row = []
             left_half = [character for character in row if character.input_coord.column <= mid_point]
             for character in left_half:
-                character.motion.set_coordinate(Coord(character.input_coord.column, self._terminal.output_area.top))
+                character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
                 input_coord_path = character.motion.new_path(
-                    speed=self._config.movement_speed, ease=self._config.movement_easing
+                    speed=self.config.movement_speed, ease=self.config.movement_easing
                 )
                 input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
             opposite_row = self.rows[-(row_index + 1)]
             right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
             for character in right_half:
-                character.motion.set_coordinate(Coord(character.input_coord.column, self._terminal.output_area.bottom))
+                character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.bottom))
                 input_coord_path = character.motion.new_path(
-                    speed=self._config.movement_speed, ease=self._config.movement_easing
+                    speed=self.config.movement_speed, ease=self.config.movement_easing
                 )
                 input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
             new_row.extend(left_half)
             new_row.extend(right_half)
-            self._new_rows.append(new_row)
+            self.new_rows.append(new_row)
 
     def __next__(self) -> str:
-        if self._new_rows or self._active_chars:
-            if self._new_rows:
-                next_row = self._new_rows.pop(0)
+        if self.new_rows or self.active_characters:
+            if self.new_rows:
+                next_row = self.new_rows.pop(0)
                 for character in next_row:
-                    self._terminal.set_character_visibility(character, True)
-                self._active_chars.extend(next_row)
-            for character in self._active_chars:
-                character.tick()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+                    self.terminal.set_character_visibility(character, True)
+                self.active_characters.extend(next_row)
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

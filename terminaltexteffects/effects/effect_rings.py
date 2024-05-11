@@ -139,7 +139,7 @@ class RingsConfig(ArgsDataClass):
 
 
 class RingsIterator(BaseEffectIterator[RingsConfig]):
-    class _Ring:
+    class Ring:
         def __init__(
             self,
             config: RingsConfig,
@@ -221,88 +221,87 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
 
     def __init__(self, effect: "Rings") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._ring_chars: list[EffectCharacter] = []
-        self._non_ring_chars: list[EffectCharacter] = []
-        self._rings: dict[int, RingsIterator._Ring] = {}
+        self.pending_chars: list[EffectCharacter] = []
+        self.ring_chars: list[EffectCharacter] = []
+        self.non_ring_chars: list[EffectCharacter] = []
+        self.rings: dict[int, RingsIterator.Ring] = {}
         self.ring_gap = int(
-            max(round(min(self._terminal.output_area.top, self._terminal.output_area.right) * self._config.ring_gap), 1)
+            max(round(min(self.terminal.output_area.top, self.terminal.output_area.right) * self.config.ring_gap), 1)
         )
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
+    def build(self) -> None:
         self.ring_gap = int(
-            max(round(min(self._terminal.output_area.top, self._terminal.output_area.right) * self._config.ring_gap), 1)
+            max(round(min(self.terminal.output_area.top, self.terminal.output_area.right) * self.config.ring_gap), 1)
         )
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             start_scn = character.animation.new_scene()
-            start_scn.add_frame(character.input_symbol, 1, color=self._character_final_color_map[character])
+            start_scn.add_frame(character.input_symbol, 1, color=self.character_final_color_map[character])
             home_path = character.motion.new_path(speed=0.8, ease=easing.out_quad, id="home")
             home_path.new_waypoint(character.input_coord)
             character.animation.activate_scene(start_scn)
-            self._terminal.set_character_visibility(character, True)
-            self._pending_chars.append(character)
+            self.terminal.set_character_visibility(character, True)
+            self.pending_chars.append(character)
 
-        random.shuffle(self._pending_chars)
+        random.shuffle(self.pending_chars)
         # make rings
-        for radius in range(1, max(self._terminal.output_area.right, self._terminal.output_area.top), self.ring_gap):
+        for radius in range(1, max(self.terminal.output_area.right, self.terminal.output_area.top), self.ring_gap):
             ring_coords = geometry.find_coords_on_circle(
-                self._terminal.output_area.center, radius, 7 * radius, unique=True
+                self.terminal.output_area.center, radius, 7 * radius, unique=True
             )
             # check if any part of the ring is in the output area, if not, stop creating rings
             if (
-                len([coord for coord in ring_coords if self._terminal.output_area.coord_is_in_output_area(coord)])
+                len([coord for coord in ring_coords if self.terminal.output_area.coord_is_in_output_area(coord)])
                 / len(ring_coords)
                 < 0.25
             ):
                 break
 
-            self._rings[radius] = RingsIterator._Ring(
-                self._config,
+            self.rings[radius] = RingsIterator.Ring(
+                self.config,
                 radius,
-                self._terminal.output_area.center,
+                self.terminal.output_area.center,
                 ring_coords,
                 self.ring_gap,
-                self._config.ring_colors[len(self._rings) % len(self._config.ring_colors)],
-                self._character_final_color_map,
+                self.config.ring_colors[len(self.rings) % len(self.config.ring_colors)],
+                self.character_final_color_map,
             )
         # assign characters to rings
         ring_count = 0
-        for ring in self._rings.values():
+        for ring in self.rings.values():
             for _ in ring.counter_clockwise_coords:
-                if self._pending_chars:
-                    next_character = self._pending_chars.pop(0)
+                if self.pending_chars:
+                    next_character = self.pending_chars.pop(0)
                     # set rings to rotate in opposite directions
                     ring.add_character(next_character, clockwise=ring_count % 2)
-                    self._ring_chars.append(next_character)
+                    self.ring_chars.append(next_character)
             ring_count += 1
 
         # make external waypoints for characters not in rings
-        for character in self._terminal.get_characters():
-            if character not in self._ring_chars:
+        for character in self.terminal.get_characters():
+            if character not in self.ring_chars:
                 external_path = character.motion.new_path(id="external", speed=0.8, ease=easing.out_sine)
-                external_path.new_waypoint(self._terminal.output_area.random_coord(outside_scope=True))
+                external_path.new_waypoint(self.terminal.output_area.random_coord(outside_scope=True))
 
-                self._non_ring_chars.append(character)
+                self.non_ring_chars.append(character)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
                     external_path,
                     EventHandler.Action.CALLBACK,
-                    EventHandler.Callback(self._terminal.set_character_visibility, False),
+                    EventHandler.Callback(self.terminal.set_character_visibility, False),
                 )
-        self._rings_list = list(self._rings.values())
+        self._rings_list = list(self.rings.values())
         self._phase = "start"
         self._initial_disperse_complete = False
-        self._spin_time_remaining = self._config.spin_duration
-        self._disperse_time_remaining = self._config.disperse_duration
-        self._cycles_remaining = self._config.spin_disperse_cycles
+        self._spin_time_remaining = self.config.spin_duration
+        self._disperse_time_remaining = self.config.disperse_duration
+        self._cycles_remaining = self.config.spin_disperse_cycles
         self._initial_phase_time_remaining = 100
 
     def __next__(self) -> str:
@@ -331,17 +330,17 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                             )
                             character.animation.activate_scene(character.animation.query_scene("disperse"))
                             character.motion.activate_path(initial_path)
-                            self._active_chars.append(character)
+                            self.active_characters.append(character)
 
-                    for character in self._non_ring_chars:
+                    for character in self.non_ring_chars:
                         character.motion.activate_path(character.motion.query_path("external"))
-                        self._active_chars.append(character)
+                        self.active_characters.append(character)
 
                 else:
                     if not self._disperse_time_remaining:
                         self._phase = "spin"
                         self._cycles_remaining -= 1
-                        self._spin_time_remaining = self._config.spin_duration
+                        self._spin_time_remaining = self.config.spin_duration
                         for ring in self._rings_list:
                             ring.spin()
                     else:
@@ -351,15 +350,15 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                 if not self._spin_time_remaining:
                     if not self._cycles_remaining:
                         self._phase = "final"
-                        for character in self._terminal.get_characters():
-                            self._terminal.set_character_visibility(character, True)
+                        for character in self.terminal.get_characters():
+                            self.terminal.set_character_visibility(character, True)
                             character.motion.activate_path(character.motion.query_path("home"))
-                            self._active_chars.append(character)
+                            self.active_characters.append(character)
                             if "external" in character.motion.paths:
                                 continue
                             character.animation.activate_scene(character.animation.query_scene("disperse"))
                     else:
-                        self._disperse_time_remaining = self._config.disperse_duration
+                        self._disperse_time_remaining = self.config.disperse_duration
                         for ring in self._rings_list:
                             ring.disperse()
                         self._phase = "disperse"
@@ -368,14 +367,11 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                     self._spin_time_remaining -= 1
 
             elif self._phase == "final":
-                if not self._active_chars:
+                if not self.active_characters:
                     self._phase = "complete"
 
-            for character in self._active_chars:
-                character.tick()
-            next_frame = self._terminal.get_formatted_output_string()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return next_frame
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

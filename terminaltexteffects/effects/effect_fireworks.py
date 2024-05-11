@@ -133,37 +133,36 @@ class FireworksConfig(ArgsDataClass):
 class FireworksIterator(BaseEffectIterator[FireworksConfig]):
     def __init__(self, effect: "Fireworks"):
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._shells: list[list[EffectCharacter]] = []
-        self._firework_volume = max(1, round(self._config.firework_volume * len(self._terminal._input_characters)))
-        self._explode_distance = max(1, round(self._terminal.output_area.right * self._config.explode_distance))
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._launch_delay: int = 0
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.shells: list[list[EffectCharacter]] = []
+        self.firework_volume = max(1, round(self.config.firework_volume * len(self.terminal._input_characters)))
+        self.explode_distance = max(1, round(self.terminal.output_area.right * self.config.explode_distance))
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.launch_delay: int = 0
+        self.build()
 
     def prepare_waypoints(self) -> None:
         firework_shell: list[EffectCharacter] = []
-        for character in self._terminal.get_characters():
-            if len(firework_shell) == self._firework_volume or not firework_shell:
-                self._shells.append(firework_shell)
+        for character in self.terminal.get_characters():
+            if len(firework_shell) == self.firework_volume or not firework_shell:
+                self.shells.append(firework_shell)
                 firework_shell = []
-                origin_x = random.randrange(0, self._terminal.output_area.right)
-                if not self._config.explode_anywhere:
+                origin_x = random.randrange(0, self.terminal.output_area.right)
+                if not self.config.explode_anywhere:
                     min_row = character.input_coord.row
                 else:
-                    min_row = self._terminal.output_area.bottom
-                origin_y = random.randrange(min_row, self._terminal.output_area.top + 1)
+                    min_row = self.terminal.output_area.bottom
+                origin_y = random.randrange(min_row, self.terminal.output_area.top + 1)
                 origin_coord = Coord(origin_x, origin_y)
-                explode_waypoint_coords = geometry.find_coords_in_circle(origin_coord, self._explode_distance)
-            character.motion.set_coordinate(Coord(origin_x, self._terminal.output_area.bottom))
+                explode_waypoint_coords = geometry.find_coords_in_circle(origin_coord, self.explode_distance)
+            character.motion.set_coordinate(Coord(origin_x, self.terminal.output_area.bottom))
             apex_path = character.motion.new_path(id="apex_pth", speed=0.2, ease=easing.out_expo)
             apex_wpt = apex_path.new_waypoint(origin_coord)
             explode_path = character.motion.new_path(speed=0.15, ease=easing.out_circ)
             explode_wpt = explode_path.new_waypoint(random.choice(explode_waypoint_coords))
 
             bloom_control_point = geometry.find_coord_at_distance(
-                apex_wpt.coord, explode_wpt.coord, self._explode_distance // 2
+                apex_wpt.coord, explode_wpt.coord, self.explode_distance // 2
             )
             bloom_wpt = explode_path.new_waypoint(
                 Coord(bloom_control_point.column, max(1, bloom_control_point.row - 7)),
@@ -192,29 +191,29 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
 
             firework_shell.append(character)
         if firework_shell:
-            self._shells.append(firework_shell)
+            self.shells.append(firework_shell)
 
     def prepare_scenes(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        for firework_shell in self._shells:
-            shell_color = random.choice(self._config.firework_colors)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for firework_shell in self.shells:
+            shell_color = random.choice(self.config.firework_colors)
             for character in firework_shell:
                 # launch scene
                 launch_scn = character.animation.new_scene()
-                launch_scn.add_frame(self._config.firework_symbol, 2, color=shell_color)
-                launch_scn.add_frame(self._config.firework_symbol, 1, color="FFFFFF")
+                launch_scn.add_frame(self.config.firework_symbol, 2, color=shell_color)
+                launch_scn.add_frame(self.config.firework_symbol, 1, color="FFFFFF")
                 launch_scn.is_looping = True
                 # bloom scene
                 bloom_scn = character.animation.new_scene()
                 bloom_scn.add_frame(character.input_symbol, 1, color=shell_color)
                 # fall scene
                 fall_scn = character.animation.new_scene()
-                fall_gradient = graphics.Gradient(shell_color, self._character_final_color_map[character], steps=15)
+                fall_gradient = graphics.Gradient(shell_color, self.character_final_color_map[character], steps=15)
                 fall_scn.apply_gradient_to_symbols(fall_gradient, character.input_symbol, 15)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
@@ -230,24 +229,21 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                     fall_scn,
                 )
 
-    def _build(self) -> None:
+    def build(self) -> None:
         self.prepare_waypoints()
         self.prepare_scenes()
 
     def __next__(self) -> str:
-        if self._shells or self._active_chars:
-            if self._shells and self._launch_delay == 0:
-                next_group = self._shells.pop()
+        if self.shells or self.active_characters:
+            if self.shells and self.launch_delay == 0:
+                next_group = self.shells.pop()
                 for character in next_group:
-                    self._terminal.set_character_visibility(character, True)
-                    self._active_chars.append(character)
-                self._launch_delay = int(self._config.launch_delay * random.uniform(0.5, 1.5))
-            for character in self._active_chars:
-                character.tick()
-            self._launch_delay -= 1
-            next_frame = self._terminal.get_formatted_output_string()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return next_frame
+                    self.terminal.set_character_visibility(character, True)
+                    self.active_characters.append(character)
+                self.launch_delay = int(self.config.launch_delay * random.uniform(0.5, 1.5))
+            self.launch_delay -= 1
+            self.update()
+            return self.frame
 
         else:
             raise StopIteration

@@ -118,32 +118,31 @@ class RainConfig(ArgsDataClass):
 class RainIterator(BaseEffectIterator[RainConfig]):
     def __init__(self, effect: "Rain") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._group_by_row: dict[int, list[EffectCharacter | None]] = {}
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
-        for character in self._terminal.get_characters():
-            raindrop_color = random.choice(self._config.rain_colors)
+        for character in self.terminal.get_characters():
+            raindrop_color = random.choice(self.config.rain_colors)
             rain_scn = character.animation.new_scene()
-            rain_scn.add_frame(random.choice(self._config.rain_symbols), 1, color=raindrop_color)
-            raindrop_gradient = graphics.Gradient(raindrop_color, self._character_final_color_map[character], steps=7)
+            rain_scn.add_frame(random.choice(self.config.rain_symbols), 1, color=raindrop_color)
+            raindrop_gradient = graphics.Gradient(raindrop_color, self.character_final_color_map[character], steps=7)
             fade_scn = character.animation.new_scene()
             fade_scn.apply_gradient_to_symbols(raindrop_gradient, character.input_symbol, 5)
             character.animation.activate_scene(rain_scn)
-            character.motion.set_coordinate(Coord(character.input_coord.column, self._terminal.output_area.top))
+            character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
             input_path = character.motion.new_path(
-                speed=random.uniform(self._config.movement_speed[0], self._config.movement_speed[1]),
-                ease=self._config.movement_easing,
+                speed=random.uniform(self.config.movement_speed[0], self.config.movement_speed[1]),
+                ease=self.config.movement_easing,
             )
             input_path.new_waypoint(character.input_coord)
 
@@ -154,31 +153,28 @@ class RainIterator(BaseEffectIterator[RainConfig]):
                 fade_scn,
             )
             character.motion.activate_path(input_path)
-            self._pending_chars.append(character)
-        for character in sorted(self._pending_chars, key=lambda c: c.input_coord.row):
-            if character.input_coord.row not in self._group_by_row:
-                self._group_by_row[character.input_coord.row] = []
-            self._group_by_row[character.input_coord.row].append(character)
-        self._pending_chars.clear()
+            self.pending_chars.append(character)
+        for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
+            if character.input_coord.row not in self.group_by_row:
+                self.group_by_row[character.input_coord.row] = []
+            self.group_by_row[character.input_coord.row].append(character)
+        self.pending_chars.clear()
 
     def __next__(self) -> str:
-        if self._group_by_row or self._active_chars or self._pending_chars:
-            if not self._pending_chars and self._group_by_row:
-                self._pending_chars.extend(self._group_by_row.pop(min(self._group_by_row.keys())))  # type: ignore
-            if self._pending_chars:
+        if self.group_by_row or self.active_characters or self.pending_chars:
+            if not self.pending_chars and self.group_by_row:
+                self.pending_chars.extend(self.group_by_row.pop(min(self.group_by_row.keys())))  # type: ignore
+            if self.pending_chars:
                 for _ in range(random.randint(1, 3)):
-                    if self._pending_chars:
-                        next_character = self._pending_chars.pop(random.randint(0, len(self._pending_chars) - 1))
-                        self._terminal.set_character_visibility(next_character, True)
-                        self._active_chars.append(next_character)
+                    if self.pending_chars:
+                        next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
+                        self.terminal.set_character_visibility(next_character, True)
+                        self.active_characters.append(next_character)
 
                     else:
                         break
-            for character in self._active_chars:
-                character.tick()
-
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

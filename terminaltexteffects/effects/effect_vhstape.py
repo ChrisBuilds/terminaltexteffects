@@ -136,7 +136,7 @@ class VHSTapeConfig(ArgsDataClass):
 
 
 class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
-    class _Line:
+    class Line:
         def __init__(
             self,
             characters: list[EffectCharacter],
@@ -262,48 +262,47 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
 
     def __init__(self, effect: "VHSTape") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._lines: dict[int, VHSTapeIterator._Line] = {}
-        self._active_glitch_wave_top: int | None = None
-        self._active_glitch_wave_lines: list[VHSTapeIterator._Line] = []
-        self._active_glitch_lines: list[VHSTapeIterator._Line] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.pending_chars: list[EffectCharacter] = []
+        self.lines: dict[int, VHSTapeIterator.Line] = {}
+        self.active_glitch_wave_top: int | None = None
+        self.active_glitch_wave_lines: list[VHSTapeIterator.Line] = []
+        self.active_glitch_lines: list[VHSTapeIterator.Line] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for row_index, characters in enumerate(
-            self._terminal.get_characters_grouped(grouping=self._terminal.CharacterGroup.ROW_BOTTOM_TO_TOP)
+            self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP)
         ):
-            self._lines[row_index] = VHSTapeIterator._Line(characters, self._config, self._character_final_color_map)
-        for character in self._terminal.get_characters():
-            self._terminal.set_character_visibility(character, True)
+            self.lines[row_index] = VHSTapeIterator.Line(characters, self.config, self.character_final_color_map)
+        for character in self.terminal.get_characters():
+            self.terminal.set_character_visibility(character, True)
             character.animation.activate_scene(character.animation.query_scene("base"))
         self._glitching_steps_elapsed = 0
         self._phase = "glitching"
-        self._to_redraw = list(self._lines.values())
+        self._to_redraw = list(self.lines.values())
         self._redrawing = False
 
-    def _glitch_wave(self) -> None:
-        if not self._active_glitch_wave_top:
-            if self._terminal.output_area.top >= 3:
+    def glitch_wave(self) -> None:
+        if not self.active_glitch_wave_top:
+            if self.terminal.output_area.top >= 3:
                 # choose a wave top index in the top half of the output area or at least 3 rows up
-                self._active_glitch_wave_top = random.randint(
-                    max((3, round(self._terminal.output_area.top * 0.5))), self._terminal.output_area.top
+                self.active_glitch_wave_top = random.randint(
+                    max((3, round(self.terminal.output_area.top * 0.5))), self.terminal.output_area.top
                 )
             else:
                 # not enough room for a wave
                 return
 
         # if all lines have completed movement, proceed to move/restore wave
-        if all(line.line_movement_complete() for line in self._active_glitch_wave_lines):
-            if self._active_glitch_wave_lines:
+        if all(line.line_movement_complete() for line in self.active_glitch_wave_lines):
+            if self.active_glitch_wave_lines:
                 # only move 30% of the time
                 if random.random() < 0.3:
                     # if moving, only move up 10% of the time
@@ -313,101 +312,95 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                         wave_top_delta = -1
                 else:
                     wave_top_delta = 0
-                self._active_glitch_wave_top += wave_top_delta
+                self.active_glitch_wave_top += wave_top_delta
                 # clamp wave top to output area
-                self._active_glitch_wave_top = max(2, min(self._active_glitch_wave_top, self._terminal.output_area.top))
+                self.active_glitch_wave_top = max(2, min(self.active_glitch_wave_top, self.terminal.output_area.top))
             # get the lines for the wave
-            new_wave_lines: list[VHSTapeIterator._Line] = []
-            for line_index in range(self._active_glitch_wave_top - 2, self._active_glitch_wave_top + 1):
-                if line_index in self._lines:
-                    new_wave_lines.append(self._lines[line_index])
+            new_wave_lines: list[VHSTapeIterator.Line] = []
+            for line_index in range(self.active_glitch_wave_top - 2, self.active_glitch_wave_top + 1):
+                if line_index in self.lines:
+                    new_wave_lines.append(self.lines[line_index])
 
             # restore any lines that are no longer part of the wave
-            for line in self._active_glitch_wave_lines:
+            for line in self.active_glitch_wave_lines:
                 if line not in new_wave_lines:
                     line.restore()
-                    self._active_chars.extend(line.characters)
-            self._active_glitch_wave_lines = new_wave_lines
+                    self.active_characters.extend(line.characters)
+            self.active_glitch_wave_lines = new_wave_lines
 
-            if self._active_glitch_wave_top < 3:
+            if self.active_glitch_wave_top < 3:
                 # wave at bottom, restore lines
-                for line in self._active_glitch_wave_lines:
+                for line in self.active_glitch_wave_lines:
                     line.restore()
-                    self._active_chars.extend(line.characters)
-                self._active_glitch_wave_top = None
-                self._active_glitch_wave_lines = []
+                    self.active_characters.extend(line.characters)
+                self.active_glitch_wave_top = None
+                self.active_glitch_wave_lines = []
 
             else:
                 for line, path_id in zip(
-                    self._active_glitch_wave_lines, ("glitch_wave_mid", "glitch_wave_end", "glitch_wave_mid")
+                    self.active_glitch_wave_lines, ("glitch_wave_mid", "glitch_wave_end", "glitch_wave_mid")
                 ):
                     line.activate_path(path_id)
-                    self._active_chars.extend(line.characters)
+                    self.active_characters.extend(line.characters)
 
     def __next__(self) -> str:
-        if self._phase != "complete" or self._active_chars:
+        if self._phase != "complete" or self.active_characters:
             if self._phase == "glitching":
                 # Check if all active glitch wave lines have completed their movement, if so move the wave
-                if not self._active_glitch_wave_lines or all(
-                    line.line_movement_complete() for line in self._active_glitch_wave_lines
+                if not self.active_glitch_wave_lines or all(
+                    line.line_movement_complete() for line in self.active_glitch_wave_lines
                 ):
-                    self._glitch_wave()
+                    self.glitch_wave()
                 # Remove completed glitch lines from active glitch lines
-                self._active_glitch_lines = [
-                    line for line in self._active_glitch_lines if not line.line_movement_complete()
+                self.active_glitch_lines = [
+                    line for line in self.active_glitch_lines if not line.line_movement_complete()
                 ]
                 # Randomly add new glitch lines
-                if random.random() < self._config.glitch_line_chance and len(self._active_glitch_lines) < 3:
-                    glitch_line: VHSTapeIterator._Line = random.choice(list(self._lines.values()))
-                    if (
-                        glitch_line not in self._active_glitch_wave_lines
-                        and glitch_line not in self._active_glitch_lines
-                    ):
+                if random.random() < self.config.glitch_line_chance and len(self.active_glitch_lines) < 3:
+                    glitch_line: VHSTapeIterator.Line = random.choice(list(self.lines.values()))
+                    if glitch_line not in self.active_glitch_wave_lines and glitch_line not in self.active_glitch_lines:
                         glitch_line.set_hold_time(random.randint(30, 120))
-                        self._active_glitch_lines.append(glitch_line)
+                        self.active_glitch_lines.append(glitch_line)
                         glitch_line.glitch()
-                        self._active_chars.extend(glitch_line.characters)
+                        self.active_characters.extend(glitch_line.characters)
                 # Randomly add noise to all lines
-                if random.random() < self._config.noise_chance:
-                    for line in self._lines.values():
+                if random.random() < self.config.noise_chance:
+                    for line in self.lines.values():
                         line.snow()
-                        if line not in self._active_glitch_wave_lines and line not in self._active_glitch_lines:
-                            self._active_chars.extend(line.characters)
+                        if line not in self.active_glitch_wave_lines and line not in self.active_glitch_lines:
+                            self.active_characters.extend(line.characters)
                 self._glitching_steps_elapsed += 1
                 # Check if glitching time has reached the total glitch time
-                if self._glitching_steps_elapsed >= self._config.total_glitch_time:
+                if self._glitching_steps_elapsed >= self.config.total_glitch_time:
                     # Restore glitch wave lines
-                    for line in self._active_glitch_wave_lines:
+                    for line in self.active_glitch_wave_lines:
                         line.restore()
                     # Restore glitch lines
-                    for line in self._active_glitch_lines:
+                    for line in self.active_glitch_lines:
                         line.restore()
                     self._phase = "noise"
 
             elif self._phase == "noise":
                 # Activate final snow animation for all characters
-                if not self._active_chars:
-                    for character in self._terminal.get_characters():
+                if not self.active_characters:
+                    for character in self.terminal.get_characters():
                         character.animation.activate_scene(character.animation.query_scene("final_snow"))
-                        self._active_chars.append(character)
+                        self.active_characters.append(character)
                     self._phase = "redraw"
 
             elif self._phase == "redraw":
                 # Redraw lines one by one
-                if self._redrawing or not self._active_chars:
+                if self._redrawing or not self.active_characters:
                     self._redrawing = True
                     if self._to_redraw:
                         next_line = self._to_redraw.pop()
                         for character in next_line.characters:
                             character.animation.activate_scene(character.animation.query_scene("final_redraw"))
-                            self._active_chars.append(character)
+                            self.active_characters.append(character)
                     else:
                         self._phase = "complete"
-            for character in self._active_chars:
-                character.tick()
-
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

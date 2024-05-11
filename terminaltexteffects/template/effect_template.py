@@ -91,26 +91,24 @@ class EffectConfig(ArgsDataClass):
 class NamedEffectIterator(BaseEffectIterator[EffectConfig]):
     def __init__(self, effect: "NamedEffect") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self._terminal.output_area.top
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
+                character.input_coord.row / self.terminal.output_area.top
             )
 
             # do something with the data if needed (sort, adjust positions, etc)
 
     def __next__(self) -> str:
-        if self._pending_chars or self._active_chars:
+        if self.pending_chars or self.active_characters:
             # perform effect logic
-            for character in self._active_chars:
-                character.tick()
-            return self._terminal.get_formatted_output_string()
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

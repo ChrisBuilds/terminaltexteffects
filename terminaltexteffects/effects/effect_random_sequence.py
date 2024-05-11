@@ -105,42 +105,35 @@ class RandomSequenceConfig(ArgsDataClass):
 class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
     def __init__(self, effect: "RandomSequence") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._characters_per_tick = max(int(self._config.speed * len(self._terminal._input_characters)), 1)
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.characters_per_tick = max(int(self.config.speed * len(self.terminal._input_characters)), 1)
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            self._terminal.set_character_visibility(character, False)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            self.terminal.set_character_visibility(character, False)
             gradient_scn = character.animation.new_scene()
-            gradient = graphics.Gradient(
-                self._config.starting_color, self._character_final_color_map[character], steps=7
-            )
-            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self._config.final_gradient_frames)
+            gradient = graphics.Gradient(self.config.starting_color, self.character_final_color_map[character], steps=7)
+            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.config.final_gradient_frames)
             character.animation.activate_scene(gradient_scn)
-            self._pending_chars.append(character)
-        random.shuffle(self._pending_chars)
+            self.pending_chars.append(character)
+        random.shuffle(self.pending_chars)
 
     def __next__(self) -> str:
-        if self._pending_chars or self._active_chars:
-            for _ in range(self._characters_per_tick):
-                if self._pending_chars:
-                    next_char = self._pending_chars.pop()
-                    self._terminal.set_character_visibility(next_char, True)
-                    self._active_chars.append(next_char)
-            for character in self._active_chars:
-                character.tick()
-            next_frame = self._terminal.get_formatted_output_string()
-
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return next_frame
+        if self.pending_chars or self.active_characters:
+            for _ in range(self.characters_per_tick):
+                if self.pending_chars:
+                    next_char = self.pending_chars.pop()
+                    self.terminal.set_character_visibility(next_char, True)
+                    self.active_characters.append(next_char)
+            self.update()
+            return self.frame
         raise StopIteration
 
 

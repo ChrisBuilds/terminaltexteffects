@@ -101,24 +101,23 @@ class ScatteredConfig(ArgsDataClass):
 class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
     def __init__(self, effect: "Scattered") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            if self._terminal.output_area.right < 2 or self._terminal.output_area.top < 2:
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.output_area.right < 2 or self.terminal.output_area.top < 2:
                 character.motion.set_coordinate(Coord(1, 1))
             else:
-                character.motion.set_coordinate(self._terminal.output_area.random_coord())
+                character.motion.set_coordinate(self.terminal.output_area.random_coord())
             input_coord_path = character.motion.new_path(
-                speed=self._config.movement_speed, ease=self._config.movement_easing
+                speed=self.config.movement_speed, ease=self.config.movement_easing
             )
             input_coord_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
@@ -128,27 +127,25 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
                 EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
             )
             character.motion.activate_path(input_coord_path)
-            self._terminal.set_character_visibility(character, True)
+            self.terminal.set_character_visibility(character, True)
             gradient_scn = character.animation.new_scene()
             char_gradient = graphics.Gradient(
-                final_gradient.spectrum[0], self._character_final_color_map[character], steps=10
+                final_gradient.spectrum[0], self.character_final_color_map[character], steps=10
             )
             gradient_scn.apply_gradient_to_symbols(
-                char_gradient, character.input_symbol, self._config.final_gradient_frames
+                char_gradient, character.input_symbol, self.config.final_gradient_frames
             )
             character.animation.activate_scene(gradient_scn)
-            self._active_chars.append(character)
+            self.active_characters.append(character)
         self._initial_hold_frames = 25
 
     def __next__(self) -> str:
-        if self._pending_chars or self._active_chars:
+        if self.pending_chars or self.active_characters:
             if self._initial_hold_frames:
                 self._initial_hold_frames -= 1
-                return self._terminal.get_formatted_output_string()
-            for character in self._active_chars:
-                character.tick()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+                return self.frame
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

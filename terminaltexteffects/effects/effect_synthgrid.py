@@ -144,7 +144,7 @@ class SynthGridConfig(ArgsDataClass):
         return SynthGrid
 
 
-class _GridLine:
+class GridLine:
     def __init__(
         self,
         terminal: Terminal,
@@ -221,13 +221,12 @@ class _GridLine:
 class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
     def __init__(self, effect: "SynthGrid") -> None:
         super().__init__(effect)
-        self._pending_groups: list[tuple[int, list[EffectCharacter]]] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._grid_lines: list[_GridLine] = []
-        self._group_tracker: dict[int, int] = {}
-        self._build()
+        self.pending_groups: list[tuple[int, list[EffectCharacter]]] = []
+        self.grid_lines: list[GridLine] = []
+        self.group_tracker: dict[int, int] = {}
+        self.build()
 
-    def _find_even_gap(self, dimension: int) -> int:
+    def find_even_gap(self, dimension: int) -> int:
         """Find the closest even gap to 20% of the longest dimension.
 
         Args:
@@ -247,118 +246,118 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
             return 4
         return min(potential_gaps, key=lambda x: abs(x - dimension // 5))
 
-    def _build(self) -> None:
-        grid_gradient = graphics.Gradient(*self._config.grid_gradient_stops, steps=self._config.grid_gradient_steps)
+    def build(self) -> None:
+        grid_gradient = graphics.Gradient(*self.config.grid_gradient_stops, steps=self.config.grid_gradient_steps)
         grid_gradient_mapping = grid_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.grid_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.grid_gradient_direction
         )
-        text_gradient = graphics.Gradient(*self._config.text_gradient_stops, steps=self._config.text_gradient_steps)
+        text_gradient = graphics.Gradient(*self.config.text_gradient_stops, steps=self.config.text_gradient_steps)
         text_gradient_mapping = text_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.text_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.text_gradient_direction
         )
 
-        self._grid_lines.append(
-            _GridLine(
-                self._terminal,
-                self._config,
-                Coord(self._terminal.output_area.left, self._terminal.output_area.bottom),
+        self.grid_lines.append(
+            GridLine(
+                self.terminal,
+                self.config,
+                Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
                 "horizontal",
                 grid_gradient_mapping,
             )
         )
-        self._grid_lines.append(
-            _GridLine(
-                self._terminal,
-                self._config,
-                Coord(self._terminal.output_area.left, self._terminal.output_area.top),
+        self.grid_lines.append(
+            GridLine(
+                self.terminal,
+                self.config,
+                Coord(self.terminal.output_area.left, self.terminal.output_area.top),
                 "horizontal",
                 grid_gradient_mapping,
             )
         )
-        self._grid_lines.append(
-            _GridLine(
-                self._terminal,
-                self._config,
-                Coord(self._terminal.output_area.left, self._terminal.output_area.bottom),
+        self.grid_lines.append(
+            GridLine(
+                self.terminal,
+                self.config,
+                Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
                 "vertical",
                 grid_gradient_mapping,
             )
         )
-        self._grid_lines.append(
-            _GridLine(
-                self._terminal,
-                self._config,
-                Coord(self._terminal.output_area.right, self._terminal.output_area.bottom),
+        self.grid_lines.append(
+            GridLine(
+                self.terminal,
+                self.config,
+                Coord(self.terminal.output_area.right, self.terminal.output_area.bottom),
                 "vertical",
                 grid_gradient_mapping,
             )
         )
         column_indexes: list[int] = []
         row_indexes: list[int] = []
-        if self._terminal.output_area.top > 2 * self._terminal.output_area.right:
-            row_gap = self._find_even_gap(self._terminal.output_area.top) + 1
+        if self.terminal.output_area.top > 2 * self.terminal.output_area.right:
+            row_gap = self.find_even_gap(self.terminal.output_area.top) + 1
             column_gap = row_gap * 2
         else:
-            column_gap = self._find_even_gap(self._terminal.output_area.right) + 1
+            column_gap = self.find_even_gap(self.terminal.output_area.right) + 1
             row_gap = column_gap // 2
 
         for row_index in range(
-            self._terminal.output_area.bottom + row_gap, self._terminal.output_area.top, max(row_gap, 1)
+            self.terminal.output_area.bottom + row_gap, self.terminal.output_area.top, max(row_gap, 1)
         ):
-            if self._terminal.output_area.top - row_index < 2:
+            if self.terminal.output_area.top - row_index < 2:
                 continue
             row_indexes.append(row_index)
-            self._grid_lines.append(
-                _GridLine(
-                    self._terminal,
-                    self._config,
-                    Coord(self._terminal.output_area.left, row_index),
+            self.grid_lines.append(
+                GridLine(
+                    self.terminal,
+                    self.config,
+                    Coord(self.terminal.output_area.left, row_index),
                     "horizontal",
                     grid_gradient_mapping,
                 )
             )
         for column_index in range(
-            self._terminal.output_area.left + column_gap, self._terminal.output_area.right, max(column_gap, 1)
+            self.terminal.output_area.left + column_gap, self.terminal.output_area.right, max(column_gap, 1)
         ):
-            if self._terminal.output_area.right - column_index < 2:
+            if self.terminal.output_area.right - column_index < 2:
                 continue
             column_indexes.append(column_index)
-            self._grid_lines.append(
-                _GridLine(
-                    self._terminal,
-                    self._config,
-                    Coord(column_index, self._terminal.output_area.bottom),
+            self.grid_lines.append(
+                GridLine(
+                    self.terminal,
+                    self.config,
+                    Coord(column_index, self.terminal.output_area.bottom),
                     "vertical",
                     grid_gradient_mapping,
                 )
             )
-        row_indexes.append(self._terminal.output_area.top + 1)
-        column_indexes.append(self._terminal.output_area.right + 1)
+        row_indexes.append(self.terminal.output_area.top + 1)
+        column_indexes.append(self.terminal.output_area.right + 1)
         prev_row_index = 1
         for row_index in row_indexes:
             prev_column_index = 1
             for column_index in column_indexes:
                 coords_in_block: list[Coord] = []
-                if row_index == self._terminal.output_area.top:  # make sure the top row is included
+                if row_index == self.terminal.output_area.top:  # make sure the top row is included
                     row_index += 1
                 for row in range(prev_row_index, row_index):
                     for column in range(prev_column_index, column_index):
                         coords_in_block.append(Coord(column, row))
                 characters_in_block: list[EffectCharacter] = []
                 for coord in coords_in_block:
-                    if coord in self._terminal.character_by_input_coord:
-                        characters_in_block.append(self._terminal.character_by_input_coord[coord])
+                    if coord in self.terminal.character_by_input_coord:
+                        characters_in_block.append(self.terminal.character_by_input_coord[coord])
                 if characters_in_block:
-                    self._pending_groups.append((len(self._pending_groups), characters_in_block))
+                    self.pending_groups.append((len(self.pending_groups), characters_in_block))
                 prev_column_index = column_index
             prev_row_index = row_index
-        for group_number, group in self._pending_groups:
-            self._group_tracker[group_number] = 0
+        for group_number, group in self.pending_groups:
+            self.group_tracker[group_number] = 0
             for character in group:
                 dissolve_scn = character.animation.new_scene()
                 for _ in range(random.randint(15, 30)):
                     dissolve_scn.add_frame(
-                        random.choice(self._config.text_generation_symbols),
+                        random.choice(self.config.text_generation_symbols),
                         3,
                         color=random.choice(text_gradient.spectrum),
                     )
@@ -368,57 +367,54 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                     EventHandler.Event.SCENE_COMPLETE,
                     dissolve_scn,
                     EventHandler.Action.CALLBACK,
-                    EventHandler.Callback(self._update_group_tracker, group_number),
+                    EventHandler.Callback(self.update_group_tracker, group_number),
                 )
-        random.shuffle(self._pending_groups)
+        random.shuffle(self.pending_groups)
         self._phase = "grid_expand"
-        self._total_group_count = len(self._pending_groups)
+        self._total_group_count = len(self.pending_groups)
         if not self._total_group_count:
-            for character in self._terminal.get_characters():
-                self._terminal.set_character_visibility(character, True)
-                self._active_chars.append(character)
+            for character in self.terminal.get_characters():
+                self.terminal.set_character_visibility(character, True)
+                self.active_characters.append(character)
         self._active_groups: int = 0
 
-    def _update_group_tracker(self, character: EffectCharacter, *args) -> None:
-        self._group_tracker[args[0]] -= 1
+    def update_group_tracker(self, character: EffectCharacter, *args) -> None:
+        self.group_tracker[args[0]] -= 1
 
     def __next__(self) -> str:
-        if self._pending_groups or self._active_chars or self._phase != "complete":
+        if self.pending_groups or self.active_characters or self._phase != "complete":
             if self._phase == "grid_expand":
-                if not all([grid_line.is_extended() for grid_line in self._grid_lines]):
-                    for grid_line in self._grid_lines:
+                if not all([grid_line.is_extended() for grid_line in self.grid_lines]):
+                    for grid_line in self.grid_lines:
                         if not grid_line.is_extended():
                             grid_line.extend()
                 else:
                     self._phase = "add_chars"
             elif self._phase == "add_chars":
                 if (
-                    self._pending_groups
-                    and self._active_groups < self._total_group_count * self._config.max_active_blocks
+                    self.pending_groups
+                    and self._active_groups < self._total_group_count * self.config.max_active_blocks
                 ):
-                    group_number, next_group = self._pending_groups.pop(0)
+                    group_number, next_group = self.pending_groups.pop(0)
                     for char in next_group:
-                        self._terminal.set_character_visibility(char, True)
-                        self._active_chars.append(char)
-                        self._group_tracker[group_number] += 1
-                if not self._pending_groups and not self._active_chars and not self._active_groups:
+                        self.terminal.set_character_visibility(char, True)
+                        self.active_characters.append(char)
+                        self.group_tracker[group_number] += 1
+                if not self.pending_groups and not self.active_characters and not self._active_groups:
                     self._phase = "collapse"
             elif self._phase == "collapse":
-                if not all([grid_line.is_collapsed() for grid_line in self._grid_lines]):
-                    for grid_line in self._grid_lines:
+                if not all([grid_line.is_collapsed() for grid_line in self.grid_lines]):
+                    for grid_line in self.grid_lines:
                         if not grid_line.is_collapsed():
                             grid_line.collapse()
                 else:
                     self._phase = "complete"
-            for character in self._active_chars:
-                character.tick()
-
-            self._active_chars = [character for character in self._active_chars if character.is_active]
+            self.update()
             self._active_groups = 0
-            for _, active_count in self._group_tracker.items():
+            for _, active_count in self.group_tracker.items():
                 if active_count:
                     self._active_groups += 1
-            return self._terminal.get_formatted_output_string()
+            return self.frame
         else:
             raise StopIteration
 

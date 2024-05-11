@@ -129,14 +129,13 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
         effect: "Swarm",
     ) -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._swarms: list[list[EffectCharacter]] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.swarms: list[list[EffectCharacter]] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _make_swarms(self, swarm_size: int) -> None:
-        unswarmed_characters = list(self._terminal._input_characters[::-1])
+    def make_swarms(self, swarm_size: int) -> None:
+        unswarmed_characters = list(self.terminal._input_characters[::-1])
         while unswarmed_characters:
             new_swarm: list[EffectCharacter] = []
             for _ in range(swarm_size):
@@ -144,43 +143,41 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                     new_swarm.append(unswarmed_characters.pop())
                 else:
                     break
-            self._swarms.append(new_swarm)
+            self.swarms.append(new_swarm)
 
-    def _build(self) -> None:
-        swarm_size: int = max(round(len(self._terminal._input_characters) * self._config.swarm_size), 1)
-        self._make_swarms(swarm_size)
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        swarm_size: int = max(round(len(self.terminal._input_characters) * self.config.swarm_size), 1)
+        self.make_swarms(swarm_size)
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        flash_list = [self._config.flash_color for _ in range(10)]
-        for swarm in self._swarms:
-            swarm_gradient = graphics.Gradient(
-                random.choice(self._config.base_color), self._config.flash_color, steps=7
-            )
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        flash_list = [self.config.flash_color for _ in range(10)]
+        for swarm in self.swarms:
+            swarm_gradient = graphics.Gradient(random.choice(self.config.base_color), self.config.flash_color, steps=7)
             swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
             swarm_area_coordinate_map: dict[Coord, list[Coord]] = {}
-            swarm_spawn = self._terminal.output_area.random_coord(outside_scope=True)
+            swarm_spawn = self.terminal.output_area.random_coord(outside_scope=True)
             swarm_areas: list[Coord] = []
-            swarm_area_count = random.randint(self._config.swarm_area_count[0], self._config.swarm_area_count[1])
+            swarm_area_count = random.randint(self.config.swarm_area_count[0], self.config.swarm_area_count[1])
             # create areas where characters will swarm
             last_focus_coord = swarm_spawn
-            radius = max(min(self._terminal.output_area.right, self._terminal.output_area.top) // 2, 1)
+            radius = max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 2, 1)
             while len(swarm_areas) < swarm_area_count:
                 potential_focus_coords = geometry.find_coords_on_circle(last_focus_coord, radius)
                 random.shuffle(potential_focus_coords)
                 for coord in potential_focus_coords:
-                    if self._terminal.output_area.coord_is_in_output_area(coord):
+                    if self.terminal.output_area.coord_is_in_output_area(coord):
                         next_focus_coord = coord
                         break
                 else:
-                    next_focus_coord = self._terminal.output_area.random_coord()
+                    next_focus_coord = self.terminal.output_area.random_coord()
                 swarm_areas.append(next_focus_coord)
                 swarm_area_coordinate_map[last_focus_coord] = geometry.find_coords_in_circle(
                     last_focus_coord,
-                    max(min(self._terminal.output_area.right, self._terminal.output_area.top) // 6, 1) * 2,
+                    max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 6, 1) * 2,
                 )
                 last_focus_coord = next_focus_coord
 
@@ -222,7 +219,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 input_path.new_waypoint(character.input_coord)
                 input_scn = character.animation.new_scene()
                 for step in graphics.Gradient(
-                    self._config.flash_color, self._character_final_color_map[character], steps=10
+                    self.config.flash_color, self.character_final_color_map[character], steps=10
                 ):
                     input_scn.add_frame(character.input_symbol, 3, color=step)
                 character.event_handler.register_event(
@@ -235,40 +232,38 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                     EventHandler.Event.PATH_ACTIVATED, input_path, EventHandler.Action.ACTIVATE_SCENE, flash_scn
                 )
                 character.motion.chain_paths(list(character.motion.paths.values()))
-        self._call_next = False
-        self._active_swarm_area = "0_swarm_area"
-        self._current_swarm = self._swarms.pop()
+        self.call_next = False
+        self.active_swarm_area = "0_swarm_area"
+        self.current_swarm = self.swarms.pop()
 
     def __next__(self) -> str:
-        if self._swarms or self._active_chars:
-            if self._swarms and self._call_next:
-                self._call_next = False
-                self._current_swarm = self._swarms.pop()
-                self._active_swarm_area = "0_swarm_area"
-                for character in self._current_swarm:
+        if self.swarms or self.active_characters:
+            if self.swarms and self.call_next:
+                self.call_next = False
+                self.current_swarm = self.swarms.pop()
+                self.active_swarm_area = "0_swarm_area"
+                for character in self.current_swarm:
                     character.motion.activate_path(character.motion.query_path("0_swarm_area"))
-                    self._terminal.set_character_visibility(character, True)
-                    self._active_chars.append(character)
-            for character in self._active_chars:
-                character.tick()
-            if len(self._active_chars) < len(self._current_swarm):
-                self._call_next = True
-            if self._current_swarm:
-                for character in self._current_swarm:
+                    self.terminal.set_character_visibility(character, True)
+                    self.active_characters.append(character)
+            if len(self.active_characters) < len(self.current_swarm):
+                self.call_next = True
+            if self.current_swarm:
+                for character in self.current_swarm:
                     if (
                         character.motion.active_path
-                        and character.motion.active_path.path_id != self._active_swarm_area
+                        and character.motion.active_path.path_id != self.active_swarm_area
                         and "swarm_area" in character.motion.active_path.path_id
-                        and int(character.motion.active_path.path_id[0]) > int(self._active_swarm_area[0])
+                        and int(character.motion.active_path.path_id[0]) > int(self.active_swarm_area[0])
                     ):
-                        self._active_swarm_area = character.motion.active_path.path_id
-                        for other in self._current_swarm:
-                            if other is not character and random.random() < self._config.swarm_coordination:
-                                other.motion.activate_path(other.motion.paths[self._active_swarm_area])
+                        self.active_swarm_area = character.motion.active_path.path_id
+                        for other in self.current_swarm:
+                            if other is not character and random.random() < self.config.swarm_coordination:
+                                other.motion.activate_path(other.motion.paths[self.active_swarm_area])
                         break
 
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

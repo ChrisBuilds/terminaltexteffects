@@ -132,52 +132,47 @@ class WavesConfig(ArgsDataClass):
 class WavesIterator(BaseEffectIterator[WavesConfig]):
     def __init__(self, effect: "Waves") -> None:
         super().__init__(effect)
-        self._pending_columns: list[list[EffectCharacter]] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_columns: list[list[EffectCharacter]] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        wave_gradient = graphics.Gradient(*self._config.wave_gradient_stops, steps=self._config.wave_gradient_steps)
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        wave_gradient = graphics.Gradient(*self.config.wave_gradient_stops, steps=self.config.wave_gradient_steps)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             wave_scn = character.animation.new_scene()
-            wave_scn.ease = self._config.wave_easing
-            for _ in range(self._config.wave_count):
+            wave_scn.ease = self.config.wave_easing
+            for _ in range(self.config.wave_count):
                 wave_scn.apply_gradient_to_symbols(
-                    wave_gradient, self._config.wave_symbols, duration=self._config.wave_length
+                    wave_gradient, self.config.wave_symbols, duration=self.config.wave_length
                 )
             final_scn = character.animation.new_scene()
             for step in graphics.Gradient(
                 wave_gradient.spectrum[-1],
-                self._character_final_color_map[character],
-                steps=self._config.final_gradient_steps,
+                self.character_final_color_map[character],
+                steps=self.config.final_gradient_steps,
             ):
                 final_scn.add_frame(character.input_symbol, 10, color=step)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, wave_scn, EventHandler.Action.ACTIVATE_SCENE, final_scn
             )
             character.animation.activate_scene(wave_scn)
-        for column in self._terminal.get_characters_grouped(
-            grouping=self._terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT
-        ):
-            self._pending_columns.append(column)
+        for column in self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT):
+            self.pending_columns.append(column)
 
     def __next__(self) -> str:
-        if self._pending_columns or self._active_chars:
-            if self._pending_columns:
-                next_column = self._pending_columns.pop(0)
+        if self.pending_columns or self.active_characters:
+            if self.pending_columns:
+                next_column = self.pending_columns.pop(0)
                 for character in next_column:
-                    self._terminal.set_character_visibility(character, True)
-                    self._active_chars.append(character)
-            for character in self._active_chars:
-                character.tick()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+                    self.terminal.set_character_visibility(character, True)
+                    self.active_characters.append(character)
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

@@ -145,7 +145,7 @@ class BubblesConfig(ArgsDataClass):
 
 
 class BubblesIterator(BaseEffectIterator[BubblesConfig]):
-    class _Bubble:
+    class Bubble:
         def __init__(
             self,
             effect: "BubblesIterator",
@@ -159,10 +159,10 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             self.radius = max(len(self.characters) // 5, 1)
             self.origin = origin
             self.anchor_char = self.terminal.add_character(" ", self.origin)
-            if self.effect._config.pop_condition == "row":
+            if self.effect.config.pop_condition == "row":
                 self.lowest_row = min([char.input_coord.row for char in self.characters])
             else:
-                self.lowest_row = self.effect._terminal.output_area.bottom
+                self.lowest_row = self.effect.terminal.output_area.bottom
             self.set_character_coordinates()
             self.landed = False
             self.make_waypoints()
@@ -177,20 +177,20 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 if point.row == self.lowest_row:
                     self.landed = True
 
-            if self.effect._config.pop_condition == "anywhere":
+            if self.effect.config.pop_condition == "anywhere":
                 if random.random() < 0.002:
                     self.landed = True
 
         def make_waypoints(self):
             waypoint_column = random.randint(
-                self.effect._terminal.output_area.left, self.effect._terminal.output_area.right
+                self.effect.terminal.output_area.left, self.effect.terminal.output_area.right
             )
-            floor_path = self.anchor_char.motion.new_path(speed=self.effect._config.bubble_speed)
+            floor_path = self.anchor_char.motion.new_path(speed=self.effect.config.bubble_speed)
             floor_path.new_waypoint(Coord(waypoint_column, self.lowest_row))
             self.anchor_char.motion.activate_path(floor_path)
 
         def make_gradients(self) -> None:
-            if self.effect._config.rainbow:
+            if self.effect.config.rainbow:
                 rainbow_gradient = list(self.effect.rainbow_gradient.spectrum)
                 gradient_offset = 0
                 for character in self.characters:
@@ -205,7 +205,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                         character.animation.active_scene.is_looping = True
 
             else:
-                bubble_color = random.choice(self.effect._config.bubble_colors)
+                bubble_color = random.choice(self.effect.config.bubble_colors)
                 for character in self.characters:
                     sheen_scene = character.animation.new_scene()
                     sheen_scene.add_frame(character.input_symbol, 1, color=bubble_color)
@@ -246,9 +246,8 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
 
     def __init__(self, effect: "Bubbles"):
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._bubbles: list[BubblesIterator._Bubble] = []
+        self.pending_chars: list[EffectCharacter] = []
+        self.bubbles: list[BubblesIterator.Bubble] = []
         red = "e81416"
         orange = "ffa500"
         yellow = "faeb36"
@@ -257,24 +256,24 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
         indigo = "4b369d"
         violet = "70369d"
         self.rainbow_gradient = graphics.Gradient(red, orange, yellow, green, blue, indigo, violet, steps=5)
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             character.layer = 1
             pop_1_scene = character.animation.new_scene(id="pop_1")
             pop_2_scene = character.animation.new_scene()
-            pop_1_scene.add_frame("*", 20, color=self._config.pop_color)
-            pop_2_scene.add_frame("'", 20, color=self._config.pop_color)
+            pop_1_scene.add_frame("*", 20, color=self.config.pop_color)
+            pop_2_scene.add_frame("'", 20, color=self.config.pop_color)
             final_scene = character.animation.new_scene()
             char_final_gradient = graphics.Gradient(
-                self._config.pop_color, self._character_final_color_map[character], steps=10
+                self.config.pop_color, self.character_final_color_map[character], steps=10
             )
             final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
             character.event_handler.register_event(
@@ -297,11 +296,9 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             )
 
         unbubbled_chars = []
-        for char_list in self._terminal.get_characters_grouped(
-            grouping=self._terminal.CharacterGroup.ROW_BOTTOM_TO_TOP
-        ):
+        for char_list in self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP):
             unbubbled_chars.extend(char_list)
-        self._bubbles = []
+        self.bubbles = []
         while unbubbled_chars:
             bubble_group = []
             if len(unbubbled_chars) < 5:
@@ -311,18 +308,18 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 for _ in range(random.randint(5, min(len(unbubbled_chars), 20))):
                     bubble_group.append(unbubbled_chars.pop(0))
             bubble_origin = Coord(
-                random.randint(self._terminal.output_area.left, self._terminal.output_area.right),
-                self._terminal.output_area.top,
+                random.randint(self.terminal.output_area.left, self.terminal.output_area.right),
+                self.terminal.output_area.top,
             )
-            new_bubble = BubblesIterator._Bubble(self, bubble_origin, bubble_group, self._terminal)
-            self._bubbles.append(new_bubble)
-        self.animating_bubbles: list[BubblesIterator._Bubble] = []
+            new_bubble = BubblesIterator.Bubble(self, bubble_origin, bubble_group, self.terminal)
+            self.bubbles.append(new_bubble)
+        self.animating_bubbles: list[BubblesIterator.Bubble] = []
         self.steps_since_last_bubble = 0
 
     def __next__(self) -> str:
-        if self.animating_bubbles or self._active_chars or self._bubbles:
-            if self._bubbles and self.steps_since_last_bubble >= self._config.bubble_delay:
-                next_bubble = self._bubbles.pop(0)
+        if self.animating_bubbles or self.active_characters or self.bubbles:
+            if self.bubbles and self.steps_since_last_bubble >= self.config.bubble_delay:
+                next_bubble = self.bubbles.pop(0)
                 next_bubble.activate()
                 self.animating_bubbles.append(next_bubble)
                 self.steps_since_last_bubble = 0
@@ -331,17 +328,14 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             for bubble in self.animating_bubbles:
                 if bubble.landed:
                     bubble.pop()
-                    self._active_chars.extend(bubble.characters)
+                    self.active_characters.extend(bubble.characters)
 
             self.animating_bubbles = [bubble for bubble in self.animating_bubbles if not bubble.landed]
             for bubble in self.animating_bubbles:
                 bubble.move()
-            for character in self._active_chars:
-                character.tick()
-            next_frame = self._terminal.get_formatted_output_string()
 
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return next_frame
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

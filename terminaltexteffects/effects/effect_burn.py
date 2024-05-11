@@ -95,12 +95,11 @@ class BurnConfig(ArgsDataClass):
 class BurnIterator(BaseEffectIterator[BurnConfig]):
     def __init__(self, effect: "Burn"):
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
+    def build(self) -> None:
         vertical_build_order = [
             "'",
             ".",
@@ -112,17 +111,17 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             "▝",
             ".",
         ]
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        fire_gradient = graphics.Gradient(*self._config.burn_colors, steps=10)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        fire_gradient = graphics.Gradient(*self.config.burn_colors, steps=10)
         groups = {
             column_index: column
             for column_index, column in enumerate(
-                self._terminal.get_characters_grouped(grouping=self._terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
+                self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
             )
         }
 
@@ -132,35 +131,31 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
         while groups_remaining(groups):
             keys = [key for key in groups.keys() if groups[key]]
             next_char = groups[random.choice(keys)].pop(0)
-            self._terminal.set_character_visibility(next_char, True)
-            next_char.animation.set_appearance(next_char.input_symbol, color=self._config.starting_color)
+            self.terminal.set_character_visibility(next_char, True)
+            next_char.animation.set_appearance(next_char.input_symbol, color=self.config.starting_color)
             burn_scn = next_char.animation.new_scene(id="burn")
             burn_scn.apply_gradient_to_symbols(fire_gradient, vertical_build_order, 12)
             final_color_scn = next_char.animation.new_scene()
             for color in graphics.Gradient(
-                fire_gradient.spectrum[-1], self._character_final_color_map[next_char], steps=8
+                fire_gradient.spectrum[-1], self.character_final_color_map[next_char], steps=8
             ):
                 final_color_scn.add_frame(next_char.input_symbol, 4, color=color)
             next_char.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, burn_scn, EventHandler.Action.ACTIVATE_SCENE, final_color_scn
             )
 
-            self._pending_chars.append(next_char)
+            self.pending_chars.append(next_char)
 
     def __next__(self) -> str:
-        if self._pending_chars or self._active_chars:
+        if self.pending_chars or self.active_characters:
             for _ in range(random.randint(2, 4)):
-                if self._pending_chars:
-                    next_char = self._pending_chars.pop(0)
+                if self.pending_chars:
+                    next_char = self.pending_chars.pop(0)
                     next_char.animation.activate_scene(next_char.animation.query_scene("burn"))
-                    # self.terminal.set_character_visibility(next_char, True)
-                    self._active_chars.append(next_char)
+                    self.active_characters.append(next_char)
 
-            for character in self._active_chars:
-                character.animation.step_animation()
-
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

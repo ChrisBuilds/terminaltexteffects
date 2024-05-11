@@ -132,64 +132,58 @@ class MiddleOutConfig(ArgsDataClass):
 class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
     def __init__(self, effect: "MiddleOut"):
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._phase = "center"
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.phase = "center"
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            character.motion.set_coordinate(self._terminal.output_area.center)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            character.motion.set_coordinate(self.terminal.output_area.center)
             # setup waypoints
-            if self._config.expand_direction == "vertical":
+            if self.config.expand_direction == "vertical":
                 column = character.input_coord.column
-                row = self._terminal.output_area.center_row
+                row = self.terminal.output_area.center_row
             else:
-                column = self._terminal.output_area.center_column
+                column = self.terminal.output_area.center_column
                 row = character.input_coord.row
             center_path = character.motion.new_path(
-                speed=self._config.center_movement_speed, ease=self._config.center_easing
+                speed=self.config.center_movement_speed, ease=self.config.center_easing
             )
             center_path.new_waypoint(Coord(column, row))
             full_path = character.motion.new_path(
-                id="full", speed=self._config.full_movement_speed, ease=self._config.full_easing
+                id="full", speed=self.config.full_movement_speed, ease=self.config.full_easing
             )
             full_path.new_waypoint(character.input_coord, id="full")
 
             # setup scenes
             full_scene = character.animation.new_scene(id="full")
             full_gradient = graphics.Gradient(
-                self._config.starting_color, self._character_final_color_map[character], steps=10
+                self.config.starting_color, self.character_final_color_map[character], steps=10
             )
             full_scene.apply_gradient_to_symbols(full_gradient, character.input_symbol, 10)
 
             # initialize character state
             character.motion.activate_path(center_path)
-            character.animation.set_appearance(character.input_symbol, self._config.starting_color)
-            self._terminal.set_character_visibility(character, True)
-            self._active_chars.append(character)
+            character.animation.set_appearance(character.input_symbol, self.config.starting_color)
+            self.terminal.set_character_visibility(character, True)
+            self.active_characters.append(character)
 
     def __next__(self) -> str:
-        if self._active_chars:
-            if (
-                all([character.motion.active_path is None for character in self._active_chars])
-                and self._phase == "center"
-            ):
-                for character in self._active_chars:
-                    character.motion.activate_path(character.motion.query_path("full"))
-                    character.animation.activate_scene(character.animation.query_scene("full"))
-                self._phase = "full"
-            for character in self._active_chars:
-                character.tick()
-            if self._phase == "full":
-                self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+        if self.phase == "center" and not self.active_characters:
+            self.phase = "full"
+            self.active_characters = self.terminal.get_characters()
+            for character in self.active_characters:
+                character.motion.activate_path(character.motion.query_path("full"))
+                character.animation.activate_scene(character.animation.query_scene("full"))
+        if self.active_characters:
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

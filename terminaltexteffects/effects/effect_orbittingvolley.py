@@ -165,7 +165,7 @@ class OrbittingVolleyConfig(ArgsDataClass):
 
 
 class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
-    class _Launcher:
+    class Launcher:
         def __init__(self, terminal: Terminal, args: OrbittingVolleyConfig, starting_edge_coord: Coord, symbol: str):
             self.terminal = terminal
             self.args = args
@@ -198,54 +198,53 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
 
     def __init__(self, effect: "OrbittingVolley"):
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
+        self.pending_chars: list[EffectCharacter] = []
         self.final_gradient = graphics.Gradient(
-            *self._config.final_gradient_stops, steps=self._config.final_gradient_steps
+            *self.config.final_gradient_stops, steps=self.config.final_gradient_steps
         )
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
         self.final_gradient_coordinate_map: dict[Coord, graphics.Color] = (
             self.final_gradient.build_coordinate_color_mapping(
-                self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+                self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
             )
         )
-        self._complete = False
-        self._build()
+        self.complete = False
+        self.build()
 
-    def _build(self) -> None:
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = self.final_gradient_coordinate_map[character.input_coord]
+    def build(self) -> None:
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = self.final_gradient_coordinate_map[character.input_coord]
             input_path = character.motion.new_path(
-                speed=self._config.character_movement_speed,
-                ease=self._config.character_easing,
+                speed=self.config.character_movement_speed,
+                ease=self.config.character_easing,
                 id="input_path",
                 layer=1,
             )
             input_path.new_waypoint(character.input_coord)
-            character.animation.set_appearance(character.input_symbol, self._character_final_color_map[character])
-        self._launchers: list[OrbittingVolleyIterator._Launcher] = []
+            character.animation.set_appearance(character.input_symbol, self.character_final_color_map[character])
+        self._launchers: list[OrbittingVolleyIterator.Launcher] = []
         for coord, symbol in (
             (
-                Coord(self._terminal.output_area.left, self._terminal.output_area.top),
-                self._config.top_launcher_symbol,
+                Coord(self.terminal.output_area.left, self.terminal.output_area.top),
+                self.config.top_launcher_symbol,
             ),
             (
-                Coord(self._terminal.output_area.right, self._terminal.output_area.top),
-                self._config.right_launcher_symbol,
+                Coord(self.terminal.output_area.right, self.terminal.output_area.top),
+                self.config.right_launcher_symbol,
             ),
             (
-                Coord(self._terminal.output_area.right, self._terminal.output_area.bottom),
-                self._config.bottom_launcher_symbol,
+                Coord(self.terminal.output_area.right, self.terminal.output_area.bottom),
+                self.config.bottom_launcher_symbol,
             ),
             (
-                Coord(self._terminal.output_area.left, self._terminal.output_area.bottom),
-                self._config.left_launcher_symbol,
+                Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
+                self.config.left_launcher_symbol,
             ),
         ):
-            launcher = OrbittingVolleyIterator._Launcher(self._terminal, self._config, coord, symbol)
+            launcher = OrbittingVolleyIterator.Launcher(self.terminal, self.config, coord, symbol)
             launcher.character.layer = 2
-            self._terminal.set_character_visibility(launcher.character, True)
-            self._active_chars.append(launcher.character)
+            self.terminal.set_character_visibility(launcher.character, True)
+            self.active_characters.append(launcher.character)
             self._launchers.append(launcher)
         self._main_launcher = self._launchers[0]
         self._main_launcher.character.animation.set_appearance(
@@ -254,37 +253,37 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
         self._main_launcher.build_paths()
         self._main_launcher.character.motion.activate_path(self._main_launcher.character.motion.query_path("perimeter"))
         self._sorted_chars = []
-        for char_list in self._terminal.get_characters_grouped(Terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS):
+        for char_list in self.terminal.get_characters_grouped(Terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS):
             self._sorted_chars.extend(char_list)
         for launcher, character in zip(cycle(self._launchers), self._sorted_chars):
             launcher.magazine.append(character)
         self._delay = 0
 
-    def _set_launcher_coordinates(self, parent: _Launcher, child: _Launcher) -> None:
-        parent_progress = parent.character.motion.current_coord.column / self._terminal.output_area.right
-        if child.character.input_coord == Coord(self._terminal.output_area.right, self._terminal.output_area.top):
-            child_row = self._terminal.output_area.top - int((self._terminal.output_area.top * parent_progress))
-            child.character.motion.set_coordinate(Coord(self._terminal.output_area.right, max(1, child_row)))
-        elif child.character.input_coord == Coord(self._terminal.output_area.right, self._terminal.output_area.bottom):
-            child_column = self._terminal.output_area.right - int((self._terminal.output_area.right * parent_progress))
-            child.character.motion.set_coordinate(Coord(max(1, child_column), self._terminal.output_area.bottom))
-        elif child.character.input_coord == Coord(self._terminal.output_area.left, self._terminal.output_area.bottom):
-            child_row = self._terminal.output_area.bottom + int((self._terminal.output_area.top * parent_progress))
+    def _set_launcher_coordinates(self, parent: Launcher, child: Launcher) -> None:
+        parent_progress = parent.character.motion.current_coord.column / self.terminal.output_area.right
+        if child.character.input_coord == Coord(self.terminal.output_area.right, self.terminal.output_area.top):
+            child_row = self.terminal.output_area.top - int((self.terminal.output_area.top * parent_progress))
+            child.character.motion.set_coordinate(Coord(self.terminal.output_area.right, max(1, child_row)))
+        elif child.character.input_coord == Coord(self.terminal.output_area.right, self.terminal.output_area.bottom):
+            child_column = self.terminal.output_area.right - int((self.terminal.output_area.right * parent_progress))
+            child.character.motion.set_coordinate(Coord(max(1, child_column), self.terminal.output_area.bottom))
+        elif child.character.input_coord == Coord(self.terminal.output_area.left, self.terminal.output_area.bottom):
+            child_row = self.terminal.output_area.bottom + int((self.terminal.output_area.top * parent_progress))
             child.character.motion.set_coordinate(
-                Coord(self._terminal.output_area.left, min(self._terminal.output_area.top, child_row))
+                Coord(self.terminal.output_area.left, min(self.terminal.output_area.top, child_row))
             )
         color = self.final_gradient_coordinate_map[child.character.motion.current_coord]
         child.character.animation.set_appearance(child.character.input_symbol, color)
 
     def __next__(self) -> str:
-        if any([launcher.magazine for launcher in self._launchers]) or len(self._active_chars) > 1:
+        if any([launcher.magazine for launcher in self._launchers]) or len(self.active_characters) > 1:
             if self._main_launcher.character.motion.active_path is None:
                 perimeter_path = self._main_launcher.character.motion.query_path("perimeter")
                 self._main_launcher.character.motion.set_coordinate(perimeter_path.waypoints[0].coord)
                 self._main_launcher.character.motion.activate_path(perimeter_path)
-                self._active_chars.append(self._main_launcher.character)
+                self.active_characters.append(self._main_launcher.character)
             self._main_launcher.character.animation.set_appearance(
-                self._config.top_launcher_symbol,
+                self.config.top_launcher_symbol,
                 self.final_gradient_coordinate_map[self._main_launcher.character.motion.current_coord],
             )
             for launcher in self._launchers[1:]:
@@ -292,27 +291,24 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
             if not self._delay:
                 for launcher in self._launchers:
                     characters_to_launch = max(
-                        int((self._config.volley_size * len(self._terminal._input_characters)) / 4), 1
+                        int((self.config.volley_size * len(self.terminal._input_characters)) / 4), 1
                     )
                     for _ in range(characters_to_launch):
                         next_char = launcher.launch()
                         if next_char:
-                            self._active_chars.append(next_char)
-                self._delay = self._config.launch_delay
+                            self.active_characters.append(next_char)
+                self._delay = self.config.launch_delay
             else:
                 self._delay -= 1
 
-            for character in self._active_chars:
-                character.tick()
-            next_frame = self._terminal.get_formatted_output_string()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return next_frame
+            self.update()
+            return self.frame
         else:
-            if not self._complete:
-                self._complete = True
+            if not self.complete:
+                self.complete = True
                 for launcher in self._launchers:
-                    self._terminal.set_character_visibility(launcher.character, False)
-                return self._terminal.get_formatted_output_string()
+                    self.terminal.set_character_visibility(launcher.character, False)
+                return self.frame
             else:
                 raise StopIteration
 

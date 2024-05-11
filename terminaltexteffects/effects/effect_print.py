@@ -103,7 +103,7 @@ class PrintConfig(ArgsDataClass):
 
 
 class PrintIterator(BaseEffectIterator[PrintConfig]):
-    class _Row:
+    class Row:
         def __init__(
             self,
             characters: list[EffectCharacter],
@@ -141,92 +141,87 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
 
     def __init__(self, effect: "Print"):
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._pending_rows: list[PrintIterator._Row] = []
-        self._processed_rows: list[PrintIterator._Row] = []
-        self._typing_head = self._terminal.add_character("█", Coord(1, 1))
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.pending_rows: list[PrintIterator.Row] = []
+        self.processed_rows: list[PrintIterator.Row] = []
+        self.typing_head = self.terminal.add_character("█", Coord(1, 1))
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
+    def build(self) -> None:
         self.final_gradient = graphics.Gradient(
-            *self._config.final_gradient_stops, steps=self._config.final_gradient_steps
+            *self.config.final_gradient_stops, steps=self.config.final_gradient_steps
         )
         final_gradient_mapping = self.final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters(fill_chars=True):
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        input_rows = self._terminal.get_characters_grouped(
-            grouping=self._terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True
+        for character in self.terminal.get_characters(fill_chars=True):
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        input_rows = self.terminal.get_characters_grouped(
+            grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True
         )
         for input_row in input_rows:
-            self._pending_rows.append(
-                PrintIterator._Row(
+            self.pending_rows.append(
+                PrintIterator.Row(
                     input_row,
-                    self._character_final_color_map,
-                    self._character_final_color_map[input_row[-1]],
+                    self.character_final_color_map,
+                    self.character_final_color_map[input_row[-1]],
                 )
             )
-        self._current_row: PrintIterator._Row = self._pending_rows.pop(0)
+        self._current_row: PrintIterator.Row = self.pending_rows.pop(0)
         self._typing = True
         self._delay = 0
         self._last_column = 0
 
     def __next__(self) -> str:
-        if self._active_chars or self._typing:
-            if self._typing_head.motion.active_path:
+        if self.active_characters or self._typing:
+            if self.typing_head.motion.active_path:
                 pass
             elif self._delay:
                 self._delay -= 1
             else:
                 self._delay = random.randint(0, 0)
                 if self._current_row.untyped_chars:
-                    for _ in range(min(len(self._current_row.untyped_chars), self._config.print_speed)):
+                    for _ in range(min(len(self._current_row.untyped_chars), self.config.print_speed)):
                         next_char = self._current_row.type_char()
                         if next_char:
-                            self._terminal.set_character_visibility(next_char, True)
-                            self._active_chars.append(next_char)
+                            self.terminal.set_character_visibility(next_char, True)
+                            self.active_characters.append(next_char)
                             self._last_column = next_char.input_coord.column
                 else:
-                    self._processed_rows.append(self._current_row)
-                    if self._pending_rows:
-                        for row in self._processed_rows:
+                    self.processed_rows.append(self._current_row)
+                    if self.pending_rows:
+                        for row in self.processed_rows:
                             row.move_up()
-                        self._current_row = self._pending_rows.pop(0)
+                        self._current_row = self.pending_rows.pop(0)
                         current_row_height = self._current_row.untyped_chars[0].input_coord.row
-                        self._typing_head.motion.set_coordinate(Coord(self._last_column, 1))
-                        self._terminal.set_character_visibility(self._typing_head, True)
-                        self._typing_head.motion.paths.clear()
-                        carriage_return_path = self._typing_head.motion.new_path(
-                            speed=self._config.print_head_return_speed,
-                            ease=self._config.print_head_easing,
+                        self.typing_head.motion.set_coordinate(Coord(self._last_column, 1))
+                        self.terminal.set_character_visibility(self.typing_head, True)
+                        self.typing_head.motion.paths.clear()
+                        carriage_return_path = self.typing_head.motion.new_path(
+                            speed=self.config.print_head_return_speed,
+                            ease=self.config.print_head_easing,
                             id="carriage_return_path",
                         )
                         carriage_return_path.new_waypoint(Coord(1, 1))
-                        self._typing_head.motion.activate_path(carriage_return_path)
-                        self._typing_head.animation.set_appearance(
-                            self._typing_head.input_symbol,
+                        self.typing_head.motion.activate_path(carriage_return_path)
+                        self.typing_head.animation.set_appearance(
+                            self.typing_head.input_symbol,
                             self.final_gradient.get_color_at_fraction(
-                                current_row_height / self._terminal.output_area.top
+                                current_row_height / self.terminal.output_area.top
                             ),
                         )
-                        self._typing_head.event_handler.register_event(
+                        self.typing_head.event_handler.register_event(
                             EventHandler.Event.PATH_COMPLETE,
                             carriage_return_path,
                             EventHandler.Action.CALLBACK,
-                            EventHandler.Callback(self._terminal.set_character_visibility, False),
+                            EventHandler.Callback(self.terminal.set_character_visibility, False),
                         )
-                        self._active_chars.append(self._typing_head)
+                        self.active_characters.append(self.typing_head)
                     else:
                         self._typing = False
-            for character in self._active_chars:
-                character.tick()
-            next_frame = self._terminal.get_formatted_output_string()
-
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return next_frame
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

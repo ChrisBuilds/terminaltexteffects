@@ -126,31 +126,30 @@ class BouncyBallsConfig(ArgsDataClass):
 class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
     def __init__(self, effect: "BouncyBalls"):
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._group_by_row: dict[int, list[EffectCharacter | None]] = {}
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            color = random.choice(self._config.ball_colors)
-            symbol = random.choice(self._config.ball_symbols)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            color = random.choice(self.config.ball_colors)
+            symbol = random.choice(self.config.ball_symbols)
             ball_scene = character.animation.new_scene()
             ball_scene.add_frame(symbol, 1, color=color)
             final_scene = character.animation.new_scene()
-            char_final_gradient = graphics.Gradient(color, self._character_final_color_map[character], steps=10)
+            char_final_gradient = graphics.Gradient(color, self.character_final_color_map[character], steps=10)
             final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
             character.motion.set_coordinate(
-                Coord(character.input_coord.column, int(self._terminal.output_area.top * random.uniform(1.0, 1.5)))
+                Coord(character.input_coord.column, int(self.terminal.output_area.top * random.uniform(1.0, 1.5)))
             )
             input_coord_path = character.motion.new_path(
-                speed=self._config.movement_speed, ease=self._config.movement_easing
+                speed=self.config.movement_speed, ease=self.config.movement_easing
             )
             input_coord_path.new_waypoint(character.input_coord)
             character.motion.activate_path(input_coord_path)
@@ -161,35 +160,33 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
                 character.event_handler.Action.ACTIVATE_SCENE,
                 final_scene,
             )
-            self._pending_chars.append(character)
-        for character in sorted(self._pending_chars, key=lambda c: c.input_coord.row):
-            if character.input_coord.row not in self._group_by_row:
-                self._group_by_row[character.input_coord.row] = []
-            self._group_by_row[character.input_coord.row].append(character)
-        self._pending_chars.clear()
+            self.pending_chars.append(character)
+        for character in sorted(self.pending_chars, key=lambda c: c.input_coord.row):
+            if character.input_coord.row not in self.group_by_row:
+                self.group_by_row[character.input_coord.row] = []
+            self.group_by_row[character.input_coord.row].append(character)
+        self.pending_chars.clear()
         self.ball_delay = 0
 
     def __next__(self) -> str:
-        if self._group_by_row or self._active_chars or self._pending_chars:
-            if not self._pending_chars and self._group_by_row:
-                self._pending_chars.extend(self._group_by_row.pop(min(self._group_by_row.keys())))  # type: ignore
-            if self._pending_chars:
+        if self.group_by_row or self.active_characters or self.pending_chars:
+            if not self.pending_chars and self.group_by_row:
+                self.pending_chars.extend(self.group_by_row.pop(min(self.group_by_row.keys())))  # type: ignore
+            if self.pending_chars:
                 if self.ball_delay == 0:
                     for _ in range(random.randint(2, 6)):
-                        if self._pending_chars:
-                            next_character = self._pending_chars.pop(random.randint(0, len(self._pending_chars) - 1))
-                            self._terminal.set_character_visibility(next_character, True)
-                            self._active_chars.append(next_character)
+                        if self.pending_chars:
+                            next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
+                            self.terminal.set_character_visibility(next_character, True)
+                            self.active_characters.append(next_character)
                         else:
                             break
-                    self.ball_delay = self._config.ball_delay
+                    self.ball_delay = self.config.ball_delay
                 else:
                     self.ball_delay -= 1
 
-            for character in self._active_chars:
-                character.tick()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

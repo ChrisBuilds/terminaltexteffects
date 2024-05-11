@@ -136,38 +136,37 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
 
     def __init__(self, effect: "BinaryPath") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._pending_binary_representations: list[BinaryPathIterator._BinaryRepresentation] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._last_frame_provided = False
-        self._active_binary_reps: list[BinaryPathIterator._BinaryRepresentation] = []
-        self._complete = False
-        self._phase = "travel"
-        self._final_wipe_chars = self._terminal.get_characters_grouped(
-            grouping=self._terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT
+        self.pending_chars: list[EffectCharacter] = []
+        self.pending_binary_representations: list[BinaryPathIterator._BinaryRepresentation] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.last_frame_provided = False
+        self.active_binary_reps: list[BinaryPathIterator._BinaryRepresentation] = []
+        self.complete = False
+        self.phase = "travel"
+        self.final_wipe_chars = self.terminal.get_characters_grouped(
+            grouping=self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT
         )
-        self._max_active_binary_groups: int = 0
-        self._build()
+        self.max_active_binary_groups: int = 0
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
-        for character in self._terminal.get_characters():
-            bin_rep = BinaryPathIterator._BinaryRepresentation(character, self._terminal)
+        for character in self.terminal.get_characters():
+            bin_rep = BinaryPathIterator._BinaryRepresentation(character, self.terminal)
             for binary_char in bin_rep.binary_string:
-                bin_rep.binary_characters.append(self._terminal.add_character(binary_char, Coord(0, 0)))
+                bin_rep.binary_characters.append(self.terminal.add_character(binary_char, Coord(0, 0)))
                 bin_rep.pending_binary_characters.append(bin_rep.binary_characters[-1])
-            self._pending_binary_representations.append(bin_rep)
+            self.pending_binary_representations.append(bin_rep)
 
-        for bin_rep in self._pending_binary_representations:
+        for bin_rep in self.pending_binary_representations:
             path_coords: list[Coord] = []
-            starting_coord = self._terminal.output_area.random_coord(outside_scope=True)
+            starting_coord = self.terminal.output_area.random_coord(outside_scope=True)
             path_coords.append(starting_coord)
             last_orientation = random.choice(("col", "row"))
             while path_coords[-1] != bin_rep.character.input_coord:
@@ -191,7 +190,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                         last_coord.column,
                         last_coord.row
                         + (
-                            random.randint(1, min(max_row_distance, max(10, int(self._terminal._input_width * 0.2))))
+                            random.randint(1, min(max_row_distance, max(10, int(self.terminal._input_width * 0.2))))
                             * row_direction
                         ),
                     )
@@ -212,77 +211,75 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
             path_coords.append(final_coord)
             for bin_effectchar in bin_rep.binary_characters:
                 bin_effectchar.motion.set_coordinate(path_coords[0])
-                digital_path = bin_effectchar.motion.new_path(speed=self._config.movement_speed)
+                digital_path = bin_effectchar.motion.new_path(speed=self.config.movement_speed)
                 for coord in path_coords:
                     digital_path.new_waypoint(coord)
                 bin_effectchar.motion.activate_path(digital_path)
                 bin_effectchar.layer = 1
                 color_scn = bin_effectchar.animation.new_scene()
-                color_scn.add_frame(bin_effectchar.symbol, 1, color=random.choice(self._config.binary_colors))
+                color_scn.add_frame(bin_effectchar.symbol, 1, color=random.choice(self.config.binary_colors))
                 bin_effectchar.animation.activate_scene(color_scn)
 
-        for character in self._terminal.get_characters():
+        for character in self.terminal.get_characters():
             collapse_scn = character.animation.new_scene(ease=easing.in_quad, id="collapse_scn")
-            dim_color = character.animation.adjust_color_brightness(self._character_final_color_map[character], 0.5)
+            dim_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.5)
             dim_gradient = graphics.Gradient("ffffff", dim_color, steps=10)
             collapse_scn.apply_gradient_to_symbols(dim_gradient, character.input_symbol, 7)
 
             brighten_scn = character.animation.new_scene(id="brighten_scn")
-            brighten_gradient = graphics.Gradient(dim_color, self._character_final_color_map[character], steps=10)
+            brighten_gradient = graphics.Gradient(dim_color, self.character_final_color_map[character], steps=10)
             brighten_scn.apply_gradient_to_symbols(brighten_gradient, character.input_symbol, 2)
-        self._max_active_binary_groups = max(
-            1, int(self._config.active_binary_groups * len(self._pending_binary_representations))
+        self.max_active_binary_groups = max(
+            1, int(self.config.active_binary_groups * len(self.pending_binary_representations))
         )
 
     def __next__(self) -> str:
-        if not self._complete or self._active_chars:
-            if self._phase == "travel":
+        if not self.complete or self.active_characters:
+            if self.phase == "travel":
                 while (
-                    len(self._active_binary_reps) < self._max_active_binary_groups
-                    and self._pending_binary_representations
+                    len(self.active_binary_reps) < self.max_active_binary_groups and self.pending_binary_representations
                 ):
-                    next_binary_rep = self._pending_binary_representations.pop(
-                        random.randrange(len(self._pending_binary_representations))
+                    next_binary_rep = self.pending_binary_representations.pop(
+                        random.randrange(len(self.pending_binary_representations))
                     )
                     next_binary_rep.is_active = True
-                    self._active_binary_reps.append(next_binary_rep)
+                    self.active_binary_reps.append(next_binary_rep)
 
-                if self._active_binary_reps:
-                    for active_rep in self._active_binary_reps:
+                if self.active_binary_reps:
+                    for active_rep in self.active_binary_reps:
                         if active_rep.pending_binary_characters:
                             next_char = active_rep.pending_binary_characters.pop(0)
-                            self._active_chars.append(next_char)
-                            self._terminal.set_character_visibility(next_char, True)
+                            self.active_characters.append(next_char)
+                            self.terminal.set_character_visibility(next_char, True)
                         elif active_rep._travel_complete():
                             active_rep._deactivate()
                             active_rep._activate_source_character()
-                            self._active_chars.append(active_rep.character)
+                            self.active_characters.append(active_rep.character)
 
-                    self._active_binary_reps = [
-                        binary_rep for binary_rep in self._active_binary_reps if binary_rep.is_active
+                    self.active_binary_reps = [
+                        binary_rep for binary_rep in self.active_binary_reps if binary_rep.is_active
                     ]
 
-                if not self._active_chars:
-                    self._phase = "wipe"
+                if not self.active_characters:
+                    self.phase = "wipe"
 
-            if self._phase == "wipe":
-                if self._final_wipe_chars:
-                    next_group = self._final_wipe_chars.pop(0)
+            if self.phase == "wipe":
+                if self.final_wipe_chars:
+                    next_group = self.final_wipe_chars.pop(0)
                     for character in next_group:
                         character.animation.activate_scene(character.animation.query_scene("brighten_scn"))
-                        self._terminal.set_character_visibility(character, True)
-                        self._active_chars.append(character)
+                        self.terminal.set_character_visibility(character, True)
+                        self.active_characters.append(character)
                 else:
-                    self._complete = True
-            next_frame = self._terminal.get_formatted_output_string()
-            for character in self._active_chars:
-                character.tick()
+                    self.complete = True
 
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return next_frame
-        elif not self._last_frame_provided:
-            self._last_frame_provided = True
-            return self._terminal.get_formatted_output_string()
+            self.update()
+            return self.frame
+
+        elif not self.last_frame_provided:
+            self.last_frame_provided = True
+            return self.frame
+
         else:
             raise StopIteration
 

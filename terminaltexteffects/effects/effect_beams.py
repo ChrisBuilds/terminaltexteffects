@@ -191,7 +191,7 @@ class BeamsConfig(ArgsDataClass):
 
 
 class BeamsIterator(BaseEffectIterator[BeamsConfig]):
-    class _Group:
+    class Group:
         def __init__(self, characters: list[EffectCharacter], direction: str, terminal: Terminal, args: BeamsConfig):
             self.characters = characters
             self.direction: str = direction
@@ -229,96 +229,92 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
 
     def __init__(self, effect: "Beams") -> None:
         super().__init__(effect)
-        self._pending_groups: list[BeamsIterator._Group] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._active_groups: list[BeamsIterator._Group] = []
-        self._delay = 0
-        self._phase = "beams"
-        self._final_wipe_groups = self._terminal.get_characters_grouped(
+        self.pending_groups: list[BeamsIterator.Group] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.active_groups: list[BeamsIterator.Group] = []
+        self.delay = 0
+        self.phase = "beams"
+        self.final_wipe_groups = self.terminal.get_characters_grouped(
             Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
         )
-        self._build()
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters(fill_chars=True):
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters(fill_chars=True):
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
-        beam_gradient = graphics.Gradient(*self._config.beam_gradient_stops, steps=self._config.beam_gradient_steps)
-        groups: list[BeamsIterator._Group] = []
-        for row in self._terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
-            groups.append(BeamsIterator._Group(row, "row", self._terminal, self._config))
-        for column in self._terminal.get_characters_grouped(
+        beam_gradient = graphics.Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
+        groups: list[BeamsIterator.Group] = []
+        for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
+            groups.append(BeamsIterator.Group(row, "row", self.terminal, self.config))
+        for column in self.terminal.get_characters_grouped(
             Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, fill_chars=True
         ):
-            groups.append(BeamsIterator._Group(column, "column", self._terminal, self._config))
+            groups.append(BeamsIterator.Group(column, "column", self.terminal, self.config))
         for group in groups:
             for character in group.characters:
                 beam_row_scn = character.animation.new_scene(id="beam_row")
                 beam_column_scn = character.animation.new_scene(id="beam_column")
                 beam_row_scn.apply_gradient_to_symbols(
-                    beam_gradient, self._config.beam_row_symbols, self._config.beam_gradient_frames
+                    beam_gradient, self.config.beam_row_symbols, self.config.beam_gradient_frames
                 )
                 beam_column_scn.apply_gradient_to_symbols(
-                    beam_gradient, self._config.beam_column_symbols, self._config.beam_gradient_frames
+                    beam_gradient, self.config.beam_column_symbols, self.config.beam_gradient_frames
                 )
                 faded_color = character.animation.adjust_color_brightness(
-                    self._character_final_color_map[character], 0.3
+                    self.character_final_color_map[character], 0.3
                 )
-                fade_gradient = graphics.Gradient(self._character_final_color_map[character], faded_color, steps=10)
+                fade_gradient = graphics.Gradient(self.character_final_color_map[character], faded_color, steps=10)
                 beam_row_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
                 beam_column_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
-                brighten_gradient = graphics.Gradient(faded_color, self._character_final_color_map[character], steps=10)
+                brighten_gradient = graphics.Gradient(faded_color, self.character_final_color_map[character], steps=10)
                 brigthen_scn = character.animation.new_scene(id="brighten")
                 brigthen_scn.apply_gradient_to_symbols(
-                    brighten_gradient, character.input_symbol, self._config.final_gradient_frames
+                    brighten_gradient, character.input_symbol, self.config.final_gradient_frames
                 )
-        self._pending_groups = groups
-        random.shuffle(self._pending_groups)
+        self.pending_groups = groups
+        random.shuffle(self.pending_groups)
 
     def __next__(self) -> str:
-        if self._phase != "complete" or self._active_chars:
-            if self._phase == "beams":
-                if not self._delay:
-                    if self._pending_groups:
+        if self.phase != "complete" or self.active_characters:
+            if self.phase == "beams":
+                if not self.delay:
+                    if self.pending_groups:
                         for _ in range(random.randint(1, 5)):
-                            if self._pending_groups:
-                                self._active_groups.append(self._pending_groups.pop(0))
-                    self._delay = self._config.beam_delay
+                            if self.pending_groups:
+                                self.active_groups.append(self.pending_groups.pop(0))
+                    self.delay = self.config.beam_delay
                 else:
-                    self._delay -= 1
-                for group in self._active_groups:
+                    self.delay -= 1
+                for group in self.active_groups:
                     group.increment_next_character_counter()
                     if int(group.next_character_counter) > 1:
                         for _ in range(int(group.next_character_counter)):
                             if not group.complete():
                                 next_char = group.get_next_character()
                                 if next_char:
-                                    self._active_chars.append(next_char)
-                self._active_groups = [group for group in self._active_groups if not group.complete()]
-                if not self._pending_groups and not self._active_groups and not self._active_chars:
-                    self._phase = "final_wipe"
-            elif self._phase == "final_wipe":
-                if self._final_wipe_groups:
-                    for _ in range(self._config.final_wipe_speed):
-                        if not self._final_wipe_groups:
+                                    self.active_characters.append(next_char)
+                self.active_groups = [group for group in self.active_groups if not group.complete()]
+                if not self.pending_groups and not self.active_groups and not self.active_characters:
+                    self.phase = "final_wipe"
+            elif self.phase == "final_wipe":
+                if self.final_wipe_groups:
+                    for _ in range(self.config.final_wipe_speed):
+                        if not self.final_wipe_groups:
                             break
-                        next_group = self._final_wipe_groups.pop(0)
+                        next_group = self.final_wipe_groups.pop(0)
                         for character in next_group:
                             character.animation.activate_scene(character.animation.query_scene("brighten"))
-                            self._terminal.set_character_visibility(character, True)
-                            self._active_chars.append(character)
+                            self.terminal.set_character_visibility(character, True)
+                            self.active_characters.append(character)
                 else:
-                    self._phase = "complete"
-            next_frame = self._terminal.get_formatted_output_string()
-            for character in self._active_chars:
-                character.tick()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return next_frame
+                    self.phase = "complete"
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

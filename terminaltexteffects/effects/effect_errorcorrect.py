@@ -126,61 +126,60 @@ class ErrorCorrectConfig(ArgsDataClass):
 class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
     def __init__(self, effect: "ErrorCorrect") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._swapped: list[tuple[EffectCharacter, EffectCharacter]] = []
-        self._swap_delay = 0
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.swapped: list[tuple[EffectCharacter, EffectCharacter]] = []
+        self.swap_delay = 0
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        for character in self._terminal.get_characters():
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters():
             spawn_scene = character.animation.new_scene()
-            spawn_scene.add_frame(character.input_symbol, 1, color=self._character_final_color_map[character])
+            spawn_scene.add_frame(character.input_symbol, 1, color=self.character_final_color_map[character])
             character.animation.activate_scene(spawn_scene)
-            self._terminal.set_character_visibility(character, True)
-        all_characters: list[EffectCharacter] = list(self._terminal._input_characters)
-        correcting_gradient = graphics.Gradient(self._config.error_color, self._config.correct_color, steps=10)
+            self.terminal.set_character_visibility(character, True)
+        all_characters: list[EffectCharacter] = list(self.terminal._input_characters)
+        correcting_gradient = graphics.Gradient(self.config.error_color, self.config.correct_color, steps=10)
         block_symbol = "▓"
         block_wipe_start = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
         block_wipe_end = ("▇", "▆", "▅", "▄", "▃", "▂", "▁")
-        for _ in range(int(self._config.error_pairs * len(self._terminal.get_characters()))):
+        for _ in range(int(self.config.error_pairs * len(self.terminal.get_characters()))):
             if len(all_characters) < 2:
                 break
             char1 = all_characters.pop(random.randrange(len(all_characters)))
             char2 = all_characters.pop(random.randrange(len(all_characters)))
             char1.motion.set_coordinate(char2.input_coord)
-            char1_input_coord_path = char1.motion.new_path(id="input_coord", speed=self._config.movement_speed)
+            char1_input_coord_path = char1.motion.new_path(id="input_coord", speed=self.config.movement_speed)
             char1_input_coord_path.new_waypoint(char1.input_coord)
             char2.motion.set_coordinate(char1.input_coord)
-            char2_input_coord_path = char2.motion.new_path(id="input_coord", speed=self._config.movement_speed)
+            char2_input_coord_path = char2.motion.new_path(id="input_coord", speed=self.config.movement_speed)
             char2_input_coord_path.new_waypoint(char2.input_coord)
-            self._swapped.append((char1, char2))
+            self.swapped.append((char1, char2))
             for character in (char1, char2):
                 first_block_wipe = character.animation.new_scene()
                 last_block_wipe = character.animation.new_scene()
                 for block in block_wipe_start:
-                    first_block_wipe.add_frame(block, 3, color=self._config.error_color)
+                    first_block_wipe.add_frame(block, 3, color=self.config.error_color)
                 for block in block_wipe_end:
-                    last_block_wipe.add_frame(block, 3, color=self._config.correct_color)
+                    last_block_wipe.add_frame(block, 3, color=self.config.correct_color)
                 initial_scene = character.animation.new_scene()
-                initial_scene.add_frame(character.input_symbol, 1, color=self._config.error_color)
+                initial_scene.add_frame(character.input_symbol, 1, color=self.config.error_color)
                 character.animation.activate_scene(initial_scene)
                 error_scene = character.animation.new_scene(id="error")
                 for _ in range(10):
-                    error_scene.add_frame(block_symbol, 3, color=self._config.error_color)
+                    error_scene.add_frame(block_symbol, 3, color=self.config.error_color)
                     error_scene.add_frame(character.input_symbol, 3, color="ffffff")
                 correcting_scene = character.animation.new_scene(sync=animation.SyncMetric.DISTANCE)
                 correcting_scene.apply_gradient_to_symbols(correcting_gradient, "█", 3)
                 final_scene = character.animation.new_scene()
                 char_final_gradient = graphics.Gradient(
-                    self._config.correct_color, self._character_final_color_map[character], steps=10
+                    self.config.correct_color, self.character_final_color_map[character], steps=10
                 )
                 final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 3)
                 input_coord_path = character.motion.query_path("input_coord")
@@ -229,20 +228,17 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 )
 
     def __next__(self) -> str:
-        if self._swapped and not self._swap_delay:
-            next_pair = self._swapped.pop(0)
+        if self.swapped and not self.swap_delay:
+            next_pair = self.swapped.pop(0)
             for char in next_pair:
                 char.animation.activate_scene(char.animation.query_scene("error"))
-                self._active_chars.append(char)
-            self._swap_delay = self._config.swap_delay
-        elif self._swap_delay:
-            self._swap_delay -= 1
-        if self._active_chars:
-            for character in self._active_chars:
-                character.tick()
-            next_frame = self._terminal.get_formatted_output_string()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return next_frame
+                self.active_characters.append(char)
+            self.swap_delay = self.config.swap_delay
+        elif self.swap_delay:
+            self.swap_delay -= 1
+        if self.active_characters:
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

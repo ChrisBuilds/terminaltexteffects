@@ -149,88 +149,84 @@ class PourIterator(BaseEffectIterator[PourConfig]):
 
     def __init__(self, effect: "Pour") -> None:
         super().__init__(effect)
-        self._pending_groups: list[list[EffectCharacter]] = []
-        self._active_characters: list[EffectCharacter] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_groups: list[list[EffectCharacter]] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
+    def build(self) -> None:
         self._pour_direction = {
             "down": PourIterator.PourDirection.DOWN,
             "up": PourIterator.PourDirection.UP,
             "left": PourIterator.PourDirection.LEFT,
             "right": PourIterator.PourDirection.RIGHT,
-        }.get(self._config.pour_direction, PourIterator.PourDirection.DOWN)
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+        }.get(self.config.pour_direction, PourIterator.PourDirection.DOWN)
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         sort_map = {
             PourIterator.PourDirection.DOWN: Terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
             PourIterator.PourDirection.UP: Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
             PourIterator.PourDirection.LEFT: Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             PourIterator.PourDirection.RIGHT: Terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
         }
-        groups = self._terminal.get_characters_grouped(grouping=sort_map[self._pour_direction])
+        groups = self.terminal.get_characters_grouped(grouping=sort_map[self._pour_direction])
         for i, group in enumerate(groups):
             for character in group:
-                self._terminal.set_character_visibility(character, False)
+                self.terminal.set_character_visibility(character, False)
                 if self._pour_direction == PourIterator.PourDirection.DOWN:
-                    character.motion.set_coordinate(Coord(character.input_coord.column, self._terminal.output_area.top))
+                    character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
                 elif self._pour_direction == PourIterator.PourDirection.UP:
                     character.motion.set_coordinate(
-                        Coord(character.input_coord.column, self._terminal.output_area.bottom)
+                        Coord(character.input_coord.column, self.terminal.output_area.bottom)
                     )
                 elif self._pour_direction == PourIterator.PourDirection.LEFT:
-                    character.motion.set_coordinate(Coord(self._terminal.output_area.right, character.input_coord.row))
+                    character.motion.set_coordinate(Coord(self.terminal.output_area.right, character.input_coord.row))
                 elif self._pour_direction == PourIterator.PourDirection.RIGHT:
-                    character.motion.set_coordinate(Coord(self._terminal.output_area.left, character.input_coord.row))
+                    character.motion.set_coordinate(Coord(self.terminal.output_area.left, character.input_coord.row))
                 input_coord_path = character.motion.new_path(
-                    speed=self._config.movement_speed,
-                    ease=self._config.movement_easing,
+                    speed=self.config.movement_speed,
+                    ease=self.config.movement_easing,
                 )
                 input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
 
                 pour_gradient = graphics.Gradient(
-                    self._config.starting_color,
-                    self._character_final_color_map[character],
-                    steps=self._config.final_gradient_steps,
+                    self.config.starting_color,
+                    self.character_final_color_map[character],
+                    steps=self.config.final_gradient_steps,
                 )
                 pour_scn = character.animation.new_scene()
                 pour_scn.apply_gradient_to_symbols(
-                    pour_gradient, character.input_symbol, self._config.final_gradient_frames
+                    pour_gradient, character.input_symbol, self.config.final_gradient_frames
                 )
                 character.animation.activate_scene(pour_scn)
             if i % 2 == 0:
-                self._pending_groups.append(group)
+                self.pending_groups.append(group)
             else:
-                self._pending_groups.append(group[::-1])
+                self.pending_groups.append(group[::-1])
         self.gap = 0
-        self.current_group = self._pending_groups.pop(0)
+        self.current_group = self.pending_groups.pop(0)
 
     def __next__(self) -> str:
-        if self._pending_groups or self._active_characters or self.current_group:
+        if self.pending_groups or self.active_characters or self.current_group:
             if not self.current_group:
-                if self._pending_groups:
-                    self.current_group = self._pending_groups.pop(0)
+                if self.pending_groups:
+                    self.current_group = self.pending_groups.pop(0)
             if self.current_group:
                 if not self.gap:
-                    for _ in range(self._config.pour_speed):
+                    for _ in range(self.config.pour_speed):
                         if self.current_group:
                             next_character = self.current_group.pop(0)
-                            self._terminal.set_character_visibility(next_character, True)
-                            self._active_characters.append(next_character)
-                    self.gap = self._config.gap
+                            self.terminal.set_character_visibility(next_character, True)
+                            self.active_characters.append(next_character)
+                    self.gap = self.config.gap
                 else:
                     self.gap -= 1
-            for character in self._active_characters:
-                character.tick()
-            next_frame = self._terminal.get_formatted_output_string()
-            self._active_characters = [character for character in self._active_characters if character.is_active]
-            return next_frame
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

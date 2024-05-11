@@ -112,7 +112,7 @@ class SprayConfig(ArgsDataClass):
 
 
 class SprayIterator(BaseEffectIterator[SprayConfig]):
-    class _SprayPosition(Enum):
+    class SprayPosition(Enum):
         N = auto()
         NE = auto()
         E = auto()
@@ -123,61 +123,53 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
         NW = auto()
         CENTER = auto()
 
-    def __init__(
-        self,
-        effect: "Spray",
-    ) -> None:
+    def __init__(self, effect: "Spray") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
+    def build(self) -> None:
         self._spray_position = {
-            "n": SprayIterator._SprayPosition.N,
-            "ne": SprayIterator._SprayPosition.NE,
-            "e": SprayIterator._SprayPosition.E,
-            "se": SprayIterator._SprayPosition.SE,
-            "s": SprayIterator._SprayPosition.S,
-            "sw": SprayIterator._SprayPosition.SW,
-            "w": SprayIterator._SprayPosition.W,
-            "nw": SprayIterator._SprayPosition.NW,
-            "center": SprayIterator._SprayPosition.CENTER,
-        }.get(self._config.spray_position, SprayIterator._SprayPosition.E)
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+            "n": SprayIterator.SprayPosition.N,
+            "ne": SprayIterator.SprayPosition.NE,
+            "e": SprayIterator.SprayPosition.E,
+            "se": SprayIterator.SprayPosition.SE,
+            "s": SprayIterator.SprayPosition.S,
+            "sw": SprayIterator.SprayPosition.SW,
+            "w": SprayIterator.SprayPosition.W,
+            "nw": SprayIterator.SprayPosition.NW,
+            "center": SprayIterator.SprayPosition.CENTER,
+        }.get(self.config.spray_position, SprayIterator.SprayPosition.E)
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         spray_origin_map = {
-            SprayIterator._SprayPosition.CENTER: (self._terminal.output_area.center),
-            SprayIterator._SprayPosition.N: Coord(
-                self._terminal.output_area.right // 2, self._terminal.output_area.top
+            SprayIterator.SprayPosition.CENTER: (self.terminal.output_area.center),
+            SprayIterator.SprayPosition.N: Coord(self.terminal.output_area.right // 2, self.terminal.output_area.top),
+            SprayIterator.SprayPosition.NW: Coord(self.terminal.output_area.left, self.terminal.output_area.top),
+            SprayIterator.SprayPosition.W: Coord(self.terminal.output_area.left, self.terminal.output_area.top // 2),
+            SprayIterator.SprayPosition.SW: Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
+            SprayIterator.SprayPosition.S: Coord(
+                self.terminal.output_area.right // 2, self.terminal.output_area.bottom
             ),
-            SprayIterator._SprayPosition.NW: Coord(self._terminal.output_area.left, self._terminal.output_area.top),
-            SprayIterator._SprayPosition.W: Coord(self._terminal.output_area.left, self._terminal.output_area.top // 2),
-            SprayIterator._SprayPosition.SW: Coord(self._terminal.output_area.left, self._terminal.output_area.bottom),
-            SprayIterator._SprayPosition.S: Coord(
-                self._terminal.output_area.right // 2, self._terminal.output_area.bottom
+            SprayIterator.SprayPosition.SE: Coord(
+                self.terminal.output_area.right - 1, self.terminal.output_area.bottom
             ),
-            SprayIterator._SprayPosition.SE: Coord(
-                self._terminal.output_area.right - 1, self._terminal.output_area.bottom
+            SprayIterator.SprayPosition.E: Coord(
+                self.terminal.output_area.right - 1, self.terminal.output_area.top // 2
             ),
-            SprayIterator._SprayPosition.E: Coord(
-                self._terminal.output_area.right - 1, self._terminal.output_area.top // 2
-            ),
-            SprayIterator._SprayPosition.NE: Coord(
-                self._terminal.output_area.right - 1, self._terminal.output_area.top
-            ),
+            SprayIterator.SprayPosition.NE: Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top),
         }
 
-        for character in self._terminal.get_characters():
+        for character in self.terminal.get_characters():
             character.motion.set_coordinate(spray_origin_map[self._spray_position])
             input_coord_path = character.motion.new_path(
-                speed=random.uniform(self._config.movement_speed[0], self._config.movement_speed[1]),
-                ease=self._config.movement_easing,
+                speed=random.uniform(self.config.movement_speed[0], self.config.movement_speed[1]),
+                ease=self.config.movement_easing,
             )
             input_coord_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
@@ -188,28 +180,26 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
             )
             droplet_scn = character.animation.new_scene()
             spray_gradient = graphics.Gradient(
-                random.choice(final_gradient.spectrum), self._character_final_color_map[character], steps=7
+                random.choice(final_gradient.spectrum), self.character_final_color_map[character], steps=7
             )
             droplet_scn.apply_gradient_to_symbols(spray_gradient, character.input_symbol, 20)
             character.animation.activate_scene(droplet_scn)
             character.motion.activate_path(input_coord_path)
-            self._pending_chars.append(character)
-        random.shuffle(self._pending_chars)
-        self._volume = max(int(len(self._pending_chars) * self._config.spray_volume), 1)
+            self.pending_chars.append(character)
+        random.shuffle(self.pending_chars)
+        self._volume = max(int(len(self.pending_chars) * self.config.spray_volume), 1)
 
     def __next__(self) -> str:
-        if self._pending_chars or self._active_chars:
-            if self._pending_chars:
+        if self.pending_chars or self.active_characters:
+            if self.pending_chars:
                 for _ in range(random.randint(1, self._volume)):
-                    if self._pending_chars:
-                        next_character = self._pending_chars.pop()
-                        self._terminal.set_character_visibility(next_character, True)
-                        self._active_chars.append(next_character)
+                    if self.pending_chars:
+                        next_character = self.pending_chars.pop()
+                        self.terminal.set_character_visibility(next_character, True)
+                        self.active_characters.append(next_character)
 
-            for character in self._active_chars:
-                character.tick()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

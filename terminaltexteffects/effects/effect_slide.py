@@ -136,75 +136,74 @@ class SlideConfig(ArgsDataClass):
 class SlideIterator(BaseEffectIterator[SlideConfig]):
     def __init__(self, effect: "Slide") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._pending_groups: list[list[EffectCharacter]] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.pending_groups: list[list[EffectCharacter]] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
         groups: list[list[EffectCharacter]] = []
-        if self._config.grouping == "row":
-            groups = self._terminal.get_characters_grouped(self._terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
-        elif self._config.grouping == "column":
-            groups = self._terminal.get_characters_grouped(self._terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
-        elif self._config.grouping == "diagonal":
-            groups = self._terminal.get_characters_grouped(
-                self._terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
+        if self.config.grouping == "row":
+            groups = self.terminal.get_characters_grouped(self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
+        elif self.config.grouping == "column":
+            groups = self.terminal.get_characters_grouped(self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
+        elif self.config.grouping == "diagonal":
+            groups = self.terminal.get_characters_grouped(
+                self.terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
             )
         for group in groups:
             for character in group:
                 input_path = character.motion.new_path(
-                    id="input_path", speed=self._config.movement_speed, ease=self._config.movement_easing
+                    id="input_path", speed=self.config.movement_speed, ease=self.config.movement_easing
                 )
                 input_path.new_waypoint(character.input_coord)
 
         for group_index, group in enumerate(groups):
-            if self._config.grouping == "row":
-                if self._config.merge and group_index % 2 == 0:
-                    starting_column = self._terminal.output_area.right + 1
+            if self.config.grouping == "row":
+                if self.config.merge and group_index % 2 == 0:
+                    starting_column = self.terminal.output_area.right + 1
                 else:
                     groups[group_index] = groups[group_index][::-1]
-                    starting_column = self._terminal.output_area.left - 1
-                if self._config.reverse_direction and not self._config.merge:
+                    starting_column = self.terminal.output_area.left - 1
+                if self.config.reverse_direction and not self.config.merge:
                     groups[group_index] = groups[group_index][::-1]
-                    starting_column = self._terminal.output_area.right + 1
+                    starting_column = self.terminal.output_area.right + 1
                 for character in groups[group_index]:
                     character.motion.set_coordinate(geometry.Coord(starting_column, character.input_coord.row))
-            elif self._config.grouping == "column":
-                if self._config.merge and group_index % 2 == 0:
-                    starting_row = self._terminal.output_area.bottom - 1
+            elif self.config.grouping == "column":
+                if self.config.merge and group_index % 2 == 0:
+                    starting_row = self.terminal.output_area.bottom - 1
                 else:
                     groups[group_index] = groups[group_index][::-1]
-                    starting_row = self._terminal.output_area.top + 1
-                if self._config.reverse_direction and not self._config.merge:
+                    starting_row = self.terminal.output_area.top + 1
+                if self.config.reverse_direction and not self.config.merge:
                     groups[group_index] = groups[group_index][::-1]
-                    starting_row = self._terminal.output_area.bottom - 1
+                    starting_row = self.terminal.output_area.bottom - 1
                 for character in groups[group_index]:
                     character.motion.set_coordinate(geometry.Coord(character.input_coord.column, starting_row))
-            if self._config.grouping == "diagonal":
-                distance_from_outside_bottom = group[-1].input_coord.row - (self._terminal.output_area.bottom - 1)
+            if self.config.grouping == "diagonal":
+                distance_from_outside_bottom = group[-1].input_coord.row - (self.terminal.output_area.bottom - 1)
                 starting_coord = geometry.Coord(
                     group[-1].input_coord.column - distance_from_outside_bottom,
                     group[-1].input_coord.row - distance_from_outside_bottom,
                 )
-                if self._config.merge and group_index % 2 == 0:
+                if self.config.merge and group_index % 2 == 0:
                     groups[group_index] = groups[group_index][::-1]
-                    distance_from_outside = (self._terminal.output_area.top + 1) - group[0].input_coord.row
+                    distance_from_outside = (self.terminal.output_area.top + 1) - group[0].input_coord.row
                     starting_coord = geometry.Coord(
                         group[0].input_coord.column + distance_from_outside,
                         group[0].input_coord.row + distance_from_outside,
                     )
-                if self._config.reverse_direction and not self._config.merge:
+                if self.config.reverse_direction and not self.config.merge:
                     groups[group_index] = groups[group_index][::-1]
-                    distance_from_outside = (self._terminal.output_area.top + 1) - group[0].input_coord.row
+                    distance_from_outside = (self.terminal.output_area.top + 1) - group[0].input_coord.row
                     starting_coord = geometry.Coord(
                         group[0].input_coord.column + distance_from_outside,
                         group[0].input_coord.row + distance_from_outside,
@@ -215,36 +214,34 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
             for character in group:
                 gradient_scn = character.animation.new_scene()
                 char_gradient = graphics.Gradient(
-                    self._config.final_gradient_stops[0], self._character_final_color_map[character], steps=10
+                    self.config.final_gradient_stops[0], self.character_final_color_map[character], steps=10
                 )
                 gradient_scn.apply_gradient_to_symbols(
-                    char_gradient, character.input_symbol, self._config.final_gradient_frames
+                    char_gradient, character.input_symbol, self.config.final_gradient_frames
                 )
                 character.animation.activate_scene(gradient_scn)
 
-        self._pending_groups = groups
+        self.pending_groups = groups
         self._active_groups: list[list[EffectCharacter]] = []
         self._current_gap = 0
 
     def __next__(self) -> str:
-        if self._pending_groups or self._active_chars or self._active_groups:
-            if self._current_gap == self._config.gap and self._pending_groups:
-                self._active_groups.append(self._pending_groups.pop(0))
+        if self.pending_groups or self.active_characters or self._active_groups:
+            if self._current_gap == self.config.gap and self.pending_groups:
+                self._active_groups.append(self.pending_groups.pop(0))
                 self._current_gap = 0
             else:
-                if self._pending_groups:
+                if self.pending_groups:
                     self._current_gap += 1
             for group in self._active_groups:
                 if group:
                     next_char = group.pop(0)
-                    self._terminal.set_character_visibility(next_char, True)
+                    self.terminal.set_character_visibility(next_char, True)
                     next_char.motion.activate_path(next_char.motion.paths["input_path"])
-                    self._active_chars.append(next_char)
+                    self.active_characters.append(next_char)
             self._active_groups = [group for group in self._active_groups if group]
-            for character in self._active_chars:
-                character.tick()
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return self._terminal.get_formatted_output_string()
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 

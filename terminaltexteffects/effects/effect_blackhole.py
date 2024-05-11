@@ -103,21 +103,20 @@ class BlackholeConfig(ArgsDataClass):
 class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
     def __init__(self, effect: "Blackhole") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._blackhole_chars: list[EffectCharacter] = []
-        self._awaiting_consumption_chars: list[EffectCharacter] = []
-        self._blackhole_radius = max(
+        self.pending_chars: list[EffectCharacter] = []
+        self.blackhole_chars: list[EffectCharacter] = []
+        self.awaiting_consumption_chars: list[EffectCharacter] = []
+        self.blackhole_radius = max(
             min(
-                round(self._terminal.output_area.right * 0.3),
-                round(self._terminal.output_area.top * 0.3),
+                round(self.terminal.output_area.right * 0.3),
+                round(self.terminal.output_area.top * 0.3),
             ),
             3,
         )
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _prepare_blackhole(self) -> None:
+    def prepare_blackhole(self) -> None:
         star_symbols = [
             "*",
             "✸",
@@ -142,20 +141,20 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         gradient_map = {}
         for color in starfield_colors:
             gradient_map[color] = graphics.Gradient(color, "000000", steps=10)
-        available_chars = list(self._terminal._input_characters)
-        while len(self._blackhole_chars) < self._blackhole_radius * 3 and available_chars:
-            self._blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
+        available_chars = list(self.terminal._input_characters)
+        while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
+            self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
         black_hole_ring_positions = geometry.find_coords_on_circle(
-            self._terminal.output_area.center,
-            self._blackhole_radius,
-            len(self._blackhole_chars),
+            self.terminal.output_area.center,
+            self.blackhole_radius,
+            len(self.blackhole_chars),
         )
-        for position_index, character in enumerate(self._blackhole_chars):
+        for position_index, character in enumerate(self.blackhole_chars):
             starting_pos = black_hole_ring_positions[position_index]
             blackhole_path = character.motion.new_path(id="blackhole", speed=0.5, ease=easing.in_out_sine)
             blackhole_path.new_waypoint(starting_pos)
             blackhole_scn = character.animation.new_scene(id="blackhole")
-            blackhole_scn.add_frame("✸", 1, color=self._config.blackhole_color)
+            blackhole_scn.add_frame("✸", 1, color=self.config.blackhole_color)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED,
                 blackhole_path,
@@ -166,39 +165,39 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             blackhole_rotation_path = character.motion.new_path(id="blackhole_rotation", speed=0.2, loop=True)
             for coord in black_hole_ring_positions[position_index:] + black_hole_ring_positions[:position_index]:
                 blackhole_rotation_path.new_waypoint(coord, id=str(len(blackhole_rotation_path.waypoints)))
-        for character in self._terminal.get_characters():
-            self._terminal.set_character_visibility(character, True)
+        for character in self.terminal.get_characters():
+            self.terminal.set_character_visibility(character, True)
             starting_scn = character.animation.new_scene()
             star_symbol = random.choice(star_symbols)
             star_color = random.choice(starfield_colors)
             starting_scn.add_frame(star_symbol, 1, color=star_color)
             character.animation.activate_scene(starting_scn)
-            if character not in self._blackhole_chars:
-                starfield_coord = self._terminal.output_area.random_coord()
+            if character not in self.blackhole_chars:
+                starfield_coord = self.terminal.output_area.random_coord()
                 character.motion.set_coordinate(starfield_coord)
-                if starfield_coord.row > self._terminal.output_area.center_row:
+                if starfield_coord.row > self.terminal.output_area.center_row:
                     if starfield_coord.column in range(
-                        round(self._terminal.output_area.right * 0.4),
-                        round(self._terminal.output_area.right * 0.7),
+                        round(self.terminal.output_area.right * 0.4),
+                        round(self.terminal.output_area.right * 0.7),
                     ):
                         # if within the top center 40% of the screen
-                        control_point = Coord(self._terminal.output_area.center.column, starfield_coord.row)
+                        control_point = Coord(self.terminal.output_area.center.column, starfield_coord.row)
                     else:
-                        control_point = Coord(starfield_coord.column, self._terminal.output_area.center_row)
+                        control_point = Coord(starfield_coord.column, self.terminal.output_area.center_row)
 
-                elif starfield_coord.row < self._terminal.output_area.center_row:
+                elif starfield_coord.row < self.terminal.output_area.center_row:
                     if starfield_coord.column in range(
-                        round(self._terminal.output_area.right * 0.4),
-                        round(self._terminal.output_area.right * 0.7),
+                        round(self.terminal.output_area.right * 0.4),
+                        round(self.terminal.output_area.right * 0.7),
                     ):
                         # if within the bottom center 40% of the screen
-                        control_point = Coord(self._terminal.output_area.center.column, starfield_coord.row)
+                        control_point = Coord(self.terminal.output_area.center.column, starfield_coord.row)
                     else:
-                        control_point = Coord(starfield_coord.column, self._terminal.output_area.center_row)
+                        control_point = Coord(starfield_coord.column, self.terminal.output_area.center_row)
                 else:
-                    control_point = self._terminal.output_area.center
+                    control_point = self.terminal.output_area.center
                 singularity_path = character.motion.new_path(id="singularity", speed=0.3, ease=easing.in_expo)
-                singularity_path.new_waypoint(self._terminal.output_area.center, bezier_control=control_point)
+                singularity_path.new_waypoint(self.terminal.output_area.center, bezier_control=control_point)
                 consumed_scn = character.animation.new_scene()
                 for color in gradient_map[star_color]:
                     consumed_scn.add_frame(star_symbol, 1, color=color)
@@ -216,28 +215,28 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                     EventHandler.Action.ACTIVATE_SCENE,
                     consumed_scn,
                 )
-                self._awaiting_consumption_chars.append(character)
-        random.shuffle(self._awaiting_consumption_chars)
+                self.awaiting_consumption_chars.append(character)
+        random.shuffle(self.awaiting_consumption_chars)
 
-    def _rotate_blackhole(self) -> None:
-        for character in self._blackhole_chars:
+    def rotate_blackhole(self) -> None:
+        for character in self.blackhole_chars:
             character.motion.activate_path(character.motion.query_path("blackhole_rotation"))
-            self._active_chars.append(character)
+            self.active_characters.append(character)
 
-    def _collapse_blackhole(self) -> None:
+    def collapse_blackhole(self) -> None:
         black_hole_ring_positions = geometry.find_coords_on_circle(
-            self._terminal.output_area.center,
-            self._blackhole_radius + 3,
-            len(self._blackhole_chars),
+            self.terminal.output_area.center,
+            self.blackhole_radius + 3,
+            len(self.blackhole_chars),
         )
         unstable_symbols = ["◦", "◎", "◉", "●", "◉", "◎", "◦"]
         point_char_made = False
-        for character in self._blackhole_chars:
+        for character in self.blackhole_chars:
             next_pos = black_hole_ring_positions.pop(0)
             expand_path = character.motion.new_path(speed=0.1, ease=easing.in_expo)
             expand_path.new_waypoint(next_pos)
             collapse_path = character.motion.new_path(speed=0.3, ease=easing.in_expo)
-            collapse_path.new_waypoint(self._terminal.output_area.center)
+            collapse_path.new_waypoint(self.terminal.output_area.center)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
                 expand_path,
@@ -248,7 +247,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                 point_scn = character.animation.new_scene()
                 for _ in range(3):
                     for symbol in unstable_symbols:
-                        point_scn.add_frame(symbol, 6, color=random.choice(self._config.star_colors))
+                        point_scn.add_frame(symbol, 6, color=random.choice(self.config.star_colors))
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
                     collapse_path,
@@ -264,11 +263,11 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                 point_char_made = True
 
             character.motion.activate_path(expand_path)
-            self._active_chars.append(character)
+            self.active_characters.append(character)
 
-    def _explode_singularity(self) -> None:
+    def explode_singularity(self) -> None:
         star_colors = ["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c" "049dbf"]
-        for character in self._terminal.get_characters():
+        for character in self.terminal.get_characters():
             nearby_coord = geometry.find_coords_on_circle(character.input_coord, 3, 5)[random.randrange(0, 5)]
             nearby_path = character.motion.new_path(speed=random.randint(2, 3) / 10, ease=easing.out_expo)
             nearby_path.new_waypoint(nearby_coord)
@@ -279,7 +278,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             explode_scn.add_frame(character.input_symbol, 1, color=explode_star_color)
             cooling_scn = character.animation.new_scene()
             cooling_gradient = graphics.Gradient(
-                explode_star_color, self._character_final_color_map[character], steps=10
+                explode_star_color, self.character_final_color_map[character], steps=10
             )
             cooling_scn.apply_gradient_to_symbols(cooling_gradient, character.input_symbol, 20)
             character.event_handler.register_event(
@@ -296,47 +295,47 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             )
             character.animation.activate_scene(explode_scn)
             character.motion.activate_path(nearby_path)
-            self._active_chars.append(character)
+            self.active_characters.append(character)
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        self._prepare_blackhole()
-        self.formation_delay = max(100 // len(self._blackhole_chars), 10)
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        self.prepare_blackhole()
+        self.formation_delay = max(100 // len(self.blackhole_chars), 10)
         self.f_delay = self.formation_delay
         self.next_char_consuming_delay = 0
-        self.max_consume = max(min(int(0.1 * len(self._terminal._input_characters)), 15), 2)
+        self.max_consume = max(min(int(0.1 * len(self.terminal._input_characters)), 15), 2)
         self.phase = "forming"
-        self.awaiting_blackhole_chars = list(self._blackhole_chars)
+        self.awaiting_blackhole_chars = list(self.blackhole_chars)
 
     def __next__(self) -> str:
-        if self._active_chars or self.phase != "complete":
+        if self.active_characters or self.phase != "complete":
             if self.phase == "forming":
                 if self.awaiting_blackhole_chars:
                     if not self.f_delay:
                         next_char = self.awaiting_blackhole_chars.pop(0)
                         next_char.motion.activate_path(next_char.motion.query_path("blackhole"))
                         next_char.animation.activate_scene(next_char.animation.query_scene("blackhole"))
-                        self._active_chars.append(next_char)
+                        self.active_characters.append(next_char)
                         self.f_delay = self.formation_delay
                     else:
                         self.f_delay -= 1
                 else:
-                    if not self._active_chars:
-                        self._rotate_blackhole()
+                    if not self.active_characters:
+                        self.rotate_blackhole()
                         self.phase = "consuming"
             elif self.phase == "consuming":
-                if self._awaiting_consumption_chars:
+                if self.awaiting_consumption_chars:
                     if not self.next_char_consuming_delay:
                         for _ in range(random.randrange(1, self.max_consume)):
-                            if self._awaiting_consumption_chars:
-                                next_char = self._awaiting_consumption_chars.pop(0)
+                            if self.awaiting_consumption_chars:
+                                next_char = self.awaiting_consumption_chars.pop(0)
                                 next_char.motion.activate_path(next_char.motion.query_path("singularity"))
-                                self._active_chars.append(next_char)
+                                self.active_characters.append(next_char)
                             else:
                                 break
                         self.max_consume += 1
@@ -345,28 +344,24 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                         self.next_char_consuming_delay -= 1
 
                 else:
-                    if all(character in self._blackhole_chars for character in self._active_chars):
+                    if all(character in self.blackhole_chars for character in self.active_characters):
                         self.phase = "collapsing"
 
             elif self.phase == "collapsing":
-                self._collapse_blackhole()
+                self.collapse_blackhole()
                 self.phase = "exploding"
             elif self.phase == "exploding":
                 if all(
                     [
                         character.motion.active_path is None and character.animation.active_scene is None
-                        for character in self._blackhole_chars
+                        for character in self.blackhole_chars
                     ]
                 ):
-                    self._explode_singularity()
+                    self.explode_singularity()
                     self.phase = "complete"
 
-            for character in self._active_chars:
-                character.tick()
-            next_frame = self._terminal.get_formatted_output_string()
-
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return next_frame
+            self.update()
+            return self.frame
 
         else:
             raise StopIteration

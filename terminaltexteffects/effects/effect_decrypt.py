@@ -101,60 +101,59 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
 
     def __init__(self, effect: "Decrypt") -> None:
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._typing_pending_chars: list[EffectCharacter] = []
-        self._decrypting_pending_chars: list[EffectCharacter] = []
-        self._phase = "typing"
-        self._active_chars: list[EffectCharacter] = []
-        self._encrypted_symbols: list[str] = []
-        self._scenes: dict[str, animation.Scene] = {}
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._make_encrypted_symbols()
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.typing_pending_chars: list[EffectCharacter] = []
+        self.decrypting_pending_chars: list[EffectCharacter] = []
+        self.phase = "typing"
+        self.encrypted_symbols: list[str] = []
+        self.scenes: dict[str, animation.Scene] = {}
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.make_encrypted_symbols()
+        self.build()
 
-    def _make_encrypted_symbols(self) -> None:
+    def make_encrypted_symbols(self) -> None:
         for n in DecryptIterator._DecryptChars.keyboard:
-            self._encrypted_symbols.append(chr(n))
+            self.encrypted_symbols.append(chr(n))
         for n in DecryptIterator._DecryptChars.blocks:
-            self._encrypted_symbols.append(chr(n))
+            self.encrypted_symbols.append(chr(n))
         for n in DecryptIterator._DecryptChars.box_drawing:
-            self._encrypted_symbols.append(chr(n))
+            self.encrypted_symbols.append(chr(n))
         for n in DecryptIterator._DecryptChars.misc:
-            self._encrypted_symbols.append(chr(n))
+            self.encrypted_symbols.append(chr(n))
 
-    def _make_decrypting_animation_scenes(self, character: EffectCharacter) -> None:
+    def make_decrypting_animation_scenes(self, character: EffectCharacter) -> None:
         fast_decrypt_scene = character.animation.new_scene(id="fast_decrypt")
-        color = random.choice(self._config.ciphertext_colors)
+        color = random.choice(self.config.ciphertext_colors)
         for _ in range(80):
-            symbol = random.choice(self._encrypted_symbols)
+            symbol = random.choice(self.encrypted_symbols)
             fast_decrypt_scene.add_frame(symbol, 3, color=color)
             duration = 3
         slow_decrypt_scene = character.animation.new_scene(id="slow_decrypt")
         for _ in range(random.randint(1, 15)):  # 1-15 longer duration units
-            symbol = random.choice(self._encrypted_symbols)
+            symbol = random.choice(self.encrypted_symbols)
             if random.randint(0, 100) <= 30:  # 30% chance of extra long duration
                 duration = random.randrange(50, 125)  # wide long duration range reduces 'waves' in the animation
             else:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
             slow_decrypt_scene.add_frame(symbol, duration, color=color)
         discovered_scene = character.animation.new_scene(id="discovered")
-        discovered_gradient = graphics.Gradient("ffffff", self._character_final_color_map[character], steps=10)
+        discovered_gradient = graphics.Gradient("ffffff", self.character_final_color_map[character], steps=10)
         discovered_scene.apply_gradient_to_symbols(discovered_gradient, character.input_symbol, 8)
 
-    def _prepare_data_for_type_effect(self) -> None:
-        for character in self._terminal.get_characters():
+    def prepare_data_for_type_effect(self) -> None:
+        for character in self.terminal.get_characters():
             typing_scene = character.animation.new_scene(id="typing")
             for block_char in ["▉", "▓", "▒", "░"]:
-                typing_scene.add_frame(block_char, 2, color=random.choice(self._config.ciphertext_colors))
+                typing_scene.add_frame(block_char, 2, color=random.choice(self.config.ciphertext_colors))
 
             typing_scene.add_frame(
-                random.choice(self._encrypted_symbols), 2, color=random.choice(self._config.ciphertext_colors)
+                random.choice(self.encrypted_symbols), 2, color=random.choice(self.config.ciphertext_colors)
             )
-            self._typing_pending_chars.append(character)
+            self.typing_pending_chars.append(character)
 
-    def _prepare_data_for_decrypt_effect(self) -> None:
-        for character in self._terminal.get_characters():
-            self._make_decrypting_animation_scenes(character)
+    def prepare_data_for_decrypt_effect(self) -> None:
+        for character in self.terminal.get_characters():
+            self.make_decrypting_animation_scenes(character)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
                 character.animation.query_scene("fast_decrypt"),
@@ -168,45 +167,41 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
                 character.animation.query_scene("discovered"),
             )
             character.animation.activate_scene(character.animation.query_scene("fast_decrypt"))
-            self._decrypting_pending_chars.append(character)
+            self.decrypting_pending_chars.append(character)
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters():
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        self._prepare_data_for_type_effect()
-        self._prepare_data_for_decrypt_effect()
+        for character in self.terminal.get_characters():
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        self.prepare_data_for_type_effect()
+        self.prepare_data_for_decrypt_effect()
 
     def __next__(self) -> str:
-        if self._phase == "typing":
-            if self._typing_pending_chars or self._active_chars:
-                if self._typing_pending_chars:
+        if self.phase == "typing":
+            if self.typing_pending_chars or self.active_characters:
+                if self.typing_pending_chars:
                     if random.randint(0, 100) <= 75:
-                        for _ in range(self._config.typing_speed):
-                            if self._typing_pending_chars:
-                                next_character = self._typing_pending_chars.pop(0)
-                                self._terminal.set_character_visibility(next_character, True)
+                        for _ in range(self.config.typing_speed):
+                            if self.typing_pending_chars:
+                                next_character = self.typing_pending_chars.pop(0)
+                                self.terminal.set_character_visibility(next_character, True)
                                 next_character.animation.activate_scene(next_character.animation.query_scene("typing"))
-                                self._active_chars.append(next_character)
-                for character in self._active_chars:
-                    character.tick()
-                self._active_chars = [character for character in self._active_chars if character.is_active]
-                return self._terminal.get_formatted_output_string()
+                                self.active_characters.append(next_character)
+                self.update()
+                return self.frame
             else:
-                self._active_chars = self._decrypting_pending_chars
-                for char in self._active_chars:
+                self.active_characters = self.decrypting_pending_chars
+                for char in self.active_characters:
                     char.animation.activate_scene(char.animation.query_scene("fast_decrypt"))
-                self._phase = "decrypting"
+                self.phase = "decrypting"
 
-        if self._phase == "decrypting":
-            if self._active_chars:
-                for character in self._active_chars:
-                    character.tick()
-                self._active_chars = [character for character in self._active_chars if character.is_active]
-                return self._terminal.get_formatted_output_string()
+        if self.phase == "decrypting":
+            if self.active_characters:
+                self.update()
+                return self.frame
             else:
                 raise StopIteration
         else:

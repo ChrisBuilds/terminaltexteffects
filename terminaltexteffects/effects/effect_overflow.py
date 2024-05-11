@@ -104,7 +104,7 @@ class OverflowConfig(ArgsDataClass):
 
 
 class OverflowIterator(BaseEffectIterator[OverflowConfig]):
-    class _Row:
+    class Row:
         def __init__(self, characters: list[EffectCharacter], final: bool = False) -> None:
             self.characters = characters
             self.current_index = 0
@@ -125,51 +125,50 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
 
     def __init__(self, effect: "Overflow"):
         super().__init__(effect)
-        self._pending_chars: list[EffectCharacter] = []
-        self._active_chars: list[EffectCharacter] = []
-        self._pending_rows: list[OverflowIterator._Row] = []
-        self._active_rows: list[OverflowIterator._Row] = []
-        self._character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self._build()
+        self.pending_chars: list[EffectCharacter] = []
+        self.pending_rows: list[OverflowIterator.Row] = []
+        self.active_rows: list[OverflowIterator.Row] = []
+        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.build()
 
-    def _build(self) -> None:
-        final_gradient = graphics.Gradient(*self._config.final_gradient_stops, steps=self._config.final_gradient_steps)
+    def build(self) -> None:
+        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self._terminal.output_area.top, self._terminal.output_area.right, self._config.final_gradient_direction
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        for character in self._terminal.get_characters(fill_chars=True):
-            self._character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        lower_range, upper_range = self._config.overflow_cycles_range
-        rows = self._terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
+        for character in self.terminal.get_characters(fill_chars=True):
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+        lower_range, upper_range = self.config.overflow_cycles_range
+        rows = self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
         if upper_range > 0:
             for _ in range(random.randint(lower_range, upper_range)):
                 random.shuffle(rows)
                 for row in rows:
                     copied_characters = [
-                        self._terminal.add_character(character.input_symbol, character.input_coord) for character in row
+                        self.terminal.add_character(character.input_symbol, character.input_coord) for character in row
                     ]
-                    self._pending_rows.append(OverflowIterator._Row(copied_characters))
+                    self.pending_rows.append(OverflowIterator.Row(copied_characters))
         # add rows in correct order to the end of self.pending_rows
-        for row in self._terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
-            next_row = OverflowIterator._Row(row)
+        for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
+            next_row = OverflowIterator.Row(row)
             for character in next_row.characters:
-                character.animation.set_appearance(character.symbol, self._character_final_color_map[character])
+                character.animation.set_appearance(character.symbol, self.character_final_color_map[character])
             next_row.set_color(
-                final_gradient.get_color_at_fraction(row[0].input_coord.row / self._terminal.output_area.top)
+                final_gradient.get_color_at_fraction(row[0].input_coord.row / self.terminal.output_area.top)
             )
-            self._pending_rows.append(OverflowIterator._Row(row, final=True))
+            self.pending_rows.append(OverflowIterator.Row(row, final=True))
         self._delay = 0
         self._overflow_gradient = graphics.Gradient(
-            *self._config.overflow_gradient_stops,
-            steps=max((self._terminal.output_area.top // max(1, len(self._config.overflow_gradient_stops) - 1)), 1),
+            *self.config.overflow_gradient_stops,
+            steps=max((self.terminal.output_area.top // max(1, len(self.config.overflow_gradient_stops) - 1)), 1),
         )
 
     def __next__(self) -> str:
-        if self._pending_rows:
+        if self.pending_rows:
             if not self._delay:
-                for _ in range(random.randint(1, self._config.overflow_speed)):
-                    if self._pending_rows:
-                        for row in self._active_rows:
+                for _ in range(random.randint(1, self.config.overflow_speed)):
+                    if self.pending_rows:
+                        for row in self.active_rows:
                             row.move_up()
                             if not row.final:
                                 row.set_color(
@@ -180,29 +179,25 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                                         )
                                     ]
                                 )
-                        next_row = self._pending_rows.pop(0)
+                        next_row = self.pending_rows.pop(0)
                         next_row.setup()
                         next_row.move_up()
                         if not next_row.final:
                             next_row.set_color(self._overflow_gradient.spectrum[0])
                         for character in next_row.characters:
-                            self._terminal.set_character_visibility(character, True)
-                        self._active_rows.append(next_row)
+                            self.terminal.set_character_visibility(character, True)
+                        self.active_rows.append(next_row)
                 self._delay = random.randint(0, 3)
 
             else:
                 self._delay -= 1
-            self._active_rows = [
+            self.active_rows = [
                 row
-                for row in self._active_rows
-                if row.characters[0].motion.current_coord.row <= self._terminal.output_area.top
+                for row in self.active_rows
+                if row.characters[0].motion.current_coord.row <= self.terminal.output_area.top
             ]
-            for character in self._active_chars:
-                character.tick()
-            next_frame = self._terminal.get_formatted_output_string()
-
-            self._active_chars = [character for character in self._active_chars if character.is_active]
-            return next_frame
+            self.update()
+            return self.frame
         else:
             raise StopIteration
 
