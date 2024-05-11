@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../installation/">
+        <link rel="prev" href="../../libguide/">
       
       
-        <link rel="next" href="../libguide/">
+        <link rel="next" href="../effectguide_lesson0/">
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.19">
     
     
       
-        <title>Application Usage - TerminalTextEffects Docs</title>
+        <title>Writing Custom Effects with TTE - TerminalTextEffects Docs</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.66ac8b77.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.66ac8b77.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -50,9 +50,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#application-guide" class="md-skip">
+        <a href="#writing-custom-effects-with-tte" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="TerminalTextEffects Docs" class="md-header__button md-logo" aria-label="TerminalTextEffects Docs" data-md-component="logo">
+    <a href="../.." title="TerminalTextEffects Docs" class="md-header__button md-logo" aria-label="TerminalTextEffects Docs" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Application Usage
+              Writing Custom Effects with TTE
             
           </span>
         </div>
@@ -162,7 +162,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="TerminalTextEffects Docs" class="md-nav__button md-logo" aria-label="TerminalTextEffects Docs" data-md-component="logo">
+    <a href="../.." title="TerminalTextEffects Docs" class="md-nav__button md-logo" aria-label="TerminalTextEffects Docs" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -192,7 +192,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -209,19 +209,17 @@
       
   
   
-    
   
   
-  
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -235,7 +233,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             How to install & use TTE
@@ -249,7 +247,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../../installation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -267,30 +265,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Application Usage
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../appguide/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -299,53 +277,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#invocation-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Invocation Examples
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configuration
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example Usage
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -358,7 +289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../libguide/" class="md-nav__link">
+      <a href="../../libguide/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -383,17 +314,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -407,7 +340,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             Effect Building Guide
@@ -418,10 +351,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../effectguide/effectguide/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -430,6 +372,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -442,7 +385,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effectguide/effectguide_lesson0/" class="md-nav__link">
+      <a href="../effectguide_lesson0/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -470,7 +413,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../showroom/" class="md-nav__link">
+      <a href="../../showroom/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -560,7 +503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/baseeffect/" class="md-nav__link">
+      <a href="../../engine/baseeffect/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -581,7 +524,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/basecharacter/" class="md-nav__link">
+      <a href="../../engine/basecharacter/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -602,7 +545,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/eventhandler/" class="md-nav__link">
+      <a href="../../engine/eventhandler/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -658,7 +601,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/animation/animation/" class="md-nav__link">
+      <a href="../../engine/animation/animation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -679,7 +622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/animation/syncmetric/" class="md-nav__link">
+      <a href="../../engine/animation/syncmetric/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -700,7 +643,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/animation/charactervisual/" class="md-nav__link">
+      <a href="../../engine/animation/charactervisual/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -721,7 +664,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/animation/frame/" class="md-nav__link">
+      <a href="../../engine/animation/frame/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -742,7 +685,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/animation/scene/" class="md-nav__link">
+      <a href="../../engine/animation/scene/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -806,7 +749,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/motion/motion/" class="md-nav__link">
+      <a href="../../engine/motion/motion/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -827,7 +770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/motion/waypoint/" class="md-nav__link">
+      <a href="../../engine/motion/waypoint/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -848,7 +791,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/motion/segment/" class="md-nav__link">
+      <a href="../../engine/motion/segment/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -869,7 +812,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/motion/path/" class="md-nav__link">
+      <a href="../../engine/motion/path/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -933,7 +876,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/terminal/terminal/" class="md-nav__link">
+      <a href="../../engine/terminal/terminal/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -954,7 +897,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/terminal/terminalconfig/" class="md-nav__link">
+      <a href="../../engine/terminal/terminalconfig/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -975,7 +918,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/terminal/outputarea/" class="md-nav__link">
+      <a href="../../engine/terminal/outputarea/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1039,7 +982,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/utils/ansitools/" class="md-nav__link">
+      <a href="../../engine/utils/ansitools/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1060,7 +1003,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/utils/argsdataclass/" class="md-nav__link">
+      <a href="../../engine/utils/argsdataclass/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1081,7 +1024,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/utils/argvalidators/" class="md-nav__link">
+      <a href="../../engine/utils/argvalidators/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1102,7 +1045,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/utils/colorterm/" class="md-nav__link">
+      <a href="../../engine/utils/colorterm/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1123,7 +1066,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/utils/easing/" class="md-nav__link">
+      <a href="../../engine/utils/easing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1144,7 +1087,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/utils/geometry/" class="md-nav__link">
+      <a href="../../engine/utils/geometry/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1165,7 +1108,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/utils/gradient/" class="md-nav__link">
+      <a href="../../engine/utils/gradient/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1186,7 +1129,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/utils/hexterm/" class="md-nav__link">
+      <a href="../../engine/utils/hexterm/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1258,7 +1201,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/beams/" class="md-nav__link">
+      <a href="../../effects/beams/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1279,7 +1222,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/binarypath/" class="md-nav__link">
+      <a href="../../effects/binarypath/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1300,7 +1243,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/blackhole/" class="md-nav__link">
+      <a href="../../effects/blackhole/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1321,7 +1264,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/bouncyballs/" class="md-nav__link">
+      <a href="../../effects/bouncyballs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1342,7 +1285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/bubbles/" class="md-nav__link">
+      <a href="../../effects/bubbles/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1363,7 +1306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/burn/" class="md-nav__link">
+      <a href="../../effects/burn/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1384,7 +1327,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/crumble/" class="md-nav__link">
+      <a href="../../effects/crumble/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1405,7 +1348,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/decrypt/" class="md-nav__link">
+      <a href="../../effects/decrypt/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1426,7 +1369,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/errorcorrect/" class="md-nav__link">
+      <a href="../../effects/errorcorrect/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1447,7 +1390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/expand/" class="md-nav__link">
+      <a href="../../effects/expand/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1468,7 +1411,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/fireworks/" class="md-nav__link">
+      <a href="../../effects/fireworks/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1489,7 +1432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/middleout/" class="md-nav__link">
+      <a href="../../effects/middleout/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1510,7 +1453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/orbittingvolley/" class="md-nav__link">
+      <a href="../../effects/orbittingvolley/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1531,7 +1474,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/overflow/" class="md-nav__link">
+      <a href="../../effects/overflow/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1552,7 +1495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/pour/" class="md-nav__link">
+      <a href="../../effects/pour/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1573,7 +1516,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/print/" class="md-nav__link">
+      <a href="../../effects/print/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1594,7 +1537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/rain/" class="md-nav__link">
+      <a href="../../effects/rain/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1615,7 +1558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/randomsequence/" class="md-nav__link">
+      <a href="../../effects/randomsequence/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1636,7 +1579,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/rings/" class="md-nav__link">
+      <a href="../../effects/rings/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1657,7 +1600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/scattered/" class="md-nav__link">
+      <a href="../../effects/scattered/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1678,7 +1621,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/slide/" class="md-nav__link">
+      <a href="../../effects/slide/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1699,7 +1642,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/spotlights/" class="md-nav__link">
+      <a href="../../effects/spotlights/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1720,7 +1663,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/spray/" class="md-nav__link">
+      <a href="../../effects/spray/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1741,7 +1684,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/swarm/" class="md-nav__link">
+      <a href="../../effects/swarm/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1762,7 +1705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/synthgrid/" class="md-nav__link">
+      <a href="../../effects/synthgrid/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1783,7 +1726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/unstable/" class="md-nav__link">
+      <a href="../../effects/unstable/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1804,7 +1747,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/verticalslice/" class="md-nav__link">
+      <a href="../../effects/verticalslice/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1825,7 +1768,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/vhstape/" class="md-nav__link">
+      <a href="../../effects/vhstape/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1846,7 +1789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/waves/" class="md-nav__link">
+      <a href="../../effects/waves/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1867,7 +1810,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../effects/wipe/" class="md-nav__link">
+      <a href="../../effects/wipe/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1916,41 +1859,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#invocation-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Invocation Examples
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configuration
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example Usage
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1967,58 +1875,15 @@
   
 
 
-<h1 id="application-guide">Application Guide</h1>
-<p>When used as a system application, TerminalTextEffects will produce animations on text passed to stdin. Often, passing data to TTE occurs via pipes or redirection.</p>
-<h2 id="invocation-examples">Invocation Examples</h2>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Piping</label><label for="__tabbed_1_2">Redirection</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="language-bash highlight"><span class="filename">Piping directory listing output through TTE</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ls<span class="w"> </span>-latr<span class="w"> </span><span class="p">|</span><span class="w"> </span>tte<span class="w"> </span>slide
-</span></code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="language-bash highlight"><span class="filename">Redirecting a file through TTE</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tte<span class="w"> </span>slide<span class="w"> </span>&lt;<span class="w"> </span>your_file
-</span></code></pre></div>
-</div>
-</div>
-</div>
-<h2 id="configuration">Configuration</h2>
-<p>TTE has many global terminal configuration options as well as effect-specific configuration options available via command-line arguments.</p>
-<p>Terminal configuration options should be specified prior to providing the effect name. The basic format is as follows:</p>
-<div class="language-bash highlight"><span class="filename">TTE usage syntax</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>tte<span class="w"> </span><span class="o">[</span>global_options<span class="o">]</span><span class="w"> </span>&lt;effect_name&gt;<span class="w"> </span><span class="o">[</span>effect_options<span class="o">]</span>
-</span></code></pre></div>
-<p>Using the <code>-h</code> argument in place of the global_options or effect_options will produce either the global or effect help output, respectively.</p>
-<p>The example below will pass the output of the <code>ls</code> command to TTE with the following options:</p>
+<h1 id="writing-custom-effects-with-tte">Writing Custom Effects with TTE</h1>
+<p>The following lessons will teach you how to write your own effects using the TerminalTextEffects engine. These lessons will cover:</p>
 <ul>
-<li>
-<p><em>Global</em> options:</p>
-<ul>
-<li>Text will be wrapped if wider than the terminal.</li>
-<li>Tabs will be replaced with 4 spaces.</li>
+<li>TTE Engine Update Cycle</li>
+<li>Anatomy of an Effect</li>
+<li>Character Motion</li>
+<li>Character Animation</li>
+<li>Effect CLI Arguments and Validation</li>
 </ul>
-</li>
-<li>
-<p><em>Effect</em> options:</p>
-<ul>
-<li>Use the <a href="../effects/slide/">slide</a> effect.</li>
-<li>Merge the groups.</li>
-<li>Set movement-speed to 2.</li>
-<li>Group by column.</li>
-</ul>
-</li>
-</ul>
-<div class="language-bash highlight"><span class="filename">TTE argument specification example</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ls<span class="w"> </span><span class="p">|</span><span class="w"> </span>tte<span class="w"> </span>--wrap-text<span class="w"> </span>--tab-width<span class="w"> </span><span class="m">4</span><span class="w"> </span>slide<span class="w"> </span>--merge<span class="w"> </span>--movement-speed<span class="w"> </span><span class="m">2</span><span class="w"> </span>--grouping<span class="w"> </span>column
-</span></code></pre></div>
-<h2 id="example-usage">Example Usage</h2>
-<p>Animate fetch output on shell launch using screenfetch:</p>
-<div class="language-bash highlight"><span class="filename">Shell Fetch</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>screenfetch<span class="w"> </span>-N<span class="w"> </span><span class="p">|</span><span class="w"> </span>tte<span class="w"> </span>slide<span class="w"> </span>--merge
-</span></code></pre></div>
-<p><img alt="fetch_demo" src="../img/application_demos/fetch_example.gif" /></p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Fetch applications which utilize terminal sequences for color/formatting will not work with TTE. 
-Check if your fetch application has a raw output switch.</p>
-</div>
 
 
 
@@ -2065,10 +1930,10 @@ Check if your fetch application has a raw output switch.</p>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.dd8806f2.min.js"></script>
+      <script src="../../assets/javascripts/bundle.dd8806f2.min.js"></script>
       
     
   </body>
