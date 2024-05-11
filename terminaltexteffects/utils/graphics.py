@@ -177,13 +177,19 @@ class Gradient:
         gradient_mapping: dict[geometry.Coord, Color] = {}
         if direction == Gradient.Direction.VERTICAL:
             for row_value in range(max_row + 1):
-                fraction = row_value / max_row
+                if max_row == 0:
+                    fraction = 1.0
+                else:
+                    fraction = row_value / max_row
                 color = self.get_color_at_fraction(fraction)
                 for column_value in range(1, max_column + 1):
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
         elif direction == Gradient.Direction.HORIZONTAL:
             for column_value in range(1, max_column + 1):
-                fraction = column_value / max_column
+                if max_column == 0:
+                    fraction = 1.0
+                else:
+                    fraction = column_value / max_column
                 color = self.get_color_at_fraction(fraction)
                 for row_value in range(max_row + 1):
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
@@ -198,7 +204,10 @@ class Gradient:
         elif direction == Gradient.Direction.DIAGONAL:
             for row_value in range(max_row + 1):
                 for column_value in range(1, max_column + 1):
-                    fraction = ((row_value * 2) + column_value) / ((max_row * 2) + max_column)
+                    if max_row == 0 or max_column == 0:
+                        fraction = 1.0
+                    else:
+                        fraction = ((row_value * 2) + column_value) / ((max_row * 2) + max_column)
                     color = self.get_color_at_fraction(fraction)
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
 
