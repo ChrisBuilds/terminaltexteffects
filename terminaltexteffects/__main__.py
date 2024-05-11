@@ -12,7 +12,7 @@ def main():
     parser = (argparse.ArgumentParser)(
         prog="terminaltexteffects",
         description="Apply visual effects to terminal text piped in from stdin.",
-        epilog="Ex: ls -a | python -m terminaltexteffects --xterm-colors decrypt -a 0.002 --ciphertext-color 00ff00 --plaintext-color ff0000 --final-color 0000ff",
+        epilog="Ex: ls -a | python -m terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical",
     )
 
     TerminalConfig._add_args_to_parser(parser)
