@@ -73,15 +73,23 @@ class TerminalConfig(ArgsDataClass):
 
     "float : Minimum time, in seconds, between frames."
 
-    terminal_dimensions: tuple[int, int] = ArgField(
-        cmd_name=["--terminal-dimensions"],
-        type_parser=argvalidators.TerminalDimensions.type_parser,
-        nargs=2,
-        default=(0, 0),
-        help="Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal width.",
+    terminal_width: int = ArgField(
+        cmd_name=["--terminal-width"],
+        type_parser=argvalidators.NonNegativeInt.type_parser,
+        default=0,
+        help="Terminal width, if set to 0 the terminal width is detected automatically.",
     )  # type: ignore[assignment]
 
-    "tuple(int,int) : Terminal dimensions as (width, height), if set to (0,0) the terminal dimensions are detected automatically."
+    "int : Terminal width, if set to 0 the terminal width is detected automatically."
+
+    terminal_height: int = ArgField(
+        cmd_name=["--terminal-height"],
+        type_parser=argvalidators.NonNegativeInt.type_parser,
+        default=0,
+        help="Terminal height, if set to 0 the terminal height is detected automatically.",
+    )  # type: ignore[assignment]
+
+    "int : Terminal height, if set to 0 the terminal height is detected automatically."
 
     ignore_terminal_dimensions: bool = ArgField(
         cmd_name=["--ignore-terminal-dimensions"],
@@ -255,19 +263,24 @@ class Terminal:
         if not input_data:
             input_data = "No Input."
         self._input_data = input_data.replace("\t", " " * self.config.tab_width)
+        self.detected_terminal_dimensions = self._get_terminal_dimensions()
+        self._width = self.config.terminal_width
+        self._height = self.config.terminal_height
         if self.config.ignore_terminal_dimensions:
             self._width = max([len(line) for line in self._input_data.splitlines()])
             self._height = len(self._input_data.splitlines()) + 1
-        elif self.config.terminal_dimensions == (0, 0):
-            self._width, self._height = self._get_terminal_dimensions()
-        else:
-            self._width, self._height = self.config.terminal_dimensions
+        elif self._width == 0 or self._height == 0:
+            if self._width == 0:
+                self._width = self.detected_terminal_dimensions[0]
+            if self._height == 0:
+                self._height = self.detected_terminal_dimensions[1]
+
         self._next_character_id = 0
         self._input_characters = self._decompose_input(self.config.xterm_colors, self.config.no_color)
         self._added_characters: list[EffectCharacter] = []
         self._input_width = max([character.input_coord.column for character in self._input_characters])
         self._input_height = max([character.input_coord.row for character in self._input_characters])
-        self.output_area = OutputArea(min(self._height - 1, self._input_height), self._input_width)
+        self.output_area = OutputArea(min(max(self._height - 1, 1), self._input_height), self._input_width)
         self._input_characters = [
             character
             for character in self._input_characters
@@ -414,7 +427,7 @@ class Terminal:
     def prep_outputarea(self) -> None:
         """Prepares the terminal for the effect by adding empty lines and hiding the cursor."""
         sys.stdout.write(ansitools.HIDE_CURSOR())
-        print("\n" * self.output_area.top)
+        print("\n" * (self.output_area.top - 1))
 
     def restore_cursor(self) -> None:
         """Restores the cursor visibility."""
