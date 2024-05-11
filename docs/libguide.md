@@ -59,7 +59,7 @@ All effect configuration options are available within each effect via the `effec
     effect.effect_config.merge = True # (1)
     effect.effect_config.grouping = "column" # (2)
     effect.effect_config.final_gradient_stops = ("0ff000", "000ff0", "0f00f0") # (3)
-    effect.terminal_config.terminal_dimensions = (30, 15) # (4)
+    effect.terminal_config.terminal.width = 30 # (4)
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
@@ -69,7 +69,7 @@ All effect configuration options are available within each effect via the `effec
     in from alternating sides of the terminal.
     2. Columns will slide in, rather than rows.
     3. Change the gradient colors from the defaults.
-    4. Set the terminal dimensions manually rather than automatically detect.
+    4. Set the terminal width manually rather than automatically detect. Terminal heigth will be automatically detected as it has not been set.
 
 === "Output"
     ![t](./img/lib_demos/libguide_configuration_output.gif)
@@ -81,8 +81,11 @@ TTE uses a [Terminal](./engine/terminal/terminal.md) class to handle terminal di
 For example, to set the terminal dimensions manually:
 
 ```python
-effect.terminal_config.terminal_dimensions = (80, 24) # width, height
+effect.terminal_config.terminal_width = 80
+effect.terminal_config.terminal_height = 24
 ```
+
+If either `terminal_width` or `terminal_height` are set to 0, that dimension will be automatically detected.
 
 If you would like to ignore terminal dimensions altogether and base the output dimensions solely on the input data:
 
