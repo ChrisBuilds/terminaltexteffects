@@ -20,7 +20,15 @@
 
 #### Effects Changes (unreleased)
 
+* All effects have been updated to use the new `update()` method and `frame` property of
+  `base_effect.BaseEffectIterator`. See Engine Changes for more info.
+
 #### Engine Changes (unreleased)
+
+* `base_effect.BaseEffectIterator` now has an `update()` method which calls the `tick()` method of all active characters
+  and manages the `active_characters` list.
+* `base_effect.BaseEffectIterator` has a `frame` property which calls `Terminal.get_formatted_output_string()` and
+  returns the string.
 
 #### Other Changes (unreleased)
 
