@@ -17,6 +17,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from typing import Generic, TypeVar
 
+from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.utils.argsdataclass import ArgsDataClass
 
@@ -30,8 +31,17 @@ class BaseEffectIterator(ABC, Generic[T]):
         effect (BaseEffect): Effect to apply to the input data.
 
     Attributes:
-        _config (T): Configuration for the effect.
-        _terminal (Terminal): Terminal to use for output.
+        config (T): Configuration for the effect.
+        terminal (Terminal): Terminal to use for output.
+        active_characters (list[EffectCharacter]): List of active characters in the effect.
+
+    Properties:
+        frame (str): Current frame of the effect.
+
+    Methods:
+        update: Run the tick method for all active characters and remove inactive characters from the active list.
+        __iter__: Return the iterator object.
+        __next__: Return the next frame of the effect.
     """
 
     def __init__(self, effect: "BaseEffect") -> None:
@@ -40,8 +50,27 @@ class BaseEffectIterator(ABC, Generic[T]):
         Args:
             effect (BaseEffect): Effect to apply to the input data.
         """
-        self._config: T = deepcopy(effect.effect_config)
-        self._terminal = Terminal(effect.input_data, deepcopy(effect.terminal_config))
+        self.config: T = deepcopy(effect.effect_config)
+        self.terminal = Terminal(effect.input_data, deepcopy(effect.terminal_config))
+        self.active_characters: list[EffectCharacter] = []
+
+    @property
+    def frame(self) -> str:
+        """Return the current frame by getting the formatted output string from the terminal.
+
+        Returns:
+            str: Current frame of the effect.
+        """
+        return self.terminal.get_formatted_output_string()
+
+    def update(self) -> None:
+        """Run the tick method for all active characters and remove inactive characters from the active list."""
+        _active_characters = []
+        for character in self.active_characters:
+            character.tick()
+            if character.is_active:
+                _active_characters.append(character)
+        self.active_characters = _active_characters
 
     def __iter__(self) -> "BaseEffectIterator":
         return self
