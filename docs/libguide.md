@@ -59,7 +59,7 @@ All effect configuration options are available within each effect via the `effec
     effect.effect_config.merge = True # (1)
     effect.effect_config.grouping = "column" # (2)
     effect.effect_config.final_gradient_stops = ("0ff000", "000ff0", "0f00f0") # (3)
-    effect.terminal_config.terminal.width = 30 # (4)
+    effect.terminal_config.terminal_width = 30 # (4)
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
