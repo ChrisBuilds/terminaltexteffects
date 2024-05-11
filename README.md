@@ -71,7 +71,7 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
 
 ```markdown
 options:
--h, --help            show this help message and exit
+  -h, --help            show this help message and exit
   --tab-width (int > 0)
                         Number of spaces to use for a tab character. (default: 4)
   --xterm-colors        Convert any colors specified in RBG hex to the closest XTerm-256 color. (default: False)
@@ -79,15 +79,17 @@ options:
   --wrap-text           Wrap text wider than the output area width. (default: False)
   --frame-rate FRAME_RATE
                         Target frame rate for the animation. (default: 100)
-  --terminal-dimensions TERMINAL_DIMENSIONS TERMINAL_DIMENSIONS
-                        Use the terminal dimensions to limit the size of the output area and support wrapping. If False, the output area is determined by the input data dimensions and may overflow the terminal
-                        width. (default: (0, 0))
+  --terminal-width TERMINAL_WIDTH
+                        Terminal width, if set to 0 the terminal width is detected automatically. (default: 0)
+  --terminal-height TERMINAL_HEIGHT
+                        Terminal height, if set to 0 the terminal height is detected automatically. (default: 0)
   --ignore-terminal-dimensions
                         Ignore the terminal dimensions and use the input data dimensions for the output area. (default: False)
+
 Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
-  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,crumble,decrypt,dev,errorcorrect,expand,fireworks,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slide,spotlights,spray,swarm,synthgrid,test,unstable,verticalslice,vhstape,waves,wipe}
+  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,crumble,decrypt,errorcorrect,expand,fireworks,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slide,spotlights,spray,swarm,synthgrid,unstable,verticalslice,vhstape,waves,wipe}
                         Available Effects
     beams               Create beams which travel over the output area illuminating the characters behind them.
     binarypath          Binary representations of each character move through the terminal towards the home coordinate of the character.
@@ -108,7 +110,7 @@ Effect:
     rain                Rain characters from the top of the output area.
     randomsequence      Prints the input data in a random sequence.
     rings               Characters are dispersed and form into spinning rings.
-    scattered           Move the characters into place from random starting locations.
+    scattered           Text is scattered across the output area and moves into position.
     slide               Slide characters into view from outside the terminal.
     spotlights          Spotlights search the text area, illuminating characters, before converging in the center and expanding.
     spray               Draws the characters spawning at varying rates from a single point.
@@ -120,7 +122,7 @@ Effect:
     waves               Waves travel across the terminal leaving behind the characters.
     wipe                Wipes the text across the terminal to reveal characters.
 
-Ex: ls -a | tte crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal
+Ex: ls -a | python -m terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical
 ```
 
 </details>
@@ -243,25 +245,48 @@ Any effects shown below are in development and will be available in the next rel
 
 ## Latest Release Notes
 
-## 0.9.0
+## 0.9.1
 
 ---
 
-### New Features (0.9.0)
+### New Features (0.9.1)
 
 ---
 
-#### New Engine Features (0.9.0)
+#### New Engine Features (0.9.1)
 
-* Linear easing function added.
+* Terminal dimension auto-detection supports automatically detecting a single dimensions.
 
-### Changes (0.9.0)
+### Changes (0.9.1)
 
 ---
 
-#### Other Changes (0.9.0)
+#### Effects Changes (0.9.1)
 
-* Major re-organization of the codebase and significant documentation changes and additions.
+* All effects have been updated to use the new `update()` method and `frame` property of
+  `base_effect.BaseEffectIterator`. See Engine Changes for more info.
+
+#### Engine Changes (0.9.1)
+
+* `base_effect.BaseEffectIterator` now has an `update()` method which calls the `tick()` method of all active characters
+  and manages the `active_characters` list.
+* `base_effect.BaseEffectIterator` has a `frame` property which calls `Terminal.get_formatted_output_string()` and
+  returns the string.
+* `TerminalConfig.terminal_dimensions` has been split into `TerminalConfig.terminal_width` and
+  `TerminalConfig.terminal_height` to simply the command line argument for dimensions and make it more obvious which
+  dimensions is being specified when interacting with `effect.terminal_config`.
+
+#### Other Changes (0.9.1)
+
+* Updated help output for `--terminal-dimensions` argument.
+
+### Bug Fixes (0.9.1)
+
+---
+
+#### Engine Fixes (0.9.1)
+
+* Fixed division by zero error when the terminal height was set to 1.
 
 ## License
 
