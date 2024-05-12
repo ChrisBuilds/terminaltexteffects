@@ -281,7 +281,7 @@ class Terminal:
         self._added_characters: list[EffectCharacter] = []
         self._input_width = max([character.input_coord.column for character in self._input_characters])
         self._input_height = max([character.input_coord.row for character in self._input_characters])
-        self.output_area = OutputArea(min(max(self._height - 1, 1), self._input_height), self._input_width)
+        self.output_area = OutputArea(min(max(self._height, 1), self._input_height), self._input_width)
         self._input_characters = [
             character
             for character in self._input_characters
@@ -429,6 +429,7 @@ class Terminal:
         """Prepares the terminal for the effect by adding empty lines and hiding the cursor."""
         sys.stdout.write(ansitools.HIDE_CURSOR())
         print("\n" * (self.output_area.top - 1))
+        sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
 
     def restore_cursor(self) -> None:
         """Restores the cursor visibility."""
@@ -631,7 +632,7 @@ class Terminal:
         output_string = "\n".join(self.terminal_state[::-1])
         return output_string
 
-    def print(self, output_string: str, *, enforce_frame_rate: bool = True):
+    def print(self, output_string: str, *, enforce_frame_rate: bool = True) -> None:
         """Prints the current terminal state to stdout while preserving the cursor position.
 
         Args:
@@ -645,14 +646,25 @@ class Terminal:
 
         """
         if enforce_frame_rate:
-            frame_delay = 1 / self._frame_rate
-            time_since_last_print = time.time() - self._last_time_printed
-            if time_since_last_print < frame_delay:
-                time.sleep(frame_delay - time_since_last_print)
-        sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
-        sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.output_area.top))
-        sys.stdout.write(ansitools.MOVE_CURSOR_TO_COLUMN(1))
+            self.enforce_framerate()
+        # sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
+        self.reuse_outputarea()
         sys.stdout.write(output_string)
-        sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
+        # sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
         sys.stdout.flush()
         self._last_time_printed = time.time()
+
+    def enforce_framerate(self):
+        """Enforces the frame rate set in the terminal config by sleeping if the time since
+        the last frame is shorter than the expected frame delay."""
+        frame_delay = 1 / self._frame_rate
+        time_since_last_print = time.time() - self._last_time_printed
+        if time_since_last_print < frame_delay:
+            time.sleep(frame_delay - time_since_last_print)
+        self._last_time_printed = time.time()
+
+    def reuse_outputarea(self):
+        """Restores the cursor position to the top of the output area."""
+        sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
+        sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.output_area.top))
+        sys.stdout.write(ansitools.MOVE_CURSOR_TO_COLUMN(1))
