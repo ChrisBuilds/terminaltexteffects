@@ -273,12 +273,10 @@ Any effects shown below are in development and will be available in the next rel
 * `base_effect.BaseEffectIterator` has a `frame` property which calls `Terminal.get_formatted_output_string()` and
   returns the string.
 * `TerminalConfig.terminal_dimensions` has been split into `TerminalConfig.terminal_width` and
-  `TerminalConfig.terminal_height` to simply the command line argument for dimensions and make it more obvious which
-  dimensions is being specified when interacting with `effect.terminal_config`.
+  `TerminalConfig.terminal_height` to simplify the command line argument for dimensions and make it more obvious which
+  dimension is being specified when interacting with `effect.terminal_config`.
 
 #### Other Changes (0.9.1)
-
-* Updated help output for `--terminal-dimensions` argument.
 
 ### Bug Fixes (0.9.1)
 
