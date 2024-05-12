@@ -34,6 +34,30 @@
 
 ---
 
+## 0.9.3
+
+---
+
+### New Features (0.9.3)
+
+---
+
+#### New Engine Features (0.9.3)
+
+* New `Terminal` method `Terminal.reuse_outputarea()` places the cursor at the top left of the output area. This allows
+  for animated prompts by calling this method after iterating over an effect. Use the last value of `frame` as your
+  input text.
+
+### Bug Fixes (0.9.3)
+
+---
+
+#### Engine Fixes (0.9.3)
+
+* Fixed the output area of an effect being 1 row less than specified via the `Terminal.terminal_height` attribute.
+
+---
+
 ## 0.9.1
 
 ---
