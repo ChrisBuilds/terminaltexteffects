@@ -245,46 +245,40 @@ Any effects shown below are in development and will be available in the next rel
 
 ## Latest Release Notes
 
-## 0.9.1
+## 0.9.3
 
 ---
 
-### New Features (0.9.1)
+### New Features (0.9.3)
 
 ---
 
-#### New Engine Features (0.9.1)
+#### New Engine Features (0.9.3)
 
-* Terminal dimension auto-detection supports automatically detecting a single dimensions.
+* Added argument to the `BaseEffect.terminal_output()` context manager. `end_on_newline` (default `True`) controls whether
+the cursor is placed on a new line after the effect completes. Set to `False` to end with the cursor on the bottom line
+of the effect. This enables animated prompts.
 
-### Changes (0.9.1)
-
----
-
-#### Effects Changes (0.9.1)
-
-* All effects have been updated to use the new `update()` method and `frame` property of
-  `base_effect.BaseEffectIterator`. See Engine Changes for more info.
-
-#### Engine Changes (0.9.1)
-
-* `base_effect.BaseEffectIterator` now has an `update()` method which calls the `tick()` method of all active characters
-  and manages the `active_characters` list.
-* `base_effect.BaseEffectIterator` has a `frame` property which calls `Terminal.get_formatted_output_string()` and
-  returns the string.
-* `TerminalConfig.terminal_dimensions` has been split into `TerminalConfig.terminal_width` and
-  `TerminalConfig.terminal_height` to simplify the command line argument for dimensions and make it more obvious which
-  dimension is being specified when interacting with `effect.terminal_config`.
-
-#### Other Changes (0.9.1)
-
-### Bug Fixes (0.9.1)
+### Changes (0.9.3)
 
 ---
 
-#### Engine Fixes (0.9.1)
+#### Engine Changes (0.9.3)
 
-* Fixed division by zero error when the terminal height was set to 1.
+* Removed unnecessary write calls for cursor positioning on every frame.
+* Separated functionality related to cursor positioning and frame timing out of `Terminal.print()` and into
+`Terminal.enforce_framerate()`, `Terminal.prep_outputarea()` and `Terminal.move_cursor_to_top()`.
+
+### Bug Fixes (0.9.3)
+
+---
+
+#### Engine Fixes (0.9.3)
+
+* Fixed the output area of an effect being 1 row less than specified via the `Terminal.terminal_height` attribute. This
+  was caused by mixing use of `print()` and `sys.stdout.write()`.
+
+---
 
 ## License
 
