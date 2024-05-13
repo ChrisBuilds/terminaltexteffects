@@ -12,9 +12,8 @@
 
 #### New Engine Features (0.9.3)
 
-* Added argument to the `BaseEffect.terminal_output()` context manager. `end_on_newline` (default `True`) controls whether
-the cursor is placed on a new line after the effect completes. Set to `False` to end with the cursor on the bottom line
-of the effect. This enables animated prompts.
+* Added argument to the `BaseEffect.terminal_output()` context manager. `end_symbol` (default `\n`) is used to specify
+the symbol that will be printed after the effect completes. Set to `''` or `' '` to enable animated prompts.
 
 ### Changes (0.9.3)
 
