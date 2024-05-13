@@ -15,7 +15,7 @@ Classes:
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Generic, TypeVar
+from typing import Generator, Generic, TypeVar
 
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
@@ -117,11 +117,14 @@ class BaseEffect(ABC, Generic[T]):
         return self._iterator_cls(self)
 
     @contextmanager
-    def terminal_output(self):
+    def terminal_output(self, end_on_newline: bool = True) -> Generator[Terminal, None, None]:
         """Context manager for terminal output. Prepares the terminal for output and restores it after.
 
+        Args:
+            end_on_newline (bool): Whether to end with the cursor on a newline after the effect completes.
+
         Yields:
-            terminal (Terminal): Terminal object for output.
+            Terminal: Terminal object for output.
 
         Raises:
             Exception: Any exception that occurs within the context manager.
@@ -133,4 +136,4 @@ class BaseEffect(ABC, Generic[T]):
         except:  # noqa: E722
             raise
         finally:
-            terminal.restore_cursor()
+            terminal.restore_cursor(end_on_newline)
