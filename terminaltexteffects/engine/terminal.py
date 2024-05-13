@@ -628,11 +628,14 @@ class Terminal:
         sys.stdout.write(("\n" * (self.output_area.top)))
         sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
 
-    def restore_cursor(self, end_on_newline: bool = True) -> None:
-        """Restores the cursor visibility."""
+    def restore_cursor(self, end_symbol: str = "\n") -> None:
+        """Restores the cursor visibility and prints the end_symbol.
+
+        Args:
+            end_symbol (str, optional): The symbol to print at the end of the output. Defaults to "\n"
+        """
         sys.stdout.write(ansitools.SHOW_CURSOR())
-        if end_on_newline:
-            sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
+        sys.stdout.write(end_symbol)
 
     def print(self, output_string: str, *, enforce_frame_rate: bool = True) -> None:
         """Prints the current terminal state to stdout while preserving the cursor position.
