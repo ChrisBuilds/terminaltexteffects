@@ -2,38 +2,6 @@
 
 ---
 
-## Unreleased
-
----
-
-### New Features (unreleased)
-
----
-
-#### New Effects (unreleased)
-
-#### New Engine Features (unreleased)
-
-### Changes (unreleased)
-
----
-
-#### Effects Changes (unreleased)
-
-#### Engine Changes (unreleased)
-
-#### Other Changes (unreleased)
-
-### Bug Fixes (unreleased)
-
----
-
-#### Effects Fixes (unreleased)
-
-#### Engine Fixes (unreleased)
-
----
-
 ## 0.9.3
 
 ---
@@ -44,9 +12,19 @@
 
 #### New Engine Features (0.9.3)
 
-* New `Terminal` method `Terminal.reuse_outputarea()` places the cursor at the top left of the output area. This allows
-  for animated prompts by calling this method after iterating over an effect. Use the last value of `frame` as your
-  input text.
+* Added argument to the `BaseEffect.terminal_output()` context manager. `end_on_newline` (default `True`) controls whether
+the cursor is placed on a new line after the effect completes. Set to `False` to end with the cursor on the bottom line
+of the effect. This enables animated prompts.
+
+### Changes (0.9.3)
+
+---
+
+#### Engine Changes (0.9.3)
+
+* Removed unnecessary write calls for cursor positioning on every frame.
+* Separated functionality related to cursor positioning and frame timing out of `Terminal.print()` and into
+`Terminal.enforce_framerate()`, `Terminal.prep_outputarea()` and `Terminal.move_cursor_to_top()`.
 
 ### Bug Fixes (0.9.3)
 
@@ -54,7 +32,8 @@
 
 #### Engine Fixes (0.9.3)
 
-* Fixed the output area of an effect being 1 row less than specified via the `Terminal.terminal_height` attribute.
+* Fixed the output area of an effect being 1 row less than specified via the `Terminal.terminal_height` attribute. This
+  was caused by mixing use of `print()` and `sys.stdout.write()`.
 
 ---
 
