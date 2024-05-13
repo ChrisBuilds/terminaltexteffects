@@ -117,11 +117,11 @@ class BaseEffect(ABC, Generic[T]):
         return self._iterator_cls(self)
 
     @contextmanager
-    def terminal_output(self, end_on_newline: bool = True) -> Generator[Terminal, None, None]:
+    def terminal_output(self, end_symbol: str = "\n") -> Generator[Terminal, None, None]:
         """Context manager for terminal output. Prepares the terminal for output and restores it after.
 
         Args:
-            end_on_newline (bool): Whether to end with the cursor on a newline after the effect completes.
+            end_symbol (str, optional): Symbol to print at the end of the output. Defaults to "\n".
 
         Yields:
             Terminal: Terminal object for output.
@@ -136,4 +136,4 @@ class BaseEffect(ABC, Generic[T]):
         except:  # noqa: E722
             raise
         finally:
-            terminal.restore_cursor(end_on_newline)
+            terminal.restore_cursor(end_symbol)
