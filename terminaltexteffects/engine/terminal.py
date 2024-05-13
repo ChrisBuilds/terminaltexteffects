@@ -632,7 +632,7 @@ class Terminal:
         """Restores the cursor visibility and prints the end_symbol.
 
         Args:
-            end_symbol (str, optional): The symbol to print at the end of the output. Defaults to "\n"
+            end_symbol (str, optional): The symbol to print after the effect has completed. Defaults to newline.
         """
         sys.stdout.write(ansitools.SHOW_CURSOR())
         sys.stdout.write(end_symbol)

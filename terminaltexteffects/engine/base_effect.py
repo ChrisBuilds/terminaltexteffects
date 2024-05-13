@@ -121,13 +121,14 @@ class BaseEffect(ABC, Generic[T]):
         """Context manager for terminal output. Prepares the terminal for output and restores it after.
 
         Args:
-            end_symbol (str, optional): Symbol to print at the end of the output. Defaults to "\n".
+            end_symbol (str, optional): Symbol to print after the effect has completed. Defaults to newline.
 
         Yields:
-            Terminal: Terminal object for output.
+            Terminal: Terminal object for handling output.
 
         Raises:
-            Exception: Any exception that occurs within the context manager.
+            Exception: Any exception that occurs within the context manager will be raised before restoring the terminal
+            state.
         """
         terminal = Terminal(self.input_data, self.terminal_config)
         try:
