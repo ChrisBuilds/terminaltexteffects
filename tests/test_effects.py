@@ -5,6 +5,7 @@ from terminaltexteffects.effects import (
     effect_bouncyballs,
     effect_bubbles,
     effect_burn,
+    effect_colorshift,
     effect_crumble,
     effect_decrypt,
     effect_errorcorrect,
@@ -106,6 +107,14 @@ def test_bubbles_effect() -> None:
 def test_burn_effect() -> None:
     for input_data in test_inputs:
         effect = effect_burn.Burn(input_data)
+        effect.terminal_config = terminal_config
+        for _ in effect:
+            ...
+
+
+def test_colorshift_effect() -> None:
+    for input_data in test_inputs:
+        effect = effect_colorshift.ColorShift(input_data)
         effect.terminal_config = terminal_config
         for _ in effect:
             ...
