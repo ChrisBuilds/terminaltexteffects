@@ -54,7 +54,8 @@ class ColorShiftConfig(ArgsDataClass):
     gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--gradient-steps",
         type_parser=argvalidators.PositiveInt.type_parser,
-        default=(12,),
+        nargs="+",
+        default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother gradient animation.",
     )  # type: ignore[assignment]
