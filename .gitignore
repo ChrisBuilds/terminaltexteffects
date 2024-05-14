@@ -170,4 +170,4 @@ terminaltexteffects/effects/effect_test.py
 terminaltexteffects/effects/effect_dev.py
 *.png
 *.gv
-terminaltexteffects/lib_test.py
+terminaltexteffects/lib_tests/*
