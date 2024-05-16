@@ -41,7 +41,7 @@ class SynthGridConfig(ArgsDataClass):
         text_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the text color.
         grid_row_symbol (str): Symbol to use for grid row lines.
         grid_column_symbol (str): Symbol to use for grid column lines.
-        text_generation_symbols (tuple[str, ...]): Tuple of characters for the text generation animation.
+        text_generation_symbols (tuple[str, ...] | str): Tuple of characters for the text generation animation.
         max_active_blocks (float): Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time. Valid values are 0 < n <= 1."""
 
     grid_gradient_stops: tuple[graphics.Color, ...] = ArgField(
@@ -58,11 +58,11 @@ class SynthGridConfig(ArgsDataClass):
         cmd_name="--grid-gradient-steps",
         type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
-        default=(12,),
+        default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     grid_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--grid-gradient-direction",
@@ -87,11 +87,11 @@ class SynthGridConfig(ArgsDataClass):
         cmd_name="--text-gradient-steps",
         type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
-        default=(12,),
+        default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     text_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--text-gradient-direction",

@@ -34,22 +34,22 @@ class BeamsConfig(ArgsDataClass):
     """Configuration for the Beams effect.
 
     Attributes:
-        beam_row_symbols (tuple[str, ...]): Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation.
-        beam_column_symbols (tuple[str, ...]): Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation.
+        beam_row_symbols (tuple[str, ...] | str): Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation.
+        beam_column_symbols (tuple[str, ...] | str): Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation.
         beam_delay (int): Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5). Valid values are n > 0.
         beam_row_speed_range (tuple[int, int]): Speed range of the beam when moving along a row. Valid values are n > 0.
         beam_column_speed_range (tuple[int, int]): Speed range of the beam when moving along a column. Valid values are n > 0.
         beam_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the beam, a gradient will be created between the colors.
-        beam_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
+        beam_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
         beam_gradient_frames (int): Number of frames to display each gradient step. Valid values are n > 0.
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the wipe gradient.
-        final_gradient_steps (tuple[int,]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
         final_wipe_speed (int): Speed of the final wipe as measured in diagonal groups activated per frame. Valid values are n > 0.
     """
 
-    beam_row_symbols: tuple[str, ...] = ArgField(
+    beam_row_symbols: tuple[str, ...] | str = ArgField(
         cmd_name="--beam-row-symbols",
         type_parser=argvalidators.Symbol.type_parser,
         nargs="+",
@@ -58,9 +58,9 @@ class BeamsConfig(ArgsDataClass):
         help="Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation.",
     )  # type: ignore[assignment]
 
-    "tuple[str, ...] : Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation."
+    "tuple[str, ...] | str : Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation."
 
-    beam_column_symbols: tuple[str, ...] = ArgField(
+    beam_column_symbols: tuple[str, ...] | str = ArgField(
         cmd_name="--beam-column-symbols",
         type_parser=argvalidators.Symbol.type_parser,
         nargs="+",
@@ -69,7 +69,7 @@ class BeamsConfig(ArgsDataClass):
         help="Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation.",
     )  # type: ignore[assignment]
 
-    "tuple[str, ...] : Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation."
+    "tuple[str, ...] | str : Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation."
 
     beam_delay: int = ArgField(
         cmd_name="--beam-delay",
@@ -112,7 +112,7 @@ class BeamsConfig(ArgsDataClass):
 
     "tuple[graphics.Color, ...] : Tuple of colors for the beam, a gradient will be created between the colors."
 
-    beam_gradient_steps: tuple[int, ...] = ArgField(
+    beam_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--beam-gradient-steps",
         type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
@@ -121,7 +121,7 @@ class BeamsConfig(ArgsDataClass):
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
     )  # type: ignore[assignment]
 
-    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
+    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
 
     beam_gradient_frames: int = ArgField(
         cmd_name="--beam-gradient-frames",
@@ -144,16 +144,16 @@ class BeamsConfig(ArgsDataClass):
 
     "tuple[graphics.Color, ...] : Tuple of colors for the wipe gradient."
 
-    final_gradient_steps: tuple[int,] = ArgField(
+    final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
         type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
-        default=(12,),
+        default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
     )  # type: ignore[assignment]
 
-    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
+    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",

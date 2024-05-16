@@ -33,7 +33,7 @@ class WipeConfig(ArgsDataClass):
     Attributes:
         wipe_direction (typing.Literal["column_left_to_right","row_top_to_bottom","row_bottom_to_top","diagonal_top_left_to_bottom_right","diagonal_bottom_left_to_top_right","diagonal_top_right_to_bottom_left","diagonal_bottom_right_to_top_left",]): Direction the text will wipe.
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the wipe gradient.
-        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
         wipe_delay (int): Number of frames to wait before adding the next character group. Increase, to slow down the effect. Valid values are n >= 0."""
@@ -73,15 +73,15 @@ class WipeConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the wipe gradient."
 
-    final_gradient_steps: tuple[int, ...] = ArgField(
+    final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
         type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
-        default=(12,),
+        default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",

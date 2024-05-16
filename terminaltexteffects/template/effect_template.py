@@ -51,11 +51,11 @@ class EffectConfig(ArgsDataClass):
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
 
-    final_gradient_steps: tuple[int, ...] = ArgField(
+    final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
         type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
-        default=(12,),
+        default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]

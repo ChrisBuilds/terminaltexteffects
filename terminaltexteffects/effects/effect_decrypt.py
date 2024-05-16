@@ -35,7 +35,7 @@ class DecryptConfig(ArgsDataClass):
         typing_speed (int): Number of characters typed per keystroke.
         ciphertext_colors (tuple[graphics.Color, ...]): Colors for the ciphertext. Color will be randomly selected for each character.
         final_gradient_stops (tuple[graphics.Color, ...]): Colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...]): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient."""
 
     typing_speed: int = ArgField(
@@ -67,15 +67,15 @@ class DecryptConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Colors for the character gradient. If only one color is provided, the characters will be displayed in that color."
 
-    final_gradient_steps: tuple[int, ...] = ArgField(
+    final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
         type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
-        default=(12,),
+        default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] : Number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] | int : Number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",

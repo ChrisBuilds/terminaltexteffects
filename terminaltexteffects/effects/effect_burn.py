@@ -36,7 +36,7 @@ class BurnConfig(ArgsDataClass):
         starting_color (graphics.Color): Color of the characters before they start to burn.
         burn_colors (tuple[graphics.Color, ...]): Colors transitioned through as the characters burn.
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient."""
 
     starting_color: graphics.Color = ArgField(
@@ -68,15 +68,15 @@ class BurnConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
-    final_gradient_steps: tuple[int, ...] = ArgField(
+    final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
         type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
-        default=(12,),
+        default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",

@@ -36,7 +36,7 @@ class SprayConfig(ArgsDataClass):
 
     Attributes:
         final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
         spray_position (typing.Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"]): Position for the spray origin. Valid values are n, ne, e, se, s, sw, w, nw, center.
         spray_volume (float): Number of characters to spray per tick as a percent of the total number of characters. Valid values are 0 < n <= 1.
@@ -53,15 +53,15 @@ class SprayConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
-    final_gradient_steps: tuple[int, ...] = ArgField(
+    final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
         type_parser=argvalidators.PositiveInt.type_parser,
         nargs="+",
-        default=(12,),
+        default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_direction: graphics.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
