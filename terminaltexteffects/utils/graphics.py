@@ -52,7 +52,7 @@ class Gradient:
         Initializes a Graphics object.
 
         Args:
-            stops (Color): Variable number of Color objects representing the color stops.
+            stops (Color): One ore more variables of type Color representing the color stops.
             steps (int | tuple[int, ...], optional): Number of steps or a tuple of step values for generating the spectrum. Defaults to 1.
 
         Raises:
