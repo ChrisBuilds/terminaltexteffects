@@ -24,7 +24,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="colorshift",
     help="Display a gradient that shifts colors across the terminal.",
     description="Display a gradient that shifts colors across the terminal.",
-    epilog="""Example: terminaltexteffects colorshift --gradient-stops 0000ff ffffff 0000ff --gradient-steps 12 --gradient-frames 10 --loop-count 3 --travel""",
+    epilog="""Example: terminaltexteffects colorshift --gradient-stops 0000ff ffffff 0000ff --gradient-steps 12 --gradient-frames 10 --cycles 3 --travel""",
 )
 @dataclass
 class ColorShiftConfig(ArgsDataClass):
