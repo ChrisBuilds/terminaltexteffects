@@ -3,7 +3,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from terminaltexteffects.utils import ansitools, colorterm, easing, graphics
+from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, hexterm
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character
@@ -183,7 +183,14 @@ class Scene:
             if self.no_color:
                 char_vis_color = None
             elif self.use_xterm_colors:
-                char_vis_color = color.xterm_color
+                if color.xterm_color:
+                    char_vis_color = color.xterm_color
+                elif color.rgb_color in self.xterm_color_map:
+                    char_vis_color = self.xterm_color_map[color.rgb_color]
+                else:
+                    xterm_color = hexterm.hex_to_xterm(color.rgb_color)
+                    self.xterm_color_map[color.rgb_color] = xterm_color
+                    char_vis_color = xterm_color
             else:
                 char_vis_color = color.rgb_color
         if duration < 1:
