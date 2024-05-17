@@ -49,7 +49,7 @@ class SpotlightsConfig(ArgsDataClass):
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("ab48ff", "e7b2b2", "fffebd"),
+        default=(graphics.Color("ab48ff"), graphics.Color("e7b2b2"), graphics.Color("fffebd")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
