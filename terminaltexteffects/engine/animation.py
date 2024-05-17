@@ -415,68 +415,77 @@ class Animation:
             Color: The adjusted color code.
         """
 
-        def hue_to_rgb(p: float, q: float, t: float) -> float:
+        def hue_to_rgb(lightness_scaled: float, color_intensity: float, hue_value: float) -> float:
             """
             Converts a hue value to an RGB value component.
 
-            This function takes three parameters: p, q, and t. It calculates the RGB value component based on the given hue value.
+            This function is a helper function used in the conversion from HSL (Hue, Saturation, Lightness)
+            color space to RGB (Red, Green, Blue) color space. It takes in three parameters: lightness_scaled,
+            color_intensity, and hue_value. These parameters are derived from the HSL color space and are used
+            to calculate the corresponding RGB value.
 
+            Args:
+                lightness_scaled (float): The lightness value from the HSL color space, scaled and shifted to be used in the RGB conversion.
+                color_intensity (float): The intensity of the color, used to adjust the RGB values.
+                hue_value (float): The hue value from the HSL color space, used to calculate the RGB values.
 
-
+            Returns:
+                float: The calculated RGB component.
             """
 
-            if t < 0:
-                t += 1
-            if t > 1:
-                t -= 1
-            if t < 1 / 6:
-                return p + (q - p) * 6 * t
-            if t < 1 / 2:
-                return q
-            if t < 2 / 3:
-                return p + (q - p) * (2 / 3 - t) * 6
-            return p
+            if hue_value < 0:
+                hue_value += 1
+            if hue_value > 1:
+                hue_value -= 1
+            if hue_value < 1 / 6:
+                return lightness_scaled + (color_intensity - lightness_scaled) * 6 * hue_value
+            if hue_value < 1 / 2:
+                return color_intensity
+            if hue_value < 2 / 3:
+                return lightness_scaled + (color_intensity - lightness_scaled) * (2 / 3 - hue_value) * 6
+            return lightness_scaled
 
-        # r: int | float
-        # g: int | float
-        # b: int | float
-        r = int(color.rgb_color[0:2], 16) / 255
-        g = int(color.rgb_color[2:4], 16) / 255
-        b = int(color.rgb_color[4:6], 16) / 255
+        normalized_red = int(color.rgb_color[0:2], 16) / 255
+        normalized_green = int(color.rgb_color[2:4], 16) / 255
+        normalized_blue = int(color.rgb_color[4:6], 16) / 255
 
         # Convert RGB to HSL
-        max_val = max(r, g, b)
-        min_val = min(r, g, b)
+        max_val = max(normalized_red, normalized_green, normalized_blue)
+        min_val = min(normalized_red, normalized_green, normalized_blue)
         lightness = (max_val + min_val) / 2
 
         if max_val == min_val:
-            h = s = 0.0  # achromatic
+            hue_value = saturation = 0.0  # achromatic
         else:
             diff = max_val - min_val
-            s = diff / (2 - max_val - min_val) if lightness > 0.5 else diff / (max_val + min_val)
-            if max_val == r:
-                h = (g - b) / diff + (6 if g < b else 0)
-            elif max_val == g:
-                h = (b - r) / diff + 2
+            saturation = diff / (2 - max_val - min_val) if lightness > 0.5 else diff / (max_val + min_val)
+            if max_val == normalized_red:
+                hue_value = (normalized_green - normalized_blue) / diff + (
+                    6 if normalized_green < normalized_blue else 0
+                )
+            elif max_val == normalized_green:
+                hue_value = (normalized_blue - normalized_red) / diff + 2
             else:
-                h = (r - g) / diff + 4
-            h /= 6
+                hue_value = (normalized_red - normalized_green) / diff + 4
+            hue_value /= 6
 
         # Adjust lightness
         lightness = max(min(lightness * brightness, 1), 0)
 
         # Convert back to RGB
-        if s == 0:
-            r = g = b = lightness  # achromatic
+        if saturation == 0:
+            red = green = blue = lightness  # achromatic
         else:
-            q = lightness * (1 + s) if lightness < 0.5 else lightness + s - lightness * s
-            p = 2 * lightness - q
-            r = hue_to_rgb(p, q, h + 1 / 3)
-            g = hue_to_rgb(p, q, h)
-            b = hue_to_rgb(p, q, h - 1 / 3)
+            color_intensity = (
+                lightness * (1 + saturation) if lightness < 0.5 else lightness + saturation - lightness * saturation
+            )
+            lightness_scaled = 2 * lightness - color_intensity
+            red = hue_to_rgb(lightness_scaled, color_intensity, hue_value + 1 / 3)
+            green = hue_to_rgb(lightness_scaled, color_intensity, hue_value)
+            blue = hue_to_rgb(lightness_scaled, color_intensity, hue_value - 1 / 3)
 
         # Convert to hex
-        adjusted_color = "{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))
+        adjusted_color = "{:02x}{:02x}{:02x}".format(int(red * 255), int(green * 255), int(blue * 255))
         return graphics.Color(adjusted_color)
 
     def _ease_animation(self, easing_func: easing.EasingFunction) -> float:
