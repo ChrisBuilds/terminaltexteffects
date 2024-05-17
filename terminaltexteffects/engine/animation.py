@@ -437,10 +437,12 @@ class Animation:
                 return p + (q - p) * (2 / 3 - t) * 6
             return p
 
-        r: int | float
-        g: int | float
-        b: int | float
-        r, g, b = color.rgb_ints
+        # r: int | float
+        # g: int | float
+        # b: int | float
+        r = int(color.rgb_color[0:2], 16) / 255
+        g = int(color.rgb_color[2:4], 16) / 255
+        b = int(color.rgb_color[4:6], 16) / 255
 
         # Convert RGB to HSL
         max_val = max(r, g, b)
