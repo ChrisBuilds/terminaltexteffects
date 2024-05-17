@@ -12,8 +12,9 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import geometry, graphics
+from terminaltexteffects.utils import geometry
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -31,25 +32,34 @@ class ColorShiftConfig(ArgsDataClass):
     """Configuration for the ColorShift effect.
 
     Attributes:
-        gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the gradient. If only one color is provided,
+        gradient_stops (tuple[Color, ...]): Tuple of colors for the gradient. If only one color is provided,
         the characters will be displayed in that color.
         gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a
         smoother and longer gradient animation. Valid values are n > 0.
         gradient_frames (int): Number of frames to display each gradient step.
-        gradient_direction (graphics.Gradient.Direction): Direction of the gradient across the output area.
+        gradient_direction (Gradient.Direction): Direction of the gradient across the output area.
         travel (bool): Display the gradient as a traveling wave.
         cycles (int): Number of times to cycle the gradient. Use 0 for infinite. Valid values are n >= 0.
     """
 
-    gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("e81416", "ffa500", "faeb36", "79c314", "487de7", "4b369d", "70369d", "e81416"),
+        default=(
+            Color("e81416"),
+            Color("ffa500"),
+            Color("faeb36"),
+            Color("79c314"),
+            Color("487de7"),
+            Color("4b369d"),
+            Color("70369d"),
+            Color("e81416"),
+        ),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the gradient.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the gradient. If only one color is provided, the characters will be displayed in that color."
 
     gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--gradient-steps",
@@ -70,13 +80,13 @@ class ColorShiftConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : Number of frames to display each gradient step."
 
-    gradient_direction: graphics.Gradient.Direction = ArgField(
+    gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--gradient-direction",
-        default=graphics.Gradient.Direction.HORIZONTAL,
+        default=Gradient.Direction.HORIZONTAL,
         type_parser=argvalidators.GradientDirection.type_parser,
         help="Direction of the gradient (vertical, horizontal, diagonal, center).",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the gradient across the output area."
+    "Gradient.Direction : Direction of the gradient across the output area."
 
     travel: bool = ArgField(
         cmd_name="--travel",
@@ -103,7 +113,7 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
     def __init__(self, effect: "ColorShift") -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.loop_tracker_map: dict[EffectCharacter, int] = {}
         self.build()
 
@@ -113,20 +123,20 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
             character.animation.activate_scene(character.animation.query_scene("gradient"))
 
     def build(self) -> None:
-        gradient = graphics.Gradient(*self.config.gradient_stops, steps=self.config.gradient_steps)
+        gradient = Gradient(*self.config.gradient_stops, steps=self.config.gradient_steps)
         for character in self.terminal.get_characters():
             self.terminal.set_character_visibility(character, True)
             gradient_scn = character.animation.new_scene(id="gradient")
             if self.config.travel:
-                if self.config.gradient_direction == graphics.Gradient.Direction.HORIZONTAL:
+                if self.config.gradient_direction == Gradient.Direction.HORIZONTAL:
                     direction_index = character.input_coord.column / self.terminal.output_area.right
-                elif self.config.gradient_direction == graphics.Gradient.Direction.VERTICAL:
+                elif self.config.gradient_direction == Gradient.Direction.VERTICAL:
                     direction_index = character.input_coord.row / self.terminal.output_area.top
-                elif self.config.gradient_direction == graphics.Gradient.Direction.DIAGONAL:
+                elif self.config.gradient_direction == Gradient.Direction.DIAGONAL:
                     direction_index = (character.input_coord.row + character.input_coord.column) / (
                         self.terminal.output_area.right + self.terminal.output_area.top
                     )
-                elif self.config.gradient_direction == graphics.Gradient.Direction.CENTER:
+                elif self.config.gradient_direction == Gradient.Direction.CENTER:
                     direction_index = geometry.find_normalized_distance_from_center(
                         self.terminal.output_area.top, self.terminal.output_area.right, character.input_coord
                     )
