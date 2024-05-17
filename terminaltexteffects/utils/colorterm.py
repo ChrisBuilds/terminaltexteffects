@@ -1,18 +1,18 @@
 """This module converts xterm color codes and hex colors into ANSI escape sequences."""
 
 
-def _hex_to_int(hex_color: str) -> list[int]:
+def _hex_to_int(hex_color: str) -> tuple[int, int, int]:
     """Converts a hex color string into a list of integers.
 
     Args:
         hex_color (str): Hex color string. '#' is optional.
 
     Returns:
-        list[int]: A list of integers [RED, GREEN, BLUE] representing the color in RGB format.
+        tuple[int, int, int]: A tuple of integers [RED, GREEN, BLUE] representing the color in RGB format.
     """
     hex_color = hex_color.strip("#")
     ints = [int(hex_color[i : i + 2], 16) for i in range(0, 6, 2)]
-    return ints
+    return ints[0], ints[1], ints[2]
 
 
 def _color(color_code: str | int, location: int) -> str:

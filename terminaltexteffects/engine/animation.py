@@ -3,7 +3,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, hexterm
+from terminaltexteffects.utils import ansitools, colorterm, easing, graphics
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character
@@ -47,7 +47,7 @@ class CharacterVisual:
     reverse: bool = False
     hidden: bool = False
     strike: bool = False
-    color: graphics.Color | None = None
+    color: str | int | None = None
 
     def __post_init__(self):
         self.format_symbol()
@@ -152,7 +152,7 @@ class Scene:
         symbol: str,
         duration: int,
         *,
-        color: str | int | None = None,
+        color: graphics.Color | None = None,
         bold=False,
         dim=False,
         italic=False,
@@ -166,7 +166,7 @@ class Scene:
 
         Args:
             symbol (str): the symbol to show
-            color (str | int): color code
+            color (graphics.Color | None): Color
             duration (int): the number of frames to use the Frame
             color (str | int | None, optional): the color to show. Defaults to None.
             bold (bool, optional): bold mode. Defaults to False.
@@ -178,16 +178,14 @@ class Scene:
             hidden (bool, optional): hidden mode. Defaults to False.
             strike (bool, optional): strike mode. Defaults to False.
         """
-        if not self.no_color and color is not None:
-            if self.use_xterm_colors and isinstance(color, str):
-                if color in self.xterm_color_map:
-                    color = self.xterm_color_map[color]
-                else:
-                    xterm_color = hexterm.hex_to_xterm(color)
-                    self.xterm_color_map[color] = xterm_color
-                    color = xterm_color
-        else:
-            color = None
+        char_vis_color: str | int | None = None
+        if color:
+            if self.no_color:
+                char_vis_color = None
+            elif self.use_xterm_colors:
+                char_vis_color = color.xterm_color
+            else:
+                char_vis_color = color.rgb_color
         if duration < 1:
             raise ValueError("duration must be greater than 0")
         char_vis = CharacterVisual(
@@ -200,7 +198,7 @@ class Scene:
             reverse=reverse,
             hidden=hidden,
             strike=strike,
-            color=color,
+            color=char_vis_color,
         )
         frame = Frame(char_vis, duration)
         self.frames.append(frame)
@@ -376,35 +374,33 @@ class Animation:
 
         return False
 
-    def set_appearance(self, symbol: str, color: str | int | None = None) -> None:
+    def set_appearance(self, symbol: str, color: graphics.Color | None = None) -> None:
         """Applies a symbol and color to the character. If the character has an active scene, any appearance set with this method
         will be overwritten when the scene is stepped to the next frame.
 
         Args:
             symbol (str): The symbol to apply.
-            color (str | int | None): The color to apply.
+            color (graphics.Color | None): The color to apply.
         """
-        if not self.no_color and color is not None:
-            if self.use_xterm_colors and isinstance(color, str):
-                if color in self.xterm_color_map:
-                    color = self.xterm_color_map[color]
-                else:
-                    xterm_color = hexterm.hex_to_xterm(color)
-                    self.xterm_color_map[color] = xterm_color
-                    color = xterm_color
-        else:
-            color = None
-        visual = CharacterVisual(symbol, color=color)
+        char_vis_color: str | int | None = None
+        if color:
+            if self.no_color:
+                char_vis_color = None
+            elif self.use_xterm_colors:
+                char_vis_color = color.xterm_color
+            else:
+                char_vis_color = color.rgb_color
+        visual = CharacterVisual(symbol, color=char_vis_color)
         self.character.symbol = visual.symbol
 
     @staticmethod
-    def random_color() -> str:
-        """Returns a random hex color code.
+    def random_color() -> graphics.Color:
+        """Returns a random color.
 
         Returns:
-            str: hex color code
+            graphics.Color: A random color.
         """
-        return hex(random.randint(0, 0xFFFFFF))[2:].zfill(6)
+        return graphics.Color(hex(random.randint(0, 0xFFFFFF))[2:].zfill(6))
 
     @staticmethod
     def adjust_color_brightness(color: graphics.Color, brightness: float) -> graphics.Color:
@@ -419,7 +415,16 @@ class Animation:
             Color: The adjusted color code.
         """
 
-        def hue_to_rgb(p, q, t):
+        def hue_to_rgb(p: float, q: float, t: float) -> float:
+            """
+            Converts a hue value to an RGB value component.
+
+            This function takes three parameters: p, q, and t. It calculates the RGB value component based on the given hue value.
+
+
+
+            """
+
             if t < 0:
                 t += 1
             if t > 1:
@@ -432,15 +437,10 @@ class Animation:
                 return p + (q - p) * (2 / 3 - t) * 6
             return p
 
-        xterm = False
-        if isinstance(color, int):
-            color = hexterm.xterm_to_hex(color)
-            xterm = True
-
-        # Split the hex color string into RGB components and convert to decimal
-        r = int(color[0:2], 16) / 255
-        g = int(color[2:4], 16) / 255
-        b = int(color[4:6], 16) / 255
+        r: int | float
+        g: int | float
+        b: int | float
+        r, g, b = color.rgb_ints
 
         # Convert RGB to HSL
         max_val = max(r, g, b)
@@ -475,9 +475,7 @@ class Animation:
 
         # Convert to hex
         adjusted_color = "{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))
-        if xterm:
-            return hexterm.hex_to_xterm(adjusted_color)
-        return adjusted_color
+        return graphics.Color(adjusted_color)
 
     def _ease_animation(self, easing_func: easing.EasingFunction) -> float:
         """Returns the percentage of total distance that should be moved based on the easing function.

@@ -14,8 +14,51 @@ from terminaltexteffects.utils import ansitools, colorterm, geometry, hexterm
 if typing.TYPE_CHECKING:
     pass
 
-Color: typing.TypeAlias = int | str
-"Colors are either XTerm-256 color codes (int 0 -> 255) or RGB hex color strings (000000 -> ffffff)."
+
+class Color:
+    def __init__(self, color_value: int | str) -> None:
+        self.color_arg = color_value
+        self.xterm_color: int | None = None
+        if hexterm.is_valid_color(color_value):
+            if isinstance(color_value, int):
+                self.xterm_color = color_value
+                self.rgb_color = hexterm.xterm_to_hex(color_value)
+            else:
+                self.rgb_color = color_value.strip("#")
+                self.xterm_color = None
+        else:
+            raise ValueError(
+                "Invalid color value. Color must be an XTerm-256 color code or an RGB hex color string. Example: 255 or 'ffffff' or '#ffffff'"
+            )
+
+    @property
+    def rgb_ints(self) -> tuple[int, int, int]:
+        """Returns the RGB values as a tuple of integers.
+
+        Returns:
+            tuple[int, int, int]: The RGB values as a tuple of integers.
+        """
+        return colorterm._hex_to_int(self.rgb_color)
+
+    def __repr__(self) -> str:
+        return f"Color({self.color_arg})"
+
+    def __str__(self) -> str:
+        color_block = f"{colorterm.fg(self.rgb_color)}█████{ansitools.RESET_ALL()}"
+        return f"Color Code: {self.rgb_color}{f' | XTerm Color: {self.xterm_color}' if self.xterm_color else ''}\nColor Appearance: {color_block}"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Color):
+            return NotImplemented
+        return self.color_arg == other.color_arg
+
+    def __ne__(self, other: object) -> bool:
+        if not isinstance(other, Color):
+            return NotImplemented
+        return self.color_arg != other.color_arg
+
+    def __hash__(self) -> int:
+        return hash(self.color_arg)
 
 
 class Gradient:
@@ -71,24 +114,24 @@ class Gradient:
         if len(self._stops) < 1:
             raise ValueError("At least one stop must be provided.")
         self._steps = steps
-        self.spectrum: list[str] = self._generate(self._steps)
+        self.spectrum: list[Color] = self._generate(self._steps)
         self._index: int = 0
 
-    def get_color_at_fraction(self, fraction: float) -> str:
+    def get_color_at_fraction(self, fraction: float) -> Color:
         """Returns the color at a fraction of the gradient.
 
         Args:
             fraction (float): The fraction of the gradient to get the color for.
 
         Returns:
-            str: The color at the fraction of the gradient.
+            Color: The color at the fraction of the gradient.
         """
         if fraction < 0 or fraction > 1:
             raise ValueError("Fraction must be 0 <= fraction <= 1.")
         index = round(fraction * (len(self.spectrum) - 1))
         return self.spectrum[index]
 
-    def _generate(self, steps) -> list[str]:
+    def _generate(self, steps) -> list[Color]:
         """Calculate a gradient of colors between two colors using linear interpolation. If
         there is only one color in the stops tuple, the gradient will be a list of the same color.
 
@@ -112,30 +155,21 @@ class Gradient:
             for step in steps:
                 if step < 1:
                     raise ValueError("Steps must be greater than 0.")
-        spectrum: list[str] = []
+        spectrum: list[Color] = []
         if len(self._stops) == 1:
             color = self._stops[0]
-            if isinstance(color, int):
-                color = hexterm.xterm_to_hex(color)
             for _ in range(steps[0]):
                 spectrum.append(color)
             return spectrum
         color_pairs = list(itertools.pairwise(self._stops))
         steps = steps[: len(color_pairs)]
+        color_pair: tuple[Color, Color]
         for color_pair, steps in itertools.zip_longest(color_pairs, steps, fillvalue=steps[-1]):
             start, end = color_pair
-            # Convert start_color to hex if it's an XTerm-256 color code
-            if isinstance(start, int):
-                start = hexterm.xterm_to_hex(start)
-            # Convert end_color to hex if it's an XTerm-256 color code
-            if isinstance(end, int):
-                end = hexterm.xterm_to_hex(end)
-            # Convert start_color to a list of RGB values
-            start_color_ints = colorterm._hex_to_int(start)
-            # Convert end_color to a list of RGB values
-            end_color_ints = colorterm._hex_to_int(end)
+            start_color_ints = start.rgb_ints
+            end_color_ints = end.rgb_ints
             # Initialize an empty list to store the gradient colors
-            gradient_colors: list[str] = []
+            gradient_colors: list[Color] = []
             # Calculate the color deltas for each RGB value
             red_delta = (end_color_ints[0] - start_color_ints[0]) // steps
             green_delta = (end_color_ints[1] - start_color_ints[1]) // steps
@@ -153,7 +187,7 @@ class Gradient:
                 blue = max(0, min(blue, 255))
 
                 # Convert the RGB values to a hex color string and add it to the gradient colors list
-                gradient_colors.append(f"{red:02x}{green:02x}{blue:02x}")
+                gradient_colors.append(Color(f"{red:02x}{green:02x}{blue:02x}"))
             # Add the end color to the gradient colors list
             gradient_colors.append(end)
             spectrum.extend(gradient_colors)
@@ -213,12 +247,14 @@ class Gradient:
 
         return gradient_mapping
 
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> Iterator[Color]:
         yield from self.spectrum
 
     def __len__(self) -> int:
         return len(self.spectrum)
 
     def __str__(self) -> str:
-        color_blocks = [f"{colorterm.fg(color)}█{ansitools.RESET_ALL()}" for color in self.spectrum]
-        return f"Gradient: Stops({self._stops}), Steps({self._steps})\n" + "".join(color_blocks)
+        color_blocks = [f"{colorterm.fg(color.rgb_color)}█{ansitools.RESET_ALL()}" for color in self.spectrum]
+        return f"Gradient: Stops({', '.join(c.rgb_color for c in self._stops)}), Steps({self._steps})\n" + "".join(
+            color_blocks
+        )

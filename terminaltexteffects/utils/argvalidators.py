@@ -31,8 +31,7 @@ import argparse
 import typing
 
 from terminaltexteffects.utils import easing
-from terminaltexteffects.utils.graphics import Color as ColorType
-from terminaltexteffects.utils.graphics import Gradient
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 EASING_EPILOG = """\
     Easing
@@ -333,7 +332,7 @@ class ColorArg:
     METAVAR = "(XTerm [0-255] OR RGB Hex [000000-ffffff])"
 
     @staticmethod
-    def type_parser(arg: str) -> ColorType:
+    def type_parser(arg: str) -> Color:
         """Validates that the given argument is a valid color value.
 
         Args:
@@ -347,16 +346,22 @@ class ColorArg:
         """
         xterm_min = 0
         xterm_max = 255
-        if len(arg) == 6:
-            # Check if the hex value is a valid color
-            if not 0 <= int(arg, 16) <= 16777215:
-                raise argparse.ArgumentTypeError(f"invalid color value: {arg} is not a valid hex color.")
-            return arg
+        if len(arg) <= 3:
+            try:
+                color = Color(int(arg))
+                return color
+            except ValueError:
+                raise argparse.ArgumentTypeError(
+                    f"invalid color value: '{arg}' is not a valid XTerm or RGB color. Must be in range {xterm_min}-{xterm_max} or 000000-FFFFFF."
+                )
         else:
-            # Check if the color is a valid xterm color
-            if not xterm_min <= int(arg) <= xterm_max:
-                raise argparse.ArgumentTypeError(f"invalid color value: {arg} is not a valid xterm color (0-255).")
-            return int(arg)
+            try:
+                color = Color(arg)
+                return color
+            except ValueError:
+                raise argparse.ArgumentTypeError(
+                    f"invalid color value: '{arg}' is not a valid XTerm or RGB color. Must be in range {xterm_min}-{xterm_max} or 000000-FFFFFF."
+                )
 
 
 class Symbol:

@@ -105,7 +105,7 @@ class BeamsConfig(ArgsDataClass):
         cmd_name="--beam-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("ffffff", "00D1FF", "8A008A"),
+        default=(graphics.Color("ffffff"), graphics.Color("00D1FF"), graphics.Color("8A008A")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors.",
     )  # type: ignore[assignment]
@@ -137,7 +137,7 @@ class BeamsConfig(ArgsDataClass):
         cmd_name="--final-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "ffffff"),
+        default=(graphics.Color("8A008A"), graphics.Color("00D1FF"), graphics.Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # type: ignore[assignment]
