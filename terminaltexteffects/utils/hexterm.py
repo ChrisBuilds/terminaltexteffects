@@ -1,6 +1,7 @@
 """This module contains a list of all XTerm-256 color codes and functions to convert between RGB Hex color strings and XTerm-256 color codes.
 
 Functions:
+    hex_to_xterm: Convert RGB Hex colors to their closest XTerm-256 color.
     xterm_to_hex: Convert XTerm-256 color codes to RGB Hex colors.
     is_valid_color: Check if the input is a valid RGB Hex color code.
 """
@@ -263,6 +264,39 @@ xterm_to_hex_map = {
     254: "#e4e4e4",
     255: "#eeeeee",
 }
+
+
+def hex_to_xterm(hex_color: str) -> int:
+    """Convert RGB Hex colors to their closest XTerm-256 color.
+
+    Args:
+        hex_color (str): RGB Hex color code, '#' is optional
+
+    Returns:
+        int: (0-255) XTerm-256 color code
+
+    """
+    color_string = hex_color.strip("#")
+    closest = sorted(
+        list(
+            (
+                xterm_color,
+                sum(
+                    [
+                        abs(x[0] - x[1])
+                        for x in zip(
+                            [int(color_string[i : i + 2], 16) for i in range(0, 6, 2)],
+                            [int(xterm_hex.strip("#")[i : i + 2], 16) for i in range(0, 6, 2)],
+                        )
+                    ]
+                )
+                / 3,
+            )
+            for xterm_color, xterm_hex in xterm_to_hex_map.items()
+        ),
+        key=lambda x_diff: x_diff[1],
+    )[0][0]
+    return closest
 
 
 def xterm_to_hex(xterm_color: int) -> str:
