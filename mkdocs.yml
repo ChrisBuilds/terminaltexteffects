@@ -72,6 +72,7 @@ nav:
         - engine/utils/colorterm.md
         - engine/utils/easing.md
         - engine/utils/geometry.md
+        - engine/utils/color.md
         - engine/utils/gradient.md
         - engine/utils/hexterm.md
     - Effects:

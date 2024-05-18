@@ -35,7 +35,7 @@ class CharacterVisual:
         reverse (bool): reverse mode
         hidden (bool): hidden mode
         strike (bool): strike mode
-        color (Color): color code
+        color (str | int | None): color code
     """
 
     symbol: str
@@ -166,9 +166,8 @@ class Scene:
 
         Args:
             symbol (str): the symbol to show
-            color (graphics.Color | None): Color
             duration (int): the number of frames to use the Frame
-            color (str | int | None, optional): the color to show. Defaults to None.
+            color (graphics.Color, optional): the color to show. Defaults to None.
             bold (bool, optional): bold mode. Defaults to False.
             dim (bool, optional): dim mode. Defaults to False.
             italic (bool, optional): italic mode. Defaults to False.
@@ -269,7 +268,7 @@ class Scene:
         This results in each symbol being displayed in a sequence of colors from the gradient, creating a gradient effect across the symbols.
 
         Args:
-            gradient (Gradient): The gradient to apply.
+            gradient (graphics.Gradient): The gradient to apply.
             symbols (list[str]): The list of symbols to apply the gradient to.
             duration (int): The duration to show each frame.
 

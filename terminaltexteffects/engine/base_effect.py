@@ -128,7 +128,7 @@ class BaseEffect(ABC, Generic[T]):
 
         Raises:
             Exception: Any exception that occurs within the context manager will be raised before restoring the terminal
-            state.
+                state.
         """
         terminal = Terminal(self.input_data, self.terminal_config)
         try:
