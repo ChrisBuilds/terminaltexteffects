@@ -1098,6 +1098,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../engine/utils/color/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Color
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../engine/utils/gradient/" class="md-nav__link">
         
   
@@ -2300,7 +2321,8 @@
 
             <details class="quote">
               <summary>Source code in <code>terminaltexteffects/effects/effect_unstable.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-259">259</a></span>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-258">258</a></span>
+<span class="normal"><a href="#__codelineno-0-259">259</a></span>
 <span class="normal"><a href="#__codelineno-0-260">260</a></span>
 <span class="normal"><a href="#__codelineno-0-261">261</a></span>
 <span class="normal"><a href="#__codelineno-0-262">262</a></span>
@@ -2315,24 +2337,23 @@
 <span class="normal"><a href="#__codelineno-0-271">271</a></span>
 <span class="normal"><a href="#__codelineno-0-272">272</a></span>
 <span class="normal"><a href="#__codelineno-0-273">273</a></span>
-<span class="normal"><a href="#__codelineno-0-274">274</a></span>
-<span class="normal"><a href="#__codelineno-0-275">275</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-259"><a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="k">class</span> <span class="nc">Unstable</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">UnstableConfig</span><span class="p">]):</span>
-</span><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.</span>
-</span><span id="__span-0-261"><a id="__codelineno-0-261" name="__codelineno-0-261"></a>
-</span><span id="__span-0-262"><a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="sd">    Attributes:</span>
-</span><span id="__span-0-263"><a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="sd">        effect_config (UnstableConfig): Configuration for the effect.</span>
-</span><span id="__span-0-264"><a id="__codelineno-0-264" name="__codelineno-0-264"></a><span class="sd">        terminal_config (TerminalConfig): Configuration for the terminal.</span>
-</span><span id="__span-0-265"><a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-266"><a id="__codelineno-0-266" name="__codelineno-0-266"></a>
-</span><span id="__span-0-267"><a id="__codelineno-0-267" name="__codelineno-0-267"></a>    <span class="n">_config_cls</span> <span class="o">=</span> <span class="n">UnstableConfig</span>
-</span><span id="__span-0-268"><a id="__codelineno-0-268" name="__codelineno-0-268"></a>    <span class="n">_iterator_cls</span> <span class="o">=</span> <span class="n">UnstableIterator</span>
-</span><span id="__span-0-269"><a id="__codelineno-0-269" name="__codelineno-0-269"></a>
-</span><span id="__span-0-270"><a id="__codelineno-0-270" name="__codelineno-0-270"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="__span-0-271"><a id="__codelineno-0-271" name="__codelineno-0-271"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the effect with the provided input data.</span>
-</span><span id="__span-0-272"><a id="__codelineno-0-272" name="__codelineno-0-272"></a>
-</span><span id="__span-0-273"><a id="__codelineno-0-273" name="__codelineno-0-273"></a><span class="sd">        Args:</span>
-</span><span id="__span-0-274"><a id="__codelineno-0-274" name="__codelineno-0-274"></a><span class="sd">            input_data (str): The input data to use for the effect.&quot;&quot;&quot;</span>
-</span><span id="__span-0-275"><a id="__codelineno-0-275" name="__codelineno-0-275"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-274">274</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-258"><a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="k">class</span> <span class="nc">Unstable</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">UnstableConfig</span><span class="p">]):</span>
+</span><span id="__span-0-259"><a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.</span>
+</span><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a>
+</span><span id="__span-0-261"><a id="__codelineno-0-261" name="__codelineno-0-261"></a><span class="sd">    Attributes:</span>
+</span><span id="__span-0-262"><a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="sd">        effect_config (UnstableConfig): Configuration for the effect.</span>
+</span><span id="__span-0-263"><a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="sd">        terminal_config (TerminalConfig): Configuration for the terminal.</span>
+</span><span id="__span-0-264"><a id="__codelineno-0-264" name="__codelineno-0-264"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-265"><a id="__codelineno-0-265" name="__codelineno-0-265"></a>
+</span><span id="__span-0-266"><a id="__codelineno-0-266" name="__codelineno-0-266"></a>    <span class="n">_config_cls</span> <span class="o">=</span> <span class="n">UnstableConfig</span>
+</span><span id="__span-0-267"><a id="__codelineno-0-267" name="__codelineno-0-267"></a>    <span class="n">_iterator_cls</span> <span class="o">=</span> <span class="n">UnstableIterator</span>
+</span><span id="__span-0-268"><a id="__codelineno-0-268" name="__codelineno-0-268"></a>
+</span><span id="__span-0-269"><a id="__codelineno-0-269" name="__codelineno-0-269"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-270"><a id="__codelineno-0-270" name="__codelineno-0-270"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the effect with the provided input data.</span>
+</span><span id="__span-0-271"><a id="__codelineno-0-271" name="__codelineno-0-271"></a>
+</span><span id="__span-0-272"><a id="__codelineno-0-272" name="__codelineno-0-272"></a><span class="sd">        Args:</span>
+</span><span id="__span-0-273"><a id="__codelineno-0-273" name="__codelineno-0-273"></a><span class="sd">            input_data (str): The input data to use for the effect.&quot;&quot;&quot;</span>
+</span><span id="__span-0-274"><a id="__codelineno-0-274" name="__codelineno-0-274"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
 
@@ -2395,17 +2416,17 @@
 
           <details class="quote">
             <summary>Source code in <code>terminaltexteffects/effects/effect_unstable.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-270">270</a></span>
+            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-269">269</a></span>
+<span class="normal"><a href="#__codelineno-0-270">270</a></span>
 <span class="normal"><a href="#__codelineno-0-271">271</a></span>
 <span class="normal"><a href="#__codelineno-0-272">272</a></span>
 <span class="normal"><a href="#__codelineno-0-273">273</a></span>
-<span class="normal"><a href="#__codelineno-0-274">274</a></span>
-<span class="normal"><a href="#__codelineno-0-275">275</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-270"><a id="__codelineno-0-270" name="__codelineno-0-270"></a><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="__span-0-271"><a id="__codelineno-0-271" name="__codelineno-0-271"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the effect with the provided input data.</span>
-</span><span id="__span-0-272"><a id="__codelineno-0-272" name="__codelineno-0-272"></a>
-</span><span id="__span-0-273"><a id="__codelineno-0-273" name="__codelineno-0-273"></a><span class="sd">    Args:</span>
-</span><span id="__span-0-274"><a id="__codelineno-0-274" name="__codelineno-0-274"></a><span class="sd">        input_data (str): The input data to use for the effect.&quot;&quot;&quot;</span>
-</span><span id="__span-0-275"><a id="__codelineno-0-275" name="__codelineno-0-275"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-274">274</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-269"><a id="__codelineno-0-269" name="__codelineno-0-269"></a><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-270"><a id="__codelineno-0-270" name="__codelineno-0-270"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the effect with the provided input data.</span>
+</span><span id="__span-0-271"><a id="__codelineno-0-271" name="__codelineno-0-271"></a>
+</span><span id="__span-0-272"><a id="__codelineno-0-272" name="__codelineno-0-272"></a><span class="sd">    Args:</span>
+</span><span id="__span-0-273"><a id="__codelineno-0-273" name="__codelineno-0-273"></a><span class="sd">        input_data (str): The input data to use for the effect.&quot;&quot;&quot;</span>
+</span><span id="__span-0-274"><a id="__codelineno-0-274" name="__codelineno-0-274"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
           </details>
   </div>
@@ -2458,7 +2479,7 @@
         <tr class="doc-section-item">
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_unstable.UnstableConfig.unstable_color" href="#terminaltexteffects.effects.effect_unstable.UnstableConfig.unstable_color">unstable_color</a></code></td>
           <td>
-                <code><a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/gradient/#terminaltexteffects.utils.graphics.Color">Color</a></code>
+                <code><a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/color/#terminaltexteffects.utils.graphics.Color">Color</a></code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2469,7 +2490,7 @@
         <tr class="doc-section-item">
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_unstable.UnstableConfig.final_gradient_stops" href="#terminaltexteffects.effects.effect_unstable.UnstableConfig.final_gradient_stops">final_gradient_stops</a></code></td>
           <td>
-                <code>tuple[<a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/gradient/#terminaltexteffects.utils.graphics.Color">Color</a>, ...]</code>
+                <code>tuple[<a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/color/#terminaltexteffects.utils.graphics.Color">Color</a>, ...]</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2480,7 +2501,7 @@
         <tr class="doc-section-item">
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_unstable.UnstableConfig.final_gradient_steps" href="#terminaltexteffects.effects.effect_unstable.UnstableConfig.final_gradient_steps">final_gradient_steps</a></code></td>
           <td>
-                <code>tuple[int, ...]</code>
+                <code>tuple[int, ...] | int</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2548,8 +2569,7 @@
 
             <details class="quote">
               <summary>Source code in <code>terminaltexteffects/effects/effect_unstable.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-25"> 25</a></span>
-<span class="normal"><a href="#__codelineno-0-26"> 26</a></span>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-26"> 26</a></span>
 <span class="normal"><a href="#__codelineno-0-27"> 27</a></span>
 <span class="normal"><a href="#__codelineno-0-28"> 28</a></span>
 <span class="normal"><a href="#__codelineno-0-29"> 29</a></span>
@@ -2645,104 +2665,105 @@
 <span class="normal"><a href="#__codelineno-0-119">119</a></span>
 <span class="normal"><a href="#__codelineno-0-120">120</a></span>
 <span class="normal"><a href="#__codelineno-0-121">121</a></span>
-<span class="normal"><a href="#__codelineno-0-122">122</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="nd">@argclass</span><span class="p">(</span>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unstable&quot;</span><span class="p">,</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;unstable | Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">epilog</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="si">{</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">EASING_EPILOG</span><span class="si">}</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="s2">    Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75&quot;&quot;&quot;</span><span class="p">,</span>
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="p">)</span>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="nd">@dataclass</span>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="k">class</span> <span class="nc">UnstableConfig</span><span class="p">(</span><span class="n">ArgsDataClass</span><span class="p">):</span>
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for the Unstable effect.</span>
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a>
-</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    Attributes:</span>
-</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        unstable_color (graphics.Color): Color transitioned to as the characters become unstable.</span>
-</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</span>
-</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n &gt; 0.</span>
-</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.</span>
-</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">        explosion_ease (easing.EasingFunction): Easing function to use for character movement during the explosion.</span>
-</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">        explosion_speed (float): Speed of characters during explosion. Valid values are n &gt; 0.</span>
-</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="sd">        reassembly_ease (easing.EasingFunction): Easing function to use for character reassembly.</span>
-</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">        reassembly_speed (float): Speed of characters during reassembly. Valid values are n &gt; 0.</span>
-</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47"></a>
-</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="n">unstable_color</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--unstable-color&quot;</span><span class="p">],</span>
-</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;ff9200&quot;</span><span class="p">,</span>
-</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Color transitioned to as the characters become unstable.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="s2">&quot;graphics.Color : Color transitioned to as the characters become unstable.&quot;</span>
-</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a>
-</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">graphics</span><span class="o">.</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--final-gradient-stops&quot;</span><span class="p">],</span>
-</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
-</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;8A008A&quot;</span><span class="p">,</span> <span class="s2">&quot;00D1FF&quot;</span><span class="p">,</span> <span class="s2">&quot;FFFFFF&quot;</span><span class="p">),</span>
-</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="s2">&quot;tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.&quot;</span>
-</span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a>
-</span><span id="__span-0-67"><a id="__codelineno-0-67" name="__codelineno-0-67"></a>    <span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--final-gradient-steps&quot;</span><span class="p">],</span>
-</span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-70"><a id="__codelineno-0-70" name="__codelineno-0-70"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
-</span><span id="__span-0-71"><a id="__codelineno-0-71" name="__codelineno-0-71"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,),</span>
-</span><span id="__span-0-72"><a id="__codelineno-0-72" name="__codelineno-0-72"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-73"><a id="__codelineno-0-73" name="__codelineno-0-73"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a>    <span class="s2">&quot;tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span>
-</span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a>
-</span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-direction&quot;</span><span class="p">,</span>
-</span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>        <span class="n">default</span><span class="o">=</span><span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">,</span>
-</span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Direction of the final gradient.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="s2">&quot;graphics.Gradient.Direction : Direction of the final gradient.&quot;</span>
-</span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>
-</span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a>    <span class="n">explosion_ease</span><span class="p">:</span> <span class="n">easing</span><span class="o">.</span><span class="n">EasingFunction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-87"><a id="__codelineno-0-87" name="__codelineno-0-87"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--explosion-ease&quot;</span><span class="p">],</span>
-</span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ease</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a>        <span class="n">default</span><span class="o">=</span><span class="n">easing</span><span class="o">.</span><span class="n">out_expo</span><span class="p">,</span>
-</span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Easing function to use for character movement during the explosion.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-92"><a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="s2">&quot;easing.EasingFunction : Easing function to use for character movement during the explosion.&quot;</span>
-</span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>
-</span><span id="__span-0-94"><a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="n">explosion_speed</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--explosion-speed&quot;</span><span class="p">],</span>
-</span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">default</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
-</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Speed of characters during explosion. &quot;</span><span class="p">,</span>
-</span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="s2">&quot;float : Speed of characters during explosion. &quot;</span>
-</span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a>
-</span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a>    <span class="n">reassembly_ease</span><span class="p">:</span> <span class="n">easing</span><span class="o">.</span><span class="n">EasingFunction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--reassembly-ease&quot;</span><span class="p">],</span>
-</span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ease</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="n">default</span><span class="o">=</span><span class="n">easing</span><span class="o">.</span><span class="n">out_expo</span><span class="p">,</span>
-</span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Easing function to use for character reassembly.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-109"><a id="__codelineno-0-109" name="__codelineno-0-109"></a>    <span class="s2">&quot;easing.EasingFunction : Easing function to use for character reassembly.&quot;</span>
-</span><span id="__span-0-110"><a id="__codelineno-0-110" name="__codelineno-0-110"></a>
-</span><span id="__span-0-111"><a id="__codelineno-0-111" name="__codelineno-0-111"></a>    <span class="n">reassembly_speed</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-112"><a id="__codelineno-0-112" name="__codelineno-0-112"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--reassembly-speed&quot;</span><span class="p">],</span>
-</span><span id="__span-0-113"><a id="__codelineno-0-113" name="__codelineno-0-113"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-114"><a id="__codelineno-0-114" name="__codelineno-0-114"></a>        <span class="n">default</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
-</span><span id="__span-0-115"><a id="__codelineno-0-115" name="__codelineno-0-115"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-116"><a id="__codelineno-0-116" name="__codelineno-0-116"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Speed of characters during reassembly. &quot;</span><span class="p">,</span>
-</span><span id="__span-0-117"><a id="__codelineno-0-117" name="__codelineno-0-117"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-118"><a id="__codelineno-0-118" name="__codelineno-0-118"></a>    <span class="s2">&quot;float : Speed of characters during reassembly.&quot;</span>
-</span><span id="__span-0-119"><a id="__codelineno-0-119" name="__codelineno-0-119"></a>
-</span><span id="__span-0-120"><a id="__codelineno-0-120" name="__codelineno-0-120"></a>    <span class="nd">@classmethod</span>
-</span><span id="__span-0-121"><a id="__codelineno-0-121" name="__codelineno-0-121"></a>    <span class="k">def</span> <span class="nf">get_effect_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-</span><span id="__span-0-122"><a id="__codelineno-0-122" name="__codelineno-0-122"></a>        <span class="k">return</span> <span class="n">Unstable</span>
+<span class="normal"><a href="#__codelineno-0-122">122</a></span>
+<span class="normal"><a href="#__codelineno-0-123">123</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="nd">@argclass</span><span class="p">(</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unstable&quot;</span><span class="p">,</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;unstable | Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">epilog</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="si">{</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">EASING_EPILOG</span><span class="si">}</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="s2">    Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75&quot;&quot;&quot;</span><span class="p">,</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="p">)</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="nd">@dataclass</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="k">class</span> <span class="nc">UnstableConfig</span><span class="p">(</span><span class="n">ArgsDataClass</span><span class="p">):</span>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for the Unstable effect.</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">    Attributes:</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        unstable_color (Color): Color transitioned to as the characters become unstable.</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n &gt; 0.</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">        final_gradient_direction (Gradient.Direction): Direction of the final gradient.</span>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">        explosion_ease (easing.EasingFunction): Easing function to use for character movement during the explosion.</span>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="sd">        explosion_speed (float): Speed of characters during explosion. Valid values are n &gt; 0.</span>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">        reassembly_ease (easing.EasingFunction): Easing function to use for character reassembly.</span>
+</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">        reassembly_speed (float): Speed of characters during reassembly. Valid values are n &gt; 0.</span>
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48"></a>
+</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="n">unstable_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--unstable-color&quot;</span><span class="p">],</span>
+</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52"></a>        <span class="n">default</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;ff9200&quot;</span><span class="p">),</span>
+</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Color transitioned to as the characters become unstable.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="s2">&quot;Color : Color transitioned to as the characters become unstable.&quot;</span>
+</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a>
+</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--final-gradient-stops&quot;</span><span class="p">],</span>
+</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
+</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;8A008A&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;00D1FF&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;FFFFFF&quot;</span><span class="p">)),</span>
+</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="s2">&quot;tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.&quot;</span>
+</span><span id="__span-0-67"><a id="__codelineno-0-67" name="__codelineno-0-67"></a>
+</span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a>    <span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--final-gradient-steps&quot;</span><span class="p">],</span>
+</span><span id="__span-0-70"><a id="__codelineno-0-70" name="__codelineno-0-70"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-71"><a id="__codelineno-0-71" name="__codelineno-0-71"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
+</span><span id="__span-0-72"><a id="__codelineno-0-72" name="__codelineno-0-72"></a>        <span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+</span><span id="__span-0-73"><a id="__codelineno-0-73" name="__codelineno-0-73"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="s2">&quot;tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span>
+</span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>
+</span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a>    <span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-direction&quot;</span><span class="p">,</span>
+</span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>        <span class="n">default</span><span class="o">=</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">,</span>
+</span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Direction of the final gradient.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>    <span class="s2">&quot;Gradient.Direction : Direction of the final gradient.&quot;</span>
+</span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a>
+</span><span id="__span-0-87"><a id="__codelineno-0-87" name="__codelineno-0-87"></a>    <span class="n">explosion_ease</span><span class="p">:</span> <span class="n">easing</span><span class="o">.</span><span class="n">EasingFunction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--explosion-ease&quot;</span><span class="p">],</span>
+</span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ease</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a>        <span class="n">default</span><span class="o">=</span><span class="n">easing</span><span class="o">.</span><span class="n">out_expo</span><span class="p">,</span>
+</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Easing function to use for character movement during the explosion.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-92"><a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="s2">&quot;easing.EasingFunction : Easing function to use for character movement during the explosion.&quot;</span>
+</span><span id="__span-0-94"><a id="__codelineno-0-94" name="__codelineno-0-94"></a>
+</span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="n">explosion_speed</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--explosion-speed&quot;</span><span class="p">],</span>
+</span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>        <span class="n">default</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
+</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Speed of characters during explosion. &quot;</span><span class="p">,</span>
+</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a>    <span class="s2">&quot;float : Speed of characters during explosion. &quot;</span>
+</span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a>
+</span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>    <span class="n">reassembly_ease</span><span class="p">:</span> <span class="n">easing</span><span class="o">.</span><span class="n">EasingFunction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--reassembly-ease&quot;</span><span class="p">],</span>
+</span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ease</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107"></a>        <span class="n">default</span><span class="o">=</span><span class="n">easing</span><span class="o">.</span><span class="n">out_expo</span><span class="p">,</span>
+</span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Easing function to use for character reassembly.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-109"><a id="__codelineno-0-109" name="__codelineno-0-109"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-110"><a id="__codelineno-0-110" name="__codelineno-0-110"></a>    <span class="s2">&quot;easing.EasingFunction : Easing function to use for character reassembly.&quot;</span>
+</span><span id="__span-0-111"><a id="__codelineno-0-111" name="__codelineno-0-111"></a>
+</span><span id="__span-0-112"><a id="__codelineno-0-112" name="__codelineno-0-112"></a>    <span class="n">reassembly_speed</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-113"><a id="__codelineno-0-113" name="__codelineno-0-113"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--reassembly-speed&quot;</span><span class="p">],</span>
+</span><span id="__span-0-114"><a id="__codelineno-0-114" name="__codelineno-0-114"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-115"><a id="__codelineno-0-115" name="__codelineno-0-115"></a>        <span class="n">default</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
+</span><span id="__span-0-116"><a id="__codelineno-0-116" name="__codelineno-0-116"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveFloat</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-117"><a id="__codelineno-0-117" name="__codelineno-0-117"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Speed of characters during reassembly. &quot;</span><span class="p">,</span>
+</span><span id="__span-0-118"><a id="__codelineno-0-118" name="__codelineno-0-118"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-119"><a id="__codelineno-0-119" name="__codelineno-0-119"></a>    <span class="s2">&quot;float : Speed of characters during reassembly.&quot;</span>
+</span><span id="__span-0-120"><a id="__codelineno-0-120" name="__codelineno-0-120"></a>
+</span><span id="__span-0-121"><a id="__codelineno-0-121" name="__codelineno-0-121"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-0-122"><a id="__codelineno-0-122" name="__codelineno-0-122"></a>    <span class="k">def</span> <span class="nf">get_effect_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="__span-0-123"><a id="__codelineno-0-123" name="__codelineno-0-123"></a>        <span class="k">return</span> <span class="n">Unstable</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
 
@@ -2805,7 +2826,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_unstable.UnstableConfig.final_gradient_direction" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-direction&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Direction of the final gradient.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-direction&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Direction of the final gradient.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2817,7 +2838,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>graphics.Gradient.Direction : Direction of the final gradient.</p>
+      <p>Gradient.Direction : Direction of the final gradient.</p>
   </div>
 
 </div>
@@ -2827,7 +2848,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_unstable.UnstableConfig.final_gradient_steps" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--final-gradient-steps&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--final-gradient-steps&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2839,7 +2860,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.</p>
+      <p>tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.</p>
   </div>
 
 </div>
@@ -2849,7 +2870,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_unstable.UnstableConfig.final_gradient_stops" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">graphics</span><span class="o">.</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--final-gradient-stops&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;8A008A&#39;</span><span class="p">,</span> <span class="s1">&#39;00D1FF&#39;</span><span class="p">,</span> <span class="s1">&#39;FFFFFF&#39;</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--final-gradient-stops&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="n">Color</span><span class="p">(</span><span class="s1">&#39;8A008A&#39;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s1">&#39;00D1FF&#39;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s1">&#39;FFFFFF&#39;</span><span class="p">)),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2861,7 +2882,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</p>
+      <p>tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</p>
   </div>
 
 </div>
@@ -2915,7 +2936,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_unstable.UnstableConfig.unstable_color" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">unstable_color</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--unstable-color&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;ff9200&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Color transitioned to as the characters become unstable.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">unstable_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--unstable-color&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="s1">&#39;ff9200&#39;</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Color transitioned to as the characters become unstable.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2927,7 +2948,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>graphics.Color : Color transitioned to as the characters become unstable.</p>
+      <p>Color : Color transitioned to as the characters become unstable.</p>
   </div>
 
 </div>

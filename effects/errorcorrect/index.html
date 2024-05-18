@@ -1098,6 +1098,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../engine/utils/color/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Color
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../engine/utils/gradient/" class="md-nav__link">
         
   
@@ -2480,7 +2501,7 @@
         <tr class="doc-section-item">
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.error_color" href="#terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.error_color">error_color</a></code></td>
           <td>
-                <code><a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/gradient/#terminaltexteffects.utils.graphics.Color">Color</a></code>
+                <code><a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/color/#terminaltexteffects.utils.graphics.Color">Color</a></code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2491,7 +2512,7 @@
         <tr class="doc-section-item">
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.correct_color" href="#terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.correct_color">correct_color</a></code></td>
           <td>
-                <code><a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/gradient/#terminaltexteffects.utils.graphics.Color">Color</a></code>
+                <code><a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/color/#terminaltexteffects.utils.graphics.Color">Color</a></code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2502,7 +2523,7 @@
         <tr class="doc-section-item">
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.final_gradient_stops" href="#terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.final_gradient_stops">final_gradient_stops</a></code></td>
           <td>
-                <code>tuple[<a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/gradient/#terminaltexteffects.utils.graphics.Color">Color</a>, ...]</code>
+                <code>tuple[<a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/color/#terminaltexteffects.utils.graphics.Color">Color</a>, ...]</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2513,7 +2534,7 @@
         <tr class="doc-section-item">
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.final_gradient_steps" href="#terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.final_gradient_steps">final_gradient_steps</a></code></td>
           <td>
-                <code>tuple[int, ...]</code>
+                <code>tuple[int, ...] | int</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2661,11 +2682,11 @@
 </span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    Attributes:</span>
 </span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        error_pairs (float): Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position. Valid values are 0 &lt; n &lt;= 1.0.</span>
 </span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        swap_delay (int): Number of frames between swaps. Valid values are n &gt;= 0.</span>
-</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        error_color (graphics.Color): Color for the characters that are in the wrong position.</span>
-</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">        correct_color (graphics.Color): Color for the characters once corrected, this is a gradient from error-color and fades to final-color.</span>
-</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</span>
-</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n &gt; 0.</span>
-</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="sd">        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        error_color (Color): Color for the characters that are in the wrong position.</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">        correct_color (Color): Color for the characters once corrected, this is a gradient from error-color and fades to final-color.</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</span>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n &gt; 0.</span>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="sd">        final_gradient_direction (Gradient.Direction): Direction of the final gradient.</span>
 </span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">        movement_speed (float): Speed of the characters while moving to the correct position. Valid values are n &gt; 0.&quot;&quot;&quot;</span>
 </span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46"></a>
 </span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="n">error_pairs</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
@@ -2686,52 +2707,52 @@
 </span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
 </span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="s2">&quot;int : Number of frames between swaps.&quot;</span>
 </span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64"></a>
-</span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="n">error_color</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="n">error_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
 </span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--error-color&quot;</span><span class="p">],</span>
 </span><span id="__span-0-67"><a id="__codelineno-0-67" name="__codelineno-0-67"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;e74c3c&quot;</span><span class="p">,</span>
+</span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="n">default</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;e74c3c&quot;</span><span class="p">),</span>
 </span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;(XTerm [0-255] OR RGB Hex [000000-ffffff])&quot;</span><span class="p">,</span>
 </span><span id="__span-0-70"><a id="__codelineno-0-70" name="__codelineno-0-70"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Color for the characters that are in the wrong position.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-71"><a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-72"><a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="s2">&quot;graphics.Color : Color for the characters that are in the wrong position.&quot;</span>
+</span><span id="__span-0-72"><a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="s2">&quot;Color : Color for the characters that are in the wrong position.&quot;</span>
 </span><span id="__span-0-73"><a id="__codelineno-0-73" name="__codelineno-0-73"></a>
-</span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="n">correct_color</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="n">correct_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
 </span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--correct-color&quot;</span><span class="p">],</span>
 </span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;45bf55&quot;</span><span class="p">,</span>
+</span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>        <span class="n">default</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;45bf55&quot;</span><span class="p">),</span>
 </span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a>        <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;(XTerm [0-255] OR RGB Hex [000000-ffffff])&quot;</span><span class="p">,</span>
 </span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Color for the characters once corrected, this is a gradient from error-color and fades to final-color.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="s2">&quot;graphics.Color : Color for the characters once corrected, this is a gradient from error-color and fades to final-color.&quot;</span>
+</span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="s2">&quot;Color : Color for the characters once corrected, this is a gradient from error-color and fades to final-color.&quot;</span>
 </span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a>
-</span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">graphics</span><span class="o">.</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
 </span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--final-gradient-stops&quot;</span><span class="p">],</span>
 </span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
 </span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
-</span><span id="__span-0-87"><a id="__codelineno-0-87" name="__codelineno-0-87"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;8A008A&quot;</span><span class="p">,</span> <span class="s2">&quot;00D1FF&quot;</span><span class="p">,</span> <span class="s2">&quot;FFFFFF&quot;</span><span class="p">),</span>
+</span><span id="__span-0-87"><a id="__codelineno-0-87" name="__codelineno-0-87"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;8A008A&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;00D1FF&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;FFFFFF&quot;</span><span class="p">)),</span>
 </span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a>        <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;(XTerm [0-255] OR RGB Hex [000000-ffffff])&quot;</span><span class="p">,</span>
 </span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>    <span class="s2">&quot;tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.&quot;</span>
+</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>    <span class="s2">&quot;tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.&quot;</span>
 </span><span id="__span-0-92"><a id="__codelineno-0-92" name="__codelineno-0-92"></a>
-</span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
 </span><span id="__span-0-94"><a id="__codelineno-0-94" name="__codelineno-0-94"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-steps&quot;</span><span class="p">,</span>
 </span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
 </span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
-</span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,),</span>
+</span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
 </span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>        <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;(int &gt; 0)&quot;</span><span class="p">,</span>
 </span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="s2">&quot;tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span>
+</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="s2">&quot;tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span>
 </span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a>
-</span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a>    <span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a>    <span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
 </span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-direction&quot;</span><span class="p">,</span>
 </span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="n">default</span><span class="o">=</span><span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">,</span>
+</span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="n">default</span><span class="o">=</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">,</span>
 </span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
 </span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Direction of the final gradient.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-109"><a id="__codelineno-0-109" name="__codelineno-0-109"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-110"><a id="__codelineno-0-110" name="__codelineno-0-110"></a>    <span class="s2">&quot;graphics.Gradient.Direction : Direction of the final gradient.&quot;</span>
+</span><span id="__span-0-110"><a id="__codelineno-0-110" name="__codelineno-0-110"></a>    <span class="s2">&quot;Gradient.Direction : Direction of the final gradient.&quot;</span>
 </span><span id="__span-0-111"><a id="__codelineno-0-111" name="__codelineno-0-111"></a>
 </span><span id="__span-0-112"><a id="__codelineno-0-112" name="__codelineno-0-112"></a>    <span class="n">movement_speed</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
 </span><span id="__span-0-113"><a id="__codelineno-0-113" name="__codelineno-0-113"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--movement-speed&quot;</span><span class="p">,</span>
@@ -2763,7 +2784,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.correct_color" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">correct_color</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--correct-color&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;45bf55&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;(XTerm [0-255] OR RGB Hex [000000-ffffff])&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Color for the characters once corrected, this is a gradient from error-color and fades to final-color.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">correct_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--correct-color&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="s1">&#39;45bf55&#39;</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;(XTerm [0-255] OR RGB Hex [000000-ffffff])&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Color for the characters once corrected, this is a gradient from error-color and fades to final-color.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2775,7 +2796,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>graphics.Color : Color for the characters once corrected, this is a gradient from error-color and fades to final-color.</p>
+      <p>Color : Color for the characters once corrected, this is a gradient from error-color and fades to final-color.</p>
   </div>
 
 </div>
@@ -2785,7 +2806,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.error_color" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">error_color</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--error-color&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;e74c3c&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;(XTerm [0-255] OR RGB Hex [000000-ffffff])&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Color for the characters that are in the wrong position.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">error_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--error-color&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="s1">&#39;e74c3c&#39;</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;(XTerm [0-255] OR RGB Hex [000000-ffffff])&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Color for the characters that are in the wrong position.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2797,7 +2818,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>graphics.Color : Color for the characters that are in the wrong position.</p>
+      <p>Color : Color for the characters that are in the wrong position.</p>
   </div>
 
 </div>
@@ -2829,7 +2850,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.final_gradient_direction" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-direction&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Direction of the final gradient.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-direction&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Direction of the final gradient.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2841,7 +2862,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>graphics.Gradient.Direction : Direction of the final gradient.</p>
+      <p>Gradient.Direction : Direction of the final gradient.</p>
   </div>
 
 </div>
@@ -2851,7 +2872,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.final_gradient_steps" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-steps&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;(int &gt; 0)&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-steps&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;(int &gt; 0)&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2863,7 +2884,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.</p>
+      <p>tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.</p>
   </div>
 
 </div>
@@ -2873,7 +2894,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig.final_gradient_stops" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">graphics</span><span class="o">.</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--final-gradient-stops&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;8A008A&#39;</span><span class="p">,</span> <span class="s1">&#39;00D1FF&#39;</span><span class="p">,</span> <span class="s1">&#39;FFFFFF&#39;</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;(XTerm [0-255] OR RGB Hex [000000-ffffff])&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--final-gradient-stops&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="n">Color</span><span class="p">(</span><span class="s1">&#39;8A008A&#39;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s1">&#39;00D1FF&#39;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s1">&#39;FFFFFF&#39;</span><span class="p">)),</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;(XTerm [0-255] OR RGB Hex [000000-ffffff])&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2885,7 +2906,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</p>
+      <p>tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</p>
   </div>
 
 </div>

@@ -1098,6 +1098,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../engine/utils/color/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Color
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../engine/utils/gradient/" class="md-nav__link">
         
   
@@ -2318,8 +2339,7 @@
 
             <details class="quote">
               <summary>Source code in <code>terminaltexteffects/effects/effect_fireworks.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-252">252</a></span>
-<span class="normal"><a href="#__codelineno-0-253">253</a></span>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-253">253</a></span>
 <span class="normal"><a href="#__codelineno-0-254">254</a></span>
 <span class="normal"><a href="#__codelineno-0-255">255</a></span>
 <span class="normal"><a href="#__codelineno-0-256">256</a></span>
@@ -2335,24 +2355,25 @@
 <span class="normal"><a href="#__codelineno-0-266">266</a></span>
 <span class="normal"><a href="#__codelineno-0-267">267</a></span>
 <span class="normal"><a href="#__codelineno-0-268">268</a></span>
-<span class="normal"><a href="#__codelineno-0-269">269</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-252"><a id="__codelineno-0-252" name="__codelineno-0-252"></a><span class="k">class</span> <span class="nc">Fireworks</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">FireworksConfig</span><span class="p">]):</span>
-</span><span id="__span-0-253"><a id="__codelineno-0-253" name="__codelineno-0-253"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Launches characters up the screen where they explode like fireworks and fall into place.</span>
-</span><span id="__span-0-254"><a id="__codelineno-0-254" name="__codelineno-0-254"></a>
-</span><span id="__span-0-255"><a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="sd">    Attributes:</span>
-</span><span id="__span-0-256"><a id="__codelineno-0-256" name="__codelineno-0-256"></a><span class="sd">        effect_config (FireworksConfig): Configuration for the effect.</span>
-</span><span id="__span-0-257"><a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="sd">        terminal_config (TerminalConfig): Configuration for the terminal.</span>
-</span><span id="__span-0-258"><a id="__codelineno-0-258" name="__codelineno-0-258"></a>
-</span><span id="__span-0-259"><a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a>
-</span><span id="__span-0-261"><a id="__codelineno-0-261" name="__codelineno-0-261"></a>    <span class="n">_config_cls</span> <span class="o">=</span> <span class="n">FireworksConfig</span>
-</span><span id="__span-0-262"><a id="__codelineno-0-262" name="__codelineno-0-262"></a>    <span class="n">_iterator_cls</span> <span class="o">=</span> <span class="n">FireworksIterator</span>
-</span><span id="__span-0-263"><a id="__codelineno-0-263" name="__codelineno-0-263"></a>
-</span><span id="__span-0-264"><a id="__codelineno-0-264" name="__codelineno-0-264"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-</span><span id="__span-0-265"><a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the effect with the provided input data.</span>
-</span><span id="__span-0-266"><a id="__codelineno-0-266" name="__codelineno-0-266"></a>
-</span><span id="__span-0-267"><a id="__codelineno-0-267" name="__codelineno-0-267"></a><span class="sd">        Args:</span>
-</span><span id="__span-0-268"><a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="sd">            input_data (str): The input data to use for the effect.&quot;&quot;&quot;</span>
-</span><span id="__span-0-269"><a id="__codelineno-0-269" name="__codelineno-0-269"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-269">269</a></span>
+<span class="normal"><a href="#__codelineno-0-270">270</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-253"><a id="__codelineno-0-253" name="__codelineno-0-253"></a><span class="k">class</span> <span class="nc">Fireworks</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">FireworksConfig</span><span class="p">]):</span>
+</span><span id="__span-0-254"><a id="__codelineno-0-254" name="__codelineno-0-254"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Launches characters up the screen where they explode like fireworks and fall into place.</span>
+</span><span id="__span-0-255"><a id="__codelineno-0-255" name="__codelineno-0-255"></a>
+</span><span id="__span-0-256"><a id="__codelineno-0-256" name="__codelineno-0-256"></a><span class="sd">    Attributes:</span>
+</span><span id="__span-0-257"><a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="sd">        effect_config (FireworksConfig): Configuration for the effect.</span>
+</span><span id="__span-0-258"><a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="sd">        terminal_config (TerminalConfig): Configuration for the terminal.</span>
+</span><span id="__span-0-259"><a id="__codelineno-0-259" name="__codelineno-0-259"></a>
+</span><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-261"><a id="__codelineno-0-261" name="__codelineno-0-261"></a>
+</span><span id="__span-0-262"><a id="__codelineno-0-262" name="__codelineno-0-262"></a>    <span class="n">_config_cls</span> <span class="o">=</span> <span class="n">FireworksConfig</span>
+</span><span id="__span-0-263"><a id="__codelineno-0-263" name="__codelineno-0-263"></a>    <span class="n">_iterator_cls</span> <span class="o">=</span> <span class="n">FireworksIterator</span>
+</span><span id="__span-0-264"><a id="__codelineno-0-264" name="__codelineno-0-264"></a>
+</span><span id="__span-0-265"><a id="__codelineno-0-265" name="__codelineno-0-265"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="__span-0-266"><a id="__codelineno-0-266" name="__codelineno-0-266"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the effect with the provided input data.</span>
+</span><span id="__span-0-267"><a id="__codelineno-0-267" name="__codelineno-0-267"></a>
+</span><span id="__span-0-268"><a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="sd">        Args:</span>
+</span><span id="__span-0-269"><a id="__codelineno-0-269" name="__codelineno-0-269"></a><span class="sd">            input_data (str): The input data to use for the effect.&quot;&quot;&quot;</span>
+</span><span id="__span-0-270"><a id="__codelineno-0-270" name="__codelineno-0-270"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
 
@@ -2415,17 +2436,17 @@
 
           <details class="quote">
             <summary>Source code in <code>terminaltexteffects/effects/effect_fireworks.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-264">264</a></span>
-<span class="normal"><a href="#__codelineno-0-265">265</a></span>
+            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-265">265</a></span>
 <span class="normal"><a href="#__codelineno-0-266">266</a></span>
 <span class="normal"><a href="#__codelineno-0-267">267</a></span>
 <span class="normal"><a href="#__codelineno-0-268">268</a></span>
-<span class="normal"><a href="#__codelineno-0-269">269</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-264"><a id="__codelineno-0-264" name="__codelineno-0-264"></a><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-</span><span id="__span-0-265"><a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the effect with the provided input data.</span>
-</span><span id="__span-0-266"><a id="__codelineno-0-266" name="__codelineno-0-266"></a>
-</span><span id="__span-0-267"><a id="__codelineno-0-267" name="__codelineno-0-267"></a><span class="sd">    Args:</span>
-</span><span id="__span-0-268"><a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="sd">        input_data (str): The input data to use for the effect.&quot;&quot;&quot;</span>
-</span><span id="__span-0-269"><a id="__codelineno-0-269" name="__codelineno-0-269"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-269">269</a></span>
+<span class="normal"><a href="#__codelineno-0-270">270</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-265"><a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="__span-0-266"><a id="__codelineno-0-266" name="__codelineno-0-266"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the effect with the provided input data.</span>
+</span><span id="__span-0-267"><a id="__codelineno-0-267" name="__codelineno-0-267"></a>
+</span><span id="__span-0-268"><a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="sd">    Args:</span>
+</span><span id="__span-0-269"><a id="__codelineno-0-269" name="__codelineno-0-269"></a><span class="sd">        input_data (str): The input data to use for the effect.&quot;&quot;&quot;</span>
+</span><span id="__span-0-270"><a id="__codelineno-0-270" name="__codelineno-0-270"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
           </details>
   </div>
@@ -2489,7 +2510,7 @@
         <tr class="doc-section-item">
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_fireworks.FireworksConfig.firework_colors" href="#terminaltexteffects.effects.effect_fireworks.FireworksConfig.firework_colors">firework_colors</a></code></td>
           <td>
-                <code>tuple[<a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/gradient/#terminaltexteffects.utils.graphics.Color">Color</a>, ...]</code>
+                <code>tuple[<a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/color/#terminaltexteffects.utils.graphics.Color">Color</a>, ...]</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2522,7 +2543,7 @@
         <tr class="doc-section-item">
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_fireworks.FireworksConfig.final_gradient_stops" href="#terminaltexteffects.effects.effect_fireworks.FireworksConfig.final_gradient_stops">final_gradient_stops</a></code></td>
           <td>
-                <code>tuple[<a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/gradient/#terminaltexteffects.utils.graphics.Color">Color</a>, ...]</code>
+                <code>tuple[<a class="autorefs autorefs-internal" title="terminaltexteffects.utils.graphics.Color" href="../../engine/utils/color/#terminaltexteffects.utils.graphics.Color">Color</a>, ...]</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2533,7 +2554,7 @@
         <tr class="doc-section-item">
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_fireworks.FireworksConfig.final_gradient_steps" href="#terminaltexteffects.effects.effect_fireworks.FireworksConfig.final_gradient_steps">final_gradient_steps</a></code></td>
           <td>
-                <code>tuple[int, ...]</code>
+                <code>tuple[int, ...] | int</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2579,8 +2600,7 @@
 
             <details class="quote">
               <summary>Source code in <code>terminaltexteffects/effects/effect_fireworks.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-24"> 24</a></span>
-<span class="normal"><a href="#__codelineno-0-25"> 25</a></span>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-25"> 25</a></span>
 <span class="normal"><a href="#__codelineno-0-26"> 26</a></span>
 <span class="normal"><a href="#__codelineno-0-27"> 27</a></span>
 <span class="normal"><a href="#__codelineno-0-28"> 28</a></span>
@@ -2685,113 +2705,114 @@
 <span class="normal"><a href="#__codelineno-0-127">127</a></span>
 <span class="normal"><a href="#__codelineno-0-128">128</a></span>
 <span class="normal"><a href="#__codelineno-0-129">129</a></span>
-<span class="normal"><a href="#__codelineno-0-130">130</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="nd">@argclass</span><span class="p">(</span>
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fireworks&quot;</span><span class="p">,</span>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Characters launch and explode like fireworks and fall into place.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;fireworks | Characters explode like fireworks and fall into place.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">epilog</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere&quot;&quot;&quot;</span><span class="p">,</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="p">)</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="nd">@dataclass</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="k">class</span> <span class="nc">FireworksConfig</span><span class="p">(</span><span class="n">ArgsDataClass</span><span class="p">):</span>
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for the Fireworks effect.</span>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">    Attributes:</span>
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">        explode_anywhere (bool): If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text.</span>
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">        firework_colors (tuple[graphics.Color, ...]): Tuple of colors from which firework colors will be randomly selected.</span>
-</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">        firework_symbol (str): Symbol to use for the firework shell.</span>
-</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        firework_volume (float): Percent of total characters in each firework shell. Valid values are 0 &lt; n &lt;= 1.</span>
-</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</span>
-</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n &gt; 0.</span>
-</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.</span>
-</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">        launch_delay (int): Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. Valid values are n &gt;= 0.</span>
-</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">        explode_distance (float): Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width. Valid values are 0 &lt; n &lt;= 1.&quot;&quot;&quot;</span>
-</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44"></a>
-</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="n">explode_anywhere</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--explode-anywhere&quot;</span><span class="p">,</span>
-</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="s2">&quot;bool : If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text.&quot;</span>
-</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52"></a>
-</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="n">firework_colors</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">graphics</span><span class="o">.</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--firework-colors&quot;</span><span class="p">,</span>
-</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
-</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;88F7E2&quot;</span><span class="p">,</span> <span class="s2">&quot;44D492&quot;</span><span class="p">,</span> <span class="s2">&quot;F5EB67&quot;</span><span class="p">,</span> <span class="s2">&quot;FFA15C&quot;</span><span class="p">,</span> <span class="s2">&quot;FA233E&quot;</span><span class="p">),</span>
-</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated list of colors from which firework colors will be randomly selected.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="s2">&quot;tuple[graphics.Color, ...] : Tuple of colors from which firework colors will be randomly selected.&quot;</span>
-</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62"></a>
-</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="n">firework_symbol</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--firework-symbol&quot;</span><span class="p">,</span>
-</span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Symbol</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a>        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span>
-</span><span id="__span-0-67"><a id="__codelineno-0-67" name="__codelineno-0-67"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Symbol</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Symbol to use for the firework shell.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-70"><a id="__codelineno-0-70" name="__codelineno-0-70"></a>    <span class="s2">&quot;str : Symbol to use for the firework shell.&quot;</span>
-</span><span id="__span-0-71"><a id="__codelineno-0-71" name="__codelineno-0-71"></a>
-</span><span id="__span-0-72"><a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="n">firework_volume</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-73"><a id="__codelineno-0-73" name="__codelineno-0-73"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--firework-volume&quot;</span><span class="p">,</span>
-</span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ratio</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a>        <span class="n">default</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span>
-</span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ratio</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Percent of total characters in each firework shell.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a>    <span class="s2">&quot;float : Percent of total characters in each firework shell.&quot;</span>
-</span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>
-</span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">graphics</span><span class="o">.</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-stops&quot;</span><span class="p">,</span>
-</span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
-</span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;8A008A&quot;</span><span class="p">,</span> <span class="s2">&quot;00D1FF&quot;</span><span class="p">,</span> <span class="s2">&quot;FFFFFF&quot;</span><span class="p">),</span>
-</span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-87"><a id="__codelineno-0-87" name="__codelineno-0-87"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a>    <span class="s2">&quot;tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.&quot;</span>
-</span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a>
-</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>    <span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-92"><a id="__codelineno-0-92" name="__codelineno-0-92"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-steps&quot;</span><span class="p">,</span>
-</span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-94"><a id="__codelineno-0-94" name="__codelineno-0-94"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
-</span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,),</span>
-</span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a>    <span class="s2">&quot;tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span>
-</span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a>
-</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-direction&quot;</span><span class="p">,</span>
-</span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>        <span class="n">default</span><span class="o">=</span><span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">,</span>
-</span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Direction of the final gradient.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a>    <span class="s2">&quot;graphics.Gradient.Direction : Direction of the final gradient.&quot;</span>
-</span><span id="__span-0-109"><a id="__codelineno-0-109" name="__codelineno-0-109"></a>
-</span><span id="__span-0-110"><a id="__codelineno-0-110" name="__codelineno-0-110"></a>    <span class="n">launch_delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-111"><a id="__codelineno-0-111" name="__codelineno-0-111"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--launch-delay&quot;</span><span class="p">,</span>
-</span><span id="__span-0-112"><a id="__codelineno-0-112" name="__codelineno-0-112"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">NonNegativeInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-113"><a id="__codelineno-0-113" name="__codelineno-0-113"></a>        <span class="n">default</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
-</span><span id="__span-0-114"><a id="__codelineno-0-114" name="__codelineno-0-114"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">NonNegativeInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-115"><a id="__codelineno-0-115" name="__codelineno-0-115"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-116"><a id="__codelineno-0-116" name="__codelineno-0-116"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-117"><a id="__codelineno-0-117" name="__codelineno-0-117"></a>    <span class="s2">&quot;int : Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.&quot;</span>
-</span><span id="__span-0-118"><a id="__codelineno-0-118" name="__codelineno-0-118"></a>
-</span><span id="__span-0-119"><a id="__codelineno-0-119" name="__codelineno-0-119"></a>    <span class="n">explode_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-120"><a id="__codelineno-0-120" name="__codelineno-0-120"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--explode-distance&quot;</span><span class="p">,</span>
-</span><span id="__span-0-121"><a id="__codelineno-0-121" name="__codelineno-0-121"></a>        <span class="n">default</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-</span><span id="__span-0-122"><a id="__codelineno-0-122" name="__codelineno-0-122"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ratio</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
-</span><span id="__span-0-123"><a id="__codelineno-0-123" name="__codelineno-0-123"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ratio</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-124"><a id="__codelineno-0-124" name="__codelineno-0-124"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-125"><a id="__codelineno-0-125" name="__codelineno-0-125"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-126"><a id="__codelineno-0-126" name="__codelineno-0-126"></a>    <span class="s2">&quot;float : Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width.&quot;</span>
-</span><span id="__span-0-127"><a id="__codelineno-0-127" name="__codelineno-0-127"></a>
-</span><span id="__span-0-128"><a id="__codelineno-0-128" name="__codelineno-0-128"></a>    <span class="nd">@classmethod</span>
-</span><span id="__span-0-129"><a id="__codelineno-0-129" name="__codelineno-0-129"></a>    <span class="k">def</span> <span class="nf">get_effect_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-</span><span id="__span-0-130"><a id="__codelineno-0-130" name="__codelineno-0-130"></a>        <span class="k">return</span> <span class="n">Fireworks</span>
+<span class="normal"><a href="#__codelineno-0-130">130</a></span>
+<span class="normal"><a href="#__codelineno-0-131">131</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="nd">@argclass</span><span class="p">(</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fireworks&quot;</span><span class="p">,</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Characters launch and explode like fireworks and fall into place.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;fireworks | Characters explode like fireworks and fall into place.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">epilog</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere&quot;&quot;&quot;</span><span class="p">,</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="p">)</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="nd">@dataclass</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="k">class</span> <span class="nc">FireworksConfig</span><span class="p">(</span><span class="n">ArgsDataClass</span><span class="p">):</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for the Fireworks effect.</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">    Attributes:</span>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">        explode_anywhere (bool): If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text.</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">        firework_colors (tuple[Color, ...]): Tuple of colors from which firework colors will be randomly selected.</span>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        firework_symbol (str): Symbol to use for the firework shell.</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        firework_volume (float): Percent of total characters in each firework shell. Valid values are 0 &lt; n &lt;= 1.</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n &gt; 0.</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">        final_gradient_direction (Gradient.Direction): Direction of the final gradient.</span>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">        launch_delay (int): Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. Valid values are n &gt;= 0.</span>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="sd">        explode_distance (float): Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width. Valid values are 0 &lt; n &lt;= 1.&quot;&quot;&quot;</span>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45"></a>
+</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="n">explode_anywhere</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--explode-anywhere&quot;</span><span class="p">,</span>
+</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="s2">&quot;bool : If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text.&quot;</span>
+</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a>
+</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="n">firework_colors</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--firework-colors&quot;</span><span class="p">,</span>
+</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
+</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;88F7E2&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;44D492&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;F5EB67&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;FFA15C&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;FA233E&quot;</span><span class="p">)),</span>
+</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated list of colors from which firework colors will be randomly selected.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="s2">&quot;tuple[Color, ...] : Tuple of colors from which firework colors will be randomly selected.&quot;</span>
+</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a>
+</span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64"></a>    <span class="n">firework_symbol</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--firework-symbol&quot;</span><span class="p">,</span>
+</span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Symbol</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-67"><a id="__codelineno-0-67" name="__codelineno-0-67"></a>        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span>
+</span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Symbol</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Symbol to use for the firework shell.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-70"><a id="__codelineno-0-70" name="__codelineno-0-70"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-71"><a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="s2">&quot;str : Symbol to use for the firework shell.&quot;</span>
+</span><span id="__span-0-72"><a id="__codelineno-0-72" name="__codelineno-0-72"></a>
+</span><span id="__span-0-73"><a id="__codelineno-0-73" name="__codelineno-0-73"></a>    <span class="n">firework_volume</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--firework-volume&quot;</span><span class="p">,</span>
+</span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ratio</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a>        <span class="n">default</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span>
+</span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ratio</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Percent of total characters in each firework shell.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>    <span class="s2">&quot;float : Percent of total characters in each firework shell.&quot;</span>
+</span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>
+</span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-stops&quot;</span><span class="p">,</span>
+</span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
+</span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a>        <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;8A008A&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;00D1FF&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;FFFFFF&quot;</span><span class="p">)),</span>
+</span><span id="__span-0-87"><a id="__codelineno-0-87" name="__codelineno-0-87"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a>    <span class="s2">&quot;tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.&quot;</span>
+</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>
+</span><span id="__span-0-92"><a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-steps&quot;</span><span class="p">,</span>
+</span><span id="__span-0-94"><a id="__codelineno-0-94" name="__codelineno-0-94"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
+</span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+</span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a>    <span class="s2">&quot;tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span>
+</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a>
+</span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a>    <span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-direction&quot;</span><span class="p">,</span>
+</span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="n">default</span><span class="o">=</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">,</span>
+</span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Direction of the final gradient.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-109"><a id="__codelineno-0-109" name="__codelineno-0-109"></a>    <span class="s2">&quot;Gradient.Direction : Direction of the final gradient.&quot;</span>
+</span><span id="__span-0-110"><a id="__codelineno-0-110" name="__codelineno-0-110"></a>
+</span><span id="__span-0-111"><a id="__codelineno-0-111" name="__codelineno-0-111"></a>    <span class="n">launch_delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-112"><a id="__codelineno-0-112" name="__codelineno-0-112"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--launch-delay&quot;</span><span class="p">,</span>
+</span><span id="__span-0-113"><a id="__codelineno-0-113" name="__codelineno-0-113"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">NonNegativeInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-114"><a id="__codelineno-0-114" name="__codelineno-0-114"></a>        <span class="n">default</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+</span><span id="__span-0-115"><a id="__codelineno-0-115" name="__codelineno-0-115"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">NonNegativeInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-116"><a id="__codelineno-0-116" name="__codelineno-0-116"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-117"><a id="__codelineno-0-117" name="__codelineno-0-117"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-118"><a id="__codelineno-0-118" name="__codelineno-0-118"></a>    <span class="s2">&quot;int : Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.&quot;</span>
+</span><span id="__span-0-119"><a id="__codelineno-0-119" name="__codelineno-0-119"></a>
+</span><span id="__span-0-120"><a id="__codelineno-0-120" name="__codelineno-0-120"></a>    <span class="n">explode_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-121"><a id="__codelineno-0-121" name="__codelineno-0-121"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--explode-distance&quot;</span><span class="p">,</span>
+</span><span id="__span-0-122"><a id="__codelineno-0-122" name="__codelineno-0-122"></a>        <span class="n">default</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+</span><span id="__span-0-123"><a id="__codelineno-0-123" name="__codelineno-0-123"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ratio</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
+</span><span id="__span-0-124"><a id="__codelineno-0-124" name="__codelineno-0-124"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">Ratio</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
+</span><span id="__span-0-125"><a id="__codelineno-0-125" name="__codelineno-0-125"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-126"><a id="__codelineno-0-126" name="__codelineno-0-126"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+</span><span id="__span-0-127"><a id="__codelineno-0-127" name="__codelineno-0-127"></a>    <span class="s2">&quot;float : Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width.&quot;</span>
+</span><span id="__span-0-128"><a id="__codelineno-0-128" name="__codelineno-0-128"></a>
+</span><span id="__span-0-129"><a id="__codelineno-0-129" name="__codelineno-0-129"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-0-130"><a id="__codelineno-0-130" name="__codelineno-0-130"></a>    <span class="k">def</span> <span class="nf">get_effect_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="__span-0-131"><a id="__codelineno-0-131" name="__codelineno-0-131"></a>        <span class="k">return</span> <span class="n">Fireworks</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
 
@@ -2854,7 +2875,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_fireworks.FireworksConfig.final_gradient_direction" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-direction&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">graphics</span><span class="o">.</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Direction of the final gradient.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-direction&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">GradientDirection</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Direction of the final gradient.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2866,7 +2887,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>graphics.Gradient.Direction : Direction of the final gradient.</p>
+      <p>Gradient.Direction : Direction of the final gradient.</p>
   </div>
 
 </div>
@@ -2876,7 +2897,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_fireworks.FireworksConfig.final_gradient_steps" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-steps&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">final_gradient_steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-steps&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2888,7 +2909,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.</p>
+      <p>tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.</p>
   </div>
 
 </div>
@@ -2898,7 +2919,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_fireworks.FireworksConfig.final_gradient_stops" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">graphics</span><span class="o">.</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-stops&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;8A008A&#39;</span><span class="p">,</span> <span class="s1">&#39;00D1FF&#39;</span><span class="p">,</span> <span class="s1">&#39;FFFFFF&#39;</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-stops&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="n">Color</span><span class="p">(</span><span class="s1">&#39;8A008A&#39;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s1">&#39;00D1FF&#39;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s1">&#39;FFFFFF&#39;</span><span class="p">)),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2910,7 +2931,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</p>
+      <p>tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</p>
   </div>
 
 </div>
@@ -2920,7 +2941,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_fireworks.FireworksConfig.firework_colors" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">firework_colors</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">graphics</span><span class="o">.</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--firework-colors&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;88F7E2&#39;</span><span class="p">,</span> <span class="s1">&#39;44D492&#39;</span><span class="p">,</span> <span class="s1">&#39;F5EB67&#39;</span><span class="p">,</span> <span class="s1">&#39;FFA15C&#39;</span><span class="p">,</span> <span class="s1">&#39;FA233E&#39;</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated list of colors from which firework colors will be randomly selected.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">firework_colors</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--firework-colors&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="n">Color</span><span class="p">(</span><span class="s1">&#39;88F7E2&#39;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s1">&#39;44D492&#39;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s1">&#39;F5EB67&#39;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s1">&#39;FFA15C&#39;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s1">&#39;FA233E&#39;</span><span class="p">)),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Space separated list of colors from which firework colors will be randomly selected.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2932,7 +2953,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>tuple[graphics.Color, ...] : Tuple of colors from which firework colors will be randomly selected.</p>
+      <p>tuple[Color, ...] : Tuple of colors from which firework colors will be randomly selected.</p>
   </div>
 
 </div>
