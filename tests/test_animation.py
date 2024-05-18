@@ -3,7 +3,7 @@ import pytest
 import terminaltexteffects.utils.easing as easing
 from terminaltexteffects.engine.animation import CharacterVisual, Frame, Scene, SyncMetric
 from terminaltexteffects.engine.base_character import EffectCharacter
-from terminaltexteffects.utils.graphics import Gradient
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 @pytest.fixture
@@ -66,7 +66,7 @@ def test_scene_init():
 
 def test_scene_add_frame():
     scene = Scene(scene_id="test_scene")
-    scene.add_frame(symbol="a", duration=5, color="ffffff", bold=True, italic=True, blink=True, hidden=True)
+    scene.add_frame(symbol="a", duration=5, color=Color("ffffff"), bold=True, italic=True, blink=True, hidden=True)
     assert len(scene.frames) == 1
     frame = scene.frames[0]
     assert frame.symbol == "\x1b[1m\x1b[3m\x1b[5m\x1b[8m\x1b[38;2;255;255;255ma\x1b[0m"
@@ -78,18 +78,18 @@ def test_scene_add_frame():
 def test_scene_add_frame_invalid_duration():
     scene = Scene(scene_id="test_scene")
     with pytest.raises(ValueError, match="duration must be greater than 0"):
-        scene.add_frame(symbol="a", duration=0, color="ffffff")
+        scene.add_frame(symbol="a", duration=0, color=Color("ffffff"))
 
 
 def test_scene_apply_gradient_to_symbols_equal_colors_and_symbols():
     scene = Scene(scene_id="test_scene")
-    gradient = Gradient("000000", "ffffff", steps=2)
+    gradient = Gradient(Color("000000"), Color("ffffff"), steps=2)
     symbols = ["a", "b", "c"]
     scene.apply_gradient_to_symbols(gradient, symbols, duration=1)
     assert len(scene.frames) == 3
     for i, frame in enumerate(scene.frames):
         assert frame.duration == 1
-        assert frame.character_visual.color == gradient.spectrum[i]
+        assert frame.character_visual.color == gradient.spectrum[i].rgb_color
 
 
 def test_scene_apply_gradient_to_symbols_unequal_colors_and_symbols():
@@ -97,13 +97,13 @@ def test_scene_apply_gradient_to_symbols_unequal_colors_and_symbols():
     the symbols are progressed such that the first and final symbols align to the
     first and final colors."""
     scene = Scene(scene_id="test_scene")
-    gradient = Gradient("000000", "ffffff", steps=4)
+    gradient = Gradient(Color("000000"), Color("ffffff"), steps=4)
     symbols = ["q", "z"]
     scene.apply_gradient_to_symbols(gradient, symbols, duration=1)
     assert len(scene.frames) == 5
-    assert scene.frames[0].character_visual.color == gradient.spectrum[0]
+    assert scene.frames[0].character_visual.color == gradient.spectrum[0].rgb_color
     assert "q" in scene.frames[0].symbol
-    assert scene.frames[-1].character_visual.color == gradient.spectrum[-1]
+    assert scene.frames[-1].character_visual.color == gradient.spectrum[-1].rgb_color
     assert "z" in scene.frames[-1].symbol
 
 
