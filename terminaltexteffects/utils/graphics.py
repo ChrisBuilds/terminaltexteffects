@@ -1,7 +1,10 @@
 """Classes for storing and manipulating character graphics.
 
 Classes:
-    Gradient: A Gradient is a list of RGB hex color strings transitioning from one color to another.
+    Color: A Color object represents a color in the RGB color space. The color can be initialized with an XTerm-256
+    color code or an RGB hex color string. Can be printed to display the color code and appearance as a color block.
+    Gradient: A Gradient is a list of RGB hex color strings transitioning from one color to another. Can be printed to
+    display the gradient color spectrum.
 """
 
 import itertools
@@ -16,7 +19,31 @@ if typing.TYPE_CHECKING:
 
 
 class Color:
+    """A Color object represents a color in the RGB color space. The color can be initialized with an XTerm-256 color
+    code or an RGB hex color string. Can be printed to display the color code and appearance as a color block.
+
+    Attributes:
+        color_arg (int | str): The color value as an XTerm-256 color code or an RGB hex color string.
+        xterm_color (int | None): The XTerm-256 color code. None if the color is an RGB hex color string.
+        rgb_color (str): The RGB hex color string.
+
+    Properties:
+        rgb_ints (tuple[int, int, int]): Returns the RGB values as a tuple of integers.
+
+    Raises:
+        ValueError: If the color value is not a valid XTerm-256 color code or an RGB hex color string.
+
+    """
+
     def __init__(self, color_value: int | str) -> None:
+        """Initializes a Color object.
+
+        Args:
+            color_value (int | str): The color value as an XTerm-256 color code or an RGB hex color string. Example: 255 or 'ffffff' or '#ffffff'
+
+        Raises:
+            ValueError: If the color value is not a valid XTerm-256 color code or an RGB hex color string.
+        """
         self.color_arg = color_value
         self.xterm_color: int | None = None
         if hexterm.is_valid_color(color_value):
@@ -60,6 +87,9 @@ class Color:
     def __hash__(self) -> int:
         return hash(self.color_arg)
 
+    def __iter__(self) -> Iterator["Color"]:
+        return iter((self,))
+
 
 class Gradient:
     """A Gradient is a list of RGB hex color strings transitioning from one color to another. The gradient color
@@ -102,10 +132,10 @@ class Gradient:
             ValueError: If no color stops are provided.
 
         Attributes:
-            stops (tuple[Color]): Tuple of Color objects representing the color stops.
-            steps (int | tuple[int, ...]): Number of steps or a tuple of step values for generating the spectrum.
+            _stops (tuple[Color]): Tuple of Color objects representing the color stops.
+            _steps (int | tuple[int, ...]): Number of steps or a tuple of step values for generating the spectrum.
             spectrum (list[str]): List of strings representing the generated spectrum.
-            index (int): Current index of the spectrum.
+            _index (int): Current index of the spectrum.
 
         Returns:
             None
