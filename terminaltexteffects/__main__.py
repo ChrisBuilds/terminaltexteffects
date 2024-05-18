@@ -15,6 +15,8 @@ def main():
         epilog="Ex: ls -a | python -m terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical",
     )
 
+    parser.add_argument("--input-file", "-i", type=str, help="File to read input from")
+
     TerminalConfig._add_args_to_parser(parser)
 
     subparsers = parser.add_subparsers(
@@ -34,7 +36,18 @@ def main():
             args_class._add_to_args_subparsers(subparsers)
 
     args = parser.parse_args()
-    input_data = term.Terminal.get_piped_input()
+    if args.input_file:
+        try:
+            with open(args.input_file, "r", encoding="UTF-8") as f:
+                input_data = f.read()
+        except FileNotFoundError:
+            print(f"File not found: {args.input_file}")
+            return
+        except Exception as e:
+            print(f"Error reading file: {args.input_file} - {e}")
+            return
+    else:
+        input_data = term.Terminal.get_piped_input()
     if not input_data.strip():
         print("NO INPUT.")
     else:
