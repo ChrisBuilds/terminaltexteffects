@@ -15,9 +15,10 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine import animation
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -35,19 +36,19 @@ class CrumbleConfig(ArgsDataClass):
     """Configuration for the Crumble effect.
 
     Attributes:
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient."""
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient."""
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("5CE1FF", "FF8C00"),
+        default=(Color("#5CE1FF"), Color("#FF8C00")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -59,14 +60,14 @@ class CrumbleConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.DIAGONAL,
+        default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
     def get_effect_class(cls):
@@ -78,21 +79,21 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
         super().__init__(effect)
 
         self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            strengthen_flash_gradient = graphics.Gradient(self.character_final_color_map[character], "ffffff", steps=6)
-            strengthen_gradient = graphics.Gradient("ffffff", self.character_final_color_map[character], steps=9)
+            strengthen_flash_gradient = Gradient(self.character_final_color_map[character], Color("ffffff"), steps=6)
+            strengthen_gradient = Gradient(Color("ffffff"), self.character_final_color_map[character], steps=9)
             weak_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.65)
             dust_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.55)
-            weaken_gradient = graphics.Gradient(weak_color, dust_color, steps=9)
+            weaken_gradient = Gradient(weak_color, dust_color, steps=9)
             self.terminal.set_character_visibility(character, True)
             # set up initial and falling stage
             initial_scn = character.animation.new_scene()

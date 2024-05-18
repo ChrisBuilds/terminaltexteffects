@@ -12,8 +12,8 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -32,10 +32,10 @@ class WipeConfig(ArgsDataClass):
 
     Attributes:
         wipe_direction (typing.Literal["column_left_to_right","row_top_to_bottom","row_bottom_to_top","diagonal_top_left_to_bottom_right","diagonal_bottom_left_to_top_right","diagonal_top_right_to_bottom_left","diagonal_bottom_right_to_top_left",]): Direction the text will wipe.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the wipe gradient.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the wipe gradient.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         wipe_delay (int): Number of frames to wait before adding the next character group. Increase, to slow down the effect. Valid values are n >= 0."""
 
     wipe_direction: typing.Literal[
@@ -63,15 +63,15 @@ class WipeConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',] : Direction the text will wipe. Options: column_left_to_right, column_right_to_left, row_top_to_bottom, row_bottom_to_top, diagonal_top_left_to_bottom_right, diagonal_bottom_left_to_top_right, diagonal_top_right_to_bottom_left, diagonal_bottom_right_to_top_left."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("833ab4", "fd1d1d", "fcb045"),
+        default=(Color("#833ab4"), Color("#fd1d1d"), Color("#fcb045")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the wipe gradient."
+    "tuple[Color, ...] : Tuple of colors for the wipe gradient."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -92,14 +92,14 @@ class WipeConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : Number of frames to display each gradient step."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     wipe_delay: int = ArgField(
         cmd_name="--wipe-delay",
@@ -119,12 +119,12 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
     def __init__(self, effect: "Wipe") -> None:
         super().__init__(effect)
         self.pending_groups: list[list[EffectCharacter]] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
         direction = self.config.wipe_direction
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -143,7 +143,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
         for group in self.terminal.get_characters_grouped(sort_map[direction]):
             for character in group:
                 wipe_scn = character.animation.new_scene()
-                wipe_gradient = graphics.Gradient(
+                wipe_gradient = Gradient(
                     final_gradient.spectrum[0],
                     self.character_final_color_map[character],
                     steps=self.config.final_gradient_steps,

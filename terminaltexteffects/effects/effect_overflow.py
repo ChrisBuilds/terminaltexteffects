@@ -14,9 +14,9 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
-from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -34,22 +34,22 @@ class OverflowConfig(ArgsDataClass):
     """Configuration for the Overflow effect.
 
     Attributes:
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        overflow_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the overflow gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+        overflow_gradient_stops (tuple[Color, ...]): Tuple of colors for the overflow gradient.
         overflow_cycles_range (tuple[int, int]): Lower and upper range of the number of cycles to overflow the text. Valid values are n >= 0.
         overflow_speed (int): Speed of the overflow effect. Valid values are n > 0."""
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -61,24 +61,24 @@ class OverflowConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
-    overflow_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    overflow_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--overflow-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("f2ebc0", "8dbfb3", "f2ebc0"),
+        default=(Color("f2ebc0"), Color("8dbfb3"), Color("f2ebc0")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the overflow gradient.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the overflow gradient."
+    "tuple[Color, ...] : Tuple of colors for the overflow gradient."
 
     overflow_cycles_range: tuple[int, int] = ArgField(
         cmd_name=["--overflow-cycles-range"],
@@ -119,7 +119,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
             for character in self.characters:
                 character.motion.set_coordinate(Coord(character.input_coord.column, 0))
 
-        def set_color(self, color: int | str) -> None:
+        def set_color(self, color: Color) -> None:
             for character in self.characters:
                 character.animation.set_appearance(character.input_symbol, color)
 
@@ -128,11 +128,11 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.pending_rows: list[OverflowIterator.Row] = []
         self.active_rows: list[OverflowIterator.Row] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -158,7 +158,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
             )
             self.pending_rows.append(OverflowIterator.Row(row, final=True))
         self._delay = 0
-        self._overflow_gradient = graphics.Gradient(
+        self._overflow_gradient = Gradient(
             *self.config.overflow_gradient_stops,
             steps=max((self.terminal.output_area.top // max(1, len(self.config.overflow_gradient_stops) - 1)), 1),
         )

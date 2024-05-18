@@ -13,8 +13,8 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -32,33 +32,33 @@ class RandomSequenceConfig(ArgsDataClass):
     """Configuration for the RandomSequence effect.
 
     Attributes:
-        starting_color (graphics.Color): Color of the characters at spawn.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        starting_color (Color): Color of the characters at spawn.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         speed (float): Speed of the animation as a percentage of the total number of characters to reveal in each tick. Valid values are 0 < n <= 1.
     """
 
-    starting_color: graphics.Color = ArgField(
+    starting_color: Color = ArgField(
         cmd_name=["--starting-color"],
         type_parser=argvalidators.ColorArg.type_parser,
-        default="000000",
+        default=Color("000000"),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color of the characters at spawn.",
     )  # type: ignore[assignment]
 
-    "graphics.Color : Color of the characters at spawn."
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    "Color : Color of the characters at spawn."
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
 
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
         type_parser=argvalidators.PositiveInt.type_parser,
@@ -78,15 +78,15 @@ class RandomSequenceConfig(ArgsDataClass):
     )  # type: ignore[assignment]
 
     "int : Number of frames to display each gradient step."
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
 
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
     speed: float = ArgField(
         cmd_name=["--speed"],
         type_parser=argvalidators.PositiveFloat.type_parser,
@@ -106,12 +106,12 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
     def __init__(self, effect: "RandomSequence") -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.characters_per_tick = max(int(self.config.speed * len(self.terminal._input_characters)), 1)
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -119,7 +119,7 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             self.terminal.set_character_visibility(character, False)
             gradient_scn = character.animation.new_scene()
-            gradient = graphics.Gradient(self.config.starting_color, self.character_final_color_map[character], steps=7)
+            gradient = Gradient(self.config.starting_color, self.character_final_color_map[character], steps=7)
             gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.config.final_gradient_frames)
             character.animation.activate_scene(gradient_scn)
             self.pending_chars.append(character)

@@ -14,8 +14,8 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine import animation
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -37,11 +37,11 @@ class ErrorCorrectConfig(ArgsDataClass):
     Attributes:
         error_pairs (float): Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position. Valid values are 0 < n <= 1.0.
         swap_delay (int): Number of frames between swaps. Valid values are n >= 0.
-        error_color (graphics.Color): Color for the characters that are in the wrong position.
-        correct_color (graphics.Color): Color for the characters once corrected, this is a gradient from error-color and fades to final-color.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        error_color (Color): Color for the characters that are in the wrong position.
+        correct_color (Color): Color for the characters once corrected, this is a gradient from error-color and fades to final-color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         movement_speed (float): Speed of the characters while moving to the correct position. Valid values are n > 0."""
 
     error_pairs: float = ArgField(
@@ -62,33 +62,33 @@ class ErrorCorrectConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : Number of frames between swaps."
 
-    error_color: graphics.Color = ArgField(
+    error_color: Color = ArgField(
         cmd_name=["--error-color"],
         type_parser=argvalidators.ColorArg.type_parser,
-        default="e74c3c",
+        default=Color("e74c3c"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters that are in the wrong position.",
     )  # type: ignore[assignment]
-    "graphics.Color : Color for the characters that are in the wrong position."
+    "Color : Color for the characters that are in the wrong position."
 
-    correct_color: graphics.Color = ArgField(
+    correct_color: Color = ArgField(
         cmd_name=["--correct-color"],
         type_parser=argvalidators.ColorArg.type_parser,
-        default="45bf55",
+        default=Color("45bf55"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters once corrected, this is a gradient from error-color and fades to final-color.",
     )  # type: ignore[assignment]
-    "graphics.Color : Color for the characters once corrected, this is a gradient from error-color and fades to final-color."
+    "Color : Color for the characters once corrected, this is a gradient from error-color and fades to final-color."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -100,14 +100,14 @@ class ErrorCorrectConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
@@ -129,11 +129,11 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.swapped: list[tuple[EffectCharacter, EffectCharacter]] = []
         self.swap_delay = 0
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -145,7 +145,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
             character.animation.activate_scene(spawn_scene)
             self.terminal.set_character_visibility(character, True)
         all_characters: list[EffectCharacter] = list(self.terminal._input_characters)
-        correcting_gradient = graphics.Gradient(self.config.error_color, self.config.correct_color, steps=10)
+        correcting_gradient = Gradient(self.config.error_color, self.config.correct_color, steps=10)
         block_symbol = "▓"
         block_wipe_start = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
         block_wipe_end = ("▇", "▆", "▅", "▄", "▃", "▂", "▁")
@@ -174,11 +174,11 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 error_scene = character.animation.new_scene(id="error")
                 for _ in range(10):
                     error_scene.add_frame(block_symbol, 3, color=self.config.error_color)
-                    error_scene.add_frame(character.input_symbol, 3, color="ffffff")
+                    error_scene.add_frame(character.input_symbol, 3, color=Color("ffffff"))
                 correcting_scene = character.animation.new_scene(sync=animation.SyncMetric.DISTANCE)
                 correcting_scene.apply_gradient_to_symbols(correcting_gradient, "█", 3)
                 final_scene = character.animation.new_scene()
-                char_final_gradient = graphics.Gradient(
+                char_final_gradient = Gradient(
                     self.config.correct_color, self.character_final_color_map[character], steps=10
                 )
                 final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 3)

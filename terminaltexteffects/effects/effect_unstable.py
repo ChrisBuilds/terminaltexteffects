@@ -13,9 +13,10 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -35,34 +36,34 @@ class UnstableConfig(ArgsDataClass):
     """Configuration for the Unstable effect.
 
     Attributes:
-        unstable_color (graphics.Color): Color transitioned to as the characters become unstable.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        unstable_color (Color): Color transitioned to as the characters become unstable.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         explosion_ease (easing.EasingFunction): Easing function to use for character movement during the explosion.
         explosion_speed (float): Speed of characters during explosion. Valid values are n > 0.
         reassembly_ease (easing.EasingFunction): Easing function to use for character reassembly.
         reassembly_speed (float): Speed of characters during reassembly. Valid values are n > 0.
     """
 
-    unstable_color: graphics.Color = ArgField(
+    unstable_color: Color = ArgField(
         cmd_name=["--unstable-color"],
         type_parser=argvalidators.ColorArg.type_parser,
-        default="ff9200",
+        default=Color("ff9200"),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color transitioned to as the characters become unstable.",
     )  # type: ignore[assignment]
-    "graphics.Color : Color transitioned to as the characters become unstable."
+    "Color : Color transitioned to as the characters become unstable."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -74,14 +75,14 @@ class UnstableConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     explosion_ease: easing.EasingFunction = ArgField(
         cmd_name=["--explosion-ease"],
@@ -127,11 +128,11 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.jumbled_coords: dict[EffectCharacter, Coord] = dict()
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -160,7 +161,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
             explosion_path.new_waypoint(Coord(col, row))
             reassembly_path = character.motion.new_path(id="reassembly", speed=0.75, ease=self.config.reassembly_ease)
             reassembly_path.new_waypoint(character.input_coord)
-            unstable_gradient = graphics.Gradient(
+            unstable_gradient = Gradient(
                 self.character_final_color_map[character], self.config.unstable_color, steps=25
             )
             rumble_scn = character.animation.new_scene(id="rumble")
@@ -169,9 +170,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                 character.input_symbol,
                 10,
             )
-            final_color = graphics.Gradient(
-                self.config.unstable_color, self.character_final_color_map[character], steps=12
-            )
+            final_color = Gradient(self.config.unstable_color, self.character_final_color_map[character], steps=12)
             final_scn = character.animation.new_scene(id="final")
             final_scn.apply_gradient_to_symbols(final_color, character.input_symbol, 5)
             character.animation.activate_scene(rumble_scn)

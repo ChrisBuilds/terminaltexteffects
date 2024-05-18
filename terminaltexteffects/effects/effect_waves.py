@@ -12,8 +12,9 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -33,11 +34,11 @@ class WavesConfig(ArgsDataClass):
 
     Attributes:
         wave_symbols (tuple[str, ...] | str): Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an animation.
-        wave_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        wave_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         wave_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         wave_count (int): Number of waves to generate. Valid values are n > 0."""
 
     wave_symbols: tuple[str, ...] = ArgField(
@@ -50,15 +51,15 @@ class WavesConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[str, ...] : Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an animation."
 
-    wave_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    wave_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--wave-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("f0ff65", "ffb102", "31a0d4", "ffb102", "f0ff65"),
+        default=(Color("#f0ff65"), Color("#ffb102"), Color("#31a0d4"), Color("#ffb102"), Color("#f0ff65")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     wave_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--wave-gradient-steps",
@@ -68,17 +69,17 @@ class WavesConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("ffb102", "31a0d4", "f0ff65"),
+        default=(Color("#ffb102"), Color("#31a0d4"), Color("#f0ff65")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -90,14 +91,14 @@ class WavesConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.DIAGONAL,
+        default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     wave_count: int = ArgField(
         cmd_name="--wave-count",
@@ -133,15 +134,15 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
     def __init__(self, effect: "Waves") -> None:
         super().__init__(effect)
         self.pending_columns: list[list[EffectCharacter]] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
-        wave_gradient = graphics.Gradient(*self.config.wave_gradient_stops, steps=self.config.wave_gradient_steps)
+        wave_gradient = Gradient(*self.config.wave_gradient_stops, steps=self.config.wave_gradient_steps)
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             wave_scn = character.animation.new_scene()
@@ -151,7 +152,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                     wave_gradient, self.config.wave_symbols, duration=self.config.wave_length
                 )
             final_scn = character.animation.new_scene()
-            for step in graphics.Gradient(
+            for step in Gradient(
                 wave_gradient.spectrum[-1],
                 self.character_final_color_map[character],
                 steps=self.config.final_gradient_steps,

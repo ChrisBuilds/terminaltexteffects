@@ -14,8 +14,8 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -33,40 +33,40 @@ class BurnConfig(ArgsDataClass):
     """Configuration for the Burn effect.
 
     Attributes:
-        starting_color (graphics.Color): Color of the characters before they start to burn.
-        burn_colors (tuple[graphics.Color, ...]): Colors transitioned through as the characters burn.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        starting_color (Color): Color of the characters before they start to burn.
+        burn_colors (tuple[Color, ...]): Colors transitioned through as the characters burn.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient."""
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient."""
 
-    starting_color: graphics.Color = ArgField(
+    starting_color: Color = ArgField(
         cmd_name="--starting-color",
         type_parser=argvalidators.ColorArg.type_parser,
-        default="837373",
+        default=Color("837373"),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color of the characters before they start to burn.",
     )  # type: ignore[assignment]
-    "graphics.Color : Color of the characters before they start to burn."
+    "Color : Color of the characters before they start to burn."
 
-    burn_colors: tuple[graphics.Color, ...] = ArgField(
+    burn_colors: tuple[Color, ...] = ArgField(
         cmd_name=["--burn-colors"],
         type_parser=argvalidators.ColorArg.type_parser,
-        default=("ffffff", "fff75d", "fe650d", "8A003C", "510100"),
+        default=(Color("ffffff"), Color("fff75d"), Color("fe650d"), Color("8A003C"), Color("510100")),
         nargs="+",
         metavar=argvalidators.ColorArg.METAVAR,
         help="Colors transitioned through as the characters burn.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Colors transitioned through as the characters burn."
+    "tuple[Color, ...] : Colors transitioned through as the characters burn."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("00c3ff", "ffff1c"),
+        default=(Color("00c3ff"), Color("ffff1c")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -78,14 +78,14 @@ class BurnConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
     def get_effect_class(cls):
@@ -96,7 +96,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
     def __init__(self, effect: "Burn"):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
@@ -111,13 +111,13 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             "▝",
             ".",
         ]
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        fire_gradient = graphics.Gradient(*self.config.burn_colors, steps=10)
+        fire_gradient = Gradient(*self.config.burn_colors, steps=10)
         groups = {
             column_index: column
             for column_index, column in enumerate(
@@ -136,9 +136,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             burn_scn = next_char.animation.new_scene(id="burn")
             burn_scn.apply_gradient_to_symbols(fire_gradient, vertical_build_order, 12)
             final_color_scn = next_char.animation.new_scene()
-            for color in graphics.Gradient(
-                fire_gradient.spectrum[-1], self.character_final_color_map[next_char], steps=8
-            ):
+            for color in Gradient(fire_gradient.spectrum[-1], self.character_final_color_map[next_char], steps=8):
                 final_color_scn.add_frame(next_char.input_symbol, 4, color=color)
             next_char.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, burn_scn, EventHandler.Action.ACTIVATE_SCENE, final_color_scn

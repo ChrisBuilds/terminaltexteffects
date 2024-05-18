@@ -12,8 +12,9 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, geometry, graphics
+from terminaltexteffects.utils import easing, geometry
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -34,10 +35,10 @@ class SlideConfig(ArgsDataClass):
     Attributes:
         movement_speed (float): Speed of the characters. Valid values are n > 0.
         grouping (typing.Literal["row", "column", "diagonal"]): Direction to group characters. Valid values are 'row', 'column', 'diagonal'.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the gradient.
         gap (int): Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect. Valid values are n >= 0.
         reverse_direction (bool): Reverse the direction of the characters.
         merge (bool): Merge the character groups originating.
@@ -60,15 +61,15 @@ class SlideConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "typing.Literal['row', 'column', 'diagonal'] : Direction to group characters. Valid values are Literal['row', 'column', 'diagonal']."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("833ab4", "fd1d1d", "fcb045"),
+        default=(Color("#833ab4"), Color("#fd1d1d"), Color("#fcb045")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -88,13 +89,13 @@ class SlideConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : Number of frames to display each gradient step."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         type_parser=argvalidators.GradientDirection.type_parser,
         help="Direction of the gradient (vertical, horizontal, diagonal, center).",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the gradient."
+    "Gradient.Direction : Direction of the gradient."
 
     gap: int = ArgField(
         cmd_name="--gap",
@@ -138,11 +139,11 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.pending_groups: list[list[EffectCharacter]] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -213,7 +214,7 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
                     character.motion.set_coordinate(starting_coord)
             for character in group:
                 gradient_scn = character.animation.new_scene()
-                char_gradient = graphics.Gradient(
+                char_gradient = Gradient(
                     self.config.final_gradient_stops[0], self.character_final_color_map[character], steps=10
                 )
                 gradient_scn.apply_gradient_to_symbols(

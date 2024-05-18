@@ -15,8 +15,8 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
-from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -39,13 +39,13 @@ class BeamsConfig(ArgsDataClass):
         beam_delay (int): Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5). Valid values are n > 0.
         beam_row_speed_range (tuple[int, int]): Speed range of the beam when moving along a row. Valid values are n > 0.
         beam_column_speed_range (tuple[int, int]): Speed range of the beam when moving along a column. Valid values are n > 0.
-        beam_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the beam, a gradient will be created between the colors.
+        beam_gradient_stops (tuple[Color, ...]): Tuple of colors for the beam, a gradient will be created between the colors.
         beam_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
         beam_gradient_frames (int): Number of frames to display each gradient step. Valid values are n > 0.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the wipe gradient.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the wipe gradient.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         final_wipe_speed (int): Speed of the final wipe as measured in diagonal groups activated per frame. Valid values are n > 0.
     """
 
@@ -101,16 +101,16 @@ class BeamsConfig(ArgsDataClass):
 
     "tuple[int, int] : Speed range of the beam when moving along a column."
 
-    beam_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    beam_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--beam-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=(graphics.Color("ffffff"), graphics.Color("00D1FF"), graphics.Color("8A008A")),
+        default=(Color("ffffff"), Color("00D1FF"), Color("8A008A")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors.",
     )  # type: ignore[assignment]
 
-    "tuple[graphics.Color, ...] : Tuple of colors for the beam, a gradient will be created between the colors."
+    "tuple[Color, ...] : Tuple of colors for the beam, a gradient will be created between the colors."
 
     beam_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--beam-gradient-steps",
@@ -133,16 +133,16 @@ class BeamsConfig(ArgsDataClass):
 
     "int : Number of frames to display each gradient step."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=(graphics.Color("8A008A"), graphics.Color("00D1FF"), graphics.Color("ffffff")),
+        default=(Color("8A008A"), Color("00D1FF"), Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # type: ignore[assignment]
 
-    "tuple[graphics.Color, ...] : Tuple of colors for the wipe gradient."
+    "tuple[Color, ...] : Tuple of colors for the wipe gradient."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -165,15 +165,15 @@ class BeamsConfig(ArgsDataClass):
 
     "int : Number of frames to display each gradient step."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
 
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     final_wipe_speed: int = ArgField(
         cmd_name="--final-wipe-speed",
@@ -230,7 +230,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
     def __init__(self, effect: "Beams") -> None:
         super().__init__(effect)
         self.pending_groups: list[BeamsIterator.Group] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.active_groups: list[BeamsIterator.Group] = []
         self.delay = 0
         self.phase = "beams"
@@ -240,14 +240,14 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters(fill_chars=True):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
-        beam_gradient = graphics.Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
+        beam_gradient = Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
         groups: list[BeamsIterator.Group] = []
         for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
             groups.append(BeamsIterator.Group(row, "row", self.terminal, self.config))
@@ -268,10 +268,10 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                 faded_color = character.animation.adjust_color_brightness(
                     self.character_final_color_map[character], 0.3
                 )
-                fade_gradient = graphics.Gradient(self.character_final_color_map[character], faded_color, steps=10)
+                fade_gradient = Gradient(self.character_final_color_map[character], faded_color, steps=10)
                 beam_row_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
                 beam_column_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
-                brighten_gradient = graphics.Gradient(faded_color, self.character_final_color_map[character], steps=10)
+                brighten_gradient = Gradient(faded_color, self.character_final_color_map[character], steps=10)
                 brigthen_scn = character.animation.new_scene(id="brighten")
                 brigthen_scn.apply_gradient_to_symbols(
                     brighten_gradient, character.input_symbol, self.config.final_gradient_frames

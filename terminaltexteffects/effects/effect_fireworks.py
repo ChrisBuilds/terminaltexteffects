@@ -12,9 +12,10 @@ from dataclasses import dataclass
 
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators, easing, geometry, graphics
+from terminaltexteffects.utils import argvalidators, easing, geometry
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -33,12 +34,12 @@ class FireworksConfig(ArgsDataClass):
 
     Attributes:
         explode_anywhere (bool): If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text.
-        firework_colors (tuple[graphics.Color, ...]): Tuple of colors from which firework colors will be randomly selected.
+        firework_colors (tuple[Color, ...]): Tuple of colors from which firework colors will be randomly selected.
         firework_symbol (str): Symbol to use for the firework shell.
         firework_volume (float): Percent of total characters in each firework shell. Valid values are 0 < n <= 1.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         launch_delay (int): Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. Valid values are n >= 0.
         explode_distance (float): Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width. Valid values are 0 < n <= 1."""
 
@@ -50,15 +51,15 @@ class FireworksConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "bool : If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text."
 
-    firework_colors: tuple[graphics.Color, ...] = ArgField(
+    firework_colors: tuple[Color, ...] = ArgField(
         cmd_name="--firework-colors",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("88F7E2", "44D492", "F5EB67", "FFA15C", "FA233E"),
+        default=(Color("88F7E2"), Color("44D492"), Color("F5EB67"), Color("FFA15C"), Color("FA233E")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated list of colors from which firework colors will be randomly selected.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors from which firework colors will be randomly selected."
+    "tuple[Color, ...] : Tuple of colors from which firework colors will be randomly selected."
 
     firework_symbol: str = ArgField(
         cmd_name="--firework-symbol",
@@ -78,15 +79,15 @@ class FireworksConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "float : Percent of total characters in each firework shell."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -98,14 +99,14 @@ class FireworksConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.HORIZONTAL,
+        default=Gradient.Direction.HORIZONTAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     launch_delay: int = ArgField(
         cmd_name="--launch-delay",
@@ -137,7 +138,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
         self.shells: list[list[EffectCharacter]] = []
         self.firework_volume = max(1, round(self.config.firework_volume * len(self.terminal._input_characters)))
         self.explode_distance = max(1, round(self.terminal.output_area.right * self.config.explode_distance))
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.launch_delay: int = 0
         self.build()
 
@@ -194,7 +195,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             self.shells.append(firework_shell)
 
     def prepare_scenes(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -206,14 +207,14 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 # launch scene
                 launch_scn = character.animation.new_scene()
                 launch_scn.add_frame(self.config.firework_symbol, 2, color=shell_color)
-                launch_scn.add_frame(self.config.firework_symbol, 1, color="FFFFFF")
+                launch_scn.add_frame(self.config.firework_symbol, 1, color=Color("FFFFFF"))
                 launch_scn.is_looping = True
                 # bloom scene
                 bloom_scn = character.animation.new_scene()
                 bloom_scn.add_frame(character.input_symbol, 1, color=shell_color)
                 # fall scene
                 fall_scn = character.animation.new_scene()
-                fall_gradient = graphics.Gradient(shell_color, self.character_final_color_map[character], steps=15)
+                fall_gradient = Gradient(shell_color, self.character_final_color_map[character], steps=15)
                 fall_scn.apply_gradient_to_symbols(fall_gradient, character.input_symbol, 15)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(

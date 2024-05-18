@@ -13,9 +13,10 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -35,22 +36,22 @@ class PrintConfig(ArgsDataClass):
     """Configuration for the Print effect.
 
     Attributes:
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         print_head_return_speed (float): Speed of the print head when performing a carriage return.
         print_speed (int): Speed of the print head when printing characters.
         print_head_easing (easing.EasingFunction): Easing function to use for print head movement."""
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("02b8bd", "c1f0e3", "00ffa0"),
+        default=(Color("02b8bd"), Color("c1f0e3"), Color("00ffa0")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -62,14 +63,14 @@ class PrintConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.DIAGONAL,
+        default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     print_head_return_speed: float = ArgField(
         cmd_name=["--print-head-return-speed"],
@@ -107,8 +108,8 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         def __init__(
             self,
             characters: list[EffectCharacter],
-            character_final_color_map: dict[EffectCharacter, graphics.Color],
-            typing_head_color: str | int,
+            character_final_color_map: dict[EffectCharacter, Color],
+            typing_head_color: Color,
         ):
             self.untyped_chars: list[EffectCharacter] = []
             self.typed_chars: list[EffectCharacter] = []
@@ -119,7 +120,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                         continue
                     blank_row_accounted = True
                 character.motion.set_coordinate(Coord(character.input_coord.column, 1))
-                color_gradient = graphics.Gradient(typing_head_color, character_final_color_map[character], steps=5)
+                color_gradient = Gradient(typing_head_color, character_final_color_map[character], steps=5)
                 typed_animation = character.animation.new_scene()
                 typed_animation.apply_gradient_to_symbols(
                     color_gradient, ("█", "▓", "▒", "░", character.input_symbol), 5
@@ -145,13 +146,11 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         self.pending_rows: list[PrintIterator.Row] = []
         self.processed_rows: list[PrintIterator.Row] = []
         self.typing_head = self.terminal.add_character("█", Coord(1, 1))
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        self.final_gradient = graphics.Gradient(
-            *self.config.final_gradient_stops, steps=self.config.final_gradient_steps
-        )
+        self.final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = self.final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )

@@ -13,9 +13,10 @@ from dataclasses import dataclass
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
-from terminaltexteffects.utils import argvalidators, geometry, graphics
+from terminaltexteffects.utils import argvalidators, geometry
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -33,26 +34,26 @@ class SynthGridConfig(ArgsDataClass):
     """Configuration for the SynthGrid effect.
 
     Attributes:
-        grid_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the grid gradient.
+        grid_gradient_stops (tuple[Color, ...]): Tuple of colors for the grid gradient.
         grid_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        grid_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the grid color.
-        text_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the text gradient.
+        grid_gradient_direction (Gradient.Direction): Direction of the gradient for the grid color.
+        text_gradient_stops (tuple[Color, ...]): Tuple of colors for the text gradient.
         text_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        text_gradient_direction (graphics.Gradient.Direction): Direction of the gradient for the text color.
+        text_gradient_direction (Gradient.Direction): Direction of the gradient for the text color.
         grid_row_symbol (str): Symbol to use for grid row lines.
         grid_column_symbol (str): Symbol to use for grid column lines.
         text_generation_symbols (tuple[str, ...] | str): Tuple of characters for the text generation animation.
         max_active_blocks (float): Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time. Valid values are 0 < n <= 1."""
 
-    grid_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    grid_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--grid-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("CC00CC", "ffffff"),
+        default=(Color("CC00CC"), Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the grid gradient.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the grid gradient."
+    "tuple[Color, ...] : Tuple of colors for the grid gradient."
 
     grid_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--grid-gradient-steps",
@@ -64,24 +65,24 @@ class SynthGridConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    grid_gradient_direction: graphics.Gradient.Direction = ArgField(
+    grid_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--grid-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.DIAGONAL,
+        default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the gradient for the grid color.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the gradient for the grid color."
+    "Gradient.Direction : Direction of the gradient for the grid color."
 
-    text_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    text_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--text-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the text gradient.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the text gradient."
+    "tuple[Color, ...] : Tuple of colors for the text gradient."
 
     text_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--text-gradient-steps",
@@ -93,14 +94,14 @@ class SynthGridConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    text_gradient_direction: graphics.Gradient.Direction = ArgField(
+    text_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--text-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the gradient for the text color.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the gradient for the text color."
+    "Gradient.Direction : Direction of the gradient for the text color."
 
     grid_row_symbol: str = ArgField(
         cmd_name="--grid-row-symbol",
@@ -151,7 +152,7 @@ class GridLine:
         args: SynthGridConfig,
         origin: Coord,
         direction: str,
-        grid_gradient_mapping: dict[geometry.Coord, graphics.Color],
+        grid_gradient_mapping: dict[geometry.Coord, Color],
     ):
         self.terminal = terminal
         self.args = args
@@ -247,11 +248,11 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
         return min(potential_gaps, key=lambda x: abs(x - dimension // 5))
 
     def build(self) -> None:
-        grid_gradient = graphics.Gradient(*self.config.grid_gradient_stops, steps=self.config.grid_gradient_steps)
+        grid_gradient = Gradient(*self.config.grid_gradient_stops, steps=self.config.grid_gradient_steps)
         grid_gradient_mapping = grid_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.grid_gradient_direction
         )
-        text_gradient = graphics.Gradient(*self.config.text_gradient_stops, steps=self.config.text_gradient_steps)
+        text_gradient = Gradient(*self.config.text_gradient_stops, steps=self.config.text_gradient_steps)
         text_gradient_mapping = text_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.text_gradient_direction
         )

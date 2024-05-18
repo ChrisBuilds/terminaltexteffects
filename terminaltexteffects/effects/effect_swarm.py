@@ -14,9 +14,10 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine import animation
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, geometry, graphics
+from terminaltexteffects.utils import easing, geometry
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -34,43 +35,43 @@ class SwarmConfig(ArgsDataClass):
     """Configuration for the Swarm effect.
 
     Attributes:
-        base_color (tuple[graphics.Color, ...]): Tuple of colors for the swarms.
-        flash_color (graphics.Color): Color for the character flash. Characters flash when moving.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        base_color (tuple[Color, ...]): Tuple of colors for the swarms.
+        flash_color (Color): Color for the character flash. Characters flash when moving.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         swarm_size (float): Percent of total characters in each swarm. Valid values are 0 < n <= 1.
         swarm_coordination (float): Percent of characters in a swarm that move as a group. Valid values are 0 < n <= 1.
         swarm_area_count (tuple[int, int]): Range of the number of areas where characters will swarm. Valid values are n > 0."""
 
-    base_color: tuple[graphics.Color, ...] = ArgField(
+    base_color: tuple[Color, ...] = ArgField(
         cmd_name=["--base-color"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("31a0d4",),
+        default=(Color("31a0d4"),),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the swarms",
     )  # type: ignore[assignment]
-    """tuple[graphics.Color, ...] : Tuple of colors for the swarms"""
+    """tuple[Color, ...] : Tuple of colors for the swarms"""
 
-    flash_color: graphics.Color = ArgField(
+    flash_color: Color = ArgField(
         cmd_name=["--flash-color"],
         type_parser=argvalidators.ColorArg.type_parser,
-        default="f2ea79",
+        default=Color("f2ea79"),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color for the character flash. Characters flash when moving.",
     )  # type: ignore[assignment]
-    """graphics.Color : Color for the character flash. Characters flash when moving."""
+    """Color : Color for the character flash. Characters flash when moving."""
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("31b900", "f0ff65"),
+        default=(Color("31b900"), Color("f0ff65")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -82,14 +83,14 @@ class SwarmConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.HORIZONTAL,
+        default=Gradient.Direction.HORIZONTAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     swarm_size: float = ArgField(
         cmd_name="--swarm-size",
@@ -131,7 +132,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.swarms: list[list[EffectCharacter]] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def make_swarms(self, swarm_size: int) -> None:
@@ -148,7 +149,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
     def build(self) -> None:
         swarm_size: int = max(round(len(self.terminal._input_characters) * self.config.swarm_size), 1)
         self.make_swarms(swarm_size)
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -156,7 +157,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         flash_list = [self.config.flash_color for _ in range(10)]
         for swarm in self.swarms:
-            swarm_gradient = graphics.Gradient(random.choice(self.config.base_color), self.config.flash_color, steps=7)
+            swarm_gradient = Gradient(random.choice(self.config.base_color), self.config.flash_color, steps=7)
             swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
             swarm_area_coordinate_map: dict[Coord, list[Coord]] = {}
             swarm_spawn = self.terminal.output_area.random_coord(outside_scope=True)
@@ -218,9 +219,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 input_path = character.motion.new_path(speed=0.3, ease=easing.in_out_quad)
                 input_path.new_waypoint(character.input_coord)
                 input_scn = character.animation.new_scene()
-                for step in graphics.Gradient(
-                    self.config.flash_color, self.character_final_color_map[character], steps=10
-                ):
+                for step in Gradient(self.config.flash_color, self.character_final_color_map[character], steps=10):
                     input_scn.add_frame(character.input_symbol, 3, color=step)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.ACTIVATE_SCENE, input_scn

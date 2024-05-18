@@ -14,9 +14,10 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -35,23 +36,32 @@ class RainConfig(ArgsDataClass):
     """Configuration for the Rain effect.
 
     Attributes:
-        rain_colors (tuple[graphics.Color, ...]): Tuple of colors for the rain drops. Colors are randomly chosen from the tuple.
+        rain_colors (tuple[Color, ...]): Tuple of colors for the rain drops. Colors are randomly chosen from the tuple.
         movement_speed (tuple[float, float]): Falling speed range of the rain drops. Valid values are n > 0.
         rain_symbols (tuple[str, ...] | str): Tuple of symbols to use for the rain drops. Symbols are randomly chosen from the tuple.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         easing (easing.EasingFunction): Easing function to use for character movement."""
 
-    rain_colors: tuple[graphics.Color, ...] = ArgField(
+    rain_colors: tuple[Color, ...] = ArgField(
         cmd_name=["--rain-colors"],
         type_parser=argvalidators.ColorArg.type_parser,
         metavar=argvalidators.ColorArg.METAVAR,
         nargs="+",
-        default=("00315C", "004C8F", "0075DB", "3F91D9", "78B9F2", "9AC8F5", "B8D8F8", "E3EFFC"),
+        default=(
+            Color("00315C"),
+            Color("004C8F"),
+            Color("0075DB"),
+            Color("3F91D9"),
+            Color("78B9F2"),
+            Color("9AC8F5"),
+            Color("B8D8F8"),
+            Color("E3EFFC"),
+        ),
         help="List of colors for the rain drops. Colors are randomly chosen from the list.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the rain drops. Colors are randomly chosen from the tuple."
+    "tuple[Color, ...] : Tuple of colors for the rain drops. Colors are randomly chosen from the tuple."
 
     movement_speed: tuple[float, float] = ArgField(
         cmd_name="--movement-speed",
@@ -72,15 +82,15 @@ class RainConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[str, ...] : Tuple of symbols to use for the rain drops. Symbols are randomly chosen from the tuple."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("488bff", "b2e7de", "57eaf7"),
+        default=(Color("488bff"), Color("b2e7de"), Color("57eaf7")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -92,14 +102,14 @@ class RainConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.DIAGONAL,
+        default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     movement_easing: easing.EasingFunction = ArgField(
         cmd_name=["--movement-easing"],
@@ -120,11 +130,11 @@ class RainIterator(BaseEffectIterator[RainConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -135,7 +145,7 @@ class RainIterator(BaseEffectIterator[RainConfig]):
             raindrop_color = random.choice(self.config.rain_colors)
             rain_scn = character.animation.new_scene()
             rain_scn.add_frame(random.choice(self.config.rain_symbols), 1, color=raindrop_color)
-            raindrop_gradient = graphics.Gradient(raindrop_color, self.character_final_color_map[character], steps=7)
+            raindrop_gradient = Gradient(raindrop_color, self.character_final_color_map[character], steps=7)
             fade_scn = character.animation.new_scene()
             fade_scn.apply_gradient_to_symbols(raindrop_gradient, character.input_symbol, 5)
             character.animation.activate_scene(rain_scn)

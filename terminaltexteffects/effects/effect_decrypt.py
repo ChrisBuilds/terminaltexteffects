@@ -13,8 +13,9 @@ from dataclasses import dataclass
 from terminaltexteffects.engine import animation
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators, graphics
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -33,10 +34,10 @@ class DecryptConfig(ArgsDataClass):
 
     Attributes:
         typing_speed (int): Number of characters typed per keystroke.
-        ciphertext_colors (tuple[graphics.Color, ...]): Colors for the ciphertext. Color will be randomly selected for each character.
-        final_gradient_stops (tuple[graphics.Color, ...]): Colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
+        ciphertext_colors (tuple[Color, ...]): Colors for the ciphertext. Color will be randomly selected for each character.
+        final_gradient_stops (tuple[Color, ...]): Colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient."""
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient."""
 
     typing_speed: int = ArgField(
         cmd_name="--typing-speed",
@@ -47,25 +48,25 @@ class DecryptConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : Number of characters typed per keystroke."
 
-    ciphertext_colors: tuple[graphics.Color, ...] = ArgField(
+    ciphertext_colors: tuple[Color, ...] = ArgField(
         cmd_name=["--ciphertext-colors"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("008000", "00cb00", "00ff00"),
+        default=(Color("008000"), Color("00cb00"), Color("00ff00")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the ciphertext. Color will be randomly selected for each character.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Colors for the ciphertext. Color will be randomly selected for each character."
+    "tuple[Color, ...] : Colors for the ciphertext. Color will be randomly selected for each character."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("eda000",),
+        default=(Color("eda000"),),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Colors for the character gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Colors for the character gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -77,14 +78,14 @@ class DecryptConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
     def get_effect_class(cls):
@@ -107,7 +108,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
         self.phase = "typing"
         self.encrypted_symbols: list[str] = []
         self.scenes: dict[str, animation.Scene] = {}
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.make_encrypted_symbols()
         self.build()
 
@@ -137,7 +138,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
             slow_decrypt_scene.add_frame(symbol, duration, color=color)
         discovered_scene = character.animation.new_scene(id="discovered")
-        discovered_gradient = graphics.Gradient("ffffff", self.character_final_color_map[character], steps=10)
+        discovered_gradient = Gradient(Color("ffffff"), self.character_final_color_map[character], steps=10)
         discovered_scene.apply_gradient_to_symbols(discovered_gradient, character.input_symbol, 8)
 
     def prepare_data_for_type_effect(self) -> None:
@@ -170,7 +171,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
             self.decrypting_pending_chars.append(character)
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )

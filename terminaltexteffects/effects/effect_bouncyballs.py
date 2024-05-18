@@ -14,9 +14,10 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -35,24 +36,24 @@ class BouncyBallsConfig(ArgsDataClass):
     """Configuration for the BouncyBalls effect.
 
     Attributes:
-        ball_colors (tuple[graphics.Color, ...]): Tuple of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random.
+        ball_colors (tuple[Color, ...]): Tuple of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random.
         ball_symbols (tuple[str, ...] | str): Tuple of symbols to use for the balls.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         ball_delay (int): Number of frames between ball drops, increase to reduce ball drop rate. Valid values are n > 0.
         movement_speed (float): Movement speed of the characters.  Valid values are n > 0.
         easing (easing.EasingFunction): Easing function to use for character movement."""
 
-    ball_colors: tuple[graphics.Color, ...] = ArgField(
+    ball_colors: tuple[Color, ...] = ArgField(
         cmd_name=["--ball-colors"],
         type_parser=argvalidators.ColorArg.type_parser,
         metavar=argvalidators.ColorArg.METAVAR,
         nargs="+",
-        default=("d1f4a5", "96e2a4", "5acda9"),
+        default=(Color("d1f4a5"), Color("96e2a4"), Color("5acda9")),
         help="Space separated list of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random."
+    "tuple[Color, ...] : Tuple of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random."
 
     ball_symbols: tuple[str, ...] = ArgField(
         cmd_name="--ball-symbols",
@@ -64,15 +65,15 @@ class BouncyBallsConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[str, ...] | str : Tuple of symbols to use for the balls."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("f8ffae", "43c6ac"),
+        default=(Color("f8ffae"), Color("43c6ac")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -84,14 +85,14 @@ class BouncyBallsConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.DIAGONAL,
+        default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
     ball_delay: int = ArgField(
         cmd_name="--ball-delay",
         type_parser=argvalidators.NonNegativeInt.type_parser,
@@ -128,11 +129,11 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -143,7 +144,7 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
             ball_scene = character.animation.new_scene()
             ball_scene.add_frame(symbol, 1, color=color)
             final_scene = character.animation.new_scene()
-            char_final_gradient = graphics.Gradient(color, self.character_final_color_map[character], steps=10)
+            char_final_gradient = Gradient(color, self.character_final_color_map[character], steps=10)
             final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
             character.motion.set_coordinate(
                 Coord(character.input_coord.column, int(self.terminal.output_area.top * random.uniform(1.0, 1.5)))

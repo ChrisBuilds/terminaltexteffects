@@ -14,9 +14,10 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
-from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -40,9 +41,9 @@ class OrbittingVolleyConfig(ArgsDataClass):
         right_launcher_symbol (str): Symbol for the right launcher.
         bottom_launcher_symbol (str): Symbol for the bottom launcher.
         left_launcher_symbol (str): Symbol for the left launcher.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         launcher_movement_speed (float): Orbitting speed of the launchers. Valid values are n > 0.
         character_movement_speed (float): Speed of the launched characters. Valid values are n > 0.
         volley_size (float): Percent of total input characters each launcher will fire per volley. Lower limit of one character. Valid values are 0 < n <= 1.
@@ -85,15 +86,15 @@ class OrbittingVolleyConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "str : Symbol for the left launcher."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("FFA15C", "44D492"),
+        default=(Color("FFA15C"), Color("44D492")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -105,14 +106,14 @@ class OrbittingVolleyConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.CENTER,
+        default=Gradient.Direction.CENTER,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     launcher_movement_speed: float = ArgField(
         cmd_name="--launcher-movement-speed",
@@ -199,14 +200,10 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
     def __init__(self, effect: "OrbittingVolley"):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
-        self.final_gradient = graphics.Gradient(
-            *self.config.final_gradient_stops, steps=self.config.final_gradient_steps
-        )
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
-        self.final_gradient_coordinate_map: dict[Coord, graphics.Color] = (
-            self.final_gradient.build_coordinate_color_mapping(
-                self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
-            )
+        self.final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.final_gradient_coordinate_map: dict[Coord, Color] = self.final_gradient.build_coordinate_color_mapping(
+            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
         self.complete = False
         self.build()

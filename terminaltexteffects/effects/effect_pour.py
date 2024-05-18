@@ -14,9 +14,10 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
-from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -39,11 +40,11 @@ class PourConfig(ArgsDataClass):
         pour_speed (int): Number of characters poured in per tick. Increase to speed up the effect. Valid values are n > 0.
         movement_speed (float): Movement speed of the characters. Valid values are n > 0.
         gap (int): Number of frames to wait between each character in the pour effect. Increase to slow down effect and create a more defined back and forth motion. Valid values are n >= 0.
-        starting_color (graphics.Color): Color of the characters before the gradient starts.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
+        starting_color (Color): Color of the characters before the gradient starts.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
         final_gradient_frames (int): Number of frames to display each gradient step.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         easing (easing.EasingFunction): Easing function to use for character movement."""
 
     pour_direction: typing.Literal["up", "down", "left", "right"] = ArgField(
@@ -81,24 +82,24 @@ class PourConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : Number of frames to wait between each character in the pour effect."
 
-    starting_color: graphics.Color = ArgField(
+    starting_color: Color = ArgField(
         cmd_name=["--starting-color"],
         type_parser=argvalidators.ColorArg.type_parser,
-        default="ffffff",
+        default=Color("ffffff"),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color of the characters before the gradient starts.",
     )  # type: ignore[assignment]
-    "graphics.Color : Color of the characters before the gradient starts."
+    "Color : Color of the characters before the gradient starts."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the character gradient."
+    "tuple[Color, ...] : Tuple of colors for the character gradient."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -118,14 +119,14 @@ class PourConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : Number of frames to display each gradient step."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     movement_easing: easing.EasingFunction = ArgField(
         cmd_name="--movement-easing",
@@ -150,7 +151,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
     def __init__(self, effect: "Pour") -> None:
         super().__init__(effect)
         self.pending_groups: list[list[EffectCharacter]] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
@@ -160,7 +161,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
             "left": PourIterator.PourDirection.LEFT,
             "right": PourIterator.PourDirection.RIGHT,
         }.get(self.config.pour_direction, PourIterator.PourDirection.DOWN)
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -193,7 +194,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
                 input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
 
-                pour_gradient = graphics.Gradient(
+                pour_gradient = Gradient(
                     self.config.starting_color,
                     self.character_final_color_map[character],
                     steps=self.config.final_gradient_steps,

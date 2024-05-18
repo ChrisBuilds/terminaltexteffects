@@ -16,9 +16,10 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine import animation
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, geometry, graphics
+from terminaltexteffects.utils import easing, geometry
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -36,43 +37,43 @@ class BlackholeConfig(ArgsDataClass):
     """Configuration for the Blackhole effect.
 
     Attributes:
-        blackhole_color (graphics.Color): Color for the stars that comprise the blackhole border.
-        star_colors (tuple[graphics.Color, ...]): Tuple of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
+        blackhole_color (Color): Color for the stars that comprise the blackhole border.
+        star_colors (tuple[Color, ...]): Tuple of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient."""
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient."""
 
-    blackhole_color: graphics.Color = ArgField(
+    blackhole_color: Color = ArgField(
         cmd_name=["--blackhole-color"],
         type_parser=argvalidators.ColorArg.type_parser,
-        default="ffffff",
+        default=Color("ffffff"),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color for the stars that comprise the blackhole border.",
     )  # type: ignore[assignment]
 
-    "graphics.Color : Color for the stars that comprise the blackhole border."
+    "Color : Color for the stars that comprise the blackhole border."
 
-    star_colors: tuple[graphics.Color, ...] = ArgField(
+    star_colors: tuple[Color, ...] = ArgField(
         cmd_name=["--star-colors"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c", "049dbf"),
+        default=(Color("ffcc0d"), Color("ff7326"), Color("ff194d"), Color("bf2669"), Color("702a8c"), Color("049dbf")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="List of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color.",
     )  # type: ignore[assignment]
 
-    "tuple[graphics.Color, ...] : Tuple of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color."
+    "tuple[Color, ...] : Tuple of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "ffffff"),
+        default=(Color("8A008A"), Color("00D1FF"), Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
 
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -85,15 +86,15 @@ class BlackholeConfig(ArgsDataClass):
 
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.DIAGONAL,
+        default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
 
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
     def get_effect_class(cls):
@@ -113,7 +114,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             ),
             3,
         )
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def prepare_blackhole(self) -> None:
@@ -137,10 +138,10 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             "⬦",
             "⬥",
         ]
-        starfield_colors = graphics.Gradient("4a4a4d", "ffffff", steps=6).spectrum
+        starfield_colors = Gradient(Color("4a4a4d"), Color("ffffff"), steps=6).spectrum
         gradient_map = {}
         for color in starfield_colors:
-            gradient_map[color] = graphics.Gradient(color, "000000", steps=10)
+            gradient_map[color] = Gradient(color, Color("000000"), steps=10)
         available_chars = list(self.terminal._input_characters)
         while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
             self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
@@ -266,7 +267,14 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             self.active_characters.append(character)
 
     def explode_singularity(self) -> None:
-        star_colors = ["ffcc0d", "ff7326", "ff194d", "bf2669", "702a8c" "049dbf"]
+        star_colors = [
+            Color("ffcc0d"),
+            Color("ff7326"),
+            Color("ff194d"),
+            Color("bf2669"),
+            Color("702a8c"),
+            Color("049dbf"),
+        ]
         for character in self.terminal.get_characters():
             nearby_coord = geometry.find_coords_on_circle(character.input_coord, 3, 5)[random.randrange(0, 5)]
             nearby_path = character.motion.new_path(speed=random.randint(2, 3) / 10, ease=easing.out_expo)
@@ -277,9 +285,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             explode_star_color = random.choice(star_colors)
             explode_scn.add_frame(character.input_symbol, 1, color=explode_star_color)
             cooling_scn = character.animation.new_scene()
-            cooling_gradient = graphics.Gradient(
-                explode_star_color, self.character_final_color_map[character], steps=10
-            )
+            cooling_gradient = Gradient(explode_star_color, self.character_final_color_map[character], steps=10)
             cooling_scn.apply_gradient_to_symbols(cooling_gradient, character.input_symbol, 20)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
@@ -298,7 +304,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             self.active_characters.append(character)
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )

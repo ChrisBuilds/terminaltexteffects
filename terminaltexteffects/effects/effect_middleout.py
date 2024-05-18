@@ -13,9 +13,10 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -34,34 +35,34 @@ class MiddleOutConfig(ArgsDataClass):
     """Configuration for the Middleout effect.
 
     Attributes:
-        starting_color (graphics.Color): Color for the initial text in the center of the output area.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        starting_color (Color): Color for the initial text in the center of the output area.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         expand_direction (typing.Literal["vertical", "horizontal"]): Direction the text will expand. Choices: vertical, horizontal.
         center_movement_speed (float): Speed of the characters during the initial expansion of the center vertical/horiztonal. Valid values are n > 0.
         full_movement_speed (float): Speed of the characters during the final full expansion. Valid values are n > 0.
         center_easing (easing.EasingFunction): Easing function to use for initial expansion.
         full_easing (easing.EasingFunction): Easing function to use for full expansion."""
 
-    starting_color: graphics.Color = ArgField(
+    starting_color: Color = ArgField(
         cmd_name="--starting-color",
         type_parser=argvalidators.ColorArg.type_parser,
-        default="ffffff",
+        default=Color("ffffff"),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color for the initial text in the center of the output area.",
     )  # type: ignore[assignment]
-    "graphics.Color : Color for the initial text in the center of the output area."
+    """Color : Color for the initial text in the center of the output area."""
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    """tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."""
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -71,16 +72,16 @@ class MiddleOutConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    """tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."""
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    """Gradient.Direction : Direction of the final gradient."""
 
     expand_direction: typing.Literal["vertical", "horizontal"] = ArgField(
         cmd_name="--expand-direction",
@@ -88,7 +89,7 @@ class MiddleOutConfig(ArgsDataClass):
         choices=["vertical", "horizontal"],
         help="Direction the text will expand.",
     )  # type: ignore[assignment]
-    "str : Direction the text will expand."
+    """str : Direction the text will expand."""
 
     center_movement_speed: float = ArgField(
         cmd_name="--center-movement-speed",
@@ -97,7 +98,7 @@ class MiddleOutConfig(ArgsDataClass):
         metavar=argvalidators.PositiveFloat.METAVAR,
         help="Speed of the characters during the initial expansion of the center vertical/horiztonal line. ",
     )  # type: ignore[assignment]
-    "float : Speed of the characters during the initial expansion of the center vertical/horiztonal line. "
+    """float : Speed of the characters during the initial expansion of the center vertical/horiztonal line. """
 
     full_movement_speed: float = ArgField(
         cmd_name="--full-movement-speed",
@@ -106,7 +107,7 @@ class MiddleOutConfig(ArgsDataClass):
         metavar=argvalidators.PositiveFloat.METAVAR,
         help="Speed of the characters during the final full expansion. ",
     )  # type: ignore[assignment]
-    "float : Speed of the characters during the final full expansion. "
+    """float : Speed of the characters during the final full expansion. """
 
     center_easing: easing.EasingFunction = ArgField(
         cmd_name="--center-easing",
@@ -114,7 +115,7 @@ class MiddleOutConfig(ArgsDataClass):
         type_parser=argvalidators.Ease.type_parser,
         help="Easing function to use for initial expansion.",
     )  # type: ignore[assignment]
-    "easing.EasingFunction : Easing function to use for initial expansion."
+    """easing.EasingFunction : Easing function to use for initial expansion."""
 
     full_easing: easing.EasingFunction = ArgField(
         cmd_name="--full-easing",
@@ -122,7 +123,7 @@ class MiddleOutConfig(ArgsDataClass):
         type_parser=argvalidators.Ease.type_parser,
         help="Easing function to use for full expansion.",
     )  # type: ignore[assignment]
-    "easing.EasingFunction : Easing function to use for full expansion."
+    """easing.EasingFunction : Easing function to use for full expansion."""
 
     @classmethod
     def get_effect_class(cls):
@@ -133,12 +134,12 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
     def __init__(self, effect: "MiddleOut"):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.phase = "center"
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -163,9 +164,7 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
 
             # setup scenes
             full_scene = character.animation.new_scene(id="full")
-            full_gradient = graphics.Gradient(
-                self.config.starting_color, self.character_final_color_map[character], steps=10
-            )
+            full_gradient = Gradient(self.config.starting_color, self.character_final_color_map[character], steps=10)
             full_scene.apply_gradient_to_symbols(full_gradient, character.input_symbol, 10)
 
             # initialize character state

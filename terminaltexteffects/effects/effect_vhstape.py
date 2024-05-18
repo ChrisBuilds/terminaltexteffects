@@ -14,9 +14,9 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine import animation
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -34,25 +34,25 @@ class VHSTapeConfig(ArgsDataClass):
     """Configuration for the VHSTape effect.
 
     Attributes:
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
-        glitch_line_colors (tuple[graphics.Color, ...]): Tuple of colors for the characters when a single line is glitching. Colors are applied in order as an animation.
-        glitch_wave_colors (tuple[graphics.Color, ...]): Tuple of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.
-        noise_colors (tuple[graphics.Color, ...]): Tuple of colors for the characters during the noise phase.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+        glitch_line_colors (tuple[Color, ...]): Tuple of colors for the characters when a single line is glitching. Colors are applied in order as an animation.
+        glitch_wave_colors (tuple[Color, ...]): Tuple of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.
+        noise_colors (tuple[Color, ...]): Tuple of colors for the characters during the noise phase.
         glitch_line_chance (float): Chance that a line will glitch on any given frame.
         noise_chance (float): Chance that all characters will experience noise on any given frame. Valid values are 0 <= n <= 1.
         total_glitch_time (int): Total time, in frames, that the glitching phase will last. Valid values are n > 0."""
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("ab48ff", "e7b2b2", "fffebd"),
+        default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -64,44 +64,44 @@ class VHSTapeConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
-    glitch_line_colors: tuple[graphics.Color, ...] = ArgField(
+    glitch_line_colors: tuple[Color, ...] = ArgField(
         cmd_name="--glitch-line-colors",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("ffffff", "ff0000", "00ff00", "0000ff", "ffffff"),
+        default=(Color("ffffff"), Color("ff0000"), Color("00ff00"), Color("0000ff"), Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors are applied in order as an animation.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the characters when a single line is glitching. Colors are applied in order as an animation."
+    "tuple[Color, ...] : Tuple of colors for the characters when a single line is glitching. Colors are applied in order as an animation."
 
-    glitch_wave_colors: tuple[graphics.Color, ...] = ArgField(
+    glitch_wave_colors: tuple[Color, ...] = ArgField(
         cmd_name="--glitch-wave-colors",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("ffffff", "ff0000", "00ff00", "0000ff", "ffffff"),
+        default=(Color("ffffff"), Color("ff0000"), Color("00ff00"), Color("0000ff"), Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation."
+    "tuple[Color, ...] : Tuple of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation."
 
-    noise_colors: tuple[graphics.Color, ...] = ArgField(
+    noise_colors: tuple[Color, ...] = ArgField(
         cmd_name="--noise-colors",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("1e1e1f", "3c3b3d", "6d6c70", "a2a1a6", "cbc9cf", "ffffff"),
+        default=(Color("1e1e1f"), Color("3c3b3d"), Color("6d6c70"), Color("a2a1a6"), Color("cbc9cf"), Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters during the noise phase.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the characters during the noise phase."
+    "tuple[Color, ...] : Tuple of colors for the characters during the noise phase."
 
     glitch_line_chance: float = ArgField(
         cmd_name="--glitch-line-chance",
@@ -141,7 +141,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
             self,
             characters: list[EffectCharacter],
             args: VHSTapeConfig,
-            character_final_color_map: dict[EffectCharacter, graphics.Color],
+            character_final_color_map: dict[EffectCharacter, Color],
         ) -> None:
             self.characters = characters
             self.args = args
@@ -189,7 +189,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 snow_scn.add_frame(character.input_symbol, duration=1, color=self.character_final_color_map[character])
                 final_snow_scn = character.animation.new_scene(id="final_snow")
                 final_redraw_scn = character.animation.new_scene(id="final_redraw")
-                final_redraw_scn.add_frame("█", duration=10, color="ffffff")
+                final_redraw_scn.add_frame("█", duration=10, color=Color("ffffff"))
                 final_redraw_scn.add_frame(
                     character.input_symbol, duration=1, color=self.character_final_color_map[character]
                 )
@@ -267,11 +267,11 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
         self.active_glitch_wave_top: int | None = None
         self.active_glitch_wave_lines: list[VHSTapeIterator.Line] = []
         self.active_glitch_lines: list[VHSTapeIterator.Line] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )

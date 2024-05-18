@@ -14,9 +14,10 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
-from terminaltexteffects.utils import easing, geometry, graphics
+from terminaltexteffects.utils import easing, geometry
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -37,11 +38,11 @@ class BubblesConfig(ArgsDataClass):
 
     Attributes:
         rainbow (bool): If set, the bubbles will be colored with a rotating rainbow gradient.
-        bubble_colors (tuple[graphics.Color, ...]): Tuple of colors for the bubbles. Ignored if --no-rainbow is left as default False.
-        pop_color (graphics.Color): Color for the spray emitted when a bubble pops.
-        final_gradient_stops (tuple[graphics.Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        bubble_colors (tuple[Color, ...]): Tuple of colors for the bubbles. Ignored if --no-rainbow is left as default False.
+        pop_color (Color): Color for the spray emitted when a bubble pops.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (graphics.Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         bubble_speed (float): Speed of the floating bubbles. Valid values are n > 0.
         bubble_delay (int): Number of frames between bubbles. Valid values are n >= 0.
         pop_condition (typing.Literal["row", "bottom", "anywhere"]): Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal.
@@ -56,34 +57,34 @@ class BubblesConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "bool : If set, the bubbles will be colored with a rotating rainbow gradient."
 
-    bubble_colors: tuple[graphics.Color, ...] = ArgField(
+    bubble_colors: tuple[Color, ...] = ArgField(
         cmd_name="--bubble-colors",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("d33aff", "7395c4", "43c2a7", "02ff7f"),
+        default=(Color("d33aff"), Color("7395c4"), Color("43c2a7"), Color("02ff7f")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as default False.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the bubbles. Ignored if --no-rainbow is left as default False."
+    "tuple[Color, ...] : Tuple of colors for the bubbles. Ignored if --no-rainbow is left as default False."
 
-    pop_color: graphics.Color = ArgField(
+    pop_color: Color = ArgField(
         cmd_name="--pop-color",
         type_parser=argvalidators.ColorArg.type_parser,
-        default="ffffff",
+        default=Color("ffffff"),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color for the spray emitted when a bubble pops.",
     )  # type: ignore[assignment]
-    "graphics.Color : Color for the spray emitted when a bubble pops."
+    "Color : Color for the spray emitted when a bubble pops."
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("d33aff", "02ff7f"),
+        default=(Color("d33aff"), Color("02ff7f")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[graphics.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -95,14 +96,14 @@ class BubblesConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
-    final_gradient_direction: graphics.Gradient.Direction = ArgField(
+    final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=graphics.Gradient.Direction.DIAGONAL,
+        default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-    "graphics.Gradient.Direction : Direction of the final gradient."
+    "Gradient.Direction : Direction of the final gradient."
 
     bubble_speed: float = ArgField(
         cmd_name="--bubble-speed",
@@ -248,19 +249,19 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.bubbles: list[BubblesIterator.Bubble] = []
-        red = "e81416"
-        orange = "ffa500"
-        yellow = "faeb36"
-        green = "79c314"
-        blue = "487de7"
-        indigo = "4b369d"
-        violet = "70369d"
-        self.rainbow_gradient = graphics.Gradient(red, orange, yellow, green, blue, indigo, violet, steps=5)
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        red = Color("#e81416")
+        orange = Color("#ffa500")
+        yellow = Color("#faeb36")
+        green = Color("#79c314")
+        blue = Color("#487de7")
+        indigo = Color("#4b369d")
+        violet = Color("#70369d")
+        self.rainbow_gradient = Gradient(red, orange, yellow, green, blue, indigo, violet, steps=5)
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
         )
@@ -272,9 +273,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             pop_1_scene.add_frame("*", 20, color=self.config.pop_color)
             pop_2_scene.add_frame("'", 20, color=self.config.pop_color)
             final_scene = character.animation.new_scene()
-            char_final_gradient = graphics.Gradient(
-                self.config.pop_color, self.character_final_color_map[character], steps=10
-            )
+            char_final_gradient = Gradient(self.config.pop_color, self.character_final_color_map[character], steps=10)
             final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, pop_1_scene, EventHandler.Action.ACTIVATE_SCENE, pop_2_scene
