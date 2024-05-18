@@ -390,6 +390,8 @@ class Terminal:
                 coord = Coord(column, row)
                 if coord not in self.character_by_input_coord:
                     fill_char = EffectCharacter(self._next_character_id, " ", column, row)
+                    fill_char.animation.use_xterm_colors = self.config.xterm_colors
+                    fill_char.animation.no_color = self.config.no_color
                     fill_characters.append(fill_char)
                     self.character_by_input_coord[coord] = fill_char
                     self._next_character_id += 1
