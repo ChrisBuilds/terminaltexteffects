@@ -293,7 +293,7 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
    a chain of paths. Looping is supported.
 * motion.Motion.find_coords_in_rect() will return a random selection of coordinates within a rectangular area. This is faster than using
    find_coords_in_circle() and should be used when the shape of the search area isn't important.
-* Terminal.Canvas.coord_in_output_area() can be used to determine if a Coord is in the canvas.
+* Terminal.Canvas.coord_in_canvas() can be used to determine if a Coord is in the canvas.
 * Paths have replaced Waypoints as the motion target specification object. Paths group Waypoints together and allow for easing
    motion and animations across an arbitrary number of Waypoints. Single Waypoint Paths are supported and function the same as
    Waypoints did previously. Paths can be looped with the loop argument.
