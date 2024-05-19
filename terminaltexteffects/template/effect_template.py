@@ -99,7 +99,7 @@ class NamedEffectIterator(BaseEffectIterator[EffectConfig]):
         final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.output_area.top
+                character.input_coord.row / self.terminal.canvas.top
             )
 
             # do something with the data if needed (sort, adjust positions, etc)

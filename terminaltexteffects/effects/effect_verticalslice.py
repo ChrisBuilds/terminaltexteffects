@@ -103,7 +103,7 @@ class VerticalSliceIterator(BaseEffectIterator[VerticalSliceConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -119,7 +119,7 @@ class VerticalSliceIterator(BaseEffectIterator[VerticalSliceConfig]):
             new_row = []
             left_half = [character for character in row if character.input_coord.column <= mid_point]
             for character in left_half:
-                character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
+                character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.canvas.top))
                 input_coord_path = character.motion.new_path(
                     speed=self.config.movement_speed, ease=self.config.movement_easing
                 )
@@ -128,7 +128,7 @@ class VerticalSliceIterator(BaseEffectIterator[VerticalSliceConfig]):
             opposite_row = self.rows[-(row_index + 1)]
             right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
             for character in right_half:
-                character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.bottom))
+                character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.canvas.bottom))
                 input_coord_path = character.motion.new_path(
                     speed=self.config.movement_speed, ease=self.config.movement_easing
                 )

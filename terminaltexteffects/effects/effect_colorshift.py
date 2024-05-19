@@ -137,16 +137,16 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
             gradient_scn = character.animation.new_scene(id="gradient")
             if self.config.travel:
                 if self.config.gradient_direction == Gradient.Direction.HORIZONTAL:
-                    direction_index = character.input_coord.column / self.terminal.output_area.right
+                    direction_index = character.input_coord.column / self.terminal.canvas.right
                 elif self.config.gradient_direction == Gradient.Direction.VERTICAL:
-                    direction_index = character.input_coord.row / self.terminal.output_area.top
+                    direction_index = character.input_coord.row / self.terminal.canvas.top
                 elif self.config.gradient_direction == Gradient.Direction.DIAGONAL:
                     direction_index = (character.input_coord.row + character.input_coord.column) / (
-                        self.terminal.output_area.right + self.terminal.output_area.top
+                        self.terminal.canvas.right + self.terminal.canvas.top
                     )
                 elif self.config.gradient_direction == Gradient.Direction.CENTER:
                     direction_index = geometry.find_normalized_distance_from_center(
-                        self.terminal.output_area.top, self.terminal.output_area.right, character.input_coord
+                        self.terminal.canvas.top, self.terminal.canvas.right, character.input_coord
                     )
                 shift_distance = int(len(gradient.spectrum) * direction_index)
                 colors = gradient.spectrum[shift_distance:] + gradient.spectrum[:shift_distance]

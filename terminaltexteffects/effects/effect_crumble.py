@@ -85,7 +85,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -103,14 +103,14 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
                 speed=0.2,
                 ease=easing.out_bounce,
             )
-            fall_path.new_waypoint(Coord(character.input_coord.column, self.terminal.output_area.bottom))
+            fall_path.new_waypoint(Coord(character.input_coord.column, self.terminal.canvas.bottom))
             weaken_scn = character.animation.new_scene(id="weaken")
             weaken_scn.apply_gradient_to_symbols(weaken_gradient, character.input_symbol, 6)
 
             top_path = character.motion.new_path(id="top", speed=0.5, ease=easing.out_quint)
             top_path.new_waypoint(
-                Coord(character.input_coord.column, self.terminal.output_area.top),
-                bezier_control=Coord(self.terminal.output_area.center_column, self.terminal.output_area.center_row),
+                Coord(character.input_coord.column, self.terminal.canvas.top),
+                bezier_control=Coord(self.terminal.canvas.center_column, self.terminal.canvas.center_row),
             )
             # set up reset stage
             input_path = character.motion.new_path(id="input", speed=0.3)

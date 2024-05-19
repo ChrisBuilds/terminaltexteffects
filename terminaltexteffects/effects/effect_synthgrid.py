@@ -164,7 +164,7 @@ class GridLine:
             self.grid_symbol = self.args.grid_column_symbol
         self.characters: list[EffectCharacter] = []
         if direction == "horizontal":
-            for column_index in range(self.terminal.output_area.left, self.terminal.output_area.right + 1):
+            for column_index in range(self.terminal.canvas.left, self.terminal.canvas.right + 1):
                 effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(
@@ -175,7 +175,7 @@ class GridLine:
                 effect_char.motion.set_coordinate(Coord(column_index, origin.row))
                 self.characters.append(effect_char)
         elif direction == "vertical":
-            for row_index in range(self.terminal.output_area.bottom, self.terminal.output_area.top):
+            for row_index in range(self.terminal.canvas.bottom, self.terminal.canvas.top):
                 effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(
@@ -250,18 +250,18 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
     def build(self) -> None:
         grid_gradient = Gradient(*self.config.grid_gradient_stops, steps=self.config.grid_gradient_steps)
         grid_gradient_mapping = grid_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.grid_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.grid_gradient_direction
         )
         text_gradient = Gradient(*self.config.text_gradient_stops, steps=self.config.text_gradient_steps)
         text_gradient_mapping = text_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.text_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.text_gradient_direction
         )
 
         self.grid_lines.append(
             GridLine(
                 self.terminal,
                 self.config,
-                Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
+                Coord(self.terminal.canvas.left, self.terminal.canvas.bottom),
                 "horizontal",
                 grid_gradient_mapping,
             )
@@ -270,7 +270,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
             GridLine(
                 self.terminal,
                 self.config,
-                Coord(self.terminal.output_area.left, self.terminal.output_area.top),
+                Coord(self.terminal.canvas.left, self.terminal.canvas.top),
                 "horizontal",
                 grid_gradient_mapping,
             )
@@ -279,7 +279,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
             GridLine(
                 self.terminal,
                 self.config,
-                Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
+                Coord(self.terminal.canvas.left, self.terminal.canvas.bottom),
                 "vertical",
                 grid_gradient_mapping,
             )
@@ -288,58 +288,56 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
             GridLine(
                 self.terminal,
                 self.config,
-                Coord(self.terminal.output_area.right, self.terminal.output_area.bottom),
+                Coord(self.terminal.canvas.right, self.terminal.canvas.bottom),
                 "vertical",
                 grid_gradient_mapping,
             )
         )
         column_indexes: list[int] = []
         row_indexes: list[int] = []
-        if self.terminal.output_area.top > 2 * self.terminal.output_area.right:
-            row_gap = self.find_even_gap(self.terminal.output_area.top) + 1
+        if self.terminal.canvas.top > 2 * self.terminal.canvas.right:
+            row_gap = self.find_even_gap(self.terminal.canvas.top) + 1
             column_gap = row_gap * 2
         else:
-            column_gap = self.find_even_gap(self.terminal.output_area.right) + 1
+            column_gap = self.find_even_gap(self.terminal.canvas.right) + 1
             row_gap = column_gap // 2
 
-        for row_index in range(
-            self.terminal.output_area.bottom + row_gap, self.terminal.output_area.top, max(row_gap, 1)
-        ):
-            if self.terminal.output_area.top - row_index < 2:
+        for row_index in range(self.terminal.canvas.bottom + row_gap, self.terminal.canvas.top, max(row_gap, 1)):
+            if self.terminal.canvas.top - row_index < 2:
                 continue
             row_indexes.append(row_index)
             self.grid_lines.append(
                 GridLine(
                     self.terminal,
                     self.config,
-                    Coord(self.terminal.output_area.left, row_index),
+                    Coord(self.terminal.canvas.left, row_index),
                     "horizontal",
                     grid_gradient_mapping,
                 )
             )
         for column_index in range(
-            self.terminal.output_area.left + column_gap, self.terminal.output_area.right, max(column_gap, 1)
+            self.terminal.canvas.left + column_gap, self.terminal.canvas.right, max(column_gap, 1)
         ):
-            if self.terminal.output_area.right - column_index < 2:
+            if self.terminal.canvas.right - column_index < 2:
                 continue
             column_indexes.append(column_index)
             self.grid_lines.append(
                 GridLine(
                     self.terminal,
                     self.config,
-                    Coord(column_index, self.terminal.output_area.bottom),
+                    Coord(column_index, self.terminal.canvas.bottom),
                     "vertical",
                     grid_gradient_mapping,
                 )
             )
-        row_indexes.append(self.terminal.output_area.top + 1)
-        column_indexes.append(self.terminal.output_area.right + 1)
+        row_indexes.append(self.terminal.canvas.top + 1)
+        column_indexes.append(self.terminal.canvas.right + 1)
         prev_row_index = 1
         for row_index in row_indexes:
             prev_column_index = 1
             for column_index in column_indexes:
                 coords_in_block: list[Coord] = []
-                if row_index == self.terminal.output_area.top:  # make sure the top row is included
+                if row_index == self.terminal.canvas.top:  # make sure the top row is included
                     row_index += 1
                 for row in range(prev_row_index, row_index):
                     for column in range(prev_column_index, column_index):

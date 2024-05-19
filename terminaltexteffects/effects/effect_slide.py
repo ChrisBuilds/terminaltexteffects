@@ -145,7 +145,7 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -169,42 +169,42 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
         for group_index, group in enumerate(groups):
             if self.config.grouping == "row":
                 if self.config.merge and group_index % 2 == 0:
-                    starting_column = self.terminal.output_area.right + 1
+                    starting_column = self.terminal.canvas.right + 1
                 else:
                     groups[group_index] = groups[group_index][::-1]
-                    starting_column = self.terminal.output_area.left - 1
+                    starting_column = self.terminal.canvas.left - 1
                 if self.config.reverse_direction and not self.config.merge:
                     groups[group_index] = groups[group_index][::-1]
-                    starting_column = self.terminal.output_area.right + 1
+                    starting_column = self.terminal.canvas.right + 1
                 for character in groups[group_index]:
                     character.motion.set_coordinate(geometry.Coord(starting_column, character.input_coord.row))
             elif self.config.grouping == "column":
                 if self.config.merge and group_index % 2 == 0:
-                    starting_row = self.terminal.output_area.bottom - 1
+                    starting_row = self.terminal.canvas.bottom - 1
                 else:
                     groups[group_index] = groups[group_index][::-1]
-                    starting_row = self.terminal.output_area.top + 1
+                    starting_row = self.terminal.canvas.top + 1
                 if self.config.reverse_direction and not self.config.merge:
                     groups[group_index] = groups[group_index][::-1]
-                    starting_row = self.terminal.output_area.bottom - 1
+                    starting_row = self.terminal.canvas.bottom - 1
                 for character in groups[group_index]:
                     character.motion.set_coordinate(geometry.Coord(character.input_coord.column, starting_row))
             if self.config.grouping == "diagonal":
-                distance_from_outside_bottom = group[-1].input_coord.row - (self.terminal.output_area.bottom - 1)
+                distance_from_outside_bottom = group[-1].input_coord.row - (self.terminal.canvas.bottom - 1)
                 starting_coord = geometry.Coord(
                     group[-1].input_coord.column - distance_from_outside_bottom,
                     group[-1].input_coord.row - distance_from_outside_bottom,
                 )
                 if self.config.merge and group_index % 2 == 0:
                     groups[group_index] = groups[group_index][::-1]
-                    distance_from_outside = (self.terminal.output_area.top + 1) - group[0].input_coord.row
+                    distance_from_outside = (self.terminal.canvas.top + 1) - group[0].input_coord.row
                     starting_coord = geometry.Coord(
                         group[0].input_coord.column + distance_from_outside,
                         group[0].input_coord.row + distance_from_outside,
                     )
                 if self.config.reverse_direction and not self.config.merge:
                     groups[group_index] = groups[group_index][::-1]
-                    distance_from_outside = (self.terminal.output_area.top + 1) - group[0].input_coord.row
+                    distance_from_outside = (self.terminal.canvas.top + 1) - group[0].input_coord.row
                     starting_coord = geometry.Coord(
                         group[0].input_coord.column + distance_from_outside,
                         group[0].input_coord.row + distance_from_outside,

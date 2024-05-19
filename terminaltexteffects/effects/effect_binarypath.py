@@ -153,7 +153,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -167,7 +167,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
 
         for bin_rep in self.pending_binary_representations:
             path_coords: list[Coord] = []
-            starting_coord = self.terminal.output_area.random_coord(outside_scope=True)
+            starting_coord = self.terminal.canvas.random_coord(outside_scope=True)
             path_coords.append(starting_coord)
             last_orientation = random.choice(("col", "row"))
             while path_coords[-1] != bin_rep.character.input_coord:

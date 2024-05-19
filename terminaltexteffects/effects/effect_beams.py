@@ -242,7 +242,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters(fill_chars=True):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]

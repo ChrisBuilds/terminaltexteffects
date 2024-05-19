@@ -134,7 +134,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters(fill_chars=True):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -153,14 +153,12 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
             next_row = OverflowIterator.Row(row)
             for character in next_row.characters:
                 character.animation.set_appearance(character.symbol, self.character_final_color_map[character])
-            next_row.set_color(
-                final_gradient.get_color_at_fraction(row[0].input_coord.row / self.terminal.output_area.top)
-            )
+            next_row.set_color(final_gradient.get_color_at_fraction(row[0].input_coord.row / self.terminal.canvas.top))
             self.pending_rows.append(OverflowIterator.Row(row, final=True))
         self._delay = 0
         self._overflow_gradient = Gradient(
             *self.config.overflow_gradient_stops,
-            steps=max((self.terminal.output_area.top // max(1, len(self.config.overflow_gradient_stops) - 1)), 1),
+            steps=max((self.terminal.canvas.top // max(1, len(self.config.overflow_gradient_stops) - 1)), 1),
         )
 
     def __next__(self) -> str:
@@ -194,7 +192,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
             self.active_rows = [
                 row
                 for row in self.active_rows
-                if row.characters[0].motion.current_coord.row <= self.terminal.output_area.top
+                if row.characters[0].motion.current_coord.row <= self.terminal.canvas.top
             ]
             self.update()
             return self.frame

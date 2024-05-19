@@ -151,7 +151,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
         self.make_swarms(swarm_size)
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -160,25 +160,25 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
             swarm_gradient = Gradient(random.choice(self.config.base_color), self.config.flash_color, steps=7)
             swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
             swarm_area_coordinate_map: dict[Coord, list[Coord]] = {}
-            swarm_spawn = self.terminal.output_area.random_coord(outside_scope=True)
+            swarm_spawn = self.terminal.canvas.random_coord(outside_scope=True)
             swarm_areas: list[Coord] = []
             swarm_area_count = random.randint(self.config.swarm_area_count[0], self.config.swarm_area_count[1])
             # create areas where characters will swarm
             last_focus_coord = swarm_spawn
-            radius = max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 2, 1)
+            radius = max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 2, 1)
             while len(swarm_areas) < swarm_area_count:
                 potential_focus_coords = geometry.find_coords_on_circle(last_focus_coord, radius)
                 random.shuffle(potential_focus_coords)
                 for coord in potential_focus_coords:
-                    if self.terminal.output_area.coord_is_in_output_area(coord):
+                    if self.terminal.canvas.coord_is_in_canvas(coord):
                         next_focus_coord = coord
                         break
                 else:
-                    next_focus_coord = self.terminal.output_area.random_coord()
+                    next_focus_coord = self.terminal.canvas.random_coord()
                 swarm_areas.append(next_focus_coord)
                 swarm_area_coordinate_map[last_focus_coord] = geometry.find_coords_in_circle(
                     last_focus_coord,
-                    max(min(self.terminal.output_area.right, self.terminal.output_area.top) // 6, 1) * 2,
+                    max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 6, 1) * 2,
                 )
                 last_focus_coord = next_focus_coord
 

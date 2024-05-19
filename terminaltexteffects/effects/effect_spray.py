@@ -144,26 +144,20 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
         }.get(self.config.spray_position, SprayIterator.SprayPosition.E)
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         spray_origin_map = {
-            SprayIterator.SprayPosition.CENTER: (self.terminal.output_area.center),
-            SprayIterator.SprayPosition.N: Coord(self.terminal.output_area.right // 2, self.terminal.output_area.top),
-            SprayIterator.SprayPosition.NW: Coord(self.terminal.output_area.left, self.terminal.output_area.top),
-            SprayIterator.SprayPosition.W: Coord(self.terminal.output_area.left, self.terminal.output_area.top // 2),
-            SprayIterator.SprayPosition.SW: Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
-            SprayIterator.SprayPosition.S: Coord(
-                self.terminal.output_area.right // 2, self.terminal.output_area.bottom
-            ),
-            SprayIterator.SprayPosition.SE: Coord(
-                self.terminal.output_area.right - 1, self.terminal.output_area.bottom
-            ),
-            SprayIterator.SprayPosition.E: Coord(
-                self.terminal.output_area.right - 1, self.terminal.output_area.top // 2
-            ),
-            SprayIterator.SprayPosition.NE: Coord(self.terminal.output_area.right - 1, self.terminal.output_area.top),
+            SprayIterator.SprayPosition.CENTER: (self.terminal.canvas.center),
+            SprayIterator.SprayPosition.N: Coord(self.terminal.canvas.right // 2, self.terminal.canvas.top),
+            SprayIterator.SprayPosition.NW: Coord(self.terminal.canvas.left, self.terminal.canvas.top),
+            SprayIterator.SprayPosition.W: Coord(self.terminal.canvas.left, self.terminal.canvas.top // 2),
+            SprayIterator.SprayPosition.SW: Coord(self.terminal.canvas.left, self.terminal.canvas.bottom),
+            SprayIterator.SprayPosition.S: Coord(self.terminal.canvas.right // 2, self.terminal.canvas.bottom),
+            SprayIterator.SprayPosition.SE: Coord(self.terminal.canvas.right - 1, self.terminal.canvas.bottom),
+            SprayIterator.SprayPosition.E: Coord(self.terminal.canvas.right - 1, self.terminal.canvas.top // 2),
+            SprayIterator.SprayPosition.NE: Coord(self.terminal.canvas.right - 1, self.terminal.canvas.top),
         }
 
         for character in self.terminal.get_characters():

@@ -109,8 +109,8 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         self.awaiting_consumption_chars: list[EffectCharacter] = []
         self.blackhole_radius = max(
             min(
-                round(self.terminal.output_area.right * 0.3),
-                round(self.terminal.output_area.top * 0.3),
+                round(self.terminal.canvas.right * 0.3),
+                round(self.terminal.canvas.top * 0.3),
             ),
             3,
         )
@@ -146,7 +146,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
             self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
         black_hole_ring_positions = geometry.find_coords_on_circle(
-            self.terminal.output_area.center,
+            self.terminal.canvas.center,
             self.blackhole_radius,
             len(self.blackhole_chars),
         )
@@ -174,31 +174,31 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             starting_scn.add_frame(star_symbol, 1, color=star_color)
             character.animation.activate_scene(starting_scn)
             if character not in self.blackhole_chars:
-                starfield_coord = self.terminal.output_area.random_coord()
+                starfield_coord = self.terminal.canvas.random_coord()
                 character.motion.set_coordinate(starfield_coord)
-                if starfield_coord.row > self.terminal.output_area.center_row:
+                if starfield_coord.row > self.terminal.canvas.center_row:
                     if starfield_coord.column in range(
-                        round(self.terminal.output_area.right * 0.4),
-                        round(self.terminal.output_area.right * 0.7),
+                        round(self.terminal.canvas.right * 0.4),
+                        round(self.terminal.canvas.right * 0.7),
                     ):
                         # if within the top center 40% of the screen
-                        control_point = Coord(self.terminal.output_area.center.column, starfield_coord.row)
+                        control_point = Coord(self.terminal.canvas.center.column, starfield_coord.row)
                     else:
-                        control_point = Coord(starfield_coord.column, self.terminal.output_area.center_row)
+                        control_point = Coord(starfield_coord.column, self.terminal.canvas.center_row)
 
-                elif starfield_coord.row < self.terminal.output_area.center_row:
+                elif starfield_coord.row < self.terminal.canvas.center_row:
                     if starfield_coord.column in range(
-                        round(self.terminal.output_area.right * 0.4),
-                        round(self.terminal.output_area.right * 0.7),
+                        round(self.terminal.canvas.right * 0.4),
+                        round(self.terminal.canvas.right * 0.7),
                     ):
                         # if within the bottom center 40% of the screen
-                        control_point = Coord(self.terminal.output_area.center.column, starfield_coord.row)
+                        control_point = Coord(self.terminal.canvas.center.column, starfield_coord.row)
                     else:
-                        control_point = Coord(starfield_coord.column, self.terminal.output_area.center_row)
+                        control_point = Coord(starfield_coord.column, self.terminal.canvas.center_row)
                 else:
-                    control_point = self.terminal.output_area.center
+                    control_point = self.terminal.canvas.center
                 singularity_path = character.motion.new_path(id="singularity", speed=0.3, ease=easing.in_expo)
-                singularity_path.new_waypoint(self.terminal.output_area.center, bezier_control=control_point)
+                singularity_path.new_waypoint(self.terminal.canvas.center, bezier_control=control_point)
                 consumed_scn = character.animation.new_scene()
                 for color in gradient_map[star_color]:
                     consumed_scn.add_frame(star_symbol, 1, color=color)
@@ -226,7 +226,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
 
     def collapse_blackhole(self) -> None:
         black_hole_ring_positions = geometry.find_coords_on_circle(
-            self.terminal.output_area.center,
+            self.terminal.canvas.center,
             self.blackhole_radius + 3,
             len(self.blackhole_chars),
         )
@@ -237,7 +237,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             expand_path = character.motion.new_path(speed=0.1, ease=easing.in_expo)
             expand_path.new_waypoint(next_pos)
             collapse_path = character.motion.new_path(speed=0.3, ease=easing.in_expo)
-            collapse_path.new_waypoint(self.terminal.output_area.center)
+            collapse_path.new_waypoint(self.terminal.canvas.center)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
                 expand_path,
@@ -306,7 +306,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]

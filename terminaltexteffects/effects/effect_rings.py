@@ -227,18 +227,18 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
         self.non_ring_chars: list[EffectCharacter] = []
         self.rings: dict[int, RingsIterator.Ring] = {}
         self.ring_gap = int(
-            max(round(min(self.terminal.output_area.top, self.terminal.output_area.right) * self.config.ring_gap), 1)
+            max(round(min(self.terminal.canvas.top, self.terminal.canvas.right) * self.config.ring_gap), 1)
         )
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
         self.ring_gap = int(
-            max(round(min(self.terminal.output_area.top, self.terminal.output_area.right) * self.config.ring_gap), 1)
+            max(round(min(self.terminal.canvas.top, self.terminal.canvas.right) * self.config.ring_gap), 1)
         )
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -252,13 +252,11 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
 
         random.shuffle(self.pending_chars)
         # make rings
-        for radius in range(1, max(self.terminal.output_area.right, self.terminal.output_area.top), self.ring_gap):
-            ring_coords = geometry.find_coords_on_circle(
-                self.terminal.output_area.center, radius, 7 * radius, unique=True
-            )
+        for radius in range(1, max(self.terminal.canvas.right, self.terminal.canvas.top), self.ring_gap):
+            ring_coords = geometry.find_coords_on_circle(self.terminal.canvas.center, radius, 7 * radius, unique=True)
             # check if any part of the ring is in the canvas, if not, stop creating rings
             if (
-                len([coord for coord in ring_coords if self.terminal.output_area.coord_is_in_output_area(coord)])
+                len([coord for coord in ring_coords if self.terminal.canvas.coord_is_in_canvas(coord)])
                 / len(ring_coords)
                 < 0.25
             ):
@@ -267,7 +265,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             self.rings[radius] = RingsIterator.Ring(
                 self.config,
                 radius,
-                self.terminal.output_area.center,
+                self.terminal.canvas.center,
                 ring_coords,
                 self.ring_gap,
                 self.config.ring_colors[len(self.rings) % len(self.config.ring_colors)],
@@ -288,7 +286,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
         for character in self.terminal.get_characters():
             if character not in self.ring_chars:
                 external_path = character.motion.new_path(id="external", speed=0.8, ease=easing.out_sine)
-                external_path.new_waypoint(self.terminal.output_area.random_coord(outside_scope=True))
+                external_path.new_waypoint(self.terminal.canvas.random_coord(outside_scope=True))
 
                 self.non_ring_chars.append(character)
                 character.event_handler.register_event(

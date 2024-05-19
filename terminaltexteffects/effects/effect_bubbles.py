@@ -163,7 +163,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             if self.effect.config.pop_condition == "row":
                 self.lowest_row = min([char.input_coord.row for char in self.characters])
             else:
-                self.lowest_row = self.effect.terminal.output_area.bottom
+                self.lowest_row = self.effect.terminal.canvas.bottom
             self.set_character_coordinates()
             self.landed = False
             self.make_waypoints()
@@ -183,9 +183,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                     self.landed = True
 
         def make_waypoints(self):
-            waypoint_column = random.randint(
-                self.effect.terminal.output_area.left, self.effect.terminal.output_area.right
-            )
+            waypoint_column = random.randint(self.effect.terminal.canvas.left, self.effect.terminal.canvas.right)
             floor_path = self.anchor_char.motion.new_path(speed=self.effect.config.bubble_speed)
             floor_path.new_waypoint(Coord(waypoint_column, self.lowest_row))
             self.anchor_char.motion.activate_path(floor_path)
@@ -263,7 +261,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -307,8 +305,8 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 for _ in range(random.randint(5, min(len(unbubbled_chars), 20))):
                     bubble_group.append(unbubbled_chars.pop(0))
             bubble_origin = Coord(
-                random.randint(self.terminal.output_area.left, self.terminal.output_area.right),
-                self.terminal.output_area.top,
+                random.randint(self.terminal.canvas.left, self.terminal.canvas.right),
+                self.terminal.canvas.top,
             )
             new_bubble = BubblesIterator.Bubble(self, bubble_origin, bubble_group, self.terminal)
             self.bubbles.append(new_bubble)

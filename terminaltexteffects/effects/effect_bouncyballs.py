@@ -135,7 +135,7 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -147,7 +147,7 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
             char_final_gradient = Gradient(color, self.character_final_color_map[character], steps=10)
             final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
             character.motion.set_coordinate(
-                Coord(character.input_coord.column, int(self.terminal.output_area.top * random.uniform(1.0, 1.5)))
+                Coord(character.input_coord.column, int(self.terminal.canvas.top * random.uniform(1.0, 1.5)))
             )
             input_coord_path = character.motion.new_path(
                 speed=self.config.movement_speed, ease=self.config.movement_easing

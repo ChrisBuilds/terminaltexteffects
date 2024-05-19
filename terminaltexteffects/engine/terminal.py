@@ -121,7 +121,7 @@ class Canvas:
         center (Coord): coordinate of the center of the canvas
 
     Methods:
-        coord_is_in_output_area(coord: Coord) -> bool: Checks whether a coordinate is within the canvas.
+        coord_is_in_canvas(coord: Coord) -> bool: Checks whether a coordinate is within the canvas.
         random_column() -> int: Get a random column position within the canvas.
         random_row() -> int: Get a random row position within the canvas.
         random_coord(outside_scope=False) -> Coord: Get a random coordinate within or outside the canvas.
@@ -138,7 +138,7 @@ class Canvas:
         self.center_column = max(self.right // 2, 1)
         self.center = Coord(self.center_column, self.center_row)
 
-    def coord_is_in_output_area(self, coord: Coord) -> bool:
+    def coord_is_in_canvas(self, coord: Coord) -> bool:
         """Checks whether a coordinate is within the canvas.
 
         Args:
@@ -153,14 +153,14 @@ class Canvas:
         """Get a random column position. Position is within the canvas.
 
         Returns:
-            int: a random column position (1 <= x <= output_area.right)"""
+            int: a random column position (1 <= x <= canvas.right)"""
         return random.randint(1, self.right)
 
     def random_row(self) -> int:
         """Get a random row position. Position is within the canvas.
 
         Returns:
-            int: a random row position (1 <= x <= terminal.output_area.top)"""
+            int: a random row position (1 <= x <= terminal.canvas.top)"""
         return random.randint(1, self.top)
 
     def random_coord(self, outside_scope=False) -> Coord:
@@ -186,7 +186,7 @@ class Terminal:
 
     Attributes:
         config (TerminalConfig): Configuration for the terminal.
-        output_area (Canvas): The canvas in the terminal.
+        canvas (Canvas): The canvas in the terminal.
         character_by_input_coord (dict[Coord, EffectCharacter]): A dictionary of characters by their input coordinates.
 
     Methods:
@@ -281,12 +281,11 @@ class Terminal:
         self._added_characters: list[EffectCharacter] = []
         self._input_width = max([character.input_coord.column for character in self._input_characters])
         self._input_height = max([character.input_coord.row for character in self._input_characters])
-        self.output_area = Canvas(min(max(self._height, 1), self._input_height), self._input_width)
+        self.canvas = Canvas(min(max(self._height, 1), self._input_height), self._input_width)
         self._input_characters = [
             character
             for character in self._input_characters
-            if character.input_coord.row <= self.output_area.top
-            and character.input_coord.column <= self.output_area.right
+            if character.input_coord.row <= self.canvas.top and character.input_coord.column <= self.canvas.right
         ]
         self.character_by_input_coord: dict[Coord, EffectCharacter] = {
             (character.input_coord): character for character in self._input_characters
@@ -385,8 +384,8 @@ class Terminal:
             list[EffectCharacter]: list of characters
         """
         fill_characters = []
-        for row in range(1, self.output_area.top + 1):
-            for column in range(1, self.output_area.right + 1):
+        for row in range(1, self.canvas.top + 1):
+            for column in range(1, self.canvas.right + 1):
                 coord = Coord(column, row)
                 if coord not in self.character_by_input_coord:
                     fill_char = EffectCharacter(self._next_character_id, " ", column, row)
@@ -418,11 +417,11 @@ class Terminal:
         """Update the internal representation of the terminal state with the current position
         of all visible characters.
         """
-        rows = [[" " for _ in range(self.output_area.right)] for _ in range(self.output_area.top)]
+        rows = [[" " for _ in range(self.canvas.right)] for _ in range(self.canvas.top)]
         for character in sorted(self._visible_characters, key=lambda c: c.layer):
             row = character.motion.current_coord.row - 1
             column = character.motion.current_coord.column - 1
-            if 0 <= row < self.output_area.top and 0 <= column < self.output_area.right:
+            if 0 <= row < self.canvas.top and 0 <= column < self.canvas.right:
                 rows[row][column] = character.symbol
         terminal_state = ["".join(row) for row in rows]
         self.terminal_state = terminal_state
@@ -509,7 +508,7 @@ class Terminal:
 
         if grouping in (self.CharacterGroup.COLUMN_LEFT_TO_RIGHT, self.CharacterGroup.COLUMN_RIGHT_TO_LEFT):
             columns = []
-            for column_index in range(self.output_area.right + 1):
+            for column_index in range(self.canvas.right + 1):
                 characters_in_column = [
                     character for character in all_characters if character.input_coord.column == column_index
                 ]
@@ -521,7 +520,7 @@ class Terminal:
 
         elif grouping in (self.CharacterGroup.ROW_BOTTOM_TO_TOP, self.CharacterGroup.ROW_TOP_TO_BOTTOM):
             rows = []
-            for row_index in range(self.output_area.top + 1):
+            for row_index in range(self.canvas.top + 1):
                 characters_in_row = [
                     character for character in all_characters if character.input_coord.row == row_index
                 ]
@@ -535,7 +534,7 @@ class Terminal:
             self.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
         ):
             diagonals = []
-            for diagonal_index in range(self.output_area.top + self.output_area.right + 1):
+            for diagonal_index in range(self.canvas.top + self.canvas.right + 1):
                 characters_in_diagonal = [
                     character
                     for character in all_characters
@@ -551,9 +550,7 @@ class Terminal:
             self.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         ):
             diagonals = []
-            for diagonal_index in range(
-                self.output_area.left - self.output_area.top, self.output_area.right - self.output_area.bottom + 1
-            ):
+            for diagonal_index in range(self.canvas.left - self.canvas.top, self.canvas.right - self.canvas.bottom + 1):
                 characters_in_diagonal = [
                     character
                     for character in all_characters
@@ -571,8 +568,8 @@ class Terminal:
             distance_map: dict[int, list[EffectCharacter]] = {}
             center_out = []
             for character in all_characters:
-                distance = abs(character.input_coord.column - self.output_area.center.column) + abs(
-                    character.input_coord.row - self.output_area.center.row
+                distance = abs(character.input_coord.column - self.canvas.center.column) + abs(
+                    character.input_coord.row - self.canvas.center.row
                 )
                 if distance not in distance_map:
                     distance_map[distance] = []
@@ -627,7 +624,7 @@ class Terminal:
     def prep_canvas(self) -> None:
         """Prepares the terminal for the effect by adding empty lines and hiding the cursor."""
         sys.stdout.write(ansitools.HIDE_CURSOR())
-        sys.stdout.write(("\n" * (self.output_area.top)))
+        sys.stdout.write(("\n" * (self.canvas.top)))
         sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
 
     def restore_cursor(self, end_symbol: str = "\n") -> None:
@@ -670,4 +667,4 @@ class Terminal:
     def move_cursor_to_top(self):
         """Restores the cursor position to the top of the canvas."""
         sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
-        sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.output_area.top))
+        sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.canvas.top))

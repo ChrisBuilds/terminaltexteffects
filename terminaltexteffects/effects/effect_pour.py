@@ -163,7 +163,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
         }.get(self.config.pour_direction, PourIterator.PourDirection.DOWN)
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -178,15 +178,13 @@ class PourIterator(BaseEffectIterator[PourConfig]):
             for character in group:
                 self.terminal.set_character_visibility(character, False)
                 if self._pour_direction == PourIterator.PourDirection.DOWN:
-                    character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
+                    character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.canvas.top))
                 elif self._pour_direction == PourIterator.PourDirection.UP:
-                    character.motion.set_coordinate(
-                        Coord(character.input_coord.column, self.terminal.output_area.bottom)
-                    )
+                    character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.canvas.bottom))
                 elif self._pour_direction == PourIterator.PourDirection.LEFT:
-                    character.motion.set_coordinate(Coord(self.terminal.output_area.right, character.input_coord.row))
+                    character.motion.set_coordinate(Coord(self.terminal.canvas.right, character.input_coord.row))
                 elif self._pour_direction == PourIterator.PourDirection.RIGHT:
-                    character.motion.set_coordinate(Coord(self.terminal.output_area.left, character.input_coord.row))
+                    character.motion.set_coordinate(Coord(self.terminal.canvas.left, character.input_coord.row))
                 input_coord_path = character.motion.new_path(
                     speed=self.config.movement_speed,
                     ease=self.config.movement_easing,

@@ -175,8 +175,8 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
 
         def build_paths(self) -> None:
             waypoints = [
-                Coord(self.terminal.output_area.left, self.terminal.output_area.top),
-                Coord(self.terminal.output_area.right, self.terminal.output_area.top),
+                Coord(self.terminal.canvas.left, self.terminal.canvas.top),
+                Coord(self.terminal.canvas.right, self.terminal.canvas.top),
             ]
 
             waypoint_start_index = waypoints.index(self.character.input_coord)
@@ -203,7 +203,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
         self.final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.final_gradient_coordinate_map: dict[Coord, Color] = self.final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         self.complete = False
         self.build()
@@ -222,19 +222,19 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
         self._launchers: list[OrbittingVolleyIterator.Launcher] = []
         for coord, symbol in (
             (
-                Coord(self.terminal.output_area.left, self.terminal.output_area.top),
+                Coord(self.terminal.canvas.left, self.terminal.canvas.top),
                 self.config.top_launcher_symbol,
             ),
             (
-                Coord(self.terminal.output_area.right, self.terminal.output_area.top),
+                Coord(self.terminal.canvas.right, self.terminal.canvas.top),
                 self.config.right_launcher_symbol,
             ),
             (
-                Coord(self.terminal.output_area.right, self.terminal.output_area.bottom),
+                Coord(self.terminal.canvas.right, self.terminal.canvas.bottom),
                 self.config.bottom_launcher_symbol,
             ),
             (
-                Coord(self.terminal.output_area.left, self.terminal.output_area.bottom),
+                Coord(self.terminal.canvas.left, self.terminal.canvas.bottom),
                 self.config.left_launcher_symbol,
             ),
         ):
@@ -257,17 +257,17 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
         self._delay = 0
 
     def _set_launcher_coordinates(self, parent: Launcher, child: Launcher) -> None:
-        parent_progress = parent.character.motion.current_coord.column / self.terminal.output_area.right
-        if child.character.input_coord == Coord(self.terminal.output_area.right, self.terminal.output_area.top):
-            child_row = self.terminal.output_area.top - int((self.terminal.output_area.top * parent_progress))
-            child.character.motion.set_coordinate(Coord(self.terminal.output_area.right, max(1, child_row)))
-        elif child.character.input_coord == Coord(self.terminal.output_area.right, self.terminal.output_area.bottom):
-            child_column = self.terminal.output_area.right - int((self.terminal.output_area.right * parent_progress))
-            child.character.motion.set_coordinate(Coord(max(1, child_column), self.terminal.output_area.bottom))
-        elif child.character.input_coord == Coord(self.terminal.output_area.left, self.terminal.output_area.bottom):
-            child_row = self.terminal.output_area.bottom + int((self.terminal.output_area.top * parent_progress))
+        parent_progress = parent.character.motion.current_coord.column / self.terminal.canvas.right
+        if child.character.input_coord == Coord(self.terminal.canvas.right, self.terminal.canvas.top):
+            child_row = self.terminal.canvas.top - int((self.terminal.canvas.top * parent_progress))
+            child.character.motion.set_coordinate(Coord(self.terminal.canvas.right, max(1, child_row)))
+        elif child.character.input_coord == Coord(self.terminal.canvas.right, self.terminal.canvas.bottom):
+            child_column = self.terminal.canvas.right - int((self.terminal.canvas.right * parent_progress))
+            child.character.motion.set_coordinate(Coord(max(1, child_column), self.terminal.canvas.bottom))
+        elif child.character.input_coord == Coord(self.terminal.canvas.left, self.terminal.canvas.bottom):
+            child_row = self.terminal.canvas.bottom + int((self.terminal.canvas.top * parent_progress))
             child.character.motion.set_coordinate(
-                Coord(self.terminal.output_area.left, min(self.terminal.output_area.top, child_row))
+                Coord(self.terminal.canvas.left, min(self.terminal.canvas.top, child_row))
             )
         color = self.final_gradient_coordinate_map[child.character.motion.current_coord]
         child.character.animation.set_appearance(child.character.input_symbol, color)

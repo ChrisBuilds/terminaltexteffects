@@ -136,7 +136,7 @@ class RainIterator(BaseEffectIterator[RainConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -149,7 +149,7 @@ class RainIterator(BaseEffectIterator[RainConfig]):
             fade_scn = character.animation.new_scene()
             fade_scn.apply_gradient_to_symbols(raindrop_gradient, character.input_symbol, 5)
             character.animation.activate_scene(rain_scn)
-            character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.output_area.top))
+            character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.canvas.top))
             input_path = character.motion.new_path(
                 speed=random.uniform(self.config.movement_speed[0], self.config.movement_speed[1]),
                 ease=self.config.movement_easing,

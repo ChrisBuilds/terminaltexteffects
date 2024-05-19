@@ -137,7 +137,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.shells: list[list[EffectCharacter]] = []
         self.firework_volume = max(1, round(self.config.firework_volume * len(self.terminal._input_characters)))
-        self.explode_distance = max(1, round(self.terminal.output_area.right * self.config.explode_distance))
+        self.explode_distance = max(1, round(self.terminal.canvas.right * self.config.explode_distance))
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.launch_delay: int = 0
         self.build()
@@ -148,15 +148,15 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             if len(firework_shell) == self.firework_volume or not firework_shell:
                 self.shells.append(firework_shell)
                 firework_shell = []
-                origin_x = random.randrange(0, self.terminal.output_area.right)
+                origin_x = random.randrange(0, self.terminal.canvas.right)
                 if not self.config.explode_anywhere:
                     min_row = character.input_coord.row
                 else:
-                    min_row = self.terminal.output_area.bottom
-                origin_y = random.randrange(min_row, self.terminal.output_area.top + 1)
+                    min_row = self.terminal.canvas.bottom
+                origin_y = random.randrange(min_row, self.terminal.canvas.top + 1)
                 origin_coord = Coord(origin_x, origin_y)
                 explode_waypoint_coords = geometry.find_coords_in_circle(origin_coord, self.explode_distance)
-            character.motion.set_coordinate(Coord(origin_x, self.terminal.output_area.bottom))
+            character.motion.set_coordinate(Coord(origin_x, self.terminal.canvas.bottom))
             apex_path = character.motion.new_path(id="apex_pth", speed=0.2, ease=easing.out_expo)
             apex_wpt = apex_path.new_waypoint(origin_coord)
             explode_path = character.motion.new_path(speed=0.15, ease=easing.out_circ)
@@ -197,7 +197,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
     def prepare_scenes(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]

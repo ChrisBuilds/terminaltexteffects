@@ -135,13 +135,13 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
 
     def make_spotlights(self, num_spotlights: int) -> list[EffectCharacter]:
         spotlights: list[EffectCharacter] = []
-        minimum_distance = self.terminal.output_area.right // 4
+        minimum_distance = self.terminal.canvas.right // 4
         for _ in range(num_spotlights):
-            spotlight = self.terminal.add_character("O", self.terminal.output_area.random_coord(outside_scope=True))
+            spotlight = self.terminal.add_character("O", self.terminal.canvas.random_coord(outside_scope=True))
             spotlights.append(spotlight)
 
             spotlight_target_coords: list[Coord] = []
-            last_coord = self.terminal.output_area.random_coord()
+            last_coord = self.terminal.canvas.random_coord()
             spotlight_target_coords.append(last_coord)
             for _ in range(10):
                 next_coord = self.find_coord_at_minimum_distance(last_coord, minimum_distance)
@@ -155,19 +155,19 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                     ease=easing.in_out_quad,
                     id=str(len(paths)),
                 )
-                path.new_waypoint(coord, bezier_control=self.terminal.output_area.random_coord(outside_scope=True))
+                path.new_waypoint(coord, bezier_control=self.terminal.canvas.random_coord(outside_scope=True))
                 paths.append(path)
             spotlight.motion.chain_paths(paths, loop=True)
 
             path = spotlight.motion.new_path(speed=0.5, ease=easing.in_out_sine, id="center")
-            path.new_waypoint(self.terminal.output_area.center)
+            path.new_waypoint(self.terminal.canvas.center)
 
         return spotlights
 
     def find_coord_at_minimum_distance(self, origin_coord: Coord, minimum_distance: int) -> Coord:
         coord_found = False
         while not coord_found:
-            coord = self.terminal.output_area.random_coord()
+            coord = self.terminal.canvas.random_coord()
             distance = geometry.find_length_of_line(origin_coord, coord)
             if distance >= minimum_distance:
                 coord_found = True
@@ -215,7 +215,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         self.spotlights: list[EffectCharacter] = self.make_spotlights(self.config.spotlight_count)
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             color_bright = final_gradient_mapping[character.input_coord]
@@ -225,7 +225,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
             character.animation.set_appearance(character.input_symbol, color_dark)
         self.illuminate_range = int(
             max(
-                min(self.terminal.output_area.right, self.terminal.output_area.top) // self.config.beam_width_ratio,
+                min(self.terminal.canvas.right, self.terminal.canvas.top) // self.config.beam_width_ratio,
                 1,
             )
         )
@@ -251,7 +251,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 while len(self.spotlights) > 1:
                     self.spotlights.pop()
                 self.illuminate_range += 1
-                if self.illuminate_range > max(self.terminal.output_area.right, self.terminal.output_area.top) // 1.5:
+                if self.illuminate_range > max(self.terminal.canvas.right, self.terminal.canvas.top) // 1.5:
                     self.complete = True
 
             self.update()

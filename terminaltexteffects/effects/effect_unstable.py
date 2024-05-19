@@ -134,7 +134,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.output_area.top, self.terminal.output_area.right, self.config.final_gradient_direction
+            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -143,17 +143,17 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
             pos = random.randint(0, 3)
             match pos:
                 case 0:
-                    col = self.terminal.output_area.left
-                    row = random.randint(1, self.terminal.output_area.top)
+                    col = self.terminal.canvas.left
+                    row = random.randint(1, self.terminal.canvas.top)
                 case 1:
-                    col = self.terminal.output_area.right
-                    row = random.randint(1, self.terminal.output_area.top)
+                    col = self.terminal.canvas.right
+                    row = random.randint(1, self.terminal.canvas.top)
                 case 2:
-                    col = random.randint(1, self.terminal.output_area.right)
-                    row = self.terminal.output_area.bottom
+                    col = random.randint(1, self.terminal.canvas.right)
+                    row = self.terminal.canvas.bottom
                 case 3:
-                    col = random.randint(1, self.terminal.output_area.right)
-                    row = self.terminal.output_area.top
+                    col = random.randint(1, self.terminal.canvas.right)
+                    row = self.terminal.canvas.top
             jumbled_coord = character_coords.pop(random.randint(0, len(character_coords) - 1))
             self.jumbled_coords[character] = jumbled_coord
             character.motion.set_coordinate(jumbled_coord)
