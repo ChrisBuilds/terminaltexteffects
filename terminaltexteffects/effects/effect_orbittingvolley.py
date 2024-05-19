@@ -109,7 +109,7 @@ class OrbittingVolleyConfig(ArgsDataClass):
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=Gradient.Direction.CENTER,
+        default=Gradient.Direction.RADIAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]

@@ -144,7 +144,7 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
                     direction_index = (character.input_coord.row + character.input_coord.column) / (
                         self.terminal.canvas.right + self.terminal.canvas.top
                     )
-                elif self.config.gradient_direction == Gradient.Direction.CENTER:
+                elif self.config.gradient_direction == Gradient.Direction.RADIAL:
                     direction_index = geometry.find_normalized_distance_from_center(
                         self.terminal.canvas.top, self.terminal.canvas.right, character.input_coord
                     )

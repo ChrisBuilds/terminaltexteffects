@@ -37,7 +37,7 @@ Creates beams which travel over the canvas illuminating the characters.
                         stops. (default: (12,))
     --final-gradient-frames (int > 0)
                         Number of frames to display each gradient step. (default: 5)
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --final-wipe-speed (int > 0)
                         Speed of the final wipe as measured in diagonal groups activated per frame. (default: 1)
@@ -62,7 +62,7 @@ Decodes characters into their binary form. Characters travel from outside the ca
                         (default: ('00d500', '007500'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.CENTER)
     --binary-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the binary characters. Character color is randomly assigned from this list. (default: ('044E29', '157e38', '45bf55', '95ed87'))
@@ -96,7 +96,7 @@ Creates a blackhole in a starfield, consumes the stars, explodes the input data 
                         (default: ('8A008A', '00D1FF', 'ffffff'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.DIAGONAL)
 
     Example: terminaltexteffects blackhole --star-colors ffcc0d ff7326 ff194d bf2669 702a8c 049dbf --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-direction vertical
@@ -123,7 +123,7 @@ Characters fall from the top of the canvas as bouncy balls before settling into 
                         (default: ('f8ffae', '43c6ac'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.DIAGONAL)
     --ball-delay (int >= 0)
                         Number of frames between ball drops, increase to reduce ball drop rate. (default: 7)
@@ -180,7 +180,7 @@ Forms bubbles with the characters. Bubbles float down and pop.
                         (default: ('d33aff', '02ff7f'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.DIAGONAL)
     --bubble-speed (float > 0)
                         Speed of the floating bubbles.  (default: 0.1)
@@ -240,7 +240,7 @@ Characters are ignited and burn up the screen.
                         (default: ('00c3ff', 'ffff1c'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
 
     Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12
@@ -263,7 +263,7 @@ Characters crumble into dust before being vacuumed up and reformed.
                         (default: ('5CE1FF', 'FF8C00'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.DIAGONAL)
 
     Example: terminaltexteffects crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 --final-gradient-direction diagonal
@@ -290,7 +290,7 @@ Movie style text decryption effect.
                         (default: ('eda000',))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
 
     Example: terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical
@@ -320,7 +320,7 @@ Swaps characters from an incorrect initial position to the correct position.
                             (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                             Direction of the final gradient. (default: Direction.VERTICAL)
     --movement-speed (float > 0)
                             Speed of the characters while moving to the correct position. Valid values are n > 0. Adjust speed and animation rate separately to fine tune the
@@ -372,7 +372,7 @@ Characters expand from the center.
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-frames (int > 0)
                         Number of frames to display each gradient step. (default: 5)
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --movement-speed (float > 0)
                         Movement speed of the characters.  (default: 0.35)
@@ -430,7 +430,7 @@ Launches characters up the screen where they explode like fireworks and fall int
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.HORIZONTAL)
     --launch-delay (int >= 0)
                         Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. (default: 60)
@@ -458,7 +458,7 @@ Text expands in a single row or column in the middle of the canvas then out.
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --expand-direction {vertical,horizontal}
                         Direction the text will expand. (default: vertical)
@@ -524,8 +524,8 @@ Four launchers orbit the canvas firing volleys of characters inward to build the
                         (default: ('FFA15C', '44D492'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
-                        Direction of the final gradient. (default: Direction.CENTER)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
+                        Direction of the final gradient. (default: Direction.RADIAL)
     --launcher-movement-speed (float > 0)
                         Orbitting speed of the launchers. (default: 0.5)
     --character-movement-speed (float > 0)
@@ -581,7 +581,7 @@ Input text overflows ands scrolls the terminal in a random order until eventuall
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --overflow-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the overflow gradient. (default: ('f2ebc0', '8dbfb3', 'f2ebc0'))
@@ -620,7 +620,7 @@ Pours the characters back and forth from the top, bottom, left, or right.
                         Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-frames (int > 0)
                         Number of frames to display each gradient step. (default: 10)
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --easing EASING       Easing function to use for character movement. (default: in_quad)
 
@@ -667,7 +667,7 @@ Prints the input data one line at at time with a carriage return and line feed.
                         (default: ('02b8bd', 'c1f0e3', '00ffa0'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.DIAGONAL)
     --print-head-return-speed (float > 0)
                         Speed of the print head when performing a carriage return. (default: 1.25)
@@ -726,7 +726,7 @@ Rain characters from the top of the canvas.
                         (default: ('488bff', 'b2e7de', '57eaf7'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.DIAGONAL)
     --easing (Easing Function)
                         Easing function to use for character movement. (default: in_quart)
@@ -778,7 +778,7 @@ Prints the input data in a random sequence, one character at a time.
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-frames (int > 0)
                         Number of frames to display each gradient step. (default: 12)
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --speed (float > 0)   Speed of the animation as a percentage of the total number of characters. (default: 0.004)
 
@@ -803,7 +803,7 @@ Characters are dispersed and form into spinning rings.
                         (default: ('ab48ff', 'e7b2b2', 'fffebd'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --ring-gap RING_GAP   Distance between rings as a percent of the smallest canvas dimension. (default: 0.1)
     --spin-duration SPIN_DURATION
@@ -836,7 +836,7 @@ Text is scattered across the canvas and moves into position.
                         Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-frames (int > 0)
                         Number of frames to display each gradient step. (default: 12)
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --movement-speed (float > 0)
                         Movement speed of the characters.  (default: 0.5)
@@ -943,7 +943,7 @@ Spotlights search the text area, illuminating characters, before converging in t
                         (default: ('ab48ff', 'e7b2b2', 'fffebd'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --beam-width-ratio (float > 0)
                         Width of the beam of light as min(width, height) // n of the input text. (default: 2.0)
@@ -999,7 +999,7 @@ Sprays the characters from a single point.
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --spray-position {n,ne,e,se,s,sw,w,nw,center}
                         Position for the spray origin. (default: e)
@@ -1057,7 +1057,7 @@ Characters are grouped into swarms and move around the terminal before settling 
                         (default: ('31b900', 'f0ff65'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.HORIZONTAL)
     --swarm-size (0 <= float(n) <= 1)
                         Percent of total characters in each swarm. (default: 0.1)
@@ -1084,13 +1084,13 @@ Create a grid which fills with characters dissolving into the final text.
                         Space separated, unquoted, list of colors for the grid gradient. (default: ('CC00CC', 'ffffff'))
     --grid-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --grid-gradient-direction (diagonal, horizontal, vertical, center)
+    --grid-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the gradient for the grid color. (default: Direction.DIAGONAL)
     --text-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the text gradient. (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --text-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --text-gradient-direction (diagonal, horizontal, vertical, center)
+    --text-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the gradient for the text color. (default: Direction.VERTICAL)
     --grid-row-symbol (ASCII/UTF-8 character)
                         Symbol to use for grid row lines. (default: ─)
@@ -1122,7 +1122,7 @@ Spawns characters jumbled, explodes them to the edge of the canvas, then reassem
                             (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                             Direction of the final gradient. (default: Direction.VERTICAL)
     --explosion-ease EXPLOSION_EASE
                             Easing function to use for character movement during the explosion. (default: out_expo)
@@ -1177,7 +1177,7 @@ Slices the input in half vertically and slides it into place from opposite direc
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --movement-speed (float > 0)
                         Movement speed of the characters.  (default: 0.15)
@@ -1228,7 +1228,7 @@ Lines of characters glitch left and right and lose detail like an old VHS tape.
                         (default: ('ab48ff', 'e7b2b2', 'fffebd'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --glitch-line-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors are applied in order as an animation. (default: ('ffffff', 'ff0000', '00ff00',
@@ -1272,7 +1272,7 @@ Waves travel across the terminal leaving behind the characters.
                         (default: ('ffb102', '31a0d4', 'f0ff65'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.DIAGONAL)
     --wave-count WAVE_COUNT
                         Number of waves to generate. n > 0. (default: 7)
@@ -1327,7 +1327,7 @@ Performs a wipe across the terminal to reveal characters.
                         Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-frames (int > 0)
                         Number of frames to display each gradient step. (default: 5)
-    --final-gradient-direction (diagonal, horizontal, vertical, center)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --wipe-delay (int >= 0)
                         Number of frames to wait before adding the next character group. Increase, to slow down the effect. (default: 0)

@@ -117,7 +117,7 @@ class Gradient:
 
         VERTICAL = auto()
         HORIZONTAL = auto()
-        CENTER = auto()
+        RADIAL = auto()
         DIAGONAL = auto()
 
     def __init__(self, *stops: Color, steps: int | tuple[int, ...] = 1, loop=False) -> None:
@@ -263,7 +263,7 @@ class Gradient:
                 color = self.get_color_at_fraction(fraction)
                 for row_value in range(max_row + 1):
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
-        elif direction == Gradient.Direction.CENTER:
+        elif direction == Gradient.Direction.RADIAL:
             for row_value in range(max_row + 1):
                 for column_value in range(1, max_column + 1):
                     distance_from_center = geometry.find_normalized_distance_from_center(

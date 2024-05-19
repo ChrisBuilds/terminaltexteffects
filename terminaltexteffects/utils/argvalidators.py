@@ -291,7 +291,7 @@ class GradientDirection:
         argparse.ArgumentTypeError: Argument value is not a valid gradient direction.
     """
 
-    METAVAR = "(diagonal, horizontal, vertical, center)"
+    METAVAR = "(diagonal, horizontal, vertical, radial)"
 
     @staticmethod
     def type_parser(arg: str) -> Gradient.Direction:
@@ -310,13 +310,13 @@ class GradientDirection:
             "horizontal": Gradient.Direction.HORIZONTAL,
             "vertical": Gradient.Direction.VERTICAL,
             "diagonal": Gradient.Direction.DIAGONAL,
-            "center": Gradient.Direction.CENTER,
+            "radial": Gradient.Direction.RADIAL,
         }
         if arg.lower() in direction_map:
             return direction_map[arg.lower()]
         else:
             raise argparse.ArgumentTypeError(
-                f"invalid gradient direction: '{arg}' is not a valid gradient direction. Choices are diagonal, horizontal, vertical, or center."
+                f"invalid gradient direction: '{arg}' is not a valid gradient direction. Choices are diagonal, horizontal, vertical, or radial."
             )
 
 
