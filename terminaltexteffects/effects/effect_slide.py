@@ -37,7 +37,7 @@ class SlideConfig(ArgsDataClass):
         grouping (typing.Literal["row", "column", "diagonal"]): Direction to group characters. Valid values are 'row', 'column', 'diagonal'.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_frames (int): Number of frames to display each gradient step.
+        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the gradient.
         gap (int): Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect. Valid values are n >= 0.
         reverse_direction (bool): Reverse the direction of the characters.
@@ -78,16 +78,16 @@ class SlideConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
         type_parser=argvalidators.PositiveInt.type_parser,
         default=10,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Number of frames to display each gradient step.",
+        help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # type: ignore[assignment]
-    "int : Number of frames to display each gradient step."
+    "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",

@@ -63,7 +63,7 @@ class SynthGridConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     grid_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--grid-gradient-direction",
@@ -92,7 +92,7 @@ class SynthGridConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     text_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--text-gradient-direction",

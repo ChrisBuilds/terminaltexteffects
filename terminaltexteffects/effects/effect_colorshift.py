@@ -36,7 +36,7 @@ class ColorShiftConfig(ArgsDataClass):
         the characters will be displayed in that color.
         gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a
         smoother and longer gradient animation. Valid values are n > 0.
-        gradient_frames (int): Number of frames to display each gradient step.
+        gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         gradient_direction (Gradient.Direction): Direction of the gradient across the canvas.
         travel (bool): Display the gradient as a traveling wave.
         cycles (int): Number of times to cycle the gradient. Use 0 for infinite. Valid values are n >= 0.
@@ -68,16 +68,23 @@ class ColorShiftConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     gradient_frames: int = ArgField(
         cmd_name="--gradient-frames",
         type_parser=argvalidators.PositiveInt.type_parser,
         default=5,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Number of frames to display each gradient step.",
+        help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # type: ignore[assignment]
-    "int : Number of frames to display each gradient step."
+    "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
+
+    travel: bool = ArgField(
+        cmd_name="--travel",
+        action="store_true",
+        help="Display the gradient as a traveling wave",
+    )  # type: ignore[assignment]
+    "bool : Display the gradient as a traveling wave."
 
     travel_direction: Gradient.Direction = ArgField(
         cmd_name="--travel-direction",
@@ -88,12 +95,12 @@ class ColorShiftConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "Gradient.Direction : Direction the gradient travels across the canvas."
 
-    travel: bool = ArgField(
-        cmd_name="--travel",
+    reverse_travel_direction: bool = ArgField(
+        cmd_name="--reverse-travel-direction",
         action="store_true",
-        help="Display the gradient as a traveling wave",
+        help="Reverse the gradient travel direction.",
     )  # type: ignore[assignment]
-    "bool : Display the gradient as a traveling wave."
+    "bool : Reverse the gradient travel direction."
 
     loop_gradient: bool = ArgField(
         cmd_name="--loop-gradient",
@@ -150,6 +157,8 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
                         self.terminal.canvas.top, self.terminal.canvas.right, character.input_coord
                     )
                 shift_distance = int(len(gradient.spectrum) * direction_index)
+                if self.config.reverse_travel_direction:
+                    shift_distance = shift_distance * -1
                 colors = gradient.spectrum[shift_distance:] + gradient.spectrum[:shift_distance]
             else:
                 colors = gradient.spectrum

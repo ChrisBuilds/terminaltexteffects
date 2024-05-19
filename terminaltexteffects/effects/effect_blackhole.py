@@ -84,7 +84,7 @@ class BlackholeConfig(ArgsDataClass):
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
 
-    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",

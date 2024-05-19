@@ -41,10 +41,10 @@ class BeamsConfig(ArgsDataClass):
         beam_column_speed_range (tuple[int, int]): Speed range of the beam when moving along a column. Valid values are n > 0.
         beam_gradient_stops (tuple[Color, ...]): Tuple of colors for the beam, a gradient will be created between the colors.
         beam_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
-        beam_gradient_frames (int): Number of frames to display each gradient step. Valid values are n > 0.
+        beam_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation. Valid values are n > 0.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the wipe gradient.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
-        final_gradient_frames (int): Number of frames to display each gradient step.
+        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         final_wipe_speed (int): Speed of the final wipe as measured in diagonal groups activated per frame. Valid values are n > 0.
     """
@@ -121,17 +121,17 @@ class BeamsConfig(ArgsDataClass):
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
     )  # type: ignore[assignment]
 
-    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
 
     beam_gradient_frames: int = ArgField(
         cmd_name="--beam-gradient-frames",
         type_parser=argvalidators.PositiveInt.type_parser,
         default=2,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Number of frames to display each gradient step.",
+        help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # type: ignore[assignment]
 
-    "int : Number of frames to display each gradient step."
+    "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
@@ -153,17 +153,17 @@ class BeamsConfig(ArgsDataClass):
         help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
     )  # type: ignore[assignment]
 
-    "tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
         type_parser=argvalidators.PositiveInt.type_parser,
         default=5,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Number of frames to display each gradient step.",
+        help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # type: ignore[assignment]
 
-    "int : Number of frames to display each gradient step."
+    "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",

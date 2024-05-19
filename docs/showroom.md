@@ -29,14 +29,14 @@ Creates beams which travel over the canvas illuminating the characters.
                         Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-
                         stops. (default: (2, 8))
     --beam-gradient-frames (int > 0)
-                        Number of frames to display each gradient step. (default: 2)
+                        Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 2)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the wipe gradient. (default: ('8A008A', '00D1FF', 'ffffff'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-
                         stops. (default: (12,))
     --final-gradient-frames (int > 0)
-                        Number of frames to display each gradient step. (default: 5)
+                        Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 5)
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --final-wipe-speed (int > 0)
@@ -371,7 +371,7 @@ Characters expand from the center.
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-frames (int > 0)
-                        Number of frames to display each gradient step. (default: 5)
+                        Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 5)
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --movement-speed (float > 0)
@@ -619,7 +619,7 @@ Pours the characters back and forth from the top, bottom, left, or right.
     --final-gradient-steps (int > 0)
                         Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-frames (int > 0)
-                        Number of frames to display each gradient step. (default: 10)
+                        Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 10)
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --easing EASING       Easing function to use for character movement. (default: in_quad)
@@ -777,7 +777,7 @@ Prints the input data in a random sequence, one character at a time.
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-frames (int > 0)
-                        Number of frames to display each gradient step. (default: 12)
+                        Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 12)
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --speed (float > 0)   Speed of the animation as a percentage of the total number of characters. (default: 0.004)
@@ -835,7 +835,7 @@ Text is scattered across the canvas and moves into position.
     --final-gradient-steps (int > 0)
                         Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-frames (int > 0)
-                        Number of frames to display each gradient step. (default: 12)
+                        Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 12)
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --movement-speed (float > 0)
@@ -891,7 +891,7 @@ Slide characters into view from outside the terminal.
     --final-gradient-steps (int > 0)
                         Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-frames (int > 0)
-                        Number of frames to display each gradient step. (default: 10)
+                        Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 10)
     --final-gradient-direction FINAL_GRADIENT_DIRECTION
                         Direction of the gradient (vertical, horizontal, diagonal, center). (default: Direction.VERTICAL)
     --gap (int >= 0)      Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect. (default: 3)
@@ -1326,7 +1326,7 @@ Performs a wipe across the terminal to reveal characters.
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-frames (int > 0)
-                        Number of frames to display each gradient step. (default: 5)
+                        Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 5)
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --wipe-delay (int >= 0)

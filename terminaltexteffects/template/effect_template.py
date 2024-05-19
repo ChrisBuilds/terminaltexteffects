@@ -65,7 +65,7 @@ class EffectConfig(ArgsDataClass):
         type_parser=argvalidators.PositiveInt.type_parser,
         default=5,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Number of frames to display each gradient step.",
+        help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # type: ignore[assignment]
 
     movement_speed: float = ArgField(
