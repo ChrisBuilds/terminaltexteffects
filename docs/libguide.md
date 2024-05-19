@@ -59,7 +59,7 @@ All effect configuration options are available within each effect via the `effec
     effect.effect_config.merge = True # (1)
     effect.effect_config.grouping = "column" # (2)
     effect.effect_config.final_gradient_stops = ("0ff000", "000ff0", "0f00f0") # (3)
-    effect.terminal_config.terminal_width = 30 # (4)
+    effect.terminal_config.canvas_width = 30 # (4)
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
@@ -69,25 +69,26 @@ All effect configuration options are available within each effect via the `effec
     in from alternating sides of the terminal.
     2. Columns will slide in, rather than rows.
     3. Change the gradient colors from the defaults.
-    4. Set the terminal width manually rather than automatically detect. Terminal heigth will be automatically detected as it has not been set.
+    4. Set the canvas width manually rather than automatically detect. Canvas heigth will be automatically detected as it has not been set.
 
 === "Output"
     ![t](./img/lib_demos/libguide_configuration_output.gif)
 
 ## Configuring the Terminal
 
-TTE uses a [Terminal](./engine/terminal/terminal.md) class to handle terminal dimensions, wrapping text, etc. Effects contain an attribute (`effect.terminal_config`) which allows access to the various terminal configuration options. The configuration should be modified prior to iterating over the effect.
+TTE uses a [Terminal](./engine/terminal/terminal.md) class and a [Canvas](./engine/terminal/canvas.md) class to handle terminal/canvas dimensions, wrapping text, etc. Effects contain an attribute (`effect.terminal_config`) which allows access to the various terminal configuration options. The configuration should be modified prior to iterating over the effect.
 
 For example, to set the terminal dimensions manually:
 
 ```python
-effect.terminal_config.terminal_width = 80
-effect.terminal_config.terminal_height = 24
+effect.terminal_config.canvas_width = 80
+effect.terminal_config.canvas_height = 24
 ```
 
-If either `terminal_width` or `terminal_height` are set to 0, that dimension will be automatically detected.
+If either `canvas_width` or `canvas_height` are set to 0, that dimension will be automatically detected based on the
+terminal device dimensions.
 
-If you would like to ignore terminal dimensions altogether and base the output dimensions solely on the input data:
+If you would like to ignore terminal dimensions altogether and base the canvas dimensions solely on the input data:
 
 ```python
 effect.terminal_config.ignore_terminal_dimensions = True

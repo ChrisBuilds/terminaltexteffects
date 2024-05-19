@@ -79,10 +79,10 @@ options:
   --wrap-text           Wrap text wider than the canvas width. (default: False)
   --frame-rate FRAME_RATE
                         Target frame rate for the animation. (default: 100)
-  --terminal-width TERMINAL_WIDTH
-                        Terminal width, if set to 0 the terminal width is detected automatically. (default: 0)
-  --terminal-height TERMINAL_HEIGHT
-                        Terminal height, if set to 0 the terminal height is detected automatically. (default: 0)
+  --canvas-width CANVAS_WIDTH
+                        Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device. (default: 0)
+  --canvas-height CANVAS_HEIGHT
+                        Canvas height, if set to 0 the canvas width is detected automatically based on the terminal device. (default: 0)
   --ignore-terminal-dimensions
                         Ignore the terminal dimensions and use the input data dimensions for the canvas. (default: False)
 

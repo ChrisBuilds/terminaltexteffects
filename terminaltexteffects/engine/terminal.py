@@ -74,23 +74,23 @@ class TerminalConfig(ArgsDataClass):
 
     "float : Minimum time, in seconds, between frames."
 
-    terminal_width: int = ArgField(
-        cmd_name=["--terminal-width"],
+    canvas_width: int = ArgField(
+        cmd_name=["--canvas-width"],
         type_parser=argvalidators.NonNegativeInt.type_parser,
         default=0,
-        help="Terminal width, if set to 0 the terminal width is detected automatically.",
+        help="Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device.",
     )  # type: ignore[assignment]
 
-    "int : Terminal width, if set to 0 the terminal width is detected automatically."
+    "int : Cavas width, if set to 0 the canvas width is detected automatically based on the terminal device."
 
-    terminal_height: int = ArgField(
-        cmd_name=["--terminal-height"],
+    canvas_height: int = ArgField(
+        cmd_name=["--canvas-height"],
         type_parser=argvalidators.NonNegativeInt.type_parser,
         default=0,
-        help="Terminal height, if set to 0 the terminal height is detected automatically.",
+        help="Canvas height, if set to 0 the canvas height is detected automatically based on the terminal device.",
     )  # type: ignore[assignment]
 
-    "int : Terminal height, if set to 0 the terminal height is detected automatically."
+    "int : Canvas height, if set to 0 the canvas height is is detected automatically based on the terminal device."
 
     ignore_terminal_dimensions: bool = ArgField(
         cmd_name=["--ignore-terminal-dimensions"],
@@ -265,8 +265,8 @@ class Terminal:
             input_data = "No Input."
         self._input_data = input_data.replace("\t", " " * self.config.tab_width)
         self.detected_terminal_dimensions = self._get_terminal_dimensions()
-        self._width = self.config.terminal_width
-        self._height = self.config.terminal_height
+        self._width = self.config.canvas_width
+        self._height = self.config.canvas_height
         if self.config.ignore_terminal_dimensions:
             self._width = max([len(line) for line in self._input_data.splitlines()])
             self._height = len(self._input_data.splitlines()) + 1
