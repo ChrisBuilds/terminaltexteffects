@@ -824,11 +824,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../engine/terminal/outputarea/" class="md-nav__link">
+      <a href="../../engine/terminal/canvas/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    OutputArea
+    Canvas
   </span>
   
 
@@ -2147,7 +2147,7 @@
 <a id="terminaltexteffects.effects.effect_middleout"></a>
   <div class="doc doc-contents first">
   
-      <p>Text expands in a single row or column in the middle of the output area then out.</p>
+      <p>Text expands in a single row or column in the middle of the canvas then out.</p>
 
 
 
@@ -2164,7 +2164,7 @@
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_middleout.MiddleOut" href="#terminaltexteffects.effects.effect_middleout.MiddleOut">MiddleOut</a></code></td>
           <td>
             <div class="doc-md-description">
-              <p>Text expands in a single row or column in the middle of the output area then out.</p>
+              <p>Text expands in a single row or column in the middle of the canvas then out.</p>
             </div>
           </td>
         </tr>
@@ -2214,7 +2214,7 @@
             Bases: <code><a class="autorefs autorefs-internal" title="terminaltexteffects.engine.base_effect.BaseEffect" href="../../engine/baseeffect/#terminaltexteffects.engine.base_effect.BaseEffect">BaseEffect</a>[<a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_middleout.MiddleOutConfig" href="#terminaltexteffects.effects.effect_middleout.MiddleOutConfig">MiddleOutConfig</a>]</code></p>
 
   
-      <p>Text expands in a single row or column in the middle of the output area then out.</p>
+      <p>Text expands in a single row or column in the middle of the canvas then out.</p>
 
 
 
@@ -2272,7 +2272,7 @@
 <span class="normal"><a href="#__codelineno-0-204">204</a></span>
 <span class="normal"><a href="#__codelineno-0-205">205</a></span>
 <span class="normal"><a href="#__codelineno-0-206">206</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-190"><a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="k">class</span> <span class="nc">MiddleOut</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">MiddleOutConfig</span><span class="p">]):</span>
-</span><span id="__span-0-191"><a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Text expands in a single row or column in the middle of the output area then out.</span>
+</span><span id="__span-0-191"><a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Text expands in a single row or column in the middle of the canvas then out.</span>
 </span><span id="__span-0-192"><a id="__codelineno-0-192" name="__codelineno-0-192"></a>
 </span><span id="__span-0-193"><a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="sd">    Attributes:</span>
 </span><span id="__span-0-194"><a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="sd">        effect_config (MiddleOutConfig): Configuration for the effect.</span>
@@ -2417,7 +2417,7 @@
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Color for the initial text in the center of the output area.</p>
+              <p>Color for the initial text in the center of the canvas.</p>
             </div>
           </td>
         </tr>
@@ -2620,8 +2620,8 @@
 <span class="normal"><a href="#__codelineno-0-129">129</a></span>
 <span class="normal"><a href="#__codelineno-0-130">130</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="nd">@argclass</span><span class="p">(</span>
 </span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;middleout&quot;</span><span class="p">,</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Text expands in a single row or column in the middle of the output area then out.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;middleout | Text expands in a single row or column in the middle of the output area then out.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Text expands in a single row or column in the middle of the canvas then out.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;middleout | Text expands in a single row or column in the middle of the canvas then out.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">epilog</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="si">{</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">EASING_EPILOG</span><span class="si">}</span>
 </span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="s2">Example: terminaltexteffects middleout --starting-color 8A008A --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical --center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE --full-easing IN_OUT_SINE&quot;&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="p">)</span>
@@ -2630,7 +2630,7 @@
 </span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for the Middleout effect.</span>
 </span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a>
 </span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    Attributes:</span>
-</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        starting_color (Color): Color for the initial text in the center of the output area.</span>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        starting_color (Color): Color for the initial text in the center of the canvas.</span>
 </span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.</span>
 </span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n &gt; 0.</span>
 </span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">        final_gradient_direction (Gradient.Direction): Direction of the final gradient.</span>
@@ -2645,9 +2645,9 @@
 </span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
 </span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">default</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;ffffff&quot;</span><span class="p">),</span>
 </span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Color for the initial text in the center of the output area.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Color for the initial text in the center of the canvas.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Color : Color for the initial text in the center of the output area.&quot;&quot;&quot;</span>
+</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Color : Color for the initial text in the center of the canvas.&quot;&quot;&quot;</span>
 </span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a>
 </span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="n">final_gradient_stops</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Color</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
 </span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-stops&quot;</span><span class="p">,</span>
@@ -2917,7 +2917,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_middleout.MiddleOutConfig.starting_color" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">starting_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--starting-color&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="s1">&#39;ffffff&#39;</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Color for the initial text in the center of the output area.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">starting_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--starting-color&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="s1">&#39;ffffff&#39;</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">ColorArg</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Color for the initial text in the center of the canvas.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2929,7 +2929,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>Color : Color for the initial text in the center of the output area.</p>
+      <p>Color : Color for the initial text in the center of the canvas.</p>
   </div>
 
 </div>

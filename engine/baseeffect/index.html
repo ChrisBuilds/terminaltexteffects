@@ -950,11 +950,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../terminal/outputarea/" class="md-nav__link">
+      <a href="../terminal/canvas/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    OutputArea
+    Canvas
   </span>
   
 
@@ -2257,7 +2257,7 @@ method and a context manager for terminal output.</p>
 </span><span id="__span-0-132"><a id="__codelineno-0-132" name="__codelineno-0-132"></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="__span-0-133"><a id="__codelineno-0-133" name="__codelineno-0-133"></a>        <span class="n">terminal</span> <span class="o">=</span> <span class="n">Terminal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal_config</span><span class="p">)</span>
 </span><span id="__span-0-134"><a id="__codelineno-0-134" name="__codelineno-0-134"></a>        <span class="k">try</span><span class="p">:</span>
-</span><span id="__span-0-135"><a id="__codelineno-0-135" name="__codelineno-0-135"></a>            <span class="n">terminal</span><span class="o">.</span><span class="n">prep_outputarea</span><span class="p">()</span>
+</span><span id="__span-0-135"><a id="__codelineno-0-135" name="__codelineno-0-135"></a>            <span class="n">terminal</span><span class="o">.</span><span class="n">prep_canvas</span><span class="p">()</span>
 </span><span id="__span-0-136"><a id="__codelineno-0-136" name="__codelineno-0-136"></a>            <span class="k">yield</span> <span class="n">terminal</span>
 </span><span id="__span-0-137"><a id="__codelineno-0-137" name="__codelineno-0-137"></a>        <span class="k">except</span><span class="p">:</span>  <span class="c1"># noqa: E722</span>
 </span><span id="__span-0-138"><a id="__codelineno-0-138" name="__codelineno-0-138"></a>            <span class="k">raise</span>
@@ -2481,7 +2481,7 @@ state.</p>
 </span><span id="__span-0-132"><a id="__codelineno-0-132" name="__codelineno-0-132"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-133"><a id="__codelineno-0-133" name="__codelineno-0-133"></a>    <span class="n">terminal</span> <span class="o">=</span> <span class="n">Terminal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal_config</span><span class="p">)</span>
 </span><span id="__span-0-134"><a id="__codelineno-0-134" name="__codelineno-0-134"></a>    <span class="k">try</span><span class="p">:</span>
-</span><span id="__span-0-135"><a id="__codelineno-0-135" name="__codelineno-0-135"></a>        <span class="n">terminal</span><span class="o">.</span><span class="n">prep_outputarea</span><span class="p">()</span>
+</span><span id="__span-0-135"><a id="__codelineno-0-135" name="__codelineno-0-135"></a>        <span class="n">terminal</span><span class="o">.</span><span class="n">prep_canvas</span><span class="p">()</span>
 </span><span id="__span-0-136"><a id="__codelineno-0-136" name="__codelineno-0-136"></a>        <span class="k">yield</span> <span class="n">terminal</span>
 </span><span id="__span-0-137"><a id="__codelineno-0-137" name="__codelineno-0-137"></a>    <span class="k">except</span><span class="p">:</span>  <span class="c1"># noqa: E722</span>
 </span><span id="__span-0-138"><a id="__codelineno-0-138" name="__codelineno-0-138"></a>        <span class="k">raise</span>

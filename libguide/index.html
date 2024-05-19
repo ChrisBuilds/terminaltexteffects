@@ -900,11 +900,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/terminal/outputarea/" class="md-nav__link">
+      <a href="../engine/terminal/canvas/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    OutputArea
+    Canvas
   </span>
   
 
@@ -1977,7 +1977,7 @@ in from alternating sides of the terminal.</li>
 </span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">effect</span><span class="o">.</span><span class="n">effect_config</span><span class="o">.</span><span class="n">merge</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># (1)</span>
 </span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">effect</span><span class="o">.</span><span class="n">effect_config</span><span class="o">.</span><span class="n">grouping</span> <span class="o">=</span> <span class="s2">&quot;column&quot;</span> <span class="c1"># (2)</span>
 </span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">effect</span><span class="o">.</span><span class="n">effect_config</span><span class="o">.</span><span class="n">final_gradient_stops</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;0ff000&quot;</span><span class="p">,</span> <span class="s2">&quot;000ff0&quot;</span><span class="p">,</span> <span class="s2">&quot;0f00f0&quot;</span><span class="p">)</span> <span class="c1"># (3)</span>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">effect</span><span class="o">.</span><span class="n">terminal_config</span><span class="o">.</span><span class="n">terminal_width</span> <span class="o">=</span> <span class="mi">30</span> <span class="c1"># (4)</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">effect</span><span class="o">.</span><span class="n">terminal_config</span><span class="o">.</span><span class="n">canvas_width</span> <span class="o">=</span> <span class="mi">30</span> <span class="c1"># (4)</span>
 </span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="k">with</span> <span class="n">effect</span><span class="o">.</span><span class="n">terminal_output</span><span class="p">()</span> <span class="k">as</span> <span class="n">terminal</span><span class="p">:</span>
 </span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">effect</span><span class="p">:</span>
 </span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="n">terminal</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
@@ -1987,7 +1987,7 @@ in from alternating sides of the terminal.</li>
 in from alternating sides of the terminal.</li>
 <li>Columns will slide in, rather than rows.</li>
 <li>Change the gradient colors from the defaults.</li>
-<li>Set the terminal width manually rather than automatically detect. Terminal heigth will be automatically detected as it has not been set.</li>
+<li>Set the canvas width manually rather than automatically detect. Canvas heigth will be automatically detected as it has not been set.</li>
 </ol>
 </div>
 <div class="tabbed-block">
@@ -1996,13 +1996,14 @@ in from alternating sides of the terminal.</li>
 </div>
 </div>
 <h2 id="configuring-the-terminal">Configuring the Terminal</h2>
-<p>TTE uses a <a href="../engine/terminal/terminal/">Terminal</a> class to handle terminal dimensions, wrapping text, etc. Effects contain an attribute (<code>effect.terminal_config</code>) which allows access to the various terminal configuration options. The configuration should be modified prior to iterating over the effect.</p>
+<p>TTE uses a <a href="../engine/terminal/terminal/">Terminal</a> class and a <a href="../engine/terminal/canvas/">Canvas</a> class to handle terminal/canvas dimensions, wrapping text, etc. Effects contain an attribute (<code>effect.terminal_config</code>) which allows access to the various terminal configuration options. The configuration should be modified prior to iterating over the effect.</p>
 <p>For example, to set the terminal dimensions manually:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">effect</span><span class="o">.</span><span class="n">terminal_config</span><span class="o">.</span><span class="n">terminal_width</span> <span class="o">=</span> <span class="mi">80</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">effect</span><span class="o">.</span><span class="n">terminal_config</span><span class="o">.</span><span class="n">terminal_height</span> <span class="o">=</span> <span class="mi">24</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">effect</span><span class="o">.</span><span class="n">terminal_config</span><span class="o">.</span><span class="n">canvas_width</span> <span class="o">=</span> <span class="mi">80</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">effect</span><span class="o">.</span><span class="n">terminal_config</span><span class="o">.</span><span class="n">canvas_height</span> <span class="o">=</span> <span class="mi">24</span>
 </span></code></pre></div>
-<p>If either <code>terminal_width</code> or <code>terminal_height</code> are set to 0, that dimension will be automatically detected.</p>
-<p>If you would like to ignore terminal dimensions altogether and base the output dimensions solely on the input data:</p>
+<p>If either <code>canvas_width</code> or <code>canvas_height</code> are set to 0, that dimension will be automatically detected based on the
+terminal device dimensions.</p>
+<p>If you would like to ignore terminal dimensions altogether and base the canvas dimensions solely on the input data:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">effect</span><span class="o">.</span><span class="n">terminal_config</span><span class="o">.</span><span class="n">ignore_terminal_dimensions</span> <span class="o">=</span> <span class="kc">True</span>
 </span></code></pre></div>
 <p>For more information on terminal configuration options, check out the <a href="../engine/terminal/terminalconfig/">TerminalConfig</a> reference.</p>

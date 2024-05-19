@@ -824,11 +824,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../engine/terminal/outputarea/" class="md-nav__link">
+      <a href="../../engine/terminal/canvas/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    OutputArea
+    Canvas
   </span>
   
 
@@ -2111,7 +2111,7 @@
 <a id="terminaltexteffects.effects.effect_rain"></a>
   <div class="doc doc-contents first">
   
-      <p>Rain characters from the top of the output area.</p>
+      <p>Rain characters from the top of the canvas.</p>
 
 
 
@@ -2128,7 +2128,7 @@
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_rain.Rain" href="#terminaltexteffects.effects.effect_rain.Rain">Rain</a></code></td>
           <td>
             <div class="doc-md-description">
-              <p>Rain characters from the top of the output area.</p>
+              <p>Rain characters from the top of the canvas.</p>
             </div>
           </td>
         </tr>
@@ -2178,7 +2178,7 @@
             Bases: <code><a class="autorefs autorefs-internal" title="terminaltexteffects.engine.base_effect.BaseEffect" href="../../engine/baseeffect/#terminaltexteffects.engine.base_effect.BaseEffect">BaseEffect</a>[<a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_rain.RainConfig" href="#terminaltexteffects.effects.effect_rain.RainConfig">RainConfig</a>]</code></p>
 
   
-      <p>Rain characters from the top of the output area.</p>
+      <p>Rain characters from the top of the canvas.</p>
 
 
 
@@ -2236,7 +2236,7 @@
 <span class="normal"><a href="#__codelineno-0-206">206</a></span>
 <span class="normal"><a href="#__codelineno-0-207">207</a></span>
 <span class="normal"><a href="#__codelineno-0-208">208</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-192"><a id="__codelineno-0-192" name="__codelineno-0-192"></a><span class="k">class</span> <span class="nc">Rain</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">RainConfig</span><span class="p">]):</span>
-</span><span id="__span-0-193"><a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Rain characters from the top of the output area.</span>
+</span><span id="__span-0-193"><a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Rain characters from the top of the canvas.</span>
 </span><span id="__span-0-194"><a id="__codelineno-0-194" name="__codelineno-0-194"></a>
 </span><span id="__span-0-195"><a id="__codelineno-0-195" name="__codelineno-0-195"></a><span class="sd">    Attributes:</span>
 </span><span id="__span-0-196"><a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="sd">        effect_config (PourConfig): Configuration for the effect.</span>
@@ -2556,8 +2556,8 @@
 <span class="normal"><a href="#__codelineno-0-124">124</a></span>
 <span class="normal"><a href="#__codelineno-0-125">125</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="nd">@argclass</span><span class="p">(</span>
 </span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rain&quot;</span><span class="p">,</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Rain characters from the top of the output area.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rain | Rain characters from the top of the output area.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Rain characters from the top of the canvas.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rain | Rain characters from the top of the canvas.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="n">epilog</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="si">{</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">EASING_EPILOG</span><span class="si">}</span><span class="s2"> </span>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="s2">Example: terminaltexteffects rain --rain-symbols o . , &quot;*&quot; &quot;|&quot; --rain-colors 00315C 004C8F 0075DB 3F91D9 78B9F2 9AC8F5 B8D8F8 E3EFFC --final-gradient-stops 488bff b2e7de 57eaf7 --final-gradient-steps 12 --movement-speed 0.1-0.2 --easing IN_QUART&quot;&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="p">)</span>

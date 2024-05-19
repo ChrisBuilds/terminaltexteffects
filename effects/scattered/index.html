@@ -824,11 +824,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../engine/terminal/outputarea/" class="md-nav__link">
+      <a href="../../engine/terminal/canvas/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    OutputArea
+    Canvas
   </span>
   
 
@@ -2093,7 +2093,7 @@
 <a id="terminaltexteffects.effects.effect_scattered"></a>
   <div class="doc doc-contents first">
   
-      <p>Text is scattered across the output area and moves into position.</p>
+      <p>Text is scattered across the canvas and moves into position.</p>
 
 
 
@@ -2160,7 +2160,7 @@
             Bases: <code><a class="autorefs autorefs-internal" title="terminaltexteffects.engine.base_effect.BaseEffect" href="../../engine/baseeffect/#terminaltexteffects.engine.base_effect.BaseEffect">BaseEffect</a>[<a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_scattered.ScatteredConfig" href="#terminaltexteffects.effects.effect_scattered.ScatteredConfig">ScatteredConfig</a>]</code></p>
 
   
-      <p>Text is scattered across the output area and moves into position.</p>
+      <p>Text is scattered across the canvas and moves into position.</p>
 
 
 
@@ -2218,7 +2218,7 @@
 <span class="normal"><a href="#__codelineno-0-166">166</a></span>
 <span class="normal"><a href="#__codelineno-0-167">167</a></span>
 <span class="normal"><a href="#__codelineno-0-168">168</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-152"><a id="__codelineno-0-152" name="__codelineno-0-152"></a><span class="k">class</span> <span class="nc">Scattered</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">ScatteredConfig</span><span class="p">]):</span>
-</span><span id="__span-0-153"><a id="__codelineno-0-153" name="__codelineno-0-153"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Text is scattered across the output area and moves into position.</span>
+</span><span id="__span-0-153"><a id="__codelineno-0-153" name="__codelineno-0-153"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Text is scattered across the canvas and moves into position.</span>
 </span><span id="__span-0-154"><a id="__codelineno-0-154" name="__codelineno-0-154"></a>
 </span><span id="__span-0-155"><a id="__codelineno-0-155" name="__codelineno-0-155"></a><span class="sd">    Attributes:</span>
 </span><span id="__span-0-156"><a id="__codelineno-0-156" name="__codelineno-0-156"></a><span class="sd">        effect_config (ScatteredConfig): Configuration for the effect.</span>
@@ -2504,8 +2504,8 @@
 <span class="normal"><a href="#__codelineno-0-98">98</a></span>
 <span class="normal"><a href="#__codelineno-0-99">99</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="nd">@argclass</span><span class="p">(</span>
 </span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;scattered&quot;</span><span class="p">,</span>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Text is scattered across the output area and moves into position.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;scattered | Text is scattered across the output area and moves into position.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Text is scattered across the canvas and moves into position.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;scattered | Text is scattered across the canvas and moves into position.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">epilog</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="si">{</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">EASING_EPILOG</span><span class="si">}</span>
 </span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="s2">Example: terminaltexteffects scattered --final-gradient-stops ff9048 ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK&quot;&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="p">)</span>

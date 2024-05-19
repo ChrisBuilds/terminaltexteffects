@@ -824,11 +824,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../engine/terminal/outputarea/" class="md-nav__link">
+      <a href="../../engine/terminal/canvas/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    OutputArea
+    Canvas
   </span>
   
 
@@ -2219,7 +2219,7 @@
 <a id="terminaltexteffects.effects.effect_beams"></a>
   <div class="doc doc-contents first">
   
-      <p>Creates beams which travel over the output area illuminating the characters.</p>
+      <p>Creates beams which travel over the canvas illuminating the characters.</p>
 
 
 
@@ -2236,7 +2236,7 @@
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_beams.Beams" href="#terminaltexteffects.effects.effect_beams.Beams">Beams</a></code></td>
           <td>
             <div class="doc-md-description">
-              <p>Creates beams which travel over the output area illuminating the characters.</p>
+              <p>Creates beams which travel over the canvas illuminating the characters.</p>
             </div>
           </td>
         </tr>
@@ -2286,7 +2286,7 @@
             Bases: <code><a class="autorefs autorefs-internal" title="terminaltexteffects.engine.base_effect.BaseEffect" href="../../engine/baseeffect/#terminaltexteffects.engine.base_effect.BaseEffect">BaseEffect</a>[<a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_beams.BeamsConfig" href="#terminaltexteffects.effects.effect_beams.BeamsConfig">BeamsConfig</a>]</code></p>
 
   
-      <p>Creates beams which travel over the output area illuminating the characters.</p>
+      <p>Creates beams which travel over the canvas illuminating the characters.</p>
 
 
 
@@ -2344,7 +2344,7 @@
 <span class="normal"><a href="#__codelineno-0-336">336</a></span>
 <span class="normal"><a href="#__codelineno-0-337">337</a></span>
 <span class="normal"><a href="#__codelineno-0-338">338</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-322"><a id="__codelineno-0-322" name="__codelineno-0-322"></a><span class="k">class</span> <span class="nc">Beams</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">BeamsConfig</span><span class="p">]):</span>
-</span><span id="__span-0-323"><a id="__codelineno-0-323" name="__codelineno-0-323"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates beams which travel over the output area illuminating the characters.</span>
+</span><span id="__span-0-323"><a id="__codelineno-0-323" name="__codelineno-0-323"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates beams which travel over the canvas illuminating the characters.</span>
 </span><span id="__span-0-324"><a id="__codelineno-0-324" name="__codelineno-0-324"></a>
 </span><span id="__span-0-325"><a id="__codelineno-0-325" name="__codelineno-0-325"></a><span class="sd">    Attributes:</span>
 </span><span id="__span-0-326"><a id="__codelineno-0-326" name="__codelineno-0-326"></a><span class="sd">        effect_config (BeamsConfig): Configuration for the effect.</span>
@@ -2796,8 +2796,8 @@
 <span class="normal"><a href="#__codelineno-0-189">189</a></span>
 <span class="normal"><a href="#__codelineno-0-190">190</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="nd">@argclass</span><span class="p">(</span>
 </span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;beams&quot;</span><span class="p">,</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Create beams which travel over the output area illuminating the characters behind them.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;beams | Create beams which travel over the output area illuminating the characters behind them.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Create beams which travel over the canvas illuminating the characters behind them.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;beams | Create beams which travel over the canvas illuminating the characters behind them.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">epilog</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical --final-wipe-speed 1&quot;&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="p">)</span>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="nd">@dataclass</span>

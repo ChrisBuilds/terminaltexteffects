@@ -16,7 +16,7 @@
         <link rel="prev" href="../terminal/">
       
       
-        <link rel="next" href="../outputarea/">
+        <link rel="next" href="../canvas/">
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
@@ -862,6 +862,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#terminaltexteffects.engine.terminal.TerminalConfig.canvas_height" class="md-nav__link">
+    <span class="md-ellipsis">
+      canvas_height
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#terminaltexteffects.engine.terminal.TerminalConfig.canvas_width" class="md-nav__link">
+    <span class="md-ellipsis">
+      canvas_width
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#terminaltexteffects.engine.terminal.TerminalConfig.frame_rate" class="md-nav__link">
     <span class="md-ellipsis">
       frame_rate
@@ -892,24 +910,6 @@
   <a href="#terminaltexteffects.engine.terminal.TerminalConfig.tab_width" class="md-nav__link">
     <span class="md-ellipsis">
       tab_width
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#terminaltexteffects.engine.terminal.TerminalConfig.terminal_height" class="md-nav__link">
-    <span class="md-ellipsis">
-      terminal_height
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#terminaltexteffects.engine.terminal.TerminalConfig.terminal_width" class="md-nav__link">
-    <span class="md-ellipsis">
-      terminal_width
     </span>
   </a>
   
@@ -949,11 +949,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../outputarea/" class="md-nav__link">
+      <a href="../canvas/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    OutputArea
+    Canvas
   </span>
   
 
@@ -1927,6 +1927,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#terminaltexteffects.engine.terminal.TerminalConfig.canvas_height" class="md-nav__link">
+    <span class="md-ellipsis">
+      canvas_height
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#terminaltexteffects.engine.terminal.TerminalConfig.canvas_width" class="md-nav__link">
+    <span class="md-ellipsis">
+      canvas_width
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#terminaltexteffects.engine.terminal.TerminalConfig.frame_rate" class="md-nav__link">
     <span class="md-ellipsis">
       frame_rate
@@ -1957,24 +1975,6 @@
   <a href="#terminaltexteffects.engine.terminal.TerminalConfig.tab_width" class="md-nav__link">
     <span class="md-ellipsis">
       tab_width
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#terminaltexteffects.engine.terminal.TerminalConfig.terminal_height" class="md-nav__link">
-    <span class="md-ellipsis">
-      terminal_height
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#terminaltexteffects.engine.terminal.TerminalConfig.terminal_width" class="md-nav__link">
-    <span class="md-ellipsis">
-      terminal_width
     </span>
   </a>
   
@@ -2084,7 +2084,7 @@
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Wrap text wider than the output area width.</p>
+              <p>Wrap text wider than the canvas width.</p>
             </div>
           </td>
         </tr>
@@ -2100,7 +2100,7 @@
           </td>
         </tr>
         <tr class="doc-section-item">
-          <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.engine.terminal.TerminalConfig.terminal_width" href="#terminaltexteffects.engine.terminal.TerminalConfig.terminal_width">terminal_width</a></code></td>
+          <td><code><span title="terminaltexteffects.engine.terminal.TerminalConfig.terminal_width">terminal_width</span></code></td>
           <td>
                 <code>int</code>
           </td>
@@ -2111,7 +2111,7 @@
           </td>
         </tr>
         <tr class="doc-section-item">
-          <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.engine.terminal.TerminalConfig.terminal_height" href="#terminaltexteffects.engine.terminal.TerminalConfig.terminal_height">terminal_height</a></code></td>
+          <td><code><span title="terminaltexteffects.engine.terminal.TerminalConfig.terminal_height">terminal_height</span></code></td>
           <td>
                 <code>int</code>
           </td>
@@ -2128,7 +2128,7 @@
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Ignore the terminal dimensions and use the input data dimensions for the output area.</p>
+              <p>Ignore the terminal dimensions and use the input data dimensions for the canvas.</p>
             </div>
           </td>
         </tr>
@@ -2223,11 +2223,11 @@
 </span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">        tab_width (int): Number of spaces to use for a tab character.</span>
 </span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="sd">        xterm_colors (bool): Convert any colors specified in RBG hex to the closest XTerm-256 color.</span>
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">        no_color (bool): Disable all colors in the effect.</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">        wrap_text (bool): Wrap text wider than the output area width.</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">        wrap_text (bool): Wrap text wider than the canvas width.</span>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">        frame_rate (float): Target frame rate for the animation.</span>
 </span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">        terminal_width (int): Terminal width, if set to 0 the terminal width is detected automatically.</span>
 </span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">        terminal_height (int): Terminal height, if set to 0 the terminal height is detected automatically.</span>
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">        ignore_terminal_dimensions (bool): Ignore the terminal dimensions and use the input data dimensions for the output area.</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">        ignore_terminal_dimensions (bool): Ignore the terminal dimensions and use the input data dimensions for the canvas.</span>
 </span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a>
 </span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a>    <span class="n">tab_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
@@ -2256,9 +2256,9 @@
 </span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="s2">&quot;bool : Disable all colors in the effect.&quot;</span>
 </span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62"></a>
 </span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="n">wrap_text</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--wrap-text&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Wrap text wider than the output area width.&quot;</span>
+</span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--wrap-text&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Wrap text wider than the canvas width.&quot;</span>
 </span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="s2">&quot;bool : Wrap text wider than the output area width.&quot;</span>
+</span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="s2">&quot;bool : Wrap text wider than the canvas width.&quot;</span>
 </span><span id="__span-0-67"><a id="__codelineno-0-67" name="__codelineno-0-67"></a>
 </span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a>    <span class="n">frame_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
 </span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--frame-rate&quot;</span><span class="p">,</span>
@@ -2269,31 +2269,31 @@
 </span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a>
 </span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a>    <span class="s2">&quot;float : Minimum time, in seconds, between frames.&quot;</span>
 </span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a>
-</span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="n">terminal_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--terminal-width&quot;</span><span class="p">],</span>
+</span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="n">canvas_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--canvas-width&quot;</span><span class="p">],</span>
 </span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">NonNegativeInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
 </span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Terminal width, if set to 0 the terminal width is detected automatically.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
 </span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a>
-</span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="s2">&quot;int : Terminal width, if set to 0 the terminal width is detected automatically.&quot;</span>
+</span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="s2">&quot;int : Cavas width, if set to 0 the canvas width is detected automatically based on the terminal device.&quot;</span>
 </span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>
-</span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a>    <span class="n">terminal_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
-</span><span id="__span-0-87"><a id="__codelineno-0-87" name="__codelineno-0-87"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--terminal-height&quot;</span><span class="p">],</span>
+</span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a>    <span class="n">canvas_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
+</span><span id="__span-0-87"><a id="__codelineno-0-87" name="__codelineno-0-87"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--canvas-height&quot;</span><span class="p">],</span>
 </span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">NonNegativeInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
 </span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a>        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Terminal height, if set to 0 the terminal height is detected automatically.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Canvas height, if set to 0 the canvas height is detected automatically based on the terminal device.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
 </span><span id="__span-0-92"><a id="__codelineno-0-92" name="__codelineno-0-92"></a>
-</span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="s2">&quot;int : Terminal height, if set to 0 the terminal height is detected automatically.&quot;</span>
+</span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="s2">&quot;int : Canvas height, if set to 0 the canvas height is is detected automatically based on the terminal device.&quot;</span>
 </span><span id="__span-0-94"><a id="__codelineno-0-94" name="__codelineno-0-94"></a>
 </span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="n">ignore_terminal_dimensions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
 </span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--ignore-terminal-dimensions&quot;</span><span class="p">],</span>
 </span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 </span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Ignore the terminal dimensions and use the input data dimensions for the output area.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Ignore the terminal dimensions and use the input data dimensions for the canvas.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="s2">&quot;bool : Ignore the terminal dimensions and use the input data dimensions for the output area.&quot;</span>
+</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="s2">&quot;bool : Ignore the terminal dimensions and use the input data dimensions for the canvas.&quot;</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
 
@@ -2306,6 +2306,50 @@
 
 
 
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="terminaltexteffects.engine.terminal.TerminalConfig.canvas_height" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">canvas_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--canvas-height&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">NonNegativeInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Canvas height, if set to 0 the canvas height is detected automatically based on the terminal device.&#39;</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>int : Canvas height, if set to 0 the canvas height is is detected automatically based on the terminal device.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="terminaltexteffects.engine.terminal.TerminalConfig.canvas_width" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">canvas_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--canvas-width&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">NonNegativeInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device.&#39;</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>int : Cavas width, if set to 0 the canvas width is detected automatically based on the terminal device.</p>
+  </div>
+
+</div>
 
 <div class="doc doc-object doc-attribute">
 
@@ -2334,7 +2378,7 @@
 
 
 <h2 id="terminaltexteffects.engine.terminal.TerminalConfig.ignore_terminal_dimensions" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">ignore_terminal_dimensions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--ignore-terminal-dimensions&#39;</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Ignore the terminal dimensions and use the input data dimensions for the output area.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">ignore_terminal_dimensions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--ignore-terminal-dimensions&#39;</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Ignore the terminal dimensions and use the input data dimensions for the canvas.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2346,7 +2390,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>bool : Ignore the terminal dimensions and use the input data dimensions for the output area.</p>
+      <p>bool : Ignore the terminal dimensions and use the input data dimensions for the canvas.</p>
   </div>
 
 </div>
@@ -2399,52 +2443,8 @@
 
 
 
-<h2 id="terminaltexteffects.engine.terminal.TerminalConfig.terminal_height" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">terminal_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--terminal-height&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">NonNegativeInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Terminal height, if set to 0 the terminal height is detected automatically.&#39;</span><span class="p">)</span></code>
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-</h2>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>int : Terminal height, if set to 0 the terminal height is detected automatically.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h2 id="terminaltexteffects.engine.terminal.TerminalConfig.terminal_width" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">terminal_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--terminal-width&#39;</span><span class="p">],</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">NonNegativeInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Terminal width, if set to 0 the terminal width is detected automatically.&#39;</span><span class="p">)</span></code>
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-</h2>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>int : Terminal width, if set to 0 the terminal width is detected automatically.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
 <h2 id="terminaltexteffects.engine.terminal.TerminalConfig.wrap_text" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">wrap_text</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--wrap-text&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Wrap text wider than the output area width.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">wrap_text</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--wrap-text&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Wrap text wider than the canvas width.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2456,7 +2456,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>bool : Wrap text wider than the output area width.</p>
+      <p>bool : Wrap text wider than the canvas width.</p>
   </div>
 
 </div>

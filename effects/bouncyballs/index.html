@@ -824,11 +824,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../engine/terminal/outputarea/" class="md-nav__link">
+      <a href="../../engine/terminal/canvas/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    OutputArea
+    Canvas
   </span>
   
 
@@ -2129,7 +2129,7 @@
 <a id="terminaltexteffects.effects.effect_bouncyballs"></a>
   <div class="doc doc-contents first">
   
-      <p>Characters fall from the top of the output area as bouncy balls before settling into place.</p>
+      <p>Characters fall from the top of the canvas as bouncy balls before settling into place.</p>
 
 
 
@@ -2146,7 +2146,7 @@
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_bouncyballs.BouncyBalls" href="#terminaltexteffects.effects.effect_bouncyballs.BouncyBalls">BouncyBalls</a></code></td>
           <td>
             <div class="doc-md-description">
-              <p>Characters fall from the top of the output area as bouncy balls before settling into place.</p>
+              <p>Characters fall from the top of the canvas as bouncy balls before settling into place.</p>
             </div>
           </td>
         </tr>
@@ -2196,7 +2196,7 @@
             Bases: <code><a class="autorefs autorefs-internal" title="terminaltexteffects.engine.base_effect.BaseEffect" href="../../engine/baseeffect/#terminaltexteffects.engine.base_effect.BaseEffect">BaseEffect</a>[<a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_bouncyballs.BouncyBallsConfig" href="#terminaltexteffects.effects.effect_bouncyballs.BouncyBallsConfig">BouncyBallsConfig</a>]</code></p>
 
   
-      <p>Characters fall from the top of the output area as bouncy balls before settling into place.</p>
+      <p>Characters fall from the top of the canvas as bouncy balls before settling into place.</p>
 
 
 
@@ -2254,7 +2254,7 @@
 <span class="normal"><a href="#__codelineno-0-209">209</a></span>
 <span class="normal"><a href="#__codelineno-0-210">210</a></span>
 <span class="normal"><a href="#__codelineno-0-211">211</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-195"><a id="__codelineno-0-195" name="__codelineno-0-195"></a><span class="k">class</span> <span class="nc">BouncyBalls</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">BouncyBallsConfig</span><span class="p">]):</span>
-</span><span id="__span-0-196"><a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Characters fall from the top of the output area as bouncy balls before settling into place.</span>
+</span><span id="__span-0-196"><a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Characters fall from the top of the canvas as bouncy balls before settling into place.</span>
 </span><span id="__span-0-197"><a id="__codelineno-0-197" name="__codelineno-0-197"></a>
 </span><span id="__span-0-198"><a id="__codelineno-0-198" name="__codelineno-0-198"></a><span class="sd">    Attributes:</span>
 </span><span id="__span-0-199"><a id="__codelineno-0-199" name="__codelineno-0-199"></a><span class="sd">        effect_config (BouncyBallsConfig): Configuration for the effect.</span>
@@ -2584,8 +2584,8 @@
 <span class="normal"><a href="#__codelineno-0-123">123</a></span>
 <span class="normal"><a href="#__codelineno-0-124">124</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="nd">@argclass</span><span class="p">(</span>
 </span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bouncyballs&quot;</span><span class="p">,</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Characters are bouncy balls falling from the top of the output area.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bouncyballs | Characters are bouncy balls falling from the top of the output area.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Characters are bouncy balls falling from the top of the canvas.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bouncyballs | Characters are bouncy balls falling from the top of the canvas.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="n">epilog</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="si">{</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">EASING_EPILOG</span><span class="si">}</span>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="s2">Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols o &quot;*&quot; O 0 . --final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal --ball-delay 7 --movement-speed 0.25 --easing OUT_BOUNCE&quot;&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="p">)</span>

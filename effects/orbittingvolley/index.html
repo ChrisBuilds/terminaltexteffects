@@ -824,11 +824,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../engine/terminal/outputarea/" class="md-nav__link">
+      <a href="../../engine/terminal/canvas/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    OutputArea
+    Canvas
   </span>
   
 
@@ -2201,7 +2201,7 @@
 <a id="terminaltexteffects.effects.effect_orbittingvolley"></a>
   <div class="doc doc-contents first">
   
-      <p>Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.</p>
+      <p>Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.</p>
 
 
 
@@ -2218,7 +2218,7 @@
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_orbittingvolley.OrbittingVolley" href="#terminaltexteffects.effects.effect_orbittingvolley.OrbittingVolley">OrbittingVolley</a></code></td>
           <td>
             <div class="doc-md-description">
-              <p>Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.</p>
+              <p>Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.</p>
             </div>
           </td>
         </tr>
@@ -2268,7 +2268,7 @@
             Bases: <code><a class="autorefs autorefs-internal" title="terminaltexteffects.engine.base_effect.BaseEffect" href="../../engine/baseeffect/#terminaltexteffects.engine.base_effect.BaseEffect">BaseEffect</a>[<a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_orbittingvolley.OrbittingVolleyConfig" href="#terminaltexteffects.effects.effect_orbittingvolley.OrbittingVolleyConfig">OrbittingVolleyConfig</a>]</code></p>
 
   
-      <p>Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.</p>
+      <p>Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.</p>
 
 
 
@@ -2326,7 +2326,7 @@
 <span class="normal"><a href="#__codelineno-0-327">327</a></span>
 <span class="normal"><a href="#__codelineno-0-328">328</a></span>
 <span class="normal"><a href="#__codelineno-0-329">329</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-313"><a id="__codelineno-0-313" name="__codelineno-0-313"></a><span class="k">class</span> <span class="nc">OrbittingVolley</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">OrbittingVolleyConfig</span><span class="p">]):</span>
-</span><span id="__span-0-314"><a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.</span>
+</span><span id="__span-0-314"><a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.</span>
 </span><span id="__span-0-315"><a id="__codelineno-0-315" name="__codelineno-0-315"></a>
 </span><span id="__span-0-316"><a id="__codelineno-0-316" name="__codelineno-0-316"></a><span class="sd">    Attributes:</span>
 </span><span id="__span-0-317"><a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="sd">        effect_config (OrbittingVolleyConfig): Configuration for the effect.</span>
@@ -2741,8 +2741,8 @@
 <span class="normal"><a href="#__codelineno-0-164">164</a></span>
 <span class="normal"><a href="#__codelineno-0-165">165</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="nd">@argclass</span><span class="p">(</span>
 </span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;orbittingvolley&quot;</span><span class="p">,</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;orbittingvolley | Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;orbittingvolley | Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="n">epilog</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="si">{</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">EASING_EPILOG</span><span class="si">}</span>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a>
 </span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="s2">Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 --launcher-movement-speed 0.5 --character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE&quot;&quot;&quot;</span><span class="p">,</span>

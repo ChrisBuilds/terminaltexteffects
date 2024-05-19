@@ -824,11 +824,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../engine/terminal/outputarea/" class="md-nav__link">
+      <a href="../../engine/terminal/canvas/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    OutputArea
+    Canvas
   </span>
   
 
@@ -2129,7 +2129,7 @@
 <a id="terminaltexteffects.effects.effect_unstable"></a>
   <div class="doc doc-contents first">
   
-      <p>Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.</p>
+      <p>Spawns characters jumbled, explodes them to the edge of the canvas, then reassembles them.</p>
 
 
 
@@ -2146,7 +2146,7 @@
           <td><code><a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_unstable.Unstable" href="#terminaltexteffects.effects.effect_unstable.Unstable">Unstable</a></code></td>
           <td>
             <div class="doc-md-description">
-              <p>Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.</p>
+              <p>Spawns characters jumbled, explodes them to the edge of the canvas, then reassembles them.</p>
             </div>
           </td>
         </tr>
@@ -2196,7 +2196,7 @@
             Bases: <code><a class="autorefs autorefs-internal" title="terminaltexteffects.engine.base_effect.BaseEffect" href="../../engine/baseeffect/#terminaltexteffects.engine.base_effect.BaseEffect">BaseEffect</a>[<a class="autorefs autorefs-internal" title="terminaltexteffects.effects.effect_unstable.UnstableConfig" href="#terminaltexteffects.effects.effect_unstable.UnstableConfig">UnstableConfig</a>]</code></p>
 
   
-      <p>Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.</p>
+      <p>Spawns characters jumbled, explodes them to the edge of the canvas, then reassembles them.</p>
 
 
 
@@ -2254,7 +2254,7 @@
 <span class="normal"><a href="#__codelineno-0-272">272</a></span>
 <span class="normal"><a href="#__codelineno-0-273">273</a></span>
 <span class="normal"><a href="#__codelineno-0-274">274</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-258"><a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="k">class</span> <span class="nc">Unstable</span><span class="p">(</span><span class="n">BaseEffect</span><span class="p">[</span><span class="n">UnstableConfig</span><span class="p">]):</span>
-</span><span id="__span-0-259"><a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.</span>
+</span><span id="__span-0-259"><a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Spawns characters jumbled, explodes them to the edge of the canvas, then reassembles them.</span>
 </span><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a>
 </span><span id="__span-0-261"><a id="__codelineno-0-261" name="__codelineno-0-261"></a><span class="sd">    Attributes:</span>
 </span><span id="__span-0-262"><a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="sd">        effect_config (UnstableConfig): Configuration for the effect.</span>
@@ -2584,8 +2584,8 @@
 <span class="normal"><a href="#__codelineno-0-122">122</a></span>
 <span class="normal"><a href="#__codelineno-0-123">123</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="nd">@argclass</span><span class="p">(</span>
 </span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unstable&quot;</span><span class="p">,</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;unstable | Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the correct layout.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;unstable | Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the correct layout.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">epilog</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="si">{</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">EASING_EPILOG</span><span class="si">}</span>
 </span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="s2">    Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75&quot;&quot;&quot;</span><span class="p">,</span>

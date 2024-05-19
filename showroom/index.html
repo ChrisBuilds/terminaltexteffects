@@ -1132,11 +1132,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../engine/terminal/outputarea/" class="md-nav__link">
+      <a href="../engine/terminal/canvas/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    OutputArea
+    Canvas
   </span>
   
 
@@ -2391,7 +2391,7 @@
 <h1 id="effects-showroom">Effects Showroom</h1>
 <p>The effects shown below represent the built-in library of effects and their default configuration.</p>
 <h2 id="beams">Beams</h2>
-<p>Creates beams which travel over the output area illuminating the characters.</p>
+<p>Creates beams which travel over the canvas illuminating the characters.</p>
 <p><img alt="Demo" src="../img/effects_demos/beams_demo.gif" /></p>
 <p><a class="md-button" href="../effects/beams/">Reference</a> <a class="md-button" href="../effects/beams/#terminaltexteffects.effects.effect_beams.BeamsConfig">Config</a></p>
 <details class="example">
@@ -2430,7 +2430,7 @@
 </details>
 <hr />
 <h2 id="binarypath">Binarypath</h2>
-<p>Decodes characters into their binary form. Characters travel from outside the output area towards their input coordinate, moving at right angles.</p>
+<p>Decodes characters into their binary form. Characters travel from outside the canvas towards their input coordinate, moving at right angles.</p>
 <p><img alt="Demo" src="../img/effects_demos/binarypath_demo.gif" /></p>
 <p><a class="md-button" href="../effects/binarypath/">Reference</a> <a class="md-button" href="../effects/binarypath/#terminaltexteffects.effects.effect_binarypath.BinaryPathConfig">Config</a></p>
 <details class="example">
@@ -2477,7 +2477,7 @@
 </details>
 <hr />
 <h2 id="bouncyballs">BouncyBalls</h2>
-<p>Characters fall from the top of the output area as bouncy balls before settling into place.</p>
+<p>Characters fall from the top of the canvas as bouncy balls before settling into place.</p>
 <p><img alt="Demo" src="../img/effects_demos/bouncyballs_demo.gif" /></p>
 <p><a class="md-button" href="../effects/bouncyballs/">Reference</a> <a class="md-button" href="../effects/bouncyballs/#terminaltexteffects.effects.effect_bouncyballs.BouncyBallsConfig">Config</a></p>
 <details class="example">
@@ -2751,7 +2751,7 @@
 <p><a class="md-button" href="../effects/fireworks/">Reference</a> <a class="md-button" href="../effects/fireworks/#terminaltexteffects.effects.effect_fireworks.FireworksConfig">Config</a></p>
 <details class="example">
 <summary>Fireworks Command Line Arguments</summary>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>--explode-anywhere    If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text. (default: False)
+<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>--explode-anywhere    If set, fireworks explode anywhere in the canvas. Otherwise, fireworks explode above highest settled row of text. (default: False)
 </span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>--firework-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
 </span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>                    Space separated list of colors from which firework colors will be randomly selected. (default: (&#39;88F7E2&#39;, &#39;44D492&#39;, &#39;F5EB67&#39;, &#39;FFA15C&#39;, &#39;FA233E&#39;))
 </span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>--firework-symbol (ASCII/UTF-8 character)
@@ -2768,19 +2768,19 @@
 </span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>--launch-delay (int &gt;= 0)
 </span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>                    Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. (default: 60)
 </span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>--explode-distance (0 &lt;= float(n) &lt;= 1)
-</span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>                    Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width. (default: 0.1)
+</span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>                    Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width. (default: 0.1)
 </span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>
 </span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere
 </span></code></pre></div>
 </details>
 <h2 id="middleout">MiddleOut</h2>
-<p>Text expands in a single row or column in the middle of the output area then out.</p>
+<p>Text expands in a single row or column in the middle of the canvas then out.</p>
 <p><img alt="Demo" src="../img/effects_demos/middleout_demo.gif" /></p>
 <p><a class="md-button" href="../effects/middleout/">Reference</a> <a class="md-button" href="../effects/middleout/#terminaltexteffects.effects.effect_middleout.MiddleOutConfig">Config</a></p>
 <details class="example">
 <summary>MiddleOut Command Line Arguments</summary>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>--starting-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>                    Color for the initial text in the center of the output area. (default: ffffff)
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>                    Color for the initial text in the center of the canvas. (default: ffffff)
 </span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>--final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
 </span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>                    Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
 </span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>                    (default: (&#39;8A008A&#39;, &#39;00D1FF&#39;, &#39;FFFFFF&#39;))
@@ -2829,7 +2829,7 @@
 </span></code></pre></div>
 </details>
 <h2 id="orbittingvolley">OrbittingVolley</h2>
-<p>Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.</p>
+<p>Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.</p>
 <p><img alt="Demo" src="../img/effects_demos/orbittingvolley_demo.gif" /></p>
 <p><a class="md-button" href="../effects/orbittingvolley/">Reference</a> <a class="md-button" href="../effects/orbittingvolley/#terminaltexteffects.effects.effect_orbittingvolley.OrbittingVolleyConfig">Config</a></p>
 <details class="example">
@@ -3013,7 +3013,7 @@
 </span></code></pre></div>
 </details>
 <h2 id="rain">Rain</h2>
-<p>Rain characters from the top of the output area.</p>
+<p>Rain characters from the top of the canvas.</p>
 <p><img alt="Demo" src="../img/effects_demos/rain_demo.gif" /></p>
 <p><a class="md-button" href="../effects/rain/">Reference</a> <a class="md-button" href="../effects/rain/#terminaltexteffects.effects.effect_rain.RainConfig">Config</a></p>
 <details class="example">
@@ -3098,7 +3098,7 @@
 </span><span id="__span-18-7"><a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>                    Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
 </span><span id="__span-18-8"><a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>--final-gradient-direction (diagonal, horizontal, vertical, center)
 </span><span id="__span-18-9"><a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>                    Direction of the final gradient. (default: Direction.VERTICAL)
-</span><span id="__span-18-10"><a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>--ring-gap RING_GAP   Distance between rings as a percent of the smallest output area dimension. (default: 0.1)
+</span><span id="__span-18-10"><a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>--ring-gap RING_GAP   Distance between rings as a percent of the smallest canvas dimension. (default: 0.1)
 </span><span id="__span-18-11"><a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>--spin-duration SPIN_DURATION
 </span><span id="__span-18-12"><a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>                    Number of frames for each cycle of the spin phase. (default: 200)
 </span><span id="__span-18-13"><a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>--spin-speed (hyphen separated float range e.g. &#39;0.25-0.5&#39;)
@@ -3112,7 +3112,7 @@
 </span></code></pre></div>
 </details>
 <h2 id="scattered">Scattered</h2>
-<p>Text is scattered across the output area and moves into position.</p>
+<p>Text is scattered across the canvas and moves into position.</p>
 <p><img alt="Demo" src="../img/effects_demos/scattered_demo.gif" /></p>
 <p><a class="md-button" href="../effects/scattered/">Reference</a> <a class="md-button" href="../effects/scattered/#terminaltexteffects.effects.effect_scattered.ScatteredConfig">Config</a></p>
 <details class="example">
@@ -3368,7 +3368,7 @@
 </span></code></pre></div>
 </details>
 <h2 id="unstable">Unstable</h2>
-<p>Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.</p>
+<p>Spawns characters jumbled, explodes them to the edge of the canvas, then reassembles them.</p>
 <p><img alt="Demo" src="../img/effects_demos/unstable_demo.gif" /></p>
 <p><a class="md-button" href="../effects/unstable/">Reference</a> <a class="md-button" href="../effects/unstable/#terminaltexteffects.effects.effect_unstable.UnstableConfig">Config</a></p>
 <details class="example">
