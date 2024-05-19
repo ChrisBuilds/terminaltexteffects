@@ -18,12 +18,16 @@ rgb_red_again = Color('#ff0000')
 
 ### Printing Colors
 
+Colors can be printed to show the code and resulting color appearance.
+
 ```python
 from terminaltexteffects.utils.graphics import Color
 
 red = Color("ff0000")
 print(red)
 ```
+
+![t](../../img/lib_demos/printing_colors_demo.png)
 
 ### Using Colors to build a Gradient
 

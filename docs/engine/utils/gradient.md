@@ -13,4 +13,14 @@ for color in rgb:
     ...
 ```
 
+## Printing Gradients
+
+Gradients can be printed to the terminal to show information about the stops, steps, and resulting spectrum.
+
+![t](../../img/lib_demos/printing_gradients_demo.png)
+
+---
+
+## Gradient Reference
+
 ::: terminaltexteffects.utils.graphics.Gradient
