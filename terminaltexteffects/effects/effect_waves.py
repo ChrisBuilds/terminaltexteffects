@@ -117,6 +117,28 @@ class WavesConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : The number of frames for each step of the wave. Higher wave-lengths will create a slower wave."
 
+    wave_direction: typing.Literal[
+        "column_left_to_right",
+        "column_right_to_left",
+        "row_top_to_bottom",
+        "row_bottom_to_top",
+        "center_to_outside",
+        "outside_to_center",
+    ] = ArgField(
+        cmd_name="--wave-direction",
+        default="column_left_to_right",
+        help="Direction of the wave.",
+        choices=[
+            "column_left_to_right",
+            "column_right_to_left",
+            "row_top_to_bottom",
+            "row_bottom_to_top",
+            "center_to_outside",
+            "outside_to_center",
+        ],
+    )  # type: ignore[assignment]
+    "typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','center_to_outside','outside_to_center']"
+
     wave_easing: easing.EasingFunction = ArgField(
         cmd_name="--wave-easing",
         type_parser=argvalidators.Ease.type_parser,
@@ -162,7 +184,16 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                 EventHandler.Event.SCENE_COMPLETE, wave_scn, EventHandler.Action.ACTIVATE_SCENE, final_scn
             )
             character.animation.activate_scene(wave_scn)
-        for column in self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT):
+        grouping_map = {
+            "column_left_to_right": self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            "column_right_to_left": self.terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            "row_top_to_bottom": self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            "row_bottom_to_top": self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
+            "center_to_outside": self.terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS,
+            "outside_to_center": self.terminal.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
+        }
+
+        for column in self.terminal.get_characters_grouped(grouping=grouping_map[self.config.wave_direction]):
             self.pending_columns.append(column)
 
     def __next__(self) -> str:

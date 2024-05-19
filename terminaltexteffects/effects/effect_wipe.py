@@ -46,6 +46,8 @@ class WipeConfig(ArgsDataClass):
         "diagonal_bottom_left_to_top_right",
         "diagonal_top_right_to_bottom_left",
         "diagonal_bottom_right_to_top_left",
+        "outside_to_center",
+        "center_to_outside",
     ] = ArgField(
         cmd_name="--wipe-direction",
         default="diagonal_bottom_left_to_top_right",
@@ -58,10 +60,12 @@ class WipeConfig(ArgsDataClass):
             "diagonal_bottom_left_to_top_right",
             "diagonal_top_right_to_bottom_left",
             "diagonal_bottom_right_to_top_left",
+            "outside_to_center",
+            "center_to_outside",
         ],
         help="Direction the text will wipe.",
     )  # type: ignore[assignment]
-    "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',] : Direction the text will wipe. Options: column_left_to_right, column_right_to_left, row_top_to_bottom, row_bottom_to_top, diagonal_top_left_to_bottom_right, diagonal_bottom_left_to_top_right, diagonal_top_right_to_bottom_left, diagonal_bottom_right_to_top_left."
+    "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]"
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
@@ -139,6 +143,8 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
             "diagonal_bottom_left_to_top_right": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
             "diagonal_top_right_to_bottom_left": self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
             "diagonal_bottom_right_to_top_left": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+            "center_to_outside": self.terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS,
+            "outside_to_center": self.terminal.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
         }
         for group in self.terminal.get_characters_grouped(sort_map[direction]):
             for character in group:
