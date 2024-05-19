@@ -79,13 +79,14 @@ class ColorShiftConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : Number of frames to display each gradient step."
 
-    gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--gradient-direction",
+    travel_direction: Gradient.Direction = ArgField(
+        cmd_name="--travel-direction",
         default=Gradient.Direction.HORIZONTAL,
         type_parser=argvalidators.GradientDirection.type_parser,
-        help="Direction of the gradient (vertical, horizontal, diagonal, center).",
+        metavar=argvalidators.GradientDirection.METAVAR,
+        help="Direction the gradient travels across the canvas.",
     )  # type: ignore[assignment]
-    "Gradient.Direction : Direction of the gradient across the canvas."
+    "Gradient.Direction : Direction the gradient travels across the canvas."
 
     travel: bool = ArgField(
         cmd_name="--travel",
@@ -136,15 +137,15 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
             self.terminal.set_character_visibility(character, True)
             gradient_scn = character.animation.new_scene(id="gradient")
             if self.config.travel:
-                if self.config.gradient_direction == Gradient.Direction.HORIZONTAL:
+                if self.config.travel_direction == Gradient.Direction.HORIZONTAL:
                     direction_index = character.input_coord.column / self.terminal.canvas.right
-                elif self.config.gradient_direction == Gradient.Direction.VERTICAL:
+                elif self.config.travel_direction == Gradient.Direction.VERTICAL:
                     direction_index = character.input_coord.row / self.terminal.canvas.top
-                elif self.config.gradient_direction == Gradient.Direction.DIAGONAL:
+                elif self.config.travel_direction == Gradient.Direction.DIAGONAL:
                     direction_index = (character.input_coord.row + character.input_coord.column) / (
                         self.terminal.canvas.right + self.terminal.canvas.top
                     )
-                elif self.config.gradient_direction == Gradient.Direction.RADIAL:
+                elif self.config.travel_direction == Gradient.Direction.RADIAL:
                     direction_index = geometry.find_normalized_distance_from_center(
                         self.terminal.canvas.top, self.terminal.canvas.right, character.input_coord
                     )
