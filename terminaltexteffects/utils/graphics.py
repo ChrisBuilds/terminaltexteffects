@@ -120,13 +120,15 @@ class Gradient:
         CENTER = auto()
         DIAGONAL = auto()
 
-    def __init__(self, *stops: Color, steps: int | tuple[int, ...] = 1) -> None:
+    def __init__(self, *stops: Color, steps: int | tuple[int, ...] = 1, loop=False) -> None:
         """
         Initializes a Graphics object.
 
         Args:
             stops (Color): One ore more variables of type Color representing the color stops.
-            steps (int | tuple[int, ...], optional): Number of steps or a tuple of step values for generating the spectrum. Defaults to 1.
+            steps (int | tuple[int, ...], optional): Number of steps or a tuple of step values for generating the
+            spectrum. Defaults to 1.
+            loop (bool, optional): Loop the gradient. This causes the final gradient color to transition back to the first gradient color. Defaults to False.
 
         Raises:
             ValueError: If no color stops are provided.
@@ -134,6 +136,7 @@ class Gradient:
         Attributes:
             _stops (tuple[Color]): Tuple of Color objects representing the color stops.
             _steps (int | tuple[int, ...]): Number of steps or a tuple of step values for generating the spectrum.
+            _loop (bool): Loop the gradient. This causes the final gradient color to transition back to the first gradient color.
             spectrum (list[str]): List of strings representing the generated spectrum.
             _index (int): Current index of the spectrum.
 
@@ -144,6 +147,7 @@ class Gradient:
         if len(self._stops) < 1:
             raise ValueError("At least one stop must be provided.")
         self._steps = steps
+        self._loop = loop
         self.spectrum: list[Color] = self._generate(self._steps)
         self._index: int = 0
 
@@ -191,6 +195,8 @@ class Gradient:
             for _ in range(steps[0]):
                 spectrum.append(color)
             return spectrum
+        if self._loop:
+            self._stops = self._stops + (self._stops[0],)
         color_pairs = list(itertools.pairwise(self._stops))
         steps = steps[: len(color_pairs)]
         color_pair: tuple[Color, Color]
