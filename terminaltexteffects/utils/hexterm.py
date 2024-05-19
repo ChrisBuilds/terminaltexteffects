@@ -265,6 +265,8 @@ xterm_to_hex_map = {
     255: "#eeeeee",
 }
 
+xterm_to_rgb_map = {k: (int(v[1:3], 16), int(v[3:5], 16), int(v[5:7], 16)) for k, v in xterm_to_hex_map.items()}
+
 
 def hex_to_xterm(hex_color: str) -> int:
     """Convert RGB Hex colors to their closest XTerm-256 color.
@@ -274,29 +276,21 @@ def hex_to_xterm(hex_color: str) -> int:
 
     Returns:
         int: (0-255) XTerm-256 color code
-
     """
+    # Strip '#' if present and convert hex to RGB
     color_string = hex_color.strip("#")
-    closest = sorted(
-        list(
-            (
-                xterm_color,
-                sum(
-                    [
-                        abs(x[0] - x[1])
-                        for x in zip(
-                            [int(color_string[i : i + 2], 16) for i in range(0, 6, 2)],
-                            [int(xterm_hex.strip("#")[i : i + 2], 16) for i in range(0, 6, 2)],
-                        )
-                    ]
-                )
-                / 3,
-            )
-            for xterm_color, xterm_hex in xterm_to_hex_map.items()
-        ),
-        key=lambda x_diff: x_diff[1],
-    )[0][0]
-    return closest
+    input_rgb = tuple(int(color_string[i : i + 2], 16) for i in range(0, 6, 2))
+
+    # Compute the differences between input color and each xterm color
+    min_diff = float("inf")
+
+    for xterm_color, xterm_rgb in xterm_to_rgb_map.items():
+        diff = sum(abs(input_rgb[i] - xterm_rgb[i]) for i in range(3)) / 3
+        if diff < min_diff:
+            min_diff = diff
+            closest_color = xterm_color
+
+    return closest_color
 
 
 def xterm_to_hex(xterm_color: int) -> str:
