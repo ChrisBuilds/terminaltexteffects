@@ -54,7 +54,6 @@ class ColorShiftConfig(ArgsDataClass):
             Color("487de7"),
             Color("4b369d"),
             Color("70369d"),
-            Color("e81416"),
         ),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the gradient.",
@@ -95,6 +94,13 @@ class ColorShiftConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "bool : Display the gradient as a traveling wave."
 
+    loop_gradient: bool = ArgField(
+        cmd_name="--loop-gradient",
+        action="store_true",
+        help="Loop the gradient. This causes the final gradient color to transition back to the first gradient color.",
+    )  # type: ignore[assignment]
+    "bool : Loop the gradient. This causes the final gradient color to transition back to the first gradient color."
+
     cycles: int = ArgField(
         cmd_name="--cycles",
         type_parser=argvalidators.PositiveInt.type_parser,
@@ -123,7 +129,9 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
             character.animation.activate_scene(character.animation.query_scene("gradient"))
 
     def build(self) -> None:
-        gradient = Gradient(*self.config.gradient_stops, steps=self.config.gradient_steps)
+        gradient = Gradient(
+            *self.config.gradient_stops, steps=self.config.gradient_steps, loop=self.config.loop_gradient
+        )
         for character in self.terminal.get_characters():
             self.terminal.set_character_visibility(character, True)
             gradient_scn = character.animation.new_scene(id="gradient")
