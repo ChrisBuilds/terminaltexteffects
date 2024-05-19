@@ -2394,7 +2394,7 @@
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Number of frames to display each gradient step.</p>
+              <p>Number of frames to display each gradient step. Increase to slow down the gradient animation.</p>
             </div>
           </td>
         </tr>
@@ -2531,7 +2531,7 @@
 </span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">        wipe_direction (typing.Literal[&quot;column_left_to_right&quot;,&quot;row_top_to_bottom&quot;,&quot;row_bottom_to_top&quot;,&quot;diagonal_top_left_to_bottom_right&quot;,&quot;diagonal_bottom_left_to_top_right&quot;,&quot;diagonal_top_right_to_bottom_left&quot;,&quot;diagonal_bottom_right_to_top_left&quot;,]): Direction the text will wipe.</span>
 </span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the wipe gradient.</span>
 </span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n &gt; 0.</span>
-</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">        final_gradient_frames (int): Number of frames to display each gradient step.</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.</span>
 </span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        final_gradient_direction (Gradient.Direction): Direction of the final gradient.</span>
 </span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        wipe_delay (int): Number of frames to wait before adding the next character group. Increase, to slow down the effect. Valid values are n &gt;= 0.&quot;&quot;&quot;</span>
 </span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a>
@@ -2578,16 +2578,16 @@
 </span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
 </span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="s2">&quot;tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span>
+</span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="s2">&quot;tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation.&quot;</span>
 </span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>
 </span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a>    <span class="n">final_gradient_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
 </span><span id="__span-0-87"><a id="__codelineno-0-87" name="__codelineno-0-87"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-frames&quot;</span><span class="p">,</span>
 </span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a>        <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span>
 </span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a>        <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
 </span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a>        <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span>
-</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of frames to display each gradient step.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of frames to display each gradient step. Increase to slow down the gradient animation.&quot;</span><span class="p">,</span>
 </span><span id="__span-0-92"><a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-</span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="s2">&quot;int : Number of frames to display each gradient step.&quot;</span>
+</span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="s2">&quot;int : Number of frames to display each gradient step. Increase to slow down the gradient animation.&quot;</span>
 </span><span id="__span-0-94"><a id="__codelineno-0-94" name="__codelineno-0-94"></a>
 </span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="n">final_gradient_direction</span><span class="p">:</span> <span class="n">Gradient</span><span class="o">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span>
 </span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">cmd_name</span><span class="o">=</span><span class="s2">&quot;--final-gradient-direction&quot;</span><span class="p">,</span>
@@ -2650,7 +2650,7 @@
 
 
 <h3 id="terminaltexteffects.effects.effect_wipe.WipeConfig.final_gradient_frames" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">final_gradient_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-frames&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Number of frames to display each gradient step.&#39;</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">final_gradient_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ArgField</span><span class="p">(</span><span class="n">cmd_name</span><span class="o">=</span><span class="s1">&#39;--final-gradient-frames&#39;</span><span class="p">,</span> <span class="n">type_parser</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">type_parser</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="n">argvalidators</span><span class="o">.</span><span class="n">PositiveInt</span><span class="o">.</span><span class="n">METAVAR</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Number of frames to display each gradient step. Increase to slow down the gradient animation.&#39;</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2662,7 +2662,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>int : Number of frames to display each gradient step.</p>
+      <p>int : Number of frames to display each gradient step. Increase to slow down the gradient animation.</p>
   </div>
 
 </div>
@@ -2684,7 +2684,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>tuple[int, ...] | int : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.</p>
+      <p>tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation.</p>
   </div>
 
 </div>
