@@ -29,3 +29,9 @@ TTE can be used as a system application or as a Python library. To get started, 
 TTE includes a growing library of built-in effects. Visit the showroom to see examples of each effect.
 
 [Effects Showroom](./showroom.md){ .md-button }
+
+## Library Cookbook
+
+Check out the cookbook to see interesting examples using the TTE library.
+
+[Library Cookbook](./cookbook.md){ .md-button }

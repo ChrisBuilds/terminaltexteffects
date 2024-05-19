@@ -45,6 +45,7 @@ nav:
   #   - effectguide/effectguide.md
   #   - effectguide/effectguide_lesson0.md
   - Effects Showroom: showroom.md
+  - Library Cookbook: cookbook.md
   - Reference:
     - Engine:
       - engine/baseeffect.md
