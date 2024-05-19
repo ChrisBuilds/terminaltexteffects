@@ -1,5 +1,5 @@
-# OutputArea
+# Canvas
 
 *Module*: `terminaltexteffects.engine.terminal`
 
-::: terminaltexteffects.engine.terminal.OutputArea
+::: terminaltexteffects.engine.terminal.Canvas

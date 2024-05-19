@@ -292,7 +292,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
     def glitch_wave(self) -> None:
         if not self.active_glitch_wave_top:
             if self.terminal.output_area.top >= 3:
-                # choose a wave top index in the top half of the output area or at least 3 rows up
+                # choose a wave top index in the top half of the canvas or at least 3 rows up
                 self.active_glitch_wave_top = random.randint(
                     max((3, round(self.terminal.output_area.top * 0.5))), self.terminal.output_area.top
                 )
@@ -313,7 +313,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 else:
                     wave_top_delta = 0
                 self.active_glitch_wave_top += wave_top_delta
-                # clamp wave top to output area
+                # clamp wave top to canvas
                 self.active_glitch_wave_top = max(2, min(self.active_glitch_wave_top, self.terminal.output_area.top))
             # get the lines for the wave
             new_wave_lines: list[VHSTapeIterator.Line] = []

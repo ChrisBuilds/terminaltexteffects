@@ -1,8 +1,8 @@
 """
-Decodes characters into their binary form. Characters travel from outside the output area towards their input coordinate, moving at right angles.
+Decodes characters into their binary form. Characters travel from outside the canvas towards their input coordinate, moving at right angles.
 
 Classes:
-    BinaryPath: Decodes characters into their binary form. Characters travel from outside the output area towards their input coordinate, moving at right angles.
+    BinaryPath: Decodes characters into their binary form. Characters travel from outside the canvas towards their input coordinate, moving at right angles.
     BinaryPathConfig: Configuration for the BinaryPath effect.
     BinaryPathIterator: Effect iterator for the BinaryPath effect. Does not normally need to be called directly.
 
@@ -286,7 +286,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
 
 
 class BinaryPath(BaseEffect):
-    """Decodes characters into their binary form. Characters travel from outside the output area towards their input coordinate, moving at right angles.
+    """Decodes characters into their binary form. Characters travel from outside the canvas towards their input coordinate, moving at right angles.
 
     Attributes:
         effect_config (BinaryPathConfig): Configuration for the BinaryPath effect.

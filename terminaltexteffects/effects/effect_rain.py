@@ -1,7 +1,7 @@
-"""Rain characters from the top of the output area.
+"""Rain characters from the top of the canvas.
 
 Classes:
-    Rain: Rain characters from the top of the output area.
+    Rain: Rain characters from the top of the canvas.
     RainConfig: Configuration for the Rain effect.
     RainIterator: Iterator for the Rain effect. Does not normally need to be called directly.
 
@@ -26,8 +26,8 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="rain",
-    help="Rain characters from the top of the output area.",
-    description="rain | Rain characters from the top of the output area.",
+    help="Rain characters from the top of the canvas.",
+    description="rain | Rain characters from the top of the canvas.",
     epilog=f"""{argvalidators.EASING_EPILOG} 
 Example: terminaltexteffects rain --rain-symbols o . , "*" "|" --rain-colors 00315C 004C8F 0075DB 3F91D9 78B9F2 9AC8F5 B8D8F8 E3EFFC --final-gradient-stops 488bff b2e7de 57eaf7 --final-gradient-steps 12 --movement-speed 0.1-0.2 --easing IN_QUART""",
 )
@@ -190,7 +190,7 @@ class RainIterator(BaseEffectIterator[RainConfig]):
 
 
 class Rain(BaseEffect[RainConfig]):
-    """Rain characters from the top of the output area.
+    """Rain characters from the top of the canvas.
 
     Attributes:
         effect_config (PourConfig): Configuration for the effect.

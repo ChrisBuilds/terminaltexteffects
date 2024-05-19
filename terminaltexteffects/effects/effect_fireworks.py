@@ -33,7 +33,7 @@ class FireworksConfig(ArgsDataClass):
     """Configuration for the Fireworks effect.
 
     Attributes:
-        explode_anywhere (bool): If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text.
+        explode_anywhere (bool): If set, fireworks explode anywhere in the canvas. Otherwise, fireworks explode above highest settled row of text.
         firework_colors (tuple[Color, ...]): Tuple of colors from which firework colors will be randomly selected.
         firework_symbol (str): Symbol to use for the firework shell.
         firework_volume (float): Percent of total characters in each firework shell. Valid values are 0 < n <= 1.
@@ -41,15 +41,15 @@ class FireworksConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         launch_delay (int): Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. Valid values are n >= 0.
-        explode_distance (float): Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width. Valid values are 0 < n <= 1."""
+        explode_distance (float): Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width. Valid values are 0 < n <= 1."""
 
     explode_anywhere: bool = ArgField(
         cmd_name="--explode-anywhere",
         action="store_true",
         default=False,
-        help="If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text.",
+        help="If set, fireworks explode anywhere in the canvas. Otherwise, fireworks explode above highest settled row of text.",
     )  # type: ignore[assignment]
-    "bool : If set, fireworks explode anywhere in the output area. Otherwise, fireworks explode above highest settled row of text."
+    "bool : If set, fireworks explode anywhere in the canvas. Otherwise, fireworks explode above highest settled row of text."
 
     firework_colors: tuple[Color, ...] = ArgField(
         cmd_name="--firework-colors",
@@ -122,9 +122,9 @@ class FireworksConfig(ArgsDataClass):
         default=0.1,
         type_parser=argvalidators.Ratio.type_parser,
         metavar=argvalidators.Ratio.METAVAR,
-        help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width.",
+        help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width.",
     )  # type: ignore[assignment]
-    "float : Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total output area width."
+    "float : Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width."
 
     @classmethod
     def get_effect_class(cls):

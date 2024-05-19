@@ -2,7 +2,7 @@
 
 Classes:
     TerminalConfig: Configuration for the terminal.
-    OutputArea: Represents the output area in the terminal. The output area is the area defined by the dimensions of the input data, unless specified otherwise in the TerminalConfig.
+    Canvas: Represents the canvas in the terminal. The canvas is the area defined by the dimensions of the input data, unless specified otherwise in the TerminalConfig.
     Terminal: A class for managing the terminal state and output.
 """
 
@@ -28,11 +28,11 @@ class TerminalConfig(ArgsDataClass):
         tab_width (int): Number of spaces to use for a tab character.
         xterm_colors (bool): Convert any colors specified in RBG hex to the closest XTerm-256 color.
         no_color (bool): Disable all colors in the effect.
-        wrap_text (bool): Wrap text wider than the output area width.
+        wrap_text (bool): Wrap text wider than the canvas width.
         frame_rate (float): Target frame rate for the animation.
         terminal_width (int): Terminal width, if set to 0 the terminal width is detected automatically.
         terminal_height (int): Terminal height, if set to 0 the terminal height is detected automatically.
-        ignore_terminal_dimensions (bool): Ignore the terminal dimensions and use the input data dimensions for the output area.
+        ignore_terminal_dimensions (bool): Ignore the terminal dimensions and use the input data dimensions for the canvas.
     """
 
     tab_width: int = ArgField(
@@ -61,9 +61,9 @@ class TerminalConfig(ArgsDataClass):
     "bool : Disable all colors in the effect."
 
     wrap_text: int = ArgField(
-        cmd_name="--wrap-text", default=False, action="store_true", help="Wrap text wider than the output area width."
+        cmd_name="--wrap-text", default=False, action="store_true", help="Wrap text wider than the canvas width."
     )  # type: ignore[assignment]
-    "bool : Wrap text wider than the output area width."
+    "bool : Wrap text wider than the canvas width."
 
     frame_rate: float = ArgField(
         cmd_name="--frame-rate",
@@ -96,35 +96,35 @@ class TerminalConfig(ArgsDataClass):
         cmd_name=["--ignore-terminal-dimensions"],
         default=False,
         action="store_true",
-        help="Ignore the terminal dimensions and use the input data dimensions for the output area.",
+        help="Ignore the terminal dimensions and use the input data dimensions for the canvas.",
     )  # type: ignore[assignment]
-    "bool : Ignore the terminal dimensions and use the input data dimensions for the output area."
+    "bool : Ignore the terminal dimensions and use the input data dimensions for the canvas."
 
 
 @dataclass
-class OutputArea:
-    """Represents the output area in the terminal. The output area is the area defined
+class Canvas:
+    """Represents the canvas in the terminal. The canvas is the area defined
     by the dimensions of the input data, unless specified otherwise in the TerminalConfig.
 
-    This class provides methods for working with the output area, such as checking if a coordinate is within the output area,
-    getting random coordinates within the output area, and getting a random coordinate outside the output area.
+    This class provides methods for working with the canvas, such as checking if a coordinate is within the canvas,
+    getting random coordinates within the canvas, and getting a random coordinate outside the canvas.
 
     Args:
-        top (int): top row of the output area
-        right (int): right column of the output area
-        bottom (int): bottom row of the output area. Defaults to 1.
-        left (int): left column of the output area. Defaults to 1.
+        top (int): top row of the canvas
+        right (int): right column of the canvas
+        bottom (int): bottom row of the canvas. Defaults to 1.
+        left (int): left column of the canvas. Defaults to 1.
 
     Attributes:
-        center_row (int): row of the center of the output area
-        center_column (int): column of the center of the output area
-        center (Coord): coordinate of the center of the output area
+        center_row (int): row of the center of the canvas
+        center_column (int): column of the center of the canvas
+        center (Coord): coordinate of the center of the canvas
 
     Methods:
-        coord_is_in_output_area(coord: Coord) -> bool: Checks whether a coordinate is within the output area.
-        random_column() -> int: Get a random column position within the output area.
-        random_row() -> int: Get a random row position within the output area.
-        random_coord(outside_scope=False) -> Coord: Get a random coordinate within or outside the output area.
+        coord_is_in_output_area(coord: Coord) -> bool: Checks whether a coordinate is within the canvas.
+        random_column() -> int: Get a random column position within the canvas.
+        random_row() -> int: Get a random row position within the canvas.
+        random_coord(outside_scope=False) -> Coord: Get a random coordinate within or outside the canvas.
 
     """
 
@@ -139,38 +139,38 @@ class OutputArea:
         self.center = Coord(self.center_column, self.center_row)
 
     def coord_is_in_output_area(self, coord: Coord) -> bool:
-        """Checks whether a coordinate is within the output area.
+        """Checks whether a coordinate is within the canvas.
 
         Args:
             coord (Coord): coordinate to check
 
         Returns:
-            bool: whether the coordinate is within the output area
+            bool: whether the coordinate is within the canvas
         """
         return self.left <= coord.column <= self.right and self.bottom <= coord.row <= self.top
 
     def random_column(self) -> int:
-        """Get a random column position. Position is within the output area.
+        """Get a random column position. Position is within the canvas.
 
         Returns:
             int: a random column position (1 <= x <= output_area.right)"""
         return random.randint(1, self.right)
 
     def random_row(self) -> int:
-        """Get a random row position. Position is within the output area.
+        """Get a random row position. Position is within the canvas.
 
         Returns:
             int: a random row position (1 <= x <= terminal.output_area.top)"""
         return random.randint(1, self.top)
 
     def random_coord(self, outside_scope=False) -> Coord:
-        """Get a random coordinate. Coordinate is within the output area unless outside_scope is True.
+        """Get a random coordinate. Coordinate is within the canvas unless outside_scope is True.
 
         Args:
-            outside_scope (bool, optional): whether the coordinate should fall outside the output area. Defaults to False.
+            outside_scope (bool, optional): whether the coordinate should fall outside the canvas. Defaults to False.
 
         Returns:
-            Coord: a random coordinate . Coordinate is within the output area unless outside_scope is True."""
+            Coord: a random coordinate . Coordinate is within the canvas unless outside_scope is True."""
         if outside_scope is True:
             random_coord_above = Coord(self.random_column(), self.top + 1)
             random_coord_below = Coord(self.random_column(), -1)
@@ -186,12 +186,12 @@ class Terminal:
 
     Attributes:
         config (TerminalConfig): Configuration for the terminal.
-        output_area (OutputArea): The output area in the terminal.
+        output_area (Canvas): The canvas in the terminal.
         character_by_input_coord (dict[Coord, EffectCharacter]): A dictionary of characters by their input coordinates.
 
     Methods:
         get_piped_input() -> str: Gets the piped input from stdin.
-        prep_outputarea(): Prepares the terminal for the effect by adding empty lines and hiding the cursor.
+        prep_canvas(): Prepares the terminal for the effect by adding empty lines and hiding the cursor.
         restore_cursor(): Restores the cursor visibility.
         get_characters(input_characters: bool = True, fill_chars: bool = False, added_chars: bool = False, sort: CharacterSort = CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT) -> list[EffectCharacter]: Get a list of all EffectCharacters in the terminal with an optional sort.
         get_characters_grouped(grouping: CharacterGroup = CharacterGroup.ROW_TOP_TO_BOTTOM, input_characters: bool = True, fill_chars: bool = False, added_chars: bool = False) -> list[list[EffectCharacter]]: Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping.
@@ -281,7 +281,7 @@ class Terminal:
         self._added_characters: list[EffectCharacter] = []
         self._input_width = max([character.input_coord.column for character in self._input_characters])
         self._input_height = max([character.input_coord.row for character in self._input_characters])
-        self.output_area = OutputArea(min(max(self._height, 1), self._input_height), self._input_width)
+        self.output_area = Canvas(min(max(self._height, 1), self._input_height), self._input_width)
         self._input_characters = [
             character
             for character in self._input_characters
@@ -378,7 +378,7 @@ class Terminal:
         return input_characters
 
     def _make_fill_characters(self) -> list[EffectCharacter]:
-        """Creates a list of characters to fill the empty spaces in the output area. The characters input_symbol is a space.
+        """Creates a list of characters to fill the empty spaces in the canvas. The characters input_symbol is a space.
         The fill characters are added to the character_by_input_coord dictionary.
 
         Returns:
@@ -624,7 +624,7 @@ class Terminal:
         output_string = "\n".join(self.terminal_state[::-1])
         return output_string
 
-    def prep_outputarea(self) -> None:
+    def prep_canvas(self) -> None:
         """Prepares the terminal for the effect by adding empty lines and hiding the cursor."""
         sys.stdout.write(ansitools.HIDE_CURSOR())
         sys.stdout.write(("\n" * (self.output_area.top)))
@@ -668,6 +668,6 @@ class Terminal:
         self._last_time_printed = time.time()
 
     def move_cursor_to_top(self):
-        """Restores the cursor position to the top of the output area."""
+        """Restores the cursor position to the top of the canvas."""
         sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
         sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.output_area.top))

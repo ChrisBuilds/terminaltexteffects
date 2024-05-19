@@ -1,7 +1,7 @@
-"""Text expands in a single row or column in the middle of the output area then out.
+"""Text expands in a single row or column in the middle of the canvas then out.
 
 Classes:
-    MiddleOut: Text expands in a single row or column in the middle of the output area then out.
+    MiddleOut: Text expands in a single row or column in the middle of the canvas then out.
     MiddleOutConfig: Configuration for the Middleout effect.
     MiddleOutIterator: Iterates over the effect's frames. Does not normally need to be called directly.
 
@@ -25,8 +25,8 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="middleout",
-    help="Text expands in a single row or column in the middle of the output area then out.",
-    description="middleout | Text expands in a single row or column in the middle of the output area then out.",
+    help="Text expands in a single row or column in the middle of the canvas then out.",
+    description="middleout | Text expands in a single row or column in the middle of the canvas then out.",
     epilog=f"""{argvalidators.EASING_EPILOG}
 Example: terminaltexteffects middleout --starting-color 8A008A --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical --center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE --full-easing IN_OUT_SINE""",
 )
@@ -35,7 +35,7 @@ class MiddleOutConfig(ArgsDataClass):
     """Configuration for the Middleout effect.
 
     Attributes:
-        starting_color (Color): Color for the initial text in the center of the output area.
+        starting_color (Color): Color for the initial text in the center of the canvas.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
@@ -50,9 +50,9 @@ class MiddleOutConfig(ArgsDataClass):
         type_parser=argvalidators.ColorArg.type_parser,
         default=Color("ffffff"),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Color for the initial text in the center of the output area.",
+        help="Color for the initial text in the center of the canvas.",
     )  # type: ignore[assignment]
-    """Color : Color for the initial text in the center of the output area."""
+    """Color : Color for the initial text in the center of the canvas."""
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
@@ -188,7 +188,7 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
 
 
 class MiddleOut(BaseEffect[MiddleOutConfig]):
-    """Text expands in a single row or column in the middle of the output area then out.
+    """Text expands in a single row or column in the middle of the canvas then out.
 
     Attributes:
         effect_config (MiddleOutConfig): Configuration for the effect.

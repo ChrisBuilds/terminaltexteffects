@@ -23,7 +23,7 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 
 * Removed unnecessary write calls for cursor positioning on every frame.
 * Separated functionality related to cursor positioning and frame timing out of `Terminal.print()` and into
-`Terminal.enforce_framerate()`, `Terminal.prep_outputarea()` and `Terminal.move_cursor_to_top()`.
+`Terminal.enforce_framerate()`, `Terminal.prep_canvas()` and `Terminal.move_cursor_to_top()`.
 
 ### Bug Fixes (0.9.3)
 
@@ -31,7 +31,7 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 
 #### Engine Fixes (0.9.3)
 
-* Fixed the output area of an effect being 1 row less than specified via the `Terminal.terminal_height` attribute. This
+* Fixed the canvas of an effect being 1 row less than specified via the `Terminal.terminal_height` attribute. This
   was caused by mixing use of `print()` and `sys.stdout.write()`.
 
 ---
@@ -109,7 +109,7 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 
 * Library support: TTE effects are now importable. All effects are iterators that return strings for each frame of the output. See README for more information.
 * Terminal: New terminal argument (--terminal-dimensions) allows specification of the terminal dimensions without relying on auto-detection. Especially useful in cases where TTE is being used as a library in non-terminal or TUI contexts.
-* Terminal: New terminal argument (--ignore-terminal-dimensions) causes the output area dimensions to match the input data dimensions without regard to the terminal.
+* Terminal: New terminal argument (--ignore-terminal-dimensions) causes the canvas dimensions to match the input data dimensions without regard to the terminal.
 
 ### Changes (0.8.0)
 
@@ -152,9 +152,9 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 
 #### New Effects (0.7.0)
 
-* Beams. Light beams travel across the output area and illuminate the characters behind them.
+* Beams. Light beams travel across the canvas and illuminate the characters behind them.
 * Overflow. The input text is scrambled by row and repeated randomly, scrolling up the terminal, before eventually displaying in the correct order.
-* OrbitingVolley. Characters fire from launcher which orbit output area.
+* OrbitingVolley. Characters fire from launcher which orbit canvas.
 * Spotlights. Spotlights search the text area, illuminating characters, before converging in the center and expanding.
 
 #### New Engine Features (0.7.0)
@@ -165,7 +165,7 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 * graphics.Gradient.build_coordinate_color_mapping() will map gradient colors to coordinates in the terminal and supports a Gradient.Direction argument to enable gradients in the following directions: horizontal, vertical, diagonal, center
 * graphics.Gradient, if printed, will show a colored spectrum and the description of its stops and steps.
 * The Scene class has a new method: apply_gradient_to_symbols(). This method will iterate over a list of symbols and apply the colors from a gradient to the symbols. A frame with the symbol will be added for each color starting from the last color used in the previous symbol, up to the the index determined by the ratio of the current symbol's index in the symbols list to the total length of the list. This method allows scenes to automatically create frames from a list of symbols and gradient of arbitrary length while ensuring every symbol and color is displayed.
-* On instatiation, Terminal creates EffectCharacters for every coordinate in the output area that does not have an input character. These EffectCharacters have the symbol " " and are stored in Terminal._fill_characters as well as added to Terminal.character_by_input_coord.
+* On instatiation, Terminal creates EffectCharacters for every coordinate in the canvas that does not have an input character. These EffectCharacters have the symbol " " and are stored in Terminal._fill_characters as well as added to Terminal.character_by_input_coord.
 * argvalidators.IntRange will validate a range specified as "int-int" and return a tuple[int,int].
 * argvalidators.FloatRange will validate a range of floats specified as "float-float" and return a tuple[float, float].
 * character.animation.set_appearance(symbol, color) will set the character symbol and color directly. If a Scene is active, the appearance will be overwritten with the Scene frame on the next call to step_animation(). This method is intended for the occasion where a full scene isn't needed, or the appearance needs to be set based on conditions not compatible with Scenes or the EventHandler. For example, setting the color based on the terminal row.
@@ -190,7 +190,7 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 * Rain effect supports character specification for rain drops and movement speed range for the rain drop falling speed.
 * Print effect uses the row final gradient color for the print head color.
 * RandomSequence effect accepts a starting color and a speed.
-* Rings effect prepares faster. Ring colors are set in order of appearance in the ring-colors argument. Ring spin speed is configurable. Rings with less than 25% visible characters based on radius are no longer generated. Ring gap is set as a percent of the smallest output area dimension.
+* Rings effect prepares faster. Ring colors are set in order of appearance in the ring-colors argument. Ring spin speed is configurable. Rings with less than 25% visible characters based on radius are no longer generated. Ring gap is set as a percent of the smallest canvas dimension.
 * Scattered effect gradient progresses from the first color to the row color.
 * Spray effect spray-volume is specified as a percent of the total number of characters and movement speed is a range.
 * Swarm effect swarm focus points algorithm changed to reduce long distances between points.
@@ -288,12 +288,12 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 
 * New effect, Vhstape. Lines of characters glitch left and right and lose detail like an old VHS tape.
 * New effect, Crumble. Characters lose color and fall as dust before being vacuumed up and rebuilt.
-* New effect, Rings. Characters are dispersed throughout the output area and form into spinning rings.
+* New effect, Rings. Characters are dispersed throughout the canvas and form into spinning rings.
 * motion.Motion.chain_paths(list[Paths]) will automatically register Paths with the EventHandler to create
    a chain of paths. Looping is supported.
 * motion.Motion.find_coords_in_rect() will return a random selection of coordinates within a rectangular area. This is faster than using
    find_coords_in_circle() and should be used when the shape of the search area isn't important.
-* Terminal.OutputArea.coord_in_output_area() can be used to determine if a Coord is in the output area.
+* Terminal.Canvas.coord_in_output_area() can be used to determine if a Coord is in the canvas.
 * Paths have replaced Waypoints as the motion target specification object. Paths group Waypoints together and allow for easing
    motion and animations across an arbitrary number of Waypoints. Single Waypoint Paths are supported and function the same as
    Waypoints did previously. Paths can be looped with the loop argument.
@@ -330,7 +330,7 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 
 ### Changes (0.4.3)
 
-* blackhole radius is based on the output area size, not the input text size.
+* blackhole radius is based on the canvas size, not the input text size.
 
 ## 0.4.2
 
@@ -352,10 +352,10 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 * Waves effect. A wave animation is played over the characters. Wave colors and final colors are configurable.
 * Blackhole effect. Characters spawn scattered as a field of stars. A blackhole forms and consumes the stars then explodes the characters across
    the screen. Characters then 'cool' and ease into position.
-* Swarm effect. Characters a separated into swarms and fly around the output area before landing in position.
+* Swarm effect. Characters a separated into swarms and fly around the canvas before landing in position.
 * Animations support easing functions. Easing functions are applied to Scenes using Scene.ease = easing_function.
-* OutputArea has a center attribute that is the center Coord of the output area.
-* Terminal has a random_coord() method which returns a random coordinate. Can specify outside the output area.
+* Canvas has a center attribute that is the center Coord of the canvas.
+* Terminal has a random_coord() method which returns a random coordinate. Can specify outside the canvas.
 
 ### Changes (0.4.0)
 
@@ -380,16 +380,16 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 
 ### New Features (0.3.1)
 
-* Bouncyballs effect. Balls drop from the top of the output area and bounce before
+* Bouncyballs effect. Balls drop from the top of the canvas and bounce before
   settling into position. A gradient is used to transition to the final color after the
   ball has landed. Random colors are used for balls unless specified.
 
-* Unstable effect. Spawn characters jumbled, explode to the edge of the output area,
+* Unstable effect. Spawn characters jumbled, explode to the edge of the canvas,
   then reassemble them in the correct layout.
 
 * Bubble effect. Characters are formed into bubbles and fall down the screen before popping.
 
-* Middleout effect. Characters start as a single character in the center of the output area. A row or column
+* Middleout effect. Characters start as a single character in the center of the canvas. A row or column
   is expanded in the center of the screen, then the entire output is expanded from this row/column. Expansion
   from row/column is determined by the --expand-direction argument.
 
@@ -421,7 +421,7 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 * Terminal maintains an input_coord tuple[row, col] -> EffectCharacter map called character_by_input_coord.
 * The terminal cursor is now hidden during the effect.
 * The find_points_on_circle method in the motion module is now a static method.
-* Terminal.OutputArea has center_row and center_column attributes.
+* Terminal.Canvas has center_row and center_column attributes.
 * Added layers to effects.
 
 ### Bug Fixes (0.3.1)

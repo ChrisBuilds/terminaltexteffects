@@ -1,7 +1,7 @@
-"""Characters fall from the top of the output area as bouncy balls before settling into place.
+"""Characters fall from the top of the canvas as bouncy balls before settling into place.
 
 Classes:
-    BouncyBalls: Characters fall from the top of the output area as bouncy balls before settling into place.
+    BouncyBalls: Characters fall from the top of the canvas as bouncy balls before settling into place.
     BouncyBallsConfig: Configuration for the BouncyBalls effect.
     BouncyBallsIterator: Iterator for the BouncyBalls effect. Does not normally need to be called directly.
 
@@ -26,8 +26,8 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="bouncyballs",
-    help="Characters are bouncy balls falling from the top of the output area.",
-    description="bouncyballs | Characters are bouncy balls falling from the top of the output area.",
+    help="Characters are bouncy balls falling from the top of the canvas.",
+    description="bouncyballs | Characters are bouncy balls falling from the top of the canvas.",
     epilog=f"""{argvalidators.EASING_EPILOG}
 Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols o "*" O 0 . --final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal --ball-delay 7 --movement-speed 0.25 --easing OUT_BOUNCE""",
 )
@@ -193,7 +193,7 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
 
 
 class BouncyBalls(BaseEffect[BouncyBallsConfig]):
-    """Characters fall from the top of the output area as bouncy balls before settling into place.
+    """Characters fall from the top of the canvas as bouncy balls before settling into place.
 
     Attributes:
         effect_config (BouncyBallsConfig): Configuration for the effect.

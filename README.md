@@ -76,7 +76,7 @@ options:
                         Number of spaces to use for a tab character. (default: 4)
   --xterm-colors        Convert any colors specified in RBG hex to the closest XTerm-256 color. (default: False)
   --no-color            Disable all colors in the effect. (default: False)
-  --wrap-text           Wrap text wider than the output area width. (default: False)
+  --wrap-text           Wrap text wider than the canvas width. (default: False)
   --frame-rate FRAME_RATE
                         Target frame rate for the animation. (default: 100)
   --terminal-width TERMINAL_WIDTH
@@ -84,39 +84,39 @@ options:
   --terminal-height TERMINAL_HEIGHT
                         Terminal height, if set to 0 the terminal height is detected automatically. (default: 0)
   --ignore-terminal-dimensions
-                        Ignore the terminal dimensions and use the input data dimensions for the output area. (default: False)
+                        Ignore the terminal dimensions and use the input data dimensions for the canvas. (default: False)
 
 Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
   {beams,binarypath,blackhole,bouncyballs,bubbles,burn,crumble,decrypt,errorcorrect,expand,fireworks,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slide,spotlights,spray,swarm,synthgrid,unstable,verticalslice,vhstape,waves,wipe}
                         Available Effects
-    beams               Create beams which travel over the output area illuminating the characters behind them.
+    beams               Create beams which travel over the canvas illuminating the characters behind them.
     binarypath          Binary representations of each character move through the terminal towards the home coordinate of the character.
     blackhole           Characters are consumed by a black hole and explode outwards.
-    bouncyballs         Characters are bouncy balls falling from the top of the output area.
+    bouncyballs         Characters are bouncy balls falling from the top of the canvas.
     bubbles             Characters are formed into bubbles that float down and pop.
-    burn                Burns vertically in the output area.
+    burn                Burns vertically in the canvas.
     crumble             Characters lose color and crumble into dust, vacuumed up, and reformed.
     decrypt             Display a movie style decryption effect.
     errorcorrect        Some characters start in the wrong position and are corrected in sequence.
     expand              Expands the text from a single point.
     fireworks           Characters launch and explode like fireworks and fall into place.
-    middleout           Text expands in a single row or column in the middle of the output area then out.
-    orbittingvolley     Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.
+    middleout           Text expands in a single row or column in the middle of the canvas then out.
+    orbittingvolley     Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.
     overflow            Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.
     pour                Pours the characters into position from the given direction.
     print               Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
-    rain                Rain characters from the top of the output area.
+    rain                Rain characters from the top of the canvas.
     randomsequence      Prints the input data in a random sequence.
     rings               Characters are dispersed and form into spinning rings.
-    scattered           Text is scattered across the output area and moves into position.
+    scattered           Text is scattered across the canvas and moves into position.
     slide               Slide characters into view from outside the terminal.
     spotlights          Spotlights search the text area, illuminating characters, before converging in the center and expanding.
     spray               Draws the characters spawning at varying rates from a single point.
     swarm               Characters are grouped into swarms and move around the terminal before settling into position.
     synthgrid           Create a grid which fills with characters dissolving into the final text.
-    unstable            Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.
+    unstable            Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the correct layout.
     verticalslice       Slices the input in half vertically and slides it into place from opposite directions.
     vhstape             Lines of characters glitch left and right and lose detail like an old VHS tape.
     waves               Waves travel across the terminal leaving behind the characters.
@@ -266,7 +266,7 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 
 * Removed unnecessary write calls for cursor positioning on every frame.
 * Separated functionality related to cursor positioning and frame timing out of `Terminal.print()` and into
-`Terminal.enforce_framerate()`, `Terminal.prep_outputarea()` and `Terminal.move_cursor_to_top()`.
+`Terminal.enforce_framerate()`, `Terminal.prep_canvas()` and `Terminal.move_cursor_to_top()`.
 
 ### Bug Fixes (0.9.3)
 
@@ -274,7 +274,7 @@ the symbol that will be printed after the effect completes. Set to `''` or `' '`
 
 #### Engine Fixes (0.9.3)
 
-* Fixed the output area of an effect being 1 row less than specified via the `Terminal.terminal_height` attribute. This
+* Fixed the canvas of an effect being 1 row less than specified via the `Terminal.terminal_height` attribute. This
   was caused by mixing use of `print()` and `sys.stdout.write()`.
 
 ---

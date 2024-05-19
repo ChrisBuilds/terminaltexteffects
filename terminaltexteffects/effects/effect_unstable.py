@@ -1,7 +1,7 @@
-"""Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.
+"""Spawns characters jumbled, explodes them to the edge of the canvas, then reassembles them.
 
 Classes:
-    Unstable: Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.
+    Unstable: Spawns characters jumbled, explodes them to the edge of the canvas, then reassembles them.
     UnstableConfig: Configuration for the Unstable effect.
     UnstableIterator: Effect iterator for the Unstable effect. Does not normally need to be called directly.
 """
@@ -25,8 +25,8 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="unstable",
-    help="Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.",
-    description="unstable | Spawn characters jumbled, explode them to the edge of the output area, then reassemble them in the correct layout.",
+    help="Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the correct layout.",
+    description="unstable | Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the correct layout.",
     epilog=f"""{argvalidators.EASING_EPILOG}
     
     Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75""",
@@ -256,7 +256,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
 
 
 class Unstable(BaseEffect[UnstableConfig]):
-    """Spawns characters jumbled, explodes them to the edge of the output area, then reassembles them.
+    """Spawns characters jumbled, explodes them to the edge of the canvas, then reassembles them.
 
     Attributes:
         effect_config (UnstableConfig): Configuration for the effect.

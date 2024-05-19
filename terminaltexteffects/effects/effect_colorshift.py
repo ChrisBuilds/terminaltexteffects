@@ -37,7 +37,7 @@ class ColorShiftConfig(ArgsDataClass):
         gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a
         smoother and longer gradient animation. Valid values are n > 0.
         gradient_frames (int): Number of frames to display each gradient step.
-        gradient_direction (Gradient.Direction): Direction of the gradient across the output area.
+        gradient_direction (Gradient.Direction): Direction of the gradient across the canvas.
         travel (bool): Display the gradient as a traveling wave.
         cycles (int): Number of times to cycle the gradient. Use 0 for infinite. Valid values are n >= 0.
     """
@@ -85,7 +85,7 @@ class ColorShiftConfig(ArgsDataClass):
         type_parser=argvalidators.GradientDirection.type_parser,
         help="Direction of the gradient (vertical, horizontal, diagonal, center).",
     )  # type: ignore[assignment]
-    "Gradient.Direction : Direction of the gradient across the output area."
+    "Gradient.Direction : Direction of the gradient across the canvas."
 
     travel: bool = ArgField(
         cmd_name="--travel",

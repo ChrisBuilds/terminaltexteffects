@@ -132,7 +132,7 @@ class BaseEffect(ABC, Generic[T]):
         """
         terminal = Terminal(self.input_data, self.terminal_config)
         try:
-            terminal.prep_outputarea()
+            terminal.prep_canvas()
             yield terminal
         except:  # noqa: E722
             raise

@@ -1,8 +1,8 @@
 """
-Creates beams which travel over the output area illuminating the characters.
+Creates beams which travel over the canvas illuminating the characters.
 
 Classes:
-    Beams: Creates beams which travel over the output area illuminating the characters.
+    Beams: Creates beams which travel over the canvas illuminating the characters.
     BeamsConfig: Configuration for the Beams effect.
     BeamsIterator: Iterates over the Beams effect. Does not normally need to be called directly.
 """
@@ -25,8 +25,8 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="beams",
-    help="Create beams which travel over the output area illuminating the characters behind them.",
-    description="beams | Create beams which travel over the output area illuminating the characters behind them.",
+    help="Create beams which travel over the canvas illuminating the characters behind them.",
+    description="beams | Create beams which travel over the canvas illuminating the characters behind them.",
     epilog="""Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical --final-wipe-speed 1""",
 )
 @dataclass
@@ -320,7 +320,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
 
 
 class Beams(BaseEffect[BeamsConfig]):
-    """Creates beams which travel over the output area illuminating the characters.
+    """Creates beams which travel over the canvas illuminating the characters.
 
     Attributes:
         effect_config (BeamsConfig): Configuration for the effect.

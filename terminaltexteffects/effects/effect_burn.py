@@ -24,8 +24,8 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="burn",
-    help="Burns vertically in the output area.",
-    description="burn | Burn the output area.",
+    help="Burns vertically in the canvas.",
+    description="burn | Burn the canvas.",
     epilog="Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12",
 )
 @dataclass

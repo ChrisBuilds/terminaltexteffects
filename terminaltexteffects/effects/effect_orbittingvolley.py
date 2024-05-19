@@ -1,7 +1,7 @@
-"""Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.
+"""Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.
 
 Classes:
-    OrbittingVolley: Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.
+    OrbittingVolley: Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.
     OrbittingVolleyConfig: Configuration for the OrbittingVolley effect.
     OrbittingVolleyIterator: Effect iterator for OrbittingVolley. Does not normally need to be called directly.
 """
@@ -26,8 +26,8 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="orbittingvolley",
-    help="Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
-    description="orbittingvolley | Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.",
+    help="Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.",
+    description="orbittingvolley | Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.",
     epilog=f"""{argvalidators.EASING_EPILOG}
     
 Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 --launcher-movement-speed 0.5 --character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE""",
@@ -311,7 +311,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
 
 
 class OrbittingVolley(BaseEffect[OrbittingVolleyConfig]):
-    """Four launchers orbit the output area firing volleys of characters inward to build the input text from the center out.
+    """Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.
 
     Attributes:
         effect_config (OrbittingVolleyConfig): Configuration for the effect.

@@ -1,4 +1,4 @@
-"""Text is scattered across the output area and moves into position.
+"""Text is scattered across the canvas and moves into position.
 
 Classes:
     Scattered: Move the characters into place from random starting locations.
@@ -23,8 +23,8 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="scattered",
-    help="Text is scattered across the output area and moves into position.",
-    description="scattered | Text is scattered across the output area and moves into position.",
+    help="Text is scattered across the canvas and moves into position.",
+    description="scattered | Text is scattered across the canvas and moves into position.",
     epilog=f"""{argvalidators.EASING_EPILOG}
 Example: terminaltexteffects scattered --final-gradient-stops ff9048 ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK""",
 )
@@ -150,7 +150,7 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
 
 
 class Scattered(BaseEffect[ScatteredConfig]):
-    """Text is scattered across the output area and moves into position.
+    """Text is scattered across the canvas and moves into position.
 
     Attributes:
         effect_config (ScatteredConfig): Configuration for the effect.

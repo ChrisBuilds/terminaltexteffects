@@ -64,7 +64,7 @@ nav:
       - Terminal:
         - engine/terminal/terminal.md
         - engine/terminal/terminalconfig.md
-        - engine/terminal/outputarea.md
+        - engine/terminal/canvas.md
       - Utils:
         - engine/utils/ansitools.md
         - engine/utils/argsdataclass.md

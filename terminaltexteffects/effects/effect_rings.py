@@ -39,7 +39,7 @@ class RingsConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        ring_gap (float): Distance between rings as a percent of the smallest output area dimension. Valid values are 0 < n <= 1.
+        ring_gap (float): Distance between rings as a percent of the smallest canvas dimension. Valid values are 0 < n <= 1.
         spin_duration (int): Number of frames for each cycle of the spin phase. Valid values are n >= 0.
         spin_speed (tuple[float, float]): Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring. Valid values are n > 0.
         disperse_duration (int): Number of frames spent in the dispersed state between spinning cycles. Valid values are n >= 0.
@@ -93,10 +93,10 @@ class RingsConfig(ArgsDataClass):
         cmd_name=["--ring-gap"],
         type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.1,
-        help="Distance between rings as a percent of the smallest output area dimension.",
+        help="Distance between rings as a percent of the smallest canvas dimension.",
     )  # type: ignore[assignment]
 
-    "float : Distance between rings as a percent of the smallest output area dimension."
+    "float : Distance between rings as a percent of the smallest canvas dimension."
     spin_duration: int = ArgField(
         cmd_name=["--spin-duration"],
         type_parser=argvalidators.PositiveInt.type_parser,
@@ -256,7 +256,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             ring_coords = geometry.find_coords_on_circle(
                 self.terminal.output_area.center, radius, 7 * radius, unique=True
             )
-            # check if any part of the ring is in the output area, if not, stop creating rings
+            # check if any part of the ring is in the canvas, if not, stop creating rings
             if (
                 len([coord for coord in ring_coords if self.terminal.output_area.coord_is_in_output_area(coord)])
                 / len(ring_coords)
