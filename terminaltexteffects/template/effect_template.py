@@ -4,8 +4,9 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, graphics
+from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 @argclass(
@@ -17,7 +18,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 )
 @dataclass
 class EffectConfig(ArgsDataClass):
-    color_single: graphics.Color = ArgField(
+    color_single: Color = ArgField(
         cmd_name=["--color-single"],
         type_parser=argvalidators.ColorArg.type_parser,
         default=0,
@@ -25,7 +26,7 @@ class EffectConfig(ArgsDataClass):
         help="Color for the ___.",
     )  # type: ignore[assignment]
 
-    color_list: tuple[graphics.Color, ...] = ArgField(
+    color_list: tuple[Color, ...] = ArgField(
         cmd_name=["--color-list"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
@@ -34,7 +35,7 @@ class EffectConfig(ArgsDataClass):
         help="Space separated, unquoted, list of colors for the ___.",
     )  # type: ignore[assignment]
 
-    final_color: graphics.Color = ArgField(
+    final_color: Color = ArgField(
         cmd_name=["--final-color"],
         type_parser=argvalidators.ColorArg.type_parser,
         default="ffffff",
@@ -42,7 +43,7 @@ class EffectConfig(ArgsDataClass):
         help="Color for the final character.",
     )  # type: ignore[assignment]
 
-    final_gradient_stops: tuple[graphics.Color, ...] = ArgField(
+    final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
@@ -92,11 +93,11 @@ class NamedEffectIterator(BaseEffectIterator[EffectConfig]):
     def __init__(self, effect: "NamedEffect") -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, graphics.Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
-        final_gradient = graphics.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
                 character.input_coord.row / self.terminal.canvas.top
