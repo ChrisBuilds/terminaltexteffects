@@ -20,13 +20,13 @@ from terminaltexteffects.effects import (
     effect_random_sequence,
     effect_rings,
     effect_scattered,
+    effect_slice,
     effect_slide,
     effect_spotlights,
     effect_spray,
     effect_swarm,
     effect_synthgrid,
     effect_unstable,
-    effect_verticalslice,
     effect_vhstape,
     effect_waves,
     effect_wipe,
@@ -279,9 +279,9 @@ def test_unstable_effect() -> None:
             ...
 
 
-def test_verticalslice_effect() -> None:
+def test_slice_effect() -> None:
     for input_data in test_inputs:
-        effect = effect_verticalslice.VerticalSlice(input_data)
+        effect = effect_slice.Slice(input_data)
         effect.terminal_config = terminal_config
         for _ in effect:
             ...
