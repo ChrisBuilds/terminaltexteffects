@@ -7,6 +7,8 @@ Classes:
     display the gradient color spectrum.
 """
 
+from __future__ import annotations
+
 import itertools
 import typing
 from collections.abc import Iterator
@@ -120,7 +122,7 @@ class Gradient:
         RADIAL = auto()
         DIAGONAL = auto()
 
-    def __init__(self, *stops: Color, steps: int | tuple[int, ...] = 1, loop=False) -> None:
+    def __init__(self, *stops: Color, steps: tuple[int, ...] | int = 1, loop=False) -> None:
         """
         Initializes a Graphics object.
 
@@ -197,7 +199,10 @@ class Gradient:
             return spectrum
         if self._loop:
             self._stops = self._stops + (self._stops[0],)
-        color_pairs = list(itertools.pairwise(self._stops))
+        a, b = itertools.tee(self._stops)
+        next(b, None)
+        color_pairs = list(zip(a, b))
+        # color_pairs = list(itertools.pairwise(self._stops))
         steps = steps[: len(color_pairs)]
         color_pair: tuple[Color, Color]
         for color_pair, steps in itertools.zip_longest(color_pairs, steps, fillvalue=steps[-1]):

@@ -16,6 +16,8 @@ Functions:
     find_normalized_distance_from_center: Returns the normalized distance from the center of the Canvas.
 """
 
+from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 

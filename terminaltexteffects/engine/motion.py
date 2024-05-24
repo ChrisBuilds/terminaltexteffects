@@ -7,6 +7,8 @@ Classes:
     Motion: Motion class for managing the movement of a character.
 """
 
+from __future__ import annotations
+
 import typing
 from dataclasses import dataclass
 

@@ -16,8 +16,11 @@ Classes:
 
 """
 
+from __future__ import annotations
+
 import argparse
 import inspect
+import sys
 import typing
 from dataclasses import MISSING, Field, dataclass, fields
 
@@ -93,8 +96,12 @@ class ArgField(Field):
             default = False
         elif action == "store_false":
             default = True
-
-        super().__init__(default, default_factory, init, repr, hash, compare, vars(additional_metadata), kw_only)
+        if sys.version_info >= (3, 10):  # Field.__init__ signature changed in Python 3.10
+            super().__init__(
+                default, default_factory, init, repr, hash, compare, vars(additional_metadata), kw_only=kw_only
+            )
+        else:
+            super().__init__(default, default_factory, init, repr, hash, compare, vars(additional_metadata))
 
     @dataclass
     class FieldAdditionalMetaData:

@@ -27,6 +27,8 @@ Constants:
     EASING_EPILOG (str): A detailed description of the easing functions supported.
 """
 
+from __future__ import annotations
+
 import argparse
 import typing
 

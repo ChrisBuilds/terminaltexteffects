@@ -1,5 +1,7 @@
 """This module converts xterm color codes and hex colors into ANSI escape sequences."""
 
+from __future__ import annotations
+
 
 def _hex_to_int(hex_color: str) -> tuple[int, int, int]:
     """Converts a hex color string into a list of integers.

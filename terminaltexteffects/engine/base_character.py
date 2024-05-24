@@ -1,5 +1,7 @@
 """This module contains the EffectCharacter class and EventHandler class used to manage the state of a single character from the input data."""
 
+from __future__ import annotations
+
 import typing
 from dataclasses import dataclass
 from enum import Enum, auto

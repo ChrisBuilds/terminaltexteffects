@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import importlib
 import pkgutil
@@ -32,7 +34,7 @@ def main():
         module = importlib.import_module(module_info.name)
 
         if hasattr(module, "get_effect_and_args"):
-            effect_class, args_class = tuple[any, ArgsDataClass](module.get_effect_and_args())
+            effect_class, args_class = module.get_effect_and_args()
             args_class._add_to_args_subparsers(subparsers)
 
     args = parser.parse_args()
