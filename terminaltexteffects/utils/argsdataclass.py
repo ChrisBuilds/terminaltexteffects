@@ -96,7 +96,7 @@ class ArgField(Field):
             default = False
         elif action == "store_false":
             default = True
-        if sys.version_info >= (3, 10):
+        if sys.version_info >= (3, 10):  # Field.__init__ signature changed in Python 3.10
             super().__init__(
                 default, default_factory, init, repr, hash, compare, vars(additional_metadata), kw_only=kw_only
             )
