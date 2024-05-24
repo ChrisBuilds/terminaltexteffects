@@ -6,6 +6,8 @@ Classes:
     Terminal: A class for managing the terminal state and output.
 """
 
+from __future__ import annotations
+
 import random
 import shutil
 import sys

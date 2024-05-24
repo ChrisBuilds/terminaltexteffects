@@ -34,10 +34,13 @@ Functions:
     in_out_bounce: Ease in/out using a bounce function.
 """
 
+from __future__ import annotations
+
 import math
 import typing
 
-EasingFunction: typing.TypeAlias = typing.Callable[[float], float]
+# EasingFunction is a type alias for a function that takes a float between 0 and 1 and returns a float between 0 and 1.
+EasingFunction = typing.Callable[[float], float]
 "EasingFunctions are Callable[[float], float] functions that take a float between 0 and 1 and return a float between 0 and 1."
 
 

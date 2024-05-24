@@ -6,6 +6,8 @@ Functions:
     is_valid_color: Check if the input is a valid RGB Hex color code.
 """
 
+from __future__ import annotations
+
 xterm_to_hex_map = {
     0: "#000000",
     1: "#800000",

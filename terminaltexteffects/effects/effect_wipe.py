@@ -6,6 +6,8 @@ Classes:
     WipeIterator: Effect iterator for the Wipe effect. Does not normally need to be called directly.
 """
 
+from __future__ import annotations
+
 import typing
 from dataclasses import dataclass
 

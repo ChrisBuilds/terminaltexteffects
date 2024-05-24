@@ -6,6 +6,8 @@ Classes:
     SwarmIterator: Effect iterator for the Swarm effect. Does not normally need to be called directly.
 """
 
+from __future__ import annotations
+
 import random
 import typing
 from dataclasses import dataclass

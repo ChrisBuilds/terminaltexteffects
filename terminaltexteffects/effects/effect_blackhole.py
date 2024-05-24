@@ -8,6 +8,8 @@ Classes:
 
 """
 
+from __future__ import annotations
+
 import random
 import typing
 from dataclasses import dataclass

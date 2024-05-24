@@ -6,6 +6,8 @@ Classes:
     SpotlightsIterator: Effect iterator for the Spotlights effect. Does not normally need to be called directly.
 """
 
+from __future__ import annotations
+
 import random
 import typing
 from dataclasses import dataclass

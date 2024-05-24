@@ -6,6 +6,8 @@ Classes:
     OrbittingVolleyIterator: Effect iterator for OrbittingVolley. Does not normally need to be called directly.
 """
 
+from __future__ import annotations
+
 import typing
 from dataclasses import dataclass
 from itertools import cycle

@@ -12,6 +12,8 @@ Classes:
         method and a context manager for terminal output.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from copy import deepcopy

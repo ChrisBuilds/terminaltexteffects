@@ -6,6 +6,8 @@ Classes:
     UnstableIterator: Effect iterator for the Unstable effect. Does not normally need to be called directly.
 """
 
+from __future__ import annotations
+
 import random
 import typing
 from dataclasses import dataclass
@@ -141,19 +143,18 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
         character_coords = [character.input_coord for character in self.terminal.get_characters()]
         for character in self.terminal.get_characters():
             pos = random.randint(0, 3)
-            match pos:
-                case 0:
-                    col = self.terminal.canvas.left
-                    row = random.randint(1, self.terminal.canvas.top)
-                case 1:
-                    col = self.terminal.canvas.right
-                    row = random.randint(1, self.terminal.canvas.top)
-                case 2:
-                    col = random.randint(1, self.terminal.canvas.right)
-                    row = self.terminal.canvas.bottom
-                case 3:
-                    col = random.randint(1, self.terminal.canvas.right)
-                    row = self.terminal.canvas.top
+            if pos == 0:
+                col = self.terminal.canvas.left
+                row = random.randint(1, self.terminal.canvas.top)
+            elif pos == 1:
+                col = self.terminal.canvas.right
+                row = random.randint(1, self.terminal.canvas.top)
+            elif pos == 2:
+                col = random.randint(1, self.terminal.canvas.right)
+                row = self.terminal.canvas.bottom
+            else:
+                col = random.randint(1, self.terminal.canvas.right)
+                row = self.terminal.canvas.top
             jumbled_coord = character_coords.pop(random.randint(0, len(character_coords) - 1))
             self.jumbled_coords[character] = jumbled_coord
             character.motion.set_coordinate(jumbled_coord)
