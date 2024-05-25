@@ -33,7 +33,7 @@ class WipeConfig(ArgsDataClass):
     """Configuration for the Wipe effect.
 
     Attributes:
-        wipe_direction (typing.Literal["column_left_to_right","row_top_to_bottom","row_bottom_to_top","diagonal_top_left_to_bottom_right","diagonal_bottom_left_to_top_right","diagonal_top_right_to_bottom_left","diagonal_bottom_right_to_top_left",]): Direction the text will wipe.
+        wipe_direction (typing.Literal["column_left_to_right","row_top_to_bottom","row_bottom_to_top","diagonal_top_left_to_bottom_right","diagonal_bottom_left_to_top_right","diagonal_top_right_to_bottom_left","diagonal_bottom_right_to_top_left","center_to_outside","outside_to_center"]): Direction the text will wipe.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the wipe gradient.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
