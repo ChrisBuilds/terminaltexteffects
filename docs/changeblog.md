@@ -14,7 +14,7 @@ older version of Python (back to 3.8), a few minor changes were implemented incl
 occasional use of modern syntax where unnecessary. Additionally, input can be passed to TTE using the new `-i` argument.
 
 Finally, a few new pages were added to the docs. Check out the [Cookbook](./cookbook.md) for interesting examples using
-the TTE library and the [ChangeBlog](changeblog.md) for a more friendly breakdown of each release.
+the TTE library and the [ChangeBlog](changeblog.md) (you're already here) for a more friendly breakdown of each release.
 
 ### ColorShift
 
@@ -70,6 +70,10 @@ feature is set by setting the
 attribute to `0`. This will only work when using the effect in your code. The command line argument validator for
 `cycles` will not allow values below `1`. This may change in the future, however at this time I'm not sold on having
 effects that have to be killed when run as an application.
+
+[ColorShiftConfig](./effects/colorshift.md#terminaltexteffects.effects.effect_colorshift.ColorShiftConfig)
+`skip-final-gradient` will cause the effect to end at when the last gradient cycle concludes. Otherwise, the
+`final_gradient_`* configuration will be used to transition to a final state.
 
 ### OutputArea is now Canvas
 
