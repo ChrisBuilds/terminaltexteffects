@@ -2,6 +2,59 @@
 
 ---
 
+## 0.10.0
+
+---
+
+### New Features (0.10.0)
+
+---
+
+#### New Effects (0.10.0)
+
+* ColorShift: Display a gradient that shifts colors across the terminal. Supports standing and traveling gradients in
+  the following directions: vertical, horizontal, diagonal, radial. The final gradient appearance is optional using the
+  --skips-final-gradient argument. This effect supports infinite looping when imported by setting
+  ColorShiftConfig.cycles
+  to 0. This functionality is not available when run from the TTE application.
+
+#### New Engine Features (0.10.0)
+
+* File input: Use the `--input-file` or `-i` option to pass a file as input.
+
+### Changes (0.10.0)
+
+---
+
+#### Effects Changes (0.10.0)
+
+* Added `--wave-direction` config to Waves effect.
+* Added additional directions to `--wipe-direction` config in Wipe effect.
+* VerticalSlice is now Slice and supports vertical, horizontal, and diagonal slice directions.
+
+#### Engine Changes (0.10.0)
+
+* Increased compatibility with Python versions from >=3.10 to >=3.8
+* Updated type information for gradient step variables to accept a single int as well as tuple[int, ...].
+* Color TypeAlias replaced with Color class. Color objects are used throughout the engine.
+* Renamed OutputArea to Canvas.
+* Changed center gradient direction to radial.
+
+### Bug Fixes (0.10.0)
+
+---
+
+#### Engine Fixes (0.10.0)
+
+* Characters created as `fill_characters` now adhere to `--no-color` and `--xterm-colors`.
+
+#### Other (0.10.0)
+
+* Added cookbook to the documentation and animated prompt example.
+* Added printing `Color` and `Gradient` objects examples to docs.
+
+---
+
 ## 0.9.3
 
 ---

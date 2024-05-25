@@ -35,3 +35,9 @@ TTE includes a growing library of built-in effects. Visit the showroom to see ex
 Check out the cookbook to see interesting examples using the TTE library.
 
 [Library Cookbook](./cookbook.md){ .md-button }
+
+## Release Write-Ups
+
+Friendly release write-ups can be found in the [ChangeBlog](./changeblog.md)
+
+[ChangeBlog](./changeblog.md){ .md-button }

@@ -245,37 +245,58 @@ Any effects shown below are in development and will be available in the next rel
 
 ## Latest Release Notes
 
-## 0.9.3
+Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/) for release write-ups.
+
+## 0.10.0
 
 ---
 
-### New Features (0.9.3)
+### New Features (0.10.0)
 
 ---
 
-#### New Engine Features (0.9.3)
+#### New Effects (0.10.0)
 
-* Added argument to the `BaseEffect.terminal_output()` context manager. `end_symbol` (default `\n`) is used to specify
-the symbol that will be printed after the effect completes. Set to `''` or `' '` to enable animated prompts.
+* ColorShift: Display a gradient that shifts colors across the terminal. Supports standing and traveling gradients in
+  the following directions: vertical, horizontal, diagonal, radial. The final gradient appearance is optional using the
+  --skips-final-gradient argument. This effect supports infinite looping when imported by setting
+  ColorShiftConfig.cycles
+  to 0. This functionality is not available when run from the TTE application.
 
-### Changes (0.9.3)
+#### New Engine Features (0.10.0)
 
----
+* File input: Use the `--input-file` or `-i` option to pass a file as input.
 
-#### Engine Changes (0.9.3)
-
-* Removed unnecessary write calls for cursor positioning on every frame.
-* Separated functionality related to cursor positioning and frame timing out of `Terminal.print()` and into
-`Terminal.enforce_framerate()`, `Terminal.prep_canvas()` and `Terminal.move_cursor_to_top()`.
-
-### Bug Fixes (0.9.3)
+### Changes (0.10.0)
 
 ---
 
-#### Engine Fixes (0.9.3)
+#### Effects Changes (0.10.0)
 
-* Fixed the canvas of an effect being 1 row less than specified via the `Terminal.terminal_height` attribute. This
-  was caused by mixing use of `print()` and `sys.stdout.write()`.
+* Added `--wave-direction` config to Waves effect.
+* Added additional directions to `--wipe-direction` config in Wipe effect.
+* VerticalSlice is now Slice and supports vertical, horizontal, and diagonal slice directions.
+
+#### Engine Changes (0.10.0)
+
+* Increased compatibility with Python versions from >=3.10 to >=3.8
+* Updated type information for gradient step variables to accept a single int as well as tuple[int, ...].
+* Color TypeAlias replaced with Color class. Color objects are used throughout the engine.
+* Renamed OutputArea to Canvas.
+* Changed center gradient direction to radial.
+
+### Bug Fixes (0.10.0)
+
+---
+
+#### Engine Fixes (0.10.0)
+
+* Characters created as `fill_characters` now adhere to `--no-color` and `--xterm-colors`.
+
+#### Other (0.10.0)
+
+* Added cookbook to the documentation and animated prompt example.
+* Added printing `Color` and `Gradient` objects examples to docs.
 
 ---
 
