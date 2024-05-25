@@ -70,59 +70,74 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
 <summary>TTE Command Line Options</summary>
 
 ```markdown
-options:
+  options:
   -h, --help            show this help message and exit
+  --input-file INPUT_FILE, -i INPUT_FILE
+                        File to read input from (default: None)
   --tab-width (int > 0)
                         Number of spaces to use for a tab character. (default: 4)
-  --xterm-colors        Convert any colors specified in RBG hex to the closest XTerm-256 color. (default: False)
+  --xterm-colors        Convert any colors specified in RBG hex to the closest XTerm-256 color.
+                        (default: False)
   --no-color            Disable all colors in the effect. (default: False)
   --wrap-text           Wrap text wider than the canvas width. (default: False)
   --frame-rate FRAME_RATE
                         Target frame rate for the animation. (default: 100)
   --canvas-width CANVAS_WIDTH
-                        Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device. (default: 0)
+                        Canvas width, if set to 0 the canvas width is detected automatically based on
+                        the terminal device. (default: 0)
   --canvas-height CANVAS_HEIGHT
-                        Canvas height, if set to 0 the canvas width is detected automatically based on the terminal device. (default: 0)
+                        Canvas height, if set to 0 the canvas height is detected automatically based on
+                        the terminal device. (default: 0)
   --ignore-terminal-dimensions
-                        Ignore the terminal dimensions and use the input data dimensions for the canvas. (default: False)
+                        Ignore the terminal dimensions and use the input data dimensions for the
+                        canvas. (default: False)
 
-Effect:
+  Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
-  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,crumble,decrypt,errorcorrect,expand,fireworks,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slide,spotlights,spray,swarm,synthgrid,unstable,verticalslice,vhstape,waves,wipe}
+  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,colorshift,crumble,decrypt,errorcorrect,expand,fireworks,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slice,slide,spotlights,spray,swarm,synthgrid,test,unstable,vhstape,waves,wipe}
                         Available Effects
-    beams               Create beams which travel over the canvas illuminating the characters behind them.
-    binarypath          Binary representations of each character move through the terminal towards the home coordinate of the character.
+    beams               Create beams which travel over the canvas illuminating the characters behind
+                        them.
+    binarypath          Binary representations of each character move through the terminal towards the
+                        home coordinate of the character.
     blackhole           Characters are consumed by a black hole and explode outwards.
     bouncyballs         Characters are bouncy balls falling from the top of the canvas.
     bubbles             Characters are formed into bubbles that float down and pop.
     burn                Burns vertically in the canvas.
+    colorshift          Display a gradient that shifts colors across the terminal.
     crumble             Characters lose color and crumble into dust, vacuumed up, and reformed.
     decrypt             Display a movie style decryption effect.
     errorcorrect        Some characters start in the wrong position and are corrected in sequence.
     expand              Expands the text from a single point.
     fireworks           Characters launch and explode like fireworks and fall into place.
     middleout           Text expands in a single row or column in the middle of the canvas then out.
-    orbittingvolley     Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.
-    overflow            Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.
+    orbittingvolley     Four launchers orbit the canvas firing volleys of characters inward to build
+                        the input text from the center out.
+    overflow            Input text overflows ands scrolls the terminal in a random order until
+                        eventually appearing ordered.
     pour                Pours the characters into position from the given direction.
-    print               Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
+    print               Lines are printed one at a time following a print head. Print head performs
+                        line feed, carriage return.
     rain                Rain characters from the top of the canvas.
     randomsequence      Prints the input data in a random sequence.
     rings               Characters are dispersed and form into spinning rings.
     scattered           Text is scattered across the canvas and moves into position.
+    slice               Slices the input in half and slides it into place from opposite directions.
     slide               Slide characters into view from outside the terminal.
-    spotlights          Spotlights search the text area, illuminating characters, before converging in the center and expanding.
+    spotlights          Spotlights search the text area, illuminating characters, before converging in
+                        the center and expanding.
     spray               Draws the characters spawning at varying rates from a single point.
-    swarm               Characters are grouped into swarms and move around the terminal before settling into position.
+    swarm               Characters are grouped into swarms and move around the terminal before settling
+                        into position.
     synthgrid           Create a grid which fills with characters dissolving into the final text.
-    unstable            Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the correct layout.
-    verticalslice       Slices the input in half vertically and slides it into place from opposite directions.
+    unstable            Spawn characters jumbled, explode them to the edge of the canvas, then
+                        reassemble them in the correct layout.
     vhstape             Lines of characters glitch left and right and lose detail like an old VHS tape.
     waves               Waves travel across the terminal leaving behind the characters.
     wipe                Wipes the text across the terminal to reveal characters.
 
-Ex: ls -a | python -m terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical
+  Ex: ls -a | python -m terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical
 ```
 
 </details>
