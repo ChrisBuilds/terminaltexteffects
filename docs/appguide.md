@@ -1,6 +1,7 @@
 # Application Guide
 
-When used as a system application, TerminalTextEffects will produce animations on text passed to stdin. Often, passing data to TTE occurs via pipes or redirection.
+When used as a system application, TerminalTextEffects will produce animations on text passed to stdin or through the
+`-i` argument. Passing data via STDIN to TTE occurs via pipes or redirection.
 
 ## Invocation Examples
 
@@ -14,6 +15,12 @@ When used as a system application, TerminalTextEffects will produce animations o
 
     ```bash title="Redirecting a file through TTE"
     tte slide < your_file
+    ```
+
+=== "File Input"
+
+    ```bash title="Passing a file argument to TTE"
+    tte -i path/to/file slide
     ```
 
 ## Configuration

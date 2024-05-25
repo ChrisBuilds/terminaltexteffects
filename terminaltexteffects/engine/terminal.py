@@ -32,8 +32,8 @@ class TerminalConfig(ArgsDataClass):
         no_color (bool): Disable all colors in the effect.
         wrap_text (bool): Wrap text wider than the canvas width.
         frame_rate (float): Target frame rate for the animation.
-        terminal_width (int): Terminal width, if set to 0 the terminal width is detected automatically.
-        terminal_height (int): Terminal height, if set to 0 the terminal height is detected automatically.
+        canvas_width (int): Cavas width, if set to 0 the canvas width is detected automatically based on the terminal device.
+        canvas_height (int): Canvas height, if set to 0 the canvas height is detected automatically based on the terminal device.
         ignore_terminal_dimensions (bool): Ignore the terminal dimensions and use the input data dimensions for the canvas.
     """
 

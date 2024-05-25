@@ -247,6 +247,45 @@ Characters are ignited and burn up the screen.
     ```
 ---
 
+## ColorShift
+
+Display a gradient that shifts colors across the terminal.
+
+![Demo](./img/effects_demos/colorshift_demo.gif)
+
+[Reference](./effects/colorshift.md){ .md-button } [Config](./effects/colorshift.md#terminaltexteffects.effects.effect_colorshift.ColorShiftConfig){ .md-button }
+
+??? example "ColorShift Command Line Arguments"
+
+    ```
+    --gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the gradient. (default: (Color(e81416), Color(ffa500), Color(faeb36), Color(79c314), Color(487de7), Color(4b369d), Color(70369d)))
+    --gradient-steps (int > 0) [(int > 0) ...]
+                        Number of gradient steps to use. More steps will create a smoother gradient animation. (default: 12)
+    --gradient-frames (int > 0)
+                        Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 5)
+    --travel              Display the gradient as a traveling wave (default: False)
+    --travel-direction (diagonal, horizontal, vertical, radial)
+                        Direction the gradient travels across the canvas. (default: Direction.HORIZONTAL)
+    --reverse-travel-direction
+                        Reverse the gradient travel direction. (default: False)
+    --loop-gradient       Loop the gradient. This causes the final gradient color to transition back to the first gradient color. (default: False)
+    --cycles (int > 0)    Number of times to cycle the gradient. (default: 3)
+    --skip-final-gradient
+                        Skip the final gradient. (default: False)
+    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        (default: (Color(e81416), Color(ffa500), Color(faeb36), Color(79c314), Color(487de7), Color(4b369d), Color(70369d)))
+    --final-gradient-steps (int > 0) [(int > 0) ...]
+                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: 12)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
+                        Direction of the final gradient. (default: Direction.VERTICAL)
+
+    Example: terminaltexteffects colorshift --gradient-stops 0000ff ffffff 0000ff --gradient-steps 12
+            --gradient-frames 10 --cycles 3 --travel --travel-direction radial --loop --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12
+    ```
+---
+
 ## Crumble
 
 Characters crumble into dust before being vacuumed up and reformed.
@@ -295,6 +334,7 @@ Movie style text decryption effect.
 
     Example: terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical
     ```
+---
 
 ## ErrorCorrect
 
@@ -353,6 +393,7 @@ Swaps characters from an incorrect initial position to the correct position.
         
     Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c --correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5
     ```
+---
 
 ## Expand
 
@@ -406,6 +447,7 @@ Characters expand from the center.
 
     Example: terminaltexteffects expand --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 5 --movement-speed 0.35 --expand-easing IN_OUT_QUART
     ```
+---
 
 ## Fireworks
 
@@ -439,6 +481,7 @@ Launches characters up the screen where they explode like fireworks and fall int
 
     Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E --firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere
     ```
+---
 
 ## MiddleOut
 
@@ -499,6 +542,7 @@ Text expands in a single row or column in the middle of the canvas then out.
 
     Example: terminaltexteffects middleout --starting-color 8A008A --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical --center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE --full-easing IN_OUT_SINE
     ```
+---
 
 ## OrbittingVolley
 
@@ -564,6 +608,7 @@ Four launchers orbit the canvas firing volleys of characters inward to build the
 
     Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 --launcher-movement-speed 0.5 --character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE
     ```
+---
 
 ## Overflow
 
@@ -592,6 +637,7 @@ Input text overflows ands scrolls the terminal in a random order until eventuall
 
     Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3
     ```
+---
 
 ## Pour
 
@@ -650,6 +696,7 @@ Pours the characters back and forth from the top, bottom, left, or right.
 
     Example: terminaltexteffects pour --pour-direction down --movement-speed 0.2 --gap 1 --starting-color FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF --easing IN_QUAD
     ```
+---
 
 ## Print
 
@@ -703,6 +750,7 @@ Prints the input data one line at at time with a carriage return and line feed.
 
     Example: terminaltexteffects print --final-gradient-stops 02b8bd c1f0e3 00ffa0 --final-gradient-steps 12 --print-head-return-speed 1.25 --print-speed 1 --print-head-easing IN_OUT_QUAD
     ```
+---
 
 ## Rain
 
@@ -757,6 +805,7 @@ Rain characters from the top of the canvas.
 
     Example: terminaltexteffects rain --rain-symbols o . , "*" "|" --rain-colors 00315C 004C8F 0075DB 3F91D9 78B9F2 9AC8F5 B8D8F8 E3EFFC --final-gradient-stops 488bff b2e7de 57eaf7 --final-gradient-steps 12 --movement-speed 0.1-0.2 --easing IN_QUART
     ```
+---
 
 ## RandomSequence
 
@@ -784,6 +833,7 @@ Prints the input data in a random sequence, one character at a time.
 
     Example: terminaltexteffects randomsequence --starting-color 000000 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 12 --speed 0.004
     ```
+---
 
 ## Rings
 
@@ -817,6 +867,7 @@ Characters are dispersed and form into spinning rings.
 
     Example: terminaltexteffects rings --ring-colors ab48ff e7b2b2 fffebd --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 --disperse-duration 200 --spin-disperse-cycles 3
     ```
+---
 
 ## Scattered
 
@@ -869,6 +920,7 @@ Text is scattered across the canvas and moves into position.
 
     Example: terminaltexteffects scattered --final-gradient-stops ff9048 ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK
     ```
+---
 
 ## Slice
 
@@ -924,6 +976,7 @@ Slices the input in half and slides it into place from opposite directions.
     Example: terminaltexteffects slice --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12
     --slice-direction vertical--movement-speed 0.15 --movement-easing IN_OUT_EXPO
     ```
+---
 
 ## Slide
 
@@ -981,6 +1034,7 @@ Slide characters into view from outside the terminal.
 
     Example: terminaltexteffects slide --movement-speed 0.5 --grouping row --final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 10 --final-gradient-direction vertical --gap 3 --reverse-direction --merge --movement-easing OUT_QUAD
     ```
+---
 
 ## Spotlights
 
@@ -1037,6 +1091,7 @@ Spotlights search the text area, illuminating characters, before converging in t
 
     Example: terminaltexteffects spotlights --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration 750 --search-speed-range 0.25-0.5 --spotlight-count 3
     ```
+---
 
 ## Spray
 
@@ -1091,6 +1146,7 @@ Sprays the characters from a single point.
 
     Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 --movement-easing OUT_EXPO
     ```
+---
 
 ## Swarm
 
@@ -1123,6 +1179,7 @@ Characters are grouped into swarms and move around the terminal before settling 
 
     Example: terminaltexteffects swarm --base-color 31a0d4 --flash-color f2ea79 --final-gradient-stops 31b900 f0ff65 --final-gradient-steps 12 --swarm-size 0.1 --swarm-coordination 0.80 --swarm-area-count 2-4
     ```
+---
 
 ## SynthGrid
 
@@ -1158,6 +1215,7 @@ Create a grid which fills with characters dissolving into the final text.
 
     Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --grid-gradient-steps 12 --text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ --grid-column-symbol "│" --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1
     ```
+---
 
 ## Unstable
 
@@ -1215,6 +1273,7 @@ Spawns characters jumbled, explodes them to the edge of the canvas, then reassem
         
         Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75</details>
     ```
+---
 
 ## VHSTape
 
@@ -1251,6 +1310,7 @@ Lines of characters glitch left and right and lose detail like an old VHS tape.
 
     Example: terminaltexteffects vhstape --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --glitch-line-colors ffffff ff0000 00ff00 0000ff ffffff --glitch-wave-colors ffffff ff0000 00ff00 0000ff ffffff --noise-colors 1e1e1f 3c3b3d 6d6c70 a2a1a6 cbc9cf ffffff --glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000
     ```
+---
 
 ## Waves
 
@@ -1268,26 +1328,28 @@ Waves travel across the terminal leaving behind the characters.
                         '▃', '▂', '▁'))
     --wave-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
-                        (default: ('f0ff65', 'ffb102', '31a0d4', 'ffb102', 'f0ff65'))
+                        (default: (Color(#f0ff65), Color(#ffb102), Color(#31a0d4), Color(#ffb102), Color(#f0ff65)))
     --wave-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (6,))
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
-                        (default: ('ffb102', '31a0d4', 'f0ff65'))
+                        (default: (Color(#ffb102), Color(#31a0d4), Color(#f0ff65)))
     --final-gradient-steps (int > 0) [(int > 0) ...]
-                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: 12)
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.DIAGONAL)
     --wave-count WAVE_COUNT
                         Number of waves to generate. n > 0. (default: 7)
     --wave-length (int > 0)
                         The number of frames for each step of the wave. Higher wave-lengths will create a slower wave. (default: 2)
+    --wave-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,center_to_outside,outside_to_center}
+                        Direction of the wave. (default: column_left_to_right)
     --wave-easing WAVE_EASING
                         Easing function to use for wave travel. (default: in_out_sine)
 
     Easing
     ------
-    Note: A prefix must be added to the function name.
+    Note: A prefix must be added to the function name (except LINEAR).
 
     All easing functions support the following prefixes:
         IN_  - Ease in
@@ -1296,6 +1358,7 @@ Waves travel across the terminal leaving behind the characters.
         
     Easing Functions
     ----------------
+    LINEAR - Linear easing
     SINE   - Sine easing
     QUAD   - Quadratic easing
     CUBIC  - Cubic easing
@@ -1311,6 +1374,7 @@ Waves travel across the terminal leaving behind the characters.
 
     Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▇ ▆ ▅ ▄ ▃ ▂ ▁ --wave-gradient-stops f0ff65 ffb102 31a0d4 ffb102 f0ff65 --wave-gradient-steps 6 --final-gradient-stops ffb102 31a0d4 f0ff65 --final-gradient-steps 12 --wave-count 7 --wave-length 2 --wave-easing IN_OUT_SINE
     ```
+---
 
 ## Wipe
 
@@ -1323,12 +1387,12 @@ Performs a wipe across the terminal to reveal characters.
 ??? example "Wipe Command Line Arguments"
 
     ```
-    --wipe-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left}
+    --wipe-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,outside_to_center,center_to_outside}
                         Direction the text will wipe. (default: diagonal_bottom_left_to_top_right)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the wipe gradient. (default: ('833ab4', 'fd1d1d', 'fcb045'))
+                        Space separated, unquoted, list of colors for the wipe gradient. (default: (Color(#833ab4), Color(#fd1d1d), Color(#fcb045)))
     --final-gradient-steps (int > 0) [(int > 0) ...]
-                        Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+                        Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: 12)
     --final-gradient-frames (int > 0)
                         Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 5)
     --final-gradient-direction (diagonal, horizontal, vertical, radial)

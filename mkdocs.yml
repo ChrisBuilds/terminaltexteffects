@@ -37,6 +37,7 @@ markdown_extensions:
 
 nav:
   - Intro to TTE: index.md
+  - ChangeBlog: changeblog.md
   - How to install & use TTE:
     - Install: installation.md
     - Application Usage: appguide.md
