@@ -41,7 +41,12 @@ class WavesConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        wave_count (int): Number of waves to generate. Valid values are n > 0."""
+        wave_count (int): Number of waves to generate. Valid values are n > 0.
+        wave_length (int): The number of frames for each step of the wave. Higher wave-lengths will create a slower wave. Valid values are n > 0.
+        wave_direction
+        (typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','center_to_outside','outside_to_center']):
+        Direction of the wave.
+        wave_easing (easing.EasingFunction): Easing function to use for wave travel."""
 
     wave_symbols: tuple[str, ...] = ArgField(
         cmd_name="--wave-symbols",
