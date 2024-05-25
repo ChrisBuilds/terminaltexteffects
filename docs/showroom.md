@@ -870,6 +870,61 @@ Text is scattered across the canvas and moves into position.
     Example: terminaltexteffects scattered --final-gradient-stops ff9048 ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK
     ```
 
+## Slice
+
+Slices the input in half and slides it into place from opposite directions.
+
+![Demo](./img/effects_demos/slice_demo.gif)
+
+[Reference](./effects/slice.md){ .md-button } [Config](./effects/slice.md#terminaltexteffects.effects.effect_slice.SliceConfig){ .md-button }
+
+??? example "Slice Command Line Arguments"
+
+    ```
+    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        (default: (Color(8A008A), Color(00D1FF), Color(FFFFFF)))
+    --final-gradient-steps (int > 0) [(int > 0) ...]
+                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: 12)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
+                        Direction of the final gradient. (default: Direction.DIAGONAL)
+    --slice-direction {vertical,horizontal,diagonal}
+                        Direction of the slice. (default: vertical)
+    --movement-speed (float > 0)
+                        Movement speed of the characters. (default: 0.15)
+    --movement-easing MOVEMENT_EASING
+                        Easing function to use for character movement. (default: in_out_expo)
+
+    Easing
+    ------
+    Note: A prefix must be added to the function name (except LINEAR).
+
+    All easing functions support the following prefixes:
+        IN_  - Ease in
+        OUT_ - Ease out
+        IN_OUT_ - Ease in and out
+        
+    Easing Functions
+    ----------------
+    LINEAR - Linear easing
+    SINE   - Sine easing
+    QUAD   - Quadratic easing
+    CUBIC  - Cubic easing
+    QUART  - Quartic easing
+    QUINT  - Quintic easing
+    EXPO   - Exponential easing
+    CIRC   - Circular easing
+    BACK   - Back easing
+    ELASTIC - Elastic easing
+    BOUNCE - Bounce easing
+
+    Visit: https://easings.net/ for visualizations of the easing functions.
+
+
+    Example: terminaltexteffects slice --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12
+    --slice-direction vertical--movement-speed 0.15 --movement-easing IN_OUT_EXPO
+    ```
+
 ## Slide
 
 Slide characters into view from outside the terminal.
@@ -1159,57 +1214,6 @@ Spawns characters jumbled, explodes them to the edge of the canvas, then reassem
 
         
         Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75</details>
-    ```
-
-## VerticalSlice
-
-Slices the input in half vertically and slides it into place from opposite directions.
-
-![Demo](./img/effects_demos/verticalslice_demo.gif)
-
-[Reference](./effects/verticalslice.md){ .md-button } [Config](./effects/verticalslice.md#terminaltexteffects.effects.effect_verticalslice.VerticalSliceConfig){ .md-button }
-
-??? example "VerticalSlice Command Line Arguments"
-
-    ```
-    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
-                        (default: ('8A008A', '00D1FF', 'FFFFFF'))
-    --final-gradient-steps (int > 0) [(int > 0) ...]
-                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
-    --final-gradient-direction (diagonal, horizontal, vertical, radial)
-                        Direction of the final gradient. (default: Direction.VERTICAL)
-    --movement-speed (float > 0)
-                        Movement speed of the characters.  (default: 0.15)
-    --movement-easing MOVEMENT_EASING
-                        Easing function to use for character movement. (default: in_out_expo)
-
-    Easing
-    ------
-    Note: A prefix must be added to the function name.
-
-    All easing functions support the following prefixes:
-        IN_  - Ease in
-        OUT_ - Ease out
-        IN_OUT_ - Ease in and out
-        
-    Easing Functions
-    ----------------
-    SINE   - Sine easing
-    QUAD   - Quadratic easing
-    CUBIC  - Cubic easing
-    QUART  - Quartic easing
-    QUINT  - Quintic easing
-    EXPO   - Exponential easing
-    CIRC   - Circular easing
-    BACK   - Back easing
-    ELASTIC - Elastic easing
-    BOUNCE - Bounce easing
-
-    Visit: https://easings.net/ for visualizations of the easing functions.
-
-
-    Example: terminaltexteffects verticalslice --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.15 --movement-easing IN_OUT_EXPO
     ```
 
 ## VHSTape
