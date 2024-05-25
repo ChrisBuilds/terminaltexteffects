@@ -1,0 +1,2223 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="TerminalTextEffects Documentation">
+      
+      
+        <meta name="author" content="ChrisBuilds">
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../installation/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.19">
+    
+    
+      
+        <title>ChangeBlog - TerminalTextEffects Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.66ac8b77.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#changeblog" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="TerminalTextEffects Docs" class="md-header__button md-logo" aria-label="TerminalTextEffects Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            TerminalTextEffects Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ChangeBlog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ChrisBuilds/terminaltexteffects" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="TerminalTextEffects Docs" class="md-nav__button md-logo" aria-label="TerminalTextEffects Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    TerminalTextEffects Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ChrisBuilds/terminaltexteffects" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Intro to TTE
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    ChangeBlog
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    ChangeBlog
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#release-0100" class="md-nav__link">
+    <span class="md-ellipsis">
+      Release 0.10.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release 0.10.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#colorshift-canvas-better-compatibililty-and-more-customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      ColorShift, Canvas, Better Compatibililty, and more Customization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#colorshift" class="md-nav__link">
+    <span class="md-ellipsis">
+      ColorShift
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ColorShift">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#not-looped" class="md-nav__link">
+    <span class="md-ellipsis">
+      Not Looped
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#looped" class="md-nav__link">
+    <span class="md-ellipsis">
+      Looped
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#travelling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Travelling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#never-ending-effects" class="md-nav__link">
+    <span class="md-ellipsis">
+      Never-Ending Effects
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#outputarea-is-now-canvas" class="md-nav__link">
+    <span class="md-ellipsis">
+      OutputArea is now Canvas
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0100-demos" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.10.0 Demos
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    How to install & use TTE
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            How to install & use TTE
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../appguide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Application Usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../libguide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Library Usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../showroom/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Effects Showroom
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cookbook/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Library Cookbook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Engine
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            Engine
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/baseeffect/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BaseEffect
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/basecharacter/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EffectCharacter
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/eventhandler/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EventHandler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_4" id="__nav_6_1_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Animation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            Animation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/animation/animation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Animation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/animation/syncmetric/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SyncMetric
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/animation/charactervisual/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CharacterVisual
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/animation/frame/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Frame
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/animation/scene/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scene
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_5" id="__nav_6_1_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Motion
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1_5">
+            <span class="md-nav__icon md-icon"></span>
+            Motion
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/motion/motion/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Motion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/motion/waypoint/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Waypoint
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/motion/segment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Segment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/motion/path/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Path
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_6" id="__nav_6_1_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Terminal
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1_6">
+            <span class="md-nav__icon md-icon"></span>
+            Terminal
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/terminal/terminal/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Terminal
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/terminal/terminalconfig/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TerminalConfig
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/terminal/canvas/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Canvas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_7" id="__nav_6_1_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Utils
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            Utils
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/utils/ansitools/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ANSItools
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/utils/argsdataclass/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ArgsDataClass
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/utils/argvalidators/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Argument Validation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/utils/colorterm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ColorTerm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/utils/easing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Easing Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/utils/geometry/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Geometry
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/utils/color/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Color
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/utils/gradient/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Gradient
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engine/utils/hexterm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HexTerm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Effects
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Effects
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/beams/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Beams
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/binarypath/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Binarypath
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/blackhole/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Blackhole
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/bouncyballs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BouncyBalls
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/bubbles/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bubbles
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/burn/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Burn
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/colorshift/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ColorShift
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/crumble/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Crumble
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/decrypt/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Decrypt
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/errorcorrect/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ErrorCorrect
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/expand/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Expand
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/fireworks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Fireworks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/middleout/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MiddleOut
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/orbittingvolley/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OrbittingVolley
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/overflow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/pour/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pour
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/print/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Print
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/rain/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/randomsequence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RandomSequence
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/rings/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/scattered/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scattered
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/slide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Slide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/spotlights/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Spotlights
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/spray/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Spray
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/swarm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Swarm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/synthgrid/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SynthGrid
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/unstable/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Unstable
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/slice/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Slice
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/vhstape/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    VHSTape
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/waves/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Waves
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../effects/wipe/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wipe
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#release-0100" class="md-nav__link">
+    <span class="md-ellipsis">
+      Release 0.10.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release 0.10.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#colorshift-canvas-better-compatibililty-and-more-customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      ColorShift, Canvas, Better Compatibililty, and more Customization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#colorshift" class="md-nav__link">
+    <span class="md-ellipsis">
+      ColorShift
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ColorShift">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#not-looped" class="md-nav__link">
+    <span class="md-ellipsis">
+      Not Looped
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#looped" class="md-nav__link">
+    <span class="md-ellipsis">
+      Looped
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#travelling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Travelling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#never-ending-effects" class="md-nav__link">
+    <span class="md-ellipsis">
+      Never-Ending Effects
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#outputarea-is-now-canvas" class="md-nav__link">
+    <span class="md-ellipsis">
+      OutputArea is now Canvas
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0100-demos" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.10.0 Demos
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="changeblog">Change[B]log</h1>
+<h2 id="release-0100">Release 0.10.0</h2>
+<h3 id="colorshift-canvas-better-compatibililty-and-more-customization">ColorShift, Canvas, Better Compatibililty, and more Customization</h3>
+<p>This release comes with a shiny new effect <a href="../showroom/#colorshift">ColorShift</a>, increased customization for
+<a href="../showroom/#waves">Waves</a> and <a href="../showroom/#wipe">Wipe</a> as well as renaming the
+VerticalSlice effect to <a href="../showroom/#slice">Slice</a> with added slice directions.</p>
+<p>Engine changes includes renaming the OutputArea class to <a href="../engine/terminal/canvas/">Canvas</a> and building out the
+<a href="../engine/utils/color/">Color</a> class from what was previously a TypeAlias. In addition, to increase compatibility with
+older version of Python (back to 3.8), a few minor changes were implemented including using annotations and removing the
+occasional use of modern syntax where unnecessary. Additionally, input can be passed to TTE using the new <code>-i</code> argument.</p>
+<p>Finally, a few new pages were added to the docs. Check out the <a href="../cookbook/">Cookbook</a> for interesting examples using
+the TTE library and the <a href="./">ChangeBlog</a> for a more friendly breakdown of each release.</p>
+<h3 id="colorshift">ColorShift</h3>
+<p>The new <a href="../showroom/#colorshift">ColorShift</a> effect is largely in response to a <a href="https://github.com/ChrisBuilds/terminaltexteffects/issues/9">Feature Request
+issue</a> involving looping effects and the desire for a
+simple RGB gradient effect. TTE supports <a href="../engine/utils/gradient/">Gradients</a> with an arbitrary number of stops and
+steps. This means you can create gradients that transition through as many colors as you want, with as many steps
+between colors. Fewer steps results in a more abrupt transition. As a part of the 0.10.0 update, I've added the <code>loop</code>
+argument which causes the final color stop to blend back to the first. Here's an example:</p>
+<h4 id="not-looped">Not Looped</h4>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">terminaltexteffects.utils.graphics</span> <span class="kn">import</span> <span class="n">Color</span><span class="p">,</span> <span class="n">Gradient</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">g</span> <span class="o">=</span> <span class="n">Gradient</span><span class="p">(</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;ff0000&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;00ff00&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;0000ff&quot;</span><span class="p">),</span> <span class="n">steps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+</span></code></pre></div>
+<p><img alt="not_looped_gradient" src="../img/changeblog_media/0.10.0/not_looped_gradient_printed.png" /></p>
+<h4 id="looped">Looped</h4>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">terminaltexteffects.utils.graphics</span> <span class="kn">import</span> <span class="n">Color</span><span class="p">,</span> <span class="n">Gradient</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">g</span> <span class="o">=</span> <span class="n">Gradient</span><span class="p">(</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;ff0000&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;00ff00&quot;</span><span class="p">),</span> <span class="n">Color</span><span class="p">(</span><span class="s2">&quot;0000ff&quot;</span><span class="p">),</span> <span class="n">steps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+</span></code></pre></div>
+<p><img alt="looped_gradient" src="../img/changeblog_media/0.10.0/looped_gradient_printed.png" /></p>
+<p>Notice how the looped <a href="../engine/utils/gradient/">Gradient</a> transitions from blue, the final color stop, back to red, the first color stop. That
+allows the smooth looped gradient animations seen in the <a href="../showroom/#colorshift">ColorShift</a> effect.</p>
+<h4 id="travelling">Travelling</h4>
+<p><a href="../showroom/#colorshift">ColorShift</a> supports standing Gradients and travelling Gradients in the following directions:</p>
+<ul>
+<li>vertical</li>
+<li>horiztonal</li>
+<li>diagonal</li>
+<li>radial</li>
+</ul>
+<p>The travel direction can be reversed (think, center -&gt; outside and outside -&gt; center) using the
+<code>--reverse-travel-direction</code> argument.</p>
+<h4 id="never-ending-effects">Never-Ending Effects</h4>
+<p><a href="../showroom/#colorshift">ColorShift</a> marks the first effect in the TTE library to support infinite looping. This
+feature is set by setting the
+<a href="../effects/colorshift/#terminaltexteffects.effects.effect_colorshift.ColorShiftConfig">ColorShiftConfig</a> <code>cycles</code>
+attribute to <code>0</code>. This will only work when using the effect in your code. The command line argument validator for
+<code>cycles</code> will not allow values below <code>1</code>. This may change in the future, however at this time I'm not sold on having
+effects that have to be killed when run as an application.</p>
+<h3 id="outputarea-is-now-canvas">OutputArea is now Canvas</h3>
+<p>On the slow but steady journey to documenting the engine from the perspective of writing effects, I realized
+<code>OutputArea</code> is not a particularly good class name to describe the area of the terminal in which the effect is being
+drawn. In addition, setting the terminal dimensions in the <a href="../engine/terminal/terminalconfig/">TerminalConfig</a> was not
+intuitive when you imagine the terminal dimensions are referring to your actual terminal device. To remedy this,
+<code>OutputArea</code> was renamed <a href="../engine/terminal/canvas/">Canvas</a> and the
+<code>TerminalConfig.terminal_height</code>/<code>TerminalConfig.terminal_width</code> are now
+<code>TerminalConfig.canvas_height</code>/<code>TerminalConfig.canvas_width</code>.</p>
+<p>So what is the <a href="../engine/terminal/canvas/">Canvas</a>? It's the space in the terminal where the effect is actually being
+rendered. When set automatically, it is determined by the bounding box that contains all of your text when it is passed to TTE. So if your
+input text is five lines high and 30 characters wide, the <a href="../engine/terminal/canvas/">Canvas</a> is 5x30. This is independent of your terminal device
+dimensions. Of course, if your text extends beyond the terminal device dimensions, it may be wrapped (if
+<code>TerminalConfig.wrap_text</code> is <code>True</code>) which will result in different <a href="../engine/terminal/canvas/">Canvas</a> dimensions.</p>
+<h3 id="0100-demos">0.10.0 Demos</h3>
+<p>Speaking of <a href="../showroom/#colorshift">ColorShift</a>, check it out.</p>
+<p><img alt="ColorShift Demo" src="../img/effects_demos/colorshift_demo.gif" /></p>
+<p>Here's one of the new directions for <a href="../showroom/#waves">Waves</a>, <code>center_to_outside</code>.</p>
+<p><img alt="Waves Demo" src="../img/changeblog_media/0.10.0/waves_center_out_changeblog_0_10_0.gif" /></p>
+<p>Here's the <a href="../showroom/#wipe">Wipe</a> showing a new wipe-direction, <code>outside_to_center</code>.</p>
+<p><img alt="Wipe Demo" src="../img/changeblog_media/0.10.0/wipe_changeblog_0_10_0.gif" /></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.dd8806f2.min.js"></script>
+      
+    
+  </body>
+</html>
