@@ -2106,7 +2106,7 @@ VerticalSlice effect to <a href="../showroom/#slice">Slice</a> with added slice 
 older version of Python (back to 3.8), a few minor changes were implemented including using annotations and removing the
 occasional use of modern syntax where unnecessary. Additionally, input can be passed to TTE using the new <code>-i</code> argument.</p>
 <p>Finally, a few new pages were added to the docs. Check out the <a href="../cookbook/">Cookbook</a> for interesting examples using
-the TTE library and the <a href="./">ChangeBlog</a> for a more friendly breakdown of each release.</p>
+the TTE library and the <a href="./">ChangeBlog</a> (you're already here) for a more friendly breakdown of each release.</p>
 <h3 id="colorshift">ColorShift</h3>
 <p>The new <a href="../showroom/#colorshift">ColorShift</a> effect is largely in response to a <a href="https://github.com/ChrisBuilds/terminaltexteffects/issues/9">Feature Request
 issue</a> involving looping effects and the desire for a
@@ -2147,6 +2147,9 @@ feature is set by setting the
 attribute to <code>0</code>. This will only work when using the effect in your code. The command line argument validator for
 <code>cycles</code> will not allow values below <code>1</code>. This may change in the future, however at this time I'm not sold on having
 effects that have to be killed when run as an application.</p>
+<p><a href="../effects/colorshift/#terminaltexteffects.effects.effect_colorshift.ColorShiftConfig">ColorShiftConfig</a>
+<code>skip-final-gradient</code> will cause the effect to end at when the last gradient cycle concludes. Otherwise, the
+<code>final_gradient_</code>* configuration will be used to transition to a final state.</p>
 <h3 id="outputarea-is-now-canvas">OutputArea is now Canvas</h3>
 <p>On the slow but steady journey to documenting the engine from the perspective of writing effects, I realized
 <code>OutputArea</code> is not a particularly good class name to describe the area of the terminal in which the effect is being
