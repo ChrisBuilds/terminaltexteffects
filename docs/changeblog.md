@@ -104,3 +104,9 @@ Here's one of the new directions for [Waves](./showroom.md#waves), `center_to_ou
 Here's the [Wipe](./showroom.md#wipe) showing a new wipe-direction, `outside_to_center`.
 
 ![Wipe Demo](./img/changeblog_media/0.10.0/wipe_changeblog_0_10_0.gif)
+
+---
+
+### Plain Old Changelog
+
+[0.10.0](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CHANGELOG.md)
