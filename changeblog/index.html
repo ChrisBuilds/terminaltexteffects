@@ -2166,7 +2166,7 @@ attribute to <code>0</code>. This will only work when using the effect in your c
 <code>cycles</code> will not allow values below <code>1</code>. This may change in the future, however at this time I'm not sold on having
 effects that have to be killed when run as an application.</p>
 <p><a href="../effects/colorshift/#terminaltexteffects.effects.effect_colorshift.ColorShiftConfig">ColorShiftConfig</a>
-<code>skip-final-gradient</code> will cause the effect to end at when the last gradient cycle concludes. Otherwise, the
+<code>skip-final-gradient</code> will cause the effect to end when the last gradient cycle concludes. Otherwise, the
 <code>final_gradient_</code>* configuration will be used to transition to a final state.</p>
 <h3 id="outputarea-is-now-canvas">OutputArea is now Canvas</h3>
 <p>On the slow but steady journey to documenting the engine from the perspective of writing effects, I realized
@@ -2178,7 +2178,7 @@ intuitive when you imagine the terminal dimensions are referring to your actual 
 <code>TerminalConfig.canvas_height</code>/<code>TerminalConfig.canvas_width</code>.</p>
 <p>So what is the <a href="../engine/terminal/canvas/">Canvas</a>? It's the space in the terminal where the effect is actually being
 rendered. When set automatically, it is determined by the bounding box that contains all of your text when it is passed to TTE. So if your
-input text is five lines high and 30 characters wide, the <a href="../engine/terminal/canvas/">Canvas</a> is 5x30. This is independent of your terminal device
+input text is 5 lines high and 30 characters wide, the <a href="../engine/terminal/canvas/">Canvas</a> is 5x30. This is independent of your terminal device
 dimensions. Of course, if your text extends beyond the terminal device dimensions, it may be wrapped (if
 <code>TerminalConfig.wrap_text</code> is <code>True</code>) which will result in different <a href="../engine/terminal/canvas/">Canvas</a> dimensions.</p>
 <h3 id="0100-demos">0.10.0 Demos</h3>
@@ -2186,7 +2186,7 @@ dimensions. Of course, if your text extends beyond the terminal device dimension
 <p><img alt="ColorShift Demo" src="../img/effects_demos/colorshift_demo.gif" /></p>
 <p>Here's one of the new directions for <a href="../showroom/#waves">Waves</a>, <code>center_to_outside</code>.</p>
 <p><img alt="Waves Demo" src="../img/changeblog_media/0.10.0/waves_center_out_changeblog_0_10_0.gif" /></p>
-<p>Here's the <a href="../showroom/#wipe">Wipe</a> showing a new wipe-direction, <code>outside_to_center</code>.</p>
+<p>Here's <a href="../showroom/#wipe">Wipe</a> showing one of the new wipe directions, <code>outside_to_center</code>.</p>
 <p><img alt="Wipe Demo" src="../img/changeblog_media/0.10.0/wipe_changeblog_0_10_0.gif" /></p>
 <hr />
 <h3 id="plain-old-changelog">Plain Old Changelog</h3>
