@@ -47,20 +47,24 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, uni
         list (Coord): list of Coord points on the circle
     """
     points = []
+    seen_points = set()
     if not coords_limit:
         coords_limit = round(2 * math.pi * radius)
+    angle_step = 2 * math.pi / coords_limit
     for i in range(coords_limit):
-        angle = 2 * math.pi * i / coords_limit
+        angle = angle_step * i
         x = origin.column + radius * math.cos(angle)
         # correct for terminal character height/width ratio by doubling the x distance from origin
         x_diff = x - origin.column
         x += x_diff
         y = origin.row + radius * math.sin(angle)
         point_coord = Coord(round(x), round(y))
-        if unique and point_coord not in points:
+        if unique:
+            if point_coord not in seen_points:
+                points.append(point_coord)
+        else:
             points.append(point_coord)
-        elif not unique:
-            points.append(point_coord)
+        seen_points.add(point_coord)
 
     return points
 
@@ -85,9 +89,10 @@ def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
     b_squared = (diameter / 2) ** 2
 
     for x in range(h - diameter, h + diameter + 1):
-        for y in range(k - diameter, k + diameter + 1):
-            if (x - h) ** 2 / a_squared + (y - k) ** 2 / b_squared <= 1:
-                coords_in_ellipse.append(Coord(x, y))
+        x_component = ((x - h) ** 2) / a_squared
+        max_y_offset = int((b_squared * (1 - x_component)) ** 0.5)
+        for y in range(k - max_y_offset, k + max_y_offset + 1):
+            coords_in_ellipse.append(Coord(x, y))
 
     return coords_in_ellipse
 
