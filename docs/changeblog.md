@@ -55,7 +55,7 @@ allows the smooth looped gradient animations seen in the [ColorShift](./showroom
 [ColorShift](./showroom.md#colorshift) supports standing Gradients and travelling Gradients in the following directions:
 
 * vertical
-* horiztonal
+* horizontal
 * diagonal
 * radial
 
@@ -72,7 +72,7 @@ attribute to `0`. This will only work when using the effect in your code. The co
 effects that have to be killed when run as an application.
 
 [ColorShiftConfig](./effects/colorshift.md#terminaltexteffects.effects.effect_colorshift.ColorShiftConfig)
-`skip-final-gradient` will cause the effect to end at when the last gradient cycle concludes. Otherwise, the
+`skip-final-gradient` will cause the effect to end when the last gradient cycle concludes. Otherwise, the
 `final_gradient_`* configuration will be used to transition to a final state.
 
 ### OutputArea is now Canvas
@@ -87,7 +87,7 @@ intuitive when you imagine the terminal dimensions are referring to your actual 
 
 So what is the [Canvas](./engine/terminal/canvas.md)? It's the space in the terminal where the effect is actually being
 rendered. When set automatically, it is determined by the bounding box that contains all of your text when it is passed to TTE. So if your
-input text is five lines high and 30 characters wide, the [Canvas](./engine/terminal/canvas.md) is 5x30. This is independent of your terminal device
+input text is 5 lines high and 30 characters wide, the [Canvas](./engine/terminal/canvas.md) is 5x30. This is independent of your terminal device
 dimensions. Of course, if your text extends beyond the terminal device dimensions, it may be wrapped (if
 `TerminalConfig.wrap_text` is `True`) which will result in different [Canvas](./engine/terminal/canvas.md) dimensions.
 
@@ -101,7 +101,7 @@ Here's one of the new directions for [Waves](./showroom.md#waves), `center_to_ou
 
 ![Waves Demo](./img/changeblog_media/0.10.0/waves_center_out_changeblog_0_10_0.gif)
 
-Here's the [Wipe](./showroom.md#wipe) showing a new wipe-direction, `outside_to_center`.
+Here's [Wipe](./showroom.md#wipe) showing one of the new wipe directions, `outside_to_center`.
 
 ![Wipe Demo](./img/changeblog_media/0.10.0/wipe_changeblog_0_10_0.gif)
 
