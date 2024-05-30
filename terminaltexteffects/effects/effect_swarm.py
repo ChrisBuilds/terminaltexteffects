@@ -138,7 +138,10 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
         self.build()
 
     def make_swarms(self, swarm_size: int) -> None:
-        unswarmed_characters = list(self.terminal._input_characters[::-1])
+        unswarmed_characters = self.terminal.get_characters(
+            sort=self.terminal.CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT
+        )
+
         while unswarmed_characters:
             new_swarm: list[EffectCharacter] = []
             for _ in range(swarm_size):
@@ -147,9 +150,14 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 else:
                     break
             self.swarms.append(new_swarm)
+        final_swarm = self.swarms.pop()
+        if len(final_swarm) < swarm_size // 2:
+            self.swarms[-1].extend(final_swarm)
+        else:
+            self.swarms.append(final_swarm)
 
     def build(self) -> None:
-        swarm_size: int = max(round(len(self.terminal._input_characters) * self.config.swarm_size), 1)
+        swarm_size: int = max(round(len(self.terminal.get_characters()) * self.config.swarm_size), 1)
         self.make_swarms(swarm_size)
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
@@ -233,9 +241,8 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                     EventHandler.Event.PATH_ACTIVATED, input_path, EventHandler.Action.ACTIVATE_SCENE, flash_scn
                 )
                 character.motion.chain_paths(list(character.motion.paths.values()))
-        self.call_next = False
+        self.call_next = True
         self.active_swarm_area = "0_swarm_area"
-        self.current_swarm = self.swarms.pop()
 
     def __next__(self) -> str:
         if self.swarms or self.active_characters:
@@ -247,7 +254,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                     character.motion.activate_path(character.motion.query_path("0_swarm_area"))
                     self.terminal.set_character_visibility(character, True)
                     self.active_characters.append(character)
-            if len(self.active_characters) < len(self.current_swarm):
+            if len(self.active_characters) < len(self.current_swarm):  # some of the characters have landed
                 self.call_next = True
             if self.current_swarm:
                 for character in self.current_swarm:
