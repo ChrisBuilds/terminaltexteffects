@@ -118,6 +118,10 @@ class Canvas:
         left (int): left column of the canvas. Defaults to 1.
 
     Attributes:
+        top (int): top row of the canvas
+        right (int): right column of the canvas
+        bottom (int): bottom row of the canvas
+        left (int): left column of the canvas
         center_row (int): row of the center of the canvas
         center_column (int): column of the center of the canvas
         center (Coord): coordinate of the center of the canvas
@@ -131,14 +135,21 @@ class Canvas:
     """
 
     top: int
+    """int: top row of the canvas"""
     right: int
+    """int: right column of the canvas"""
     bottom: int = 1
+    """int: bottom row of the canvas"""
     left: int = 1
+    """int: left column of the canvas"""
 
     def __post_init__(self):
         self.center_row = max(self.top // 2, 1)
+        """int: row of the center of the canvas"""
         self.center_column = max(self.right // 2, 1)
+        """int: column of the center of the canvas"""
         self.center = Coord(self.center_column, self.center_row)
+        """Coord: coordinate of the center of the canvas"""
 
     def coord_is_in_canvas(self, coord: Coord) -> bool:
         """Checks whether a coordinate is within the canvas.
