@@ -2,6 +2,24 @@
 
 ---
 
+## 0.10.1
+
+---
+
+### Changes (0.10.1)
+
+---
+
+#### Engine Changes (0.10.1)
+
+* Performance improvements to geometry functions related to circles.
+
+### Bug Fixes (0.10.1)
+
+* Fixed swarm effect not handling the first swarm (bottom right characters) resulting in missing characters in the output.
+
+---
+
 ## 0.10.0
 
 ---

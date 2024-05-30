@@ -262,6 +262,20 @@ Any effects shown below are in development and will be available in the next rel
 
 Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/) for release write-ups.
 
+### Changes (0.10.1)
+
+---
+
+#### Engine Changes (0.10.1)
+
+* Performance improvements to geometry functions related to circles.
+
+### Bug Fixes (0.10.1)
+
+* Fixed swarm effect not handling the first swarm (bottom right characters) resulting in missing characters in the output.
+
+---
+
 ## 0.10.0
 
 ---
