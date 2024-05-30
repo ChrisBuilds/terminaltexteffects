@@ -83,7 +83,7 @@ class TerminalConfig(ArgsDataClass):
         help="Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device.",
     )  # type: ignore[assignment]
 
-    "int : Cavas width, if set to 0 the canvas width is detected automatically based on the terminal device."
+    "int : Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device."
 
     canvas_height: int = ArgField(
         cmd_name=["--canvas-height"],
