@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "terminaltexteffects"
 version = "0.10.1"
-description = "A collection of visual effects that can be applied to terminal piped stdin text."
+description = "TerminalTextEffects (TTE) is a terminal visual effects engine."
 authors = ["Chris <741258@pm.me>"]
 license = "MIT"
 readme = "README.md"
