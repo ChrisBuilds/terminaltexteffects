@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import importlib.metadata
 import pkgutil
 
 import terminaltexteffects.effects
@@ -12,12 +13,18 @@ from terminaltexteffects.utils.argsdataclass import ArgsDataClass
 
 def main():
     parser = (argparse.ArgumentParser)(
-        prog="terminaltexteffects",
-        description="Apply visual effects to terminal text piped in from stdin.",
-        epilog="Ex: ls -a | python -m terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical",
+        prog="tte",
+        description="A terminal visual effects engine, application, and library",
+        epilog="Ex: ls -a | tte decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical",
     )
 
     parser.add_argument("--input-file", "-i", type=str, help="File to read input from")
+    parser.add_argument(
+        "--version",
+        "-v",
+        action="version",
+        version="TerminalTextEffects " + importlib.metadata.version("terminaltexteffects"),
+    )
 
     TerminalConfig._add_args_to_parser(parser)
 
