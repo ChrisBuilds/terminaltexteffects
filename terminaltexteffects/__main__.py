@@ -4,6 +4,7 @@ import argparse
 import importlib
 import importlib.metadata
 import pkgutil
+import sys
 
 import terminaltexteffects.effects
 import terminaltexteffects.engine.terminal as term
@@ -67,9 +68,12 @@ def main():
         effect = effect_class(input_data)
         effect.effect_config = effect_config
         effect.terminal_config = terminal_config
-        with effect.terminal_output() as terminal:
-            for frame in effect:
-                terminal.print(frame)
+        try:
+            with effect.terminal_output() as terminal:
+                for frame in effect:
+                    terminal.print(frame)
+        except KeyboardInterrupt:
+            sys.exit(1)
 
 
 if __name__ == "__main__":
