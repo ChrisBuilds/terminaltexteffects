@@ -1,19 +1,20 @@
 {
   self,
-  version,
   python312Packages,
-}:
-python312Packages.buildPythonApplication {
-  pname = "terminaltexteffects";
-  inherit version;
+}: let
+  version = with builtins; (fromTOML (readFile ./pyproject.toml)).tool.poetry.version;
+in
+  python312Packages.buildPythonApplication {
+    pname = "terminaltexteffects";
+    inherit version;
 
-  src = self;
+    src = self;
 
-  pyproject = true;
+    pyproject = true;
 
-  nativeBuildInputs = [
-    python312Packages.poetry-core
-  ];
+    nativeBuildInputs = [
+      python312Packages.poetry-core
+    ];
 
-  meta.mainProgram = "tte";
-}
+    meta.mainProgram = "tte";
+  }
