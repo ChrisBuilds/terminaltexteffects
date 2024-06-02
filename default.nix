@@ -1,14 +1,16 @@
-{
-  self,
-  python312Packages,
-}: let
-  version = with builtins; (fromTOML (readFile ./pyproject.toml)).tool.poetry.version;
+{python312Packages}: let
+  poetryDef = with builtins; (fromTOML (readFile ./pyproject.toml)).tool.poetry;
+
+  name = poetryDef.name;
 in
   python312Packages.buildPythonApplication {
     pname = "terminaltexteffects";
-    inherit version;
+    inherit (poetryDef) version;
 
-    src = self;
+    src = builtins.path {
+      path = ./.;
+      name = name;
+    };
 
     pyproject = true;
 

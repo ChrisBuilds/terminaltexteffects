@@ -7,16 +7,16 @@
   };
 
   outputs = {
-    self,
     systems,
     nixpkgs,
+    ...
   }: let
     forEachSystem = f: nixpkgs.lib.genAttrs (import systems) (system: f nixpkgs.legacyPackages.${system});
   in {
     formatter = forEachSystem (pkgs: pkgs.alejandra);
 
     packages = forEachSystem (pkgs: {
-      default = pkgs.callPackage ./default.nix {inherit self;};
+      default = pkgs.callPackage ./default.nix {};
     });
   };
 }
