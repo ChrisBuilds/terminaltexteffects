@@ -1,10 +1,13 @@
-{python312Packages}: let
+{
+  lib,
+  python312Packages,
+}: let
   poetryDef = with builtins; (fromTOML (readFile ./pyproject.toml)).tool.poetry;
 
   name = poetryDef.name;
 in
   python312Packages.buildPythonApplication {
-    pname = "terminaltexteffects";
+    pname = name;
     inherit (poetryDef) version;
 
     src = builtins.path {
@@ -18,5 +21,11 @@ in
       python312Packages.poetry-core
     ];
 
-    meta.mainProgram = "tte";
+    meta = {
+      inherit (poetryDef) description;
+      maintainers = poetryDef.authors;
+      homepage = "https://github.com/ChrisBuilds/${name}";
+      license = lib.licenses.mit;
+      mainProgram = "tte";
+    };
   }
