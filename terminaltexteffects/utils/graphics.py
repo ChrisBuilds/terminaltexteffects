@@ -294,6 +294,13 @@ class Gradient:
     def __len__(self) -> int:
         return len(self.spectrum)
 
+    def __getitem__(self, index: int) -> Color:
+        if not isinstance(index, int):
+            raise TypeError("Index must be an integer.")
+        if index < 0 or index >= len(self.spectrum):
+            raise IndexError("Index out of range.")
+        return self.spectrum[index]
+
     def __str__(self) -> str:
         color_blocks = [f"{colorterm.fg(color.rgb_color)}█{ansitools.RESET_ALL()}" for color in self.spectrum]
         return f"Gradient: Stops({', '.join(c.rgb_color for c in self._stops)}), Steps({self._steps})\n" + "".join(
