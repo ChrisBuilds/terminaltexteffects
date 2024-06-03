@@ -1,7 +1,7 @@
-"""Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.
+"""Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.
 
 Classes:
-    Overflow: Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.
+    Overflow: Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.
     OverflowConfig: Configuration for the Overflow effect.
     OverflowIterator: Iterates over the effect. Does not normally need to be called directly.
 """
@@ -27,8 +27,8 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 
 @argclass(
     name="overflow",
-    help="Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
-    description="overflow | Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.",
+    help="Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.",
+    description="overflow | Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.",
     epilog="""Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3""",
 )
 @dataclass
@@ -203,7 +203,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
 
 
 class Overflow(BaseEffect[OverflowConfig]):
-    """Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.
+    """Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.
 
     Attributes:
         effect_config (OverflowConfig): Configuration for the effect.

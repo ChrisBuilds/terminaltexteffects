@@ -114,7 +114,7 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
     middleout           Text expands in a single row or column in the middle of the canvas then out.
     orbittingvolley     Four launchers orbit the canvas firing volleys of characters inward to build
                         the input text from the center out.
-    overflow            Input text overflows ands scrolls the terminal in a random order until
+    overflow            Input text overflows and scrolls the terminal in a random order until
                         eventually appearing ordered.
     pour                Pours the characters into position from the given direction.
     print               Lines are printed one at a time following a print head. Print head performs
