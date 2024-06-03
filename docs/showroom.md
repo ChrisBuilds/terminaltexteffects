@@ -612,7 +612,7 @@ Four launchers orbit the canvas firing volleys of characters inward to build the
 
 ## Overflow
 
-Input text overflows ands scrolls the terminal in a random order until eventually appearing ordered.
+Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.
 
 ![Demo](./img/effects_demos/overflow_demo.gif)
 
