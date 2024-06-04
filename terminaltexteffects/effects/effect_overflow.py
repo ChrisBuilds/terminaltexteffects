@@ -154,7 +154,9 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
         for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
             next_row = OverflowIterator.Row(row)
             for character in next_row.characters:
-                character.animation.set_appearance(character.symbol, self.character_final_color_map[character])
+                character.animation.set_appearance(
+                    character.animation.current_character_visual.symbol, self.character_final_color_map[character]
+                )
             next_row.set_color(final_gradient.get_color_at_fraction(row[0].input_coord.row / self.terminal.canvas.top))
             self.pending_rows.append(OverflowIterator.Row(row, final=True))
         self._delay = 0

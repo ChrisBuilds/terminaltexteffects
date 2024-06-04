@@ -182,7 +182,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         chars_in_range: set[EffectCharacter] = set()
         for coord in coords_in_range:
             character = self.terminal.get_character_by_input_coord(coord)
-            if character and character.symbol != " ":
+            if character and character.input_symbol != " ":
                 chars_in_range.add(character)
         chars_no_longer_in_range = self.illuminated_chars - chars_in_range
         for character in chars_no_longer_in_range:

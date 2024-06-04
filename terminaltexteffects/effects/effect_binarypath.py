@@ -119,7 +119,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
         def __init__(self, character: EffectCharacter, terminal: Terminal):
             self.character = character
             self.terminal = terminal
-            self.binary_string = format(ord(self.character.symbol), "08b")
+            self.binary_string = format(ord(self.character.animation.current_character_visual.symbol), "08b")
             self.binary_characters: list[EffectCharacter] = []
             self.pending_binary_characters: list[EffectCharacter] = []
             self.input_coord = self.character.input_coord
@@ -220,7 +220,11 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                 bin_effectchar.motion.activate_path(digital_path)
                 bin_effectchar.layer = 1
                 color_scn = bin_effectchar.animation.new_scene()
-                color_scn.add_frame(bin_effectchar.symbol, 1, color=random.choice(self.config.binary_colors))
+                color_scn.add_frame(
+                    bin_effectchar.animation.current_character_visual.symbol,
+                    1,
+                    color=random.choice(self.config.binary_colors),
+                )
                 bin_effectchar.animation.activate_scene(color_scn)
 
         for character in self.terminal.get_characters():
