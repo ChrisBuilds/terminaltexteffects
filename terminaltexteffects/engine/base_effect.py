@@ -67,12 +67,9 @@ class BaseEffectIterator(ABC, Generic[T]):
 
     def update(self) -> None:
         """Run the tick method for all active characters and remove inactive characters from the active list."""
-        _active_characters = []
         for character in self.active_characters:
             character.tick()
-            if character.is_active:
-                _active_characters.append(character)
-        self.active_characters = _active_characters
+        self.active_characters = [character for character in self.active_characters if character.is_active]
 
     def __iter__(self) -> "BaseEffectIterator":
         return self
