@@ -435,7 +435,7 @@ class Terminal:
             row = character.motion.current_coord.row - 1
             column = character.motion.current_coord.column - 1
             if 0 <= row < self.canvas.top and 0 <= column < self.canvas.right:
-                rows[row][column] = character.symbol
+                rows[row][column] = character.animation.current_character_visual.formatted_symbol
         terminal_state = ["".join(row) for row in rows]
         self.terminal_state = terminal_state
 

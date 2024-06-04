@@ -28,7 +28,7 @@ class CharacterVisual:
     """A class for storing symbol, color, and terminal graphical modes for the character.
 
     Args:
-        symbol (str): the symbol to show
+        symbol (str): the unformatted symbol
         bold (bool): bold mode
         dim (bool): dim mode
         italic (bool): italic mode
@@ -38,6 +38,9 @@ class CharacterVisual:
         hidden (bool): hidden mode
         strike (bool): strike mode
         color (str | int | None): color code
+
+    Attributes:
+        formatted_symbol (str): the current symbol with all ANSI sequences applied
     """
 
     symbol: str
@@ -52,7 +55,7 @@ class CharacterVisual:
     color: str | int | None = None
 
     def __post_init__(self):
-        self.format_symbol()
+        self.formatted_symbol = self.format_symbol()
 
     def disable_modes(self) -> None:
         """Disables all graphical modes."""
@@ -65,7 +68,7 @@ class CharacterVisual:
         self.hidden = False
         self.strike = False
 
-    def format_symbol(self) -> None:
+    def format_symbol(self) -> str:
         """Formats the symbol for printing by applying ANSI sequences for any active modes and color."""
         formatting_string = ""
         if self.bold:
@@ -85,7 +88,7 @@ class CharacterVisual:
         if self.color is not None:
             formatting_string += colorterm.fg(self.color)
 
-        self.symbol = f"{formatting_string}{self.symbol}{ansitools.RESET_ALL() if formatting_string else ''}"
+        return f"{formatting_string}{self.symbol}{ansitools.RESET_ALL() if formatting_string else ''}"
 
 
 @dataclass
@@ -94,26 +97,51 @@ class Frame:
 
     Args:
         character_visual (CharacterVisual): a CharacterVisual object
-        duration (int): the number of frames to use the Frame
+        duration (int): the number of ticks to display the Frame
+
+    Attributes:
+        character_visual (CharacterVisual): the CharacterVisual object for the Frame
+        duration (int): the number of ticks to display the Frame
+        ticks_elapsed (int): the number of ticks that have elapsed displaying this frame
     """
 
     character_visual: CharacterVisual
     duration: int
 
     def __post_init__(self):
-        self.frames_played = 0
-        self.symbol = self.character_visual.symbol
+        self.ticks_elapsed = 0
 
 
 class Scene:
     """A Scene is a collection of Frames that can be played in sequence. Scenes can be looped and synced to movement.
 
+    Args:
+        scene_id (str): the ID of the Scene
+        is_looping (bool, optional): Whether the Scene should loop. Defaults to False.
+        sync (SyncMetric | None, optional): The type of sync to use for the Scene. Defaults to None.
+        ease (easing.EasingFunction | None, optional): The easing function to use for the Scene. Defaults to None.
+        no_color (bool, optional): Whether to ignore colors. Defaults to False.
+        use_xterm_colors (bool, optional): Whether to convert all colors to XTerm-256 colors. Defaults to False.
+
     Methods:
         add_frame: Adds a Frame to the Scene.
         activate: Activates the Scene.
-        get_next_symbol: Returns the next symbol in the Scene.
+        get_next_visual: Gets the next CharacterVisual in the Scene.
         apply_gradient_to_symbols: Applies a gradient effect to a sequence of symbols.
         reset_scene: Resets the Scene.
+
+    Attributes:
+        scene_id (str): the ID of the Scene
+        is_looping (bool): Whether the Scene should loop
+        sync (SyncMetric | None): The type of sync to use for the Scene
+        ease (easing.EasingFunction | None): The easing function to use for the Scene
+        no_color (bool): Whether to ignore colors
+        use_xterm_colors (bool): Whether to convert all colors to XTerm-256 colors
+        frames (list[Frame]): The list of Frames in the Scene
+        played_frames (list[Frame]): The list of Frames that have been played
+        frame_index_map (dict[int, Frame]): A mapping of frame index to Frame
+        easing_total_steps (int): The total number of steps in the easing function
+        easing_current_step (int): The current step in the easing function
     """
 
     xterm_color_map: dict[str, int] = {}
@@ -214,42 +242,42 @@ class Scene:
             self.frame_index_map[self.easing_total_steps] = frame
             self.easing_total_steps += 1
 
-    def activate(self) -> str:
-        """Activates the Scene by returning the first frame symbol. Called by the Animation object when the Scene is activated.
+    def activate(self) -> CharacterVisual:
+        """Activates the Scene by returning the first frame CharacterVisual. Called by the Animation object when the Scene is activated.
 
         Raises:
-            ValueError: if the Scene has no sequences
+            ValueError: if the Scene has no frames
 
         Returns:
-            str: the next symbol in the Scene
+            CharacterVisual: the next CharacterVisual in the Scene
         """
         if self.frames:
-            return self.frames[0].symbol
+            return self.frames[0].character_visual
         else:
-            raise ValueError("Scene has no sequences.")
+            raise ValueError("Scene has no frames.")
 
-    def get_next_symbol(self) -> str:
+    def get_next_visual(self) -> CharacterVisual:
         """
-        This method is used to get the next symbol in the Scene. It first retrieves the current sequence from the frames list.
-        It then increments the 'frames_played' attribute of the current sequence. If the 'frames_played' equals the 'duration'
-        of the current sequence, it resets 'frames_played' to 0 and moves the current sequence from the frames list to the
-        'played_frames' list. If the Scene is set to loop and all frames have been played, it refills the frames list with the
-        sequences from 'played_frames' and clears 'played_frames'. Finally, it returns the symbol of the current sequence.
+        This method is used to get the next CharacterVisual in the Scene. It first retrieves the current frame from the frames list.
+        It then increments the ticks_elapsed attribute of the Frame. If the ticks_elapsed equals the duration
+        of the current frame, it resets ticks_elapsed to 0 and moves the current frame from the frames list to the
+        played_frames list. If the Scene is set to loop and all frames have been played, it refills the frames list with the
+        frames from played_frames and clears played_frames. Finally, it returns the CharacterVisual of the current frame.
 
         Returns:
-            str: The symbol of the current sequence in the Scene.
+            CharacterVisual: The visual of the current frame in the Scene.
         """
 
-        current_sequence = self.frames[0]
-        next_symbol = current_sequence.symbol
-        current_sequence.frames_played += 1
-        if current_sequence.frames_played == current_sequence.duration:
-            current_sequence.frames_played = 0
+        current_frame = self.frames[0]
+        next_visual = current_frame.character_visual
+        current_frame.ticks_elapsed += 1
+        if current_frame.ticks_elapsed == current_frame.duration:
+            current_frame.ticks_elapsed = 0
             self.played_frames.append(self.frames.pop(0))
             if self.is_looping and not self.frames:
                 self.frames.extend(self.played_frames)
                 self.played_frames.clear()
-        return next_symbol
+        return next_visual
 
     def apply_gradient_to_symbols(
         self, gradient: graphics.Gradient, symbols: typing.Sequence[str], duration: int
@@ -288,7 +316,7 @@ class Scene:
     def reset_scene(self) -> None:
         """Resets the Scene."""
         for sequence in self.frames:
-            sequence.frames_played = 0
+            sequence.ticks_elapsed = 0
             self.played_frames.append(sequence)
         self.frames.clear()
         self.frames.extend(self.played_frames)
@@ -306,10 +334,31 @@ class Scene:
 class Animation:
     def __init__(self, character: "base_character.EffectCharacter"):
         """Animation handles the animations of a character. It contains a scene_name -> Scene mapping and the active Scene. Calls to step_animation()
-        progress the Scene and apply the next symbol to the character.
+        progress the Scene and apply the next visual to the character.
 
         Args:
             character (base_character.EffectCharacter): the EffectCharacter object to animate
+
+        Attributes:
+            scenes (dict[str, Scene]): a mapping of scene IDs to Scene objects
+            character (base_character.EffectCharacter): the EffectCharacter object to animate
+            active_scene (Scene | None): the active Scene
+            use_xterm_colors (bool): whether to convert all colors to XTerm-256 colors
+            no_color (bool): whether to ignore colors
+            xterm_color_map (dict[str, int]): a mapping of RGB color codes to XTerm-256 color codes
+            active_scene_current_step (int): the current step in the active Scene
+            current_character_visual (CharacterVisual): the current visual of the character
+
+        Methods:
+            new_scene: Creates a new Scene and adds it to the Animation.
+            query_scene: Returns a Scene from the Animation.
+            active_scene_is_complete: Returns whether the active scene is complete.
+            set_appearance: Applies a symbol and color to the character.
+            random_color: Returns a random color.
+            adjust_color_brightness: Adjusts the brightness of a given color.
+            _ease_animation: Returns the percentage of total distance that should be moved based on the easing function.
+            step_animation: Apply the next symbol in the scene to the character.
+            activate_scene: Activates a Scene.
         """
         self.scenes: dict[str, Scene] = {}
         self.character = character
@@ -318,6 +367,7 @@ class Animation:
         self.no_color: bool = False
         self.xterm_color_map: dict[str, int] = {}
         self.active_scene_current_step: int = 0
+        self.current_character_visual: CharacterVisual = CharacterVisual(character.input_symbol)
 
     def new_scene(
         self,
@@ -327,7 +377,7 @@ class Animation:
         ease: easing.EasingFunction | None = None,
         id: str = "",
     ) -> Scene:
-        """Creates a new Scene and adds it to the Animation.
+        """Creates a new Scene and adds it to the Animation. If no ID is provided, a unique ID is generated.
 
         Args:
             id (str): Unique name for the scene. Used to query for the scene.
@@ -360,6 +410,9 @@ class Animation:
         Args:
             scene_id (str): the ID of the Scene
 
+        Raises:
+            ValueError: if the Scene does not exist
+
         Returns:
             Scene: the Scene
         """
@@ -383,7 +436,7 @@ class Animation:
         return False
 
     def set_appearance(self, symbol: str, color: graphics.Color | None = None) -> None:
-        """Applies a symbol and color to the character. If the character has an active scene, any appearance set with this method
+        """Updates the current character visual with the symbol and color provided. If the character has an active scene, any appearance set with this method
         will be overwritten when the scene is stepped to the next frame.
 
         Args:
@@ -398,8 +451,7 @@ class Animation:
                 char_vis_color = color.xterm_color
             else:
                 char_vis_color = color.rgb_color
-        visual = CharacterVisual(symbol, color=char_vis_color)
-        self.character.symbol = visual.symbol
+        self.current_character_visual = CharacterVisual(symbol, color=char_vis_color)
 
     @staticmethod
     def random_color() -> graphics.Color:
@@ -512,8 +564,7 @@ class Animation:
         return easing_func(elapsed_step_ratio)
 
     def step_animation(self) -> None:
-        """Apply the next symbol in the scene to the character. If a scene order exists, the next scene
-        will be activated when the current scene is complete."""
+        """Progresses the Scene and applies the next visual to the character. If the active scene is complete, a SCENE_COMPLETE event is triggered."""
         if self.active_scene and self.active_scene.frames:
             # if the active scene is synced to movement, calculate the sequence index based on the
             # current waypoint progress
@@ -544,11 +595,11 @@ class Animation:
                             )
                         )
                     try:
-                        self.character.symbol = self.active_scene.frames[sequence_index].symbol
+                        self.current_character_visual = self.active_scene.frames[sequence_index].character_visual
                     except IndexError:
-                        self.character.symbol = self.active_scene.frames[-1].symbol
+                        self.current_character_visual = self.active_scene.frames[-1].character_visual
                 else:  # when the active waypoint has been deactivated, use the final symbol in the scene and finish the scene
-                    self.character.symbol = self.active_scene.frames[-1].symbol
+                    self.current_character_visual = self.active_scene.frames[-1].character_visual
                     self.active_scene.played_frames.extend(self.active_scene.frames)
                     self.active_scene.frames.clear()
 
@@ -557,7 +608,7 @@ class Animation:
                 frame_index = round(easing_factor * max(self.active_scene.easing_total_steps - 1, 0))
                 frame_index = max(min(frame_index, self.active_scene.easing_total_steps - 1), 0)
                 frame = self.active_scene.frame_index_map[frame_index]
-                self.character.symbol = frame.symbol
+                self.current_character_visual = frame.character_visual
                 self.active_scene.easing_current_step += 1
                 if self.active_scene.easing_current_step == self.active_scene.easing_total_steps:
                     if self.active_scene.is_looping:
@@ -567,7 +618,7 @@ class Animation:
                         self.active_scene.frames.clear()
 
             else:
-                self.character.symbol = self.active_scene.get_next_symbol()
+                self.current_character_visual = self.active_scene.get_next_visual()
             if self.active_scene_is_complete():
                 completed_scene = self.active_scene
                 if not self.active_scene.is_looping:
@@ -579,14 +630,14 @@ class Animation:
                 )
 
     def activate_scene(self, scene: Scene) -> None:
-        """Sets the active scene.
+        """Sets the active scene and updates the current character visual. A SCENE_ACTIVATED event is triggered.
 
         Args:
             scene (Scene): the Scene to set as active
         """
         self.active_scene = scene
         self.active_scene_current_step = 0
-        self.character.symbol = self.active_scene.activate()
+        self.current_character_visual = self.active_scene.activate()
         self.character.event_handler._handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, scene)
 
     def deactivate_scene(self, scene: Scene) -> None:
