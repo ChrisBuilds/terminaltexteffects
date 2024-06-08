@@ -294,12 +294,22 @@ class Gradient:
     def __len__(self) -> int:
         return len(self.spectrum)
 
-    def __getitem__(self, index: int) -> Color:
-        if not isinstance(index, int):
-            raise TypeError("Index must be an integer.")
-        if index < 0 or index >= len(self.spectrum):
-            raise IndexError("Index out of range.")
-        return self.spectrum[index]
+    @typing.overload
+    def __getitem__(self, index: int) -> Color: ...
+
+    @typing.overload
+    def __getitem__(self, index: slice) -> list[Color]: ...
+
+    def __getitem__(self, index: int | slice) -> Color | list[Color]:
+        if isinstance(index, int):
+            if index < 0 or index >= len(self.spectrum):
+                raise IndexError("Index out of range.")
+            return self.spectrum[index]
+        elif isinstance(index, slice):
+            start, stop, step = index.indices(len(self.spectrum))
+            return [self.spectrum[i] for i in range(start, stop, step)]
+        else:
+            raise TypeError("Index must be an integer or a slice.")
 
     def __str__(self) -> str:
         color_blocks = [f"{colorterm.fg(color.rgb_color)}█{ansitools.RESET_ALL()}" for color in self.spectrum]
