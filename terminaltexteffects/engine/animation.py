@@ -37,7 +37,7 @@ class CharacterVisual:
         reverse (bool): reverse mode
         hidden (bool): hidden mode
         strike (bool): strike mode
-        color (str | int | None): color code
+        color (graphics.Color | None): color to display the symbol
 
     Attributes:
         formatted_symbol (str): the current symbol with all ANSI sequences applied
@@ -52,7 +52,8 @@ class CharacterVisual:
     reverse: bool = False
     hidden: bool = False
     strike: bool = False
-    color: str | int | None = None
+    color: graphics.Color | None = None
+    _color_code: str | int | None = None
 
     def __post_init__(self):
         self.formatted_symbol = self.format_symbol()
@@ -85,8 +86,8 @@ class CharacterVisual:
             formatting_string += ansitools.APPLY_HIDDEN()
         if self.strike:
             formatting_string += ansitools.APPLY_STRIKETHROUGH()
-        if self.color is not None:
-            formatting_string += colorterm.fg(self.color)
+        if self._color_code is not None:
+            formatting_string += colorterm.fg(self._color_code)
 
         return f"{formatting_string}{self.symbol}{ansitools.RESET_ALL() if formatting_string else ''}"
 
@@ -234,7 +235,8 @@ class Scene:
             reverse=reverse,
             hidden=hidden,
             strike=strike,
-            color=char_vis_color,
+            color=color,
+            _color_code=char_vis_color,
         )
         frame = Frame(char_vis, duration)
         self.frames.append(frame)
@@ -451,7 +453,7 @@ class Animation:
                 char_vis_color = color.xterm_color
             else:
                 char_vis_color = color.rgb_color
-        self.current_character_visual = CharacterVisual(symbol, color=char_vis_color)
+        self.current_character_visual = CharacterVisual(symbol, color=color, _color_code=char_vis_color)
 
     @staticmethod
     def random_color() -> graphics.Color:
