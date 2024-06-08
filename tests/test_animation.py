@@ -22,7 +22,8 @@ def test_character_visual_init():
         reverse=False,
         hidden=True,
         strike=False,
-        color="ffffff",
+        color=Color("ffffff"),
+        _color_code="ffffff",
     )
     assert visual.formatted_symbol == "\x1b[1m\x1b[3m\x1b[5m\x1b[8m\x1b[38;2;255;255;255ma\x1b[0m"
     assert visual.bold is True
@@ -33,7 +34,8 @@ def test_character_visual_init():
     assert visual.reverse is False
     assert visual.hidden is True
     assert visual.strike is False
-    assert visual.color == "ffffff"
+    assert visual.color == Color("ffffff")
+    assert visual._color_code == "ffffff"
 
 
 def test_frame_init():
@@ -70,7 +72,7 @@ def test_scene_add_frame():
     frame = scene.frames[0]
     assert frame.character_visual.formatted_symbol == "\x1b[1m\x1b[3m\x1b[5m\x1b[8m\x1b[38;2;255;255;255ma\x1b[0m"
     assert frame.duration == 5
-    assert frame.character_visual.color == "ffffff"
+    assert frame.character_visual.color == Color("ffffff")
     assert frame.character_visual.bold is True
 
 
@@ -88,7 +90,7 @@ def test_scene_apply_gradient_to_symbols_equal_colors_and_symbols():
     assert len(scene.frames) == 3
     for i, frame in enumerate(scene.frames):
         assert frame.duration == 1
-        assert frame.character_visual.color == gradient.spectrum[i].rgb_color
+        assert frame.character_visual._color_code == gradient.spectrum[i].rgb_color
 
 
 def test_scene_apply_gradient_to_symbols_unequal_colors_and_symbols():
@@ -100,9 +102,9 @@ def test_scene_apply_gradient_to_symbols_unequal_colors_and_symbols():
     symbols = ["q", "z"]
     scene.apply_gradient_to_symbols(gradient, symbols, duration=1)
     assert len(scene.frames) == 5
-    assert scene.frames[0].character_visual.color == gradient.spectrum[0].rgb_color
+    assert scene.frames[0].character_visual._color_code == gradient.spectrum[0].rgb_color
     assert "q" in scene.frames[0].character_visual.symbol
-    assert scene.frames[-1].character_visual.color == gradient.spectrum[-1].rgb_color
+    assert scene.frames[-1].character_visual._color_code == gradient.spectrum[-1].rgb_color
     assert "z" in scene.frames[-1].character_visual.symbol
 
 
