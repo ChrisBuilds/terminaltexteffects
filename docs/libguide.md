@@ -96,3 +96,14 @@ effect.terminal_config.ignore_terminal_dimensions = True
 ```
 
 For more information on terminal configuration options, check out the [TerminalConfig](./engine/terminal/terminalconfig.md) reference.
+
+## Infinitely Looping Effects
+
+Some effects support infinite looping. For example, [ColorShift](./effects/colorshift.md) via the
+[ColorShiftConfig.cycles](./effects/colorshift.md#terminaltexteffects.effects.effect_colorshift.ColorShiftConfig) config
+attribute. When set to 0 directly, the effect will cycle indefinitely. Explore the configuration options for a given
+effect to see if it supports infinite looping.
+
+!!! note
+
+    Infinite looping is *NOT* supported when TTE is run as an application. The command line argument validators will not accept these values. This is by design, to prevent users inadvertently inputting a configuration that results in having to interrupt the process to end an effect.
