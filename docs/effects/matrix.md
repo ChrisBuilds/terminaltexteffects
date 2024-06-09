@@ -7,7 +7,7 @@
 ``` py title="matrix.py"
 from terminaltexteffects.effects.effect_matrix import Matrix
 
-effect = Matrix("YourTextHere")
+effect = Matrix("YourTextHere\n" * 10)
 with effect.terminal_output() as terminal:
     for frame in effect:
         terminal.print(frame)
