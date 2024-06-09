@@ -11,6 +11,7 @@ from terminaltexteffects.effects import (
     effect_errorcorrect,
     effect_expand,
     effect_fireworks,
+    effect_matrix,
     effect_middleout,
     effect_orbittingvolley,
     effect_overflow,
@@ -156,6 +157,15 @@ def test_fireworks_effect() -> None:
     for input_data in test_inputs:
         effect = effect_fireworks.Fireworks(input_data)
         effect.terminal_config = terminal_config
+        for _ in effect:
+            ...
+
+
+def test_matrix_effect() -> None:
+    for input_data in test_inputs:
+        effect = effect_matrix.Matrix(input_data)
+        effect.terminal_config = terminal_config
+        effect.effect_config.rain_time = 1
         for _ in effect:
             ...
 
