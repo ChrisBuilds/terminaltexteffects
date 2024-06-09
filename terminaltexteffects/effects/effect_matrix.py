@@ -122,7 +122,6 @@ class MatrixConfig(ArgsDataClass):
 
     rain_fall_delay: tuple[int, int] = ArgField(
         cmd_name=["--rain-fall-delay"],
-        nargs=2,
         type_parser=argvalidators.IntRange.type_parser,
         default=(8, 25),
         metavar=argvalidators.IntRange.METAVAR,
@@ -139,11 +138,29 @@ class MatrixConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : Time, in seconds, to display the rain effect before transitioning to the input text."
 
+    symbol_swap_chance: float = ArgField(
+        cmd_name="--symbol-swap-chance",
+        type_parser=argvalidators.PositiveFloat.type_parser,
+        default=0.005,
+        metavar=argvalidators.PositiveFloat.METAVAR,
+        help="Chance of swapping a character's symbol on each tick.",
+    )  # type: ignore[assignment]
+    "float : Chance of swapping a character's symbol on each tick."
+
+    color_swap_chance: float = ArgField(
+        cmd_name="--color-swap-chance",
+        type_parser=argvalidators.PositiveFloat.type_parser,
+        default=0.001,
+        metavar=argvalidators.PositiveFloat.METAVAR,
+        help="Chance of swapping a character's color on each tick.",
+    )  # type: ignore[assignment]
+    "float : Chance of swapping a character's color on each tick."
+
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
+        default=(Color("389c38")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -183,31 +200,39 @@ class MatrixConfig(ArgsDataClass):
 
 
 class MatrixIterator(BaseEffectIterator[MatrixConfig]):
-    RAIN_COLORS = Gradient(*MatrixConfig.rain_color_gradient, steps=6)
-
     class RainColumn:
         def __init__(
-            self,
-            characters: list[EffectCharacter],
-            terminal: Terminal,
-            config: MatrixConfig,
+            self, characters: list[EffectCharacter], terminal: Terminal, config: MatrixConfig, rain_colors: Gradient
         ) -> None:
             self.terminal = terminal
             self.config = config
             self.characters: list[EffectCharacter] = characters
             self.pending_characters: list[EffectCharacter] = []
             self.matrix_symbols: tuple[str, ...] = config.rain_symbols
-            self.setup_column()
+            self.rain_colors = rain_colors
+            self.setup_column("rain")
 
-        def setup_column(self) -> None:
+        def setup_column(self, phase: str) -> None:
+            self.pending_characters.clear()
+            self.phase = phase
             for character in self.characters:
                 self.terminal.set_character_visibility(character, False)
                 self.pending_characters.append(character)
                 character.motion.current_coord = character.input_coord
             self.visible_characters: list[EffectCharacter] = []
-            self.base_rain_fall_delay = random.randint(self.config.rain_fall_delay[0], self.config.rain_fall_delay[1])
-            self.random_rain_fall_delay = 0
-            self.length = random.randint(max(1, int(len(self.characters) * 0.1)), len(self.characters))
+            if self.phase == "fill":
+                self.base_rain_fall_delay = random.randint(
+                    max(self.config.rain_fall_delay[0] // 3, 1), max(self.config.rain_fall_delay[1] // 3, 1)
+                )
+            else:
+                self.base_rain_fall_delay = random.randint(
+                    self.config.rain_fall_delay[0], self.config.rain_fall_delay[1]
+                )
+            self.active_rain_fall_delay = 0
+            if self.phase == "rain":
+                self.length = random.randint(max(1, int(len(self.characters) * 0.1)), len(self.characters))
+            else:
+                self.length = len(self.characters)
             self.hold_time = 0
             if self.length == len(self.characters):
                 self.hold_time = random.randint(20, 45)
@@ -225,13 +250,17 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 )
 
         def fade_last_character(self) -> None:
-            darker_color = Animation.adjust_color_brightness(random.choice(MatrixIterator.RAIN_COLORS[-3:]), 0.65)  # type: ignore
+            darker_color = Animation.adjust_color_brightness(random.choice(self.rain_colors[-3:]), 0.65)  # type: ignore
             self.visible_characters[0].animation.set_appearance(
                 self.visible_characters[0].animation.current_character_visual.symbol, darker_color
             )
 
+        def resolve_char(self) -> EffectCharacter:
+            random_char = self.visible_characters.pop(random.randint(0, len(self.visible_characters) - 1))
+            return random_char
+
         def tick(self) -> None:
-            if not self.random_rain_fall_delay:
+            if not self.active_rain_fall_delay:
                 if self.pending_characters:
                     next_char = self.pending_characters.pop(0)
                     next_char.animation.set_appearance(random.choice(self.matrix_symbols), self.config.highlight_color)
@@ -240,7 +269,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                     if previous_character:
                         previous_character.animation.set_appearance(
                             previous_character.animation.current_character_visual.symbol,
-                            random.choice(MatrixIterator.RAIN_COLORS),
+                            random.choice(self.rain_colors),
                         )
                     self.terminal.set_character_visibility(next_char, True)
                     self.visible_characters.append(next_char)
@@ -261,33 +290,34 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                         ):
                             self.visible_characters[-1].animation.set_appearance(
                                 self.visible_characters[-1].animation.current_character_visual.symbol,
-                                random.choice(MatrixIterator.RAIN_COLORS),
+                                random.choice(self.rain_colors),
                             )
 
                         if self.hold_time:
                             self.hold_time -= 1
                         else:
-                            if random.random() < 0.05:
-                                self.drop_column()
-                            self.trim_column()
+                            if self.phase == "rain":
+                                if random.random() < 0.08:
+                                    self.drop_column()
+                                self.trim_column()
 
                 # if the column is longer than the preset length while still adding characters, trim it
                 if len(self.visible_characters) > self.length:
                     self.trim_column()
-                self.random_rain_fall_delay = self.base_rain_fall_delay
+                self.active_rain_fall_delay = self.base_rain_fall_delay
 
             else:
-                self.random_rain_fall_delay -= 1
+                self.active_rain_fall_delay -= 1
 
             # randomly change the symbol and/or color of the characters
             next_color: Color | None
             for character in self.visible_characters:
-                if random.random() < 0.005:
+                if random.random() < self.config.symbol_swap_chance:
                     next_symbol = random.choice(self.matrix_symbols)
                 else:
                     next_symbol = character.animation.current_character_visual.symbol
-                if random.random() < 0.001:
-                    next_color = random.choice(MatrixIterator.RAIN_COLORS)
+                if random.random() < self.config.color_swap_chance:
+                    next_color = random.choice(self.rain_colors)
                 else:
                     next_color = character.animation.current_character_visual.color
                 character.animation.set_appearance(next_symbol, next_color)
@@ -297,7 +327,10 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         self.pending_columns: list[MatrixIterator.RainColumn] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.active_columns: list[MatrixIterator.RainColumn] = []
+        self.full_columns: list[MatrixIterator.RainColumn] = []
+        self.rain_colors = Gradient(*self.config.rain_color_gradient, steps=6)
         self.column_delay = 0
+        self.resolve_delay = 5
         self.phase = "rain"
         self.build()
         self.rain_start = time.time()
@@ -319,12 +352,14 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, fill_chars=True
         ):
             column_chars.reverse()
-            self.pending_columns.append(MatrixIterator.RainColumn(column_chars, self.terminal, self.config))
+            self.pending_columns.append(
+                MatrixIterator.RainColumn(column_chars, self.terminal, self.config, self.rain_colors)
+            )
         random.shuffle(self.pending_columns)
 
     def __next__(self) -> str:
-        if self.phase == "rain":
-            if self.pending_columns and not self.column_delay:
+        if self.phase == "rain" or self.phase == "fill":
+            if not self.column_delay:
                 for _ in range(random.randint(1, 3)):
                     if self.pending_columns:
                         self.active_columns.append(self.pending_columns.pop(0))
@@ -333,18 +368,51 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 self.column_delay -= 1
             for column in self.active_columns:
                 column.tick()
-                if not column.visible_characters and not column.pending_characters:
-                    self.pending_columns.append(column)
-                    column.setup_column()
-            self.active_columns = [
-                column for column in self.active_columns if column.visible_characters or column.pending_characters
-            ]
 
+                if not column.pending_characters:
+                    if column.phase == "fill" and column not in self.full_columns:
+                        self.full_columns.append(column)
+                    else:
+                        if not column.visible_characters:
+                            column.setup_column(self.phase)
+                            self.pending_columns.append(column)
+
+            self.active_columns = [column for column in self.active_columns if column.visible_characters]
+            if self.phase == "fill":
+                if not self.pending_columns and all(
+                    [(not column.pending_characters and column.phase == "fill") for column in self.active_columns]
+                ):
+                    self.phase = "resolve"
+                    self.active_columns.clear()
+
+            if self.phase == "rain" and self.config.rain_time > 0:
+                if time.time() - self.rain_start > self.config.rain_time:
+                    self.phase = "fill"
+                    for column in self.pending_columns:
+                        column.setup_column(self.phase)
+
+        elif self.phase == "resolve":
+            for column in self.full_columns:
+                column.tick()
+                if column.visible_characters:
+                    if not self.resolve_delay:
+                        for _ in range(random.randint(1, 4)):
+                            if column.visible_characters:
+                                next_char = column.resolve_char()
+                                if next_char.input_symbol != " ":
+                                    next_char.animation.activate_scene(next_char.animation.query_scene("resolve"))
+                                    self.active_characters.append(next_char)
+                                else:
+                                    self.terminal.set_character_visibility(next_char, False)
+                        self.resolve_delay = 10
+                    else:
+                        self.resolve_delay -= 1
+
+            self.full_columns = [column for column in self.full_columns if column.visible_characters]
+
+        if self.full_columns or self.active_columns or self.active_characters:
             self.update()
-            if time.time() - self.rain_start > self.config.rain_time:
-                self.phase = "resolve"
             return self.frame
-
         else:
             raise StopIteration
 
