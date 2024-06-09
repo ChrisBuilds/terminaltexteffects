@@ -1,6 +1,12 @@
+"""
+Effect Description.
+
+Classes:
+
+"""
+
 from __future__ import annotations
 
-import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
@@ -27,6 +33,7 @@ class EffectConfig(ArgsDataClass):
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color for the ___.",
     )  # type: ignore[assignment]
+    "Color: Color for the ___."
 
     color_list: tuple[Color, ...] = ArgField(
         cmd_name=["--color-list"],
@@ -36,6 +43,7 @@ class EffectConfig(ArgsDataClass):
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the ___.",
     )  # type: ignore[assignment]
+    "tuple[Color, ...]: Space separated, unquoted, list of colors for the ___."
 
     final_color: Color = ArgField(
         cmd_name=["--final-color"],
@@ -44,6 +52,7 @@ class EffectConfig(ArgsDataClass):
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color for the final character.",
     )  # type: ignore[assignment]
+    "Color: Color for the final character."
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -53,6 +62,7 @@ class EffectConfig(ArgsDataClass):
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
+    "tuple[Color, ...]: Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -62,6 +72,7 @@ class EffectConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
+    "tuple[int, ...] | int: Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
@@ -70,6 +81,7 @@ class EffectConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # type: ignore[assignment]
+    "int: Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
@@ -78,13 +90,15 @@ class EffectConfig(ArgsDataClass):
         metavar=argvalidators.PositiveFloat.METAVAR,
         help="Speed of the ___.",
     )  # type: ignore[assignment]
+    "float: Speed of the ___."
 
-    easing: typing.Callable = ArgField(
+    easing: easing.EasingFunction = ArgField(
         cmd_name=["--easing"],
         default=easing.in_out_sine,
         type_parser=argvalidators.Ease.type_parser,
         help="Easing function to use for character movement.",
     )  # type: ignore[assignment]
+    "easing.EasingFunction: Easing function to use for character movement."
 
     @classmethod
     def get_effect_class(cls):
