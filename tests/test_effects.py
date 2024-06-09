@@ -166,6 +166,8 @@ def test_matrix_effect() -> None:
         effect = effect_matrix.Matrix(input_data)
         effect.terminal_config = terminal_config
         effect.effect_config.rain_time = 1
+        effect.effect_config.rain_fall_delay_range = (1, 1)
+        effect.effect_config.rain_column_delay_range = (1, 1)
         for _ in effect:
             ...
 
