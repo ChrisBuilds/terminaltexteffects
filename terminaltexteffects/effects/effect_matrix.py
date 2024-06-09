@@ -86,8 +86,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="matrix",
     help="Matrix digital rain effect.",
     description="matrix | Matrix digital rain effect.",
-    epilog="""
-    """,
+    epilog="""Example: tte matrix --rain-color-gradient 92be92 185318 --rain-symbols 2 5 9 8 Z : . = + - ¦ _ --rain-fall-delay-range 8-25 --rain-column-delay-range 5-15 --rain-time 15 --symbol-swap-chance 0.005 --color-swap-chance 0.001 --resolve-delay 5 --final-gradient-stops 389c38 --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical --highlight-color dbffdb""",
 )
 @dataclass
 class MatrixConfig(ArgsDataClass):
@@ -120,12 +119,12 @@ class MatrixConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[str, ...] : Tuple of symbols to use for the rain."
 
-    rain_fall_delay: tuple[int, int] = ArgField(
-        cmd_name=["--rain-fall-delay"],
+    rain_fall_delay_range: tuple[int, int] = ArgField(
+        cmd_name=["--rain-fall-delay-range"],
         type_parser=argvalidators.IntRange.type_parser,
         default=(8, 25),
         metavar=argvalidators.IntRange.METAVAR,
-        help="Speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range.",
+        help="Range for the speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range.",
     )  # type: ignore[assignment]
     "tuple[int, int] : Speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range."
 
@@ -240,11 +239,11 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             self.visible_characters: list[EffectCharacter] = []
             if self.phase == "fill":
                 self.base_rain_fall_delay = random.randint(
-                    max(self.config.rain_fall_delay[0] // 3, 1), max(self.config.rain_fall_delay[1] // 3, 1)
+                    max(self.config.rain_fall_delay_range[0] // 3, 1), max(self.config.rain_fall_delay_range[1] // 3, 1)
                 )
             else:
                 self.base_rain_fall_delay = random.randint(
-                    self.config.rain_fall_delay[0], self.config.rain_fall_delay[1]
+                    self.config.rain_fall_delay_range[0], self.config.rain_fall_delay_range[1]
                 )
             self.active_rain_fall_delay = 0
             if self.phase == "rain":
