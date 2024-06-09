@@ -483,6 +483,55 @@ Launches characters up the screen where they explode like fireworks and fall int
     ```
 ---
 
+## Matrix
+
+Matrix digital rain effect.
+
+![Demo](./img/effects_demos/matrix_demo.gif)
+
+[Reference](./effects/matrix.md){ .md-button } [Config](./effects/matrix.md#terminaltexteffects.effects.effect_matrix.MatrixConfig){ .md-button }
+
+??? example "Matrix Command Line Arguments"
+
+    ```
+    --highlight-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                        Color for the bottom of the rain column. (default: Color Code: dbffdb Color Appearance: █████)
+    --rain-color-gradient (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the rain gradient. Colors are selected from the gradient randomly. If only one color is provided, the characters will be displayed in that
+                        color. (default: (Color(92be92), Color(185318)))
+    --rain-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                        Space separated, unquoted, list of symbols to use for the rain. (default: ('2', '5', '9', '8', 'Z', '*', ')', ':', '.', '"', '=', '+', '-', '¦', '|', '_', 'ｦ', 'ｱ', 'ｳ', 'ｴ', 'ｵ', 'ｶ',
+                        'ｷ', 'ｹ', 'ｺ', 'ｻ', 'ｼ', 'ｽ', 'ｾ', 'ｿ', 'ﾀ', 'ﾂ', 'ﾃ', 'ﾅ', 'ﾆ', 'ﾇ', 'ﾈ', 'ﾊ', 'ﾋ', 'ﾎ', 'ﾏ', 'ﾐ', 'ﾑ', 'ﾒ', 'ﾓ', 'ﾔ', 'ﾕ', 'ﾗ', 'ﾘ', 'ﾜ'))
+    --rain-fall-delay-range (hyphen separated int range e.g. '1-10')
+                        Range for the speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range. (default: (8, 25))
+    --rain-column-delay-range (hyphen separated int range e.g. '1-10')
+                        Range of frames to wait between adding new rain columns. (default: (5, 15))
+    --rain-time (int > 0)
+                        Time, in seconds, to display the rain effect before transitioning to the input text. (default: 15)
+    --symbol-swap-chance (float > 0)
+                        Chance of swapping a character's symbol on each tick. (default: 0.005)
+    --color-swap-chance (float > 0)
+                        Chance of swapping a character's color on each tick. (default: 0.001)
+    --resolve-delay (int > 0)
+                        Number of frames to wait between resolving the next group of characters. This is used to adjust the speed of the final resolve phase. (default: 5)
+    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        (default: Color Code: 389c38 Color Appearance: █████)
+    --final-gradient-steps (int > 0) [(int > 0) ...]
+                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: 12)
+    --final-gradient-frames (int > 0)
+                        Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 5)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
+                        Direction of the final gradient. (default: Direction.VERTICAL)
+
+    Example: tte matrix --rain-color-gradient 92be92 185318 --rain-symbols 2 5 9 8 Z : . = + - ¦ _ --rain-fall-delay-range
+    8-25 --rain-column-delay-range 5-15 --rain-time 15 --symbol-swap-chance 0.005 --color-swap-chance 0.001 --resolve-delay
+    5 --final-gradient-stops 389c38 --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical
+    --highlight-color dbffdb    
+    ```
+
+---
+
 ## MiddleOut
 
 Text expands in a single row or column in the middle of the canvas then out.
