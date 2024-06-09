@@ -129,6 +129,15 @@ class MatrixConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, int] : Speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range."
 
+    rain_column_delay_range: tuple[int, int] = ArgField(
+        cmd_name=["--rain-column-delay-range"],
+        type_parser=argvalidators.IntRange.type_parser,
+        default=(5, 15),
+        metavar=argvalidators.IntRange.METAVAR,
+        help="Range of frames to wait between adding new rain columns.",
+    )  # type: ignore[assignment]
+    "tuple[int, int] : Range of frames to wait between adding new rain columns."
+
     rain_time: int = ArgField(
         cmd_name="--rain-time",
         type_parser=argvalidators.PositiveInt.type_parser,
@@ -155,6 +164,15 @@ class MatrixConfig(ArgsDataClass):
         help="Chance of swapping a character's color on each tick.",
     )  # type: ignore[assignment]
     "float : Chance of swapping a character's color on each tick."
+
+    resolve_delay: int = ArgField(
+        cmd_name="--resolve-delay",
+        type_parser=argvalidators.PositiveInt.type_parser,
+        default=5,
+        metavar=argvalidators.PositiveInt.METAVAR,
+        help="Number of frames to wait between resolving the next group of characters. This is used to adjust the speed of the final resolve phase.",
+    )  # type: ignore[assignment]
+    "int : Number of frames to wait between resolving the next group of characters. This is used to adjust the speed of the final resolve phase."
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -330,7 +348,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         self.full_columns: list[MatrixIterator.RainColumn] = []
         self.rain_colors = Gradient(*self.config.rain_color_gradient, steps=6)
         self.column_delay = 0
-        self.resolve_delay = 5
+        self.resolve_delay = self.config.resolve_delay
         self.phase = "rain"
         self.build()
         self.rain_start = time.time()
@@ -363,7 +381,9 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 for _ in range(random.randint(1, 3)):
                     if self.pending_columns:
                         self.active_columns.append(self.pending_columns.pop(0))
-                self.column_delay = random.randint(5, 15)
+                self.column_delay = random.randint(
+                    self.config.rain_column_delay_range[0], self.config.rain_column_delay_range[1]
+                )
             else:
                 self.column_delay -= 1
             for column in self.active_columns:
@@ -404,7 +424,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                                     self.active_characters.append(next_char)
                                 else:
                                     self.terminal.set_character_visibility(next_char, False)
-                        self.resolve_delay = 10
+                        self.resolve_delay = self.config.resolve_delay
                     else:
                         self.resolve_delay -= 1
 
