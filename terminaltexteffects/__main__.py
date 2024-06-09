@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import importlib
-import importlib.metadata
 import pkgutil
 import sys
 
@@ -24,7 +23,7 @@ def main():
         "--version",
         "-v",
         action="version",
-        version="TerminalTextEffects " + importlib.metadata.version("terminaltexteffects"),
+        version="TerminalTextEffects " + terminaltexteffects.__version__,
     )
 
     TerminalConfig._add_args_to_parser(parser)
