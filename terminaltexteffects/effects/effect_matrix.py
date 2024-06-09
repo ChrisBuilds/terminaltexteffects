@@ -124,11 +124,11 @@ class MatrixConfig(ArgsDataClass):
         cmd_name=["--rain-fall-delay"],
         nargs=2,
         type_parser=argvalidators.IntRange.type_parser,
-        default=(4, 20),
+        default=(8, 25),
         metavar=argvalidators.IntRange.METAVAR,
-        help="Delay, in frames, to wait between dropping new rain columns. Columns are dropped in groups sized between 1-3. Actual delay is randomly selected from the range.",
+        help="Speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range.",
     )  # type: ignore[assignment]
-    "tuple[int, int] : Delay, in frames, to wait between dropping new rain columns. Columns are dropped in groups sized between 1-3. Actual delay is randomly selected from the range."
+    "tuple[int, int] : Speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range."
 
     rain_time: int = ArgField(
         cmd_name="--rain-time",
