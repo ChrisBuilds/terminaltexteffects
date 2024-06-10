@@ -258,6 +258,8 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 Any effects shown below are in development and will be available in the next release.
 
+![matrix_demo](./docs/img/effects_demos/matrix_demo.gif)
+
 ## Latest Release Notes
 
 Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/) for release write-ups.
