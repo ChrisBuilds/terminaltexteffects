@@ -195,7 +195,7 @@ class MatrixConfig(ArgsDataClass):
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=(Color("389c38")),
+        default=(Color("92be92"), Color("336b33")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -223,7 +223,7 @@ class MatrixConfig(ArgsDataClass):
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=Gradient.Direction.VERTICAL,
+        default=Gradient.Direction.RADIAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
@@ -274,16 +274,23 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 self.hold_time = random.randint(20, 45)
 
         def trim_column(self) -> None:
+            if not self.visible_characters:
+                return
             popped_char = self.visible_characters.pop(0)
             self.terminal.set_character_visibility(popped_char, False)
             if len(self.visible_characters) > 1:
                 self.fade_last_character()
 
         def drop_column(self) -> None:
+            out_of_canvas = []
             for character in self.visible_characters:
                 character.motion.current_coord = Coord(
                     character.motion.current_coord.column, character.motion.current_coord.row - 1
                 )
+                if character.motion.current_coord.row < self.terminal.canvas.bottom:
+                    self.terminal.set_character_visibility(character, False)
+                    out_of_canvas.append(character)
+            self.visible_characters = [char for char in self.visible_characters if char not in out_of_canvas]
 
         def fade_last_character(self) -> None:
             darker_color = Animation.adjust_color_brightness(random.choice(self.rain_colors[-3:]), 0.65)  # type: ignore
@@ -396,12 +403,19 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
     def __next__(self) -> str:
         if self.phase == "rain" or self.phase == "fill":
             if not self.column_delay:
-                for _ in range(random.randint(1, 3)):
-                    if self.pending_columns:
+                if self.phase == "rain":
+                    for _ in range(random.randint(1, 3)):
+                        if self.pending_columns:
+                            self.active_columns.append(self.pending_columns.pop(0))
+                else:
+                    while self.pending_columns:
                         self.active_columns.append(self.pending_columns.pop(0))
-                self.column_delay = random.randint(
-                    self.config.rain_column_delay_range[0], self.config.rain_column_delay_range[1]
-                )
+                if self.phase == "rain":
+                    self.column_delay = random.randint(
+                        self.config.rain_column_delay_range[0], self.config.rain_column_delay_range[1]
+                    )
+                else:
+                    self.column_delay = 1
             else:
                 self.column_delay -= 1
             for column in self.active_columns:
