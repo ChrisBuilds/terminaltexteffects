@@ -160,14 +160,8 @@ cython_debug/
 #.idea/
 notes.txt
 terminaltexteffects/test_tte.py
-.vscode/settings.json
-.vscode/launch.json
 */*.stats
 *.prof
-testinput/*
 github_resources/*
-terminaltexteffects/effects/effect_test.py
-terminaltexteffects/effects/effect_dev.py
 *.png
 *.gv
-terminaltexteffects/lib_tests/*

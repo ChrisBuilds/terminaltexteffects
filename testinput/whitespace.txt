@@ -1,0 +1,22 @@
+		tabs			tabs	tabs
+tabs		tabs	tabs	tabs
+spaces spaces spaces   spaces      spaces
+
+		tabs			tabs	tabs
+tabs		tabs	tabs	tabs
+spaces spaces spaces   spaces      spaces
+
+		tabs			tabs	tabs
+tabs		tabs	tabs	tabs
+spaces spaces spaces   spaces      spaces
+
+		tabs			tabs	tabs
+tabs		tabs	tabs	tabs
+spaces spaces spaces   spaces      spaces
+
+		tabs			tabs	tabs
+tabs		tabs	tabs	tabs
+spaces spaces spaces   spaces      spaces
+
+
+newlines

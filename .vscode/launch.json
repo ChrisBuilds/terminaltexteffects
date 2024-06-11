@@ -1,0 +1,138 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Profile Effect",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "cProfile",
+            "args": [
+                "-o",
+                "/home/michael/G/Programming/terminaltexteffects/${input:shortDate}.prof",
+                "/home/michael/G/Programming/terminaltexteffects/terminaltexteffects/__main__.py",
+                "<",
+                "${input:pickText}",
+                "${input:pickEffect}"
+            ]
+        },
+        {
+            "name": "Debug Effect",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/home/michael/G/Programming/terminaltexteffects/terminaltexteffects/__main__.py",
+            "args": [
+                "<",
+                "${input:pickText}",
+                "${input:pickEffect}"
+            ]
+        },
+        {
+            "name": "Canvas Dimensions",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/home/michael/G/Programming/terminaltexteffects/terminaltexteffects/__main__.py",
+            "args": [
+                "<",
+                "${input:pickText}",
+                "--canvas-width",
+                "${input:canvasWidth}",
+                "--canvas-height",
+                "${input:canvasHeight}",
+                "${input:pickEffect}",
+            ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "canvasHeight",
+            "type": "promptString",
+            "description": "Canvas Height",
+            "default": "20",
+        },
+        {
+            "id": "canvasWidth",
+            "type": "promptString",
+            "description": "Canvas Width",
+            "default": "80",
+        },
+        {
+            "id": "pickText",
+            "type": "command",
+            "command": "extension.commandvariable.file.pickFile",
+            "args": {
+                "fromWorkspace": "terminaltexteffects",
+                "include": "testinput/*.txt"
+            }
+        },
+        {
+            "id": "pickEffect",
+            "type": "pickString",
+            "description": "Effect to use",
+            "options": [
+                "test",
+                "beams",
+                "binarypath",
+                "blackhole",
+                "bouncyballs",
+                "bubbles",
+                "burn",
+                "colorshift",
+                "crumble",
+                "decrypt",
+                "dev",
+                "errorcorrect",
+                "expand",
+                "fireworks",
+                "matrix",
+                "middleout",
+                "orbittingvolley",
+                "overflow",
+                "pour",
+                "print",
+                "rain",
+                "randomsequence",
+                "rings",
+                "scattered",
+                "slide",
+                "spray",
+                "spotlights",
+                "swarm",
+                "synthgrid",
+                "unstable",
+                "slice",
+                "vhstape",
+                "waves",
+                "wipe"
+            ],
+            "default": "dev"
+        },
+        {
+            "id": "shortDate",
+            "type": "command",
+            "command": "extension.commandvariable.dateTime",
+            "args": {
+                "options": {
+                    "year": "numeric",
+                    "month": "2-digit",
+                    "day": "2-digit",
+                    "hour12": false,
+                    "hour": "2-digit",
+                    "minute": "2-digit",
+                    "second": "2-digit"
+                },
+                "template": "${year}-${month}-${day}-T${hour}-${minute}-${second}"
+            }
+        }
+    ],
+}

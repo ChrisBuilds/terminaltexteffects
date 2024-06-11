@@ -1,0 +1,26 @@
+                      _______ _______ _______                                                     
+                     (_______|_______|_______)                                                    
+                         _       _    _____                                                       
+                        | |     | |  |  ___)                                                      
+                        | |     | |  | |_____                                                     
+                        |_|     |_|  |_______)                                                    
+                     ==========================                       
+TerminalTextEffects applies visual effects to text in the terminal.
+
+The TTE animation engine has the following features:
+        * Xterm 256 / RGB hex color support
+        * Complex character movement via Paths, Waypoints, and
+          motion easing.
+        * Complex animations via Scenes with symbol/color changes,
+          layers, easing, and Path synced progression.
+        * Event handling for Path/Scene state changes with 
+          custom callback support and many pre-defined actions.
+        * Variable stop/step color gradient generation. 
+        * Extensive effect customization via per-effect arguments.
+        * Runs inline, preserving terminal state and workflow.
+Installation:
+        * pip install TerminalTextEffects
+        * pipx install TerminalTextEffects
+More Info:
+    https://github.com/ChrisBuilds/terminaltexteffects
+    https://pypi.org/project/terminaltexteffects/
