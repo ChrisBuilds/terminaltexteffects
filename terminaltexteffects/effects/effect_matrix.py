@@ -140,7 +140,7 @@ class MatrixConfig(ArgsDataClass):
     rain_fall_delay_range: tuple[int, int] = ArgField(
         cmd_name=["--rain-fall-delay-range"],
         type_parser=argvalidators.IntRange.type_parser,
-        default=(8, 25),
+        default=(3, 25),
         metavar=argvalidators.IntRange.METAVAR,
         help="Range for the speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range.",
     )  # type: ignore[assignment]
