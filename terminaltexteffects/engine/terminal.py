@@ -78,21 +78,23 @@ class TerminalConfig(ArgsDataClass):
 
     canvas_width: int = ArgField(
         cmd_name=["--canvas-width"],
-        type_parser=argvalidators.NonNegativeInt.type_parser,
+        metavar=argvalidators.CanvasDimension.METAVAR,
+        type_parser=argvalidators.CanvasDimension.type_parser,
         default=0,
-        help="Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device.",
+        help="Canvas width, set to an integer > 0 or use 'input' or 'terminal' to set the dimension based off the input data or the terminal device, respectively.",
     )  # type: ignore[assignment]
 
-    "int : Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device."
+    "int : Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data width."
 
     canvas_height: int = ArgField(
         cmd_name=["--canvas-height"],
-        type_parser=argvalidators.NonNegativeInt.type_parser,
+        metavar=argvalidators.CanvasDimension.METAVAR,
+        type_parser=argvalidators.CanvasDimension.type_parser,
         default=0,
-        help="Canvas height, if set to 0 the canvas height is detected automatically based on the terminal device.",
+        help="Canvas height, set to an integer > 0 or use 'input' or 'terminal' to set the dimension based off the input data or the terminal device, respectively.",
     )  # type: ignore[assignment]
 
-    "int : Canvas height, if set to 0 the canvas height is is detected automatically based on the terminal device."
+    "int : Canvas height, if set to 0 the canvas height is is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data height."
 
     ignore_terminal_dimensions: bool = ArgField(
         cmd_name=["--ignore-terminal-dimensions"],
@@ -277,24 +279,16 @@ class Terminal:
         if not input_data:
             input_data = "No Input."
         self._input_data = input_data.replace("\t", " " * self.config.tab_width)
-        self.detected_terminal_dimensions = self._get_terminal_dimensions()
-        self._width = self.config.canvas_width
-        self._height = self.config.canvas_height
+        self._terminal_width, self._terminal_height = self._get_terminal_dimensions()
+        self.canvas = Canvas(*self._get_canvas_dimensions())
         if self.config.ignore_terminal_dimensions:
-            self._width = max([len(line) for line in self._input_data.splitlines()])
-            self._height = len(self._input_data.splitlines()) + 1
-        elif self._width == 0 or self._height == 0:
-            if self._width == 0:
-                self._width = self.detected_terminal_dimensions[0]
-            if self._height == 0:
-                self._height = self.detected_terminal_dimensions[1]
-
+            self._terminal_width = self.canvas.right
+            self._terminal_height = self.canvas.top
+        self.visible_top = min(self.canvas.top, self._terminal_height)
+        self.visible_right = min(self.canvas.right, self._terminal_width)
         self._next_character_id = 0
         self._input_characters = self._decompose_input(self.config.xterm_colors, self.config.no_color)
         self._added_characters: list[EffectCharacter] = []
-        self._input_width = max([character.input_coord.column for character in self._input_characters])
-        self._input_height = max([character.input_coord.row for character in self._input_characters])
-        self.canvas = Canvas(min(max(self._height, 1), self._input_height), self._input_width)
         self._input_characters = [
             character
             for character in self._input_characters
@@ -308,6 +302,34 @@ class Terminal:
         self._frame_rate = self.config.frame_rate
         self._last_time_printed = time.time()
         self._update_terminal_state()
+
+    def _get_canvas_dimensions(self) -> tuple[int, int]:
+        """Determine the canvas dimensions using the input data dimensions, terminal dimensions, and text wrapping.
+
+        Returns:
+            tuple[int, int]: Canvas height, Canvas width
+        """
+        if self.config.canvas_width > 0:
+            canvas_width = self.config.canvas_width
+        elif self.config.canvas_width == 0:
+            canvas_width = self._terminal_width
+        else:
+            input_width = max([len(line.rstrip()) for line in self._input_data.splitlines()])
+            if self.config.wrap_text:
+                canvas_width = min(self._terminal_width, input_width)
+            else:
+                canvas_width = input_width
+        if self.config.canvas_height > 0:
+            canvas_height = self.config.canvas_height
+        elif self.config.canvas_height == 0:
+            canvas_height = self._terminal_height
+        else:
+            input_width = max([len(line.rstrip()) for line in self._input_data.splitlines()])
+            if self.config.wrap_text:
+                canvas_height = len(self._wrap_lines(self._input_data.splitlines(), canvas_width))
+            else:
+                canvas_height = len(self._input_data.splitlines())
+        return canvas_height, canvas_width
 
     def _get_terminal_dimensions(self) -> tuple[int, int]:
         """Gets the terminal dimensions.
@@ -341,21 +363,23 @@ class Terminal:
             return ""
         return sys.stdin.read()
 
-    def _wrap_lines(self, lines: list[str]) -> list[str]:
+    def _wrap_lines(self, lines: list[str], width: int) -> list[str]:
         """
-        Wraps the given lines of text to fit within the width of the terminal.
+        Wraps the given lines of text to fit within the width of the canvas.
 
         Args:
             lines (list): The lines of text to be wrapped.
+            width (int): The maximum length of a line.
 
         Returns:
             list: The wrapped lines of text.
         """
         wrapped_lines = []
         for line in lines:
-            while len(line) > self._width:
-                wrapped_lines.append(line[: self._width])
-                line = line[self._width :]
+            line = line.rstrip()
+            while len(line) > width:
+                wrapped_lines.append(line[:width])
+                line = line[width:]
             wrapped_lines.append(line)
         return wrapped_lines
 
@@ -376,7 +400,11 @@ class Terminal:
         if not self._input_data.strip():
             self._input_data = "No Input."
         lines = self._input_data.splitlines()
-        formatted_lines = self._wrap_lines(lines) if self.config.wrap_text else [line[: self._width] for line in lines]
+        formatted_lines = (
+            self._wrap_lines(lines, self.canvas.right)
+            if self.config.wrap_text
+            else [line[: self.canvas.right] for line in lines]
+        )
         input_height = len(formatted_lines)
         input_characters = []
         for row, line in enumerate(formatted_lines):
@@ -430,11 +458,11 @@ class Terminal:
         """Update the internal representation of the terminal state with the current position
         of all visible characters.
         """
-        rows = [[" " for _ in range(self.canvas.right)] for _ in range(self.canvas.top)]
+        rows = [[" " for _ in range(self.visible_right)] for _ in range(self.visible_top)]
         for character in sorted(self._visible_characters, key=lambda c: c.layer):
             row = character.motion.current_coord.row - 1
             column = character.motion.current_coord.column - 1
-            if 0 <= row < self.canvas.top and 0 <= column < self.canvas.right:
+            if 0 <= row < self.visible_top and 0 <= column < self.visible_right:
                 rows[row][column] = character.animation.current_character_visual.formatted_symbol
         terminal_state = ["".join(row) for row in rows]
         self.terminal_state = terminal_state
