@@ -398,20 +398,13 @@ class CanvasDimension:
 
     @staticmethod
     def type_parser(arg: str) -> int:
-        if arg.isdigit():
-            if int(arg) > 0:
+        if arg.isdigit() or arg == "-1":
+            if int(arg) >= -1:
                 return int(arg)
             else:
-                raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not > 0.")
+                raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not >= -1.")
         else:
-            if arg == "input":
-                return -1
-            elif arg == "terminal":
-                return 0
-            else:
-                raise argparse.ArgumentTypeError(
-                    f"invalid value: '{arg}' is not a valid canvas dimension. Must be 'input', 'terminal', or a positive integer."
-                )
+            raise argparse.ArgumentTypeError(f"invalid value '{arg}' is not a valid integer. Must be >= -1.")
 
 
 class TerminalDimensions:
