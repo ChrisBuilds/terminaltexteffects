@@ -80,8 +80,8 @@ class TerminalConfig(ArgsDataClass):
         cmd_name=["--canvas-width"],
         metavar=argvalidators.CanvasDimension.METAVAR,
         type_parser=argvalidators.CanvasDimension.type_parser,
-        default=0,
-        help="Canvas width, set to an integer > 0 or use 'input' or 'terminal' to set the dimension based off the input data or the terminal device, respectively.",
+        default=-1,
+        help="Canvas width, set to an integer > 0 to use a specific dimension, or use 0, or -1 to set the dimension based off the input data or the terminal device, respectively.",
     )  # type: ignore[assignment]
 
     "int : Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data width."
@@ -90,8 +90,8 @@ class TerminalConfig(ArgsDataClass):
         cmd_name=["--canvas-height"],
         metavar=argvalidators.CanvasDimension.METAVAR,
         type_parser=argvalidators.CanvasDimension.type_parser,
-        default=0,
-        help="Canvas height, set to an integer > 0 or use 'input' or 'terminal' to set the dimension based off the input data or the terminal device, respectively.",
+        default=-1,
+        help="Canvas height, set to an integer > 0 to use a specific dimension, or use 0, or -1 to set the dimension based off the input data or the terminal device, respectively.",
     )  # type: ignore[assignment]
 
     "int : Canvas height, if set to 0 the canvas height is is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data height."
