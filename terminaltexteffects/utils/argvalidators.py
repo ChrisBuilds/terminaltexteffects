@@ -393,6 +393,27 @@ class Symbol:
             )
 
 
+class CanvasDimension:
+    METAVAR = "WIDTH"
+
+    @staticmethod
+    def type_parser(arg: str) -> int:
+        if arg.isdigit():
+            if int(arg) > 0:
+                return int(arg)
+            else:
+                raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not > 0.")
+        else:
+            if arg == "input":
+                return -1
+            elif arg == "terminal":
+                return 0
+            else:
+                raise argparse.ArgumentTypeError(
+                    f"invalid value: '{arg}' is not a valid canvas dimension. Must be 'input', 'terminal', or a positive integer."
+                )
+
+
 class TerminalDimensions:
     """Argument type for terminal dimensions.
 
