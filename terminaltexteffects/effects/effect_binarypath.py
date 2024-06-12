@@ -193,7 +193,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                         last_coord.column,
                         last_coord.row
                         + (
-                            random.randint(1, min(max_row_distance, max(10, int(self.terminal._input_width * 0.2))))
+                            random.randint(1, min(max_row_distance, max(10, int(self.terminal.canvas.right * 0.2))))
                             * row_direction
                         ),
                     )
