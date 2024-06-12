@@ -14,6 +14,7 @@ import sys
 import time
 from dataclasses import dataclass
 from enum import Enum, auto
+from typing import Literal
 
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
@@ -95,6 +96,15 @@ class TerminalConfig(ArgsDataClass):
     )  # type: ignore[assignment]
 
     "int : Canvas height, if set to 0 the canvas height is is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data height."
+
+    anchor_text: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgField(
+        cmd_name=["--anchor-text"],
+        choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
+        default="sw",
+        help="Anchor point for the text. Text will anchored to the canvas at the edge corresponding to the cardinal/diagonal direction.",
+    )  # type: ignore[assignment]
+
+    "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the text. Text will anchored to the canvas at the edge corresponding to the cardinal/diagonal direction."
 
     ignore_terminal_dimensions: bool = ArgField(
         cmd_name=["--ignore-terminal-dimensions"],
@@ -194,6 +204,10 @@ class Canvas:
             return random.choice([random_coord_above, random_coord_below, random_coord_left, random_coord_right])
         else:
             return Coord(self.random_column(), self.random_row())
+
+
+# TODO: test canvas sizes with anchors and handle smaller than input text
+# TODO: figure out what --ignore-terminal-dimensions is useful for
 
 
 class Terminal:
@@ -396,6 +410,7 @@ class Terminal:
         Returns:
             list[Character]: list of EffectCharacter objects
         """
+
         formatted_lines = []
         if not self._input_data.strip():
             self._input_data = "No Input."
@@ -406,7 +421,7 @@ class Terminal:
             else [line[: self.canvas.right] for line in lines]
         )
         input_height = len(formatted_lines)
-        input_characters = []
+        input_characters: list[EffectCharacter] = []
         for row, line in enumerate(formatted_lines):
             for column, symbol in enumerate(line):
                 if symbol != " ":
@@ -415,6 +430,41 @@ class Terminal:
                     character.animation.no_color = no_color
                     input_characters.append(character)
                     self._next_character_id += 1
+        # translate coordinate based on anchor
+        input_width = max([character._input_coord.column for character in input_characters])
+        input_height = max([character._input_coord.row for character in input_characters])
+        if self.config.anchor_text == "se":
+            column_delta = self.canvas.right - input_width
+            row_delta = 0
+        elif self.config.anchor_text == "s":
+            column_delta = self.canvas.right // 2 - input_width // 2
+            row_delta = 0
+        elif self.config.anchor_text == "sw":
+            column_delta = row_delta = 0
+        elif self.config.anchor_text == "w":
+            column_delta = 0
+            row_delta = self.canvas.top // 2 - input_height // 2
+        elif self.config.anchor_text == "nw":
+            column_delta = 0
+            row_delta = self.canvas.top - input_height
+        elif self.config.anchor_text == "n":
+            column_delta = self.canvas.right // 2 - input_width // 2
+            row_delta = self.canvas.top - input_height
+        elif self.config.anchor_text == "ne":
+            column_delta = self.canvas.right - input_width
+            row_delta = self.canvas.top - input_height
+        elif self.config.anchor_text == "e":
+            column_delta = self.canvas.right - input_width
+            row_delta = self.canvas.top // 2 - input_height // 2
+        elif self.config.anchor_text == "c":
+            column_delta = self.canvas.right // 2 - input_width // 2
+            row_delta = self.canvas.top // 2 - input_height // 2
+
+        for character in input_characters:
+            current_coord = character.input_coord
+            anchored_coord = Coord(current_coord.column + column_delta, current_coord.row + row_delta)
+            character._input_coord = anchored_coord
+            character.motion.set_coordinate(anchored_coord)
         return input_characters
 
     def _make_fill_characters(self) -> list[EffectCharacter]:
