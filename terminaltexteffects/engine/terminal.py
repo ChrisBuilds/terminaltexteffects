@@ -399,7 +399,7 @@ class Terminal:
 
     def _decompose_input(self, use_xterm_colors: bool, no_color: bool) -> list[EffectCharacter]:
         """Decomposes the output into a list of Character objects containing the symbol and its row/column coordinates
-        relative to the input display location.
+        relative to the anchor point in the Canvas.
 
         Coordinates are relative to the cursor row position at the time of execution. 1,1 is the bottom left corner of the row
         above the cursor.
@@ -433,36 +433,20 @@ class Terminal:
         # translate coordinate based on anchor
         input_width = max([character._input_coord.column for character in input_characters])
         input_height = max([character._input_coord.row for character in input_characters])
-        if self.config.anchor_text == "se":
-            column_delta = self.canvas.right - input_width
-            row_delta = 0
-        elif self.config.anchor_text == "s":
+        column_delta = row_delta = 0
+
+        if self.config.anchor_text in ("s", "n", "c"):
             column_delta = self.canvas.right // 2 - input_width // 2
-            row_delta = 0
-        elif self.config.anchor_text == "sw":
-            column_delta = row_delta = 0
-        elif self.config.anchor_text == "w":
-            column_delta = 0
-            row_delta = self.canvas.top // 2 - input_height // 2
-        elif self.config.anchor_text == "nw":
-            column_delta = 0
-            row_delta = self.canvas.top - input_height
-        elif self.config.anchor_text == "n":
-            column_delta = self.canvas.right // 2 - input_width // 2
-            row_delta = self.canvas.top - input_height
-        elif self.config.anchor_text == "ne":
+        elif self.config.anchor_text in ("se", "e", "ne"):
             column_delta = self.canvas.right - input_width
+        if self.config.anchor_text in ("w", "e", "c"):
+            row_delta = self.canvas.top // 2 - input_height // 2
+        elif self.config.anchor_text in ("nw", "n", "ne"):
             row_delta = self.canvas.top - input_height
-        elif self.config.anchor_text == "e":
-            column_delta = self.canvas.right - input_width
-            row_delta = self.canvas.top // 2 - input_height // 2
-        elif self.config.anchor_text == "c":
-            column_delta = self.canvas.right // 2 - input_width // 2
-            row_delta = self.canvas.top // 2 - input_height // 2
 
         for character in input_characters:
             current_coord = character.input_coord
-            anchored_coord = Coord(current_coord.column + column_delta, current_coord.row + row_delta)
+            anchored_coord = Coord(current_coord.column + max(column_delta, 0), current_coord.row + max(row_delta, 0))
             character._input_coord = anchored_coord
             character.motion.set_coordinate(anchored_coord)
         return input_characters
