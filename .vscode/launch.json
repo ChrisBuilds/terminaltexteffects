@@ -49,6 +49,10 @@
                 "${input:canvasWidth}",
                 "--canvas-height",
                 "${input:canvasHeight}",
+                "--anchor-canvas",
+                "${input:pickCanvasAnchor}",
+                "--anchor-effect",
+                "${input:pickEffectAnchor}",
                 "${input:pickEffect}",
             ]
         }
@@ -58,13 +62,47 @@
             "id": "canvasHeight",
             "type": "promptString",
             "description": "Canvas Height",
-            "default": "20",
+            "default": "-1",
         },
         {
             "id": "canvasWidth",
             "type": "promptString",
             "description": "Canvas Width",
-            "default": "80",
+            "default": "-1",
+        },
+        {
+            "id": "pickCanvasAnchor",
+            "type": "pickString",
+            "description": "Canvas Anchor to use",
+            "options": [
+                "n",
+                "ne",
+                "e",
+                "se",
+                "s",
+                "sw",
+                "w",
+                "nw",
+                "c"
+            ],
+            "default": "sw"
+        },
+        {
+            "id": "pickEffectAnchor",
+            "type": "pickString",
+            "description": "Effect Anchor to use",
+            "options": [
+                "n",
+                "ne",
+                "e",
+                "se",
+                "s",
+                "sw",
+                "w",
+                "nw",
+                "c"
+            ],
+            "default": "se"
         },
         {
             "id": "pickText",
