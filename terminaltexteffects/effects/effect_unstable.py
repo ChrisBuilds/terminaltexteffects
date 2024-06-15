@@ -145,15 +145,15 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
             pos = random.randint(0, 3)
             if pos == 0:
                 col = self.terminal.canvas.left
-                row = random.randint(1, self.terminal.canvas.top)
+                row = self.terminal.canvas.random_row()
             elif pos == 1:
                 col = self.terminal.canvas.right
-                row = random.randint(1, self.terminal.canvas.top)
+                row = self.terminal.canvas.random_row()
             elif pos == 2:
-                col = random.randint(1, self.terminal.canvas.right)
+                col = self.terminal.canvas.random_column()
                 row = self.terminal.canvas.bottom
             else:
-                col = random.randint(1, self.terminal.canvas.right)
+                col = self.terminal.canvas.random_column()
                 row = self.terminal.canvas.top
             jumbled_coord = character_coords.pop(random.randint(0, len(character_coords) - 1))
             self.jumbled_coords[character] = jumbled_coord
