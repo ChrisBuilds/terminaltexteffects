@@ -35,6 +35,8 @@ class TerminalConfig(ArgsDataClass):
         frame_rate (float): Target frame rate for the animation.
         canvas_width (int): Cavas width, if set to 0 the canvas width is detected automatically based on the terminal device.
         canvas_height (int): Canvas height, if set to 0 the canvas height is detected automatically based on the terminal device.
+        anchor_canvas (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the Canvas. The Canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
+        anchor_effect (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the effect within the Canvas. Effect text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
         ignore_terminal_dimensions (bool): Ignore the terminal dimensions and use the input data dimensions for the canvas.
     """
 
@@ -97,14 +99,23 @@ class TerminalConfig(ArgsDataClass):
 
     "int : Canvas height, if set to 0 the canvas height is is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data height."
 
-    anchor_text: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgField(
-        cmd_name=["--anchor-text"],
-        choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
+    anchor_canvas: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"] = ArgField(
+        cmd_name=["--anchor-canvas"],
+        choices=["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"],
         default="sw",
-        help="Anchor point for the text. Text will anchored to the canvas at the edge corresponding to the cardinal/diagonal direction.",
+        help="Anchor point for the canvas. The canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction.",
     )  # type: ignore[assignment]
 
-    "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the text. Text will anchored to the canvas at the edge corresponding to the cardinal/diagonal direction."
+    "Literal['sw','s','se','e','ne','n','nw','w','c'] : Anchor point for the canvas. The canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction."
+
+    anchor_effect: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgField(
+        cmd_name=["--anchor-effect"],
+        choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
+        default="sw",
+        help="Anchor point for the effect within the Canvas. Effect text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction.",
+    )  # type: ignore[assignment]
+
+    "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the effect within the Canvas. Effect text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction."
 
     ignore_terminal_dimensions: bool = ArgField(
         cmd_name=["--ignore-terminal-dimensions"],
@@ -150,15 +161,15 @@ class Canvas:
     """int: top row of the canvas"""
     right: int
     """int: right column of the canvas"""
-    bottom: int = 1
+    bottom: int
     """int: bottom row of the canvas"""
-    left: int = 1
+    left: int
     """int: left column of the canvas"""
 
     def __post_init__(self):
-        self.center_row = max(self.top // 2, 1)
+        self.center_row = max(self.top - ((self.top - self.bottom) // 2), self.bottom)
         """int: row of the center of the canvas"""
-        self.center_column = max(self.right // 2, 1)
+        self.center_column = max(self.right - ((self.right - self.left) // 2), self.left)
         """int: column of the center of the canvas"""
         self.center = Coord(self.center_column, self.center_row)
         """Coord: coordinate of the center of the canvas"""
@@ -179,14 +190,14 @@ class Canvas:
 
         Returns:
             int: a random column position (1 <= x <= canvas.right)"""
-        return random.randint(1, self.right)
+        return random.randint(self.left, self.right)
 
     def random_row(self) -> int:
         """Get a random row position. Position is within the canvas.
 
         Returns:
             int: a random row position (1 <= x <= terminal.canvas.top)"""
-        return random.randint(1, self.top)
+        return random.randint(self.bottom, self.top)
 
     def random_coord(self, outside_scope=False) -> Coord:
         """Get a random coordinate. Coordinate is within the canvas unless outside_scope is True.
@@ -198,15 +209,14 @@ class Canvas:
             Coord: a random coordinate . Coordinate is within the canvas unless outside_scope is True."""
         if outside_scope is True:
             random_coord_above = Coord(self.random_column(), self.top + 1)
-            random_coord_below = Coord(self.random_column(), -1)
-            random_coord_left = Coord(-1, self.random_row())
+            random_coord_below = Coord(self.random_column(), self.bottom - 1)
+            random_coord_left = Coord(self.left - 1, self.random_row())
             random_coord_right = Coord(self.right + 1, self.random_row())
             return random.choice([random_coord_above, random_coord_below, random_coord_left, random_coord_right])
         else:
             return Coord(self.random_column(), self.random_row())
 
 
-# TODO: test canvas sizes with anchors and handle smaller than input text
 # TODO: figure out what --ignore-terminal-dimensions is useful for
 
 
@@ -299,7 +309,9 @@ class Terminal:
             self._terminal_width = self.canvas.right
             self._terminal_height = self.canvas.top
         self.visible_top = min(self.canvas.top, self._terminal_height)
+        self.visible_bottom = max(self.canvas.bottom, 1)
         self.visible_right = min(self.canvas.right, self._terminal_width)
+        self.visible_left = max(self.canvas.left, 1)
         self._next_character_id = 0
         self._input_characters = self._decompose_input(self.config.xterm_colors, self.config.no_color)
         self._added_characters: list[EffectCharacter] = []
@@ -317,12 +329,14 @@ class Terminal:
         self._last_time_printed = time.time()
         self._update_terminal_state()
 
-    def _get_canvas_dimensions(self) -> tuple[int, int]:
+    def _get_canvas_dimensions(self) -> tuple[int, int, int, int]:
         """Determine the canvas dimensions using the input data dimensions, terminal dimensions, and text wrapping.
 
         Returns:
-            tuple[int, int]: Canvas height, Canvas width
+            tuple[int, int, int, int]: Canvas top, right, bottom, and left coordinates.
         """
+        # todo: Track down the canvas/terminal dimension off by one error, verify which it should start, 0 or 1 and be
+        # consistent
         if self.config.canvas_width > 0:
             canvas_width = self.config.canvas_width
         elif self.config.canvas_width == 0:
@@ -343,7 +357,22 @@ class Terminal:
                 canvas_height = len(self._wrap_lines(self._input_data.splitlines(), canvas_width))
             else:
                 canvas_height = len(self._input_data.splitlines())
-        return canvas_height, canvas_width
+
+        # anchor canvas
+        canvas_left = canvas_bottom = 1
+        if self.config.anchor_canvas in ("s", "n", "c"):
+            canvas_left = (self._terminal_width // 2) - (canvas_width // 2)
+        elif self.config.anchor_canvas in ("se", "e", "ne"):
+            canvas_left = self._terminal_width - canvas_width
+        if self.config.anchor_canvas in ("w", "e", "c"):
+            canvas_bottom = self._terminal_height // 2 - canvas_height // 2
+        elif self.config.anchor_canvas in ("nw", "n", "ne"):
+            canvas_bottom = self._terminal_height - canvas_height
+
+        canvas_right = canvas_left + canvas_width - 1
+        canvas_top = canvas_bottom + canvas_height - 1
+
+        return canvas_top, canvas_right, canvas_bottom, canvas_left
 
     def _get_terminal_dimensions(self) -> tuple[int, int]:
         """Gets the terminal dimensions.
@@ -423,9 +452,9 @@ class Terminal:
         input_height = len(formatted_lines)
         input_characters: list[EffectCharacter] = []
         for row, line in enumerate(formatted_lines):
-            for column, symbol in enumerate(line):
+            for column, symbol in enumerate(line, start=1):
                 if symbol != " ":
-                    character = EffectCharacter(self._next_character_id, symbol, column + 1, input_height - row)
+                    character = EffectCharacter(self._next_character_id, symbol, column, input_height - row)
                     character.animation.use_xterm_colors = use_xterm_colors
                     character.animation.no_color = no_color
                     input_characters.append(character)
@@ -433,16 +462,21 @@ class Terminal:
         # translate coordinate based on anchor
         input_width = max([character._input_coord.column for character in input_characters])
         input_height = max([character._input_coord.row for character in input_characters])
+
         column_delta = row_delta = 0
 
-        if self.config.anchor_text in ("s", "n", "c"):
-            column_delta = self.canvas.right // 2 - input_width // 2
-        elif self.config.anchor_text in ("se", "e", "ne"):
+        if self.config.anchor_effect in ("s", "n", "c"):
+            column_delta = self.canvas.center_column - ((input_width // 2) + 1)
+        elif self.config.anchor_effect in ("se", "e", "ne"):
             column_delta = self.canvas.right - input_width
-        if self.config.anchor_text in ("w", "e", "c"):
-            row_delta = self.canvas.top // 2 - input_height // 2
-        elif self.config.anchor_text in ("nw", "n", "ne"):
+        elif self.config.anchor_effect in ("sw", "w", "nw"):
+            column_delta = self.canvas.left - 1
+        if self.config.anchor_effect in ("w", "e", "c"):
+            row_delta = self.canvas.center_row - ((input_height // 2) + 1)
+        elif self.config.anchor_effect in ("nw", "n", "ne"):
             row_delta = self.canvas.top - input_height
+        elif self.config.anchor_effect in ("sw", "s", "se"):
+            row_delta = self.canvas.bottom - 1
 
         for character in input_characters:
             current_coord = character.input_coord
@@ -494,10 +528,10 @@ class Terminal:
         """
         rows = [[" " for _ in range(self.visible_right)] for _ in range(self.visible_top)]
         for character in sorted(self._visible_characters, key=lambda c: c.layer):
-            row = character.motion.current_coord.row - 1
-            column = character.motion.current_coord.column - 1
-            if 0 <= row < self.visible_top and 0 <= column < self.visible_right:
-                rows[row][column] = character.animation.current_character_visual.formatted_symbol
+            row = character.motion.current_coord.row
+            column = character.motion.current_coord.column
+            if self.visible_bottom <= row <= self.visible_top and self.visible_left <= column <= self.visible_right:
+                rows[row - 1][column - 1] = character.animation.current_character_visual.formatted_symbol
         terminal_state = ["".join(row) for row in rows]
         self.terminal_state = terminal_state
 
