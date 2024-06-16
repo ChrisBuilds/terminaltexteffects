@@ -148,6 +148,8 @@ class Canvas:
         center_row (int): row of the center of the canvas
         center_column (int): column of the center of the canvas
         center (Coord): coordinate of the center of the canvas
+        width (int): width of the canvas
+        height (int): height of the canvas
 
     Methods:
         coord_is_in_canvas(coord: Coord) -> bool: Checks whether a coordinate is within the canvas.
@@ -173,6 +175,10 @@ class Canvas:
         """int: column of the center of the canvas"""
         self.center = Coord(self.center_column, self.center_row)
         """Coord: coordinate of the center of the canvas"""
+        self.width = (self.right - self.left) + 1
+        """int: width of the canvas"""
+        self.height = (self.top - self.bottom) + 1
+        """int: height of the canvas"""
 
     def coord_is_in_canvas(self, coord: Coord) -> bool:
         """Checks whether a coordinate is within the canvas.
