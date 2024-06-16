@@ -239,23 +239,27 @@ def find_length_of_line(coord1: Coord, coord2: Coord, double_row_diff: bool = Fa
     return math.hypot(column_diff, row_diff)
 
 
-def find_normalized_distance_from_center(max_row: int, max_column: int, other_coord: Coord) -> float:
-    """Returns the normalized distance from the center of the Canvas as a float between 0 and 1.
+def find_normalized_distance_from_center(
+    left_column: int, right_column: int, bottom_row: int, top_row: int, other_coord: Coord
+) -> float:
+    """Returns the normalized distance from the center of the bounding box as a float between 0 and 1.
 
     The distance is calculated using the Pythagorean theorem and accounts for the aspect ratio of the terminal.
 
     Args:
-        max_row (int): Maximum row value of the Canvas.
-        max_column (int): Maximum column value of the Canvas.
+        left_column (int): Left column of the bounding box.
+        right_column (int): Right column of the bounding box.
+        bottom_row (int): Bottom row of the bounding box.
+        top_row (int): Top row of the bounding box.
         other_coord (Coord): Other coordinate from which to calculate the distance.
 
     Returns:
-        float: Normalized distance from the center of the Canvas, float between 0 and 1.
+        float: Normalized distance from the center of the bounding box, float between 0 and 1.
     """
-    center_x = max_column / 2
-    center_y = max_row / 2
+    center_x = right_column - ((right_column - left_column) // 2)
+    center_y = top_row - ((top_row - bottom_row) // 2)
 
-    max_distance = ((max_column**2) + ((max_row * 2) ** 2)) ** 0.5
+    max_distance = (((right_column - left_column) ** 2) + (((top_row - bottom_row) * 2) ** 2)) ** 0.5
 
     distance = ((other_coord.column - center_x) ** 2 + (((other_coord.row) - center_y) * 2) ** 2) ** 0.5
 
