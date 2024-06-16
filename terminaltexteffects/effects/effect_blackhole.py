@@ -111,8 +111,8 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         self.awaiting_consumption_chars: list[EffectCharacter] = []
         self.blackhole_radius = max(
             min(
-                round(self.terminal.canvas.right * 0.3),
-                round(self.terminal.canvas.top * 0.3),
+                round(self.terminal.canvas.width * 0.3),
+                round(self.terminal.canvas.height * 0.3),
             ),
             3,
         )
