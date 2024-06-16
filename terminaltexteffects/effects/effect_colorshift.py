@@ -215,12 +215,10 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
                     )
                 elif self.config.travel_direction == Gradient.Direction.RADIAL:
                     direction_index = geometry.find_normalized_distance_from_center(
-                        self.terminal.canvas.left,
-                        self.terminal.canvas.right,
-                        self.terminal.canvas.bottom,
-                        self.terminal.canvas.top,
+                        self.terminal.canvas.height,
+                        self.terminal.canvas.width,
                         character.input_coord,
-                    )  # todo: fix finding center, may need to fix all to reference the canvas
+                    )
                 shift_distance = int(len(gradient.spectrum) * direction_index)
                 if self.config.reverse_travel_direction:
                     shift_distance = shift_distance * -1
