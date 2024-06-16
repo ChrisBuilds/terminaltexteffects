@@ -108,14 +108,14 @@ class TerminalConfig(ArgsDataClass):
 
     "Literal['sw','s','se','e','ne','n','nw','w','c'] : Anchor point for the canvas. The canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction."
 
-    anchor_effect: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgField(
-        cmd_name=["--anchor-effect"],
+    anchor_text: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgField(
+        cmd_name=["--anchor-text"],
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
         default="sw",
-        help="Anchor point for the effect within the Canvas. Effect text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction.",
+        help="Anchor point for the text within the Canvas. Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction.",
     )  # type: ignore[assignment]
 
-    "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the effect within the Canvas. Effect text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction."
+    "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the text within the Canvas. Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction."
 
     ignore_terminal_dimensions: bool = ArgField(
         cmd_name=["--ignore-terminal-dimensions"],
@@ -137,8 +137,6 @@ class Canvas:
     Args:
         top (int): top row of the canvas
         right (int): right column of the canvas
-        bottom (int): bottom row of the canvas. Defaults to 1.
-        left (int): left column of the canvas. Defaults to 1.
 
     Attributes:
         top (int): top row of the canvas
@@ -163,21 +161,21 @@ class Canvas:
     """int: top row of the canvas"""
     right: int
     """int: right column of the canvas"""
-    bottom: int
+    bottom: int = 1
     """int: bottom row of the canvas"""
-    left: int
+    left: int = 1
     """int: left column of the canvas"""
 
     def __post_init__(self):
-        self.center_row = max(self.top - ((self.top - self.bottom) // 2), self.bottom)
+        self.center_row = max(self.top // 2, self.bottom)
         """int: row of the center of the canvas"""
-        self.center_column = max(self.right - ((self.right - self.left) // 2), self.left)
+        self.center_column = max(self.right // 2, self.left)
         """int: column of the center of the canvas"""
         self.center = Coord(self.center_column, self.center_row)
         """Coord: coordinate of the center of the canvas"""
-        self.width = (self.right - self.left) + 1
+        self.width = self.right
         """int: width of the canvas"""
-        self.height = (self.top - self.bottom) + 1
+        self.height = self.top
         """int: height of the canvas"""
 
     def coord_is_in_canvas(self, coord: Coord) -> bool:
@@ -311,13 +309,14 @@ class Terminal:
         self._input_data = input_data.replace("\t", " " * self.config.tab_width)
         self._terminal_width, self._terminal_height = self._get_terminal_dimensions()
         self.canvas = Canvas(*self._get_canvas_dimensions())
+        self.canvas_column_offset, self.canvas_row_offset = self._calc_canvas_offsets()
         if self.config.ignore_terminal_dimensions:
             self._terminal_width = self.canvas.right
             self._terminal_height = self.canvas.top
-        self.visible_top = min(self.canvas.top, self._terminal_height)
-        self.visible_bottom = max(self.canvas.bottom, 1)
-        self.visible_right = min(self.canvas.right, self._terminal_width)
-        self.visible_left = max(self.canvas.left, 1)
+        self.visible_top = min(self.canvas.top + self.canvas_row_offset, self._terminal_height)
+        self.visible_bottom = max(self.canvas.bottom + self.canvas_row_offset, 1)
+        self.visible_right = min(self.canvas.right + self.canvas_column_offset, self._terminal_width)
+        self.visible_left = max(self.canvas.left + self.canvas_column_offset, 1)
         self._next_character_id = 0
         self._input_characters = self._decompose_input(self.config.xterm_colors, self.config.no_color)
         self._added_characters: list[EffectCharacter] = []
@@ -335,14 +334,29 @@ class Terminal:
         self._last_time_printed = time.time()
         self._update_terminal_state()
 
-    def _get_canvas_dimensions(self) -> tuple[int, int, int, int]:
+    def _calc_canvas_offsets(self) -> tuple[int, int]:
+        """Calculate the canvas offsets based on the anchor point.
+
+        Returns:
+            tuple[int, int]: Canvas column offset, row offset
+        """
+        canvas_column_offset = canvas_row_offset = 0
+        if self.config.anchor_canvas in ("s", "n", "c"):
+            canvas_column_offset = (self._terminal_width // 2) - (self.canvas.width // 2)
+        elif self.config.anchor_canvas in ("se", "e", "ne"):
+            canvas_column_offset = self._terminal_width - self.canvas.width
+        if self.config.anchor_canvas in ("w", "e", "c"):
+            canvas_row_offset = self._terminal_height // 2 - self.canvas.height // 2
+        elif self.config.anchor_canvas in ("nw", "n", "ne"):
+            canvas_row_offset = self._terminal_height - self.canvas.height
+        return canvas_column_offset, canvas_row_offset
+
+    def _get_canvas_dimensions(self) -> tuple[int, int]:
         """Determine the canvas dimensions using the input data dimensions, terminal dimensions, and text wrapping.
 
         Returns:
-            tuple[int, int, int, int]: Canvas top, right, bottom, and left coordinates.
+            tuple[int, int]: Canvas height, width.
         """
-        # todo: Track down the canvas/terminal dimension off by one error, verify which it should start, 0 or 1 and be
-        # consistent
         if self.config.canvas_width > 0:
             canvas_width = self.config.canvas_width
         elif self.config.canvas_width == 0:
@@ -364,21 +378,7 @@ class Terminal:
             else:
                 canvas_height = len(self._input_data.splitlines())
 
-        # anchor canvas
-        canvas_left = canvas_bottom = 1
-        if self.config.anchor_canvas in ("s", "n", "c"):
-            canvas_left = (self._terminal_width // 2) - (canvas_width // 2)
-        elif self.config.anchor_canvas in ("se", "e", "ne"):
-            canvas_left = self._terminal_width - canvas_width
-        if self.config.anchor_canvas in ("w", "e", "c"):
-            canvas_bottom = self._terminal_height // 2 - canvas_height // 2
-        elif self.config.anchor_canvas in ("nw", "n", "ne"):
-            canvas_bottom = self._terminal_height - canvas_height
-
-        canvas_right = canvas_left + canvas_width - 1
-        canvas_top = canvas_bottom + canvas_height - 1
-
-        return canvas_top, canvas_right, canvas_bottom, canvas_left
+        return canvas_height, canvas_width
 
     def _get_terminal_dimensions(self) -> tuple[int, int]:
         """Gets the terminal dimensions.
@@ -451,9 +451,7 @@ class Terminal:
             self._input_data = "No Input."
         lines = self._input_data.splitlines()
         formatted_lines = (
-            self._wrap_lines(lines, self.canvas.right)
-            if self.config.wrap_text
-            else [line[: self.canvas.right] for line in lines]
+            self._wrap_lines(lines, self.canvas.right) if self.config.wrap_text else [line for line in lines]
         )
         input_height = len(formatted_lines)
         input_characters: list[EffectCharacter] = []
@@ -470,26 +468,27 @@ class Terminal:
         input_height = max([character._input_coord.row for character in input_characters])
 
         column_delta = row_delta = 0
-
-        if self.config.anchor_effect in ("s", "n", "c"):
-            column_delta = self.canvas.center_column - ((input_width // 2) + 1)
-        elif self.config.anchor_effect in ("se", "e", "ne"):
-            column_delta = self.canvas.right - input_width
-        elif self.config.anchor_effect in ("sw", "w", "nw"):
-            column_delta = self.canvas.left - 1
-        if self.config.anchor_effect in ("w", "e", "c"):
-            row_delta = self.canvas.center_row - ((input_height // 2) + 1)
-        elif self.config.anchor_effect in ("nw", "n", "ne"):
-            row_delta = self.canvas.top - input_height
-        elif self.config.anchor_effect in ("sw", "s", "se"):
-            row_delta = self.canvas.bottom - 1
+        if input_width != self.canvas.width:
+            if self.config.anchor_text in ("s", "n", "c"):
+                column_delta = self.canvas.center_column - (input_width // 2)
+            elif self.config.anchor_text in ("se", "e", "ne"):
+                column_delta = self.canvas.right - input_width
+            elif self.config.anchor_text in ("sw", "w", "nw"):
+                column_delta = self.canvas.left - 1
+        if input_height != self.canvas.height:
+            if self.config.anchor_text in ("w", "e", "c"):
+                row_delta = self.canvas.center_row - (input_height // 2)
+            elif self.config.anchor_text in ("nw", "n", "ne"):
+                row_delta = self.canvas.top - input_height
+            elif self.config.anchor_text in ("sw", "s", "se"):
+                row_delta = self.canvas.bottom - 1
 
         for character in input_characters:
             current_coord = character.input_coord
-            anchored_coord = Coord(current_coord.column + max(column_delta, 0), current_coord.row + max(row_delta, 0))
+            anchored_coord = Coord(current_coord.column + column_delta, current_coord.row + row_delta)
             character._input_coord = anchored_coord
             character.motion.set_coordinate(anchored_coord)
-        return input_characters
+        return [char for char in input_characters if self.canvas.coord_is_in_canvas(char._input_coord)]
 
     def _make_fill_characters(self) -> list[EffectCharacter]:
         """Creates a list of characters to fill the empty spaces in the canvas. The characters input_symbol is a space.
@@ -527,19 +526,6 @@ class Terminal:
         self._added_characters.append(character)
         self._next_character_id += 1
         return character
-
-    def _update_terminal_state(self):
-        """Update the internal representation of the terminal state with the current position
-        of all visible characters.
-        """
-        rows = [[" " for _ in range(self.visible_right)] for _ in range(self.visible_top)]
-        for character in sorted(self._visible_characters, key=lambda c: c.layer):
-            row = character.motion.current_coord.row
-            column = character.motion.current_coord.column
-            if self.visible_bottom <= row <= self.visible_top and self.visible_left <= column <= self.visible_right:
-                rows[row - 1][column - 1] = character.animation.current_character_visual.formatted_symbol
-        terminal_state = ["".join(row) for row in rows]
-        self.terminal_state = terminal_state
 
     def get_characters(
         self,
@@ -736,10 +722,23 @@ class Terminal:
         output_string = "\n".join(self.terminal_state[::-1])
         return output_string
 
+    def _update_terminal_state(self):
+        """Update the internal representation of the terminal state with the current position
+        of all visible characters.
+        """
+        rows = [[" " for _ in range(self.visible_right)] for _ in range(self.visible_top)]
+        for character in sorted(self._visible_characters, key=lambda c: c.layer):
+            row = character.motion.current_coord.row + self.canvas_row_offset
+            column = character.motion.current_coord.column + self.canvas_column_offset
+            if self.visible_bottom <= row <= self.visible_top and self.visible_left <= column <= self.visible_right:
+                rows[row - 1][column - 1] = character.animation.current_character_visual.formatted_symbol
+        terminal_state = ["".join(row) for row in rows]
+        self.terminal_state = terminal_state
+
     def prep_canvas(self) -> None:
         """Prepares the terminal for the effect by adding empty lines and hiding the cursor."""
         sys.stdout.write(ansitools.HIDE_CURSOR())
-        sys.stdout.write(("\n" * (self.canvas.top)))
+        sys.stdout.write(("\n" * (self.visible_top)))
         sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
 
     def restore_cursor(self, end_symbol: str = "\n") -> None:
@@ -782,4 +781,4 @@ class Terminal:
     def move_cursor_to_top(self):
         """Restores the cursor position to the top of the canvas."""
         sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
-        sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.canvas.top))
+        sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.visible_top))
