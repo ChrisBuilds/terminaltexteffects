@@ -129,12 +129,14 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
             )
         if self.config.slice_direction == "vertical":
             self.rows = self.terminal.get_characters_grouped(grouping=slice_direction_map[self.config.slice_direction])
-            lengths = [max([c.input_coord.column for c in row]) for row in self.rows]
-            mid_point = sum(lengths) // len(lengths) // 2
             for row_index, row in enumerate(self.rows):
                 new_row = []
 
-                left_half = [character for character in row if character.input_coord.column <= mid_point]
+                left_half = [
+                    character
+                    for character in row
+                    if character.input_coord.column <= self.terminal.canvas.text_center_column
+                ]
                 for character in left_half:
                     character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.canvas.top + 1))
                     input_coord_path = character.motion.new_path(
@@ -143,7 +145,7 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                     input_coord_path.new_waypoint(character.input_coord)
                     character.motion.activate_path(input_coord_path)
                 opposite_row = self.rows[-(row_index + 1)]
-                right_half = [c for c in opposite_row if c.input_coord.column > mid_point]
+                right_half = [c for c in opposite_row if c.input_coord.column > self.terminal.canvas.text_center_column]
                 for character in right_half:
                     character.motion.set_coordinate(
                         Coord(character.input_coord.column, self.terminal.canvas.bottom - 1)
@@ -161,11 +163,24 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
             self.columns = self.terminal.get_characters_grouped(
                 grouping=slice_direction_map[self.config.slice_direction], fill_chars=True
             )
-            lengths = [max([c.input_coord.row for c in column]) for column in self.columns]
-            mid_point = sum(lengths) // len(lengths) // 2
+            trimmed_columns = []
+            for column in self.columns:
+                new_column = []
+                for character in column:
+                    if (
+                        self.terminal.canvas.text_left
+                        <= character.input_coord.column
+                        <= self.terminal.canvas.text_right
+                    ) and (
+                        self.terminal.canvas.text_bottom <= character.input_coord.row <= self.terminal.canvas.text_top
+                    ):
+                        new_column.append(character)
+                if new_column:
+                    trimmed_columns.append(new_column)
+            self.columns = trimmed_columns
+            mid_point = self.terminal.canvas.text_center_row
             for column_index, column in enumerate(self.columns):
                 new_column = []
-
                 bottom_half = [character for character in column if character.input_coord.row <= mid_point]
                 for character in bottom_half:
                     character.motion.set_coordinate(Coord(self.terminal.canvas.left - 1, character.input_coord.row))
