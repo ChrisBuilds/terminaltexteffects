@@ -37,7 +37,7 @@ class TerminalConfig(ArgsDataClass):
         canvas_height (int): Canvas height, if set to 0 the canvas height is detected automatically based on the terminal device.
         anchor_canvas (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the Canvas. The Canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
         anchor_effect (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the effect within the Canvas. Effect text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
-        ignore_terminal_dimensions (bool): Ignore the terminal dimensions and use the input data dimensions for the canvas.
+        ignore_terminal_dimensions (bool): Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. Useful for sending frames to another output handler.
     """
 
     tab_width: int = ArgField(
@@ -134,7 +134,7 @@ class Canvas:
     This class provides methods for working with the canvas, such as checking if a coordinate is within the canvas,
     getting random coordinates within the canvas, and getting a random coordinate outside the canvas.
 
-    This class also provides attributes for the dimensions of the canvas, the text within the canvas, and the center of the canvas.
+    This class also provides attributes for the dimensions of the canvas, the extents of the text within the canvas, and the center of the canvas.
 
     Args:
         top (int): top row of the canvas
@@ -176,7 +176,7 @@ class Canvas:
     left: int = 1
     """int: left column of the canvas"""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.center_row = max(self.top // 2, self.bottom)
         """int: row of the center of the canvas"""
         self.center_column = max(self.right // 2, self.left)
