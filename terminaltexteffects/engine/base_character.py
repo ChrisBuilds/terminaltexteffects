@@ -183,6 +183,7 @@ class EffectCharacter:
         motion (motion.Motion): The motion object that controls the character's movement.
         event_handler (EventHandler): The event handler object that handles events related to the character.
         layer (int): The layer of the character. The layer determines the order in which characters are printed.
+        is_fill_character (bool): Whether the character is a fill character. Fill characters are used to fill the empty cells of the Canvas.
     """
 
     def __init__(self, character_id: int, symbol: str, input_column: int, input_row: int):
@@ -202,6 +203,7 @@ class EffectCharacter:
         self.motion: motion.Motion = motion.Motion(self)
         self.event_handler: EventHandler = EventHandler(self)
         self.layer: int = 0
+        self.is_fill_character = False
 
     @property
     def input_symbol(self) -> str:
