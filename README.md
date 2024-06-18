@@ -57,6 +57,45 @@ Note: Windows Terminal performance is slow for some effects.
 OR
 ```pipx install terminaltexteffects```
 
+### Nix (flakes)
+
+Add it as an input to a flake:
+```nix
+inputs = {
+  terminaltexteffects.url = "github:ChrisBuilds/terminaltexteffects/<optional-ref>"
+}
+````
+
+Create a shell with it:
+```nix
+nix shell github:ChrisBuilds/terminaltexteffects/<optional-ref>
+```
+
+Or run it directly:
+
+```nix
+echo 'terminaltexteffects is awesome' | nix run github:ChrisBuilds/terminaltexteffects/<optional-ref> -- beams
+```
+
+### Nix (classic)
+
+Fetch the source and add it to, e.g. your shell:
+```nix
+let
+  pkgs = import <nixpkgs> {};
+
+  tte = pkgs.callPackage (pkgs.fetchFromGitHub {
+    owner = "ChrisBuilds";
+    repo = "terminaltexteffects";
+    rev = "<revision, e.g. main/v0.10.0/etc.>";
+    hash = ""; # Build first, put proper hash in place
+  }) {};
+in
+  pkgs.mkShell {
+    packages = [tte];
+  }
+```
+
 ## Usage
 
 View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for a full installation and usage guide.
