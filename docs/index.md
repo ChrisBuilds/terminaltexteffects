@@ -38,6 +38,6 @@ Check out the cookbook to see interesting examples using the TTE library.
 
 ## Release Write-Ups
 
-Friendly release write-ups can be found in the [ChangeBlog](./changeblog.md)
+Friendly release write-ups can be found in the [ChangeBlog](./changeblog/changeblog.md)
 
-[ChangeBlog](./changeblog.md){ .md-button }
+[ChangeBlog](./changeblog/changeblog.md){ .md-button }

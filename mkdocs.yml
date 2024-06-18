@@ -37,7 +37,9 @@ markdown_extensions:
 
 nav:
   - Intro to TTE: index.md
-  - ChangeBlog: changeblog.md
+  - Change[B]log: 
+    - changeblog/changeblog_0.10.0.md
+
   - How to install & use TTE:
     - Install: installation.md
     - Application Usage: appguide.md
