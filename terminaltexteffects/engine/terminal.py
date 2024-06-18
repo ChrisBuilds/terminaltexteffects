@@ -121,9 +121,9 @@ class TerminalConfig(ArgsDataClass):
         cmd_name=["--ignore-terminal-dimensions"],
         default=False,
         action="store_true",
-        help="Ignore the terminal dimensions and use the input data dimensions for the canvas.",
+        help="Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. Useful for sending frames to another output handler.",
     )  # type: ignore[assignment]
-    "bool : Ignore the terminal dimensions and use the input data dimensions for the canvas."
+    "bool : Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. Useful for sending frames to another output handler."
 
 
 @dataclass
@@ -133,6 +133,8 @@ class Canvas:
 
     This class provides methods for working with the canvas, such as checking if a coordinate is within the canvas,
     getting random coordinates within the canvas, and getting a random coordinate outside the canvas.
+
+    This class also provides attributes for the dimensions of the canvas, the text within the canvas, and the center of the canvas.
 
     Args:
         top (int): top row of the canvas
@@ -148,6 +150,14 @@ class Canvas:
         center (Coord): coordinate of the center of the canvas
         width (int): width of the canvas
         height (int): height of the canvas
+        text_left (int): left column of the text within the canvas
+        text_right (int): right column of the text within the canvas
+        text_top (int): top row of the text within the canvas
+        text_bottom (int): bottom row of the text within the canvas
+        text_width (int): width of the text within the canvas
+        text_height (int): height of the text within the canvas
+        text_center_row (int): row of the center of the text within the canvas
+        text_center_column (int): column of the center of the text within the canvas
 
     Methods:
         coord_is_in_canvas(coord: Coord) -> bool: Checks whether a coordinate is within the canvas.
@@ -177,6 +187,75 @@ class Canvas:
         """int: width of the canvas"""
         self.height = self.top
         """int: height of the canvas"""
+        self.text_left = 0
+        """int: left column of the text within the canvas"""
+        self.text_right = 0
+        """int: right column of the text within the canvas"""
+        self.text_top = 0
+        """int: top row of the text within the canvas"""
+        self.text_bottom = 0
+        """int: bottom row of the text within the canvas"""
+        self.text_width = 0
+        """int: width of the text within the canvas"""
+        self.text_height = 0
+        """int: height of the text within the canvas"""
+        self.text_center_row = 0
+        """int: row of the center of the text within the canvas"""
+        self.text_center_column = 0
+        """int: column of the center of the text within the canvas"""
+
+    def _anchor_text(
+        self, characters: list[EffectCharacter], anchor: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]
+    ) -> list[EffectCharacter]:
+        """Anchors the text within the canvas based on the specified anchor point.
+
+        Args:
+            characters (list[EffectCharacter]): _description_
+            anchor (Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]): Anchor point for the text within the Canvas.
+
+        Returns:
+            list[EffectCharacter]: List of characters anchored within the canvas. Only returns characters with
+            coordinates within the canvas after anchoring.
+        """
+        # translate coordinate based on anchor within the canvas
+        input_width = max([character._input_coord.column for character in characters])
+        input_height = max([character._input_coord.row for character in characters])
+
+        column_delta = row_delta = 0
+        if input_width != self.width:
+            if anchor in ("s", "n", "c"):
+                column_delta = self.center_column - (input_width // 2)
+            elif anchor in ("se", "e", "ne"):
+                column_delta = self.right - input_width
+            elif anchor in ("sw", "w", "nw"):
+                column_delta = self.left - 1
+        if input_height != self.height:
+            if anchor in ("w", "e", "c"):
+                row_delta = self.center_row - (input_height // 2)
+            elif anchor in ("nw", "n", "ne"):
+                row_delta = self.top - input_height
+            elif anchor in ("sw", "s", "se"):
+                row_delta = self.bottom - 1
+
+        for character in characters:
+            current_coord = character.input_coord
+            anchored_coord = Coord(current_coord.column + column_delta, current_coord.row + row_delta)
+            character._input_coord = anchored_coord
+            character.motion.set_coordinate(anchored_coord)
+
+        characters = [character for character in characters if self.coord_is_in_canvas(character.input_coord)]
+
+        # get text dimensions, centers, and extents
+        self.text_left = min([character.input_coord.column for character in characters])
+        self.text_right = max([character.input_coord.column for character in characters])
+        self.text_top = max([character.input_coord.row for character in characters])
+        self.text_bottom = min([character.input_coord.row for character in characters])
+        self.text_width = max(self.text_right - self.text_left + 1, 1)
+        self.text_height = max(self.text_top - self.text_bottom + 1, 1)
+        self.text_center_row = self.text_bottom + ((self.text_top - self.text_bottom) // 2)
+        self.text_center_column = self.text_left + ((self.text_right - self.text_left) // 2)
+
+        return characters
 
     def coord_is_in_canvas(self, coord: Coord) -> bool:
         """Checks whether a coordinate is within the canvas.
@@ -219,9 +298,6 @@ class Canvas:
             return random.choice([random_coord_above, random_coord_below, random_coord_left, random_coord_right])
         else:
             return Coord(self.random_column(), self.random_row())
-
-
-# TODO: figure out what --ignore-terminal-dimensions is useful for
 
 
 class Terminal:
@@ -310,9 +386,12 @@ class Terminal:
         self._terminal_width, self._terminal_height = self._get_terminal_dimensions()
         self.canvas = Canvas(*self._get_canvas_dimensions())
         self.canvas_column_offset, self.canvas_row_offset = self._calc_canvas_offsets()
-        if self.config.ignore_terminal_dimensions:
+        if (
+            self.config.ignore_terminal_dimensions
+        ):  # allow effects larger than the terminal for use when sending frames to another output handler
             self._terminal_width = self.canvas.right
             self._terminal_height = self.canvas.top
+        # the visible_* attributes are used to determine which characters are visible on the terminal
         self.visible_top = min(self.canvas.top + self.canvas_row_offset, self._terminal_height)
         self.visible_bottom = max(self.canvas.bottom + self.canvas_row_offset, 1)
         self.visible_right = min(self.canvas.right + self.canvas_column_offset, self._terminal_width)
@@ -372,7 +451,6 @@ class Terminal:
         elif self.config.canvas_height == 0:
             canvas_height = self._terminal_height
         else:
-            input_width = max([len(line.rstrip()) for line in self._input_data.splitlines()])
             if self.config.wrap_text:
                 canvas_height = len(self._wrap_lines(self._input_data.splitlines(), canvas_width))
             else:
@@ -463,32 +541,9 @@ class Terminal:
                     character.animation.no_color = no_color
                     input_characters.append(character)
                     self._next_character_id += 1
-        # translate coordinate based on anchor
-        input_width = max([character._input_coord.column for character in input_characters])
-        input_height = max([character._input_coord.row for character in input_characters])
 
-        column_delta = row_delta = 0
-        if input_width != self.canvas.width:
-            if self.config.anchor_text in ("s", "n", "c"):
-                column_delta = self.canvas.center_column - (input_width // 2)
-            elif self.config.anchor_text in ("se", "e", "ne"):
-                column_delta = self.canvas.right - input_width
-            elif self.config.anchor_text in ("sw", "w", "nw"):
-                column_delta = self.canvas.left - 1
-        if input_height != self.canvas.height:
-            if self.config.anchor_text in ("w", "e", "c"):
-                row_delta = self.canvas.center_row - (input_height // 2)
-            elif self.config.anchor_text in ("nw", "n", "ne"):
-                row_delta = self.canvas.top - input_height
-            elif self.config.anchor_text in ("sw", "s", "se"):
-                row_delta = self.canvas.bottom - 1
-
-        for character in input_characters:
-            current_coord = character.input_coord
-            anchored_coord = Coord(current_coord.column + column_delta, current_coord.row + row_delta)
-            character._input_coord = anchored_coord
-            character.motion.set_coordinate(anchored_coord)
-        return [char for char in input_characters if self.canvas.coord_is_in_canvas(char._input_coord)]
+        anchored_characters = self.canvas._anchor_text(input_characters, self.config.anchor_text)
+        return [char for char in anchored_characters if self.canvas.coord_is_in_canvas(char._input_coord)]
 
     def _make_fill_characters(self) -> list[EffectCharacter]:
         """Creates a list of characters to fill the empty spaces in the canvas. The characters input_symbol is a space.
@@ -503,6 +558,7 @@ class Terminal:
                 coord = Coord(column, row)
                 if coord not in self.character_by_input_coord:
                     fill_char = EffectCharacter(self._next_character_id, " ", column, row)
+                    fill_char.is_fill_character = True
                     fill_char.animation.use_xterm_colors = self.config.xterm_colors
                     fill_char.animation.no_color = self.config.no_color
                     fill_characters.append(fill_char)
