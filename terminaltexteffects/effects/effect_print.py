@@ -8,7 +8,6 @@ Classes:
 
 from __future__ import annotations
 
-import random
 import typing
 from dataclasses import dataclass
 
@@ -115,12 +114,14 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         ):
             self.untyped_chars: list[EffectCharacter] = []
             self.typed_chars: list[EffectCharacter] = []
-            blank_row_accounted = False
+            if all(character.input_symbol == " " for character in characters):
+                characters = characters[:1]
+            else:
+                right_extent = max(
+                    character.input_coord.column for character in characters if not character.is_fill_character
+                )
+                characters = [char for char in characters if char.input_coord.column <= right_extent]
             for character in characters:
-                if character.input_symbol == " ":
-                    if blank_row_accounted:
-                        continue
-                    blank_row_accounted = True
                 character.motion.set_coordinate(Coord(character.input_coord.column, 1))
                 color_gradient = Gradient(typing_head_color, character_final_color_map[character], steps=5)
                 typed_animation = character.animation.new_scene()
@@ -171,17 +172,13 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
             )
         self._current_row: PrintIterator.Row = self.pending_rows.pop(0)
         self._typing = True
-        self._delay = 0
         self._last_column = 0
 
     def __next__(self) -> str:
         if self.active_characters or self._typing:
             if self.typing_head.motion.active_path:
                 pass
-            elif self._delay:
-                self._delay -= 1
             else:
-                self._delay = random.randint(0, 0)
                 if self._current_row.untyped_chars:
                     for _ in range(min(len(self._current_row.untyped_chars), self.config.print_speed)):
                         next_char = self._current_row.type_char()
@@ -195,6 +192,21 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                         for row in self.processed_rows:
                             row.move_up()
                         self._current_row = self.pending_rows.pop(0)
+                        if not all(
+                            character.is_fill_character for character in self.processed_rows[-1].typed_chars
+                        ) and not all(character.is_fill_character for character in self._current_row.untyped_chars):
+                            left_extent = min(
+                                [
+                                    character.input_coord.column
+                                    for character in self._current_row.untyped_chars
+                                    if not character.is_fill_character
+                                ]
+                            )
+                            self._current_row.untyped_chars = [
+                                char
+                                for char in self._current_row.untyped_chars
+                                if left_extent <= char.input_coord.column <= self.terminal.canvas.text_right
+                            ]
                         current_row_height = self._current_row.untyped_chars[0].input_coord.row
                         self.typing_head.motion.set_coordinate(Coord(self._last_column, 1))
                         self.terminal.set_character_visibility(self.typing_head, True)
@@ -204,7 +216,13 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                             ease=self.config.print_head_easing,
                             id="carriage_return_path",
                         )
-                        carriage_return_path.new_waypoint(Coord(1, 1))
+                        # if self.pending_rows and self.pending_rows[0].untyped_chars:
+                        #     next_left_extent = self.pending_rows[0].untyped_chars[0].input_coord.column
+                        #     carriage_return_path.new_waypoint(Coord(next_left_extent, 1))
+                        # else:
+                        carriage_return_path.new_waypoint(
+                            Coord(self._current_row.untyped_chars[0].input_coord.column, 1)
+                        )
                         self.typing_head.motion.activate_path(carriage_return_path)
                         self.typing_head.animation.set_appearance(
                             self.typing_head.input_symbol,
