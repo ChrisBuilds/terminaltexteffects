@@ -1,9 +1,10 @@
 TL!!!!!!!!!!!!!!!!!!!!!TOP*********************TR
 +                 <----50---->                  #
 +                       |                       #
++                       |                       #
 L        ^              |                       R
 E        |              |                       I
-F MID 12 |            CENTER                MID G
+F MID 13 |            CENTER                MID G
 T        |              |                       H
 -        v              |                       T
 -                       |                       @
