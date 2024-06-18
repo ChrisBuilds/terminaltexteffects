@@ -165,3 +165,7 @@ terminaltexteffects/test_tte.py
 github_resources/*
 *.png
 *.gv
+effect_test.py
+effect_dev.py
+effect_canvas_test.py
+.vscode/*
