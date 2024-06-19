@@ -2448,7 +2448,7 @@ cells are activated, old cells are deactivated.</p>
 </dd>
 <dt><code>Only a single streak is active in a column</code></dt>
 <dd>
-<p>A new steak will not start until the previous streak has completely fallen out of view.</p>
+<p>A new streak will not start until the previous streak has completely fallen out of view.</p>
 </dd>
 <dt><code>Full column streaks are held in place for a random amount of time</code></dt>
 <dd>
@@ -2550,7 +2550,7 @@ terminal dimensions.</p>
 <dt><code>Terminal Dimensions</code></dt>
 <dd>
 <p>The terminal dimensions are based on your terminal emulator. TTE discovers the dimensions of your terminal emulator by
-calling  <code>shutil.get_terminal_size()</code>. Should there be an issue that prevents terminal dimension discovery, a fallback
+calling  <code>shutil.get_terminal_size()</code>. Should there an issue occur that prevents terminal dimension discovery, a fallback
 of <code>(80, 24)</code> is used.</p>
 </dd>
 <dd>
@@ -2569,7 +2569,7 @@ requests for Coordinates to ensure Coordinates are anchored appropriately and wi
 </dd>
 <dd>
 <ul>
-<li>Specified exactly via the <code>--canvas-width</code> and <code>--canvas-height</code> arguments (or related TerminalConfig attributes).</li>
+<li>Specified exactly via the <code>--canvas-width</code> and <code>--canvas-height</code> options (or related TerminalConfig attributes).</li>
 </ul>
 </dd>
 <dd>
@@ -2600,9 +2600,9 @@ the Canvas will be sized to the minimum bounding box that would contain all of t
 <summary>How Input Text is Processed</summary>
 <ul>
 <li>Whitespace characters to the right of the last non-whitespace character in a given line are stripped.</li>
-<li>Empty lines are preserved. Whitespace to the left of a non-whitespace character is preserved.</li>
-<li>Tabs are converted to four spaces.</li>
-<li>Tab conversion can be specified using the <code>--tab-width</code> option.</li>
+<li>Empty lines are preserved. </li>
+<li>Whitespace to the left of a non-whitespace character is preserved.</li>
+<li>Tabs are converted to four spaces, and the tab width can be specified using the <code>--tab-width</code> option.</li>
 </ul>
 </details>
 <dl>
@@ -2624,7 +2624,7 @@ wrapped based on the Terminal dimensions.</li>
 </dd>
 <dd>
 <ul>
-<li>If the <code>--ignore-terminal-dimensions</code> option is passed, wrapping will be occur based on the Canvas size or not at
+<li>If the <code>--ignore-terminal-dimensions</code> option is passed, wrapping will occur based on the Canvas size or not at
 all (if the Canvas is set to match the text), however the output will exceed the dimensions of the terminal and will be
 wrapped by the terminal emulator (resulting in expected effect behavior) unless the output is directed somewhere else.</li>
 </ul>
@@ -2649,7 +2649,7 @@ the breath.</p>
 <hr />
 <h4 id="anchoring-the-canvas-andor-input-text">Anchoring the Canvas and/or Input Text</h4>
 <p>The Canvas and/or Input Text can be anchored around the respective container using the <code>--anchor-[canavs/text]</code> option. Acceptable values are any of the
-Cardinal/Diagonal directions.</p>
+Cardinal/Diagonal directions, or centered.</p>
 <ul>
 <li><code>sw</code> = South West (bottom left corner) (<strong>default</strong>)</li>
 <li><code>w</code> = West (centered on left edge)</li>
@@ -2659,6 +2659,7 @@ Cardinal/Diagonal directions.</p>
 <li><code>e</code> = East (centered on right edge)</li>
 <li><code>se</code> = South East (bottom right corner)</li>
 <li><code>s</code> = South (centered on bottom edge)</li>
+<li><code>c</code> = Center (centered within the Canvas/Terminal)</li>
 </ul>
 <p>Here is an example of the Canvas anchored to the North East of the terminal, and the text anchored to the center of the
 Canvas.</p>
