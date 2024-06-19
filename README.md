@@ -60,6 +60,7 @@ OR
 ### Nix (flakes)
 
 Add it as an input to a flake:
+
 ```nix
 inputs = {
   terminaltexteffects.url = "github:ChrisBuilds/terminaltexteffects/<optional-ref>"
@@ -67,6 +68,7 @@ inputs = {
 ````
 
 Create a shell with it:
+
 ```nix
 nix shell github:ChrisBuilds/terminaltexteffects/<optional-ref>
 ```
@@ -80,6 +82,7 @@ echo 'terminaltexteffects is awesome' | nix run github:ChrisBuilds/terminaltexte
 ### Nix (classic)
 
 Fetch the source and add it to, e.g. your shell:
+
 ```nix
 let
   pkgs = import <nixpkgs> {};
@@ -113,69 +116,93 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
   -h, --help            show this help message and exit
   --input-file INPUT_FILE, -i INPUT_FILE
                         File to read input from (default: None)
+  --version, -v         show program's version number and exit
   --tab-width (int > 0)
                         Number of spaces to use for a tab character. (default: 4)
-  --xterm-colors        Convert any colors specified in RBG hex to the closest XTerm-256 color.
-                        (default: False)
+  --xterm-colors        Convert any colors specified in RBG hex to the closest
+                        XTerm-256 color. (default: False)
   --no-color            Disable all colors in the effect. (default: False)
   --wrap-text           Wrap text wider than the canvas width. (default: False)
   --frame-rate FRAME_RATE
                         Target frame rate for the animation. (default: 100)
-  --canvas-width CANVAS_WIDTH
-                        Canvas width, if set to 0 the canvas width is detected automatically based on
-                        the terminal device. (default: 0)
-  --canvas-height CANVAS_HEIGHT
-                        Canvas height, if set to 0 the canvas height is detected automatically based on
-                        the terminal device. (default: 0)
+  --canvas-width WIDTH  Canvas width, set to an integer > 0 to use a specific
+                        dimension, or use 0, or -1 to set the dimension based off the
+                        input data or the terminal device, respectively. (default:
+                        -1)
+  --canvas-height WIDTH
+                        Canvas height, set to an integer > 0 to use a specific
+                        dimension, or use 0, or -1 to set the dimension based off the
+                        input data or the terminal device, respectively. (default:
+                        -1)
+  --anchor-canvas {sw,s,se,e,ne,n,nw,w,c}
+                        Anchor point for the canvas. The canvas will be anchored in
+                        the terminal to the location corresponding to the
+                        cardinal/diagonal direction. (default: sw)
+  --anchor-text {n,ne,e,se,s,sw,w,nw,c}
+                        Anchor point for the text within the Canvas. Input text will
+                        anchored in the Canvas to the location corresponding to the
+                        cardinal/diagonal direction. (default: sw)
   --ignore-terminal-dimensions
-                        Ignore the terminal dimensions and use the input data dimensions for the
-                        canvas. (default: False)
+                        Ignore the terminal dimensions and utilize the full Canvas
+                        beyond the extents of the terminal. Useful for sending frames
+                        to another output handler. (default: False)
 
   Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
-  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,colorshift,crumble,decrypt,errorcorrect,expand,fireworks,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slice,slide,spotlights,spray,swarm,synthgrid,unstable,vhstape,waves,wipe}
+  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,canvas_test,colorshift,crumble,decrypt,dev,errorcorrect,expand,fireworks,matrix,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slice,slide,spotlights,spray,swarm,synthgrid,test,unstable,vhstape,waves,wipe}
                         Available Effects
-    beams               Create beams which travel over the canvas illuminating the characters behind
-                        them.
-    binarypath          Binary representations of each character move through the terminal towards the
-                        home coordinate of the character.
+    beams               Create beams which travel over the canvas illuminating the
+                        characters behind them.
+    binarypath          Binary representations of each character move through the
+                        terminal towards the home coordinate of the character.
     blackhole           Characters are consumed by a black hole and explode outwards.
-    bouncyballs         Characters are bouncy balls falling from the top of the canvas.
+    bouncyballs         Characters are bouncy balls falling from the top of the
+                        canvas.
     bubbles             Characters are formed into bubbles that float down and pop.
     burn                Burns vertically in the canvas.
     colorshift          Display a gradient that shifts colors across the terminal.
-    crumble             Characters lose color and crumble into dust, vacuumed up, and reformed.
+    crumble             Characters lose color and crumble into dust, vacuumed up, and
+                        reformed.
     decrypt             Display a movie style decryption effect.
-    errorcorrect        Some characters start in the wrong position and are corrected in sequence.
+    errorcorrect        Some characters start in the wrong position and are corrected
+                        in sequence.
     expand              Expands the text from a single point.
-    fireworks           Characters launch and explode like fireworks and fall into place.
-    middleout           Text expands in a single row or column in the middle of the canvas then out.
-    orbittingvolley     Four launchers orbit the canvas firing volleys of characters inward to build
-                        the input text from the center out.
-    overflow            Input text overflows and scrolls the terminal in a random order until
-                        eventually appearing ordered.
+    fireworks           Characters launch and explode like fireworks and fall into
+                        place.
+    matrix              Matrix digital rain effect.
+    middleout           Text expands in a single row or column in the middle of the
+                        canvas then out.
+    orbittingvolley     Four launchers orbit the canvas firing volleys of characters
+                        inward to build the input text from the center out.
+    overflow            Input text overflows and scrolls the terminal in a random
+                        order until eventually appearing ordered.
     pour                Pours the characters into position from the given direction.
-    print               Lines are printed one at a time following a print head. Print head performs
-                        line feed, carriage return.
+    print               Lines are printed one at a time following a print head. Print
+                        head performs line feed, carriage return.
     rain                Rain characters from the top of the canvas.
     randomsequence      Prints the input data in a random sequence.
     rings               Characters are dispersed and form into spinning rings.
     scattered           Text is scattered across the canvas and moves into position.
-    slice               Slices the input in half and slides it into place from opposite directions.
+    slice               Slices the input in half and slides it into place from
+                        opposite directions.
     slide               Slide characters into view from outside the terminal.
-    spotlights          Spotlights search the text area, illuminating characters, before converging in
-                        the center and expanding.
-    spray               Draws the characters spawning at varying rates from a single point.
-    swarm               Characters are grouped into swarms and move around the terminal before settling
-                        into position.
-    synthgrid           Create a grid which fills with characters dissolving into the final text.
-    unstable            Spawn characters jumbled, explode them to the edge of the canvas, then
-                        reassemble them in the correct layout.
-    vhstape             Lines of characters glitch left and right and lose detail like an old VHS tape.
-    waves               Waves travel across the terminal leaving behind the characters.
+    spotlights          Spotlights search the text area, illuminating characters,
+                        before converging in the center and expanding.
+    spray               Draws the characters spawning at varying rates from a single
+                        point.
+    swarm               Characters are grouped into swarms and move around the
+                        terminal before settling into position.
+    synthgrid           Create a grid which fills with characters dissolving into the
+                        final text.
+    unstable            Spawn characters jumbled, explode them to the edge of the
+                        canvas, then reassemble them in the correct layout.
+    vhstape             Lines of characters glitch left and right and lose detail
+                        like an old VHS tape.
+    waves               Waves travel across the terminal leaving behind the
+                        characters.
     wipe                Wipes the text across the terminal to reveal characters.
-
+    
   Ex: ls -a | python -m terminaltexteffects decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical
 ```
 
@@ -253,6 +280,10 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 ![fireworks_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/da6a97b1-c4fd-4370-9852-9ddb8a494b55)
 
+#### Matrix
+
+![matrix_demo]()
+
 #### Orbittingvolley
 
 ![orbittingvolley_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/084038e5-9d49-4c7d-bf15-e989f541b15c)
@@ -297,76 +328,57 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 Any effects shown below are in development and will be available in the next release.
 
-![matrix_demo](./docs/img/effects_demos/matrix_demo.gif)
-
 ## Latest Release Notes
 
 Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/) for release write-ups.
 
-### Changes (0.10.1)
+### New Features (0.11.0)
 
 ---
 
-#### Engine Changes (0.10.1)
+#### New Effects (0.11.0)
 
-* Performance improvements to geometry functions related to circles.
+* Matrix effect. Matrix digital rain effect with that ends with a final curtain and character resolve phase.
 
-### Bug Fixes (0.10.1)
+#### New Engine Features (0.11.0)
 
-* Fixed swarm effect not handling the first swarm (bottom right characters) resulting in missing characters in the output.
+* Canvas is now arbitrarily sizeable. (`-1` matches the input text dimension, `0` matches the terminal dimension)
+* Canvas can be anchored around the terminal.
+* Text can be anchored around the Canvas.
+* Canvas new attributes `text_[left/right/top/bottom]` and `text_width/height` and `text_center_row/center_column`.
+* Version switch (--version, -v)
 
----
-
-## 0.10.0
-
----
-
-### New Features (0.10.0)
+### Changes (0.11.0)
 
 ---
 
-#### New Effects (0.10.0)
+#### Effects Changes (0.11.0)
 
-* ColorShift: Display a gradient that shifts colors across the terminal. Supports standing and traveling gradients in
-  the following directions: vertical, horizontal, diagonal, radial. The final gradient appearance is optional using the
-  --skips-final-gradient argument. This effect supports infinite looping when imported by setting
-  ColorShiftConfig.cycles
-  to 0. This functionality is not available when run from the TTE application.
+* Slice effect calculates the center of the text absolutely rather than by average line length.
+* Print effect no longer moves the print head to the start of each line, only back to the first character on the next line.
+* Many effects were updated to support anchoring within the Canvas.
 
-#### New Engine Features (0.10.0)
+#### Engine Changes (0.11.0)
 
-* File input: Use the `--input-file` or `-i` option to pass a file as input.
-
-### Changes (0.10.0)
-
----
-
-#### Effects Changes (0.10.0)
-
-* Added `--wave-direction` config to Waves effect.
-* Added additional directions to `--wipe-direction` config in Wipe effect.
-* VerticalSlice is now Slice and supports vertical, horizontal, and diagonal slice directions.
-
-#### Engine Changes (0.10.0)
-
-* Increased compatibility with Python versions from >=3.10 to >=3.8
-* Updated type information for gradient step variables to accept a single int as well as tuple[int, ...].
-* Color TypeAlias replaced with Color class. Color objects are used throughout the engine.
-* Renamed OutputArea to Canvas.
-* Changed center gradient direction to radial.
-
-### Bug Fixes (0.10.0)
+* Performance improvements to geometry functions related to circles. (10.0.1)
+* Gradient's support indexing and slicing.
+* EffectCharacter objects no longer have a `symbol` attribute. Instead, the `Animation` class has a new attribute
+`current_character_visual` which provides access to a `symbol` and `color` attribute reflecting the character's current
+symbol and color. The prior `EffectCharacter.symbol` attribute was unreliable and represented both a formatted and
+unformatted symbol depending on when it was accessed. In addition, the `color` attribute is now a `Color` object and the
+color code has been moved into the `_color_code` attribute.
+* EffectCharacter objects have a new attribute `is_fill_character: bool`.
 
 ---
 
-#### Engine Fixes (0.10.0)
+#### Effects Fixes (0.11.0)
 
-* Characters created as `fill_characters` now adhere to `--no-color` and `--xterm-colors`.
+* Fixed swarm effect not handling the first swarm (bottom right characters) resulting in missing characters in the
+output. (10.0.1)
 
-#### Other (0.10.0)
+#### Other (0.11.0)
 
-* Added cookbook to the documentation and animated prompt example.
-* Added printing `Color` and `Gradient` objects examples to docs.
+* Keyboard Interrupts are handled gracefully while effects are animating.
 
 ---
 
