@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "terminaltexteffects"
-version = "0.10.1"
+version = "0.11.0"
 description = "TerminalTextEffects (TTE) is a terminal visual effects engine."
 authors = ["Chris <741258@pm.me>"]
 license = "MIT"
