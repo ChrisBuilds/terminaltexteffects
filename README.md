@@ -330,7 +330,7 @@ Any effects shown below are in development and will be available in the next rel
 
 ## Latest Release Notes
 
-Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/) for release write-ups.
+Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/changeblog/) for release write-ups.
 
 ### New Features (0.11.0)
 
