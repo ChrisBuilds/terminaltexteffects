@@ -267,8 +267,7 @@ supported:
 Either dimension can be specified with any of the three options.
 
 By sizing the Canvas greater than the input text, you can expand the total effect area and give the effects more room
-the breath. Some examples are shown here. Note that these examples take advantage of [Anchoring](#anchoring) which will
-be covered later in this blog post.
+the breath.
 
 ### Anchoring
 
