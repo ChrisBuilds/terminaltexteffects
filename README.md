@@ -282,7 +282,7 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 #### Matrix
 
-![matrix_demo]()
+![matrix_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/0f6ddfd9-5e78-4de2-a187-7950b1e5b9d0)
 
 #### Orbittingvolley
 
