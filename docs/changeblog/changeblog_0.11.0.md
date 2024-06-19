@@ -38,7 +38,7 @@ Now, on to the release info.
 ## Matrix Effect
 
 ---
-When people first encounter TTE their first thought is something like, "Neat.", and their second thought is probably,
+When people initially encounter TTE their first thought is something like, "Neat.", and their second thought is probably,
 "Why?". Shortly after that, the obvious next thought is, "There must be a Matrix effect.". This led to disappointment
 and bewilderment. Who would make a terminal visual effects library and not include the most famous terminal visual
 effect in cinema history? Nobody. That would be crazy.
