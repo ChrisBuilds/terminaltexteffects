@@ -2,6 +2,60 @@
 
 ---
 
+## 0.11.0
+
+---
+
+### New Features (0.11.0)
+
+---
+
+#### New Effects (0.11.0)
+
+* Matrix effect. Matrix digital rain effect with that ends with a final curtain and character resolve phase.
+
+#### New Engine Features (0.11.0)
+
+* Canvas is now arbitrarily sizeable. (`-1` matches the input text dimension, `0` matches the terminal dimension)
+* Canvas can be anchored around the terminal.
+* Text can be anchored around the Canvas.
+* Canvas new attributes `text_[left/right/top/bottom]` and `text_width/height` and `text_center_row/center_column`.
+* Version switch (--version, -v)
+
+### Changes (0.11.0)
+
+---
+
+#### Effects Changes (0.11.0)
+
+* Slice effect calculates the center of the text absolutely rather than by average line length.
+* Print effect no longer moves the print head to the start of each line, only back to the first character on the next line.
+* Many effects were updated to support anchoring within the Canvas.
+
+#### Engine Changes (0.11.0)
+
+* Performance improvements to geometry functions related to circles. (10.0.1)
+* Gradient's support indexing and slicing.
+* EffectCharacter objects no longer have a `symbol` attribute. Instead, the `Animation` class has a new attribute
+`current_character_visual` which provides access to a `symbol` and `color` attribute reflecting the character's current
+symbol and color. The prior `EffectCharacter.symbol` attribute was unreliable and represented both a formatted and
+unformatted symbol depending on when it was accessed. In addition, the `color` attribute is now a `Color` object and the
+color code has been moved into the `_color_code` attribute.
+* EffectCharacter objects have a new attribute `is_fill_character: bool`.
+
+---
+
+#### Effects Fixes (0.11.0)
+
+* Fixed swarm effect not handling the first swarm (bottom right characters) resulting in missing characters in the
+output. (10.0.1)
+
+#### Other (0.11.0)
+
+* Keyboard Interrupts are handled gracefully while effects are animating.
+
+---
+
 ## 0.10.1
 
 ---
