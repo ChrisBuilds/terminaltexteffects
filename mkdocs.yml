@@ -33,11 +33,16 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.details
+  - pymdownx.caret
+  - pymdownx.tilde
   - attr_list
+  - def_list
 
 nav:
   - Intro to TTE: index.md
   - Change[B]log: 
+    - changeblog/changeblog.md
+    - changeblog/changeblog_0.11.0.md
     - changeblog/changeblog_0.10.0.md
 
   - How to install & use TTE:
