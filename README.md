@@ -58,14 +58,14 @@ Screenshot:[Personal Branch Coverage Tool](README\CoverageToolDimos.png)
 Mihail-Dimosthenis Cretu
 
 Test 1:test_type_parser_valid + Test 2:test_type_parser_invalid
-Link:<>
+Link:<https://github.com/cretud/terminaltexteffects/commit/7d93d87f58fed95296635b5fe2f5cbb58c630c2f>
 Screenshot Before:[Personal Branch Coverage Tool](README\type_parserFloatBefore.png)
 Screenshot After:[Personal Branch Coverage Tool](README\type_parserFloat.png)
 
 The coverage has improved from 0% to 100%. First test checks the first branch of the method when input is valid and the second one checks the second branch when the input is invalid.
 
 Test 3:test_xterm_to_hex_valid + Test 4:test_xterm_to_hex_invalid
-Link:<>
+Link:<https://github.com/cretud/terminaltexteffects/commit/7d93d87f58fed95296635b5fe2f5cbb58c630c2f>
 Screenshot Before:[Personal Branch Coverage Tool](README\hextermBefore.png)
 Screenshot After:[Personal Branch Coverage Tool](README\hexterm.png)
 
@@ -74,7 +74,7 @@ The coverage has improved from 0% to 100%. First test checks the first branch of
 Test 5:test_is_valid_color_invalid_length +
 Test 6:test_is_valid_color_invalid_characters +
 Test 7:test_is_valid_color_number 
-Link:<>
+Link:<https://github.com/cretud/terminaltexteffects/commit/7d93d87f58fed95296635b5fe2f5cbb58c630c2f>
 Screenshot Before:[Personal Branch Coverage Tool](README\hextermBefore.png)
 Screenshot After:[Personal Branch Coverage Tool](README\hexterm.png)
 
