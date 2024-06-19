@@ -385,10 +385,10 @@ class Terminal:
         self._input_data = input_data.replace("\t", " " * self.config.tab_width)
         self._terminal_width, self._terminal_height = self._get_terminal_dimensions()
         self.canvas = Canvas(*self._get_canvas_dimensions())
-        self.canvas_column_offset, self.canvas_row_offset = self._calc_canvas_offsets()
-        if (
-            self.config.ignore_terminal_dimensions
-        ):  # allow effects larger than the terminal for use when sending frames to another output handler
+        if not self.config.ignore_terminal_dimensions:
+            self.canvas_column_offset, self.canvas_row_offset = self._calc_canvas_offsets()
+        else:
+            self.canvas_column_offset = self.canvas_row_offset = 0
             self._terminal_width = self.canvas.right
             self._terminal_height = self.canvas.top
         # the visible_* attributes are used to determine which characters are visible on the terminal
@@ -442,7 +442,7 @@ class Terminal:
             canvas_width = self._terminal_width
         else:
             input_width = max([len(line.rstrip()) for line in self._input_data.splitlines()])
-            if self.config.wrap_text:
+            if self.config.wrap_text and not self.config.ignore_terminal_dimensions:
                 canvas_width = min(self._terminal_width, input_width)
             else:
                 canvas_width = input_width
