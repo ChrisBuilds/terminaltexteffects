@@ -210,14 +210,14 @@ width is less than the terminal width, and the Canvas was anchored to the center
 
 The [Canvas](../engine/terminal/canvas.md) is the space within the terminal where the effect takes place. From the
 perspective of an effect, the Canvas is the entire world. Effects *should* be designed to reference the Canvas for all
-requests for Coordinates to ensure Coordinates are anchored appropriates and within the correct space within the terminal.
+requests for Coordinates to ensure Coordinates are anchored appropriately and within the correct space within the terminal.
 
 `Canvas Dimensions`
 
 : The Canvas dimensions are determined in one of three ways.
 : - Specified exactly via the `--canvas-width` and `--canvas-height` arguments (or related TerminalConfig attributes).
 : - Set to match the discovered Terminal dimensions by setting `--canvas-height` or `--canvas-width` to `0`.
-: - Set to match the dimensions of the input text by settings `--canvas-height` or `--canvas-width` to `-1`.
+: - Set to match the dimensions of the input text by setting `--canvas-height` or `--canvas-width` to `-1`.
 : Note that the separate dimensions, width and height, can be specified through any of these methods independently.
 
 : In the image above, you can see the canvas as the grey area surrounding the inner-text, with solid borders. In the
