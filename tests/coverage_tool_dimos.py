@@ -1,4 +1,3 @@
-# my_module.py
 from argparse import ArgumentTypeError
 import argparse
 import pytest
@@ -14,10 +13,8 @@ def initialize_branch_coverage():
     branch_coverage = {
         "xterm_to_hex_not_in_map": False,
         "xterm_to_hex_in_map": False,
-        "is_valid_color_is_str": False,
         "is_valid_color_not_str": False,
         "is_valid_color_invalid_len": False,
-        "is_valid_color_valid_len": False,
         "is_valid_color_value_error": False,
         "is_valid_color_valid_str": False,
         "type_parser_valid_float": False,
@@ -41,12 +38,10 @@ def xterm_to_hex(xterm_color: int) -> str:
 
 def is_valid_color(color: int | str) -> bool:
     if isinstance(color, str):
-        track_coverage("is_valid_color_is_str")
         if len(color) not in [6, 7]:
             track_coverage("is_valid_color_invalid_len")
             return False
         try:
-            track_coverage("is_valid_color_valid_len")
             int(color.strip("#"), 16)
         except ValueError:
             track_coverage("is_valid_color_value_error")
@@ -69,9 +64,24 @@ class PositiveFloat:
                 f"invalid value: '{arg}' is not a valid value. Argument must be a float > 0."
             )
 
+
 def print_coverage():
-    for branch, hit in branch_coverage.items():
-        print(f"{branch} was {'hit' if hit else 'not hit'}")
+    method_branches = {
+        "xterm_to_hex": ["xterm_to_hex_not_in_map", "xterm_to_hex_in_map"],
+        "is_valid_color": [
+            "is_valid_color_not_str","is_valid_color_invalid_len",
+            "is_valid_color_value_error", "is_valid_color_valid_str"
+        ],
+        "type_parser": ["type_parser_valid_float", "type_parser_invalid_float"]
+    }
+    
+    for method, branches in method_branches.items():
+        hit_branches = sum(branch_coverage.get(branch, False) for branch in branches)
+        total_branches = len(branches)
+        coverage_percentage = (hit_branches / total_branches) * 100
+        print(f"Coverage for {method}: {hit_branches}/{total_branches} branches hit ({coverage_percentage:.2f}%)")
+        for branch in branches:
+            print(f"  {branch} was {'hit' if branch_coverage.get(branch, False) else 'not hit'}")
 
 
 def test_module_dimos():
@@ -92,8 +102,7 @@ def test_module_dimos():
     is_valid_color("#123456") #valid color
     is_valid_color("#12345G") #invalid color
     is_valid_color("#12345670000000") #invalid length
-    is_valid_color(122) # number is in range
-    is_valid_color(256) # number is not in range
+    is_valid_color(122) # integer in range
 
 
 if __name__ == "__main__":

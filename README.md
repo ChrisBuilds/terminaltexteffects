@@ -21,29 +21,41 @@ And then we run "coverage report" to get the following report:
 
 [Coverage Results](README\BeforeTestCoverage.png)
 
+### Your own coverage tool
+
+Mihail-Dimosthenis Cretu
+
+Function 1 : xterm_to_hex
+Link:<>
+Screenshot:[Personal Branch Coverage Tool](README\CoverageToolDimos.png)
+
+Function 2 : is_valid_color
+Link:<>
+Screenshot:[Personal Branch Coverage Tool](README\CoverageToolDimos.png)
+
+Function 3 : type_parser
+Link:<>
+Screenshot:[Personal Branch Coverage Tool](README\CoverageToolDimos.png)
+
+<The following is supposed to be repeated for each group member>
+
+<Group member name>
+
+<Function 1 name>
+
+<Show a patch (diff) or a link to a commit made in your forked repository that shows the instrumented code to gather coverage measurements>
+
+<Provide a screenshot of the coverage results output by the instrumentation>
+
+<Function 2 name>
+
+<Provide the same kind of information provided for Function 1>
+
 ## Coverage improvement
 
 ### Individual tests
 
 <The following is supposed to be repeated for each group member>
-
-Mihail-Dimosthenis Cretu
-
-test_type_parser_valid and test_type_parser_invalid
-
-<Show a patch (diff) or a link to a commit made in your forked repository that shows the new/enhanced test>
-
-[1stMethod](README\Dimos1.png)
-
-To enhance the coverage for the PositiveFloat.type_parser method from 0% to 100%, I developed a test suite. This suite validates that the method correctly parses positive float values and appropriately raises an error for invalid inputs. Prior to these tests, the method had no coverage; thus, this suite significantly improved its coverage.
-
-test_is_valid_color_invalid_characters, test_is_valid_color_too_long, test_is_valid_color_not_string
-
-<Show a patch (diff) or a link to a commit made in your forked repository that shows the new/enhanced test>
-
-[1stMethod](README\Dimos2.png)
-
-To enhance the coverage for the is_valid_color method from 56% to 100%, I developed a test suite. This suite validates that the method correctly return false values and can also operate with integers between the value of 1 and 256.
 
 <Group member name>
 
@@ -70,3 +82,4 @@ To enhance the coverage for the is_valid_color method from 56% to 100%, I develo
 ## Statement of individual contributions
 
 <Write what each group member did>
+
