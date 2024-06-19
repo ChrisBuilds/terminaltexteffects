@@ -324,6 +324,11 @@ resulting effect looks better.
 
 ![spray_wide_canvas](../img/changeblog_media/0.11.0/spray_wide_canvas_anchored.gif)
 
+All these changes with the Canvas has led to some additional complexity when ensuring all effects operate in reference
+to the Canvas dimensions properly in addition to the complexity handling the interactions between achoring, text wrapping,
+and ignoring the terminal dimensions when appropriate. I'm sure there are edge cases somebody will find and report.
+Looking forward to fixing those.
+
 ## Other Changes
 
 ---
