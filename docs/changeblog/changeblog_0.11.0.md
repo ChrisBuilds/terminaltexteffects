@@ -87,7 +87,7 @@ Here is the result of my analysis.
 
     `Only a single streak is active in a column`
 
-    : A new steak will not start until the previous streak has completely fallen out of view.
+    : A new streak will not start until the previous streak has completely fallen out of view.
 
     `Full column streaks are held in place for a random amount of time`
 
@@ -200,7 +200,7 @@ terminal dimensions.
 `Terminal Dimensions`
 
 : The terminal dimensions are based on your terminal emulator. TTE discovers the dimensions of your terminal emulator by
-calling  `shutil.get_terminal_size()`. Should there be an issue that prevents terminal dimension discovery, a fallback
+calling  `shutil.get_terminal_size()`. Should there an issue occur that prevents terminal dimension discovery, a fallback
 of `(80, 24)` is used.
   
 : In the image above, you can see the terminal as the black area on the left and right edges. This indicates the Canvas
@@ -215,7 +215,7 @@ requests for Coordinates to ensure Coordinates are anchored appropriately and wi
 `Canvas Dimensions`
 
 : The Canvas dimensions are determined in one of three ways.
-: - Specified exactly via the `--canvas-width` and `--canvas-height` arguments (or related TerminalConfig attributes).
+: - Specified exactly via the `--canvas-width` and `--canvas-height` options (or related TerminalConfig attributes).
 : - Set to match the discovered Terminal dimensions by setting `--canvas-height` or `--canvas-width` to `0`.
 : - Set to match the dimensions of the input text by setting `--canvas-height` or `--canvas-width` to `-1`.
 : Note that the separate dimensions, width and height, can be specified through any of these methods independently.
@@ -234,9 +234,9 @@ the Canvas will be sized to the minimum bounding box that would contain all of t
 ??? "How Input Text is Processed"
 
     - Whitespace characters to the right of the last non-whitespace character in a given line are stripped.
-    - Empty lines are preserved. Whitespace to the left of a non-whitespace character is preserved.
-    - Tabs are converted to four spaces.
-    - Tab conversion can be specified using the `--tab-width` option.
+    - Empty lines are preserved. 
+    - Whitespace to the left of a non-whitespace character is preserved.
+    - Tabs are converted to four spaces, and the tab width can be specified using the `--tab-width` option.
 
 `Input Text Dimensions`
 
@@ -247,7 +247,7 @@ original text dimensions.
 : - If the Canvas is set match the dimensions of the text and the `--wrap-text` option is passed, the text will be
 wrapped based on the Terminal dimensions.
 
-: - If the `--ignore-terminal-dimensions` option is passed, wrapping will be occur based on the Canvas size or not at
+: - If the `--ignore-terminal-dimensions` option is passed, wrapping will occur based on the Canvas size or not at
 all (if the Canvas is set to match the text), however the output will exceed the dimensions of the terminal and will be
 wrapped by the terminal emulator (resulting in expected effect behavior) unless the output is directed somewhere else.
 
@@ -278,7 +278,7 @@ the breath.
 #### Anchoring the Canvas and/or Input Text
 
 The Canvas and/or Input Text can be anchored around the respective container using the `--anchor-[canavs/text]` option. Acceptable values are any of the
-Cardinal/Diagonal directions.
+Cardinal/Diagonal directions, or centered.
 
 - `sw` = South West (bottom left corner) (**default**)
 - `w` = West (centered on left edge)
@@ -288,6 +288,7 @@ Cardinal/Diagonal directions.
 - `e` = East (centered on right edge)
 - `se` = South East (bottom right corner)
 - `s` = South (centered on bottom edge)
+- `c` = Center (centered within the Canvas/Terminal)
 
 Here is an example of the Canvas anchored to the North East of the terminal, and the text anchored to the center of the
 Canvas.
