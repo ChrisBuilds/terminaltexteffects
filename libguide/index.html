@@ -211,16 +211,101 @@
   
   
   
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Change[B]log
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Change[B]log
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../changeblog/" class="md-nav__link">
+      <a href="../changeblog/changeblog/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    ChangeBlog
+    ChangeBlog Home
   </span>
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changeblog/changeblog_0.11.0/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0.11.0 (Enter the Matrix)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changeblog/changeblog_0.10.0/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0.10.0 (ColorShift)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -387,6 +472,15 @@
   <a href="#configuring-the-terminal" class="md-nav__link">
     <span class="md-ellipsis">
       Configuring the Terminal
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#infinitely-looping-effects" class="md-nav__link">
+    <span class="md-ellipsis">
+      Infinitely Looping Effects
     </span>
   </a>
   
@@ -1496,6 +1590,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../effects/matrix/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Matrix
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../effects/middleout/" class="md-nav__link">
         
   
@@ -1965,6 +2080,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#infinitely-looping-effects" class="md-nav__link">
+    <span class="md-ellipsis">
+      Infinitely Looping Effects
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2069,6 +2193,15 @@ terminal device dimensions.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">effect</span><span class="o">.</span><span class="n">terminal_config</span><span class="o">.</span><span class="n">ignore_terminal_dimensions</span> <span class="o">=</span> <span class="kc">True</span>
 </span></code></pre></div>
 <p>For more information on terminal configuration options, check out the <a href="../engine/terminal/terminalconfig/">TerminalConfig</a> reference.</p>
+<h2 id="infinitely-looping-effects">Infinitely Looping Effects</h2>
+<p>Some effects support infinite looping. For example, <a href="../effects/colorshift/">ColorShift</a> via the
+<a href="../effects/colorshift/#terminaltexteffects.effects.effect_colorshift.ColorShiftConfig">ColorShiftConfig.cycles</a> config
+attribute. When set to 0 directly, the effect will cycle indefinitely. Explore the configuration options for a given
+effect to see if it supports infinite looping.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Infinite looping is <em>NOT</em> supported when TTE is run as an application. The command line argument validators will not accept these values. This is by design, to prevent users inadvertently inputting a configuration that results in having to interrupt the process to end an effect.</p>
+</div>
 
 
 
