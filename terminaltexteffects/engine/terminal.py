@@ -32,7 +32,7 @@ class TerminalConfig(ArgsDataClass):
         xterm_colors (bool): Convert any colors specified in RBG hex to the closest XTerm-256 color.
         no_color (bool): Disable all colors in the effect.
         wrap_text (bool): Wrap text wider than the canvas width.
-        frame_rate (float): Target frame rate for the animation.
+        frame_rate (float): Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting.
         canvas_width (int): Cavas width, if set to 0 the canvas width is detected automatically based on the terminal device.
         canvas_height (int): Canvas height, if set to 0 the canvas height is detected automatically based on the terminal device.
         anchor_canvas (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the Canvas. The Canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
@@ -70,14 +70,14 @@ class TerminalConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "bool : Wrap text wider than the canvas width."
 
-    frame_rate: float = ArgField(
+    frame_rate: int = ArgField(
         cmd_name="--frame-rate",
-        type_parser=argvalidators.PositiveInt.type_parser,
+        type_parser=argvalidators.NonNegativeInt.type_parser,
         default=100,
-        help="""Target frame rate for the animation.""",
+        help="""Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting.""",
     )  # type: ignore[assignment]
 
-    "float : Minimum time, in seconds, between frames."
+    "int : Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting."
 
     canvas_width: int = ArgField(
         cmd_name=["--canvas-width"],
@@ -819,8 +819,6 @@ class Terminal:
             to ensure a consistent animation speed.
 
         """
-        if enforce_frame_rate:
-            self.enforce_framerate()
         self.move_cursor_to_top()
         sys.stdout.write(output_string)
         sys.stdout.flush()

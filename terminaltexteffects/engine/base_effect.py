@@ -58,11 +58,14 @@ class BaseEffectIterator(ABC, Generic[T]):
 
     @property
     def frame(self) -> str:
-        """Return the current frame by getting the formatted output string from the terminal.
+        """Return the current frame by getting the formatted output string from the terminal. If the frame rate is set >0
+        in the terminal configuration, enforce the frame rate.
 
         Returns:
             str: Current frame of the effect.
         """
+        if self.terminal._frame_rate:
+            self.terminal.enforce_framerate()
         return self.terminal.get_formatted_output_string()
 
     def update(self) -> None:
