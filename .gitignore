@@ -169,3 +169,4 @@ effect_test.py
 effect_dev.py
 effect_canvas_test.py
 .vscode/*
+lib_tests/*
