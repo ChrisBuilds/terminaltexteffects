@@ -293,10 +293,10 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
 
     def glitch_wave(self) -> None:
         if not self.active_glitch_wave_top:
-            if self.terminal.canvas.top >= 3:
+            if self.terminal.canvas.text_height >= 3:
                 # choose a wave top index in the top half of the canvas or at least 3 rows up
-                self.active_glitch_wave_top = random.randint(
-                    max((3, round(self.terminal.canvas.top * 0.5))), self.terminal.canvas.top
+                self.active_glitch_wave_top = self.terminal.canvas.text_bottom + random.randint(
+                    max((3, round(self.terminal.canvas.text_height * 0.5))), self.terminal.canvas.text_height
                 )
             else:
                 # not enough room for a wave
@@ -316,12 +316,13 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                     wave_top_delta = 0
                 self.active_glitch_wave_top += wave_top_delta
                 # clamp wave top to canvas
-                self.active_glitch_wave_top = max(2, min(self.active_glitch_wave_top, self.terminal.canvas.top))
+                self.active_glitch_wave_top = max(2, min(self.active_glitch_wave_top, self.terminal.canvas.text_top))
             # get the lines for the wave
             new_wave_lines: list[VHSTapeIterator.Line] = []
             for line_index in range(self.active_glitch_wave_top - 2, self.active_glitch_wave_top + 1):
-                if line_index in self.lines:
-                    new_wave_lines.append(self.lines[line_index])
+                adjusted_line_index = line_index - (self.terminal.canvas.text_bottom - 1)
+                if adjusted_line_index in self.lines:
+                    new_wave_lines.append(self.lines[adjusted_line_index])
 
             # restore any lines that are no longer part of the wave
             for line in self.active_glitch_wave_lines:
@@ -330,7 +331,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                     self.active_characters.extend(line.characters)
             self.active_glitch_wave_lines = new_wave_lines
 
-            if self.active_glitch_wave_top < 3:
+            if self.active_glitch_wave_top < self.terminal.canvas.text_bottom + 2:
                 # wave at bottom, restore lines
                 for line in self.active_glitch_wave_lines:
                     line.restore()
