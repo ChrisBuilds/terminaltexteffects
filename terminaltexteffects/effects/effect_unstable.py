@@ -197,7 +197,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                             )
                         )
                         character.animation.step_animation()
-                    next_frame = self.terminal.get_formatted_output_string()
+                    next_frame = self.frame
                     for character in self.terminal.get_characters():
                         character.motion.set_coordinate(self.jumbled_coords[character])
                     self._rumble_mod_delay -= 1
@@ -205,7 +205,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                 else:
                     for character in self.terminal.get_characters():
                         character.animation.step_animation()
-                    next_frame = self.terminal.get_formatted_output_string()
+                    next_frame = self.frame
 
                 self._current_rumble_steps += 1
             else:
@@ -223,13 +223,13 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                     for character in self.active_characters
                     if not character.motion.current_coord == character.motion.query_path("explosion").waypoints[0].coord
                 ]
-                next_frame = self.terminal.get_formatted_output_string()
+                next_frame = self.frame
 
             elif self._explosion_hold_time:
                 for character in self.active_characters:
                     character.tick()
                 self._explosion_hold_time -= 1
-                next_frame = self.terminal.get_formatted_output_string()
+                next_frame = self.frame
             else:
                 self.phase = "reassembly"
                 for character in self.terminal.get_characters():
@@ -248,7 +248,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                     == character.motion.query_path("reassembly").waypoints[0].coord
                     or not character.animation.active_scene_is_complete()
                 ]
-                next_frame = self.terminal.get_formatted_output_string()
+                next_frame = self.frame
 
         if next_frame is not None:
             return next_frame
