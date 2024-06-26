@@ -37,7 +37,8 @@ class CharacterVisual:
         reverse (bool): reverse mode
         hidden (bool): hidden mode
         strike (bool): strike mode
-        color (graphics.Color | None): color to display the symbol
+        fg_color (graphics.Color | None): the symbol's foreground color
+        bg_color (graphics.Color | None): the symbol's background color
 
     Attributes:
         formatted_symbol (str): the current symbol with all ANSI sequences applied
@@ -52,8 +53,10 @@ class CharacterVisual:
     reverse: bool = False
     hidden: bool = False
     strike: bool = False
-    color: graphics.Color | None = None
-    _color_code: str | int | None = None
+    fg_color: graphics.Color | None = None
+    bg_color: graphics.Color | None = None
+    _fg_color_code: str | int | None = None  # the original color code, used to enable reference to the color
+    _bg_color_code: str | int | None = None
 
     def __post_init__(self):
         self.formatted_symbol = self.format_symbol()
@@ -86,8 +89,10 @@ class CharacterVisual:
             formatting_string += ansitools.APPLY_HIDDEN()
         if self.strike:
             formatting_string += ansitools.APPLY_STRIKETHROUGH()
-        if self._color_code is not None:
-            formatting_string += colorterm.fg(self._color_code)
+        if self._fg_color_code is not None:
+            formatting_string += colorterm.fg(self._fg_color_code)
+        if self._bg_color_code is not None:
+            formatting_string += colorterm.bg(self._bg_color_code)
 
         return f"{formatting_string}{self.symbol}{ansitools.RESET_ALL() if formatting_string else ''}"
 
@@ -178,12 +183,39 @@ class Scene:
         self.easing_total_steps: int = 0
         self.easing_current_step: int = 0
 
+    def _get_color_code(self, color: graphics.Color | None) -> str | int | None:
+        """Get the color code for the given color. RGB colors are converted to XTerm-256 colors if use_xterm_colors
+        is True. If no_color is True, returns None. Otherwise, returns the RGB color.
+
+        Args:
+            color (graphics.Color | None): the color to get the code for
+
+        Returns:
+            str | int | None: the color code
+        """
+        if color:
+            if self.no_color:
+                return None
+            elif self.use_xterm_colors:
+                if color.xterm_color:
+                    return color.xterm_color
+                elif color.rgb_color in self.xterm_color_map:
+                    return self.xterm_color_map[color.rgb_color]
+                else:
+                    xterm_color = hexterm.hex_to_xterm(color.rgb_color)
+                    self.xterm_color_map[color.rgb_color] = xterm_color
+                    return xterm_color
+            else:
+                return color.rgb_color
+        return None
+
     def add_frame(
         self,
         symbol: str,
         duration: int,
         *,
-        color: graphics.Color | None = None,
+        fg_color: graphics.Color | None = None,
+        bg_color: graphics.Color | None = None,
         bold=False,
         dim=False,
         italic=False,
@@ -198,7 +230,8 @@ class Scene:
         Args:
             symbol (str): the symbol to show
             duration (int): the number of frames to use the Frame
-            color (graphics.Color, optional): the color to show. Defaults to None.
+            fg_color (graphics.Color, optional): the foreground color to show. Defaults to None.
+            bg_color (graphics.Color, optional): the background color to show. Defaults to None.
             bold (bool, optional): bold mode. Defaults to False.
             dim (bool, optional): dim mode. Defaults to False.
             italic (bool, optional): italic mode. Defaults to False.
@@ -208,21 +241,10 @@ class Scene:
             hidden (bool, optional): hidden mode. Defaults to False.
             strike (bool, optional): strike mode. Defaults to False.
         """
-        char_vis_color: str | int | None = None
-        if color:
-            if self.no_color:
-                char_vis_color = None
-            elif self.use_xterm_colors:
-                if color.xterm_color:
-                    char_vis_color = color.xterm_color
-                elif color.rgb_color in self.xterm_color_map:
-                    char_vis_color = self.xterm_color_map[color.rgb_color]
-                else:
-                    xterm_color = hexterm.hex_to_xterm(color.rgb_color)
-                    self.xterm_color_map[color.rgb_color] = xterm_color
-                    char_vis_color = xterm_color
-            else:
-                char_vis_color = color.rgb_color
+
+        char_vis_fg_color = self._get_color_code(fg_color)
+        char_vis_bg_color = self._get_color_code(bg_color)
+
         if duration < 1:
             raise ValueError("duration must be greater than 0")
         char_vis = CharacterVisual(
@@ -235,8 +257,10 @@ class Scene:
             reverse=reverse,
             hidden=hidden,
             strike=strike,
-            color=color,
-            _color_code=char_vis_color,
+            fg_color=fg_color,
+            bg_color=bg_color,
+            _fg_color_code=char_vis_fg_color,
+            _bg_color_code=char_vis_bg_color,
         )
         frame = Frame(char_vis, duration)
         self.frames.append(frame)
@@ -312,7 +336,7 @@ class Scene:
             symbol_progress = (symbol_index + 1) / len(symbols)
             gradient_index = int(symbol_progress * len(gradient.spectrum))
             for color in gradient.spectrum[last_index : max(gradient_index, 1)]:
-                self.add_frame(symbol, duration, color=color)
+                self.add_frame(symbol, duration, fg_color=color)
             last_index = gradient_index
 
     def reset_scene(self) -> None:
@@ -370,6 +394,32 @@ class Animation:
         self.xterm_color_map: dict[str, int] = {}
         self.active_scene_current_step: int = 0
         self.current_character_visual: CharacterVisual = CharacterVisual(character.input_symbol)
+
+    def _get_color_code(self, color: graphics.Color | None) -> str | int | None:
+        """Get the color code for the given color. RGB colors are converted to XTerm-256 colors if use_xterm_colors
+        is True. If no_color is True, returns None. Otherwise, returns the RGB color.
+
+        Args:
+            color (graphics.Color | None): the color to get the code for
+
+        Returns:
+            str | int | None: the color code
+        """
+        if color:
+            if self.no_color:
+                return None
+            elif self.use_xterm_colors:
+                if color.xterm_color:
+                    return color.xterm_color
+                elif color.rgb_color in self.xterm_color_map:
+                    return self.xterm_color_map[color.rgb_color]
+                else:
+                    xterm_color = hexterm.hex_to_xterm(color.rgb_color)
+                    self.xterm_color_map[color.rgb_color] = xterm_color
+                    return xterm_color
+            else:
+                return color.rgb_color
+        return None
 
     def new_scene(
         self,
@@ -437,23 +487,26 @@ class Animation:
 
         return False
 
-    def set_appearance(self, symbol: str, color: graphics.Color | None = None) -> None:
+    def set_appearance(
+        self, symbol: str, fg_color: graphics.Color | None = None, bg_color: graphics.Color | None = None
+    ) -> None:
         """Updates the current character visual with the symbol and color provided. If the character has an active scene, any appearance set with this method
         will be overwritten when the scene is stepped to the next frame.
 
         Args:
             symbol (str): The symbol to apply.
-            color (graphics.Color | None): The color to apply.
+            fg_color (graphics.Color | None): The foreground color to apply.
+            bg_color (graphics.Color | None): The background color to apply.
         """
-        char_vis_color: str | int | None = None
-        if color:
-            if self.no_color:
-                char_vis_color = None
-            elif self.use_xterm_colors:
-                char_vis_color = color.xterm_color
-            else:
-                char_vis_color = color.rgb_color
-        self.current_character_visual = CharacterVisual(symbol, color=color, _color_code=char_vis_color)
+        char_vis_fg_color: str | int | None = self._get_color_code(fg_color)
+        char_vis_bg_color: str | int | None = self._get_color_code(bg_color)
+        self.current_character_visual = CharacterVisual(
+            symbol,
+            fg_color=fg_color,
+            _fg_color_code=char_vis_fg_color,
+            bg_color=bg_color,
+            _bg_color_code=char_vis_bg_color,
+        )
 
     @staticmethod
     def random_color() -> graphics.Color:
