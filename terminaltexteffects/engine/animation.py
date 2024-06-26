@@ -53,10 +53,14 @@ class CharacterVisual:
     reverse: bool = False
     hidden: bool = False
     strike: bool = False
-    fg_color: graphics.Color | None = None
-    bg_color: graphics.Color | None = None
-    _fg_color_code: str | int | None = None  # the original color code, used to enable reference to the color
-    _bg_color_code: str | int | None = None
+    fg_color: graphics.Color | None = None  # the Color object provided during initialization
+    bg_color: graphics.Color | None = None  # the Color object provided during initialization
+    _fg_color_code: str | int | None = (
+        None  # the actual color code after applying terminal args (--no-color, --use-xterm-colors)
+    )
+    _bg_color_code: str | int | None = (
+        None  # the actual color code after applying terminal args (--no-color, --use-xterm-colors)
+    )
 
     def __post_init__(self):
         self.formatted_symbol = self.format_symbol()
@@ -306,7 +310,7 @@ class Scene:
         return next_visual
 
     def apply_gradient_to_symbols(
-        self, gradient: graphics.Gradient, symbols: typing.Sequence[str], duration: int
+        self, gradient: graphics.Gradient, symbols: typing.Sequence[str], duration: int, fg=True, bg=False
     ) -> None:
         """
         Applies a gradient effect to a sequence of symbols and adds each symbol as a frame to the Scene.
@@ -327,16 +331,25 @@ class Scene:
             gradient (graphics.Gradient): The gradient to apply.
             symbols (list[str]): The list of symbols to apply the gradient to.
             duration (int): The duration to show each frame.
+            fg (bool, optional): Whether to apply the gradient to the foreground color. Defaults to True.
+            bg (bool, optional): Whether to apply the gradient to the background color. Defaults to False.
 
         Returns:
             None
+
+        Raises:
+            ValueError: If fg and bg are both False or if the gradient has no colors in the spectrum.
         """
+        if not fg and not bg:
+            raise ValueError("At least one of fg or bg must be True.")
+        if not gradient.spectrum:
+            raise ValueError("Gradient must have at least one color in the spectrum.")
         last_index = 0
         for symbol_index, symbol in enumerate(symbols):
             symbol_progress = (symbol_index + 1) / len(symbols)
             gradient_index = int(symbol_progress * len(gradient.spectrum))
             for color in gradient.spectrum[last_index : max(gradient_index, 1)]:
-                self.add_frame(symbol, duration, fg_color=color)
+                self.add_frame(symbol, duration, fg_color=color if fg else None, bg_color=color if bg else None)
             last_index = gradient_index
 
     def reset_scene(self) -> None:
