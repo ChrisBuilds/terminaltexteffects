@@ -22,10 +22,12 @@ def test_character_visual_init():
         reverse=False,
         hidden=True,
         strike=False,
-        color=Color("ffffff"),
-        _color_code="ffffff",
+        fg_color=Color("ffffff"),
+        _fg_color_code="ffffff",
+        bg_color=Color("ffffff"),
+        _bg_color_code="ffffff",
     )
-    assert visual.formatted_symbol == "\x1b[1m\x1b[3m\x1b[5m\x1b[8m\x1b[38;2;255;255;255ma\x1b[0m"
+    assert visual.formatted_symbol == "\x1b[1m\x1b[3m\x1b[5m\x1b[8m\x1b[38;2;255;255;255m\x1b[48;2;255;255;255ma\x1b[0m"
     assert visual.bold is True
     assert visual.dim is False
     assert visual.italic is True
@@ -34,8 +36,8 @@ def test_character_visual_init():
     assert visual.reverse is False
     assert visual.hidden is True
     assert visual.strike is False
-    assert visual.color == Color("ffffff")
-    assert visual._color_code == "ffffff"
+    assert visual.fg_color == Color("ffffff")
+    assert visual._fg_color_code == "ffffff"
 
 
 def test_frame_init():
@@ -49,7 +51,7 @@ def test_frame_init():
         reverse=False,
         hidden=True,
         strike=False,
-        color="ffffff",
+        fg_color="ffffff",
     )
     frame = Frame(character_visual=visual, duration=5)
     assert frame.character_visual == visual
@@ -67,19 +69,32 @@ def test_scene_init():
 
 def test_scene_add_frame():
     scene = Scene(scene_id="test_scene")
-    scene.add_frame(symbol="a", duration=5, color=Color("ffffff"), bold=True, italic=True, blink=True, hidden=True)
+    scene.add_frame(
+        symbol="a",
+        duration=5,
+        fg_color=Color("ffffff"),
+        bg_color=Color("ffffff"),
+        bold=True,
+        italic=True,
+        blink=True,
+        hidden=True,
+    )
     assert len(scene.frames) == 1
     frame = scene.frames[0]
-    assert frame.character_visual.formatted_symbol == "\x1b[1m\x1b[3m\x1b[5m\x1b[8m\x1b[38;2;255;255;255ma\x1b[0m"
+    assert (
+        frame.character_visual.formatted_symbol
+        == "\x1b[1m\x1b[3m\x1b[5m\x1b[8m\x1b[38;2;255;255;255m\x1b[48;2;255;255;255ma\x1b[0m"
+    )
     assert frame.duration == 5
-    assert frame.character_visual.color == Color("ffffff")
+    assert frame.character_visual.fg_color == Color("ffffff")
+    assert frame.character_visual.bg_color == Color("ffffff")
     assert frame.character_visual.bold is True
 
 
 def test_scene_add_frame_invalid_duration():
     scene = Scene(scene_id="test_scene")
     with pytest.raises(ValueError, match="duration must be greater than 0"):
-        scene.add_frame(symbol="a", duration=0, color=Color("ffffff"))
+        scene.add_frame(symbol="a", duration=0, fg_color=Color("ffffff"))
 
 
 def test_scene_apply_gradient_to_symbols_equal_colors_and_symbols():
@@ -90,7 +105,7 @@ def test_scene_apply_gradient_to_symbols_equal_colors_and_symbols():
     assert len(scene.frames) == 3
     for i, frame in enumerate(scene.frames):
         assert frame.duration == 1
-        assert frame.character_visual._color_code == gradient.spectrum[i].rgb_color
+        assert frame.character_visual._fg_color_code == gradient.spectrum[i].rgb_color
 
 
 def test_scene_apply_gradient_to_symbols_unequal_colors_and_symbols():
@@ -102,9 +117,9 @@ def test_scene_apply_gradient_to_symbols_unequal_colors_and_symbols():
     symbols = ["q", "z"]
     scene.apply_gradient_to_symbols(gradient, symbols, duration=1)
     assert len(scene.frames) == 5
-    assert scene.frames[0].character_visual._color_code == gradient.spectrum[0].rgb_color
+    assert scene.frames[0].character_visual._fg_color_code == gradient.spectrum[0].rgb_color
     assert "q" in scene.frames[0].character_visual.symbol
-    assert scene.frames[-1].character_visual._color_code == gradient.spectrum[-1].rgb_color
+    assert scene.frames[-1].character_visual._fg_color_code == gradient.spectrum[-1].rgb_color
     assert "z" in scene.frames[-1].character_visual.symbol
 
 
