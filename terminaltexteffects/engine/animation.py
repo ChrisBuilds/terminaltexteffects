@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import random
 import typing
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -393,7 +392,6 @@ class Animation:
             query_scene: Returns a Scene from the Animation.
             active_scene_is_complete: Returns whether the active scene is complete.
             set_appearance: Applies a symbol and color to the character.
-            random_color: Returns a random color.
             adjust_color_brightness: Adjusts the brightness of a given color.
             _ease_animation: Returns the percentage of total distance that should be moved based on the easing function.
             step_animation: Apply the next symbol in the scene to the character.
@@ -520,15 +518,6 @@ class Animation:
             bg_color=bg_color,
             _bg_color_code=char_vis_bg_color,
         )
-
-    @staticmethod
-    def random_color() -> graphics.Color:
-        """Returns a random color.
-
-        Returns:
-            graphics.Color: A random color.
-        """
-        return graphics.Color(hex(random.randint(0, 0xFFFFFF))[2:].zfill(6))
 
     @staticmethod
     def adjust_color_brightness(color: graphics.Color, brightness: float) -> graphics.Color:

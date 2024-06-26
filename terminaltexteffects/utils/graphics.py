@@ -10,6 +10,7 @@ Classes:
 from __future__ import annotations
 
 import itertools
+import random
 import typing
 from collections.abc import Iterator
 from enum import Enum, auto
@@ -316,3 +317,12 @@ class Gradient:
         return f"Gradient: Stops({', '.join(c.rgb_color for c in self._stops)}), Steps({self._steps})\n" + "".join(
             color_blocks
         )
+
+
+def random_color() -> Color:
+    """Returns a random color in the range 000000 -> ffffff.
+
+    Returns:
+        Color: A random color in the range 000000 -> ffffff.
+    """
+    return Color(hex(random.randint(0, 0xFFFFFF))[2:].zfill(6))
