@@ -99,7 +99,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             self.terminal.set_character_visibility(character, True)
             # set up initial and falling stage
             initial_scn = character.animation.new_scene()
-            initial_scn.add_frame(character.input_symbol, 1, color=weak_color)
+            initial_scn.add_frame(character.input_symbol, 1, fg_color=weak_color)
             character.animation.activate_scene(initial_scn)
             fall_path = character.motion.new_path(
                 speed=0.2,
@@ -123,7 +123,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             strengthen_scn.apply_gradient_to_symbols(strengthen_gradient, character.input_symbol, 6)
             dust_scn = character.animation.new_scene(sync=animation.SyncMetric.DISTANCE)
             for _ in range(5):
-                dust_scn.add_frame(random.choice(["*", ".", ","]), 1, color=dust_color)
+                dust_scn.add_frame(random.choice(["*", ".", ","]), 1, fg_color=dust_color)
 
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.ACTIVATE_PATH, fall_path

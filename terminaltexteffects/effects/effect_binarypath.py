@@ -223,7 +223,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                 color_scn.add_frame(
                     bin_effectchar.animation.current_character_visual.symbol,
                     1,
-                    color=random.choice(self.config.binary_colors),
+                    fg_color=random.choice(self.config.binary_colors),
                 )
                 bin_effectchar.animation.activate_scene(color_scn)
 

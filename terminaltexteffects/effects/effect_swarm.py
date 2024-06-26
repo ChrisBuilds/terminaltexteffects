@@ -198,7 +198,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 character.motion.set_coordinate(swarm_spawn)
                 flash_scn = character.animation.new_scene(sync=animation.SyncMetric.DISTANCE)
                 for step in swarm_gradient_mirror:
-                    flash_scn.add_frame(character.input_symbol, 1, color=step)
+                    flash_scn.add_frame(character.input_symbol, 1, fg_color=step)
                 for _, swarm_area_coords in swarm_area_coordinate_map.items():
                     swarm_area_name = f"{swarm_area_count}_swarm_area"
                     swarm_area_count += 1
@@ -230,7 +230,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 input_path.new_waypoint(character.input_coord)
                 input_scn = character.animation.new_scene()
                 for step in Gradient(self.config.flash_color, self.character_final_color_map[character], steps=10):
-                    input_scn.add_frame(character.input_symbol, 3, color=step)
+                    input_scn.add_frame(character.input_symbol, 3, fg_color=step)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.ACTIVATE_SCENE, input_scn
                 )

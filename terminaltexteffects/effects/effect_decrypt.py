@@ -129,7 +129,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
         color = random.choice(self.config.ciphertext_colors)
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
-            fast_decrypt_scene.add_frame(symbol, 3, color=color)
+            fast_decrypt_scene.add_frame(symbol, 3, fg_color=color)
             duration = 3
         slow_decrypt_scene = character.animation.new_scene(id="slow_decrypt")
         for _ in range(random.randint(1, 15)):  # 1-15 longer duration units
@@ -138,7 +138,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
                 duration = random.randrange(50, 125)  # wide long duration range reduces 'waves' in the animation
             else:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
-            slow_decrypt_scene.add_frame(symbol, duration, color=color)
+            slow_decrypt_scene.add_frame(symbol, duration, fg_color=color)
         discovered_scene = character.animation.new_scene(id="discovered")
         discovered_gradient = Gradient(Color("ffffff"), self.character_final_color_map[character], steps=10)
         discovered_scene.apply_gradient_to_symbols(discovered_gradient, character.input_symbol, 8)
@@ -147,10 +147,10 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
         for character in self.terminal.get_characters():
             typing_scene = character.animation.new_scene(id="typing")
             for block_char in ["▉", "▓", "▒", "░"]:
-                typing_scene.add_frame(block_char, 2, color=random.choice(self.config.ciphertext_colors))
+                typing_scene.add_frame(block_char, 2, fg_color=random.choice(self.config.ciphertext_colors))
 
             typing_scene.add_frame(
-                random.choice(self.encrypted_symbols), 2, color=random.choice(self.config.ciphertext_colors)
+                random.choice(self.encrypted_symbols), 2, fg_color=random.choice(self.config.ciphertext_colors)
             )
             self.typing_pending_chars.append(character)
 

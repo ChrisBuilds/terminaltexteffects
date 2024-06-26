@@ -245,7 +245,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             start_scn = character.animation.new_scene()
-            start_scn.add_frame(character.input_symbol, 1, color=self.character_final_color_map[character])
+            start_scn.add_frame(character.input_symbol, 1, fg_color=self.character_final_color_map[character])
             home_path = character.motion.new_path(speed=0.8, ease=easing.out_quad, id="home")
             home_path.new_waypoint(character.input_coord)
             character.animation.activate_scene(start_scn)

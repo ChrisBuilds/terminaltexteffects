@@ -134,12 +134,12 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             keys = [key for key in groups.keys() if groups[key]]
             next_char = groups[random.choice(keys)].pop(0)
             self.terminal.set_character_visibility(next_char, True)
-            next_char.animation.set_appearance(next_char.input_symbol, color=self.config.starting_color)
+            next_char.animation.set_appearance(next_char.input_symbol, fg_color=self.config.starting_color)
             burn_scn = next_char.animation.new_scene(id="burn")
             burn_scn.apply_gradient_to_symbols(fire_gradient, vertical_build_order, 12)
             final_color_scn = next_char.animation.new_scene()
             for color in Gradient(fire_gradient.spectrum[-1], self.character_final_color_map[next_char], steps=8):
-                final_color_scn.add_frame(next_char.input_symbol, 4, color=color)
+                final_color_scn.add_frame(next_char.input_symbol, 4, fg_color=color)
             next_char.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, burn_scn, EventHandler.Action.ACTIVATE_SCENE, final_color_scn
             )

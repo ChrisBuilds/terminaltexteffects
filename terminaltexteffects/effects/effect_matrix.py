@@ -295,7 +295,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         def fade_last_character(self) -> None:
             darker_color = Animation.adjust_color_brightness(random.choice(self.rain_colors[-3:]), 0.65)  # type: ignore
             self.visible_characters[0].animation.set_appearance(
-                self.visible_characters[0].animation.current_character_visual.symbol, darker_color
+                self.visible_characters[0].animation.current_character_visual.symbol, fg_color=darker_color
             )
 
         def resolve_char(self) -> EffectCharacter:
@@ -306,13 +306,15 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             if not self.active_rain_fall_delay:
                 if self.pending_characters:
                     next_char = self.pending_characters.pop(0)
-                    next_char.animation.set_appearance(random.choice(self.matrix_symbols), self.config.highlight_color)
+                    next_char.animation.set_appearance(
+                        random.choice(self.matrix_symbols), fg_color=self.config.highlight_color
+                    )
                     previous_character = self.visible_characters[-1] if self.visible_characters else None
                     # if there is a previous character, remove the highlight
                     if previous_character:
                         previous_character.animation.set_appearance(
                             previous_character.animation.current_character_visual.symbol,
-                            random.choice(self.rain_colors),
+                            fg_color=random.choice(self.rain_colors),
                         )
                     self.terminal.set_character_visibility(next_char, True)
                     self.visible_characters.append(next_char)
@@ -328,12 +330,12 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                         # this is separately handled from the rest to prevent the
                         # highlight color from being replaced before appropriate
                         if (
-                            self.visible_characters[-1].animation.current_character_visual.color
+                            self.visible_characters[-1].animation.current_character_visual.fg_color
                             == self.config.highlight_color
                         ):
                             self.visible_characters[-1].animation.set_appearance(
                                 self.visible_characters[-1].animation.current_character_visual.symbol,
-                                random.choice(self.rain_colors),
+                                fg_color=random.choice(self.rain_colors),
                             )
 
                         if self.hold_time:
@@ -362,8 +364,8 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 if random.random() < self.config.color_swap_chance:
                     next_color = random.choice(self.rain_colors)
                 else:
-                    next_color = character.animation.current_character_visual.color
-                character.animation.set_appearance(next_symbol, next_color)
+                    next_color = character.animation.current_character_visual.fg_color
+                character.animation.set_appearance(next_symbol, fg_color=next_color)
 
     def __init__(self, effect: Matrix) -> None:
         super().__init__(effect)
@@ -389,7 +391,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         for character in self.terminal.get_characters():
             resolve_scn = character.animation.new_scene(id="resolve")
             for color in Gradient(self.config.highlight_color, final_gradient_mapping[character.input_coord], steps=8):
-                resolve_scn.add_frame(character.input_symbol, self.config.final_gradient_frames, color=color)
+                resolve_scn.add_frame(character.input_symbol, self.config.final_gradient_frames, fg_color=color)
 
         for column_chars in self.terminal.get_characters_grouped(
             self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, fill_chars=True

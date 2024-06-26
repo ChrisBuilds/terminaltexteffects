@@ -170,7 +170,9 @@ class GridLine:
                 effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(
-                    self.grid_symbol, 1, color=grid_gradient_mapping[geometry.Coord(column_index, origin.row)]
+                    self.grid_symbol,
+                    1,
+                    fg_color=grid_gradient_mapping[geometry.Coord(column_index, origin.row)],
                 )
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
@@ -181,7 +183,9 @@ class GridLine:
                 effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
                 grid_scn = effect_char.animation.new_scene()
                 grid_scn.add_frame(
-                    self.grid_symbol, 1, color=grid_gradient_mapping[geometry.Coord(origin.column, row_index)]
+                    self.grid_symbol,
+                    1,
+                    fg_color=grid_gradient_mapping[geometry.Coord(origin.column, row_index)],
                 )
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
@@ -360,9 +364,9 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                     dissolve_scn.add_frame(
                         random.choice(self.config.text_generation_symbols),
                         3,
-                        color=random.choice(text_gradient.spectrum),
+                        fg_color=random.choice(text_gradient.spectrum),
                     )
-                dissolve_scn.add_frame(character.input_symbol, 1, color=text_gradient_mapping[character.input_coord])
+                dissolve_scn.add_frame(character.input_symbol, 1, fg_color=text_gradient_mapping[character.input_coord])
                 character.animation.activate_scene(dissolve_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
