@@ -42,7 +42,7 @@ class EventHandler:
             list[
                 tuple[
                     EventHandler.Action,
-                    animation.Scene | motion.Waypoint | motion.Path | int | Coord | EventHandler.Callback,
+                    animation.Scene | motion.Waypoint | motion.Path | int | Coord | EventHandler.Callback | None,
                 ]
             ],
         ] = {}
@@ -81,6 +81,7 @@ class EventHandler:
             ACTIVATE_SCENE (Action): Activates an animation scene. The action target is the scene ID.
             DEACTIVATE_PATH (Action): Deactivates a path. The action target is the path ID.
             DEACTIVATE_SCENE (Action): Deactivates an animation scene. The action target is the scene ID.
+            RESET_APPEARANCE (Action): Resets the appearance of the character to the input symbol and color.
             SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
             SET_COORDINATE (Action): Sets the coordinate of the character. The action target is the coordinate.
             CALLBACK (Action): Calls a callback function. The action target is an EventHandler.Callback object.
@@ -90,6 +91,7 @@ class EventHandler:
         ACTIVATE_SCENE = auto()
         DEACTIVATE_PATH = auto()
         DEACTIVATE_SCENE = auto()
+        RESET_APPEARANCE = auto()
         SET_LAYER = auto()
         SET_COORDINATE = auto()
         CALLBACK = auto()
@@ -115,12 +117,65 @@ class EventHandler:
             self.callback = callback
             self.args = args
 
+    @typing.overload
+    def register_event(
+        self,
+        event: Event,
+        caller: animation.Scene | motion.Waypoint | motion.Path,
+        action: typing.Literal[Action.ACTIVATE_SCENE] | typing.Literal[Action.DEACTIVATE_SCENE],
+        target: animation.Scene,
+    ) -> None: ...
+
+    @typing.overload
+    def register_event(
+        self,
+        event: Event,
+        caller: animation.Scene | motion.Waypoint | motion.Path,
+        action: typing.Literal[Action.ACTIVATE_PATH] | typing.Literal[Action.DEACTIVATE_PATH],
+        target: motion.Path,
+    ) -> None: ...
+
+    @typing.overload
+    def register_event(
+        self,
+        event: Event,
+        caller: animation.Scene | motion.Waypoint | motion.Path,
+        action: typing.Literal[Action.SET_COORDINATE],
+        target: Coord,
+    ) -> None: ...
+
+    @typing.overload
+    def register_event(
+        self,
+        event: Event,
+        caller: animation.Scene | motion.Waypoint | motion.Path,
+        action: typing.Literal[Action.SET_LAYER],
+        target: int,
+    ) -> None: ...
+
+    @typing.overload
+    def register_event(
+        self,
+        event: Event,
+        caller: animation.Scene | motion.Waypoint | motion.Path,
+        action: typing.Literal[Action.CALLBACK],
+        target: Callback,
+    ) -> None: ...
+
+    @typing.overload
+    def register_event(
+        self,
+        event: Event,
+        caller: animation.Scene | motion.Waypoint | motion.Path,
+        action: typing.Literal[Action.RESET_APPEARANCE],
+    ) -> None: ...
+
     def register_event(
         self,
         event: Event,
         caller: animation.Scene | motion.Waypoint | motion.Path,
         action: Action,
-        target: animation.Scene | motion.Waypoint | motion.Path | int | Coord | Callback,
+        target: animation.Scene | motion.Waypoint | motion.Path | int | Coord | Callback | None = None,
     ) -> None:
         """Registers an event to be handled by the EventHandler.
 
@@ -130,10 +185,41 @@ class EventHandler:
             action (Action): The action to take when the event is triggered.
             target (animation.Scene | motion.Waypoint | motion.Path | int | Coord | Callback): The target of the action.
 
+        Raises:
+            ValueError: If the caller or target object is not the correct type for the event or action.
+
         Example:
             Register an event to activate a scene when a Path is complete:
             `event_handler.register_event(EventHandler.Event.PATH_COMPLETE, some_path, EventHandler.Action.ACTIVATE_SCENE, some_scene)`
         """
+        if event in (
+            EventHandler.Event.PATH_ACTIVATED,
+            EventHandler.Event.PATH_COMPLETE,
+            EventHandler.Event.PATH_HOLDING,
+            EventHandler.Event.SEGMENT_ENTERED,
+            EventHandler.Event.SEGMENT_EXITED,
+        ):
+            if not isinstance(caller, motion.Path):
+                raise ValueError(f"Event {event.name} requires a Path object as the caller.")
+        elif event in (EventHandler.Event.SCENE_ACTIVATED, EventHandler.Event.SCENE_COMPLETE):
+            if not isinstance(caller, animation.Scene):
+                raise ValueError(f"Event {event.name} requires a Scene object as the caller.")
+
+        if action in (EventHandler.Action.ACTIVATE_PATH, EventHandler.Action.DEACTIVATE_PATH):
+            if not isinstance(target, motion.Path):
+                raise ValueError(f"Action {action.name} requires a Path object as the target.")
+        elif action in (EventHandler.Action.ACTIVATE_SCENE, EventHandler.Action.DEACTIVATE_SCENE):
+            if not isinstance(target, animation.Scene):
+                raise ValueError(f"Action {action.name} requires a Scene object as the target.")
+        elif action == EventHandler.Action.CALLBACK and not isinstance(target, EventHandler.Callback):
+            raise ValueError("Action CALLBACK requires a Callback object as the target.")
+        elif action == EventHandler.Action.SET_LAYER and not isinstance(target, int):
+            raise ValueError("Action SET_LAYER requires an int as the target.")
+        elif action == EventHandler.Action.SET_COORDINATE and not isinstance(target, Coord):
+            raise ValueError("Action SET_COORDINATE requires a Coord as the target.")
+        elif action == EventHandler.Action.RESET_APPEARANCE and target is not None:
+            raise ValueError("Action RESET_APPEARANCE does not require a target.")
+
         new_event = (event, caller)
         new_action = (action, target)
         if new_event not in self.registered_events:
@@ -152,6 +238,9 @@ class EventHandler:
             EventHandler.Action.ACTIVATE_SCENE: self.character.animation.activate_scene,
             EventHandler.Action.DEACTIVATE_PATH: self.character.motion.deactivate_path,
             EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
+            EventHandler.Action.RESET_APPEARANCE: lambda _: self.character.animation.set_appearance(
+                self.character.input_symbol
+            ),
             EventHandler.Action.SET_LAYER: lambda layer: setattr(self.character, "layer", layer),
             EventHandler.Action.SET_COORDINATE: lambda coord: setattr(self.character.motion, "current_coord", coord),
             EventHandler.Action.CALLBACK: lambda callback: callback.callback(self.character, *callback.args),
