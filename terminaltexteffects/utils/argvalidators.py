@@ -9,16 +9,18 @@ Classes:
         `argparse.ArgumentDefaultsHelpFormatter` and `argparse.RawDescriptionHelpFormatter`.
     GradientDirection: Argument type for gradient directions.
     Color: Argument type for color values.
-    PositiveFloatRange: Argument type for float ranges.
-    IntRange: Argument type for integer ranges.
     Symbol: Argument type for single ASCII/UTF-8 characters.
-    TerminalDimensions: Argument type for terminal dimensions.
-    PositiveInt: Argument type for positive integers.
     Ease: Argument type for easing functions.
-    Ratio: Argument type for float values between zero and one.
-    PositiveFloat: Argument type for positive floats.
+    PositiveInt: Argument type for positive integers.
     NonNegativeInt: Argument type for nonnegative integers.
+    IntRange: Argument type for integer ranges.
+    PositiveFloat: Argument type for positive floats.
     NonNegativeFloat: Argument type for nonnegative floats.
+    PositiveFloatRange: Argument type for float ranges.
+    TerminalDimensions: Argument type for terminal dimensions.
+    CanvasDimension: Argument type for canvas dimensions.
+    Ratio: Argument type for float values between zero and one.
+
 
 Functions:
     is_ascii_or_utf8: Tests if the given string is either ASCII or UTF-8.
