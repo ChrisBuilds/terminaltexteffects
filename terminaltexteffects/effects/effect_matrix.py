@@ -394,7 +394,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 resolve_scn.add_frame(character.input_symbol, self.config.final_gradient_frames, fg_color=color)
 
         for column_chars in self.terminal.get_characters_grouped(
-            self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, fill_chars=True
+            self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, outer_fill_chars=True, inner_fill_chars=True
         ):
             column_chars.reverse()
             self.pending_columns.append(

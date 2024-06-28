@@ -138,7 +138,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
-        for character in self.terminal.get_characters(fill_chars=True):
+        for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         lower_range, upper_range = self.config.overflow_cycles_range
         rows = self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
@@ -151,7 +151,9 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                     ]
                     self.pending_rows.append(OverflowIterator.Row(copied_characters))
         # add rows in correct order to the end of self.pending_rows
-        for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
+        for row in self.terminal.get_characters_grouped(
+            Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, outer_fill_chars=True, inner_fill_chars=True
+        ):
             next_row = OverflowIterator.Row(row)
             for character in next_row.characters:
                 character.animation.set_appearance(

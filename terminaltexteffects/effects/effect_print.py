@@ -157,10 +157,10 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         final_gradient_mapping = self.final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
-        for character in self.terminal.get_characters(fill_chars=True):
+        for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         input_rows = self.terminal.get_characters_grouped(
-            grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True
+            grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, outer_fill_chars=True, inner_fill_chars=True
         )
         for input_row in input_rows:
             self.pending_rows.append(

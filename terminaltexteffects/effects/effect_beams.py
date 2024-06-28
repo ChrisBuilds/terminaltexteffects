@@ -246,15 +246,17 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
-        for character in self.terminal.get_characters(fill_chars=True):
+        for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
         beam_gradient = Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
         groups: list[BeamsIterator.Group] = []
-        for row in self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, fill_chars=True):
+        for row in self.terminal.get_characters_grouped(
+            Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, outer_fill_chars=True, inner_fill_chars=True
+        ):
             groups.append(BeamsIterator.Group(row, "row", self.terminal, self.config))
         for column in self.terminal.get_characters_grouped(
-            Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, fill_chars=True
+            Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, outer_fill_chars=True, inner_fill_chars=True
         ):
             groups.append(BeamsIterator.Group(column, "column", self.terminal, self.config))
         for group in groups:

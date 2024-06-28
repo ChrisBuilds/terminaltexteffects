@@ -161,7 +161,7 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
         elif self.config.slice_direction == "horizontal":
             self.config.movement_speed *= 2
             self.columns = self.terminal.get_characters_grouped(
-                grouping=slice_direction_map[self.config.slice_direction], fill_chars=True
+                grouping=slice_direction_map[self.config.slice_direction], outer_fill_chars=True, inner_fill_chars=True
             )
             trimmed_columns = []
             for column in self.columns:
