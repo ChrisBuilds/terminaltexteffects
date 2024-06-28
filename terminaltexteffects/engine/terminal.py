@@ -312,8 +312,8 @@ class Terminal:
         get_piped_input() -> str: Gets the piped input from stdin.
         prep_canvas(): Prepares the terminal for the effect by adding empty lines and hiding the cursor.
         restore_cursor(): Restores the cursor visibility.
-        get_characters(input_characters: bool = True, fill_chars: bool = False, added_chars: bool = False, sort: CharacterSort = CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT) -> list[EffectCharacter]: Get a list of all EffectCharacters in the terminal with an optional sort.
-        get_characters_grouped(grouping: CharacterGroup = CharacterGroup.ROW_TOP_TO_BOTTOM, input_characters: bool = True, fill_chars: bool = False, added_chars: bool = False) -> list[list[EffectCharacter]]: Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping.
+        get_characters(input_characters: bool = True, inner_fill_chars: bool = False, outer_fill_chars: bool = False, added_chars: bool = False, sort: CharacterSort = CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT) -> list[EffectCharacter]: Get a list of all EffectCharacters in the terminal with an optional sort.
+        get_characters_grouped(grouping: CharacterGroup = CharacterGroup.ROW_TOP_TO_BOTTOM, input_characters: bool = True, inner_fill_chars: bool = False, outer_fill_chars: bool = False, added_chars: bool = False) -> list[list[EffectCharacter]]: Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping.
         get_character_by_input_coord(coord: Coord) -> EffectCharacter | None: Get an EffectCharacter by its input coordinates.
         set_character_visibility(character: EffectCharacter, is_visible: bool): Set the visibility of a character.
         get_formatted_output_string() -> str: Get the formatted output string based on the current terminal state.
@@ -407,7 +407,8 @@ class Terminal:
         self.character_by_input_coord: dict[Coord, EffectCharacter] = {
             (character.input_coord): character for character in self._input_characters
         }
-        self._fill_characters = self._make_fill_characters()
+        self._inner_fill_characters = self._make_inner_fill_characters()
+        self._outer_fill_characters = self._make_outer_fill_characters()
         self._visible_characters: set[EffectCharacter] = set()
         self._frame_rate = self.config.frame_rate
         self._last_time_printed = time.time()
@@ -545,14 +546,36 @@ class Terminal:
         anchored_characters = self.canvas._anchor_text(input_characters, self.config.anchor_text)
         return [char for char in anchored_characters if self.canvas.coord_is_in_canvas(char._input_coord)]
 
-    def _make_fill_characters(self) -> list[EffectCharacter]:
-        """Creates a list of characters to fill the empty spaces in the canvas. The characters input_symbol is a space.
-        The fill characters are added to the character_by_input_coord dictionary.
+    def _make_inner_fill_characters(self) -> list[EffectCharacter]:
+        """Creates a list of characters to fill the empty spaces in the bounding box which encloses the input text. The
+        characters input_symbol is a space. The characters are added to the character_by_input_coord dictionary.
+
 
         Returns:
             list[EffectCharacter]: list of characters
         """
-        fill_characters = []
+        inner_fill_characters = []
+        for row in range(self.canvas.text_top, self.canvas.text_bottom - 1, -1):
+            for column in range(self.canvas.text_left, self.canvas.text_right + 1):
+                coord = Coord(column, row)
+                if coord not in self.character_by_input_coord:
+                    fill_char = EffectCharacter(self._next_character_id, " ", column, row)
+                    fill_char.is_fill_character = True
+                    fill_char.animation.use_xterm_colors = self.config.xterm_colors
+                    fill_char.animation.no_color = self.config.no_color
+                    self.character_by_input_coord[coord] = fill_char
+                    self._next_character_id += 1
+                    inner_fill_characters.append(fill_char)
+        return inner_fill_characters
+
+    def _make_outer_fill_characters(self) -> list[EffectCharacter]:
+        """Creates a list of characters to fill the empty spaces in the canvas around the bounding box which encloses
+        the input text. The characters input_symbol is a space. The characters are added to the character_by_input_coord dictionary.
+
+        Returns:
+            list[EffectCharacter]: list of characters
+        """
+        outer_fill_characters = []
         for row in range(1, self.canvas.top + 1):
             for column in range(1, self.canvas.right + 1):
                 coord = Coord(column, row)
@@ -561,10 +584,10 @@ class Terminal:
                     fill_char.is_fill_character = True
                     fill_char.animation.use_xterm_colors = self.config.xterm_colors
                     fill_char.animation.no_color = self.config.no_color
-                    fill_characters.append(fill_char)
+                    outer_fill_characters.append(fill_char)
                     self.character_by_input_coord[coord] = fill_char
                     self._next_character_id += 1
-        return fill_characters
+        return outer_fill_characters
 
     def add_character(self, symbol: str, coord: Coord) -> EffectCharacter:
         """Adds a character to the terminal for printing. Used to create characters that are not in the input data.
@@ -586,8 +609,9 @@ class Terminal:
     def get_characters(
         self,
         *,
-        input_characters: bool = True,
-        fill_chars: bool = False,
+        input_chars: bool = True,
+        inner_fill_chars: bool = False,
+        outer_fill_chars: bool = False,
         added_chars: bool = False,
         sort: CharacterSort = CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT,
     ) -> list[EffectCharacter]:
@@ -595,7 +619,8 @@ class Terminal:
 
         Args:
             input_characters (bool, optional): whether to include input characters. Defaults to True.
-            fill_chars (bool, optional): whether to include fill characters. Defaults to False.
+            inner_fill_chars (bool, optional): whether to include inner fill characters. Defaults to False.
+            outer_fill_chars (bool, optional): whether to include outer fill characters. Defaults to False.
             added_chars (bool, optional): whether to include added characters. Defaults to False.
             sort (CharacterSort, optional): order to sort the characters. Defaults to CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT.
 
@@ -603,10 +628,12 @@ class Terminal:
             list[EffectCharacter]: list of EffectCharacters in the terminal
         """
         all_characters: list[EffectCharacter] = []
-        if input_characters:
+        if input_chars:
             all_characters.extend(self._input_characters)
-        if fill_chars:
-            all_characters.extend(self._fill_characters)
+        if inner_fill_chars:
+            all_characters.extend(self._inner_fill_characters)
+        if outer_fill_chars:
+            all_characters.extend(self._outer_fill_characters)
         if added_chars:
             all_characters.extend(self._added_characters)
 
@@ -638,8 +665,9 @@ class Terminal:
         self,
         grouping: CharacterGroup = CharacterGroup.ROW_TOP_TO_BOTTOM,
         *,
-        input_characters: bool = True,
-        fill_chars: bool = False,
+        input_chars: bool = True,
+        inner_fill_chars: bool = False,
+        outer_fill_chars: bool = False,
         added_chars: bool = False,
     ) -> list[list[EffectCharacter]]:
         """Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping.
@@ -647,17 +675,20 @@ class Terminal:
         Args:
             grouping (CharacterGroup, optional): order to group the characters. Defaults to ROW_TOP_TO_BOTTOM.
             input_characters (bool, optional): whether to include input characters. Defaults to True.
-            fill_chars (bool, optional): whether to include fill characters. Defaults to False.
+            inner_fill_chars (bool, optional): whether to include inner fill characters. Defaults to False.
+            outer_fill_chars (bool, optional): whether to include outer fill characters. Defaults to False.
             added_chars (bool, optional): whether to include added characters. Defaults to False.
 
         Returns:
             list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond to groups as specified in the grouping.
         """
         all_characters: list[EffectCharacter] = []
-        if input_characters:
+        if input_chars:
             all_characters.extend(self._input_characters)
-        if fill_chars:
-            all_characters.extend(self._fill_characters)
+        if inner_fill_chars:
+            all_characters.extend(self._inner_fill_characters)
+        if outer_fill_chars:
+            all_characters.extend(self._outer_fill_characters)
         if added_chars:
             all_characters.extend(self._added_characters)
 
