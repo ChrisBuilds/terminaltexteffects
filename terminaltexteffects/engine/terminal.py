@@ -504,6 +504,10 @@ class Terminal:
                 character.animation.no_color = self.config.no_color
                 character.animation.use_xterm_colors = self.config.xterm_colors
                 character.animation.existing_color_handling = self.config.existing_color_handling
+                # if existing_color_handling is set to 'always', set the appearance to the input symbol with
+                # any existing color sequences
+                if character.animation.existing_color_handling == "always":
+                    character.animation.set_appearance(character.input_symbol)
                 current_character_line.append(character)
                 self._next_character_id += 1
                 char_index += 1
