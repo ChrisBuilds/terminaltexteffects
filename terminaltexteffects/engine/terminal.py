@@ -9,6 +9,7 @@ Classes:
 from __future__ import annotations
 
 import random
+import re
 import shutil
 import sys
 import time
@@ -21,6 +22,7 @@ from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.utils import ansitools
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color
 
 
 @dataclass
@@ -54,16 +56,25 @@ class TerminalConfig(ArgsDataClass):
         cmd_name=["--xterm-colors"],
         default=False,
         action="store_true",
-        help="Convert any colors specified in RBG hex to the closest XTerm-256 color.",
+        help="Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color.",
     )  # type: ignore[assignment]
 
-    "bool : Convert any colors specified in RBG hex to the closest XTerm-256 color."
+    "bool : Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color."
 
     no_color: bool = ArgField(
         cmd_name=["--no-color"], default=False, action="store_true", help="Disable all colors in the effect."
     )  # type: ignore[assignment]
 
     "bool : Disable all colors in the effect."
+
+    existing_color_handling: Literal["always", "dynamic", "ignore"] = ArgField(
+        cmd_name=["--existing-color-handling"],
+        default="ignore",
+        choices=["always", "dynamic", "ignore"],
+        help="Specify handling of existing 8-bit and 24-bit ANSI color sequences in the input data. 3-bit and 4-bit sequences are not supported. 'always' will always use the input colors, ignoring any effect specific colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors in the input data. Default is 'ignore'.",
+    )  # type: ignore[assignment]
+
+    "Literal['always','dynamic','ignore'] : Specify handling of existing ANSI color sequences in the input data. 'always' will always use the input colors, ignoring any effect specific colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors in the input data. Default is 'ignore'."
 
     wrap_text: int = ArgField(
         cmd_name="--wrap-text", default=False, action="store_true", help="Wrap text wider than the canvas width."
@@ -321,6 +332,8 @@ class Terminal:
 
     """
 
+    ansi_sequence_color_map: dict[str, Color] = {}
+
     class CharacterGroup(Enum):
         """An enum specifying character groupings.
 
@@ -382,7 +395,8 @@ class Terminal:
             self.config = config
         if not input_data:
             input_data = "No Input."
-        self._input_data = input_data.replace("\t", " " * self.config.tab_width)
+        self._next_character_id = 0
+        self._preprocessed_character_lines = self._preprocess_input_data(input_data)
         self._terminal_width, self._terminal_height = self._get_terminal_dimensions()
         self.canvas = Canvas(*self._get_canvas_dimensions())
         if not self.config.ignore_terminal_dimensions:
@@ -396,14 +410,12 @@ class Terminal:
         self.visible_bottom = max(self.canvas.bottom + self.canvas_row_offset, 1)
         self.visible_right = min(self.canvas.right + self.canvas_column_offset, self._terminal_width)
         self.visible_left = max(self.canvas.left + self.canvas_column_offset, 1)
-        self._next_character_id = 0
-        self._input_characters = self._decompose_input(self.config.xterm_colors, self.config.no_color)
-        self._added_characters: list[EffectCharacter] = []
         self._input_characters = [
             character
-            for character in self._input_characters
+            for character in self._setup_input_characters(self.config.xterm_colors, self.config.no_color)
             if character.input_coord.row <= self.canvas.top and character.input_coord.column <= self.canvas.right
         ]
+        self._added_characters: list[EffectCharacter] = []
         self.character_by_input_coord: dict[Coord, EffectCharacter] = {
             (character.input_coord): character for character in self._input_characters
         }
@@ -413,6 +425,90 @@ class Terminal:
         self._frame_rate = self.config.frame_rate
         self._last_time_printed = time.time()
         self._update_terminal_state()
+
+    def _preprocess_input_data(self, input_data: str) -> list[list[EffectCharacter]]:
+        """Preprocess the input data by replacing tabs with spaces and decomposing the input data into a list of
+        characters while applying any active SGR foreground/background ANSI escape sequences discovered in the data.
+
+        Args:
+            input_data (str): The input data to be displayed in the terminal.
+
+        Returns:
+            list[EffectCharacter]: A list of characters decomposed from the input data.
+        """
+
+        def find_ansi_sequences_with_positions(text) -> list[tuple[int, int]]:  # [(start,end), ...]
+            """Find SGR foreground and background ANSI escape sequences in the input text and return their positions.
+
+            Args:
+                text (str): The input text.
+
+            Returns:
+                list[tuple[int, int]]: A list of tuples containing the start and end positions of the ANSI escape sequences.
+            """
+            sequence_list: list[tuple[int, int]] = []
+            # match all SGR sequences, though only 8bit and 24bit color sequences will be used, the others are ignored
+            ansi_escape_pattern = r"(\x1b|\x1B|\033)\[[\d;]*m"
+            matches = re.finditer(ansi_escape_pattern, text)
+            for match in matches:
+                sequence_list.append((match.start(), match.end() - 1))
+            return sequence_list
+
+        characters: list[list[EffectCharacter]] = []
+        # replace tabs with spaces
+        input_data = input_data.replace("\t", " " * self.config.tab_width)
+        # remove trailing whitespace from each line
+        input_data_lines = input_data.splitlines()
+        input_data = ""
+        for line in input_data_lines:
+            input_data += line.rstrip() + "\n"
+        # find ansi sequences
+        sequence_list = find_ansi_sequences_with_positions(input_data)
+        active_sequences = {"fg_color": "", "bg_color": ""}
+        char_index = 0
+        current_character_line: list[EffectCharacter] = []
+        while char_index < len(input_data):
+            if input_data[char_index] == "\n":
+                characters.append(current_character_line)
+                current_character_line = []
+                char_index += 1
+            elif sequence_list and char_index == sequence_list[0][0]:
+                active_sequence = input_data[sequence_list[0][0] : sequence_list[0][1] + 1]
+                # only apply sequences that are 8bit or 24bit color (only support RGB colorspace, though 38;3 and 38;4
+                # exist and indicate CMY and CMYK colorspaces, respectively)
+                # match foreground colors
+                if re.match(r"(\x1b|\x1B|\033)\[38;(2|5)", active_sequence):
+                    active_sequences["fg_color"] = active_sequence
+                # match background colors
+                elif re.match(r"(\x1b|\x1B|\033)\[48;(2|5)", active_sequence):
+                    active_sequences["bg_color"] = active_sequence
+                # match reset sequence and clear active sequences
+                elif re.match(r"(\x1b|\x1B|\033)\[0?m", active_sequence):
+                    active_sequences["fg_color"] = active_sequences["bg_color"] = ""
+                char_index = sequence_list[0][1] + 1
+                sequence_list.pop(0)
+            else:
+                character = EffectCharacter(self._next_character_id, input_data[char_index], 0, 0)
+                for sequence_type, sequence in active_sequences.items():
+                    if sequence:
+                        character._input_ansi_sequences[sequence_type] = sequence
+                        if sequence in Terminal.ansi_sequence_color_map:
+                            color = Terminal.ansi_sequence_color_map[sequence]
+                        else:
+                            color = Color(ansitools.parse_ansi_color_sequence(sequence))
+                            Terminal.ansi_sequence_color_map[sequence] = color
+                        if sequence_type == "fg_color":
+                            character.animation.input_fg_color = color
+                        else:
+                            character.animation.input_bg_color = color
+                character.animation.no_color = self.config.no_color
+                character.animation.use_xterm_colors = self.config.xterm_colors
+                character.animation.existing_color_handling = self.config.existing_color_handling
+                current_character_line.append(character)
+                self._next_character_id += 1
+                char_index += 1
+
+        return characters
 
     def _calc_canvas_offsets(self) -> tuple[int, int]:
         """Calculate the canvas offsets based on the anchor point.
@@ -442,7 +538,7 @@ class Terminal:
         elif self.config.canvas_width == 0:
             canvas_width = self._terminal_width
         else:
-            input_width = max([len(line.rstrip()) for line in self._input_data.splitlines()])
+            input_width = max([len(line) for line in self._preprocessed_character_lines])
             if self.config.wrap_text and not self.config.ignore_terminal_dimensions:
                 canvas_width = min(self._terminal_width, input_width)
             else:
@@ -453,9 +549,9 @@ class Terminal:
             canvas_height = self._terminal_height
         else:
             if self.config.wrap_text:
-                canvas_height = len(self._wrap_lines(self._input_data.splitlines(), canvas_width))
+                canvas_height = len(self._wrap_lines(self._preprocessed_character_lines, canvas_width))
             else:
-                canvas_height = len(self._input_data.splitlines())
+                canvas_height = len(self._preprocessed_character_lines)
 
         return canvas_height, canvas_width
 
@@ -491,12 +587,12 @@ class Terminal:
             return ""
         return sys.stdin.read()
 
-    def _wrap_lines(self, lines: list[str], width: int) -> list[str]:
+    def _wrap_lines(self, lines: list[list[EffectCharacter]], width: int) -> list[list[EffectCharacter]]:
         """
         Wraps the given lines of text to fit within the width of the canvas.
 
         Args:
-            lines (list): The lines of text to be wrapped.
+            lines (list[list[EffectCharacter]]): The lines of text to be wrapped.
             width (int): The maximum length of a line.
 
         Returns:
@@ -504,15 +600,14 @@ class Terminal:
         """
         wrapped_lines = []
         for line in lines:
-            line = line.rstrip()
             while len(line) > width:
                 wrapped_lines.append(line[:width])
                 line = line[width:]
             wrapped_lines.append(line)
         return wrapped_lines
 
-    def _decompose_input(self, use_xterm_colors: bool, no_color: bool) -> list[EffectCharacter]:
-        """Decomposes the output into a list of Character objects containing the symbol and its row/column coordinates
+    def _setup_input_characters(self, use_xterm_colors: bool, no_color: bool) -> list[EffectCharacter]:
+        """Sets up the input characters discovered during preprocessing and positions them based on row/column coordinates
         relative to the anchor point in the Canvas.
 
         Coordinates are relative to the cursor row position at the time of execution. 1,1 is the bottom left corner of the row
@@ -526,22 +621,22 @@ class Terminal:
         """
 
         formatted_lines = []
-        if not self._input_data.strip():
+        if not self._preprocessed_character_lines:
             self._input_data = "No Input."
-        lines = self._input_data.splitlines()
         formatted_lines = (
-            self._wrap_lines(lines, self.canvas.right) if self.config.wrap_text else [line for line in lines]
+            self._wrap_lines(self._preprocessed_character_lines, self.canvas.right)
+            if self.config.wrap_text
+            else self._preprocessed_character_lines
         )
         input_height = len(formatted_lines)
         input_characters: list[EffectCharacter] = []
         for row, line in enumerate(formatted_lines):
-            for column, symbol in enumerate(line, start=1):
-                if symbol != " ":
-                    character = EffectCharacter(self._next_character_id, symbol, column, input_height - row)
-                    character.animation.use_xterm_colors = use_xterm_colors
-                    character.animation.no_color = no_color
+            for column, character in enumerate(line, start=1):
+                character._input_coord = Coord(column, input_height - row)
+                if character._input_symbol != " ":
                     input_characters.append(character)
-                    self._next_character_id += 1
+                else:
+                    character.is_fill_character = True
 
         anchored_characters = self.canvas._anchor_text(input_characters, self.config.anchor_text)
         return [char for char in anchored_characters if self.canvas.coord_is_in_canvas(char._input_coord)]
@@ -555,14 +650,21 @@ class Terminal:
             list[EffectCharacter]: list of characters
         """
         inner_fill_characters = []
+        # account for spaces in input text already processed into EffectCharacters
+        for character in self._input_characters:
+            if character.is_fill_character:
+                inner_fill_characters.append(character)
+                self.character_by_input_coord[character.input_coord] = character
+        # account for space between input text and canvas edges
         for row in range(self.canvas.text_top, self.canvas.text_bottom - 1, -1):
             for column in range(self.canvas.text_left, self.canvas.text_right + 1):
                 coord = Coord(column, row)
                 if coord not in self.character_by_input_coord:
                     fill_char = EffectCharacter(self._next_character_id, " ", column, row)
                     fill_char.is_fill_character = True
-                    fill_char.animation.use_xterm_colors = self.config.xterm_colors
                     fill_char.animation.no_color = self.config.no_color
+                    fill_char.animation.use_xterm_colors = self.config.xterm_colors
+                    fill_char.animation.existing_color_handling = self.config.existing_color_handling
                     self.character_by_input_coord[coord] = fill_char
                     self._next_character_id += 1
                     inner_fill_characters.append(fill_char)
@@ -582,8 +684,9 @@ class Terminal:
                 if coord not in self.character_by_input_coord:
                     fill_char = EffectCharacter(self._next_character_id, " ", column, row)
                     fill_char.is_fill_character = True
-                    fill_char.animation.use_xterm_colors = self.config.xterm_colors
                     fill_char.animation.no_color = self.config.no_color
+                    fill_char.animation.use_xterm_colors = self.config.xterm_colors
+                    fill_char.animation.existing_color_handling = self.config.existing_color_handling
                     outer_fill_characters.append(fill_char)
                     self.character_by_input_coord[coord] = fill_char
                     self._next_character_id += 1
@@ -600,8 +703,10 @@ class Terminal:
             EffectCharacter: the character that was added
         """
         character = EffectCharacter(self._next_character_id, symbol, coord.column, coord.row)
-        character.animation.use_xterm_colors = self.config.xterm_colors
         character.animation.no_color = self.config.no_color
+        character.animation.use_xterm_colors = self.config.xterm_colors
+        character.animation.existing_color_handling = self.config.existing_color_handling
+
         self._added_characters.append(character)
         self._next_character_id += 1
         return character

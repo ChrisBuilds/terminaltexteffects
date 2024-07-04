@@ -54,11 +54,17 @@ class CharacterVisual:
     strike: bool = False
     fg_color: graphics.Color | None = None  # the Color object provided during initialization
     bg_color: graphics.Color | None = None  # the Color object provided during initialization
-    _fg_color_code: str | int | None = (
-        None  # the actual color code after applying terminal args (--no-color, --use-xterm-colors)
+    # the _*_color_code attributes are used to store the actual 8-bit int or 24-bit hex str after applying terminal config args
+    # these are used by colorterm to produce the ansi sequences, the *_color Color objects are present to enable
+    # programmatic access to the character's current visual color
+    _fg_color_code: str | int | None = None
+    _bg_color_code: str | int | None = None
+
+    _fg_color_sequence_override: str | None = (
+        None  # the ansi sequence from the input data if --existing-colors = always
     )
-    _bg_color_code: str | int | None = (
-        None  # the actual color code after applying terminal args (--no-color, --use-xterm-colors)
+    _bg_color_sequence_override: str | None = (
+        None  # the ansi sequence from the input data if --existing-colors = always
     )
 
     def __post_init__(self):
@@ -92,9 +98,13 @@ class CharacterVisual:
             formatting_string += ansitools.APPLY_HIDDEN()
         if self.strike:
             formatting_string += ansitools.APPLY_STRIKETHROUGH()
-        if self._fg_color_code is not None:
+        if self._fg_color_sequence_override is not None:
+            formatting_string += self._fg_color_sequence_override
+        elif self._fg_color_code is not None:
             formatting_string += colorterm.fg(self._fg_color_code)
-        if self._bg_color_code is not None:
+        if self._bg_color_sequence_override is not None:
+            formatting_string += self._bg_color_sequence_override
+        elif self._bg_color_code is not None:
             formatting_string += colorterm.bg(self._bg_color_code)
 
         return f"{formatting_string}{self.symbol}{ansitools.RESET_ALL() if formatting_string else ''}"
@@ -131,6 +141,8 @@ class Scene:
         ease (easing.EasingFunction | None, optional): The easing function to use for the Scene. Defaults to None.
         no_color (bool, optional): Whether to ignore colors. Defaults to False.
         use_xterm_colors (bool, optional): Whether to convert all colors to XTerm-256 colors. Defaults to False.
+        fg_color_sequence_override (str | None, optional): The foreground color sequence override. If present, this ANSI sequence will supercede any color provided via other means. Defaults to None.
+        bg_color_sequence_override (str | None, optional): The background color sequence override. If present, this ANSI sequence will supercede any color provided via other means. Defaults to None.
 
     Methods:
         add_frame: Adds a Frame to the Scene.
@@ -163,6 +175,8 @@ class Scene:
         ease: easing.EasingFunction | None = None,
         no_color: bool = False,
         use_xterm_colors: bool = False,
+        fg_color_sequence_override: str | None = None,
+        bg_color_sequence_override: str | None = None,
     ):
         """Initializes a Scene.
 
@@ -180,6 +194,8 @@ class Scene:
         self.ease: easing.EasingFunction | None = ease
         self.no_color = no_color
         self.use_xterm_colors = use_xterm_colors
+        self.fg_color_sequence_override = fg_color_sequence_override
+        self.bg_color_sequence_override = bg_color_sequence_override
         self.frames: list[Frame] = []
         self.played_frames: list[Frame] = []
         self.frame_index_map: dict[int, Frame] = {}
@@ -264,6 +280,8 @@ class Scene:
             bg_color=bg_color,
             _fg_color_code=char_vis_fg_color,
             _bg_color_code=char_vis_bg_color,
+            _fg_color_sequence_override=self.fg_color_sequence_override,
+            _bg_color_sequence_override=self.bg_color_sequence_override,
         )
         frame = Frame(char_vis, duration)
         self.frames.append(frame)
@@ -383,6 +401,9 @@ class Animation:
             active_scene (Scene | None): the active Scene
             use_xterm_colors (bool): whether to convert all colors to XTerm-256 colors
             no_color (bool): whether to ignore colors
+            existing_color_handling (str): how to handle color ANSI sequences from the input data
+            input_fg_color (graphics.Color | None): the input foreground Color
+            input_bg_color (graphics.Color | None): the input background Color
             xterm_color_map (dict[str, int]): a mapping of RGB color codes to XTerm-256 color codes
             active_scene_current_step (int): the current step in the active Scene
             current_character_visual (CharacterVisual): the current visual of the character
@@ -402,6 +423,9 @@ class Animation:
         self.active_scene: Scene | None = None
         self.use_xterm_colors: bool = False
         self.no_color: bool = False
+        self.existing_color_handling: typing.Literal["always", "dynamic", "ignore"] = "ignore"
+        self.input_fg_color: graphics.Color | None = None
+        self.input_bg_color: graphics.Color | None = None
         self.xterm_color_map: dict[str, int] = {}
         self.active_scene_current_step: int = 0
         self.current_character_visual: CharacterVisual = CharacterVisual(character.input_symbol)
@@ -460,11 +484,23 @@ class Animation:
                     found_unique = True
                 else:
                     current_id += 1
-
-        new_scene = Scene(scene_id=id, is_looping=is_looping, sync=sync, ease=ease)
+        if self.existing_color_handling == "always":
+            fg_color_sequence_override = self.character._input_ansi_sequences.get("fg_color", None)
+            bg_color_sequence_override = self.character._input_ansi_sequences.get("fg_color", None)
+        else:
+            fg_color_sequence_override = None
+            bg_color_sequence_override = None
+        new_scene = Scene(
+            scene_id=id,
+            is_looping=is_looping,
+            sync=sync,
+            ease=ease,
+            no_color=self.no_color,
+            use_xterm_colors=self.use_xterm_colors,
+            fg_color_sequence_override=fg_color_sequence_override,
+            bg_color_sequence_override=bg_color_sequence_override,
+        )
         self.scenes[id] = new_scene
-        new_scene.no_color = self.no_color
-        new_scene.use_xterm_colors = self.use_xterm_colors
         return new_scene
 
     def query_scene(self, scene_id: str) -> Scene:
@@ -511,12 +547,21 @@ class Animation:
         """
         char_vis_fg_color: str | int | None = self._get_color_code(fg_color)
         char_vis_bg_color: str | int | None = self._get_color_code(bg_color)
+        if self.existing_color_handling == "always":
+            fg_color_sequence_override = self.character._input_ansi_sequences.get("fg_color", None)
+            bg_color_sequence_override = self.character._input_ansi_sequences.get("fg_color", None)
+        else:
+            fg_color_sequence_override = None
+            bg_color_sequence_override = None
+
         self.current_character_visual = CharacterVisual(
             symbol,
             fg_color=fg_color,
             _fg_color_code=char_vis_fg_color,
             bg_color=bg_color,
             _bg_color_code=char_vis_bg_color,
+            _fg_color_sequence_override=fg_color_sequence_override,
+            _bg_color_sequence_override=bg_color_sequence_override,
         )
 
     @staticmethod

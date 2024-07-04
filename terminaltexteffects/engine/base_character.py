@@ -287,6 +287,7 @@ class EffectCharacter:
         self._character_id: int = character_id
         self._input_symbol: str = symbol
         self._input_coord: Coord = Coord(input_column, input_row)
+        self._input_ansi_sequences: dict[str, str | None] = {"fg_color": None, "bg_color": None}
         self._is_visible: bool = False
         self.animation: animation.Animation = animation.Animation(self)
         self.motion: motion.Motion = motion.Motion(self)
