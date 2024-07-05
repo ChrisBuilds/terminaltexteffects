@@ -146,9 +146,14 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
             for _ in range(random.randint(lower_range, upper_range)):
                 random.shuffle(rows)
                 for row in rows:
-                    copied_characters = [
-                        self.terminal.add_character(character.input_symbol, character.input_coord) for character in row
-                    ]
+                    copied_characters = []
+                    for character in row:
+                        character_copy = self.terminal.add_character(character.input_symbol, character.input_coord)
+                        character_copy.animation.existing_color_handling = self.terminal.config.existing_color_handling
+                        character_copy._input_ansi_sequences = character._input_ansi_sequences
+                        character_copy.animation.no_color = character.animation.no_color
+                        character_copy.animation.use_xterm_colors = character.animation.use_xterm_colors
+                        copied_characters.append(character_copy)
                     self.pending_rows.append(OverflowIterator.Row(copied_characters))
         # add rows in correct order to the end of self.pending_rows
         for row in self.terminal.get_characters_grouped(
