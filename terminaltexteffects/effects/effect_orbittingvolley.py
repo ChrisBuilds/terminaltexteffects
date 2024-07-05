@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from itertools import cycle
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
 from terminaltexteffects.utils import easing
@@ -220,6 +220,9 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
                 layer=1,
             )
             input_path.new_waypoint(character.input_coord)
+            character.event_handler.register_event(
+                EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.SET_LAYER, 0
+            )
             character.animation.set_appearance(character.input_symbol, self.character_final_color_map[character])
         self._launchers: list[OrbittingVolleyIterator.Launcher] = []
         for coord, symbol in (
