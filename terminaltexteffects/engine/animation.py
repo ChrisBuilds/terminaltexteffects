@@ -478,6 +478,9 @@ class Animation:
         if self.existing_color_handling == "always":
             fg_color = self.input_fg_color
             bg_color = self.input_bg_color
+        else:
+            fg_color = None
+            bg_color = None
         new_scene = Scene(
             scene_id=id,
             is_looping=is_looping,
