@@ -220,9 +220,13 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
             self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
         )
         for character in self.terminal.get_characters():
-            color_bright = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic" and character.animation.input_fg_color:
+                color_bright = character.animation.input_fg_color
+                color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
+            else:
+                color_bright = final_gradient_mapping[character.input_coord]
+                color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
             self.terminal.set_character_visibility(character, True)
-            color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
             self.character_color_map[character] = (color_bright, color_dark)
             character.animation.set_appearance(character.input_symbol, color_dark)
         self.illuminate_range = int(
