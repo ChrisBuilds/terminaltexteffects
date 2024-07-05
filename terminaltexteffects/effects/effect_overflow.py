@@ -147,12 +147,15 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                 random.shuffle(rows)
                 for row in rows:
                     copied_characters = []
+                    # copy the character attributes to new characters
                     for character in row:
                         character_copy = self.terminal.add_character(character.input_symbol, character.input_coord)
                         character_copy.animation.existing_color_handling = self.terminal.config.existing_color_handling
                         character_copy._input_ansi_sequences = character._input_ansi_sequences
                         character_copy.animation.no_color = character.animation.no_color
                         character_copy.animation.use_xterm_colors = character.animation.use_xterm_colors
+                        character_copy.animation.input_fg_color = character.animation.input_fg_color
+                        character_copy.animation.input_bg_color = character.animation.input_bg_color
                         copied_characters.append(character_copy)
                     self.pending_rows.append(OverflowIterator.Row(copied_characters))
         # add rows in correct order to the end of self.pending_rows
