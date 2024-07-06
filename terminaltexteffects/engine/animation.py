@@ -538,8 +538,10 @@ class Animation:
         """
         # override fg and bg colors if they are set in the Scene due to existing color handling = always
         if self.existing_color_handling == "always":
-            fg_color = self.input_fg_color
-            bg_color = self.input_bg_color
+            if self.input_fg_color:
+                fg_color = self.input_fg_color
+            if self.input_bg_color:
+                bg_color = self.input_bg_color
 
         char_vis_fg_color: str | int | None = self._get_color_code(fg_color)
         char_vis_bg_color: str | int | None = self._get_color_code(bg_color)
