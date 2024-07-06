@@ -382,6 +382,19 @@ class Terminal:
         OUTSIDE_ROW_TO_MIDDLE = auto()
         MIDDLE_ROW_TO_OUTSIDE = auto()
 
+    class ColorSort(Enum):
+        """An enum for specifying color sorts for the colors derived from the input text ansi sequences.
+
+        Attributes:
+            LEAST_TO_MOST: Sort colors from least to most frequent.
+            MOST_TO_LEAST: Sort colors from most to least frequent.
+            RANDOM: Random order.
+        """
+
+        LEAST_TO_MOST = auto()
+        MOST_TO_LEAST = auto()
+        RANDOM = auto()
+
     def __init__(self, input_data: str, config: TerminalConfig | None = None):
         """Initializes the Terminal object.
 
@@ -396,6 +409,7 @@ class Terminal:
         if not input_data:
             input_data = "No Input."
         self._next_character_id = 0
+        self._input_colors_frequency: dict[Color, int] = {}
         self._preprocessed_character_lines = self._preprocess_input_data(input_data)
         self._terminal_width, self._terminal_height = self._get_terminal_dimensions()
         self.canvas = Canvas(*self._get_canvas_dimensions())
@@ -496,7 +510,12 @@ class Terminal:
                             color = Terminal.ansi_sequence_color_map[sequence]
                         else:
                             color = Color(ansitools.parse_ansi_color_sequence(sequence))
+
                             Terminal.ansi_sequence_color_map[sequence] = color
+                        if color in self._input_colors_frequency:
+                            self._input_colors_frequency[color] += 1
+                        else:
+                            self._input_colors_frequency[color] = 1
                         if sequence_type == "fg_color":
                             character.animation.input_fg_color = color
                         else:
@@ -714,6 +733,31 @@ class Terminal:
         self._added_characters.append(character)
         self._next_character_id += 1
         return character
+
+    def get_input_colors(self, sort: ColorSort = ColorSort.MOST_TO_LEAST) -> list[Color]:
+        """Get a list of colors derived from the input text ansi sequences with an optional sort.
+
+        Args:
+            sort (ColorSort, optional): Sort the colors. Defaults to ColorSort.MOST_TO_LEAST.
+
+        Raises:
+            ValueError: If an invalid sort option is provided.
+
+        Returns:
+            list[Color]: list of Colors
+        """
+        if sort == self.ColorSort.MOST_TO_LEAST:
+            return sorted(
+                self._input_colors_frequency.keys(), key=lambda color: self._input_colors_frequency[color], reverse=True
+            )
+        elif sort == self.ColorSort.RANDOM:
+            colors = list(self._input_colors_frequency.keys())
+            random.shuffle(colors)
+            return colors
+        elif sort == self.ColorSort.LEAST_TO_MOST:
+            return sorted(self._input_colors_frequency.keys(), key=lambda color: self._input_colors_frequency[color])
+        else:
+            raise ValueError("Invalid sort option.")
 
     def get_characters(
         self,
