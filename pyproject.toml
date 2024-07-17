@@ -5,6 +5,8 @@ description = "TerminalTextEffects (TTE) is a terminal visual effects engine."
 authors = ["Chris <741258@pm.me>"]
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/ChrisBuilds/terminaltexteffects"
+documentation = "https://chrisbuilds.github.io/terminaltexteffects/"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -15,6 +17,13 @@ tte = "terminaltexteffects.__main__:main"
 [tool.ruff]
 show-fixes = true
 line-length = 120
+
+[tool.pytest.ini_options]
+console_output_style = "progress"
+minversion = "6.0"
+addopts = ["--capture=sys", "--strict-markers", "--strict-config", "-ra"]
+markers = ["manual: subset to run manually"]
+testpaths = ["tests"]
 
 [build-system]
 requires = ["poetry-core"]
