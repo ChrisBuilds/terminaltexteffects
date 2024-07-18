@@ -86,6 +86,12 @@ class PositiveInt:
         Returns:
             int: validated positive integer
         """
+        try:
+            int(arg)
+
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a valid integer.")
+
         if int(arg) > 0:
             return int(arg)
         else:
@@ -114,21 +120,27 @@ class NonNegativeInt:
         Returns:
             int: validated gap value
         """
+        try:
+            int(arg)
+
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a valid integer.")
+
         if int(arg) < 0:
             raise argparse.ArgumentTypeError(f"invalid value: '{arg}' Argument must be int >= 0.")
         return int(arg)
 
 
-class IntRange:
-    """Argument type for integer ranges.
+class PositiveIntRange:
+    """Argument type for positive integer ranges.
 
-    Integer ranges are a pair of integers separated by a hyphen. Ex: 1-10
+    Positive integer ranges are a pair of integers separated by a hyphen. Ex: 1-10
 
     Raises:
-        argparse.ArgumentTypeError: Value is not a valid range of integers.
+        argparse.ArgumentTypeError: Value is not a valid range of positive integers.
     """
 
-    METAVAR = "(hyphen separated int range e.g. '1-10')"
+    METAVAR = "(hyphen separated positive int range e.g. '1-10')"
 
     @staticmethod
     def type_parser(arg: str) -> tuple[int, int]:
@@ -144,16 +156,16 @@ class IntRange:
             start, end = map(int, arg.split("-"))
             if start <= 0:
                 raise argparse.ArgumentTypeError(
-                    f"invalid range: '{arg}' is not a valid range of ints. Must be start > 0. Ex: 1-10"
+                    f"invalid range: '{arg}' is not a valid range of positive ints. Must be start > 0. Ex: 1-10"
                 )
             if start > end:
                 raise argparse.ArgumentTypeError(
-                    f"invalid range: '{arg}' is not a valid range of ints. Must be start <= end. Ex: 1-10"
+                    f"invalid range: '{arg}' is not a valid range of positive ints. Must be start <= end. Ex: 1-10"
                 )
             return start, end
         except ValueError:
             raise argparse.ArgumentTypeError(
-                f"invalid range: '{arg}' is not a valid range. Must be start-end. Ex: 1-10"
+                f"invalid range: '{arg}' is not a valid range of positive ints. Must be start-end. Ex: 1-10"
             )
 
 
@@ -179,6 +191,11 @@ class PositiveFloat:
         Returns:
             float: validated positive float
         """
+        try:
+            float(arg)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a valid float.")
+
         if float(arg) > 0:
             return float(arg)
         else:
@@ -209,6 +226,11 @@ class NonNegativeFloat:
         Returns:
             float: validated value
         """
+        try:
+            float(arg)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"invalid argument value: '{arg}' is not a valid float.")
+
         if float(arg) < 0:
             raise argparse.ArgumentTypeError(f"invalid argument value: '{arg}' is out of range. Must be float >= 0.")
         return float(arg)
@@ -276,6 +298,11 @@ class Ratio:
         Returns:
             float: validated float value
         """
+        try:
+            float(arg)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a float or int.")
+
         if 0 <= float(arg) <= 1:
             return float(arg)
         else:
@@ -387,7 +414,7 @@ class Symbol:
         Returns:
             str: validated symbol
         """
-        if len(arg) == 1 and is_ascii_or_utf8(arg):
+        if len(arg) == 1 and arg.isprintable():
             return arg
         else:
             raise argparse.ArgumentTypeError(
@@ -396,29 +423,43 @@ class Symbol:
 
 
 class CanvasDimension:
-    METAVAR = "WIDTH"
+    """Argument type for canvas dimensions.
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not a valid canvas dimension.
+    """
+
+    METAVAR = "int >= -1"
 
     @staticmethod
     def type_parser(arg: str) -> int:
+        """Validates that the given argument is a valid canvas dimension.
+
+        Args:
+            arg (str): argument to validate
+
+        Raises:
+            argparse.ArgumentTypeError: Value is not a valid canvas dimension.
+
+        Returns:
+            int: validated canvas dimension
+        """
         if arg.isdigit() or arg == "-1":
-            if int(arg) >= -1:
-                return int(arg)
-            else:
-                raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not >= -1.")
+            return int(arg)
         else:
             raise argparse.ArgumentTypeError(f"invalid value '{arg}' is not a valid integer. Must be >= -1.")
 
 
-class TerminalDimensions:
-    """Argument type for terminal dimensions.
+class TerminalDimension:
+    """Argument type for terminal dimension.
 
-    Terminal dimensions are a pair of non-negative integers separated by a space. Ex: 80 24
+    A Terminal Dimension is an integer >= 0.
 
     Raises:
         argparse.ArgumentTypeError: Value is not a valid terminal dimension.
     """
 
-    METAVAR = "(width height)"
+    METAVAR = "int >= 0"
 
     @staticmethod
     def type_parser(arg: str) -> int:
@@ -428,7 +469,7 @@ class TerminalDimensions:
             arg (str): argument to validate
 
         Returns:
-            tuple[int,int]: validated terminal dimension
+            int: validated terminal dimension
         """
         try:
             dimension = int(arg)
@@ -505,25 +546,3 @@ class Ease:
             return easing_func_map[arg.lower()]
         except KeyError:
             raise argparse.ArgumentTypeError(f"invalid ease value: '{arg}' is not a valid ease.")
-
-
-def is_ascii_or_utf8(s: str) -> bool:
-    """Tests if the given string is either ASCII or UTF-8.
-
-    Args:
-        s (str): string to test
-
-    Returns:
-        bool: True if the string is either ASCII or UTF-8, False otherwise
-    """
-    try:
-        s.encode("ascii")
-    except UnicodeEncodeError:
-        try:
-            s.encode("utf-8")
-        except UnicodeEncodeError:
-            return False
-        else:
-            return True
-    else:
-        return True

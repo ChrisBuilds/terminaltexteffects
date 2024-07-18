@@ -114,8 +114,8 @@ class SwarmConfig(ArgsDataClass):
 
     swarm_area_count: tuple[int, int] = ArgField(
         cmd_name="--swarm-area-count",
-        type_parser=argvalidators.IntRange.type_parser,
-        metavar=argvalidators.IntRange.METAVAR,
+        type_parser=argvalidators.PositiveIntRange.type_parser,
+        metavar=argvalidators.PositiveIntRange.METAVAR,
         default=(2, 4),
         help="Range of the number of areas where characters will swarm.",
     )  # type: ignore[assignment]

@@ -139,18 +139,18 @@ class MatrixConfig(ArgsDataClass):
 
     rain_fall_delay_range: tuple[int, int] = ArgField(
         cmd_name=["--rain-fall-delay-range"],
-        type_parser=argvalidators.IntRange.type_parser,
+        type_parser=argvalidators.PositiveIntRange.type_parser,
         default=(3, 25),
-        metavar=argvalidators.IntRange.METAVAR,
+        metavar=argvalidators.PositiveIntRange.METAVAR,
         help="Range for the speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range.",
     )  # type: ignore[assignment]
     "tuple[int, int] : Speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range."
 
     rain_column_delay_range: tuple[int, int] = ArgField(
         cmd_name=["--rain-column-delay-range"],
-        type_parser=argvalidators.IntRange.type_parser,
+        type_parser=argvalidators.PositiveIntRange.type_parser,
         default=(5, 15),
-        metavar=argvalidators.IntRange.METAVAR,
+        metavar=argvalidators.PositiveIntRange.METAVAR,
         help="Range of frames to wait between adding new rain columns.",
     )  # type: ignore[assignment]
     "tuple[int, int] : Range of frames to wait between adding new rain columns."

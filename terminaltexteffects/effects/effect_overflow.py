@@ -84,9 +84,9 @@ class OverflowConfig(ArgsDataClass):
 
     overflow_cycles_range: tuple[int, int] = ArgField(
         cmd_name=["--overflow-cycles-range"],
-        type_parser=argvalidators.IntRange.type_parser,
+        type_parser=argvalidators.PositiveIntRange.type_parser,
         default=(2, 4),
-        metavar=argvalidators.IntRange.METAVAR,
+        metavar=argvalidators.PositiveIntRange.METAVAR,
         help="Number of cycles to overflow the text.",
     )  # type: ignore[assignment]
     "tuple[int, int] : Lower and upper range of the number of cycles to overflow the text."

@@ -85,9 +85,9 @@ class BeamsConfig(ArgsDataClass):
 
     beam_row_speed_range: tuple[int, int] = ArgField(
         cmd_name="--beam-row-speed-range",
-        type_parser=argvalidators.IntRange.type_parser,
+        type_parser=argvalidators.PositiveIntRange.type_parser,
         default=(10, 40),
-        metavar=argvalidators.IntRange.METAVAR,
+        metavar=argvalidators.PositiveIntRange.METAVAR,
         help="Speed range of the beam when moving along a row.",
     )  # type: ignore[assignment]
 
@@ -95,9 +95,9 @@ class BeamsConfig(ArgsDataClass):
 
     beam_column_speed_range: tuple[int, int] = ArgField(
         cmd_name="--beam-column-speed-range",
-        type_parser=argvalidators.IntRange.type_parser,
+        type_parser=argvalidators.PositiveIntRange.type_parser,
         default=(6, 10),
-        metavar=argvalidators.IntRange.METAVAR,
+        metavar=argvalidators.PositiveIntRange.METAVAR,
         help="Speed range of the beam when moving along a column.",
     )  # type: ignore[assignment]
 
