@@ -38,6 +38,7 @@ from terminaltexteffects.effects import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect
 from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.utils.graphics import Color
 
 INPUT_EMPTY = ""
 INPUT_SINGLE_CHAR = "a"
@@ -191,3 +192,23 @@ def terminal_config_with_anchoring(canvas_dimensions, canvas_anchor, text_anchor
 @pytest.fixture()
 def input_data(request: pytest.FixtureRequest) -> str:
     return TEST_INPUTS[request.param]
+
+
+@pytest.fixture(params=[(Color("000000"), Color("ff00ff"), Color("0ffff0")), Color("ff0fff")])
+def gradient_stops(request: pytest.FixtureRequest) -> Color | tuple[Color, ...]:
+    return request.param
+
+
+@pytest.fixture(params=[1, 5, 10, (1, 3)])
+def gradient_steps(request: pytest.FixtureRequest) -> int | tuple[int, ...]:
+    return request.param
+
+
+@pytest.fixture(params=[1, 5])
+def gradient_frames(request: pytest.FixtureRequest) -> int:
+    return request.param
+
+
+@pytest.fixture(params=[True, False])
+def bool_arg(request: pytest.FixtureRequest) -> bool:
+    return request.param
