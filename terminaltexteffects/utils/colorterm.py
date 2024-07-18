@@ -7,7 +7,7 @@ def _hex_to_int(hex_color: str) -> tuple[int, int, int]:
     """Converts a hex color string into a list of integers.
 
     Args:
-        hex_color (str): Hex color string. '#' is optional.
+        hex_color (str): Hex color string in the range 000000 -> FFFFFF. '#' is optional.
 
     Returns:
         tuple[int, int, int]: A tuple of integers [RED, GREEN, BLUE] representing the color in RGB format.
