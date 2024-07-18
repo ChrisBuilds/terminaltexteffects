@@ -46,7 +46,9 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, uni
     Returns:
         list (Coord): list of Coord points on the circle
     """
-    points = []
+    points: list[Coord] = []
+    if not radius:
+        return points
     seen_points = set()
     if not coords_limit:
         coords_limit = round(2 * math.pi * radius)
@@ -85,6 +87,9 @@ def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
 
     h, k = center.column, center.row
     coords_in_ellipse: list[Coord] = []
+    if not diameter:
+        return coords_in_ellipse
+
     a_squared = diameter**2
     b_squared = (diameter / 2) ** 2
 
@@ -114,6 +119,8 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
     top_boundary = origin.row - distance
     bottom_boundary = origin.row + distance
     coords: list[Coord] = []
+    if not distance:
+        return coords
     for column in range(left_boundary, right_boundary + 1):
         for row in range(top_boundary, bottom_boundary + 1):
             coords.append(Coord(column, row))
@@ -123,6 +130,8 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
 
 def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coord:
     """Finds the coordinate at the given distance along the line defined by the origin and target coordinates.
+
+    The coordinate returned is approximately [distance] units away from the target coordinate, away from the origin coordinate.
 
     Args:
         origin (Coord): origin coordinate (a)
@@ -134,7 +143,7 @@ def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coo
     """
     total_distance = find_length_of_line(origin, target) + distance
     if total_distance == 0 or origin == target:
-        return origin
+        return target
     t = total_distance / find_length_of_line(origin, target)
     next_column, next_row = (
         ((1 - t) * origin.column + t * target.column),
@@ -158,6 +167,8 @@ def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord,
     Returns:
         Coord: The coordinate on the bezier curve corresponding to the given parameter value.
     """
+    if not 0 <= round(t) <= 1:
+        raise ValueError("t must be between 0 and 1.")
     if isinstance(control, Coord):
         control = (control,)
     if len(control) == 1:
@@ -178,6 +189,8 @@ def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord,
             + 3 * (1 - t) * t**2 * control2.row
             + t**3 * end.row
         )
+    else:
+        raise ValueError("Invalid number of control points for bezier curve. Max 2.")
     return Coord(round(x), round(y))
 
 
@@ -193,6 +206,8 @@ def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
     Returns:
         Coord: The coordinate on the line corresponding to the given parameter value.
     """
+    if not 0 <= round(t) <= 1:
+        raise ValueError("t must be between 0 and 1.")
     x = (1 - t) * start.column + t * end.column
     y = (1 - t) * start.row + t * end.row
     return Coord(round(x), round(y))
@@ -247,7 +262,7 @@ def find_normalized_distance_from_center(max_row: int, max_column: int, other_co
     Args:
         max_row (int): Maximum row value of the Canvas.
         max_column (int): Maximum column value of the Canvas.
-        other_coord (Coord): Other coordinate from which to calculate the distance.
+        other_coord (Coord): Other coordinate from which to calculate the distance to the center of the canvas.
 
     Returns:
         float: Normalized distance from the center of the Canvas, float between 0 and 1.
