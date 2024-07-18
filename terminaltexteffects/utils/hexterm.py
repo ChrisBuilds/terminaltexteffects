@@ -323,7 +323,7 @@ def is_valid_color(color: int | str) -> bool:
 
     """
     if isinstance(color, str):
-        if len(color) not in [6, 7]:
+        if len(color.lstrip("#")) not in [6, 7]:
             return False
         try:
             int(color.strip("#"), 16)
