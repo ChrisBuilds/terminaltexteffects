@@ -36,12 +36,30 @@ class ExpandConfig(ArgsDataClass):
     """Configuration for the Expand effect.
 
     Attributes:
+        movement_speed (float): Movement speed of the characters.
+        expand_easing (easing.EasingFunction): Easing function to use for character movement.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        movement_speed (float): Movement speed of the characters.
-        expand_easing (easing.EasingFunction): Easing function to use for character movement."""
+    """
+
+    expand_easing: easing.EasingFunction = ArgField(
+        cmd_name="--expand-easing",
+        default=easing.in_out_quart,
+        type_parser=argvalidators.Ease.type_parser,
+        help="Easing function to use for character movement.",
+    )  # type: ignore[assignment]
+    "easing.EasingFunction : Easing function to use for character movement."
+
+    movement_speed: float = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argvalidators.PositiveFloat.type_parser,
+        default=0.35,
+        metavar=argvalidators.PositiveFloat.METAVAR,
+        help="Movement speed of the characters. ",
+    )  # type: ignore[assignment]
+    "float : Movement speed of the characters. "
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -80,23 +98,6 @@ class ExpandConfig(ArgsDataClass):
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "Gradient.Direction : Direction of the final gradient."
-
-    movement_speed: float = ArgField(
-        cmd_name="--movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.35,
-        metavar=argvalidators.PositiveFloat.METAVAR,
-        help="Movement speed of the characters. ",
-    )  # type: ignore[assignment]
-    "float : Movement speed of the characters. "
-
-    expand_easing: easing.EasingFunction = ArgField(
-        cmd_name="--expand-easing",
-        default=easing.in_out_quart,
-        type_parser=argvalidators.Ease.type_parser,
-        help="Easing function to use for character movement.",
-    )  # type: ignore[assignment]
-    "easing.EasingFunction : Easing function to use for character movement."
 
     @classmethod
     def get_effect_class(cls):
