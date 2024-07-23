@@ -39,12 +39,13 @@ class SwarmConfig(ArgsDataClass):
     Attributes:
         base_color (tuple[Color, ...]): Tuple of colors for the swarms.
         flash_color (Color): Color for the character flash. Characters flash when moving.
+        swarm_size (float): Percent of total characters in each swarm. Valid values are 0 < n <= 1.
+        swarm_coordination (float): Percent of characters in a swarm that move as a group. Valid values are 0 < n <= 1.
+        swarm_area_count_range (tuple[int, int]): Range of the number of areas where characters will swarm. Valid values are n > 0.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        swarm_size (float): Percent of total characters in each swarm. Valid values are 0 < n <= 1.
-        swarm_coordination (float): Percent of characters in a swarm that move as a group. Valid values are 0 < n <= 1.
-        swarm_area_count (tuple[int, int]): Range of the number of areas where characters will swarm. Valid values are n > 0."""
+    """
 
     base_color: tuple[Color, ...] = ArgField(
         cmd_name=["--base-color"],
@@ -64,6 +65,33 @@ class SwarmConfig(ArgsDataClass):
         help="Color for the character flash. Characters flash when moving.",
     )  # type: ignore[assignment]
     """Color : Color for the character flash. Characters flash when moving."""
+
+    swarm_size: float = ArgField(
+        cmd_name="--swarm-size",
+        type_parser=argvalidators.NonNegativeRatio.type_parser,
+        metavar=argvalidators.NonNegativeRatio.METAVAR,
+        default=0.1,
+        help="Percent of total characters in each swarm.",
+    )  # type: ignore[assignment]
+    "float : Percent of total characters in each swarm."
+
+    swarm_coordination: float = ArgField(
+        cmd_name="--swarm-coordination",
+        type_parser=argvalidators.NonNegativeRatio.type_parser,
+        metavar=argvalidators.NonNegativeRatio.METAVAR,
+        default=0.80,
+        help="Percent of characters in a swarm that move as a group.",
+    )  # type: ignore[assignment]
+    "float : Percent of characters in a swarm that move as a group."
+
+    swarm_area_count_range: tuple[int, int] = ArgField(
+        cmd_name="--swarm-area-count-range",
+        type_parser=argvalidators.PositiveIntRange.type_parser,
+        metavar=argvalidators.PositiveIntRange.METAVAR,
+        default=(2, 4),
+        help="Range of the number of areas where characters will swarm.",
+    )  # type: ignore[assignment]
+    "tuple[int, int] : Range of the number of areas where characters will swarm."
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -93,33 +121,6 @@ class SwarmConfig(ArgsDataClass):
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "Gradient.Direction : Direction of the final gradient."
-
-    swarm_size: float = ArgField(
-        cmd_name="--swarm-size",
-        type_parser=argvalidators.Ratio.type_parser,
-        metavar=argvalidators.Ratio.METAVAR,
-        default=0.1,
-        help="Percent of total characters in each swarm.",
-    )  # type: ignore[assignment]
-    "float : Percent of total characters in each swarm."
-
-    swarm_coordination: float = ArgField(
-        cmd_name="--swarm-coordination",
-        type_parser=argvalidators.Ratio.type_parser,
-        metavar=argvalidators.Ratio.METAVAR,
-        default=0.80,
-        help="Percent of characters in a swarm that move as a group.",
-    )  # type: ignore[assignment]
-    "float : Percent of characters in a swarm that move as a group."
-
-    swarm_area_count: tuple[int, int] = ArgField(
-        cmd_name="--swarm-area-count",
-        type_parser=argvalidators.PositiveIntRange.type_parser,
-        metavar=argvalidators.PositiveIntRange.METAVAR,
-        default=(2, 4),
-        help="Range of the number of areas where characters will swarm.",
-    )  # type: ignore[assignment]
-    "tuple[int, int] : Range of the number of areas where characters will swarm."
 
     @classmethod
     def get_effect_class(cls):
@@ -172,7 +173,9 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
             swarm_area_coordinate_map: dict[Coord, list[Coord]] = {}
             swarm_spawn = self.terminal.canvas.random_coord(outside_scope=True)
             swarm_areas: list[Coord] = []
-            swarm_area_count = random.randint(self.config.swarm_area_count[0], self.config.swarm_area_count[1])
+            swarm_area_count = random.randint(
+                self.config.swarm_area_count_range[0], self.config.swarm_area_count_range[1]
+            )
             # create areas where characters will swarm
             last_focus_coord = swarm_spawn
             radius = max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 2, 1)
