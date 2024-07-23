@@ -44,7 +44,7 @@ class RainConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        easing (easing.EasingFunction): Easing function to use for character movement."""
+        movement_easing (easing.EasingFunction): Easing function to use for character movement."""
 
     rain_colors: tuple[Color, ...] = ArgField(
         cmd_name=["--rain-colors"],
