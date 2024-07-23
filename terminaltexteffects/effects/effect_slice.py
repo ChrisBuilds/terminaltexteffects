@@ -37,13 +37,38 @@ class SliceConfig(ArgsDataClass):
     """Configuration for the Slice effect.
 
     Attributes:
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         slice_direction (typing.Literal["vertical", "horizontal", "diagonal"]): Direction of the slice.
         movement_speed (float): Movement speed of the characters. Valid values are n > 0.
         movement_easing (easing.EasingFunction): Easing function to use for character movement.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
     """
+
+    slice_direction: typing.Literal["vertical", "horizontal", "diagonal"] = ArgField(
+        cmd_name="--slice-direction",
+        default="vertical",
+        choices=["vertical", "horizontal", "diagonal"],
+        help="Direction of the slice.",
+    )  # type: ignore[assignment]
+    "typing.Literal['vertical', 'horizontal', 'diagonal'] : Direction of the slice."
+
+    movement_speed: float = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argvalidators.PositiveFloat.type_parser,
+        default=0.15,
+        metavar=argvalidators.PositiveFloat.METAVAR,
+        help="Movement speed of the characters. ",
+    )  # type: ignore[assignment]
+    "float : Movement speed of the characters. Doubled for horizontal slices."
+
+    movement_easing: easing.EasingFunction = ArgField(
+        cmd_name="--movement-easing",
+        type_parser=argvalidators.Ease.type_parser,
+        default=easing.in_out_expo,
+        help="Easing function to use for character movement.",
+    )  # type: ignore[assignment]
+    "easing.EasingFunction : Easing function to use for character movement."
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -73,31 +98,6 @@ class SliceConfig(ArgsDataClass):
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "Gradient.Direction : Direction of the final gradient."
-
-    slice_direction: typing.Literal["vertical", "horizontal", "diagonal"] = ArgField(
-        cmd_name="--slice-direction",
-        default="vertical",
-        choices=["vertical", "horizontal", "diagonal"],
-        help="Direction of the slice.",
-    )  # type: ignore[assignment]
-    "typing.Literal['vertical', 'horizontal', 'diagonal'] : Direction of the slice."
-
-    movement_speed: float = ArgField(
-        cmd_name="--movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.15,
-        metavar=argvalidators.PositiveFloat.METAVAR,
-        help="Movement speed of the characters. ",
-    )  # type: ignore[assignment]
-    "float : Movement speed of the characters. Doubled for horizontal slices."
-
-    movement_easing: easing.EasingFunction = ArgField(
-        cmd_name="--movement-easing",
-        type_parser=argvalidators.Ease.type_parser,
-        default=easing.in_out_expo,
-        help="Easing function to use for character movement.",
-    )  # type: ignore[assignment]
-    "easing.EasingFunction : Easing function to use for character movement."
 
     @classmethod
     def get_effect_class(cls):
