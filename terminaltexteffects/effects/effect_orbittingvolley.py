@@ -43,14 +43,15 @@ class OrbittingVolleyConfig(ArgsDataClass):
         right_launcher_symbol (str): Symbol for the right launcher.
         bottom_launcher_symbol (str): Symbol for the bottom launcher.
         left_launcher_symbol (str): Symbol for the left launcher.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         launcher_movement_speed (float): Orbitting speed of the launchers. Valid values are n > 0.
         character_movement_speed (float): Speed of the launched characters. Valid values are n > 0.
         volley_size (float): Percent of total input characters each launcher will fire per volley. Lower limit of one character. Valid values are 0 < n <= 1.
         launch_delay (int): Number of animation ticks to wait between volleys of characters. Valid values are n >= 0.
-        character_easing (easing.EasingFunction): Easing function to use for launched character movement."""
+        character_easing (easing.EasingFunction): Easing function to use for launched character movement.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+    """
 
     top_launcher_symbol: str = ArgField(
         cmd_name="--top-launcher-symbol",
@@ -88,6 +89,51 @@ class OrbittingVolleyConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "str : Symbol for the left launcher."
 
+    launcher_movement_speed: float = ArgField(
+        cmd_name="--launcher-movement-speed",
+        type_parser=argvalidators.PositiveFloat.type_parser,
+        default=0.5,
+        metavar=argvalidators.PositiveFloat.METAVAR,
+        help="Orbitting speed of the launchers.",
+    )  # type: ignore[assignment]
+    "float : Orbitting speed of the launchers."
+
+    character_movement_speed: float = ArgField(
+        cmd_name="--character-movement-speed",
+        type_parser=argvalidators.PositiveFloat.type_parser,
+        default=1,
+        metavar=argvalidators.PositiveFloat.METAVAR,
+        help="Speed of the launched characters.",
+    )  # type: ignore[assignment]
+    "float : Speed of the launched characters."
+
+    volley_size: float = ArgField(
+        cmd_name="--volley-size",
+        type_parser=argvalidators.NonNegativeRatio.type_parser,
+        default=0.03,
+        metavar=argvalidators.NonNegativeRatio.METAVAR,
+        help="Percent of total input characters each launcher will fire per volley. Lower limit of one character.",
+    )  # type: ignore[assignment]
+    "float : Percent of total input characters each launcher will fire per volley. Lower limit of one character."
+
+    launch_delay: int = ArgField(
+        cmd_name="--launch-delay",
+        type_parser=argvalidators.NonNegativeInt.type_parser,
+        default=50,
+        metavar=argvalidators.NonNegativeInt.METAVAR,
+        help="Number of animation ticks to wait between volleys of characters.",
+    )  # type: ignore[assignment]
+    "int : Number of animation ticks to wait between volleys of characters."
+
+    character_easing: easing.EasingFunction = ArgField(
+        cmd_name=["--character-easing"],
+        default=easing.out_sine,
+        type_parser=argvalidators.Ease.type_parser,
+        metavar=argvalidators.Ease.METAVAR,
+        help="Easing function to use for launched character movement.",
+    )  # type: ignore[assignment]
+    "easing.EasingFunction : Easing function to use for launched character movement."
+
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
@@ -116,51 +162,6 @@ class OrbittingVolleyConfig(ArgsDataClass):
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "Gradient.Direction : Direction of the final gradient."
-
-    launcher_movement_speed: float = ArgField(
-        cmd_name="--launcher-movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.5,
-        metavar=argvalidators.PositiveFloat.METAVAR,
-        help="Orbitting speed of the launchers.",
-    )  # type: ignore[assignment]
-    "float : Orbitting speed of the launchers."
-
-    character_movement_speed: float = ArgField(
-        cmd_name="--character-movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=1,
-        metavar=argvalidators.PositiveFloat.METAVAR,
-        help="Speed of the launched characters.",
-    )  # type: ignore[assignment]
-    "float : Speed of the launched characters."
-
-    volley_size: float = ArgField(
-        cmd_name="--volley-size",
-        type_parser=argvalidators.Ratio.type_parser,
-        default=0.03,
-        metavar=argvalidators.Ratio.METAVAR,
-        help="Percent of total input characters each launcher will fire per volley. Lower limit of one character.",
-    )  # type: ignore[assignment]
-    "float : Percent of total input characters each launcher will fire per volley. Lower limit of one character."
-
-    launch_delay: int = ArgField(
-        cmd_name="--launch-delay",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
-        default=50,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
-        help="Number of animation ticks to wait between volleys of characters.",
-    )  # type: ignore[assignment]
-    "int : Number of animation ticks to wait between volleys of characters."
-
-    character_easing: easing.EasingFunction = ArgField(
-        cmd_name=["--character-easing"],
-        default=easing.out_sine,
-        type_parser=argvalidators.Ease.type_parser,
-        metavar=argvalidators.Ease.METAVAR,
-        help="Easing function to use for launched character movement.",
-    )  # type: ignore[assignment]
-    "easing.EasingFunction : Easing function to use for launched character movement."
 
     @classmethod
     def get_effect_class(cls):
