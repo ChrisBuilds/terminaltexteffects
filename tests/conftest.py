@@ -38,7 +38,40 @@ from terminaltexteffects.effects import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect
 from terminaltexteffects.engine.terminal import TerminalConfig
-from terminaltexteffects.utils.graphics import Color
+from terminaltexteffects.utils.easing import (
+    EasingFunction,
+    in_back,
+    in_bounce,
+    in_circ,
+    in_cubic,
+    in_elastic,
+    in_expo,
+    in_out_back,
+    in_out_bounce,
+    in_out_circ,
+    in_out_cubic,
+    in_out_elastic,
+    in_out_expo,
+    in_out_quad,
+    in_out_quart,
+    in_out_quint,
+    in_out_sine,
+    in_quad,
+    in_quart,
+    in_quint,
+    in_sine,
+    out_back,
+    out_bounce,
+    out_circ,
+    out_cubic,
+    out_elastic,
+    out_expo,
+    out_quad,
+    out_quart,
+    out_quint,
+    out_sine,
+)
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 INPUT_EMPTY = ""
 INPUT_SINGLE_CHAR = "a"
@@ -129,11 +162,59 @@ EFFECTS = [
     effect_wipe.Wipe,
 ]
 
+EASING_FUNCTIONS = [
+    in_sine,
+    out_sine,
+    in_out_sine,
+    in_quad,
+    out_quad,
+    in_out_quad,
+    in_cubic,
+    out_cubic,
+    in_out_cubic,
+    in_quart,
+    out_quart,
+    in_out_quart,
+    in_quint,
+    out_quint,
+    in_out_quint,
+    in_expo,
+    out_expo,
+    in_out_expo,
+    in_circ,
+    out_circ,
+    in_out_circ,
+    in_elastic,
+    out_elastic,
+    in_out_elastic,
+    in_back,
+    out_back,
+    in_out_back,
+    in_bounce,
+    out_bounce,
+    in_out_bounce,
+]
+
 ANCHORS = ["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"]
+
+
+@pytest.fixture()
+def input_data(request: pytest.FixtureRequest) -> str:
+    return TEST_INPUTS[request.param]
 
 
 @pytest.fixture(params=EFFECTS)
 def effect(request: pytest.FixtureRequest) -> BaseEffect:
+    return request.param
+
+
+@pytest.fixture(params=EASING_FUNCTIONS)
+def easing_function_1(request: pytest.FixtureRequest) -> EasingFunction:
+    return request.param
+
+
+@pytest.fixture(params=EASING_FUNCTIONS)
+def easing_function_2(request: pytest.FixtureRequest) -> EasingFunction:
     return request.param
 
 
@@ -189,23 +270,30 @@ def terminal_config_with_anchoring(canvas_dimensions, canvas_anchor, text_anchor
     return terminal_config
 
 
-@pytest.fixture()
-def input_data(request: pytest.FixtureRequest) -> str:
-    return TEST_INPUTS[request.param]
-
-
-@pytest.fixture(params=[(Color("000000"), Color("ff00ff"), Color("0ffff0")), Color("ff0fff")])
+@pytest.fixture(params=[(Color("000000"), Color("ff00ff"), Color("0ffff0")), (Color("ff0fff"),)])
 def gradient_stops(request: pytest.FixtureRequest) -> Color | tuple[Color, ...]:
     return request.param
 
 
-@pytest.fixture(params=[1, 5, 10, (1, 3)])
+@pytest.fixture(params=[1, 4, (1, 3)])
 def gradient_steps(request: pytest.FixtureRequest) -> int | tuple[int, ...]:
     return request.param
 
 
-@pytest.fixture(params=[1, 5])
+@pytest.fixture(params=[1, 4])
 def gradient_frames(request: pytest.FixtureRequest) -> int:
+    return request.param
+
+
+@pytest.fixture(
+    params=[
+        Gradient.Direction.DIAGONAL,
+        Gradient.Direction.HORIZONTAL,
+        Gradient.Direction.VERTICAL,
+        Gradient.Direction.RADIAL,
+    ]
+)
+def gradient_direction(request: pytest.FixtureRequest) -> Gradient.Direction:
     return request.param
 
 
