@@ -38,53 +38,24 @@ class SpotlightsConfig(ArgsDataClass):
     """Configuration for the Spotlights effect.
 
     Attributes:
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        beam_width_ratio (float): Width of the beam of light as min(width, height) // n of the input text. Valid values are n > 0.
+        beam_width_ratio (float): Width of the beam of light as min(width, height) // n of the input text. Valid values are n > 0. Values where n < 1 are raised to 1.
         beam_falloff (float): Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width. Valid values are 0 <= n <= 1.
         search_duration (int): Duration of the search phase, in frames, before the spotlights converge in the center. Valid values are n > 0.
         search_speed_range (tuple[float, float]): Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values. Valid values are n > 0.
         spotlight_count (int): Number of spotlights to use. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
     """
-
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        nargs="+",
-        default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
-        metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
-
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        nargs="+",
-        default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
-        help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
-
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
-        default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
-        help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
-    "Gradient.Direction : Direction of the final gradient."
 
     beam_width_ratio: float = ArgField(
         cmd_name="--beam-width-ratio",
         type_parser=argvalidators.PositiveFloat.type_parser,
         default=2.0,
         metavar=argvalidators.PositiveFloat.METAVAR,
-        help="Width of the beam of light as min(width, height) // n of the input text.",
+        help="Width of the beam of light as min(width, height) // n of the input text. Values less than 1 are raised to 1.",
     )  # type: ignore[assignment]
-    "float : Width of the beam of light as min(width, height) // n of the input text."
+    "float : Width of the beam of light as min(width, height) // n of the input text. Values less than 1 are raised to 1."
 
     beam_falloff: float = ArgField(
         cmd_name="--beam-falloff",
@@ -121,6 +92,35 @@ class SpotlightsConfig(ArgsDataClass):
         help="Number of spotlights to use.",
     )  # type: ignore[assignment]
     "int : Number of spotlights to use."
+
+    final_gradient_stops: tuple[Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argvalidators.ColorArg.type_parser,
+        nargs="+",
+        default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
+        metavar=argvalidators.ColorArg.METAVAR,
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )  # type: ignore[assignment]
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+
+    final_gradient_steps: tuple[int, ...] | int = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argvalidators.PositiveInt.type_parser,
+        nargs="+",
+        default=12,
+        metavar=argvalidators.PositiveInt.METAVAR,
+        help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )  # type: ignore[assignment]
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+
+    final_gradient_direction: Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=argvalidators.GradientDirection.type_parser,
+        default=Gradient.Direction.VERTICAL,
+        metavar=argvalidators.GradientDirection.METAVAR,
+        help="Direction of the final gradient.",
+    )  # type: ignore[assignment]
+    "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
     def get_effect_class(cls):
@@ -229,11 +229,15 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
             self.terminal.set_character_visibility(character, True)
             self.character_color_map[character] = (color_bright, color_dark)
             character.animation.set_appearance(character.input_symbol, color_dark)
-        self.illuminate_range = int(
-            max(
-                min(self.terminal.canvas.right, self.terminal.canvas.top) // self.config.beam_width_ratio,
-                1,
-            )
+        smallest_dimension = min(self.terminal.canvas.right, self.terminal.canvas.top)
+        self.illuminate_range = max(
+            int(
+                min(
+                    smallest_dimension // self.config.beam_width_ratio,
+                    smallest_dimension,
+                )
+            ),
+            1,
         )
         self.search_duration = self.config.search_duration
         self.searching = True
