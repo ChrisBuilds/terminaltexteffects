@@ -39,11 +39,11 @@ class FireworksConfig(ArgsDataClass):
         firework_colors (tuple[Color, ...]): Tuple of colors from which firework colors will be randomly selected.
         firework_symbol (str): Symbol to use for the firework shell.
         firework_volume (float): Percent of total characters in each firework shell. Valid values are 0 < n <= 1.
+        launch_delay (int): Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. Valid values are n >= 0.
+        explode_distance (float): Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width. Valid values are 0 < n <= 1.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        launch_delay (int): Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value. Valid values are n >= 0.
-        explode_distance (float): Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width. Valid values are 0 < n <= 1."""
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient."""
 
     explode_anywhere: bool = ArgField(
         cmd_name="--explode-anywhere",
@@ -74,12 +74,30 @@ class FireworksConfig(ArgsDataClass):
 
     firework_volume: float = ArgField(
         cmd_name="--firework-volume",
-        type_parser=argvalidators.Ratio.type_parser,
+        type_parser=argvalidators.NonNegativeRatio.type_parser,
         default=0.02,
-        metavar=argvalidators.Ratio.METAVAR,
+        metavar=argvalidators.NonNegativeRatio.METAVAR,
         help="Percent of total characters in each firework shell.",
     )  # type: ignore[assignment]
     "float : Percent of total characters in each firework shell."
+
+    launch_delay: int = ArgField(
+        cmd_name="--launch-delay",
+        type_parser=argvalidators.NonNegativeInt.type_parser,
+        default=60,
+        metavar=argvalidators.NonNegativeInt.METAVAR,
+        help="Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.",
+    )  # type: ignore[assignment]
+    "int : Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value."
+
+    explode_distance: float = ArgField(
+        cmd_name="--explode-distance",
+        default=0.1,
+        type_parser=argvalidators.NonNegativeRatio.type_parser,
+        metavar=argvalidators.NonNegativeRatio.METAVAR,
+        help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width.",
+    )  # type: ignore[assignment]
+    "float : Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width."
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
@@ -109,24 +127,6 @@ class FireworksConfig(ArgsDataClass):
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "Gradient.Direction : Direction of the final gradient."
-
-    launch_delay: int = ArgField(
-        cmd_name="--launch-delay",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
-        default=60,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
-        help="Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value.",
-    )  # type: ignore[assignment]
-    "int : Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is applied to this value."
-
-    explode_distance: float = ArgField(
-        cmd_name="--explode-distance",
-        default=0.1,
-        type_parser=argvalidators.Ratio.type_parser,
-        metavar=argvalidators.Ratio.METAVAR,
-        help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width.",
-    )  # type: ignore[assignment]
-    "float : Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width."
 
     @classmethod
     def get_effect_class(cls):
@@ -238,7 +238,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
 
     def __next__(self) -> str:
         if self.shells or self.active_characters:
-            if self.shells and self.launch_delay == 0:
+            if self.shells and self.launch_delay <= 0:
                 next_group = self.shells.pop()
                 for character in next_group:
                     self.terminal.set_character_visibility(character, True)
