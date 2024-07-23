@@ -36,12 +36,41 @@ class OverflowConfig(ArgsDataClass):
     """Configuration for the Overflow effect.
 
     Attributes:
+        overflow_gradient_stops (tuple[Color, ...]): Tuple of colors for the overflow gradient.
+        overflow_cycles_range (tuple[int, int]): Lower and upper range of the number of cycles to overflow the text. Valid values are n >= 0.
+        overflow_speed (int): Speed of the overflow effect. Valid values are n > 0.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        overflow_gradient_stops (tuple[Color, ...]): Tuple of colors for the overflow gradient.
-        overflow_cycles_range (tuple[int, int]): Lower and upper range of the number of cycles to overflow the text. Valid values are n >= 0.
-        overflow_speed (int): Speed of the overflow effect. Valid values are n > 0."""
+    """
+
+    overflow_gradient_stops: tuple[Color, ...] = ArgField(
+        cmd_name=["--overflow-gradient-stops"],
+        type_parser=argvalidators.ColorArg.type_parser,
+        nargs="+",
+        default=(Color("f2ebc0"), Color("8dbfb3"), Color("f2ebc0")),
+        metavar=argvalidators.ColorArg.METAVAR,
+        help="Space separated, unquoted, list of colors for the overflow gradient.",
+    )  # type: ignore[assignment]
+    "tuple[Color, ...] : Tuple of colors for the overflow gradient."
+
+    overflow_cycles_range: tuple[int, int] = ArgField(
+        cmd_name=["--overflow-cycles-range"],
+        type_parser=argvalidators.PositiveIntRange.type_parser,
+        default=(2, 4),
+        metavar=argvalidators.PositiveIntRange.METAVAR,
+        help="Number of cycles to overflow the text.",
+    )  # type: ignore[assignment]
+    "tuple[int, int] : Lower and upper range of the number of cycles to overflow the text."
+
+    overflow_speed: int = ArgField(
+        cmd_name=["--overflow-speed"],
+        type_parser=argvalidators.PositiveInt.type_parser,
+        default=3,
+        metavar=argvalidators.PositiveInt.METAVAR,
+        help="Speed of the overflow effect.",
+    )  # type: ignore[assignment]
+    "int : Speed of the overflow effect."
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -71,34 +100,6 @@ class OverflowConfig(ArgsDataClass):
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "Gradient.Direction : Direction of the final gradient."
-
-    overflow_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--overflow-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        nargs="+",
-        default=(Color("f2ebc0"), Color("8dbfb3"), Color("f2ebc0")),
-        metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the overflow gradient.",
-    )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the overflow gradient."
-
-    overflow_cycles_range: tuple[int, int] = ArgField(
-        cmd_name=["--overflow-cycles-range"],
-        type_parser=argvalidators.PositiveIntRange.type_parser,
-        default=(2, 4),
-        metavar=argvalidators.PositiveIntRange.METAVAR,
-        help="Number of cycles to overflow the text.",
-    )  # type: ignore[assignment]
-    "tuple[int, int] : Lower and upper range of the number of cycles to overflow the text."
-
-    overflow_speed: int = ArgField(
-        cmd_name=["--overflow-speed"],
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=3,
-        metavar=argvalidators.PositiveInt.METAVAR,
-        help="Speed of the overflow effect.",
-    )  # type: ignore[assignment]
-    "int : Speed of the overflow effect."
 
     @classmethod
     def get_effect_class(cls):
