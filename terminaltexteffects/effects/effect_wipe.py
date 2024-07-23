@@ -34,11 +34,12 @@ class WipeConfig(ArgsDataClass):
 
     Attributes:
         wipe_direction (typing.Literal["column_left_to_right","row_top_to_bottom","row_bottom_to_top","diagonal_top_left_to_bottom_right","diagonal_bottom_left_to_top_right","diagonal_top_right_to_bottom_left","diagonal_bottom_right_to_top_left","center_to_outside","outside_to_center"]): Direction the text will wipe.
+        wipe_delay (int): Number of frames to wait before adding the next character group. Increase, to slow down the effect. Valid values are n >= 0.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the wipe gradient.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        wipe_delay (int): Number of frames to wait before adding the next character group. Increase, to slow down the effect. Valid values are n >= 0."""
+    """
 
     wipe_direction: typing.Literal[
         "column_left_to_right",
@@ -68,6 +69,15 @@ class WipeConfig(ArgsDataClass):
         help="Direction the text will wipe.",
     )  # type: ignore[assignment]
     "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]"
+
+    wipe_delay: int = ArgField(
+        cmd_name="--wipe-delay",
+        type_parser=argvalidators.NonNegativeInt.type_parser,
+        default=0,
+        metavar=argvalidators.NonNegativeInt.METAVAR,
+        help="Number of frames to wait before adding the next character group. Increase, to slow down the effect.",
+    )  # type: ignore[assignment]
+    "int : Number of frames to wait before adding the next character group. Increase, to slow down the effect."
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
@@ -106,15 +116,6 @@ class WipeConfig(ArgsDataClass):
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "Gradient.Direction : Direction of the final gradient."
-
-    wipe_delay: int = ArgField(
-        cmd_name="--wipe-delay",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
-        default=0,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
-        help="Number of frames to wait before adding the next character group. Increase, to slow down the effect.",
-    )  # type: ignore[assignment]
-    "int : Number of frames to wait before adding the next character group. Increase, to slow down the effect."
 
     @classmethod
     def get_effect_class(cls):

@@ -36,44 +36,16 @@ class VHSTapeConfig(ArgsDataClass):
     """Configuration for the VHSTape effect.
 
     Attributes:
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         glitch_line_colors (tuple[Color, ...]): Tuple of colors for the characters when a single line is glitching. Colors are applied in order as an animation.
         glitch_wave_colors (tuple[Color, ...]): Tuple of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.
         noise_colors (tuple[Color, ...]): Tuple of colors for the characters during the noise phase.
         glitch_line_chance (float): Chance that a line will glitch on any given frame.
         noise_chance (float): Chance that all characters will experience noise on any given frame. Valid values are 0 <= n <= 1.
-        total_glitch_time (int): Total time, in frames, that the glitching phase will last. Valid values are n > 0."""
-
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        nargs="+",
-        default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
-        metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
-
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        nargs="+",
-        default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
-
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
-        default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
-        help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
-    "Gradient.Direction : Direction of the final gradient."
+        total_glitch_time (int): Total time, in frames, that the glitching phase will last. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+    """
 
     glitch_line_colors: tuple[Color, ...] = ArgField(
         cmd_name="--glitch-line-colors",
@@ -107,18 +79,18 @@ class VHSTapeConfig(ArgsDataClass):
 
     glitch_line_chance: float = ArgField(
         cmd_name="--glitch-line-chance",
-        type_parser=argvalidators.Ratio.type_parser,
+        type_parser=argvalidators.NonNegativeRatio.type_parser,
         default=0.05,
-        metavar=argvalidators.Ratio.METAVAR,
+        metavar=argvalidators.NonNegativeRatio.METAVAR,
         help="Chance that a line will glitch on any given frame.",
     )  # type: ignore[assignment]
     "float : Chance that a line will glitch on any given frame."
 
     noise_chance: float = ArgField(
         cmd_name="--noise-chance",
-        type_parser=argvalidators.Ratio.type_parser,
+        type_parser=argvalidators.NonNegativeRatio.type_parser,
         default=0.004,
-        metavar=argvalidators.Ratio.METAVAR,
+        metavar=argvalidators.NonNegativeRatio.METAVAR,
         help="Chance that all characters will experience noise on any given frame.",
     )  # type: ignore[assignment]
     "float : Chance that all characters will experience noise on any given frame."
@@ -131,6 +103,35 @@ class VHSTapeConfig(ArgsDataClass):
         help="Total time, frames, that the glitching phase will last.",
     )  # type: ignore[assignment]
     "int : Total time, frames, that the glitching phase will last."
+
+    final_gradient_stops: tuple[Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argvalidators.ColorArg.type_parser,
+        nargs="+",
+        default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
+        metavar=argvalidators.ColorArg.METAVAR,
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )  # type: ignore[assignment]
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+
+    final_gradient_steps: tuple[int, ...] | int = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argvalidators.PositiveInt.type_parser,
+        nargs="+",
+        default=12,
+        metavar=argvalidators.PositiveInt.METAVAR,
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )  # type: ignore[assignment]
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+
+    final_gradient_direction: Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=argvalidators.GradientDirection.type_parser,
+        default=Gradient.Direction.VERTICAL,
+        metavar=argvalidators.GradientDirection.METAVAR,
+        help="Direction of the final gradient.",
+    )  # type: ignore[assignment]
+    "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
     def get_effect_class(cls):

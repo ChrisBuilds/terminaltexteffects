@@ -38,13 +38,14 @@ class WavesConfig(ArgsDataClass):
         wave_symbols (tuple[str, ...] | str): Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an animation.
         wave_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         wave_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         wave_count (int): Number of waves to generate. Valid values are n > 0.
         wave_length (int): The number of frames for each step of the wave. Higher wave-lengths will create a slower wave. Valid values are n > 0.
         wave_direction (typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','center_to_outside','outside_to_center']): Direction of the wave.
-        wave_easing (easing.EasingFunction): Easing function to use for wave travel."""
+        wave_easing (easing.EasingFunction): Easing function to use for wave travel.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+    """
 
     wave_symbols: tuple[str, ...] = ArgField(
         cmd_name="--wave-symbols",
@@ -75,35 +76,6 @@ class WavesConfig(ArgsDataClass):
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
     "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
-
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name="--final-gradient-stops",
-        type_parser=argvalidators.ColorArg.type_parser,
-        nargs="+",
-        default=(Color("#ffb102"), Color("#31a0d4"), Color("#f0ff65")),
-        metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
-
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        nargs="+",
-        default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
-
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
-        default=Gradient.Direction.DIAGONAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
-        help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
-    "Gradient.Direction : Direction of the final gradient."
 
     wave_count: int = ArgField(
         cmd_name="--wave-count",
@@ -151,6 +123,35 @@ class WavesConfig(ArgsDataClass):
         help="Easing function to use for wave travel.",
     )  # type: ignore[assignment]
     "easing.EasingFunction : Easing function to use for wave travel."
+
+    final_gradient_stops: tuple[Color, ...] = ArgField(
+        cmd_name="--final-gradient-stops",
+        type_parser=argvalidators.ColorArg.type_parser,
+        nargs="+",
+        default=(Color("#ffb102"), Color("#31a0d4"), Color("#f0ff65")),
+        metavar=argvalidators.ColorArg.METAVAR,
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )  # type: ignore[assignment]
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+
+    final_gradient_steps: tuple[int, ...] | int = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argvalidators.PositiveInt.type_parser,
+        nargs="+",
+        default=12,
+        metavar=argvalidators.PositiveInt.METAVAR,
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )  # type: ignore[assignment]
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+
+    final_gradient_direction: Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=argvalidators.GradientDirection.type_parser,
+        default=Gradient.Direction.DIAGONAL,
+        metavar=argvalidators.GradientDirection.METAVAR,
+        help="Direction of the final gradient.",
+    )  # type: ignore[assignment]
+    "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
     def get_effect_class(cls):

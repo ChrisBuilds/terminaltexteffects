@@ -39,13 +39,13 @@ class UnstableConfig(ArgsDataClass):
 
     Attributes:
         unstable_color (Color): Color transitioned to as the characters become unstable.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         explosion_ease (easing.EasingFunction): Easing function to use for character movement during the explosion.
         explosion_speed (float): Speed of characters during explosion. Valid values are n > 0.
         reassembly_ease (easing.EasingFunction): Easing function to use for character reassembly.
         reassembly_speed (float): Speed of characters during reassembly. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
     """
 
     unstable_color: Color = ArgField(
@@ -56,35 +56,6 @@ class UnstableConfig(ArgsDataClass):
         help="Color transitioned to as the characters become unstable.",
     )  # type: ignore[assignment]
     "Color : Color transitioned to as the characters become unstable."
-
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
-
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name=["--final-gradient-steps"],
-        type_parser=argvalidators.PositiveInt.type_parser,
-        nargs="+",
-        default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
-
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
-        default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
-        help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
-    "Gradient.Direction : Direction of the final gradient."
 
     explosion_ease: easing.EasingFunction = ArgField(
         cmd_name=["--explosion-ease"],
@@ -119,6 +90,35 @@ class UnstableConfig(ArgsDataClass):
         help="Speed of characters during reassembly. ",
     )  # type: ignore[assignment]
     "float : Speed of characters during reassembly."
+
+    final_gradient_stops: tuple[Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argvalidators.ColorArg.type_parser,
+        nargs="+",
+        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
+        metavar=argvalidators.ColorArg.METAVAR,
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )  # type: ignore[assignment]
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+
+    final_gradient_steps: tuple[int, ...] | int = ArgField(
+        cmd_name=["--final-gradient-steps"],
+        type_parser=argvalidators.PositiveInt.type_parser,
+        nargs="+",
+        default=12,
+        metavar=argvalidators.PositiveInt.METAVAR,
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )  # type: ignore[assignment]
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+
+    final_gradient_direction: Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=argvalidators.GradientDirection.type_parser,
+        default=Gradient.Direction.VERTICAL,
+        metavar=argvalidators.GradientDirection.METAVAR,
+        help="Direction of the final gradient.",
+    )  # type: ignore[assignment]
+    "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
     def get_effect_class(cls):
