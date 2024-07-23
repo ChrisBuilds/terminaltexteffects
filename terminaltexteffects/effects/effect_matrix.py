@@ -380,9 +380,6 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         self.build()
         self.rain_start = time.time()
 
-    def add_character_to_active_characters(self, character: EffectCharacter) -> None:
-        self.active_characters.append(character)
-
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
