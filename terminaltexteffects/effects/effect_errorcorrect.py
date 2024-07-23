@@ -82,6 +82,15 @@ class ErrorCorrectConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "Color : Color for the characters once corrected, this is a gradient from error-color and fades to final-color."
 
+    movement_speed: float = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argvalidators.PositiveFloat.type_parser,
+        default=0.5,
+        metavar="(float > 0)",
+        help="Speed of the characters while moving to the correct position. ",
+    )  # type: ignore[assignment]
+    "float : Speed of the characters while moving to the correct position. "
+
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
@@ -110,15 +119,6 @@ class ErrorCorrectConfig(ArgsDataClass):
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "Gradient.Direction : Direction of the final gradient."
-
-    movement_speed: float = ArgField(
-        cmd_name="--movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.5,
-        metavar="(float > 0)",
-        help="Speed of the characters while moving to the correct position. ",
-    )  # type: ignore[assignment]
-    "float : Speed of the characters while moving to the correct position. "
 
     @classmethod
     def get_effect_class(cls):
