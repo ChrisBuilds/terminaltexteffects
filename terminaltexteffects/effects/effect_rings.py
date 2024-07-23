@@ -38,14 +38,14 @@ class RingsConfig(ArgsDataClass):
 
     Attributes:
         ring_colors (tuple[Color, ...]): Tuple of colors for the rings.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         ring_gap (float): Distance between rings as a percent of the smallest canvas dimension. Valid values are 0 < n <= 1.
         spin_duration (int): Number of frames for each cycle of the spin phase. Valid values are n >= 0.
         spin_speed (tuple[float, float]): Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring. Valid values are n > 0.
         disperse_duration (int): Number of frames spent in the dispersed state between spinning cycles. Valid values are n >= 0.
         spin_disperse_cycles (int): Number of times the animation will cycle between spinning rings and dispersed characters. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
     """
 
     ring_colors: tuple[Color, ...] = ArgField(
@@ -56,8 +56,47 @@ class RingsConfig(ArgsDataClass):
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the rings.",
     )  # type: ignore[assignment]
-
     "tuple[Color] : Tuple of colors for the rings."
+
+    ring_gap: float = ArgField(
+        cmd_name=["--ring-gap"],
+        type_parser=argvalidators.PositiveFloat.type_parser,
+        default=0.1,
+        help="Distance between rings as a percent of the smallest canvas dimension.",
+    )  # type: ignore[assignment]
+    "float : Distance between rings as a percent of the smallest canvas dimension."
+    spin_duration: int = ArgField(
+        cmd_name=["--spin-duration"],
+        type_parser=argvalidators.PositiveInt.type_parser,
+        default=200,
+        help="Number of frames for each cycle of the spin phase.",
+    )  # type: ignore[assignment]
+    "int : Number of frames for each cycle of the spin phase."
+
+    spin_speed: tuple[float, float] = ArgField(
+        cmd_name=["--spin-speed"],
+        type_parser=argvalidators.PositiveFloatRange.type_parser,
+        default=(0.25, 1.0),
+        metavar=argvalidators.PositiveFloatRange.METAVAR,
+        help="Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring.",
+    )  # type: ignore[assignment]
+    "tuple[float, float] : Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring."
+
+    disperse_duration: int = ArgField(
+        cmd_name=["--disperse-duration"],
+        type_parser=argvalidators.PositiveInt.type_parser,
+        default=200,
+        help="Number of frames spent in the dispersed state between spinning cycles.",
+    )  # type: ignore[assignment]
+    "int : Number of frames spent in the dispersed state between spinning cycles."
+
+    spin_disperse_cycles: int = ArgField(
+        cmd_name=["--spin-disperse-cycles"],
+        type_parser=argvalidators.PositiveInt.type_parser,
+        default=3,
+        help="Number of times the animation will cycles between spinning rings and dispersed characters.",
+    )  # type: ignore[assignment]
+    "int : Number of times the animation will cycles between spinning rings and dispersed characters."
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -67,7 +106,6 @@ class RingsConfig(ArgsDataClass):
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-
     "tuple[Color] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
@@ -78,7 +116,6 @@ class RingsConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-
     "tuple[int, ...] | int : Number of gradient steps to use. More steps will create a smoother and longer gradient animation."
 
     final_gradient_direction: Gradient.Direction = ArgField(
@@ -88,53 +125,7 @@ class RingsConfig(ArgsDataClass):
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
-
     "Gradient.Direction : Direction of the final gradient."
-
-    ring_gap: float = ArgField(
-        cmd_name=["--ring-gap"],
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.1,
-        help="Distance between rings as a percent of the smallest canvas dimension.",
-    )  # type: ignore[assignment]
-
-    "float : Distance between rings as a percent of the smallest canvas dimension."
-    spin_duration: int = ArgField(
-        cmd_name=["--spin-duration"],
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=200,
-        help="Number of frames for each cycle of the spin phase.",
-    )  # type: ignore[assignment]
-
-    "int : Number of frames for each cycle of the spin phase."
-
-    spin_speed: tuple[float, float] = ArgField(
-        cmd_name=["--spin-speed"],
-        type_parser=argvalidators.PositiveFloatRange.type_parser,
-        default=(0.25, 1.0),
-        metavar=argvalidators.PositiveFloatRange.METAVAR,
-        help="Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring.",
-    )  # type: ignore[assignment]
-
-    "tuple[float, float] : Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring."
-
-    disperse_duration: int = ArgField(
-        cmd_name=["--disperse-duration"],
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=200,
-        help="Number of frames spent in the dispersed state between spinning cycles.",
-    )  # type: ignore[assignment]
-
-    "int : Number of frames spent in the dispersed state between spinning cycles."
-
-    spin_disperse_cycles: int = ArgField(
-        cmd_name=["--spin-disperse-cycles"],
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=3,
-        help="Number of times the animation will cycles between spinning rings and dispersed characters.",
-    )  # type: ignore[assignment]
-
-    "int : Number of times the animation will cycles between spinning rings and dispersed characters."
 
     @classmethod
     def get_effect_class(cls):
