@@ -13,13 +13,14 @@ Classes:
     Ease: Argument type for easing functions.
     PositiveInt: Argument type for positive integers.
     NonNegativeInt: Argument type for nonnegative integers.
-    IntRange: Argument type for integer ranges.
+    PositiveIntRange: Argument type for integer ranges.
     PositiveFloat: Argument type for positive floats.
     NonNegativeFloat: Argument type for nonnegative floats.
     PositiveFloatRange: Argument type for float ranges.
     TerminalDimensions: Argument type for terminal dimensions.
     CanvasDimension: Argument type for canvas dimensions.
-    Ratio: Argument type for float values between zero and one.
+    NonNegativeRatio: Argument type for float values from zero and one.
+    PositiveRatio: Argument type for positive float values between greater than zero and less than or equal to one.
 
 
 Functions:
@@ -274,7 +275,7 @@ class PositiveFloatRange:
             )
 
 
-class Ratio:
+class NonNegativeRatio:
     """Validates that the given argument is a valid float value between zero and one.
 
     0 <= float(n) <= 1
@@ -307,6 +308,41 @@ class Ratio:
             return float(arg)
         else:
             raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a float >= 0 and <= 1. Example: 0.5")
+
+
+class PositiveRatio:
+    """Validates that the given argument is a valid positive float.
+
+    0 < float(n) <= 1
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not in range.
+    """
+
+    METAVAR = "(0 < float(n) <= 1)"
+
+    @staticmethod
+    def type_parser(arg: str) -> float:
+        """Validates that the given argument is a valid positive float.
+
+        Args:
+            arg (str): argument to validate
+
+        Raises:
+            argparse.ArgumentTypeError: Value is not in range.
+
+        Returns:
+            float: validated float value
+        """
+        try:
+            float(arg)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a float or int.")
+
+        if 0 < float(arg) <= 1:
+            return float(arg)
+        else:
+            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' must be 0 < n <=1. Example: 0.5")
 
 
 class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
