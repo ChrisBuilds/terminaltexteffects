@@ -67,6 +67,32 @@ class BouncyBallsConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[str, ...] | str : Tuple of symbols to use for the balls."
 
+    ball_delay: int = ArgField(
+        cmd_name="--ball-delay",
+        type_parser=argvalidators.NonNegativeInt.type_parser,
+        default=7,
+        metavar=argvalidators.NonNegativeInt.METAVAR,
+        help="Number of frames between ball drops, increase to reduce ball drop rate.",
+    )  # type: ignore[assignment]
+    "int : Number of frames between ball drops, increase to reduce ball drop rate."
+
+    movement_speed: float = ArgField(
+        cmd_name="--movement-speed",
+        type_parser=argvalidators.PositiveFloat.type_parser,
+        default=0.25,
+        metavar=argvalidators.PositiveFloat.METAVAR,
+        help="Movement speed of the characters. ",
+    )  # type: ignore[assignment]
+    "float : Movement speed of the characters. "
+
+    movement_easing: easing.EasingFunction = ArgField(
+        cmd_name="--movement-easing",
+        type_parser=argvalidators.Ease.type_parser,
+        default=easing.out_bounce,
+        help="Easing function to use for character movement.",
+    )  # type: ignore[assignment]
+    "easing.EasingFunction : Easing function to use for character movement."
+
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
@@ -95,31 +121,6 @@ class BouncyBallsConfig(ArgsDataClass):
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
     "Gradient.Direction : Direction of the final gradient."
-    ball_delay: int = ArgField(
-        cmd_name="--ball-delay",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
-        default=7,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
-        help="Number of frames between ball drops, increase to reduce ball drop rate.",
-    )  # type: ignore[assignment]
-    "int : Number of frames between ball drops, increase to reduce ball drop rate."
-
-    movement_speed: float = ArgField(
-        cmd_name="--movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.25,
-        metavar=argvalidators.PositiveFloat.METAVAR,
-        help="Movement speed of the characters. ",
-    )  # type: ignore[assignment]
-    "float : Movement speed of the characters. "
-
-    movement_easing: easing.EasingFunction = ArgField(
-        cmd_name="--movement-easing",
-        type_parser=argvalidators.Ease.type_parser,
-        default=easing.out_bounce,
-        help="Easing function to use for character movement.",
-    )  # type: ignore[assignment]
-    "easing.EasingFunction : Easing function to use for character movement."
 
     @classmethod
     def get_effect_class(cls):
