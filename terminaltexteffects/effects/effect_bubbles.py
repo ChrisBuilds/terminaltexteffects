@@ -42,13 +42,13 @@ class BubblesConfig(ArgsDataClass):
         rainbow (bool): If set, the bubbles will be colored with a rotating rainbow gradient.
         bubble_colors (tuple[Color, ...]): Tuple of colors for the bubbles. Ignored if --no-rainbow is left as default False.
         pop_color (Color): Color for the spray emitted when a bubble pops.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         bubble_speed (float): Speed of the floating bubbles. Valid values are n > 0.
         bubble_delay (int): Number of frames between bubbles. Valid values are n >= 0.
         pop_condition (typing.Literal["row", "bottom", "anywhere"]): Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal.
-        easing (easing.EasingFunction): Easing function to use for character movement after a bubble pops.
+        movement_easing (easing.EasingFunction): Easing function to use for character movement after a bubble pops.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
     """
 
     rainbow: bool = ArgField(
@@ -77,35 +77,6 @@ class BubblesConfig(ArgsDataClass):
         help="Color for the spray emitted when a bubble pops.",
     )  # type: ignore[assignment]
     "Color : Color for the spray emitted when a bubble pops."
-
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        nargs="+",
-        default=(Color("d33aff"), Color("02ff7f")),
-        metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
-
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        nargs="+",
-        default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
-
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
-        default=Gradient.Direction.DIAGONAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
-        help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
-    "Gradient.Direction : Direction of the final gradient."
 
     bubble_speed: float = ArgField(
         cmd_name="--bubble-speed",
@@ -141,6 +112,35 @@ class BubblesConfig(ArgsDataClass):
         help="Easing function to use for character movement after a bubble pops.",
     )  # type: ignore[assignment]
     "easing.EasingFunction : Easing function to use for character movement after a bubble pops."
+
+    final_gradient_stops: tuple[Color, ...] = ArgField(
+        cmd_name=["--final-gradient-stops"],
+        type_parser=argvalidators.ColorArg.type_parser,
+        nargs="+",
+        default=(Color("d33aff"), Color("02ff7f")),
+        metavar=argvalidators.ColorArg.METAVAR,
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+    )  # type: ignore[assignment]
+    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+
+    final_gradient_steps: tuple[int, ...] | int = ArgField(
+        cmd_name="--final-gradient-steps",
+        type_parser=argvalidators.PositiveInt.type_parser,
+        nargs="+",
+        default=12,
+        metavar=argvalidators.PositiveInt.METAVAR,
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+    )  # type: ignore[assignment]
+    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+
+    final_gradient_direction: Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=argvalidators.GradientDirection.type_parser,
+        default=Gradient.Direction.DIAGONAL,
+        metavar=argvalidators.GradientDirection.METAVAR,
+        help="Direction of the final gradient.",
+    )  # type: ignore[assignment]
+    "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
     def get_effect_class(cls):
