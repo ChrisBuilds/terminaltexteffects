@@ -37,10 +37,10 @@ class SynthGridConfig(ArgsDataClass):
 
     Attributes:
         grid_gradient_stops (tuple[Color, ...]): Tuple of colors for the grid gradient.
-        grid_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        grid_gradient_steps (tuple[int, ...] | int ): Int or Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         grid_gradient_direction (Gradient.Direction): Direction of the gradient for the grid color.
         text_gradient_stops (tuple[Color, ...]): Tuple of colors for the text gradient.
-        text_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        text_gradient_steps (tuple[int, ...] | int ): Int or Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         text_gradient_direction (Gradient.Direction): Direction of the gradient for the text color.
         grid_row_symbol (str): Symbol to use for grid row lines.
         grid_column_symbol (str): Symbol to use for grid column lines.
@@ -135,9 +135,9 @@ class SynthGridConfig(ArgsDataClass):
 
     max_active_blocks: float = ArgField(
         cmd_name="--max-active-blocks",
-        type_parser=argvalidators.PositiveFloat.type_parser,
+        type_parser=argvalidators.PositiveRatio.type_parser,
         default=0.1,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argvalidators.PositiveRatio.METAVAR,
         help="Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time.",
     )  # type: ignore[assignment]
     "float : Maximum percentage of blocks to have active at any given time."
