@@ -101,9 +101,9 @@ class BinaryPathConfig(ArgsDataClass):
 
     active_binary_groups: float = ArgField(
         cmd_name="--active-binary-groups",
-        type_parser=argvalidators.Ratio.type_parser,
+        type_parser=argvalidators.NonNegativeRatio.type_parser,
         default=0.05,
-        metavar=argvalidators.Ratio.METAVAR,
+        metavar=argvalidators.NonNegativeRatio.METAVAR,
         help="Maximum number of binary groups that are active at any given time as a percentage of the total number of binary groups. Lower this to improve performance.",
     )  # type: ignore[assignment]
 
