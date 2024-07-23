@@ -1,7 +1,9 @@
-import pytest
-from terminaltexteffects.utils import argvalidators, easing
-from terminaltexteffects.utils.graphics import Gradient, Color
 from argparse import ArgumentTypeError
+
+import pytest
+
+from terminaltexteffects.utils import argvalidators, easing
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def test_postive_int_valid_int():
@@ -65,16 +67,28 @@ def test_positive_float_range_invalid_range(arg):
         argvalidators.PositiveFloatRange.type_parser(arg)
 
 
-def test_ratio_valid_ratio():
-    assert argvalidators.Ratio.type_parser("0.5") == 0.5
-    assert argvalidators.Ratio.type_parser("1") == 1
-    assert argvalidators.Ratio.type_parser("0") == 0
+def test_NonNegativeRatio_valid_ratio():
+    assert argvalidators.NonNegativeRatio.type_parser("0.5") == 0.5
+    assert argvalidators.NonNegativeRatio.type_parser("1") == 1
+    assert argvalidators.NonNegativeRatio.type_parser("0") == 0
 
 
 @pytest.mark.parametrize("arg", ["-1", "1.1", "a"])
-def test_ratio_invalid_ratio(arg):
+def test_NonNegativeRatio_invalid_ratio(arg):
     with pytest.raises(ArgumentTypeError):
-        argvalidators.Ratio.type_parser(arg)
+        argvalidators.NonNegativeRatio.type_parser(arg)
+
+
+def test_PositiveRatio_valid_ratio():
+    assert argvalidators.PositiveRatio.type_parser("0.5") == 0.5
+    assert argvalidators.PositiveRatio.type_parser("1.0") == 1
+    assert argvalidators.PositiveRatio.type_parser("0.01") == 0.01
+
+
+@pytest.mark.parametrize("arg", ["-1", "1.1", "0", "a"])
+def test_PositiveRatio_invalid_ratio(arg):
+    with pytest.raises(ArgumentTypeError):
+        argvalidators.PositiveRatio.type_parser(arg)
 
 
 def test_gradient_direction_valid_direction():
