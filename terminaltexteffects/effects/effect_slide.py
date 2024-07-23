@@ -37,14 +37,15 @@ class SlideConfig(ArgsDataClass):
     Attributes:
         movement_speed (float): Speed of the characters. Valid values are n > 0.
         grouping (typing.Literal["row", "column", "diagonal"]): Direction to group characters. Valid values are 'row', 'column', 'diagonal'.
+        gap (int): Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect. Valid values are n >= 0.
+        reverse_direction (bool): Reverse the direction of the characters.
+        merge (bool): Merge the character groups originating.
+        movement_easing (easing.EasingFunction): Easing function to use for character movement.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the gradient.
-        gap (int): Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect. Valid values are n >= 0.
-        reverse_direction (bool): Reverse the direction of the characters.
-        merge (bool): Merge the character groups originating.
-        movement_easing (easing.EasingFunction): Easing function to use for character movement."""
+    """
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
@@ -62,6 +63,38 @@ class SlideConfig(ArgsDataClass):
         help="Direction to group characters.",
     )  # type: ignore[assignment]
     "typing.Literal['row', 'column', 'diagonal'] : Direction to group characters. Valid values are Literal['row', 'column', 'diagonal']."
+
+    gap: int = ArgField(
+        cmd_name="--gap",
+        type_parser=argvalidators.NonNegativeInt.type_parser,
+        default=3,
+        metavar=argvalidators.NonNegativeInt.METAVAR,
+        help="Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect.",
+    )  # type: ignore[assignment]
+    "int : Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect."
+
+    reverse_direction: bool = ArgField(
+        cmd_name="--reverse-direction",
+        action="store_true",
+        help="Reverse the direction of the characters.",
+    )  # type: ignore[assignment]
+    "bool : Reverse the direction of the characters."
+
+    merge: bool = ArgField(
+        cmd_name="--merge",
+        action="store_true",
+        help="Merge the character groups originating from either side of the terminal. (--reverse-direction is ignored when merging)",
+    )  # type: ignore[assignment]
+    "bool : Merge the character groups originating from either side of the terminal."
+
+    movement_easing: easing.EasingFunction = ArgField(
+        cmd_name=["--movement-easing"],
+        default=easing.in_out_quad,
+        type_parser=argvalidators.Ease.type_parser,
+        metavar=argvalidators.Ease.METAVAR,
+        help="Easing function to use for character movement.",
+    )  # type: ignore[assignment]
+    "easing.EasingFunction : Easing function to use for character movement."
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -98,38 +131,6 @@ class SlideConfig(ArgsDataClass):
         help="Direction of the gradient (vertical, horizontal, diagonal, center).",
     )  # type: ignore[assignment]
     "Gradient.Direction : Direction of the gradient."
-
-    gap: int = ArgField(
-        cmd_name="--gap",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
-        default=3,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
-        help="Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect.",
-    )  # type: ignore[assignment]
-    "int : Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect."
-
-    reverse_direction: bool = ArgField(
-        cmd_name="--reverse-direction",
-        action="store_true",
-        help="Reverse the direction of the characters.",
-    )  # type: ignore[assignment]
-    "bool : Reverse the direction of the characters."
-
-    merge: bool = ArgField(
-        cmd_name="--merge",
-        action="store_true",
-        help="Merge the character groups originating from either side of the terminal. (--reverse-direction is ignored when merging)",
-    )  # type: ignore[assignment]
-    "bool : Merge the character groups originating from either side of the terminal."
-
-    movement_easing: easing.EasingFunction = ArgField(
-        cmd_name=["--movement-easing"],
-        default=easing.in_out_quad,
-        type_parser=argvalidators.Ease.type_parser,
-        metavar=argvalidators.Ease.METAVAR,
-        help="Easing function to use for character movement.",
-    )  # type: ignore[assignment]
-    "easing.EasingFunction : Easing function to use for character movement."
 
     @classmethod
     def get_effect_class(cls):
