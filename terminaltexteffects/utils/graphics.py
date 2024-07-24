@@ -47,6 +47,8 @@ class Color:
         Raises:
             ValueError: If the color value is not a valid XTerm-256 color code or an RGB hex color string.
         """
+        if isinstance(color_value, str):
+            color_value = color_value.strip("#")
         self.color_arg = color_value
         self.xterm_color: int | None = None
         if hexterm.is_valid_color(color_value):
@@ -54,7 +56,7 @@ class Color:
                 self.xterm_color = color_value
                 self.rgb_color = hexterm.xterm_to_hex(color_value)
             else:
-                self.rgb_color = color_value.strip("#")
+                self.rgb_color = color_value
                 self.xterm_color = None
         else:
             raise ValueError(
@@ -71,7 +73,7 @@ class Color:
         return colorterm._hex_to_int(self.rgb_color)
 
     def __repr__(self) -> str:
-        return f"Color({self.color_arg})"
+        return f"Color('{self.color_arg}')"
 
     def __str__(self) -> str:
         color_block = f"{colorterm.fg(self.rgb_color)}█████{ansitools.RESET_ALL()}"
@@ -207,6 +209,8 @@ class Gradient:
         steps = steps[: len(color_pairs)]
         color_pair: tuple[Color, Color]
         for color_pair, steps in itertools.zip_longest(color_pairs, steps, fillvalue=steps[-1]):
+            if steps < 1:
+                raise ValueError(f"Invalid steps: {steps} | Steps must be greater than 0.")
             start, end = color_pair
             start_color_ints = start.rgb_ints
             end_color_ints = end.rgb_ints
@@ -243,29 +247,25 @@ class Gradient:
         For example, a vertical gradient will have the same color for each column in a row. When applied across all characters in the canvas, the gradient will be visible as a vertical gradient.
 
         Args:
-            max_row (int): The maximum row value.
-            max_column (int): The maximum column value.
+            max_row (int): The maximum row value. Must be greater than 0.
+            max_column (int): The maximum column value. Must be greater than 0.
             direction (Gradient.Direction): The direction of the gradient.
 
         Returns:
             dict[Coord, str]: A mapping of coordinates to colors.
         """
+        if max_row <= 0 or max_column <= 0:
+            raise ValueError("max_row and max_column must be greater than 0.")
         gradient_mapping: dict[geometry.Coord, Color] = {}
         if direction == Gradient.Direction.VERTICAL:
             for row_value in range(max_row + 1):
-                if max_row == 0:
-                    fraction = 1.0
-                else:
-                    fraction = row_value / max_row
+                fraction = row_value / max_row
                 color = self.get_color_at_fraction(fraction)
                 for column_value in range(1, max_column + 1):
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
         elif direction == Gradient.Direction.HORIZONTAL:
             for column_value in range(1, max_column + 1):
-                if max_column == 0:
-                    fraction = 1.0
-                else:
-                    fraction = column_value / max_column
+                fraction = column_value / max_column
                 color = self.get_color_at_fraction(fraction)
                 for row_value in range(max_row + 1):
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
@@ -280,10 +280,7 @@ class Gradient:
         elif direction == Gradient.Direction.DIAGONAL:
             for row_value in range(max_row + 1):
                 for column_value in range(1, max_column + 1):
-                    if max_row == 0 or max_column == 0:
-                        fraction = 1.0
-                    else:
-                        fraction = ((row_value * 2) + column_value) / ((max_row * 2) + max_column)
+                    fraction = ((row_value * 2) + column_value) / ((max_row * 2) + max_column)
                     color = self.get_color_at_fraction(fraction)
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
 
@@ -302,15 +299,7 @@ class Gradient:
     def __getitem__(self, index: slice) -> list[Color]: ...
 
     def __getitem__(self, index: int | slice) -> Color | list[Color]:
-        if isinstance(index, int):
-            if index < 0 or index >= len(self.spectrum):
-                raise IndexError("Index out of range.")
-            return self.spectrum[index]
-        elif isinstance(index, slice):
-            start, stop, step = index.indices(len(self.spectrum))
-            return [self.spectrum[i] for i in range(start, stop, step)]
-        else:
-            raise TypeError("Index must be an integer or a slice.")
+        return self.spectrum[index]
 
     def __str__(self) -> str:
         color_blocks = [f"{colorterm.fg(color.rgb_color)}█{ansitools.RESET_ALL()}" for color in self.spectrum]
