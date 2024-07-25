@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from terminaltexteffects.utils import geometry
 
 
@@ -20,12 +21,12 @@ def test_coord_equalities(coord):
 
 
 def test_find_coords_on_circle_coords_limit(coord):
-    coords = geometry.find_coords_on_circle(coord, 5, 5, True)
+    coords = geometry.find_coords_on_circle(coord, 5, 5, False)
     assert len(coords) == 5
 
 
 def test_find_coords_on_circle_zero_radius(coord):
-    coords = geometry.find_coords_on_circle(coord, 0, 5, True)
+    coords = geometry.find_coords_on_circle(coord, 0, 5, False)
     assert len(coords) == 0
 
 
@@ -56,15 +57,14 @@ def test_find_coords_in_rect_zero_width(coord):
 
 def test_find_coord_at_distance(coord):
     new_coord = geometry.Coord(coord.column + 5, coord.row + 5)
-    coord = geometry.find_coord_at_distance(coord, new_coord, 3)
+    coord_at_distance = geometry.find_coord_at_distance(coord, new_coord, 3)
     # verify the coord returned is further away from the target coord
-    assert coord.column > new_coord.column and coord.row > new_coord.row
+    assert coord_at_distance == geometry.Coord(8, 9)
 
 
 def test_find_coord_at_distance_zero_distance(coord):
-    new_coord = geometry.Coord(coord.column + 5, coord.row + 5)
-    coord = geometry.find_coord_at_distance(coord, new_coord, 0)
-    assert coord.column == new_coord.column and coord.row == new_coord.row
+    coord_at_distance = geometry.find_coord_at_distance(coord, coord, 0)
+    assert coord_at_distance.column == coord.column and coord_at_distance.row == coord.row
 
 
 def test_find_coord_on_bezier_curve():
@@ -120,7 +120,8 @@ def test_find_length_of_bezier_curve():
     start = geometry.Coord(0, 0)
     end = geometry.Coord(10, 10)
     control = geometry.Coord(5, 0)
-    assert geometry.find_length_of_bezier_curve(start, end, control) > 0
+    length = geometry.find_length_of_bezier_curve(start, end, control)
+    assert length == 12.307135789365265
 
 
 def test_find_length_of_bezier_curve_two_control_points():
@@ -128,16 +129,25 @@ def test_find_length_of_bezier_curve_two_control_points():
     end = geometry.Coord(10, 10)
     control1 = geometry.Coord(5, 0)
     control2 = geometry.Coord(5, 10)
-    assert geometry.find_length_of_bezier_curve(start, (control1, control2), end) > 0
+    length = geometry.find_length_of_bezier_curve(start, (control1, control2), end)
+    assert length == 13.957417329238151
 
 
 def test_find_length_of_line():
     start = geometry.Coord(0, 0)
     end = geometry.Coord(10, 10)
-    assert geometry.find_length_of_line(start, end) > 0
+    length = geometry.find_length_of_line(start, end)
+    assert length == 14.142135623730951
+
+
+def test_find_length_of_line_double_row_diff():
+    start = geometry.Coord(0, 0)
+    end = geometry.Coord(0, 10)
+    length = geometry.find_length_of_line(start, end, double_row_diff=True)
+    assert length == 20
 
 
 def test_find_normalized_distance_from_center():
     coord = geometry.Coord(3, 3)
     distance = geometry.find_normalized_distance_from_center(10, 10, coord)
-    assert distance > 0
+    assert distance == 0.4
