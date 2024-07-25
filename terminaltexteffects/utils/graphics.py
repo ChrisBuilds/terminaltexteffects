@@ -17,9 +17,6 @@ from enum import Enum, auto
 
 from terminaltexteffects.utils import ansitools, colorterm, geometry, hexterm
 
-if typing.TYPE_CHECKING:
-    pass
-
 
 class Color:
     """A Color object represents a color in the RGB color space. The color can be initialized with an XTerm-256 color
