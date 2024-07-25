@@ -1,7 +1,11 @@
 import pytest
 
 from terminaltexteffects.engine.motion import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient
+from terminaltexteffects.utils.graphics import Color, Gradient, random_color
+
+
+def test_random_color() -> None:
+    assert isinstance(random_color(), Color)
 
 
 def test_gradient_zero_stops() -> None:
@@ -30,6 +34,16 @@ def test_gradient_iter() -> None:
     g = Gradient(Color("ffffff"), Color("000000"), steps=4)
     for color in g:
         assert isinstance(color, Color)
+
+
+def test_gradient_str() -> None:
+    g = Gradient(Color("ffffff"), Color("000000"), steps=4)
+    assert "Stops(ffffff, 000000)" in str(g)
+
+
+def test_gradient_len() -> None:
+    g = Gradient(Color("ffffff"), Color("000000"), steps=4)
+    assert len(g) == 5
 
 
 def test_gradient_length_single_color() -> None:
