@@ -71,8 +71,8 @@ def test_find_coord_on_bezier_curve():
     start = geometry.Coord(0, 0)
     end = geometry.Coord(10, 10)
     control = geometry.Coord(5, 0)
-    # verify a Coord is returned and no exception is raised
-    assert isinstance(geometry.find_coord_on_bezier_curve(start, end, control, 0.5), geometry.Coord)
+    coord_on_curve = geometry.find_coord_on_bezier_curve(start, end, control, 0.5)
+    assert coord_on_curve == geometry.Coord(6, 5)
 
 
 def test_find_coord_on_bezier_curve_two_control_points():
