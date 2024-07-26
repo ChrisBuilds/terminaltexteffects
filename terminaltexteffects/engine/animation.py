@@ -7,7 +7,7 @@ from enum import Enum, auto
 from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, hexterm
 
 if typing.TYPE_CHECKING:
-    from terminaltexteffects.engine import base_character
+    from terminaltexteffects.engine import base_character  # pragma: no cover
 
 
 class SyncMetric(Enum):
@@ -62,17 +62,6 @@ class CharacterVisual:
 
     def __post_init__(self):
         self.formatted_symbol = self.format_symbol()
-
-    def disable_modes(self) -> None:
-        """Disables all graphical modes."""
-        self.bold = False
-        self.dim = False
-        self.italic = False
-        self.underline = False
-        self.blink = False
-        self.reverse = False
-        self.hidden = False
-        self.strike = False
 
     def format_symbol(self) -> str:
         """Formats the symbol for printing by applying ANSI sequences for any active modes and color."""
@@ -203,7 +192,7 @@ class Scene:
             if self.no_color:
                 return None
             elif self.use_xterm_colors:
-                if color.xterm_color:
+                if color.xterm_color is not None:
                     return color.xterm_color
                 elif color.rgb_color in self.xterm_color_map:
                     return self.xterm_color_map[color.rgb_color]
@@ -435,7 +424,7 @@ class Animation:
             if self.no_color:
                 return None
             elif self.use_xterm_colors:
-                if color.xterm_color:
+                if color.xterm_color is not None:
                     return color.xterm_color
                 elif color.rgb_color in self.xterm_color_map:
                     return self.xterm_color_map[color.rgb_color]
@@ -470,7 +459,7 @@ class Animation:
             found_unique = False
             current_id = len(self.scenes)
             while not found_unique:
-                id = f"{len(self.scenes)}"
+                id = f"{current_id}"
                 if id not in self.scenes:
                     found_unique = True
                 else:
