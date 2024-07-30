@@ -653,8 +653,6 @@ class Terminal:
                 character._input_coord = Coord(column, input_height - row)
                 if character._input_symbol != " ":
                     input_characters.append(character)
-                else:
-                    character.is_fill_character = True
 
         anchored_characters = self.canvas._anchor_text(input_characters, self.config.anchor_text)
         return [char for char in anchored_characters if self.canvas.coord_is_in_canvas(char._input_coord)]
@@ -668,11 +666,6 @@ class Terminal:
             list[EffectCharacter]: list of characters
         """
         inner_fill_characters = []
-        # account for spaces in input text already processed into EffectCharacters
-        for character in self._input_characters:
-            if character.is_fill_character:
-                inner_fill_characters.append(character)
-                self.character_by_input_coord[character.input_coord] = character
         # account for space between input text and canvas edges
         for row in range(self.canvas.text_top, self.canvas.text_bottom - 1, -1):
             for column in range(self.canvas.text_left, self.canvas.text_right + 1):
