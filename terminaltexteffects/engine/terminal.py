@@ -426,7 +426,7 @@ class Terminal:
         self.visible_left = max(self.canvas.left + self.canvas_column_offset, 1)
         self._input_characters = [
             character
-            for character in self._setup_input_characters(self.config.xterm_colors, self.config.no_color)
+            for character in self._setup_input_characters()
             if character.input_coord.row <= self.canvas.top and character.input_coord.column <= self.canvas.right
         ]
         self._added_characters: list[EffectCharacter] = []
@@ -641,8 +641,6 @@ class Terminal:
         """
 
         formatted_lines = []
-        if not self._preprocessed_character_lines:
-            self._input_data = "No Input."
         formatted_lines = (
             self._wrap_lines(self._preprocessed_character_lines, self.canvas.right)
             if self.config.wrap_text
