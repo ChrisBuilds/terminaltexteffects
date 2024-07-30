@@ -629,15 +629,12 @@ class Terminal:
             wrapped_lines.append(line)
         return wrapped_lines
 
-    def _setup_input_characters(self, use_xterm_colors: bool, no_color: bool) -> list[EffectCharacter]:
+    def _setup_input_characters(self) -> list[EffectCharacter]:
         """Sets up the input characters discovered during preprocessing and positions them based on row/column coordinates
         relative to the anchor point in the Canvas.
 
         Coordinates are relative to the cursor row position at the time of execution. 1,1 is the bottom left corner of the row
         above the cursor.
-
-        Args:
-            use_xterm_colors (bool): whether to convert colors to the closest XTerm-256 color
 
         Returns:
             list[Character]: list of EffectCharacter objects
