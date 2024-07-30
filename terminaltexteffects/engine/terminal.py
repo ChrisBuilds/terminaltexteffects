@@ -395,7 +395,7 @@ class Terminal:
         MOST_TO_LEAST = auto()
         RANDOM = auto()
 
-    def __init__(self, input_data: str, config: TerminalConfig | None = None):
+    def __init__(self, input_data: str, config: TerminalConfig | None = None) -> None:
         """Initializes the Terminal object.
 
         Args:
