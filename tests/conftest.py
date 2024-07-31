@@ -253,7 +253,7 @@ def terminal_config_with_color_options(xterm_colors, no_color) -> TerminalConfig
 
 
 @pytest.fixture()
-def terminal_config_default() -> TerminalConfig:
+def terminal_config_default_no_framerate() -> TerminalConfig:
     terminal_config = TerminalConfig()
     terminal_config.frame_rate = 0
     return terminal_config
