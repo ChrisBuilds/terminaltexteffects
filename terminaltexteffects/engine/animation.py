@@ -281,7 +281,7 @@ class Scene:
         if self.frames:
             return self.frames[0].character_visual
         else:
-            raise ValueError("Scene has no frames.")
+            raise ValueError(f"Scene {self.scene_id} - Unable to activate, scene has no frames.")
 
     def get_next_visual(self) -> CharacterVisual:
         """
