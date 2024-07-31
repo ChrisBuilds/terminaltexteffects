@@ -3,6 +3,7 @@ import pytest
 import terminaltexteffects.utils.easing as easing
 from terminaltexteffects.engine.animation import CharacterVisual, Frame, Scene, SyncMetric
 from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, Gradient
 
 
@@ -210,6 +211,121 @@ def test_animation_set_appearance_existing_colors(character: EffectCharacter):
     character.animation.set_appearance("a", fg_color=Color("f0f0f0"), bg_color=Color("0f0f0f"))
     assert character.animation.current_character_visual.fg_color == Color("ffffff")
     assert character.animation.current_character_visual.bg_color == Color("000000")
+
+
+def test_animation_adjust_color_brightness_half(character: EffectCharacter):
+    red = Color("ff0000")
+    new_color = character.animation.adjust_color_brightness(red, 0.5)
+    assert new_color == Color("7f0000")
+
+
+def test_animation_adjust_color_brightness_double(character: EffectCharacter):
+    red = Color("ff0000")
+    new_color = character.animation.adjust_color_brightness(red, 2)
+    assert new_color == Color("ffffff")
+
+
+def test_animation_adjust_color_brightness_quarter(character: EffectCharacter):
+    red = Color("ff0000")
+    new_color = character.animation.adjust_color_brightness(red, 0.25)
+    assert new_color == Color("3f0000")
+
+
+def test_animation_adjust_color_brightness_zero(character: EffectCharacter):
+    red = Color("ff0000")
+    new_color = character.animation.adjust_color_brightness(red, 0)
+    assert new_color == Color("000000")
+
+
+def test_animation_adjust_color_brightness_negative(character: EffectCharacter):
+    red = Color("ff0000")
+    new_color = character.animation.adjust_color_brightness(red, -0.5)
+    assert new_color == Color("000000")
+
+
+def test_animation_adjust_color_brightness_black(character: EffectCharacter):
+    black = Color("000000")
+    new_color = character.animation.adjust_color_brightness(black, 0.5)
+    assert new_color == Color("000000")
+
+
+def test_animation_ease_animation_no_active_scene(character: EffectCharacter):
+    assert character.animation._ease_animation(easing.in_sine) == 0
+
+
+def test_animation_ease_animation_active_scene(character: EffectCharacter):
+    scene = character.animation.new_scene(id="test_scene", ease=easing.in_sine)
+    scene.add_frame(symbol="a", duration=10)
+    scene.add_frame(symbol="b", duration=10)
+    character.animation.activate_scene(scene)
+    for _ in range(10):
+        character.animation.step_animation()
+    n = character.animation._ease_animation(easing.in_sine)
+    assert n == 0.2928932188134524
+
+
+def test_animation_step_animation_sync_step(character: EffectCharacter):
+    p = character.motion.new_path()
+    p.new_waypoint(Coord(10, 10))
+    character.motion.activate_path(p)
+    s = character.animation.new_scene(sync=SyncMetric.STEP)
+    s.add_frame(symbol="a", duration=10)
+    s.add_frame(symbol="b", duration=10)
+    character.animation.activate_scene(s)
+    for _ in range(5):
+        character.animation.step_animation()
+
+
+def test_animation_step_animation_sync_distance(character: EffectCharacter):
+    p = character.motion.new_path()
+    p.new_waypoint(Coord(10, 10))
+    character.motion.activate_path(p)
+    s = character.animation.new_scene(sync=SyncMetric.DISTANCE)
+    s.add_frame(symbol="a", duration=10)
+    s.add_frame(symbol="b", duration=10)
+    character.animation.activate_scene(s)
+    for _ in range(5):
+        character.animation.step_animation()
+
+
+def test_animation_step_animation_sync_waypoint_deactivated(character: EffectCharacter):
+    p = character.motion.new_path()
+    p.new_waypoint(Coord(10, 10))
+    character.motion.activate_path(p)
+    s = character.animation.new_scene(sync=SyncMetric.DISTANCE)
+    s.add_frame(symbol="a", duration=10)
+    s.add_frame(symbol="b", duration=10)
+    character.animation.activate_scene(s)
+    for _ in range(5):
+        character.animation.step_animation()
+    character.motion.deactivate_path(p)
+    character.animation.step_animation()
+
+
+def test_animation_step_animation_eased_scene(character: EffectCharacter):
+    scene = character.animation.new_scene(id="test_scene", ease=easing.in_sine)
+    scene.add_frame(symbol="a", duration=10)
+    scene.add_frame(symbol="b", duration=10)
+    character.animation.activate_scene(scene)
+    while character.animation.active_scene:
+        character.animation.step_animation()
+
+
+def test_animation_step_animation_eased_scene_looping(character: EffectCharacter):
+    scene = character.animation.new_scene(id="test_scene", ease=easing.in_sine, is_looping=True)
+    scene.add_frame(symbol="a", duration=10)
+    scene.add_frame(symbol="b", duration=10)
+    character.animation.activate_scene(scene)
+    for _ in range(100):
+        character.animation.step_animation()
+
+
+def test_animation_deactivate_scene(character: EffectCharacter):
+    scene = character.animation.new_scene(id="test_scene")
+    scene.add_frame(symbol="a", duration=10)
+    character.animation.activate_scene(scene)
+    character.animation.deactivate_scene(scene)
+    assert character.animation.active_scene is None
 
 
 def test_scene_get_color_code_no_color(character: EffectCharacter):
