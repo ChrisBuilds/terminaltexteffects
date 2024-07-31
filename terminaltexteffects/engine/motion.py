@@ -16,48 +16,34 @@ from terminaltexteffects.utils import easing, geometry
 from terminaltexteffects.utils.geometry import Coord
 
 if typing.TYPE_CHECKING:
-    from terminaltexteffects.engine import base_character
+    from terminaltexteffects.engine import base_character  # pragma: no cover
 
 
-@dataclass
+@dataclass(frozen=True)
 class Waypoint:
     """A Waypoint comprises a coordinate, speed, and, optionally, bezier control point(s).
 
     Args:
         waypoint_id (str): unique identifier for the waypoint
         coord (Coord): coordinate
-        bezier_control (tuple[Coord, ...] | Coord | None): coordinate of the control point for a bezier curve. Defaults to None.
+        bezier_control (tuple[Coord, ...] | None): coordinate of the control point for a bezier curve. Defaults to None.
     """
 
     waypoint_id: str
     coord: Coord
-    bezier_control: tuple[Coord, ...] | Coord | None = None
-
-    def __post_init__(self) -> None:
-        if self.bezier_control and isinstance(self.bezier_control, Coord):
-            self.bezier_control = (self.bezier_control,)
-
-    def __eq__(self, other: typing.Any) -> bool:
-        if not isinstance(other, Waypoint):
-            return NotImplemented
-        return self.coord == other.coord
-
-    def __hash__(self):
-        return hash(self.waypoint_id)
+    bezier_control: tuple[Coord, ...] | None = None
 
 
 @dataclass
 class Segment:
     """A segment of a path consisting of two waypoints and the distance between them.
 
+    Segments are created by the Path class. The start waypoint is the end waypoint of the previous segment or the origin waypoint.
+
     Attributes:
         start (Waypoint): start waypoint
         end (Waypoint): end waypoint
         distance (float): distance between the start and end waypoints
-
-    Methods:
-        get_coord_on_segment(distance_factor: float) -> Coord:
-            Returns the coordinate at the given distance along the segment.
     """
 
     start: Waypoint
@@ -67,25 +53,6 @@ class Segment:
     def __post_init__(self) -> None:
         self.enter_event_triggered: bool = False
         self.exit_event_triggered: bool = False
-
-    def get_coord_on_segment(self, distance_factor: float) -> Coord:
-        """Returns the coordinate at the given distance along the segment.
-
-        Args:
-            distance_factor (float): distance factor
-
-        Returns:
-            Coord: Coordinate at the given distance.
-        """
-        if self.start.bezier_control:
-            return geometry.find_coord_on_bezier_curve(
-                self.start.coord,
-                self.start.bezier_control,
-                self.end.coord,
-                distance_factor,
-            )
-        else:
-            return geometry.find_coord_on_line(self.start.coord, self.end.coord, distance_factor)
 
     def __eq__(self, other: typing.Any) -> bool:
         if not isinstance(other, Segment):
@@ -162,12 +129,19 @@ class Path:
             found_unique = False
             current_id = len(self.waypoints)
             while not found_unique:
-                id = f"{len(self.waypoints)}"
+                id = f"{current_id}"
                 if id not in self.waypoint_lookup:
                     found_unique = True
                 else:
                     current_id += 1
-        new_waypoint = Waypoint(id, coord, bezier_control=bezier_control)
+        bezier_control_tuple: tuple[Coord, ...] | None
+        if bezier_control and isinstance(bezier_control, Coord):
+            bezier_control_tuple = (bezier_control,)
+        elif bezier_control and isinstance(bezier_control, tuple):
+            bezier_control_tuple = bezier_control
+        else:
+            bezier_control_tuple = None
+        new_waypoint = Waypoint(id, coord, bezier_control=bezier_control_tuple)
         self._add_waypoint_to_path(new_waypoint)
         return new_waypoint
 
@@ -356,7 +330,7 @@ class Motion:
             found_unique = False
             current_id = len(self.paths)
             while not found_unique:
-                id = f"{len(self.paths)}"
+                id = f"{current_id}"
                 if id not in self.paths:
                     found_unique = True
                 else:
@@ -449,6 +423,8 @@ class Motion:
         Args:
             path (Path): The path to activate.
         """
+        if not path.waypoints:
+            raise ValueError(f"Cannot active path: {path.path_id} | Path has no waypoints.")
         self.active_path = path
         first_waypoint = self.active_path.waypoints[0]
         if first_waypoint.bezier_control:
