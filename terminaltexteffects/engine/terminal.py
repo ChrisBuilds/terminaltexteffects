@@ -190,8 +190,12 @@ class Canvas:
     def __post_init__(self) -> None:
         self.center_row = max(self.top // 2, self.bottom)
         """int: row of the center of the canvas"""
+        if self.top % 2 and self.top > 1:
+            self.center_row += 1
         self.center_column = max(self.right // 2, self.left)
         """int: column of the center of the canvas"""
+        if self.right % 2 and self.right > 1:
+            self.center_column += 1
         self.center = Coord(self.center_column, self.center_row)
         """Coord: coordinate of the center of the canvas"""
         self.width = self.right
@@ -978,18 +982,11 @@ class Terminal:
         sys.stdout.write(ansitools.SHOW_CURSOR())
         sys.stdout.write(end_symbol)
 
-    def print(self, output_string: str, *, enforce_frame_rate: bool = True) -> None:
+    def print(self, output_string: str) -> None:
         """Prints the current terminal state to stdout while preserving the cursor position.
 
         Args:
             output_string (str): The string to be printed.
-            enforce_frame_rate (bool, optional): Whether to enforce the frame rate set in the terminal config. Defaults to True.
-
-        Notes:
-            This method includes animation timing to control the frame rate.
-            If the time since the last print is less than required to limit the frame rate, the method will sleep for the remaining time
-            to ensure a consistent animation speed.
-
         """
         self.move_cursor_to_top()
         sys.stdout.write(output_string)
