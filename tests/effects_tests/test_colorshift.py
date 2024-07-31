@@ -6,9 +6,9 @@ from terminaltexteffects.effects import effect_colorshift
 @pytest.mark.parametrize(
     "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
 )
-def test_colorshift_effect_all_inputs(input_data, terminal_config_default) -> None:
+def test_colorshift_effect_all_inputs(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_colorshift.ColorShift(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
@@ -25,10 +25,10 @@ def test_colorshift_effect_terminal_color_options(input_data, terminal_config_wi
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_colorshift_final_gradient(
-    terminal_config_default, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
 ) -> None:
     effect = effect_colorshift.ColorShift(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.final_gradient_direction = gradient_direction
     effect.effect_config.final_gradient_steps = gradient_steps
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -49,7 +49,7 @@ def test_colorshift_args(
     travel,
     reverse_travel_direction,
     cycles,
-    terminal_config_default,
+    terminal_config_default_no_framerate,
     skip_final_gradient,
     gradient_direction,
     gradient_stops,
@@ -57,7 +57,7 @@ def test_colorshift_args(
     gradient_frames,
 ) -> None:
     effect = effect_colorshift.ColorShift(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.gradient_stops = gradient_stops
     effect.effect_config.gradient_steps = gradient_steps
     effect.effect_config.gradient_frames = gradient_frames

@@ -7,9 +7,9 @@ from terminaltexteffects.utils.graphics import Color, Gradient
 @pytest.mark.parametrize(
     "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
 )
-def test_synthgrid_effect(input_data, terminal_config_default) -> None:
+def test_synthgrid_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_synthgrid.SynthGrid(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
@@ -52,7 +52,7 @@ def test_synthgrid_effect_terminal_color_options(input_data, terminal_config_wit
 )
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_synthgrid_gradients(
-    terminal_config_default,
+    terminal_config_default_no_framerate,
     input_data,
     grid_gradient_stops,
     grid_gradient_steps,
@@ -62,7 +62,7 @@ def test_synthgrid_gradients(
     text_gradient_direction,
 ) -> None:
     effect = effect_synthgrid.SynthGrid(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.grid_gradient_stops = grid_gradient_stops
     effect.effect_config.grid_gradient_steps = grid_gradient_steps
     effect.effect_config.grid_gradient_direction = grid_gradient_direction
@@ -80,7 +80,7 @@ def test_synthgrid_gradients(
 @pytest.mark.parametrize("max_active_blocks", [0.001, 1])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_synthgrid_args(
-    terminal_config_default,
+    terminal_config_default_no_framerate,
     input_data,
     grid_row_symbol,
     grid_column_symbol,
@@ -88,7 +88,7 @@ def test_synthgrid_args(
     max_active_blocks,
 ) -> None:
     effect = effect_synthgrid.SynthGrid(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.grid_row_symbol = grid_row_symbol
     effect.effect_config.grid_column_symbol = grid_column_symbol
     effect.effect_config.text_generation_symbols = text_generation_symbols

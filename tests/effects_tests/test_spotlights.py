@@ -6,9 +6,9 @@ from terminaltexteffects.effects import effect_spotlights
 @pytest.mark.parametrize(
     "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
 )
-def test_spotlights_effect(input_data, terminal_config_default) -> None:
+def test_spotlights_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_spotlights.Spotlights(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
@@ -25,13 +25,13 @@ def test_spotlights_effect_terminal_color_options(input_data, terminal_config_wi
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_spotlights_final_gradient(
-    terminal_config_default, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
 ) -> None:
     effect = effect_spotlights.Spotlights(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
     effect.effect_config.final_gradient_steps = gradient_steps
     effect.effect_config.final_gradient_direction = gradient_direction
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config
     with effect.terminal_output() as terminal:
         for frame in effect:
@@ -45,7 +45,7 @@ def test_spotlights_final_gradient(
 @pytest.mark.parametrize("spotlight_count", [1, 10])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_spotlights_args(
-    terminal_config_default,
+    terminal_config_default_no_framerate,
     input_data,
     beam_width_ratio,
     beam_falloff,
@@ -54,7 +54,7 @@ def test_spotlights_args(
     spotlight_count,
 ) -> None:
     effect = effect_spotlights.Spotlights(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.beam_width_ratio = beam_width_ratio
     effect.effect_config.beam_falloff = beam_falloff
     effect.effect_config.search_duration = search_duration

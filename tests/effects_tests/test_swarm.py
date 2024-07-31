@@ -7,9 +7,9 @@ from terminaltexteffects.utils.graphics import Color
 @pytest.mark.parametrize(
     "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
 )
-def test_swarm_effect(input_data, terminal_config_default) -> None:
+def test_swarm_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_swarm.Swarm(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
@@ -26,13 +26,13 @@ def test_swarm_effect_terminal_color_options(input_data, terminal_config_with_co
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_swarm_final_gradient(
-    terminal_config_default, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
 ) -> None:
     effect = effect_swarm.Swarm(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
     effect.effect_config.final_gradient_steps = gradient_steps
     effect.effect_config.final_gradient_direction = gradient_direction
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config
     with effect.terminal_output() as terminal:
         for frame in effect:
@@ -46,10 +46,16 @@ def test_swarm_final_gradient(
 @pytest.mark.parametrize("swarm_area_count_range", [(1, 2), (3, 4)])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_swarm_args(
-    terminal_config_default, input_data, base_color, flash_color, swarm_size, swarm_coordination, swarm_area_count_range
+    terminal_config_default_no_framerate,
+    input_data,
+    base_color,
+    flash_color,
+    swarm_size,
+    swarm_coordination,
+    swarm_area_count_range,
 ) -> None:
     effect = effect_swarm.Swarm(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.base_color = base_color
     effect.effect_config.flash_color = flash_color
     effect.effect_config.swarm_size = swarm_size

@@ -6,9 +6,9 @@ from terminaltexteffects.effects import effect_beams
 @pytest.mark.parametrize(
     "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
 )
-def test_beams_effect(input_data, terminal_config_default) -> None:
+def test_beams_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_beams.Beams(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
@@ -25,10 +25,10 @@ def test_beams_effect_terminal_color_options(input_data, terminal_config_with_co
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_beams_final_gradient(
-    terminal_config_default, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
 ) -> None:
     effect = effect_beams.Beams(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.final_gradient_direction = gradient_direction
     effect.effect_config.final_gradient_steps = gradient_steps
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -45,7 +45,7 @@ def test_beams_final_gradient(
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_beams_effect_args(
     input_data,
-    terminal_config_default,
+    terminal_config_default_no_framerate,
     beam_row_symbols,
     beam_column_symbols,
     beam_delay,
@@ -56,7 +56,7 @@ def test_beams_effect_args(
     gradient_frames,
 ) -> None:
     effect = effect_beams.Beams(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.beam_row_symbols = beam_row_symbols
     effect.effect_config.beam_column_symbols = beam_column_symbols
     effect.effect_config.beam_delay = beam_delay

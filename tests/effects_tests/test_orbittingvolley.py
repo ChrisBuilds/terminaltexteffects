@@ -6,9 +6,9 @@ from terminaltexteffects.effects import effect_orbittingvolley
 @pytest.mark.parametrize(
     "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
 )
-def test_orbittingvolley_effect(input_data, terminal_config_default) -> None:
+def test_orbittingvolley_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_orbittingvolley.OrbittingVolley(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
@@ -25,13 +25,13 @@ def test_orbittingvolley_effect_terminal_color_options(input_data, terminal_conf
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_orbittingvolley_final_gradient(
-    terminal_config_default, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
 ) -> None:
     effect = effect_orbittingvolley.OrbittingVolley(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
     effect.effect_config.final_gradient_steps = gradient_steps
     effect.effect_config.final_gradient_direction = gradient_direction
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config
     with effect.terminal_output() as terminal:
         for frame in effect:
@@ -48,7 +48,7 @@ def test_orbittingvolley_final_gradient(
 @pytest.mark.parametrize("launch_delay", [1, 5])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_orbittingvolley_args(
-    terminal_config_default,
+    terminal_config_default_no_framerate,
     input_data,
     top_launcher_symbol,
     right_launcher_symbol,
@@ -60,7 +60,7 @@ def test_orbittingvolley_args(
     launch_delay,
 ) -> None:
     effect = effect_orbittingvolley.OrbittingVolley(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.top_launcher_symbol = top_launcher_symbol
     effect.effect_config.right_launcher_symbol = right_launcher_symbol
     effect.effect_config.bottom_launcher_symbol = bottom_launcher_symbol
@@ -80,7 +80,7 @@ def test_orbittingvolley_args(
 @pytest.mark.parametrize("launch_delay", [1, 5])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_orbittingvolley_easing(
-    terminal_config_default,
+    terminal_config_default_no_framerate,
     input_data,
     launcher_movement_speed,
     character_movement_speed,
@@ -89,7 +89,7 @@ def test_orbittingvolley_easing(
     easing_function_1,
 ) -> None:
     effect = effect_orbittingvolley.OrbittingVolley(input_data)
-    effect.terminal_config = terminal_config_default
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.launcher_movement_speed = launcher_movement_speed
     effect.effect_config.character_movement_speed = character_movement_speed
     effect.effect_config.volley_size = volley_size
