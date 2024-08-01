@@ -22,7 +22,18 @@ line-length = 120
 console_output_style = "progress"
 minversion = "6.0"
 addopts = ["--capture=sys", "--strict-markers", "--strict-config", "-ra"]
-markers = ["manual: subset to run manually", "visual: visually inspect effects"]
+markers = [
+    "manual: subset to run manually",
+    "visual: visually inspect effects",
+    "effects: quick effect tests",
+    "engine: engine tests",
+    "animation: animation tests",
+    "motion: motion tests",
+    "terminal: terminal tests",
+    "base_character: base character tests",
+    "utils: utility tests",
+    "smoke: quick tests covering over 90% of code",
+]
 testpaths = ["tests"]
 
 [build-system]
