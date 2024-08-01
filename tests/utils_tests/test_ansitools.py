@@ -1,5 +1,8 @@
 import pytest
+
 from terminaltexteffects.utils import ansitools
+
+pytestmark = pytest.mark.utils
 
 
 @pytest.mark.parametrize("escape", ["\033[", "\x1b["])

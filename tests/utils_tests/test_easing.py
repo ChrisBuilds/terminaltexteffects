@@ -34,6 +34,8 @@ from terminaltexteffects.utils.easing import (
     out_sine,
 )
 
+pytestmark = pytest.mark.utils
+
 easing_functions = [
     linear,
     in_sine,

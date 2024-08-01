@@ -1,5 +1,8 @@
 import pytest
+
 from terminaltexteffects.utils import hexterm
+
+pytestmark = pytest.mark.utils
 
 
 def test_hex_to_xterm():

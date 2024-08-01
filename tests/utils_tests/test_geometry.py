@@ -4,6 +4,8 @@ import pytest
 
 from terminaltexteffects.utils import geometry
 
+pytestmark = pytest.mark.utils
+
 
 @pytest.fixture()
 def coord():

@@ -2,6 +2,8 @@ import pytest
 
 from terminaltexteffects.utils import colorterm
 
+pytestmark = pytest.mark.utils
+
 
 def test_fg_hex_with_hash():
     assert colorterm.fg("#ffffff") == "\x1b[38;2;255;255;255m"

@@ -5,6 +5,8 @@ import pytest
 from terminaltexteffects.utils import argvalidators, easing
 from terminaltexteffects.utils.graphics import Color, Gradient
 
+pytestmark = pytest.mark.utils
+
 
 def test_postive_int_valid_int():
     assert argvalidators.PositiveInt.type_parser("1") == 1
