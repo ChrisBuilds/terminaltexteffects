@@ -8,7 +8,7 @@ from terminaltexteffects.engine.terminal import Canvas, Terminal, TerminalConfig
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
 
-pytestmark = [pytest.mark.engine, pytest.mark.terminal]
+pytestmark = [pytest.mark.engine, pytest.mark.terminal, pytest.mark.smoke]
 
 
 def test_canvas_init_even():

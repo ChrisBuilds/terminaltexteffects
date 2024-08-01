@@ -2,7 +2,7 @@ import pytest
 
 from terminaltexteffects.utils import hexterm
 
-pytestmark = pytest.mark.utils
+pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
 
 def test_hex_to_xterm():

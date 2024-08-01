@@ -5,7 +5,7 @@ import pytest
 from terminaltexteffects.utils import argvalidators, easing
 from terminaltexteffects.utils.graphics import Color, Gradient
 
-pytestmark = pytest.mark.utils
+pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
 
 def test_postive_int_valid_int():

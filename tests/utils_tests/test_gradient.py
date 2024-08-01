@@ -3,7 +3,7 @@ import pytest
 from terminaltexteffects.engine.motion import Coord
 from terminaltexteffects.utils.graphics import Color, Gradient, random_color
 
-pytestmark = pytest.mark.utils
+pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
 
 def test_random_color() -> None:

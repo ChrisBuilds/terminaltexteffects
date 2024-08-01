@@ -2,7 +2,7 @@ import pytest
 
 from terminaltexteffects.utils import ansitools
 
-pytestmark = pytest.mark.utils
+pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
 
 @pytest.mark.parametrize("escape", ["\033[", "\x1b["])

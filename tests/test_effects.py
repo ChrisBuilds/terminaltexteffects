@@ -3,6 +3,8 @@ import pytest
 from terminaltexteffects.effects import effect_matrix
 
 
+@pytest.mark.smoke
+@pytest.mark.effects
 @pytest.mark.parametrize(
     "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
 )

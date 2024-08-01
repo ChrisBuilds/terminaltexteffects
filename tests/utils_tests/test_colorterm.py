@@ -2,7 +2,7 @@ import pytest
 
 from terminaltexteffects.utils import colorterm
 
-pytestmark = pytest.mark.utils
+pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
 
 def test_fg_hex_with_hash():

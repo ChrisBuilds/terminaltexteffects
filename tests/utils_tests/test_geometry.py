@@ -4,7 +4,7 @@ import pytest
 
 from terminaltexteffects.utils import geometry
 
-pytestmark = pytest.mark.utils
+pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
 
 @pytest.fixture()

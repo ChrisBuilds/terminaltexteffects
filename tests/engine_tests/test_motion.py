@@ -5,7 +5,7 @@ from terminaltexteffects.engine.motion import Path, Segment, Waypoint
 from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.geometry import Coord, find_length_of_bezier_curve, find_length_of_line
 
-pytestmark = [pytest.mark.engine, pytest.mark.motion]
+pytestmark = [pytest.mark.engine, pytest.mark.motion, pytest.mark.smoke]
 
 
 @pytest.fixture
