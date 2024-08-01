@@ -8,6 +8,8 @@ from terminaltexteffects.engine.terminal import Canvas, Terminal, TerminalConfig
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
 
+pytestmark = [pytest.mark.engine, pytest.mark.terminal]
+
 
 def test_canvas_init_even():
     canvas = Canvas(10, 10)
@@ -247,10 +249,12 @@ def test_get_terminal_dimensions_raise_oserror(monkeypatch: pytest.MonkeyPatch):
     def raise_oserror():
         raise OSError
 
-    monkeypatch.setattr(shutil, "get_terminal_size", raise_oserror)
     config = TerminalConfig()
     terminal = Terminal(input_data="test", config=config)
+    old_f = shutil.get_terminal_size
+    monkeypatch.setattr(shutil, "get_terminal_size", raise_oserror)
     w, h = terminal._get_terminal_dimensions()
+    monkeypatch.setattr(shutil, "get_terminal_size", old_f)  # unpatch to avoid side effects in pytest output
     assert w == 80
     assert h == 24
 
