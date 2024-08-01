@@ -6,6 +6,8 @@ from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, Gradient
 
+pytestmark = [pytest.mark.engine, pytest.mark.animation]
+
 
 @pytest.fixture
 def character_visual_default() -> CharacterVisual:

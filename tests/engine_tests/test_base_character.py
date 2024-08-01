@@ -4,6 +4,8 @@ from terminaltexteffects.engine.base_character import EffectCharacter, EventHand
 from terminaltexteffects.engine.motion import Path
 from terminaltexteffects.utils.geometry import Coord
 
+pytestmark = [pytest.mark.engine, pytest.mark.base_character]
+
 
 @pytest.fixture()
 def effectcharacter() -> EffectCharacter:
