@@ -763,7 +763,7 @@ class Terminal:
         """Get a list of all EffectCharacters in the terminal with an optional sort.
 
         Args:
-            input_characters (bool, optional): whether to include input characters. Defaults to True.
+            input_chars (bool, optional): whether to include input characters. Defaults to True.
             inner_fill_chars (bool, optional): whether to include inner fill characters. Defaults to False.
             outer_fill_chars (bool, optional): whether to include outer fill characters. Defaults to False.
             added_chars (bool, optional): whether to include added characters. Defaults to False.
@@ -819,7 +819,7 @@ class Terminal:
 
         Args:
             grouping (CharacterGroup, optional): order to group the characters. Defaults to ROW_TOP_TO_BOTTOM.
-            input_characters (bool, optional): whether to include input characters. Defaults to True.
+            input_chars (bool, optional): whether to include input characters. Defaults to True.
             inner_fill_chars (bool, optional): whether to include inner fill characters. Defaults to False.
             outer_fill_chars (bool, optional): whether to include outer fill characters. Defaults to False.
             added_chars (bool, optional): whether to include added characters. Defaults to False.
