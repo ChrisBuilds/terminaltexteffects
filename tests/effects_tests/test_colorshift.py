@@ -37,7 +37,7 @@ def test_colorshift_final_gradient(
             terminal.print(frame)
 
 
-@pytest.mark.parametrize("loop_gradient", [True, False])
+@pytest.mark.parametrize("no_loop", [True, False])
 @pytest.mark.parametrize("travel", [True, False])
 @pytest.mark.parametrize("reverse_travel_direction", [True, False])
 @pytest.mark.parametrize("cycles", [1, 3])
@@ -45,7 +45,7 @@ def test_colorshift_final_gradient(
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_colorshift_args(
     input_data,
-    loop_gradient,
+    no_loop,
     travel,
     reverse_travel_direction,
     cycles,
@@ -61,7 +61,7 @@ def test_colorshift_args(
     effect.effect_config.gradient_stops = gradient_stops
     effect.effect_config.gradient_steps = gradient_steps
     effect.effect_config.gradient_frames = gradient_frames
-    effect.effect_config.loop_gradient = loop_gradient
+    effect.effect_config.no_loop = no_loop
     effect.effect_config.travel = travel
     effect.effect_config.travel_direction = gradient_direction
     effect.effect_config.reverse_travel_direction = reverse_travel_direction
