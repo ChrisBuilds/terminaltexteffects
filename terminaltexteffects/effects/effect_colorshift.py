@@ -39,7 +39,7 @@ class ColorShiftConfig(ArgsDataClass):
         gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         gradient_direction (Gradient.Direction): Direction of the gradient across the canvas.
-        loop_gradient (bool): Loop the gradient. This causes the final gradient color to transition back to the first gradient color.
+        no_loop (bool): Do not loop the gradient. If not set, the gradient generation will loop the final gradient color back to the first gradient color.
         travel (bool): Display the gradient as a traveling wave.
         travel_direction (Gradient.Direction): Direction the gradient travels across the canvas.
         reverse_travel_direction (bool): Reverse the gradient travel direction.
@@ -110,12 +110,12 @@ class ColorShiftConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "bool : Reverse the gradient travel direction."
 
-    loop_gradient: bool = ArgField(
-        cmd_name="--loop-gradient",
+    no_loop: bool = ArgField(
+        cmd_name="--no-loop",
         action="store_true",
-        help="Loop the gradient. This causes the final gradient color to transition back to the first gradient color.",
+        help="Do not loop the gradient. If not set, the gradient generation will loop the final gradient color back to the first gradient color.",
     )  # type: ignore[assignment]
-    "bool : Loop the gradient. This causes the final gradient color to transition back to the first gradient color."
+    "bool : Do not loop the gradient. If not set, the gradient generation will loop the final gradient color back to the first gradient color."
 
     cycles: int = ArgField(
         cmd_name="--cycles",
@@ -198,9 +198,7 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        gradient = Gradient(
-            *self.config.gradient_stops, steps=self.config.gradient_steps, loop=self.config.loop_gradient
-        )
+        gradient = Gradient(*self.config.gradient_stops, steps=self.config.gradient_steps, loop=not self.config.no_loop)
         for character in self.terminal.get_characters():
             self.terminal.set_character_visibility(character, True)
             gradient_scn = character.animation.new_scene(id="gradient")
