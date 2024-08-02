@@ -253,13 +253,18 @@ Display a gradient that shifts colors across the terminal.
 
 ![Demo](./img/effects_demos/colorshift_demo.gif)
 
+!!! note
+
+    Demo GIF uses `--travel` and `--travel-direction radial` arguments.
+
 [Reference](./effects/colorshift.md){ .md-button } [Config](./effects/colorshift.md#terminaltexteffects.effects.effect_colorshift.ColorShiftConfig){ .md-button }
 
 ??? example "ColorShift Command Line Arguments"
 
     ```
     --gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the gradient. (default: (Color(e81416), Color(ffa500), Color(faeb36), Color(79c314), Color(487de7), Color(4b369d), Color(70369d)))
+                        Space separated, unquoted, list of colors for the gradient. (default: (Color('e81416'), Color('ffa500'), Color('faeb36'), Color('79c314'), Color('487de7'),
+                        Color('4b369d'), Color('70369d')))
     --gradient-steps (int > 0) [(int > 0) ...]
                         Number of gradient steps to use. More steps will create a smoother gradient animation. (default: 12)
     --gradient-frames (int > 0)
@@ -269,20 +274,20 @@ Display a gradient that shifts colors across the terminal.
                         Direction the gradient travels across the canvas. (default: Direction.HORIZONTAL)
     --reverse-travel-direction
                         Reverse the gradient travel direction. (default: False)
-    --loop-gradient       Loop the gradient. This causes the final gradient color to transition back to the first gradient color. (default: False)
+    --no-loop             Do not loop the gradient. If not set, the gradient generation will loop the final gradient color back to the first gradient color. (default: False)
     --cycles (int > 0)    Number of times to cycle the gradient. (default: 3)
     --skip-final-gradient
                         Skip the final gradient. (default: False)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
-                        (default: (Color(e81416), Color(ffa500), Color(faeb36), Color(79c314), Color(487de7), Color(4b369d), Color(70369d)))
+                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be
+                        displayed in that color. (default: (Color('e81416'), Color('ffa500'), Color('faeb36'), Color('79c314'), Color('487de7'), Color('4b369d'), Color('70369d')))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: 12)
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
 
     Example: terminaltexteffects colorshift --gradient-stops 0000ff ffffff 0000ff --gradient-steps 12
-            --gradient-frames 10 --cycles 3 --travel --travel-direction radial --loop --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12
+            --gradient-frames 10 --cycles 3 --travel --travel-direction radial --loop --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 1212 
     ```
 ---
 
