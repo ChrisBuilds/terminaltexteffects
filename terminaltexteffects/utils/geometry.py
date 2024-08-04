@@ -254,24 +254,37 @@ def find_length_of_line(coord1: Coord, coord2: Coord, double_row_diff: bool = Fa
     return math.hypot(column_diff, row_diff)
 
 
-def find_normalized_distance_from_center(max_row: int, max_column: int, other_coord: Coord) -> float:
-    """Returns the normalized distance from the center of the Canvas as a float between 0 and 1.
+def find_normalized_distance_from_center(bottom: int, top: int, left: int, right: int, other_coord: Coord) -> float:
+    """Returns the normalized distance from the center of a rectangle on the Canvas as a float between 0 and 1.
 
     The distance is calculated using the Pythagorean theorem and accounts for the aspect ratio of the terminal.
 
     Args:
-        max_row (int): Maximum row value of the Canvas.
-        max_column (int): Maximum column value of the Canvas.
-        other_coord (Coord): Other coordinate from which to calculate the distance to the center of the canvas.
+        bottom (int): Bottom row of the rectangle on the Canvas.
+        top (int): Top row of the rectangle on the Canvas.
+        left (int): Left column of the rectangle on the Canvas.
+        right (int): Right column of the rectangle on the Canvas.
+        other_coord (Coord): Other coordinate from which to calculate the distance to the center of the rectangle.
 
     Returns:
-        float: Normalized distance from the center of the Canvas, float between 0 and 1.
+        float: Normalized distance from the center of the rectangle on the Canvas, float between 0 and 1.
     """
-    center_x = max_column / 2
-    center_y = max_row / 2
+    y_offset = bottom - 1
+    x_offset = left - 1
+    right = right - x_offset
+    top = top - y_offset
+    center_x = right / 2
+    center_y = top / 2
 
-    max_distance = ((max_column**2) + ((max_row * 2) ** 2)) ** 0.5
+    if (other_coord.column - x_offset) not in range(left - x_offset, right + 1) or (
+        other_coord.row - y_offset
+    ) not in range(bottom - y_offset, top + 1):
+        raise ValueError("Coordinate is not within the rectangle.")
 
-    distance = ((other_coord.column - center_x) ** 2 + (((other_coord.row) - center_y) * 2) ** 2) ** 0.5
+    max_distance = ((right**2) + ((top * 2) ** 2)) ** 0.5
+
+    distance = (
+        ((other_coord.column - x_offset) - center_x) ** 2 + (((other_coord.row - y_offset) - center_y) * 2) ** 2
+    ) ** 0.5
 
     return distance / (max_distance / 2)
