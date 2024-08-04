@@ -151,5 +151,20 @@ def test_find_length_of_line_double_row_diff():
 
 def test_find_normalized_distance_from_center():
     coord = geometry.Coord(3, 3)
-    distance = geometry.find_normalized_distance_from_center(10, 10, coord)
+    distance = geometry.find_normalized_distance_from_center(1, 10, 1, 10, coord)
     assert distance == 0.4
+
+
+def test_find_normalized_distance_from_center_with_offset():
+    coord = geometry.Coord(6, 6)
+    distance = geometry.find_normalized_distance_from_center(4, 13, 4, 13, coord)
+    assert distance == 0.4
+
+
+def test_find_normalized_distance_from_center_out_of_bounds():
+    coord = geometry.Coord(1, 1)
+    with pytest.raises(ValueError):
+        geometry.find_normalized_distance_from_center(4, 13, 4, 13, coord)
+    coord = geometry.Coord(14, 14)
+    with pytest.raises(ValueError):
+        geometry.find_normalized_distance_from_center(4, 13, 4, 13, coord)

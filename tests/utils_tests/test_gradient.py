@@ -122,13 +122,13 @@ def test_gradient_get_color_at_fraction_invalid_float() -> None:
 )
 def test_gradient_build_coordinate_color_mapping(direction) -> None:
     g = Gradient(Color("ffffff"), Color("000000"), steps=4)
-    coordinate_map = g.build_coordinate_color_mapping(10, 10, direction)
+    coordinate_map = g.build_coordinate_color_mapping(1, 10, 1, 10, direction)
     if direction == Gradient.Direction.DIAGONAL:
-        assert coordinate_map[Coord(1, 0)] == Color("ffffff")
+        assert coordinate_map[Coord(1, 1)] == Color("ffffff")
         assert coordinate_map[Coord(10, 10)] == Color("000000")
     elif direction == Gradient.Direction.HORIZONTAL:
-        assert coordinate_map[Coord(1, 0)] == Color("ffffff")
-        assert coordinate_map[Coord(10, 0)] == Color("000000")
+        assert coordinate_map[Coord(1, 1)] == Color("ffffff")
+        assert coordinate_map[Coord(10, 1)] == Color("000000")
     elif direction == Gradient.Direction.VERTICAL:
         assert coordinate_map[Coord(1, 1)] == Color("ffffff")
         assert coordinate_map[Coord(1, 10)] == Color("000000")
@@ -137,12 +137,62 @@ def test_gradient_build_coordinate_color_mapping(direction) -> None:
         assert coordinate_map[Coord(10, 10)] == Color("000000")
 
 
+@pytest.mark.parametrize(
+    "direction",
+    [
+        Gradient.Direction.DIAGONAL,
+        Gradient.Direction.HORIZONTAL,
+        Gradient.Direction.VERTICAL,
+        Gradient.Direction.RADIAL,
+    ],
+)
+@pytest.mark.parametrize("min_column", [1, 5])
+@pytest.mark.parametrize("max_column", [5, 10])
+@pytest.mark.parametrize("min_row", [1, 5])
+@pytest.mark.parametrize("max_row", [5, 10])
+def test_gradient_build_coordinate_color_mapping_no_exceptions(
+    direction, min_column, max_column, min_row, max_row
+) -> None:
+    g = Gradient(Color("ffffff"), Color("000000"), steps=4)
+    if min_column > max_column or min_row > max_row:
+        with pytest.raises(ValueError):
+            coordinate_map = g.build_coordinate_color_mapping(min_row, max_row, min_column, max_column, direction)
+    else:  # check for exceptions across single row/column and issue that might arise from math calculations
+        coordinate_map = g.build_coordinate_color_mapping(min_row, max_row, min_column, max_column, direction)
+
+
+def test_gradient_build_coordinate_color_mapping_single_row() -> None:
+    g = Gradient(Color("ffffff"), Color("000000"), steps=4)
+    coordinate_map = g.build_coordinate_color_mapping(1, 1, 1, 10, Gradient.Direction.HORIZONTAL)
+    assert coordinate_map[Coord(1, 1)] == Color("ffffff")
+    assert coordinate_map[Coord(10, 1)] == Color("000000")
+
+
+def test_gradient_build_coordinate_color_mapping_single_column() -> None:
+    g = Gradient(Color("ffffff"), Color("000000"), steps=4)
+    coordinate_map = g.build_coordinate_color_mapping(1, 10, 1, 1, Gradient.Direction.VERTICAL)
+    assert coordinate_map[Coord(1, 1)] == Color("ffffff")
+    assert coordinate_map[Coord(1, 10)] == Color("000000")
+
+
+def test_gradient_build_coordinate_color_mapping_single_row_column() -> None:
+    g = Gradient(Color("ffffff"), Color("000000"), steps=4)
+    coordinate_map = g.build_coordinate_color_mapping(1, 1, 1, 1, Gradient.Direction.HORIZONTAL)
+    assert coordinate_map[Coord(1, 1)] == Color("000000")
+
+
 def test_gradient_build_coordinate_color_mapping_invalid_row_column() -> None:
     g = Gradient(Color("ffffff"), Color("000000"), steps=4)
     with pytest.raises(ValueError):
-        g.build_coordinate_color_mapping(0, 10, Gradient.Direction.HORIZONTAL)
+        g.build_coordinate_color_mapping(0, 10, 0, 10, Gradient.Direction.HORIZONTAL)
     with pytest.raises(ValueError):
-        g.build_coordinate_color_mapping(10, 0, Gradient.Direction.HORIZONTAL)
+        g.build_coordinate_color_mapping(10, 0, 10, 0, Gradient.Direction.HORIZONTAL)
+
+
+def test_gradient_build_coordinate_color_mapping_max_less_than_min() -> None:
+    g = Gradient(Color("ffffff"), Color("000000"), steps=4)
+    with pytest.raises(ValueError):
+        g.build_coordinate_color_mapping(10, 1, 10, 1, Gradient.Direction.HORIZONTAL)
 
 
 def test_color_invalid_xterm_color() -> None:
