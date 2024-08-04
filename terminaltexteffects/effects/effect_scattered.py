@@ -11,6 +11,7 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
+from terminaltexteffects.engine.animation import SyncMetric
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators, easing
@@ -111,7 +112,11 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
+            self.terminal.canvas.text_bottom,
+            self.terminal.canvas.text_top,
+            self.terminal.canvas.text_left,
+            self.terminal.canvas.text_right,
+            self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
@@ -131,7 +136,7 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
             )
             character.motion.activate_path(input_coord_path)
             self.terminal.set_character_visibility(character, True)
-            gradient_scn = character.animation.new_scene()
+            gradient_scn = character.animation.new_scene(sync=SyncMetric.DISTANCE)
             char_gradient = Gradient(final_gradient.spectrum[0], self.character_final_color_map[character], steps=10)
             gradient_scn.apply_gradient_to_symbols(
                 char_gradient, character.input_symbol, self.config.final_gradient_frames

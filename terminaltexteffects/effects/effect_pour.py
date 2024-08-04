@@ -165,7 +165,11 @@ class PourIterator(BaseEffectIterator[PourConfig]):
         }.get(self.config.pour_direction, PourIterator.PourDirection.DOWN)
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
+            self.terminal.canvas.text_bottom,
+            self.terminal.canvas.text_top,
+            self.terminal.canvas.text_left,
+            self.terminal.canvas.text_right,
+            self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]

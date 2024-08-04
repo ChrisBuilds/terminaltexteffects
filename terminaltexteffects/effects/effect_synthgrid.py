@@ -256,11 +256,15 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
     def build(self) -> None:
         grid_gradient = Gradient(*self.config.grid_gradient_stops, steps=self.config.grid_gradient_steps)
         grid_gradient_mapping = grid_gradient.build_coordinate_color_mapping(
-            self.terminal.canvas.top, self.terminal.canvas.right, self.config.grid_gradient_direction
+            1, self.terminal.canvas.top, 1, self.terminal.canvas.right, self.config.grid_gradient_direction
         )
         text_gradient = Gradient(*self.config.text_gradient_stops, steps=self.config.text_gradient_steps)
         text_gradient_mapping = text_gradient.build_coordinate_color_mapping(
-            self.terminal.canvas.top, self.terminal.canvas.right, self.config.text_gradient_direction
+            self.terminal.canvas.text_bottom,
+            self.terminal.canvas.text_top,
+            self.terminal.canvas.text_left,
+            self.terminal.canvas.text_right,
+            self.config.text_gradient_direction,
         )
 
         self.grid_lines.append(
@@ -366,7 +370,12 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                         3,
                         fg_color=random.choice(text_gradient.spectrum),
                     )
-                dissolve_scn.add_frame(character.input_symbol, 1, fg_color=text_gradient_mapping[character.input_coord])
+                if character.input_symbol == " ":
+                    dissolve_scn.add_frame(character.input_symbol, 1)
+                else:
+                    dissolve_scn.add_frame(
+                        character.input_symbol, 1, fg_color=text_gradient_mapping[character.input_coord]
+                    )
                 character.animation.activate_scene(dissolve_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,

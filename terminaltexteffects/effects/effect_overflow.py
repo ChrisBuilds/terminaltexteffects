@@ -137,10 +137,16 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
+            self.terminal.canvas.text_bottom,
+            self.terminal.canvas.text_top,
+            self.terminal.canvas.text_left,
+            self.terminal.canvas.text_right,
+            self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            self.character_final_color_map[character] = final_gradient_mapping.get(
+                character.input_coord, Color("000000")
+            )
         lower_range, upper_range = self.config.overflow_cycles_range
         rows = self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
         if upper_range > 0:
@@ -168,7 +174,6 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                 character.animation.set_appearance(
                     character.animation.current_character_visual.symbol, self.character_final_color_map[character]
                 )
-            next_row.set_color(final_gradient.get_color_at_fraction(row[0].input_coord.row / self.terminal.canvas.top))
             self.pending_rows.append(OverflowIterator.Row(row, final=True))
         self._delay = 0
         self._overflow_gradient = Gradient(

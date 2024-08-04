@@ -206,7 +206,18 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
         self.final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.final_gradient_coordinate_map: dict[Coord, Color] = self.final_gradient.build_coordinate_color_mapping(
-            self.terminal.canvas.top, self.terminal.canvas.right, self.config.final_gradient_direction
+            self.terminal.canvas.text_bottom,
+            self.terminal.canvas.text_top,
+            self.terminal.canvas.text_left,
+            self.terminal.canvas.text_right,
+            self.config.final_gradient_direction,
+        )
+        self.launcher_gradient_coordinate_map: dict[Coord, Color] = self.final_gradient.build_coordinate_color_mapping(
+            self.terminal.canvas.bottom,
+            self.terminal.canvas.top,
+            self.terminal.canvas.left,
+            self.terminal.canvas.right,
+            self.config.final_gradient_direction,
         )
         self.complete = False
         self.build()
@@ -275,7 +286,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
             child.character.motion.set_coordinate(
                 Coord(self.terminal.canvas.left, min(self.terminal.canvas.top, child_row))
             )
-        color = self.final_gradient_coordinate_map[child.character.motion.current_coord]
+        color = self.launcher_gradient_coordinate_map[child.character.motion.current_coord]
         child.character.animation.set_appearance(child.character.input_symbol, color)
 
     def __next__(self) -> str:
@@ -287,7 +298,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
                 self.active_characters.append(self._main_launcher.character)
             self._main_launcher.character.animation.set_appearance(
                 self.config.top_launcher_symbol,
-                self.final_gradient_coordinate_map[self._main_launcher.character.motion.current_coord],
+                self.launcher_gradient_coordinate_map[self._main_launcher.character.motion.current_coord],
             )
             for launcher in self._launchers[1:]:
                 self._set_launcher_coordinates(self._main_launcher, launcher)
