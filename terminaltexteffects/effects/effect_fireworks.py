@@ -18,6 +18,7 @@ from terminaltexteffects.utils import argvalidators, easing, geometry
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, Gradient
+from terminaltexteffects.engine.animation import SyncMetric
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -159,9 +160,9 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 origin_coord = Coord(origin_x, origin_y)
                 explode_waypoint_coords = geometry.find_coords_in_circle(origin_coord, self.explode_distance)
             character.motion.set_coordinate(Coord(origin_x, self.terminal.canvas.bottom))
-            apex_path = character.motion.new_path(id="apex_pth", speed=0.2, ease=easing.out_expo)
+            apex_path = character.motion.new_path(id="apex_pth", speed=0.2, ease=easing.out_expo, layer=2)
             apex_wpt = apex_path.new_waypoint(origin_coord)
-            explode_path = character.motion.new_path(speed=0.15, ease=easing.out_circ)
+            explode_path = character.motion.new_path(speed=random.uniform(0.09, 0.2), ease=easing.out_circ, layer=2)
             explode_wpt = explode_path.new_waypoint(random.choice(explode_waypoint_coords))
 
             bloom_control_point = geometry.find_coord_at_distance(
@@ -171,15 +172,9 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 Coord(bloom_control_point.column, max(1, bloom_control_point.row - 7)),
                 bezier_control=bloom_control_point,
             )
-            input_path = character.motion.new_path(id="input_pth", speed=0.3, ease=easing.in_out_quart)
+            input_path = character.motion.new_path(id="input_pth", speed=0.3, ease=easing.in_out_quart, layer=2)
             input_control_point = Coord(bloom_wpt.coord.column, 1)
             input_path.new_waypoint(character.input_coord, bezier_control=input_control_point)
-            character.event_handler.register_event(
-                EventHandler.Event.PATH_ACTIVATED, apex_path, EventHandler.Action.SET_LAYER, 2
-            )
-            character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, explode_path, EventHandler.Action.SET_LAYER, 0
-            )
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
                 apex_path,
@@ -188,6 +183,9 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             )
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE, explode_path, EventHandler.Action.ACTIVATE_PATH, input_path
+            )
+            character.event_handler.register_event(
+                EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.SET_LAYER, 0
             )
 
             character.motion.activate_path(apex_path)
@@ -209,6 +207,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for firework_shell in self.shells:
             shell_color = random.choice(self.config.firework_colors)
+            shell_gradient = Gradient(shell_color, Color("FFFFFF"), shell_color, steps=5)
             for character in firework_shell:
                 # launch scene
                 launch_scn = character.animation.new_scene()
@@ -216,8 +215,9 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 launch_scn.add_frame(self.config.firework_symbol, 1, fg_color=Color("FFFFFF"))
                 launch_scn.is_looping = True
                 # bloom scene
-                bloom_scn = character.animation.new_scene()
-                bloom_scn.add_frame(character.input_symbol, 1, fg_color=shell_color)
+                bloom_scn = character.animation.new_scene(sync=SyncMetric.STEP)
+                for color in shell_gradient:
+                    bloom_scn.add_frame(character.input_symbol, 3, fg_color=color)
                 # fall scene
                 fall_scn = character.animation.new_scene()
                 fall_gradient = Gradient(shell_color, self.character_final_color_map[character], steps=15)
