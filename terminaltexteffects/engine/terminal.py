@@ -566,19 +566,24 @@ class Terminal:
             canvas_width = self._terminal_width
         else:
             input_width = max([len(line) for line in self._preprocessed_character_lines])
-            if self.config.wrap_text and not self.config.ignore_terminal_dimensions:
-                canvas_width = min(self._terminal_width, input_width)
-            else:
+            if self.config.ignore_terminal_dimensions:
                 canvas_width = input_width
+            else:
+                canvas_width = min(self._terminal_width, input_width)
         if self.config.canvas_height > 0:
             canvas_height = self.config.canvas_height
         elif self.config.canvas_height == 0:
             canvas_height = self._terminal_height
         else:
-            if self.config.wrap_text:
-                canvas_height = len(self._wrap_lines(self._preprocessed_character_lines, canvas_width))
+            input_height = len(self._preprocessed_character_lines)
+            if self.config.ignore_terminal_dimensions:
+                canvas_height = input_height
+            elif self.config.wrap_text:
+                canvas_height = min(
+                    len(self._wrap_lines(self._preprocessed_character_lines, canvas_width)), self._terminal_height
+                )
             else:
-                canvas_height = len(self._preprocessed_character_lines)
+                canvas_height = min(self._terminal_height, input_height)
 
         return canvas_height, canvas_width
 
