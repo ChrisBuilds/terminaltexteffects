@@ -156,14 +156,16 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
     def build(self) -> None:
         self.final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = self.final_gradient.build_coordinate_color_mapping(
-            1,
-            self.terminal.canvas.top,
-            1,
-            self.terminal.canvas.right,
+            self.terminal.canvas.text_bottom,
+            self.terminal.canvas.text_top,
+            self.terminal.canvas.text_left,
+            self.terminal.canvas.text_right,
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            self.character_final_color_map[character] = final_gradient_mapping.get(
+                character.input_coord, Color("ffffff")
+            )
         input_rows = self.terminal.get_characters_grouped(
             grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, outer_fill_chars=True, inner_fill_chars=True
         )
@@ -172,7 +174,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 PrintIterator.Row(
                     input_row,
                     self.character_final_color_map,
-                    self.character_final_color_map[input_row[-1]],
+                    Color("ffffff"),
                 )
             )
         self._current_row: PrintIterator.Row = self.pending_rows.pop(0)
@@ -212,7 +214,6 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                                 for char in self._current_row.untyped_chars
                                 if left_extent <= char.input_coord.column <= self.terminal.canvas.text_right
                             ]
-                        current_row_height = self._current_row.untyped_chars[0].input_coord.row
                         self.typing_head.motion.set_coordinate(Coord(self._last_column, 1))
                         self.terminal.set_character_visibility(self.typing_head, True)
                         self.typing_head.motion.paths.clear()
@@ -229,10 +230,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                             Coord(self._current_row.untyped_chars[0].input_coord.column, 1)
                         )
                         self.typing_head.motion.activate_path(carriage_return_path)
-                        self.typing_head.animation.set_appearance(
-                            self.typing_head.input_symbol,
-                            self.final_gradient.get_color_at_fraction(current_row_height / self.terminal.canvas.top),
-                        )
+
                         self.typing_head.event_handler.register_event(
                             EventHandler.Event.PATH_COMPLETE,
                             carriage_return_path,
