@@ -116,6 +116,8 @@ T        |              |                       H
 -                       |                       @
 BL--------------------BOTTOM...................BR"""
 
+COLOR_SEQUENCES = """[38;5;231m....[39m....| [38;5;95m[48;5;128mggggggg[0m [38;5;180mggggggg [38;5;146m:gggggg; [38;5;64mggggggg [38;5;182mggggggg [38;5;195m:gggggg; [38;5;214mggggggg [38;5;146m;gggggg  [38;5;174mggggggg [0m"""
+
 TEST_INPUTS = {
     "empty": INPUT_EMPTY,
     "single_char": INPUT_SINGLE_CHAR,
@@ -125,6 +127,7 @@ TEST_INPUTS = {
     "tabs": INPUT_TABS,
     "large": INPUT_LARGE,
     "canvas": CANVAS_TEST_INPUT,
+    "color_sequences": COLOR_SEQUENCES,
 }
 
 EFFECTS = [
