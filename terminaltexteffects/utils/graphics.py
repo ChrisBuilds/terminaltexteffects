@@ -1,10 +1,9 @@
 """Classes for storing and manipulating character graphics.
 
 Classes:
-    Color: A Color object represents a color in the RGB color space. The color can be initialized with an XTerm-256
-    color code or an RGB hex color string. Can be printed to display the color code and appearance as a color block.
-    Gradient: A Gradient is a list of RGB hex color strings transitioning from one color to another. Can be printed to
-    display the gradient color spectrum.
+    Color: A Color object represents a color in the RGB color space. The color can be initialized with an XTerm-256 color code or an RGB hex color string. Can be printed to display the color code and appearance as a color block.
+    ColorPair: A ColorPair object represents a pair of colors to specify a character's foreground and background colors.
+    Gradient: A Gradient is a list of RGB hex color strings transitioning from one color to another. Can be printed to display the gradient color spectrum.
 """
 
 from __future__ import annotations
