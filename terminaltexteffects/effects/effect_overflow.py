@@ -122,9 +122,9 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
             for character in self.characters:
                 character.motion.set_coordinate(Coord(character.input_coord.column, 0))
 
-        def set_color(self, color: Color) -> None:
+        def set_color(self, fg_color: Color | None = None, bg_color: Color | None = None) -> None:
             for character in self.characters:
-                character.animation.set_appearance(character.input_symbol, color)
+                character.animation.set_appearance(character.input_symbol, fg_color, bg_color)
 
     def __init__(self, effect: "Overflow"):
         super().__init__(effect)
@@ -171,9 +171,16 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
         ):
             next_row = OverflowIterator.Row(row)
             for character in next_row.characters:
-                character.animation.set_appearance(
-                    character.animation.current_character_visual.symbol, self.character_final_color_map[character]
-                )
+                if self.terminal.config.existing_color_handling == "dynamic":
+                    character.animation.set_appearance(
+                        character.animation.current_character_visual.symbol,
+                        character.animation.input_fg_color,
+                        character.animation.input_bg_color,
+                    )
+                else:
+                    character.animation.set_appearance(
+                        character.animation.current_character_visual.symbol, self.character_final_color_map[character]
+                    )
             self.pending_rows.append(OverflowIterator.Row(row, final=True))
         self._delay = 0
         self._overflow_gradient = Gradient(
