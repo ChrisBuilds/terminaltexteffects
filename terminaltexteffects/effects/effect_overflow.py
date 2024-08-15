@@ -171,7 +171,9 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
         ):
             next_row = OverflowIterator.Row(row)
             for character in next_row.characters:
-                if self.terminal.config.existing_color_handling == "dynamic":
+                if self.terminal.config.existing_color_handling == "dynamic" and any(
+                    (character.animation.input_fg_color, character.animation.input_bg_color)
+                ):
                     character.animation.set_appearance(
                         character.animation.current_character_visual.symbol,
                         character.animation.input_fg_color,
