@@ -13,6 +13,7 @@ import itertools
 import random
 import typing
 from collections.abc import Iterator
+from dataclasses import dataclass
 from enum import Enum, auto
 
 from terminaltexteffects.utils import ansitools, colorterm, geometry, hexterm
@@ -91,6 +92,19 @@ class Color:
 
     def __iter__(self) -> Iterator["Color"]:
         return iter((self,))
+
+
+@dataclass
+class ColorPair:
+    """A ColorPair object represents a pair of colors to specify a character's foreground and background colors.
+
+    Attributes:
+        fg_color (Color | None): The foreground color. None if no foreground color is specified.
+        bg_color (Color | None): The background color. None if no background color is specified.
+    """
+
+    fg_color: Color | None = None
+    bg_color: Color | None = None
 
 
 class Gradient:
