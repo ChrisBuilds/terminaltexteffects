@@ -252,7 +252,10 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             try:
-                self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+                if self.terminal.config.existing_color_handling == "dynamic" and character.animation.input_fg_color:
+                    self.character_final_color_map[character] = character.animation.input_fg_color
+                else:
+                    self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             except KeyError:
                 self.character_final_color_map[character] = Color("000000")
 
