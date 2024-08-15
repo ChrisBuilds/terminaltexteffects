@@ -21,7 +21,7 @@ from terminaltexteffects.engine.terminal import Terminal
 from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient
+from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -141,7 +141,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.pending_binary_representations: list[BinaryPathIterator._BinaryRepresentation] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.last_frame_provided = False
         self.active_binary_reps: list[BinaryPathIterator._BinaryRepresentation] = []
         self.complete = False
@@ -162,7 +162,14 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic" and character.animation.input_fg_color:
+                self.character_final_color_map[character] = ColorPair(
+                    character.animation.input_fg_color, character.animation.input_bg_color
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    final_gradient_mapping[character.input_coord], None
+                )
 
         for character in self.terminal.get_characters():
             bin_rep = BinaryPathIterator._BinaryRepresentation(character, self.terminal)
@@ -233,12 +240,15 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
 
         for character in self.terminal.get_characters():
             collapse_scn = character.animation.new_scene(ease=easing.in_quad, id="collapse_scn")
-            dim_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.5)
+            dim_color = character.animation.adjust_color_brightness(
+                self.character_final_color_map[character].fg_color,  # type: ignore
+                0.5,
+            )
             dim_gradient = Gradient(Color("ffffff"), dim_color, steps=10)
             collapse_scn.apply_gradient_to_symbols(dim_gradient, character.input_symbol, 7)
 
             brighten_scn = character.animation.new_scene(id="brighten_scn")
-            brighten_gradient = Gradient(dim_color, self.character_final_color_map[character], steps=10)
+            brighten_gradient = Gradient(dim_color, self.character_final_color_map[character].fg_color, steps=10)  # type: ignore
             brighten_scn.apply_gradient_to_symbols(brighten_gradient, character.input_symbol, 2)
         self.max_active_binary_groups = max(
             1, int(self.config.active_binary_groups * len(self.pending_binary_representations))
