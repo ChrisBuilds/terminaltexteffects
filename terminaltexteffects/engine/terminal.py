@@ -40,6 +40,7 @@ class TerminalConfig(ArgsDataClass):
         anchor_canvas (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the Canvas. The Canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
         anchor_effect (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the effect within the Canvas. Effect text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
         ignore_terminal_dimensions (bool): Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. Useful for sending frames to another output handler.
+        existing_color_handling (Literal['always','dynamic','ignore']): Specify handling of existing ANSI color sequences in the input data. 'always' will always use the input colors, ignoring any effect specific colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors in the input data. Default is 'ignore'.
     """
 
     tab_width: int = ArgField(
