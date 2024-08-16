@@ -521,3 +521,30 @@ def in_out_bounce(progress_ratio: float) -> float:
         return (1 - out_bounce(1 - 2 * progress_ratio)) / 2
     else:
         return (1 + out_bounce(2 * progress_ratio - 1)) / 2
+
+
+def eased_step_function(easing_func: EasingFunction, step_size: float) -> typing.Callable[[], tuple[float, float]]:
+    """
+    Create a closure that returns the eased value of each step from 0 to 1 increasing by the step_size.
+
+    Args:
+        easing_func (EasingFunction): The easing function to use.
+        step_size (float): The step size.
+
+    Returns:
+        callable[[],tuple[float,float]]: A closure that returns a tuple of the current input step and eased value of the current input step.
+    """
+    if step_size > 1 or step_size <= 0:
+        raise ValueError("Step size must be 0 < n <= 1.")
+
+    current_step = 0.0
+
+    def ease() -> tuple[float, float]:
+        nonlocal current_step
+        eased_value = easing_func(current_step)
+        used_step = current_step
+        if current_step < 1:
+            current_step = min((current_step + step_size, 1.0))
+        return used_step, eased_value
+
+    return ease
