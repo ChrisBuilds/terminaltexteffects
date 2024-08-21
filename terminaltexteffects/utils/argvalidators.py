@@ -582,3 +582,31 @@ class Ease:
             return easing_func_map[arg.lower()]
         except KeyError:
             raise argparse.ArgumentTypeError(f"invalid ease value: '{arg}' is not a valid ease.")
+
+
+class EasingStep:
+    """Argument type for easing step size values.
+
+    Args:
+        arg (str): argument to validate
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not a valid easing step size.
+
+    Returns:
+        float: validated easing step size value
+    """
+
+    METAVAR = "0 < float(n) <= 1"
+
+    @staticmethod
+    def type_parser(arg: str) -> float:
+        try:
+            f = float(arg)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a valid float.")
+
+        if 0 < f <= 1:
+            return f
+        else:
+            raise argparse.ArgumentTypeError(f"invalid value: '{arg}' is not a float > 0 and <= 1. Example: 0.5")
