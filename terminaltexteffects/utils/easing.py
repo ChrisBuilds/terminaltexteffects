@@ -534,7 +534,7 @@ def eased_step_function(easing_func: EasingFunction, step_size: float) -> typing
     Returns:
         callable[[],tuple[float,float]]: A closure that returns a tuple of the current input step and eased value of the current input step.
     """
-    if step_size > 1 or step_size <= 0:
+    if not 0 < step_size <= 1:
         raise ValueError("Step size must be 0 < n <= 1.")
 
     current_step = 0.0
