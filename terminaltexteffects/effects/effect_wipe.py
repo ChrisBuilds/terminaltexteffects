@@ -14,6 +14,7 @@ from dataclasses import dataclass
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import Color, Gradient
 
@@ -79,6 +80,23 @@ class WipeConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int : Number of frames to wait before adding the next character group. Increase, to slow down the effect."
 
+    wipe_ease: easing.EasingFunction = ArgField(
+        cmd_name="--wipe-ease",
+        type_parser=argvalidators.Ease.type_parser,
+        default=easing.linear,
+        help="Easing function to use for the wipe effect.",
+    )  # type: ignore[assignment]
+    "easing.EasingFunction : Easing function to use for the wipe effect."
+
+    wipe_ease_stepsize: float = ArgField(
+        cmd_name="--wipe-ease-stepsize",
+        type_parser=argvalidators.EasingStep.type_parser,
+        default=0.01,
+        metavar=argvalidators.EasingStep.METAVAR,
+        help="Step size to use for the easing function.",
+    )  # type: ignore[assignment]
+    "float : Step size to use for the easing function."
+
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
@@ -125,8 +143,11 @@ class WipeConfig(ArgsDataClass):
 class WipeIterator(BaseEffectIterator[WipeConfig]):
     def __init__(self, effect: "Wipe") -> None:
         super().__init__(effect)
-        self.pending_groups: list[list[EffectCharacter]] = []
+        self.groups: list[list[EffectCharacter]] = []
+        self.active_groups: list[list[EffectCharacter]] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.wipe_ease = easing.eased_step_function(self.config.wipe_ease, self.config.wipe_ease_stepsize)
+        self.complete = False
         self.build()
 
     def build(self) -> None:
@@ -153,9 +174,10 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
             "center_to_outside": self.terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS,
             "outside_to_center": self.terminal.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
         }
-        for group in self.terminal.get_characters_grouped(sort_map[direction]):
+        character_groups = self.terminal.get_characters_grouped(sort_map[direction])
+        for group in character_groups:
             for character in group:
-                wipe_scn = character.animation.new_scene()
+                wipe_scn = character.animation.new_scene(id="wipe")
                 wipe_gradient = Gradient(
                     final_gradient.spectrum[0],
                     self.character_final_color_map[character],
@@ -165,22 +187,47 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
                     wipe_gradient, character.input_symbol, self.config.final_gradient_frames
                 )
                 character.animation.activate_scene(wipe_scn)
-            self.pending_groups.append(group)
+            self.groups.append(group)
         self._wipe_delay = self.config.wipe_delay
 
     def __next__(self) -> str:
-        if self.pending_groups or self.active_characters:
+        if not self.complete or self.active_characters:
             if not self._wipe_delay:
-                if self.pending_groups:
-                    next_group = self.pending_groups.pop(0)
-                    for character in next_group:
-                        self.terminal.set_character_visibility(character, True)
-                        self.active_characters.append(character)
+                current_step, progress_ratio = self.wipe_ease()
+                target_active_group_count = min(int(len(self.groups) * progress_ratio), len(self.groups))
+
+                # if the easing function results in a decreased progress ratio, deactivate groups
+                if target_active_group_count < len(self.active_groups):
+                    for group in self.active_groups[target_active_group_count:]:
+                        for character in group:
+                            self.terminal.set_character_visibility(character, False)
+                            scn = character.animation.active_scene
+                            if scn:
+                                scn.reset_scene()
+                                character.animation.deactivate_scene(scn)
+
+                    self.active_groups = self.active_groups[:target_active_group_count]
+
+                if len(self.active_groups) < target_active_group_count:
+                    for i in range(target_active_group_count):
+                        group = self.groups[i]
+                        if group in self.active_groups:
+                            continue
+                        for character in group:
+                            self.terminal.set_character_visibility(character, True)
+                            scn = character.animation.query_scene("wipe")
+                            if scn:
+                                character.animation.activate_scene(scn)
+                            self.active_characters.append(character)
+                        self.active_groups.append(group)
                 self._wipe_delay = self.config.wipe_delay
+                if current_step == 1:
+                    self.complete = True
             else:
                 self._wipe_delay -= 1
             self.update()
             return self.frame
+
         else:
             raise StopIteration
 
