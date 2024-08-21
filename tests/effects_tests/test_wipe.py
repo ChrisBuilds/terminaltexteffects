@@ -68,3 +68,15 @@ def test_wipe_args(terminal_config_default_no_framerate, input_data, wipe_direct
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+@pytest.mark.parametrize("wipe_ease_stepsize", [0.01, 0.1, 1])
+@pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
+def test_wipe_ease(terminal_config_default_no_framerate, input_data, wipe_ease_stepsize, easing_function_1) -> None:
+    effect = effect_wipe.Wipe(input_data)
+    effect.terminal_config = terminal_config_default_no_framerate
+    effect.effect_config.wipe_ease_stepsize = wipe_ease_stepsize
+    effect.effect_config.wipe_ease = easing_function_1
+    with effect.terminal_output() as terminal:
+        for frame in effect:
+            terminal.print(frame)
