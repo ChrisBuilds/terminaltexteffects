@@ -212,7 +212,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                 next_column = self.pending_columns.pop(0)
                 for character in next_column:
                     self.terminal.set_character_visibility(character, True)
-                    self.active_characters.append(character)
+                    self.active_characters.add(character)
             self.update()
             return self.frame
         else:

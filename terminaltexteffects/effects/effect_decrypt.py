@@ -106,7 +106,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.typing_pending_chars: list[EffectCharacter] = []
-        self.decrypting_pending_chars: list[EffectCharacter] = []
+        self.decrypting_pending_chars: set[EffectCharacter] = set()
         self.phase = "typing"
         self.encrypted_symbols: list[str] = []
         self.scenes: dict[str, animation.Scene] = {}
@@ -170,7 +170,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
                 character.animation.query_scene("discovered"),
             )
             character.animation.activate_scene(character.animation.query_scene("fast_decrypt"))
-            self.decrypting_pending_chars.append(character)
+            self.decrypting_pending_chars.add(character)
 
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
@@ -196,7 +196,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
                                 next_character = self.typing_pending_chars.pop(0)
                                 self.terminal.set_character_visibility(next_character, True)
                                 next_character.animation.activate_scene(next_character.animation.query_scene("typing"))
-                                self.active_characters.append(next_character)
+                                self.active_characters.add(next_character)
                 self.update()
                 return self.frame
             else:

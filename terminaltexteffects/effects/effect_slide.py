@@ -246,7 +246,7 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
                     next_char = group.pop(0)
                     self.terminal.set_character_visibility(next_char, True)
                     next_char.motion.activate_path(next_char.motion.paths["input_path"])
-                    self.active_characters.append(next_char)
+                    self.active_characters.add(next_char)
             self._active_groups = [group for group in self._active_groups if group]
             self.update()
             return self.frame

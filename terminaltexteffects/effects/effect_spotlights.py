@@ -249,7 +249,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         for spotlight in self.spotlights:
             spotlight_path_start = spotlight.motion.query_path("0")
             spotlight.motion.activate_path(spotlight_path_start)
-            self.active_characters.append(spotlight)
+            self.active_characters.add(spotlight)
 
     def __next__(self) -> str:
         if not self.complete:

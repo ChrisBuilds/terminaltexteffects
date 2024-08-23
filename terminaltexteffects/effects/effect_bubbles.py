@@ -331,7 +331,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             for bubble in self.animating_bubbles:
                 if bubble.landed:
                     bubble.pop()
-                    self.active_characters.extend(bubble.characters)
+                    self.active_characters = self.active_characters.union(bubble.characters)
 
             self.animating_bubbles = [bubble for bubble in self.animating_bubbles if not bubble.landed]
             for bubble in self.animating_bubbles:

@@ -216,17 +216,17 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                 self.phase = "explosion"
                 for character in self.terminal.get_characters():
                     character.motion.activate_path(character.motion.query_path("explosion"))
-                self.active_characters = [character for character in self.terminal.get_characters()]
+                self.active_characters = {character for character in self.terminal.get_characters()}
 
         if self.phase == "explosion":
             if self.active_characters:
                 for character in self.active_characters:
                     character.tick()
-                self.active_characters = [
+                self.active_characters = {
                     character
                     for character in self.active_characters
                     if not character.motion.current_coord == character.motion.query_path("explosion").waypoints[0].coord
-                ]
+                }
                 next_frame = self.frame
 
             elif self._explosion_hold_time:
@@ -238,20 +238,20 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                 self.phase = "reassembly"
                 for character in self.terminal.get_characters():
                     character.animation.activate_scene(character.animation.query_scene("final"))
-                    self.active_characters.append(character)
+                    self.active_characters.add(character)
                     character.motion.activate_path(character.motion.query_path("reassembly"))
 
         if self.phase == "reassembly":
             if self.active_characters:
                 for character in self.active_characters:
                     character.tick()
-                self.active_characters = [
+                self.active_characters = {
                     character
                     for character in self.active_characters
                     if not character.motion.current_coord
                     == character.motion.query_path("reassembly").waypoints[0].coord
                     or not character.animation.active_scene_is_complete()
-                ]
+                }
                 next_frame = self.frame
 
         if next_frame is not None:

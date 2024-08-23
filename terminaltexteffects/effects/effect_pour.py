@@ -226,7 +226,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
                         if self.current_group:
                             next_character = self.current_group.pop(0)
                             self.terminal.set_character_visibility(next_character, True)
-                            self.active_characters.append(next_character)
+                            self.active_characters.add(next_character)
                     self.gap = self.config.gap
                 else:
                     self.gap -= 1

@@ -389,7 +389,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
         if not self._total_group_count:
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, True)
-                self.active_characters.append(character)
+                self.active_characters.add(character)
         self._active_groups: int = 0
 
     def update_group_tracker(self, character: EffectCharacter, *args) -> None:
@@ -412,7 +412,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                     group_number, next_group = self.pending_groups.pop(0)
                     for char in next_group:
                         self.terminal.set_character_visibility(char, True)
-                        self.active_characters.append(char)
+                        self.active_characters.add(char)
                         self.group_tracker[group_number] += 1
                 if not self.pending_groups and not self.active_characters and not self._active_groups:
                     self._phase = "collapse"

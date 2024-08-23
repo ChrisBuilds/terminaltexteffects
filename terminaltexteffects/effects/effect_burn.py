@@ -156,7 +156,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
                 if self.pending_chars:
                     next_char = self.pending_chars.pop(0)
                     next_char.animation.activate_scene(next_char.animation.query_scene("burn"))
-                    self.active_characters.append(next_char)
+                    self.active_characters.add(next_char)
 
             self.update()
             return self.frame

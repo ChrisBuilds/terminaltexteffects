@@ -133,7 +133,7 @@ class ExpandIterator(BaseEffectIterator[ExpandConfig]):
             )
             input_coord_path.new_waypoint(character.input_coord)
             self.terminal.set_character_visibility(character, True)
-            self.active_characters.append(character)
+            self.active_characters.add(character)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED, input_coord_path, EventHandler.Action.SET_LAYER, 1
             )

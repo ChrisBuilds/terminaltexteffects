@@ -270,12 +270,12 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                     for active_rep in self.active_binary_reps:
                         if active_rep.pending_binary_characters:
                             next_char = active_rep.pending_binary_characters.pop(0)
-                            self.active_characters.append(next_char)
+                            self.active_characters.add(next_char)
                             self.terminal.set_character_visibility(next_char, True)
                         elif active_rep._travel_complete():
                             active_rep._deactivate()
                             active_rep._activate_source_character()
-                            self.active_characters.append(active_rep.character)
+                            self.active_characters.add(active_rep.character)
 
                     self.active_binary_reps = [
                         binary_rep for binary_rep in self.active_binary_reps if binary_rep.is_active
@@ -290,7 +290,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                     for character in next_group:
                         character.animation.activate_scene(character.animation.query_scene("brighten_scn"))
                         self.terminal.set_character_visibility(character, True)
-                        self.active_characters.append(character)
+                        self.active_characters.add(character)
                 else:
                     self.complete = True
 

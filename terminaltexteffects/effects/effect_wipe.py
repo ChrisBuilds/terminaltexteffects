@@ -218,7 +218,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
                             scn = character.animation.query_scene("wipe")
                             if scn:
                                 character.animation.activate_scene(scn)
-                            self.active_characters.append(character)
+                            self.active_characters.add(character)
                         self.active_groups.append(group)
                 self._wipe_delay = self.config.wipe_delay
                 if current_step == 1:

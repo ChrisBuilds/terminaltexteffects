@@ -178,12 +178,12 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
             character.motion.activate_path(center_path)
             character.animation.set_appearance(character.input_symbol, self.config.starting_color)
             self.terminal.set_character_visibility(character, True)
-            self.active_characters.append(character)
+            self.active_characters.add(character)
 
     def __next__(self) -> str:
         if self.phase == "center" and not self.active_characters:
             self.phase = "full"
-            self.active_characters = self.terminal.get_characters()
+            self.active_characters = set(self.terminal.get_characters())
             for character in self.active_characters:
                 character.motion.activate_path(character.motion.query_path("full"))
                 character.animation.activate_scene(character.animation.query_scene("full"))

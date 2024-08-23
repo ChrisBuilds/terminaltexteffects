@@ -198,7 +198,7 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop()
                         self.terminal.set_character_visibility(next_character, True)
-                        self.active_characters.append(next_character)
+                        self.active_characters.add(next_character)
 
             self.update()
             return self.frame

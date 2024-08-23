@@ -161,7 +161,7 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                     character.motion.activate_path(input_coord_path)
                 new_row.extend(left_half)
                 new_row.extend(right_half)
-                self.active_characters.extend(new_row)
+                self.active_characters = self.active_characters.union(new_row)
         elif self.config.slice_direction == "horizontal":
             self.config.movement_speed *= 2
             self.columns = self.terminal.get_characters_grouped(
@@ -204,7 +204,7 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                     character.motion.activate_path(input_coord_path)
                 new_column.extend(bottom_half)
                 new_column.extend(top_half)
-                self.active_characters.extend(new_column)
+                self.active_characters = self.active_characters.union(new_column)
         elif self.config.slice_direction == "diagonal":
             self.diagonals = self.terminal.get_characters_grouped(
                 grouping=slice_direction_map[self.config.slice_direction]
@@ -235,7 +235,7 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                         input_coord_path.new_waypoint(character.input_coord)
                         character.motion.activate_path(input_coord_path)
                     new_group.extend(right_group)
-                self.active_characters.extend(new_group)
+                self.active_characters = self.active_characters.union(new_group)
         for character in self.active_characters:
             self.terminal.set_character_visibility(character, True)
 

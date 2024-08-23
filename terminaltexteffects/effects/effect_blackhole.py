@@ -224,7 +224,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
     def rotate_blackhole(self) -> None:
         for character in self.blackhole_chars:
             character.motion.activate_path(character.motion.query_path("blackhole_rotation"))
-            self.active_characters.append(character)
+            self.active_characters.add(character)
 
     def collapse_blackhole(self) -> None:
         black_hole_ring_positions = geometry.find_coords_on_circle(
@@ -266,7 +266,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                 point_char_made = True
 
             character.motion.activate_path(expand_path)
-            self.active_characters.append(character)
+            self.active_characters.add(character)
 
     def explode_singularity(self) -> None:
         star_colors = [
@@ -303,7 +303,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             )
             character.animation.activate_scene(explode_scn)
             character.motion.activate_path(nearby_path)
-            self.active_characters.append(character)
+            self.active_characters.add(character)
 
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
@@ -332,7 +332,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                         next_char = self.awaiting_blackhole_chars.pop(0)
                         next_char.motion.activate_path(next_char.motion.query_path("blackhole"))
                         next_char.animation.activate_scene(next_char.animation.query_scene("blackhole"))
-                        self.active_characters.append(next_char)
+                        self.active_characters.add(next_char)
                         self.f_delay = self.formation_delay
                     else:
                         self.f_delay -= 1
@@ -347,7 +347,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                             if self.awaiting_consumption_chars:
                                 next_char = self.awaiting_consumption_chars.pop(0)
                                 next_char.motion.activate_path(next_char.motion.query_path("singularity"))
-                                self.active_characters.append(next_char)
+                                self.active_characters.add(next_char)
                             else:
                                 break
                         self.max_consume += 1

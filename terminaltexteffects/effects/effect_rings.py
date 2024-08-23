@@ -326,11 +326,11 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                             )
                             character.animation.activate_scene(character.animation.query_scene("disperse"))
                             character.motion.activate_path(initial_path)
-                            self.active_characters.append(character)
+                            self.active_characters.add(character)
 
                     for character in self.non_ring_chars:
                         character.motion.activate_path(character.motion.query_path("external"))
-                        self.active_characters.append(character)
+                        self.active_characters.add(character)
 
                 else:
                     if not self._disperse_time_remaining:
@@ -349,7 +349,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                         for character in self.terminal.get_characters():
                             self.terminal.set_character_visibility(character, True)
                             character.motion.activate_path(character.motion.query_path("home"))
-                            self.active_characters.append(character)
+                            self.active_characters.add(character)
                             if "external" in character.motion.paths:
                                 continue
                             character.animation.activate_scene(character.animation.query_scene("disperse"))

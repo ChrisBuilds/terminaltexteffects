@@ -191,7 +191,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                         next_char = self._current_row.type_char()
                         if next_char:
                             self.terminal.set_character_visibility(next_char, True)
-                            self.active_characters.append(next_char)
+                            self.active_characters.add(next_char)
                             self._last_column = next_char.input_coord.column
                 else:
                     self.processed_rows.append(self._current_row)
@@ -237,7 +237,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                             EventHandler.Action.CALLBACK,
                             EventHandler.Callback(self.terminal.set_character_visibility, False),
                         )
-                        self.active_characters.append(self.typing_head)
+                        self.active_characters.add(self.typing_head)
                     else:
                         self._typing = False
             self.update()

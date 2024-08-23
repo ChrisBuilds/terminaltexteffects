@@ -258,7 +258,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
             launcher = OrbittingVolleyIterator.Launcher(self.terminal, self.config, coord, symbol)
             launcher.character.layer = 2
             self.terminal.set_character_visibility(launcher.character, True)
-            self.active_characters.append(launcher.character)
+            self.active_characters.add(launcher.character)
             self._launchers.append(launcher)
         self._main_launcher = self._launchers[0]
         self._main_launcher.character.animation.set_appearance(
@@ -295,7 +295,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
                 perimeter_path = self._main_launcher.character.motion.query_path("perimeter")
                 self._main_launcher.character.motion.set_coordinate(perimeter_path.waypoints[0].coord)
                 self._main_launcher.character.motion.activate_path(perimeter_path)
-                self.active_characters.append(self._main_launcher.character)
+                self.active_characters.add(self._main_launcher.character)
             self._main_launcher.character.animation.set_appearance(
                 self.config.top_launcher_symbol,
                 self.launcher_gradient_coordinate_map[self._main_launcher.character.motion.current_coord],
@@ -310,7 +310,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
                     for _ in range(characters_to_launch):
                         next_char = launcher.launch()
                         if next_char:
-                            self.active_characters.append(next_char)
+                            self.active_characters.add(next_char)
                 self._delay = self.config.launch_delay
             else:
                 self._delay -= 1

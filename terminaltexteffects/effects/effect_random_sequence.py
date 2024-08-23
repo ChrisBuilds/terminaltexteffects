@@ -136,7 +136,7 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
                 if self.pending_chars:
                     next_char = self.pending_chars.pop()
                     self.terminal.set_character_visibility(next_char, True)
-                    self.active_characters.append(next_char)
+                    self.active_characters.add(next_char)
             self.update()
             return self.frame
         raise StopIteration

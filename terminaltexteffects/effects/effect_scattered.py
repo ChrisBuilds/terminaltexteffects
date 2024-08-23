@@ -142,7 +142,7 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
                 char_gradient, character.input_symbol, self.config.final_gradient_frames
             )
             character.animation.activate_scene(gradient_scn)
-            self.active_characters.append(character)
+            self.active_characters.add(character)
         self._initial_hold_frames = 25
 
     def __next__(self) -> str:

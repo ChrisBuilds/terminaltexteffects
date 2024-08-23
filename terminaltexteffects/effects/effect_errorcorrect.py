@@ -238,7 +238,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
             next_pair = self.swapped.pop(0)
             for char in next_pair:
                 char.animation.activate_scene(char.animation.query_scene("error"))
-                self.active_characters.append(char)
+                self.active_characters.add(char)
             self.swap_delay = self.config.swap_delay
         elif self.swap_delay:
             self.swap_delay -= 1

@@ -311,7 +311,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                             if not group.complete():
                                 next_char = group.get_next_character()
                                 if next_char:
-                                    self.active_characters.append(next_char)
+                                    self.active_characters.add(next_char)
                 self.active_groups = [group for group in self.active_groups if not group.complete()]
                 if not self.pending_groups and not self.active_groups and not self.active_characters:
                     self.phase = "final_wipe"
@@ -324,7 +324,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                         for character in next_group:
                             character.animation.activate_scene(character.animation.query_scene("brighten"))
                             self.terminal.set_character_visibility(character, True)
-                            self.active_characters.append(character)
+                            self.active_characters.add(character)
                 else:
                     self.phase = "complete"
             self.update()

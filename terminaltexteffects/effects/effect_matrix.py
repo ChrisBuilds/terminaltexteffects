@@ -459,7 +459,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                                 next_char = column.resolve_char()
                                 if next_char.input_symbol != " ":
                                     next_char.animation.activate_scene(next_char.animation.query_scene("resolve"))
-                                    self.active_characters.append(next_char)
+                                    self.active_characters.add(next_char)
                                 else:
                                     self.terminal.set_character_visibility(next_char, False)
                         self.resolve_delay = self.config.resolve_delay

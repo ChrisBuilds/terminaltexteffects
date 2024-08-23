@@ -12,13 +12,13 @@ import random
 import typing
 from dataclasses import dataclass
 
+from terminaltexteffects.engine.animation import SyncMetric
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators, easing, geometry
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, Gradient
-from terminaltexteffects.engine.animation import SyncMetric
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -246,7 +246,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 next_group = self.shells.pop()
                 for character in next_group:
                     self.terminal.set_character_visibility(character, True)
-                    self.active_characters.append(character)
+                    self.active_characters.add(character)
                 self.launch_delay = int(self.config.launch_delay * random.uniform(0.5, 1.5))
             self.launch_delay -= 1
             self.update()
