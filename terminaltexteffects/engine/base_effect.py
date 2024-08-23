@@ -54,7 +54,7 @@ class BaseEffectIterator(ABC, Generic[T]):
         """
         self.config: T = deepcopy(effect.effect_config)
         self.terminal = Terminal(effect.input_data, deepcopy(effect.terminal_config))
-        self.active_characters: list[EffectCharacter] = []
+        self.active_characters: set[EffectCharacter] = set()
 
     @property
     def frame(self) -> str:
@@ -72,7 +72,7 @@ class BaseEffectIterator(ABC, Generic[T]):
         """Run the tick method for all active characters and remove inactive characters from the active list."""
         for character in self.active_characters:
             character.tick()
-        self.active_characters = [character for character in self.active_characters if character.is_active]
+        self.active_characters = {character for character in self.active_characters if character.is_active}
 
     def __iter__(self) -> "BaseEffectIterator":
         return self
