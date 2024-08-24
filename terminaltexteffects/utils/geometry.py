@@ -9,7 +9,7 @@ Functions:
     find_coords_in_circle: Finds coordinates within an ellipse given the center and major axis length.
     find_coords_in_rect: Finds coordinates within a rectangle given the origin and distance.
     find_coord_at_distance: Finds the coordinate at a given distance along a line defined by two coordinates.
-    find_coord_on_bezier_curve: Finds points on a quadratic or cubic bezier curve.
+    find_coord_on_bezier_curve: Finds points on a bezier curve.
     find_coord_on_line: Finds points on a line.
     find_length_of_bezier_curve: Finds the length of a quadratic or cubic bezier curve.
     find_length_of_line: Finds the length of a line intersecting two coordinates.
