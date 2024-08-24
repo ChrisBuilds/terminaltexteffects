@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from functools import lru_cache
 
 
 @dataclass(eq=True, frozen=True)
@@ -34,6 +35,7 @@ class Coord:
     row: int
 
 
+@lru_cache(maxsize=8192)
 def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, unique: bool = True) -> list[Coord]:
     """Finds points on a circle.
 
@@ -71,6 +73,7 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, uni
     return points
 
 
+@lru_cache(maxsize=8192)
 def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
     """
     Find the coordinates within an circle given the center and diameter. The actual
@@ -102,6 +105,7 @@ def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
     return coords_in_ellipse
 
 
+@lru_cache(maxsize=8192)
 def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
     """Find coords that fall within a rectangle with the given origin and distance
     from the origin. Distance specifies the number of units in each direction from the origin.
@@ -128,6 +132,7 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
     return coords
 
 
+@lru_cache(maxsize=8192)
 def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coord:
     """Finds the coordinate at the given distance along the line defined by the origin and target coordinates.
 
@@ -152,48 +157,39 @@ def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coo
     return Coord(round(next_column), round(next_row))
 
 
-def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord, t: float) -> Coord:
+@lru_cache(maxsize=16384)
+def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Coord, t: float) -> Coord:
     """
-    Finds points on a quadratic or cubic bezier curve.
+    Finds points on a bezier curve of any degree.
 
     Args:
         start (Coord): The starting coordinate of the curve.
-        control (tuple[Coord, ...] | Coord): The control point(s) of the curve.
-            For a quadratic bezier curve, a single control point is expected.
-            For a cubic bezier curve, two control points are expected.
+        control (tuple[Coord, ...]): The control points of the curve.
         end (Coord): The ending coordinate of the curve.
         t (float): The parameter value between 0 and 1 that determines the position on the curve.
 
     Returns:
         Coord: The coordinate on the bezier curve corresponding to the given parameter value.
     """
-    if not 0 <= round(t) <= 1:
+    if not 0 <= t <= 1:
         raise ValueError("t must be between 0 and 1.")
-    if isinstance(control, Coord):
-        control = (control,)
-    if len(control) == 1:
-        control1 = control[0]
-        x = (1 - t) ** 2 * start.column + 2 * (1 - t) * t * control1.column + t**2 * end.column
-        y = (1 - t) ** 2 * start.row + 2 * (1 - t) * t * control1.row + t**2 * end.row
-    elif len(control) == 2:
-        control1, control2 = control
-        x = (
-            (1 - t) ** 3 * start.column
-            + 3 * (1 - t) ** 2 * t * control1.column
-            + 3 * (1 - t) * t**2 * control2.column
-            + t**3 * end.column
-        )
-        y = (
-            (1 - t) ** 3 * start.row
-            + 3 * (1 - t) ** 2 * t * control1.row
-            + 3 * (1 - t) * t**2 * control2.row
-            + t**3 * end.row
-        )
-    else:
-        raise ValueError("Invalid number of control points for bezier curve. Max 2.")
-    return Coord(round(x), round(y))
+    points = [start] + list(control) + [end]
+
+    def de_casteljau(points: list[Coord], t: float):
+        if len(points) == 1:
+            return points[0]
+        new_points = []
+        for i in range(len(points) - 1):
+            x = (1 - t) * points[i].column + t * points[i + 1].column
+            y = (1 - t) * points[i].row + t * points[i + 1].row
+            new_points.append(Coord(x, y))  # type: ignore
+        return de_casteljau(new_points, t)
+
+    result = de_casteljau(points, t)
+    return Coord(round(result.column), round(result.row))
 
 
+@lru_cache(maxsize=16384)
 def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
     """
     Finds points on a line.
@@ -213,9 +209,10 @@ def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
     return Coord(round(x), round(y))
 
 
+@lru_cache(maxsize=2048)
 def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord) -> float:
     """
-    Finds the length of a quadratic or cubic bezier curve.
+    Finds the length of a bezier curve.
 
     Args:
         start (Coord): The starting coordinate of the curve.
@@ -225,6 +222,8 @@ def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord
     Returns:
         float: The length of the bezier curve.
     """
+    if isinstance(control, Coord):
+        control = (control,)
     length = 0.0
     prev_coord = start
     for t in range(1, 10):
@@ -235,6 +234,7 @@ def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord
     return length
 
 
+@lru_cache(maxsize=8192)
 def find_length_of_line(coord1: Coord, coord2: Coord, double_row_diff: bool = False) -> float:
     """Returns the length of the line intersecting coord1 and coord2. If double_row_diff is True, the distance is
     doubled to account for the terminal character height/width ratio.
@@ -254,6 +254,7 @@ def find_length_of_line(coord1: Coord, coord2: Coord, double_row_diff: bool = Fa
     return math.hypot(column_diff, row_diff)
 
 
+@lru_cache(maxsize=8192)
 def find_normalized_distance_from_center(bottom: int, top: int, left: int, right: int, other_coord: Coord) -> float:
     """Returns the normalized distance from the center of a rectangle on the Canvas as a float between 0 and 1.
 
