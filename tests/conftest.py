@@ -38,6 +38,7 @@ from terminaltexteffects.effects import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect
 from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.utils import geometry
 from terminaltexteffects.utils.easing import (
     EasingFunction,
     in_back,
@@ -199,6 +200,20 @@ EASING_FUNCTIONS = [
 ]
 
 ANCHORS = ["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"]
+
+
+@pytest.fixture(scope="function", autouse=True)
+def clear_lru_cache():
+    yield
+    geometry.find_coords_on_circle.cache_clear()
+    geometry.find_coords_in_circle.cache_clear()
+    geometry.find_coords_in_rect.cache_clear()
+    geometry.find_coord_at_distance.cache_clear()
+    geometry.find_coord_on_bezier_curve.cache_clear()
+    geometry.find_coord_on_line.cache_clear()
+    geometry.find_length_of_bezier_curve.cache_clear()
+    geometry.find_length_of_line.cache_clear()
+    geometry.find_normalized_distance_from_center.cache_clear()
 
 
 @pytest.fixture()
