@@ -225,7 +225,7 @@ class Path:
         if active_segment.distance == 0:
             segment_distance_to_travel_factor = 0.0
         else:
-            segment_distance_to_travel_factor = distance_to_travel / active_segment.distance
+            segment_distance_to_travel_factor = min((distance_to_travel / active_segment.distance, 1))
 
         if active_segment.end.bezier_control:
             next_coord = geometry.find_coord_on_bezier_curve(
