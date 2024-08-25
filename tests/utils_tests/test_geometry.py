@@ -87,11 +87,12 @@ def test_find_coord_on_bezier_curve_two_control_points():
 
 
 def test_find_coord_on_bezier_curve_invalid_t():
+    geometry.find_coord_at_distance.cache_clear()
     start = geometry.Coord(0, 0)
     end = geometry.Coord(10, 10)
     control = geometry.Coord(5, 0)
     with pytest.raises(ValueError):
-        geometry.find_coord_on_bezier_curve(start, end, control, 1.5)
+        geometry.find_coord_on_bezier_curve(start, (control,), end, 1.5)
 
 
 def test_find_coord_on_line():
