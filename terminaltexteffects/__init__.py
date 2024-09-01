@@ -6,4 +6,4 @@ from terminaltexteffects.utils import easing, geometry  # noqa: F401
 from terminaltexteffects.utils.geometry import Coord  # noqa: F401
 from terminaltexteffects.utils.graphics import Color, Gradient  # noqa: F401
 
-__version__ = "0.11.0"
+__version__ = "0.12.0"
