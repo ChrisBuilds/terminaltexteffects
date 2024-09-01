@@ -10,18 +10,6 @@ if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character  # pragma: no cover
 
 
-class SyncMetric(Enum):
-    """Enum for specifying the type of sync to use for a Scene.
-
-    Attributes:
-        DISTANCE (int): Sync to a Waypoint based on distance from the Waypoint
-        STEP (int): Sync to a Waypoint based on the number of steps taken towards the Waypoint
-    """
-
-    DISTANCE = auto()
-    STEP = auto()
-
-
 @dataclass
 class CharacterVisual:
     """A class for storing symbol, color, and terminal graphical modes for the character.
@@ -115,7 +103,7 @@ class Scene:
     Args:
         scene_id (str): the ID of the Scene
         is_looping (bool, optional): Whether the Scene should loop. Defaults to False.
-        sync (SyncMetric | None, optional): The type of sync to use for the Scene. Defaults to None.
+        sync (Scene.SyncMetric | None, optional): The type of sync to use for the Scene. Defaults to None.
         ease (easing.EasingFunction | None, optional): The easing function to use for the Scene. Defaults to None.
         no_color (bool, optional): Whether to ignore colors. Defaults to False.
         use_xterm_colors (bool, optional): Whether to convert all colors to XTerm-256 colors. Defaults to False.
@@ -130,7 +118,7 @@ class Scene:
     Attributes:
         scene_id (str): the ID of the Scene
         is_looping (bool): Whether the Scene should loop
-        sync (SyncMetric | None): The type of sync to use for the Scene
+        sync (Scene.SyncMetric | None): The type of sync to use for the Scene
         ease (easing.EasingFunction | None): The easing function to use for the Scene
         no_color (bool): Whether to ignore colors
         use_xterm_colors (bool): Whether to convert all colors to XTerm-256 colors
@@ -142,6 +130,17 @@ class Scene:
     """
 
     xterm_color_map: dict[str, int] = {}
+
+    class SyncMetric(Enum):
+        """Enum for specifying the type of sync to use for a Scene.
+
+        Attributes:
+            DISTANCE (int): Sync to a Waypoint based on distance from the Waypoint
+            STEP (int): Sync to a Waypoint based on the number of steps taken towards the Waypoint
+        """
+
+        DISTANCE = auto()
+        STEP = auto()
 
     def __init__(
         self,
@@ -159,14 +158,14 @@ class Scene:
         Args:
             scene_id (str): the ID of the Scene
             is_looping (bool, optional): Whether the Scene should loop. Defaults to False.
-            sync (SyncMetric | None, optional): The type of sync to use for the Scene. Defaults to None.
+            sync (Scene.SyncMetric | None, optional): The type of sync to use for the Scene. Defaults to None.
             ease (easing.EasingFunction | None, optional): The easing function to use for the Scene. Defaults to None.
             no_color (bool, optional): Whether to colors should be ignored. Defaults to False.
             use_xterm_colors (bool, optional): Whether to convert all colors to XTerm-256 colors. Defaults to False.
         """
         self.scene_id = scene_id
         self.is_looping = is_looping
-        self.sync: SyncMetric | None = sync
+        self.sync: Scene.SyncMetric | None = sync
         self.ease: easing.EasingFunction | None = ease
         self.no_color = no_color
         self.use_xterm_colors = use_xterm_colors
@@ -440,7 +439,7 @@ class Animation:
         self,
         *,
         is_looping: bool = False,
-        sync: SyncMetric | None = None,
+        sync: Scene.SyncMetric | None = None,
         ease: easing.EasingFunction | None = None,
         id: str = "",
     ) -> Scene:
@@ -449,7 +448,7 @@ class Animation:
         Args:
             id (str): Unique name for the scene. Used to query for the scene.
             is_looping (bool): Whether the scene should loop.
-            sync (SyncMetric): The type of sync to use for the scene.
+            sync (Scene.SyncMetric): The type of sync to use for the scene.
             ease (easing.EasingFunction): The easing function to use for the scene.
 
         Returns:
@@ -651,7 +650,7 @@ class Animation:
             # current waypoint progress
             if self.active_scene.sync:
                 if self.character.motion.active_path:
-                    if self.active_scene.sync == SyncMetric.STEP:
+                    if self.active_scene.sync == Scene.SyncMetric.STEP:
                         sequence_index = round(
                             (len(self.active_scene.frames) - 1)
                             * (
@@ -659,7 +658,7 @@ class Animation:
                                 / max(self.character.motion.active_path.max_steps, 1)
                             )
                         )
-                    elif self.active_scene.sync == SyncMetric.DISTANCE:
+                    elif self.active_scene.sync == Scene.SyncMetric.DISTANCE:
                         sequence_index = round(
                             (len(self.active_scene.frames) - 1)
                             * (
