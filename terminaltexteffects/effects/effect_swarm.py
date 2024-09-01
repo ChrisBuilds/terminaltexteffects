@@ -13,13 +13,9 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects.engine import animation
-from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, geometry
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -203,7 +199,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
             for character in swarm:
                 swarm_area_count = 0
                 character.motion.set_coordinate(swarm_spawn)
-                flash_scn = character.animation.new_scene(sync=animation.SyncMetric.DISTANCE)
+                flash_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
                 for step in swarm_gradient_mirror:
                     flash_scn.add_frame(character.input_symbol, 1, fg_color=step)
                 for _, swarm_area_coords in swarm_area_coordinate_map.items():

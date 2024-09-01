@@ -11,12 +11,10 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators, easing
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:

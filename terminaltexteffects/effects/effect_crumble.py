@@ -14,13 +14,9 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects.engine import animation
-from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -125,7 +121,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             strengthen_flash_scn.apply_gradient_to_symbols(strengthen_flash_gradient, character.input_symbol, 4)
             strengthen_scn = character.animation.new_scene()
             strengthen_scn.apply_gradient_to_symbols(strengthen_gradient, character.input_symbol, 6)
-            dust_scn = character.animation.new_scene(sync=animation.SyncMetric.DISTANCE)
+            dust_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
             for _ in range(5):
                 dust_scn.add_frame(random.choice(["*", ".", ","]), 1, fg_color=dust_color)
 

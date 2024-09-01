@@ -12,12 +12,10 @@ import random
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects.engine import animation
-from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Scene
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -109,7 +107,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
         self.decrypting_pending_chars: set[EffectCharacter] = set()
         self.phase = "typing"
         self.encrypted_symbols: list[str] = []
-        self.scenes: dict[str, animation.Scene] = {}
+        self.scenes: dict[str, Scene] = {}
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.make_encrypted_symbols()
         self.build()

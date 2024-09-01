@@ -14,13 +14,9 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects.engine.animation import Animation
-from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects import Animation, Color, Coord, EffectCharacter, Gradient, Terminal
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.motion import Coord
-from terminaltexteffects.engine.terminal import Terminal
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 MATRIX_SYMBOLS_COMMON = (
     "2",

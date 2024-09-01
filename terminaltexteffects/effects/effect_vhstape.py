@@ -13,12 +13,9 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects.engine import animation
-from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -182,10 +179,10 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 base_scn.add_frame(
                     character.input_symbol, duration=1, fg_color=self.character_final_color_map[character]
                 )
-                glitch_scn_forward = character.animation.new_scene(id="rgb_glitch_fwd", sync=animation.SyncMetric.STEP)
+                glitch_scn_forward = character.animation.new_scene(id="rgb_glitch_fwd", sync=Scene.SyncMetric.STEP)
                 for color in glitch_line_colors:
                     glitch_scn_forward.add_frame(character.input_symbol, duration=1, fg_color=color)
-                glitch_scn_backward = character.animation.new_scene(id="rgb_glitch_bwd", sync=animation.SyncMetric.STEP)
+                glitch_scn_backward = character.animation.new_scene(id="rgb_glitch_bwd", sync=Scene.SyncMetric.STEP)
                 for color in glitch_line_colors[::-1]:
                     glitch_scn_backward.add_frame(character.input_symbol, duration=1, fg_color=color)
                 snow_scn = character.animation.new_scene(id="snow")

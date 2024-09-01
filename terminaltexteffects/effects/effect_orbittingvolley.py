@@ -13,13 +13,9 @@ from dataclasses import dataclass
 from itertools import cycle
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Terminal, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.terminal import Terminal
-from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:

@@ -15,13 +15,9 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects.engine import animation
-from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing, geometry
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -205,7 +201,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                 for color in gradient_map[star_color]:
                     consumed_scn.add_frame(star_symbol, 1, fg_color=color)
                 consumed_scn.add_frame(" ", 1)
-                consumed_scn.sync = animation.SyncMetric.DISTANCE
+                consumed_scn.sync = Scene.SyncMetric.DISTANCE
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
                     singularity_path,

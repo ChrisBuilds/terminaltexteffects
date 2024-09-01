@@ -13,11 +13,9 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects.engine import animation
-from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Scene
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -181,7 +179,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 for _ in range(10):
                     error_scene.add_frame(block_symbol, 3, fg_color=self.config.error_color)
                     error_scene.add_frame(character.input_symbol, 3, fg_color=Color("ffffff"))
-                correcting_scene = character.animation.new_scene(sync=animation.SyncMetric.DISTANCE)
+                correcting_scene = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
                 correcting_scene.apply_gradient_to_symbols(correcting_gradient, "█", 3)
                 final_scene = character.animation.new_scene()
                 char_final_gradient = Gradient(

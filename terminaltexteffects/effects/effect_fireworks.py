@@ -12,13 +12,10 @@ import random
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects.engine.animation import SyncMetric
-from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators, easing, geometry
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -215,7 +212,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 launch_scn.add_frame(self.config.firework_symbol, 1, fg_color=Color("FFFFFF"))
                 launch_scn.is_looping = True
                 # bloom scene
-                bloom_scn = character.animation.new_scene(sync=SyncMetric.STEP)
+                bloom_scn = character.animation.new_scene(sync=Scene.SyncMetric.STEP)
                 for color in shell_gradient:
                     bloom_scn.add_frame(character.input_symbol, 3, fg_color=color)
                 # fall scene

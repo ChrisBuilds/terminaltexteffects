@@ -11,13 +11,10 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects.engine.animation import SyncMetric
-from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators, easing
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -136,7 +133,7 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
             )
             character.motion.activate_path(input_coord_path)
             self.terminal.set_character_visibility(character, True)
-            gradient_scn = character.animation.new_scene(sync=SyncMetric.DISTANCE)
+            gradient_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
             char_gradient = Gradient(final_gradient.spectrum[0], self.character_final_color_map[character], steps=10)
             gradient_scn.apply_gradient_to_symbols(
                 char_gradient, character.input_symbol, self.config.final_gradient_frames
