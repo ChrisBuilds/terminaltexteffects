@@ -1,7 +1,7 @@
 import pytest
 
 import terminaltexteffects.utils.easing as easing
-from terminaltexteffects.engine.animation import CharacterVisual, Frame, Scene, SyncMetric
+from terminaltexteffects.engine.animation import CharacterVisual, Frame, Scene
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, Gradient
@@ -59,10 +59,10 @@ def test_frame_init(character_visual_default):
 
 
 def test_scene_init():
-    scene = Scene(scene_id="test_scene", is_looping=True, sync=SyncMetric.STEP, ease=easing.in_sine)
+    scene = Scene(scene_id="test_scene", is_looping=True, sync=Scene.SyncMetric.STEP, ease=easing.in_sine)
     assert scene.scene_id == "test_scene"
     assert scene.is_looping is True
-    assert scene.sync == SyncMetric.STEP
+    assert scene.sync == Scene.SyncMetric.STEP
     assert scene.ease == easing.in_sine
 
 
@@ -270,7 +270,7 @@ def test_animation_step_animation_sync_step(character: EffectCharacter):
     p = character.motion.new_path()
     p.new_waypoint(Coord(10, 10))
     character.motion.activate_path(p)
-    s = character.animation.new_scene(sync=SyncMetric.STEP)
+    s = character.animation.new_scene(sync=Scene.SyncMetric.STEP)
     s.add_frame(symbol="a", duration=10)
     s.add_frame(symbol="b", duration=10)
     character.animation.activate_scene(s)
@@ -282,7 +282,7 @@ def test_animation_step_animation_sync_distance(character: EffectCharacter):
     p = character.motion.new_path()
     p.new_waypoint(Coord(10, 10))
     character.motion.activate_path(p)
-    s = character.animation.new_scene(sync=SyncMetric.DISTANCE)
+    s = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
     s.add_frame(symbol="a", duration=10)
     s.add_frame(symbol="b", duration=10)
     character.animation.activate_scene(s)
@@ -294,7 +294,7 @@ def test_animation_step_animation_sync_waypoint_deactivated(character: EffectCha
     p = character.motion.new_path()
     p.new_waypoint(Coord(10, 10))
     character.motion.activate_path(p)
-    s = character.animation.new_scene(sync=SyncMetric.DISTANCE)
+    s = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
     s.add_frame(symbol="a", duration=10)
     s.add_frame(symbol="b", duration=10)
     character.animation.activate_scene(s)
