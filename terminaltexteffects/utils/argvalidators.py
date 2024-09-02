@@ -17,7 +17,7 @@ Classes:
     PositiveFloat: Argument type for positive floats.
     NonNegativeFloat: Argument type for nonnegative floats.
     PositiveFloatRange: Argument type for float ranges.
-    TerminalDimensions: Argument type for terminal dimensions.
+    TerminalDimension: Argument type for terminal dimensions.
     CanvasDimension: Argument type for canvas dimensions.
     NonNegativeRatio: Argument type for float values from zero and one.
     PositiveRatio: Argument type for positive float values between greater than zero and less than or equal to one.
@@ -587,20 +587,25 @@ class Ease:
 class EasingStep:
     """Argument type for easing step size values.
 
-    Args:
-        arg (str): argument to validate
-
     Raises:
         argparse.ArgumentTypeError: Value is not a valid easing step size.
-
-    Returns:
-        float: validated easing step size value
     """
 
     METAVAR = "0 < float(n) <= 1"
 
     @staticmethod
     def type_parser(arg: str) -> float:
+        """Validates that the given argument is a valid easing function.
+
+        Args:
+            arg (str): argument to validate
+
+        Raises:
+            argparse.ArgumentTypeError: Value is not a valid easing step size.
+
+        Returns:
+            float: validated easing step size value
+        """
         try:
             f = float(arg)
         except ValueError:
