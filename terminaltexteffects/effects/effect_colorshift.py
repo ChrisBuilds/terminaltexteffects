@@ -25,8 +25,7 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="colorshift",
     help="Display a gradient that shifts colors across the terminal.",
     description="Display a gradient that shifts colors across the terminal.",
-    epilog="""Example: terminaltexteffects colorshift --gradient-stops 0000ff ffffff 0000ff --gradient-steps 12
-           --gradient-frames 10 --cycles 3 --travel --travel-direction radial --loop --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12""",
+    epilog="""Example: terminaltexteffects colorshift --gradient-stops 0000ff ffffff 0000ff --gradient-steps 12 --gradient-frames 10 --cycles 3 --travel --travel-direction radial --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12""",
 )
 @dataclass
 class ColorShiftConfig(ArgsDataClass):
@@ -36,7 +35,6 @@ class ColorShiftConfig(ArgsDataClass):
         gradient_stops (tuple[Color, ...]): Tuple of colors for the gradient. If only one color is provided, the characters will be displayed in that color.
         gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
-        gradient_direction (Gradient.Direction): Direction of the gradient across the canvas.
         no_loop (bool): Do not loop the gradient. If not set, the gradient generation will loop the final gradient color back to the first gradient color.
         travel (bool): Display the gradient as a traveling wave.
         travel_direction (Gradient.Direction): Direction the gradient travels across the canvas.
