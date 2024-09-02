@@ -61,7 +61,6 @@ nav:
       - engine/eventhandler.md
       - Animation:
         - engine/animation/animation.md
-        - engine/animation/syncmetric.md
         - engine/animation/charactervisual.md
         - engine/animation/frame.md
         - engine/animation/scene.md
@@ -97,6 +96,7 @@ nav:
       - effects/errorcorrect.md
       - effects/expand.md
       - effects/fireworks.md
+      - effects/highlight.md
       - effects/matrix.md
       - effects/middleout.md
       - effects/orbittingvolley.md
