@@ -170,3 +170,4 @@ effect_dev.py
 effect_canvas_test.py
 .vscode/*
 lib_tests/*
+dev_notes/project_notes.md
