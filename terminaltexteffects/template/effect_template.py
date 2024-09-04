@@ -29,36 +29,17 @@ class EffectConfig(ArgsDataClass):
     color_single: Color = ArgField(
         cmd_name=["--color-single"],
         type_parser=argvalidators.ColorArg.type_parser,
-        default=0,
+        default=Color(0),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color for the ___.",
     )  # type: ignore[assignment]
     "Color: Color for the ___."
 
-    color_list: tuple[Color, ...] = ArgField(
-        cmd_name=["--color-list"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        nargs="+",
-        default=0,
-        metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the ___.",
-    )  # type: ignore[assignment]
-    "tuple[Color, ...]: Space separated, unquoted, list of colors for the ___."
-
-    final_color: Color = ArgField(
-        cmd_name=["--final-color"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        default="ffffff",
-        metavar=argvalidators.ColorArg.METAVAR,
-        help="Color for the final character.",
-    )  # type: ignore[assignment]
-    "Color: Color for the final character."
-
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=("8A008A", "00D1FF", "FFFFFF"),
+        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
@@ -82,6 +63,15 @@ class EffectConfig(ArgsDataClass):
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # type: ignore[assignment]
     "int: Number of frames to display each gradient step. Increase to slow down the gradient animation."
+
+    final_gradient_direction: Gradient.Direction = ArgField(
+        cmd_name="--final-gradient-direction",
+        type_parser=argvalidators.GradientDirection.type_parser,
+        default=Gradient.Direction.VERTICAL,
+        metavar=argvalidators.GradientDirection.METAVAR,
+        help="Direction of the final gradient.",
+    )  # type: ignore[assignment]
+    "Gradient.Direction : Direction of the final gradient."
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
@@ -114,10 +104,15 @@ class NamedEffectIterator(BaseEffectIterator[EffectConfig]):
 
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.canvas.text_bottom,
+            self.terminal.canvas.text_top,
+            self.terminal.canvas.text_left,
+            self.terminal.canvas.text_right,
+            self.config.final_gradient_direction,
+        )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient.get_color_at_fraction(
-                character.input_coord.row / self.terminal.canvas.top
-            )
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
             # do something with the data if needed (sort, adjust positions, etc)
 
