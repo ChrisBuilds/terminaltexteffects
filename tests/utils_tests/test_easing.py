@@ -1,83 +1,31 @@
 import pytest
 
-from terminaltexteffects.utils.easing import (
-    in_back,
-    in_bounce,
-    in_circ,
-    in_cubic,
-    in_elastic,
-    in_expo,
-    in_out_back,
-    in_out_bounce,
-    in_out_circ,
-    in_out_cubic,
-    in_out_elastic,
-    in_out_expo,
-    in_out_quad,
-    in_out_quart,
-    in_out_quint,
-    in_out_sine,
-    in_quad,
-    in_quart,
-    in_quint,
-    in_sine,
-    linear,
-    out_back,
-    out_bounce,
-    out_circ,
-    out_cubic,
-    out_elastic,
-    out_expo,
-    out_quad,
-    out_quart,
-    out_quint,
-    out_sine,
-)
+from terminaltexteffects.utils.easing import eased_step_function
 
 pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
-easing_functions = [
-    linear,
-    in_sine,
-    out_sine,
-    in_out_sine,
-    in_quad,
-    out_quad,
-    in_out_quad,
-    in_cubic,
-    out_cubic,
-    in_out_cubic,
-    in_quart,
-    out_quart,
-    in_out_quart,
-    in_quint,
-    out_quint,
-    in_out_quint,
-    in_expo,
-    out_expo,
-    in_out_expo,
-    in_circ,
-    out_circ,
-    in_out_circ,
-    in_back,
-    out_back,
-    in_out_back,
-    in_elastic,
-    out_elastic,
-    in_out_elastic,
-    in_bounce,
-    out_bounce,
-    in_out_bounce,
-]
+
+def test_ease_valid_progress(easing_function_1):
+    assert round(easing_function_1(0)) == 0
+    assert round(easing_function_1(1)) == 1
 
 
-@pytest.mark.parametrize("easing_function", easing_functions)
-def test_ease_valid_progress(easing_function):
-    assert round(easing_function(0)) == 0
-    assert round(easing_function(1)) == 1
-
-
-@pytest.mark.parametrize("easing_function", easing_functions)
 @pytest.mark.parametrize("progress", [n / 10 for n in range(1, 11)])
-def test_ease_progress_ratios(progress, easing_function):
-    easing_function(progress)  # should not raise an exception
+def test_ease_progress_ratios(progress, easing_function_1):
+    easing_function_1(progress)  # should not raise an exception
+
+
+@pytest.mark.parametrize("clamp", [True, False])
+def test_eased_step_function(easing_function_1, clamp):
+    f = eased_step_function(easing_function_1, 0.01, clamp)
+    used_step = 0
+    while used_step < 1:
+        used_step, eased_value = f()
+        if clamp:
+            assert 0 <= eased_value <= 1
+
+
+@pytest.mark.parametrize("step_size", [-1, 0, 1.1])
+def test_eased_step_function_invalid_step_size(easing_function_1, step_size):
+    with pytest.raises(ValueError):
+        f = eased_step_function(easing_function_1, step_size)
