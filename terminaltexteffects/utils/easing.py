@@ -32,6 +32,7 @@ Functions:
     in_bounce: Ease in using a bounce function.
     out_bounce: Ease out using a bounce function.
     in_out_bounce: Ease in/out using a bounce function.
+    eased_step_function: Create a closure that returns the eased value of each step from 0 to 1 increasing by the step_size.
 """
 
 from __future__ import annotations
@@ -523,13 +524,16 @@ def in_out_bounce(progress_ratio: float) -> float:
         return (1 + out_bounce(2 * progress_ratio - 1)) / 2
 
 
-def eased_step_function(easing_func: EasingFunction, step_size: float) -> typing.Callable[[], tuple[float, float]]:
+def eased_step_function(
+    easing_func: EasingFunction, step_size: float, clamp: bool = False
+) -> typing.Callable[[], tuple[float, float]]:
     """
     Create a closure that returns the eased value of each step from 0 to 1 increasing by the step_size.
 
     Args:
         easing_func (EasingFunction): The easing function to use.
         step_size (float): The step size.
+        clamp (bool): If True, the easing function will be limited to 0 <= n <= 1. Defaults to False.
 
     Returns:
         callable[[],tuple[float,float]]: A closure that returns a tuple of the current input step and eased value of the current input step.
@@ -545,6 +549,8 @@ def eased_step_function(easing_func: EasingFunction, step_size: float) -> typing
         used_step = current_step
         if current_step < 1:
             current_step = min((current_step + step_size, 1.0))
+        if clamp:
+            eased_value = max(0, min(eased_value, 1))
         return used_step, eased_value
 
     return ease
