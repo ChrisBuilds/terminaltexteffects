@@ -28,4 +28,4 @@ def test_eased_step_function(easing_function_1, clamp):
 @pytest.mark.parametrize("step_size", [-1, 0, 1.1])
 def test_eased_step_function_invalid_step_size(easing_function_1, step_size):
     with pytest.raises(ValueError):
-        f = eased_step_function(easing_function_1, step_size)
+        _ = eased_step_function(easing_function_1, step_size)
