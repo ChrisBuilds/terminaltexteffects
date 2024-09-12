@@ -372,6 +372,8 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         self.rain_colors = Gradient(*self.config.rain_color_gradient, steps=6)
         self.column_delay = 0
         self.resolve_delay = self.config.resolve_delay
+        self.final_frame_shown = False
+        self.rain_complete = False
         self.phase = "rain"
         self.build()
         self.rain_start = time.time()
@@ -438,6 +440,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
 
             if self.phase == "rain" and self.config.rain_time > 0:
                 if time.time() - self.rain_start > self.config.rain_time:
+                    self.rain_complete = True
                     self.phase = "fill"
                     for column in self.active_columns:
                         column.hold_time = 0
@@ -464,7 +467,17 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
 
             self.full_columns = [column for column in self.full_columns if column.visible_characters]
 
-        if self.full_columns or self.active_columns or self.active_characters:
+        if (
+            self.full_columns
+            or self.active_columns
+            or self.active_characters
+            or self.pending_columns
+            or not self.rain_complete
+        ):
+            self.update()
+            return self.frame
+        elif not self.final_frame_shown:
+            self.final_frame_shown = True
             self.update()
             return self.frame
         else:
