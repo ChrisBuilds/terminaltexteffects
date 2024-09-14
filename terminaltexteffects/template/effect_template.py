@@ -10,11 +10,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects import Color, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 @argclass(
