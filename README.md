@@ -35,7 +35,7 @@ TerminalTextEffects (TTE) is a terminal visual effects engine. TTE can be instal
 
 * Xterm 256 / RGB hex color support
 * Complex character movement via Paths, Waypoints, and
-  motion easing, with support for quadratic/cubic bezier curves.
+  motion easing, with support for bezier curves.
 * Complex animations via Scenes with symbol/color changes,
   layers, easing, and Path synced progression.
 * Variable stop/step color gradient generation.
