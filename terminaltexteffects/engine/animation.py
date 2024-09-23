@@ -24,6 +24,7 @@ class CharacterVisual:
         reverse (bool): reverse mode
         hidden (bool): hidden mode
         strike (bool): strike mode
+        colors (graphics.ColorPair | None): the symbol's colors
         fg_color (graphics.Color | None): the symbol's foreground color
         bg_color (graphics.Color | None): the symbol's background color
 
@@ -40,8 +41,7 @@ class CharacterVisual:
     reverse: bool = False
     hidden: bool = False
     strike: bool = False
-    fg_color: graphics.Color | None = None  # the Color object provided during initialization
-    bg_color: graphics.Color | None = None  # the Color object provided during initialization
+    colors: graphics.ColorPair | None = None  # the Color object provided during initialization
     # the _*_color_code attributes are used to store the actual 8-bit int or 24-bit hex str after applying terminal config args
     # these are used by colorterm to produce the ansi sequences, the *_color Color objects are present to enable
     # programmatic access to the character's current visual color
@@ -107,6 +107,7 @@ class Scene:
         ease (easing.EasingFunction | None, optional): The easing function to use for the Scene. Defaults to None.
         no_color (bool, optional): Whether to ignore colors. Defaults to False.
         use_xterm_colors (bool, optional): Whether to convert all colors to XTerm-256 colors. Defaults to False.
+        preexisting_colors (graphics.ColorPair | None, optional): The preexisting colors to use for the Scene. Defaults to None.
 
     Methods:
         add_frame: Adds a Frame to the Scene.
@@ -150,8 +151,7 @@ class Scene:
         ease: easing.EasingFunction | None = None,
         no_color: bool = False,
         use_xterm_colors: bool = False,
-        fg_color: graphics.Color | None = None,
-        bg_color: graphics.Color | None = None,
+        preexisting_colors: graphics.ColorPair | None = None,
     ):
         """Initializes a Scene.
 
@@ -169,8 +169,7 @@ class Scene:
         self.ease: easing.EasingFunction | None = ease
         self.no_color = no_color
         self.use_xterm_colors = use_xterm_colors
-        self.fg_color: graphics.Color | None = fg_color
-        self.bg_color: graphics.Color | None = bg_color
+        self.preexisting_colors: graphics.ColorPair | None = preexisting_colors
         self.frames: list[Frame] = []
         self.played_frames: list[Frame] = []
         self.frame_index_map: dict[int, Frame] = {}
@@ -208,8 +207,7 @@ class Scene:
         symbol: str,
         duration: int,
         *,
-        fg_color: graphics.Color | None = None,
-        bg_color: graphics.Color | None = None,
+        colors: graphics.ColorPair | None = None,
         bold=False,
         dim=False,
         italic=False,
@@ -224,8 +222,7 @@ class Scene:
         Args:
             symbol (str): the symbol to show
             duration (int): the number of frames to use the Frame
-            fg_color (graphics.Color, optional): the foreground color to show. Defaults to None.
-            bg_color (graphics.Color, optional): the background color to show. Defaults to None.
+            colors (graphics.ColorPair | None, optional): the colors to use. Defaults to None.
             bold (bool, optional): bold mode. Defaults to False.
             dim (bool, optional): dim mode. Defaults to False.
             italic (bool, optional): italic mode. Defaults to False.
@@ -236,14 +233,16 @@ class Scene:
             strike (bool, optional): strike mode. Defaults to False.
         """
         # override fg and bg colors if they are set in the Scene due to existing color handling = always
-        if self.fg_color:
-            fg_color = self.fg_color
-        if self.bg_color:
-            bg_color = self.bg_color
+        if self.preexisting_colors:
+            colors = self.preexisting_colors
 
         # get the color code for the fg and bg colors
-        char_vis_fg_color = self._get_color_code(fg_color)
-        char_vis_bg_color = self._get_color_code(bg_color)
+        if colors:
+            char_vis_fg_color = self._get_color_code(colors.fg_color)
+            char_vis_bg_color = self._get_color_code(colors.bg_color)
+        else:
+            char_vis_fg_color = None
+            char_vis_bg_color = None
 
         if duration < 1:
             raise ValueError("duration must be greater than 0")
@@ -257,8 +256,7 @@ class Scene:
             reverse=reverse,
             hidden=hidden,
             strike=strike,
-            fg_color=fg_color,
-            bg_color=bg_color,
+            colors=colors,
             _fg_color_code=char_vis_fg_color,
             _bg_color_code=char_vis_bg_color,
         )
@@ -306,29 +304,20 @@ class Scene:
         return next_visual
 
     def apply_gradient_to_symbols(
-        self, gradient: graphics.Gradient, symbols: typing.Sequence[str], duration: int, fg=True, bg=False
+        self,
+        fg_gradient: graphics.Gradient | None,
+        bg_gradient: graphics.Gradient | None,
+        symbols: typing.Sequence[str],
+        duration: int,
     ) -> None:
         """
         Applies a gradient effect to a sequence of symbols and adds each symbol as a frame to the Scene.
 
-        This method works by iterating over the symbols and calculating a progress ratio for each symbol.
-        This ratio is calculated by dividing the index of the current symbol (plus one) by the total number of symbols.
-        The gradient index is then calculated by multiplying the symbol progress by the length of the gradient's spectrum.
-        This index is used to select a color from the gradient's spectrum.
-
-        The method then iterates over the colors in the gradient's spectrum from the last index to the gradient index
-        (or 1 if gradient index is 0). For each color, it calls the add_frame method, passing the symbol, duration, and color.
-        This adds a frame to the Scene with the symbol displayed in the color from the gradient.
-
-        Finally, the last index is updated to the current gradient index, and the process repeats for the next symbol.
-        This results in each symbol being displayed in a sequence of colors from the gradient, creating a gradient effect across the symbols.
-
         Args:
-            gradient (graphics.Gradient): The gradient to apply.
-            symbols (list[str]): The list of symbols to apply the gradient to.
+            fg_gradient (graphics.Gradient | None): The foreground gradient to apply.
+            bg_gradient (graphics.Gradient | None): The background gradient to apply.
+            symbols (Sequence[str]): The sequence of symbols to apply the gradient to.
             duration (int): The duration to show each frame.
-            fg (bool, optional): Whether to apply the gradient to the foreground color. Defaults to True.
-            bg (bool, optional): Whether to apply the gradient to the background color. Defaults to False.
 
         Returns:
             None
@@ -336,17 +325,76 @@ class Scene:
         Raises:
             ValueError: If fg and bg are both False or if the gradient has no colors in the spectrum.
         """
-        if not fg and not bg:
-            raise ValueError("At least one of fg or bg must be True.")
-        if not gradient.spectrum:
-            raise ValueError("Gradient must have at least one color in the spectrum.")
-        last_index = 0
-        for symbol_index, symbol in enumerate(symbols):
-            symbol_progress = (symbol_index + 1) / len(symbols)
-            gradient_index = int(symbol_progress * len(gradient.spectrum))
-            for color in gradient.spectrum[last_index : max(gradient_index, 1)]:
-                self.add_frame(symbol, duration, fg_color=color if fg else None, bg_color=color if bg else None)
-            last_index = gradient_index
+        T = typing.TypeVar("T")
+        R = typing.TypeVar("R")
+
+        def cyclic_distribution(
+            larger_seq: typing.Sequence[T], smaller_seq: typing.Sequence[R]
+        ) -> typing.Generator[tuple[T, R], None, None]:
+            """Distributes the elements of a smaller sequence cyclically across a larger sequence with overflow.
+
+            Example:
+                cyclic_distribution([1, 2, 3, 4, 5], [a, b]) -> [(1, a), (2, a), (3, a), (4, b), (5, b)]
+
+            Args:
+                larger_seq (typing.Sequence[T]): the larger sequence
+                smaller_seq (typing.Sequence[R]): the smaller sequence
+
+            Yields:
+                typing.Generator[tuple[T, R], None, None]: a generator yielding tuples of elements from the larger and smaller sequences
+            """
+            repeat_factor = len(larger_seq) // len(smaller_seq)
+            overflow_count = len(larger_seq) % len(smaller_seq)
+            overflow_used = False
+            smaller_index = 0
+            current_repeat_factor = 0
+            for larger_seq_element in larger_seq:
+                if current_repeat_factor >= repeat_factor:
+                    if overflow_count:
+                        if overflow_used:
+                            smaller_index += 1
+                            current_repeat_factor = 0
+                            overflow_used = False
+                        else:
+                            overflow_used = True
+                            overflow_count -= 1
+                    else:
+                        smaller_index += 1
+                        current_repeat_factor = 0
+
+                current_repeat_factor += 1
+                yield larger_seq_element, smaller_seq[smaller_index]
+
+        if not fg_gradient and not bg_gradient:
+            raise ValueError("Must provide at least one gradient to apply.")
+        if not ((fg_gradient and fg_gradient.spectrum) or (bg_gradient and bg_gradient.spectrum)):
+            raise ValueError(
+                "fg_gradient and bg_gradient have empty spectrums. Gradient must have at least one color in the spectrum."
+            )
+        color_pairs: list[graphics.ColorPair] = []
+        if fg_gradient and fg_gradient.spectrum and bg_gradient and bg_gradient.spectrum:
+            if len(fg_gradient.spectrum) >= len(bg_gradient.spectrum):
+                color_pairs = [
+                    graphics.ColorPair(fg_color=fg_color, bg_color=bg_color)
+                    for fg_color, bg_color in cyclic_distribution(fg_gradient.spectrum, bg_gradient.spectrum)
+                ]
+            else:
+                color_pairs = [
+                    graphics.ColorPair(fg_color=fg_color, bg_color=bg_color)
+                    for bg_color, fg_color in cyclic_distribution(bg_gradient.spectrum, fg_gradient.spectrum)
+                ]
+        else:
+            if fg_gradient and fg_gradient.spectrum:
+                color_pairs = [graphics.ColorPair(fg_color=color, bg_color=None) for color in fg_gradient.spectrum]
+            elif bg_gradient and bg_gradient.spectrum:
+                color_pairs = [graphics.ColorPair(fg_color=None, bg_color=color) for color in bg_gradient.spectrum]
+
+        if len(symbols) >= len(color_pairs):
+            for symbol, colors in cyclic_distribution(symbols, color_pairs):
+                self.add_frame(symbol, duration, colors=colors)
+        else:
+            for colors, symbol in cyclic_distribution(color_pairs, symbols):
+                self.add_frame(symbol, duration, colors=colors)
 
     def reset_scene(self) -> None:
         """Resets the Scene."""
@@ -464,11 +512,9 @@ class Animation:
                 else:
                     current_id += 1
         if self.existing_color_handling == "always":
-            fg_color = self.input_fg_color
-            bg_color = self.input_bg_color
+            preexisting_colors = graphics.ColorPair(fg_color=self.input_fg_color, bg_color=self.input_bg_color)
         else:
-            fg_color = None
-            bg_color = None
+            preexisting_colors = None
         new_scene = Scene(
             scene_id=id,
             is_looping=is_looping,
@@ -476,8 +522,7 @@ class Animation:
             ease=ease,
             no_color=self.no_color,
             use_xterm_colors=self.use_xterm_colors,
-            fg_color=fg_color,
-            bg_color=bg_color,
+            preexisting_colors=preexisting_colors,
         )
         self.scenes[id] = new_scene
         return new_scene
@@ -513,32 +558,30 @@ class Animation:
 
         return False
 
-    def set_appearance(
-        self, symbol: str, fg_color: graphics.Color | None = None, bg_color: graphics.Color | None = None
-    ) -> None:
-        """Updates the current character visual with the symbol and color provided. If the character has an active scene, any appearance set with this method
+    def set_appearance(self, symbol: str, colors: graphics.ColorPair | None = None) -> None:
+        """Updates the current character visual with the symbol and colors provided. If the character has an active scene, any appearance set with this method
         will be overwritten when the scene is stepped to the next frame.
 
         Args:
             symbol (str): The symbol to apply.
-            fg_color (graphics.Color | None): The foreground color to apply.
-            bg_color (graphics.Color | None): The background color to apply.
+            colors (graphics.ColorPair | None): The colors to apply.
         """
         # override fg and bg colors if they are set in the Scene due to existing color handling = always
+        if colors is None:
+            colors = graphics.ColorPair(fg_color=None, bg_color=None)
         if self.existing_color_handling == "always":
             if self.input_fg_color:
-                fg_color = self.input_fg_color
+                colors.fg_color = self.input_fg_color
             if self.input_bg_color:
-                bg_color = self.input_bg_color
+                colors.bg_color = self.input_bg_color
 
-        char_vis_fg_color: str | int | None = self._get_color_code(fg_color)
-        char_vis_bg_color: str | int | None = self._get_color_code(bg_color)
+        char_vis_fg_color: str | int | None = self._get_color_code(colors.fg_color)
+        char_vis_bg_color: str | int | None = self._get_color_code(colors.bg_color)
 
         self.current_character_visual = CharacterVisual(
             symbol,
-            fg_color=fg_color,
+            colors=colors,
             _fg_color_code=char_vis_fg_color,
-            bg_color=bg_color,
             _bg_color_code=char_vis_bg_color,
         )
 
