@@ -13,7 +13,17 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
+from terminaltexteffects import (
+    Color,
+    ColorPair,
+    Coord,
+    EffectCharacter,
+    EventHandler,
+    Gradient,
+    Scene,
+    easing,
+    geometry,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
@@ -201,7 +211,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 character.motion.set_coordinate(swarm_spawn)
                 flash_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
                 for step in swarm_gradient_mirror:
-                    flash_scn.add_frame(character.input_symbol, 1, fg_color=step)
+                    flash_scn.add_frame(character.input_symbol, 1, colors=ColorPair(step))
                 for _, swarm_area_coords in swarm_area_coordinate_map.items():
                     swarm_area_name = f"{swarm_area_count}_swarm_area"
                     swarm_area_count += 1
@@ -233,7 +243,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 input_path.new_waypoint(character.input_coord)
                 input_scn = character.animation.new_scene()
                 for step in Gradient(self.config.flash_color, self.character_final_color_map[character], steps=10):
-                    input_scn.add_frame(character.input_symbol, 3, fg_color=step)
+                    input_scn.add_frame(character.input_symbol, 3, colors=ColorPair(step))
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.ACTIVATE_SCENE, input_scn
                 )

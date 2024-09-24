@@ -12,7 +12,7 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, easing
+from terminaltexteffects import Color, ColorPair, EffectCharacter, EventHandler, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
@@ -179,7 +179,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             wave_scn.ease = self.config.wave_easing
             for _ in range(self.config.wave_count):
                 wave_scn.apply_gradient_to_symbols(
-                    wave_gradient, self.config.wave_symbols, duration=self.config.wave_length
+                    self.config.wave_symbols, duration=self.config.wave_length, fg_gradient=wave_gradient
                 )
             final_scn = character.animation.new_scene()
             for step in Gradient(
@@ -187,7 +187,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                 self.character_final_color_map[character],
                 steps=self.config.final_gradient_steps,
             ):
-                final_scn.add_frame(character.input_symbol, 10, fg_color=step)
+                final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(step))
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, wave_scn, EventHandler.Action.ACTIVATE_SCENE, final_scn
             )

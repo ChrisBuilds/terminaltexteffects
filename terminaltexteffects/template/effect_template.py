@@ -7,12 +7,17 @@ Classes:
 
 from __future__ import annotations
 
+import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+
+
+def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    return NamedEffect, EffectConfig
 
 
 @argclass(

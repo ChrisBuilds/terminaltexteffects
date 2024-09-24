@@ -12,7 +12,17 @@ import random
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
+from terminaltexteffects import (
+    Color,
+    ColorPair,
+    Coord,
+    EffectCharacter,
+    EventHandler,
+    Gradient,
+    Scene,
+    easing,
+    geometry,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -208,17 +218,17 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             for character in firework_shell:
                 # launch scene
                 launch_scn = character.animation.new_scene()
-                launch_scn.add_frame(self.config.firework_symbol, 2, fg_color=shell_color)
-                launch_scn.add_frame(self.config.firework_symbol, 1, fg_color=Color("FFFFFF"))
+                launch_scn.add_frame(self.config.firework_symbol, 2, colors=ColorPair(shell_color))
+                launch_scn.add_frame(self.config.firework_symbol, 1, colors=ColorPair(Color("FFFFFF")))
                 launch_scn.is_looping = True
                 # bloom scene
                 bloom_scn = character.animation.new_scene(sync=Scene.SyncMetric.STEP)
                 for color in shell_gradient:
-                    bloom_scn.add_frame(character.input_symbol, 3, fg_color=color)
+                    bloom_scn.add_frame(character.input_symbol, 3, colors=ColorPair(color))
                 # fall scene
                 fall_scn = character.animation.new_scene()
                 fall_gradient = Gradient(shell_color, self.character_final_color_map[character], steps=15)
-                fall_scn.apply_gradient_to_symbols(fall_gradient, character.input_symbol, 15)
+                fall_scn.apply_gradient_to_symbols(character.input_symbol, 15, fg_gradient=fall_gradient)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,

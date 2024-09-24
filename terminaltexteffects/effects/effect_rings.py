@@ -13,7 +13,7 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, easing, geometry
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, easing, geometry
 from terminaltexteffects.engine import motion
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -159,7 +159,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             # make gradient scene
             gradient_scn = character.animation.new_scene(id="gradient")
             char_gradient = Gradient(self.character_color_map[character], self.ring_color, steps=8)
-            gradient_scn.apply_gradient_to_symbols(char_gradient, character.input_symbol, 5)
+            gradient_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=char_gradient)
 
             # make rotation waypoints
             ring_paths: list[motion.Path] = []
@@ -176,7 +176,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             # make disperse scene
             disperse_scn = character.animation.new_scene(is_looping=False, id="disperse")
             disperse_gradient = Gradient(self.ring_color, self.character_color_map[character], steps=8)
-            disperse_scn.apply_gradient_to_symbols(disperse_gradient, character.input_symbol, 16)
+            disperse_scn.apply_gradient_to_symbols(character.input_symbol, 16, fg_gradient=disperse_gradient)
             character.motion.chain_paths(ring_paths, loop=True)
             self.characters.append(character)
 
@@ -237,7 +237,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             start_scn = character.animation.new_scene()
-            start_scn.add_frame(character.input_symbol, 1, fg_color=self.character_final_color_map[character])
+            start_scn.add_frame(character.input_symbol, 1, colors=ColorPair(self.character_final_color_map[character]))
             home_path = character.motion.new_path(speed=0.8, ease=easing.out_quad, id="home")
             home_path.new_waypoint(character.input_coord)
             character.animation.activate_scene(start_scn)

@@ -223,7 +223,7 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
                     self.config.final_gradient_stops[0], self.character_final_color_map[character], steps=10
                 )
                 gradient_scn.apply_gradient_to_symbols(
-                    char_gradient, character.input_symbol, self.config.final_gradient_frames
+                    character.input_symbol, self.config.final_gradient_frames, fg_gradient=char_gradient
                 )
                 character.animation.activate_scene(gradient_scn)
 

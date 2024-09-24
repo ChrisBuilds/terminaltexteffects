@@ -136,7 +136,7 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
             gradient_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
             char_gradient = Gradient(final_gradient.spectrum[0], self.character_final_color_map[character], steps=10)
             gradient_scn.apply_gradient_to_symbols(
-                char_gradient, character.input_symbol, self.config.final_gradient_frames
+                character.input_symbol, self.config.final_gradient_frames, fg_gradient=char_gradient
             )
             character.animation.activate_scene(gradient_scn)
             self.active_characters.add(character)

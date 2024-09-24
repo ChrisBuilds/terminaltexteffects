@@ -1,13 +1,25 @@
 import pytest
 
 from terminaltexteffects.engine.motion import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient, random_color
+from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient, random_color
 
 pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
 
 def test_random_color() -> None:
     assert isinstance(random_color(), Color)
+
+
+def test_color_pair_init() -> None:
+    cp = ColorPair(Color("ffffff"), Color("000000"))
+    assert cp.fg_color == Color("ffffff")
+    assert cp.bg_color == Color("000000")
+
+
+def test_color_pair_init_single_color() -> None:
+    cp = ColorPair(Color("ffffff"))
+    assert cp.fg_color == Color("ffffff")
+    assert cp.bg_color is None
 
 
 def test_gradient_zero_stops() -> None:

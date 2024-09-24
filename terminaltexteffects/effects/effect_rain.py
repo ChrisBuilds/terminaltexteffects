@@ -14,7 +14,7 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
@@ -147,10 +147,10 @@ class RainIterator(BaseEffectIterator[RainConfig]):
         for character in self.terminal.get_characters():
             raindrop_color = random.choice(self.config.rain_colors)
             rain_scn = character.animation.new_scene()
-            rain_scn.add_frame(random.choice(self.config.rain_symbols), 1, fg_color=raindrop_color)
+            rain_scn.add_frame(random.choice(self.config.rain_symbols), 1, colors=ColorPair(raindrop_color))
             raindrop_gradient = Gradient(raindrop_color, self.character_final_color_map[character], steps=7)
             fade_scn = character.animation.new_scene()
-            fade_scn.apply_gradient_to_symbols(raindrop_gradient, character.input_symbol, 5)
+            fade_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=raindrop_gradient)
             character.animation.activate_scene(rain_scn)
             character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.canvas.top))
             input_path = character.motion.new_path(

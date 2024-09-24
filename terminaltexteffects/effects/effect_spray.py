@@ -181,7 +181,7 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
             spray_gradient = Gradient(
                 random.choice(final_gradient.spectrum), self.character_final_color_map[character], steps=7
             )
-            droplet_scn.apply_gradient_to_symbols(spray_gradient, character.input_symbol, 20)
+            droplet_scn.apply_gradient_to_symbols(character.input_symbol, 20, fg_gradient=spray_gradient)
             character.animation.activate_scene(droplet_scn)
             character.motion.activate_path(input_coord_path)
             self.pending_chars.append(character)

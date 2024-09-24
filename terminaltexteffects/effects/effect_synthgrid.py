@@ -12,7 +12,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Terminal, geometry
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, Terminal, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -169,7 +169,7 @@ class GridLine:
                 grid_scn.add_frame(
                     self.grid_symbol,
                     1,
-                    fg_color=grid_gradient_mapping[geometry.Coord(column_index, origin.row)],
+                    colors=ColorPair(grid_gradient_mapping[geometry.Coord(column_index, origin.row)]),
                 )
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
@@ -182,7 +182,7 @@ class GridLine:
                 grid_scn.add_frame(
                     self.grid_symbol,
                     1,
-                    fg_color=grid_gradient_mapping[geometry.Coord(origin.column, row_index)],
+                    colors=ColorPair(grid_gradient_mapping[geometry.Coord(origin.column, row_index)]),
                 )
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
@@ -365,13 +365,13 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                     dissolve_scn.add_frame(
                         random.choice(self.config.text_generation_symbols),
                         3,
-                        fg_color=random.choice(text_gradient.spectrum),
+                        colors=ColorPair(random.choice(text_gradient.spectrum)),
                     )
                 if character.input_symbol == " ":
                     dissolve_scn.add_frame(character.input_symbol, 1)
                 else:
                     dissolve_scn.add_frame(
-                        character.input_symbol, 1, fg_color=text_gradient_mapping[character.input_coord]
+                        character.input_symbol, 1, colors=ColorPair(text_gradient_mapping[character.input_coord])
                     )
                 character.animation.activate_scene(dissolve_scn)
                 character.event_handler.register_event(

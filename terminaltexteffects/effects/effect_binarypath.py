@@ -231,7 +231,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                 color_scn.add_frame(
                     bin_effectchar.animation.current_character_visual.symbol,
                     1,
-                    fg_color=random.choice(self.config.binary_colors),
+                    colors=ColorPair(random.choice(self.config.binary_colors), None),
                 )
                 bin_effectchar.animation.activate_scene(color_scn)
 
@@ -242,11 +242,11 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                 0.5,
             )
             dim_gradient = Gradient(Color("ffffff"), dim_color, steps=10)
-            collapse_scn.apply_gradient_to_symbols(dim_gradient, character.input_symbol, 7)
+            collapse_scn.apply_gradient_to_symbols(character.input_symbol, 7, fg_gradient=dim_gradient)
 
             brighten_scn = character.animation.new_scene(id="brighten_scn")
             brighten_gradient = Gradient(dim_color, self.character_final_color_map[character].fg_color, steps=10)  # type: ignore
-            brighten_scn.apply_gradient_to_symbols(brighten_gradient, character.input_symbol, 2)
+            brighten_scn.apply_gradient_to_symbols(character.input_symbol, 2, fg_gradient=brighten_gradient)
         self.max_active_binary_groups = max(
             1, int(self.config.active_binary_groups * len(self.pending_binary_representations))
         )

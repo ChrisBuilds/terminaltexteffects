@@ -178,8 +178,8 @@ def test_terminal_preprocess_input_data_existing_color():
     assert chars[6].animation.input_bg_color == Color(68)
     assert chars[6].animation.input_fg_color == Color("00FF00")
     chars = terminal._preprocess_input_data(input_data)[0]
-    assert chars[0].animation.current_character_visual.bg_color is None
-    assert chars[0].animation.current_character_visual.fg_color == Color("FF0000")
+    assert chars[0].animation.current_character_visual.colors.bg_color is None
+    assert chars[0].animation.current_character_visual.colors.fg_color == Color("FF0000")
 
 
 @pytest.mark.parametrize("anchor", ["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"])

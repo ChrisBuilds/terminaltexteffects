@@ -201,7 +201,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
                 )
                 pour_scn = character.animation.new_scene()
                 pour_scn.apply_gradient_to_symbols(
-                    pour_gradient, character.input_symbol, self.config.final_gradient_frames
+                    character.input_symbol, self.config.final_gradient_frames, fg_gradient=pour_gradient
                 )
                 character.animation.activate_scene(pour_scn)
             if i % 2 == 0:

@@ -18,6 +18,7 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import ColorPair
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -153,7 +154,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             blackhole_path = character.motion.new_path(id="blackhole", speed=0.5, ease=easing.in_out_sine)
             blackhole_path.new_waypoint(starting_pos)
             blackhole_scn = character.animation.new_scene(id="blackhole")
-            blackhole_scn.add_frame("✸", 1, fg_color=self.config.blackhole_color)
+            blackhole_scn.add_frame("✸", 1, colors=ColorPair(self.config.blackhole_color, None))
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED,
                 blackhole_path,
@@ -169,7 +170,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             starting_scn = character.animation.new_scene()
             star_symbol = random.choice(star_symbols)
             star_color = random.choice(starfield_colors)
-            starting_scn.add_frame(star_symbol, 1, fg_color=star_color)
+            starting_scn.add_frame(star_symbol, 1, colors=ColorPair(star_color, None))
             character.animation.activate_scene(starting_scn)
             if character not in self.blackhole_chars:
                 starfield_coord = self.terminal.canvas.random_coord()
@@ -199,7 +200,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                 singularity_path.new_waypoint(self.terminal.canvas.center, bezier_control=control_point)
                 consumed_scn = character.animation.new_scene()
                 for color in gradient_map[star_color]:
-                    consumed_scn.add_frame(star_symbol, 1, fg_color=color)
+                    consumed_scn.add_frame(star_symbol, 1, colors=ColorPair(color, None))
                 consumed_scn.add_frame(" ", 1)
                 consumed_scn.sync = Scene.SyncMetric.DISTANCE
                 character.event_handler.register_event(
@@ -246,7 +247,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                 point_scn = character.animation.new_scene()
                 for _ in range(3):
                     for symbol in unstable_symbols:
-                        point_scn.add_frame(symbol, 6, fg_color=random.choice(self.config.star_colors))
+                        point_scn.add_frame(symbol, 6, colors=ColorPair(random.choice(self.config.star_colors), None))
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
                     collapse_path,
@@ -281,10 +282,10 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             input_path.new_waypoint(character.input_coord)
             explode_scn = character.animation.new_scene()
             explode_star_color = random.choice(star_colors)
-            explode_scn.add_frame(character.input_symbol, 1, fg_color=explode_star_color)
+            explode_scn.add_frame(character.input_symbol, 1, colors=ColorPair(explode_star_color, None))
             cooling_scn = character.animation.new_scene()
             cooling_gradient = Gradient(explode_star_color, self.character_final_color_map[character], steps=10)
-            cooling_scn.apply_gradient_to_symbols(cooling_gradient, character.input_symbol, 20)
+            cooling_scn.apply_gradient_to_symbols(character.input_symbol, 20, fg_gradient=cooling_gradient)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
                 nearby_path,
