@@ -4,7 +4,7 @@ import terminaltexteffects.utils.easing as easing
 from terminaltexteffects.engine.animation import CharacterVisual, Frame, Scene
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.graphics import Color, Gradient
+from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
 pytestmark = [pytest.mark.engine, pytest.mark.animation, pytest.mark.smoke]
 
@@ -28,9 +28,8 @@ def character_visual_all_modes_enabled() -> CharacterVisual:
         reverse=True,
         hidden=True,
         strike=True,
-        fg_color=Color("ffffff"),
+        colors=ColorPair(Color("ffffff"), Color("ffffff")),
         _fg_color_code="ffffff",
-        bg_color=Color("ffffff"),
         _bg_color_code="ffffff",
     )
 
@@ -71,8 +70,7 @@ def test_scene_add_frame():
     scene.add_frame(
         symbol="a",
         duration=5,
-        fg_color=Color("ffffff"),
-        bg_color=Color("ffffff"),
+        colors=ColorPair(Color("ffffff"), Color("ffffff")),
         bold=True,
         italic=True,
         blink=True,
@@ -85,22 +83,21 @@ def test_scene_add_frame():
         == "\x1b[1m\x1b[3m\x1b[5m\x1b[8m\x1b[38;2;255;255;255m\x1b[48;2;255;255;255ma\x1b[0m"
     )
     assert frame.duration == 5
-    assert frame.character_visual.fg_color == Color("ffffff")
-    assert frame.character_visual.bg_color == Color("ffffff")
+    assert frame.character_visual.colors == ColorPair(Color("ffffff"), Color("ffffff"))
     assert frame.character_visual.bold is True
 
 
 def test_scene_add_frame_invalid_duration():
     scene = Scene(scene_id="test_scene")
     with pytest.raises(ValueError, match="duration must be greater than 0"):
-        scene.add_frame(symbol="a", duration=0, fg_color=Color("ffffff"))
+        scene.add_frame(symbol="a", duration=0, colors=ColorPair(Color("ffffff"), Color("ffffff")))
 
 
 def test_scene_apply_gradient_to_symbols_equal_colors_and_symbols():
     scene = Scene(scene_id="test_scene")
     gradient = Gradient(Color("000000"), Color("ffffff"), steps=2)
     symbols = ["a", "b", "c"]
-    scene.apply_gradient_to_symbols(gradient, symbols, duration=1)
+    scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient)
     assert len(scene.frames) == 3
     for i, frame in enumerate(scene.frames):
         assert frame.duration == 1
@@ -114,7 +111,7 @@ def test_scene_apply_gradient_to_symbols_unequal_colors_and_symbols():
     scene = Scene(scene_id="test_scene")
     gradient = Gradient(Color("000000"), Color("ffffff"), steps=4)
     symbols = ["q", "z"]
-    scene.apply_gradient_to_symbols(gradient, symbols, duration=1)
+    scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient)
     assert len(scene.frames) == 5
     assert scene.frames[0].character_visual._fg_color_code == gradient.spectrum[0].rgb_color
     assert "q" in scene.frames[0].character_visual.symbol
@@ -210,9 +207,8 @@ def test_animation_set_appearance_existing_colors(character: EffectCharacter):
     character.animation.existing_color_handling = "always"
     character.animation.input_fg_color = Color("ffffff")
     character.animation.input_bg_color = Color("000000")
-    character.animation.set_appearance("a", fg_color=Color("f0f0f0"), bg_color=Color("0f0f0f"))
-    assert character.animation.current_character_visual.fg_color == Color("ffffff")
-    assert character.animation.current_character_visual.bg_color == Color("000000")
+    character.animation.set_appearance("a", colors=ColorPair(Color("f0f0f0"), Color("0f0f0f")))
+    assert character.animation.current_character_visual.colors == ColorPair(Color("ffffff"), Color("000000"))
 
 
 def test_animation_adjust_color_brightness_half(character: EffectCharacter):
@@ -349,8 +345,7 @@ def test_scene_input_color_from_existing(character: EffectCharacter):
     character.animation.input_fg_color = Color("ffffff")
     character.animation.input_bg_color = Color("000000")
     new_scene = character.animation.new_scene()
-    assert new_scene.fg_color == Color("ffffff")
-    assert new_scene.bg_color == Color("000000")
+    assert new_scene.preexisting_colors == ColorPair(Color("ffffff"), Color("000000"))
 
 
 def test_scene_add_frame_existing_colors(character: EffectCharacter):
@@ -358,10 +353,9 @@ def test_scene_add_frame_existing_colors(character: EffectCharacter):
     character.animation.input_fg_color = Color("ffffff")
     character.animation.input_bg_color = Color("000000")
     new_scene = character.animation.new_scene()
-    new_scene.add_frame(symbol="a", duration=1, fg_color=Color("f0f0f0"), bg_color=Color("0f0f0f"))
+    new_scene.add_frame(symbol="a", duration=1, colors=ColorPair(Color("f0f0f0"), Color("0f0f0f")))
     # the frame colors should be overridden by the scene colors derived from the input
-    assert new_scene.frames[0].character_visual.fg_color == Color("ffffff")
-    assert new_scene.frames[0].character_visual.bg_color == Color("000000")
+    assert new_scene.frames[0].character_visual.colors == ColorPair(Color("ffffff"), Color("000000"))
 
 
 def test_activate_scene_with_no_frames(character: EffectCharacter):
@@ -389,15 +383,38 @@ def test_scene_apply_gradient_to_symbols_empty_gradient(character: EffectCharact
     gradient.spectrum.clear()
     symbols = ["a", "b", "c"]
     with pytest.raises(ValueError):
-        new_scene.apply_gradient_to_symbols(gradient, symbols, duration=1)
+        new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient)
 
 
-def test_scene_apply_gradient_to_symbols_no_fg_no_bg(character: EffectCharacter):
+def test_scene_apply_gradient_to_symbols_both_gradients_empty(character: EffectCharacter):
     new_scene = character.animation.new_scene(id="test_scene")
     gradient = Gradient(Color("000000"), Color("ffffff"), steps=2)
+    gradient.spectrum.clear()
     symbols = ["a", "b", "c"]
     with pytest.raises(ValueError):
-        new_scene.apply_gradient_to_symbols(gradient, symbols, duration=1, fg=False, bg=False)
+        new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient, bg_gradient=gradient)
+
+
+def test_scene_apply_gradient_to_symbols_single_single_step(character: EffectCharacter):
+    new_scene = character.animation.new_scene(id="test_scene")
+    gradient = Gradient(Color("000000"), Color("ffffff"), steps=1)
+    symbols = ["a"]
+    new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient, bg_gradient=gradient)
+    assert len(new_scene.frames) == 2
+    for i, frame in enumerate(new_scene.frames):
+        assert frame.character_visual._fg_color_code == gradient.spectrum[i].rgb_color
+        assert symbols[0] in frame.character_visual.symbol
+
+
+def test_scene_apply_gradient_to_symbols_fg_bg_spectrums_not_equal(character: EffectCharacter):
+    new_scene = character.animation.new_scene(id="test_scene")
+    fg_gradient = Gradient(Color("000000"), Color("ffffff"), steps=8)
+    bg_gradient = Gradient(Color("ffffff"), Color("000000"), steps=6)
+    symbols = ["a", "b", "c"]
+    new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=fg_gradient, bg_gradient=bg_gradient)
+    assert len(new_scene.frames) == 9
+    for i, frame in enumerate(new_scene.frames):
+        assert frame.character_visual._fg_color_code == fg_gradient.spectrum[i].rgb_color
 
 
 def test_scene_reset_scene(character: EffectCharacter):
