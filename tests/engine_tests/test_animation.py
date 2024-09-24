@@ -417,6 +417,59 @@ def test_scene_apply_gradient_to_symbols_fg_bg_spectrums_not_equal(character: Ef
         assert frame.character_visual._fg_color_code == fg_gradient.spectrum[i].rgb_color
 
 
+def test_scene_apply_gradient_to_symbols_empty_spectrums(character: EffectCharacter):
+    new_scene = character.animation.new_scene(id="test_scene")
+    fg_gradient = Gradient(Color("000000"), Color("ffffff"), steps=1)
+    bg_gradient = Gradient(Color("ffffff"), Color("000000"), steps=1)
+    fg_gradient.spectrum.clear()
+    bg_gradient.spectrum.clear()
+    symbols = ["a", "b", "c"]
+    with pytest.raises(ValueError):
+        new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=fg_gradient, bg_gradient=bg_gradient)
+
+
+def test_scene_apply_gradient_to_symbols_larger_bg_spectrum(character: EffectCharacter):
+    new_scene = character.animation.new_scene(id="test_scene")
+    fg_gradient = Gradient(Color("000000"), Color("ffffff"), steps=3)
+    bg_gradient = Gradient(Color("ffffff"), Color("000000"), steps=6)
+    symbols = ["a", "b", "c"]
+    new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=fg_gradient, bg_gradient=bg_gradient)
+    assert len(new_scene.frames) == 7
+    for i, frame in enumerate(new_scene.frames):
+        assert frame.character_visual._bg_color_code == bg_gradient.spectrum[i].rgb_color
+
+
+def test_scene_apply_gradient_to_symbols_larger_fg_spectrum(character: EffectCharacter):
+    new_scene = character.animation.new_scene(id="test_scene")
+    fg_gradient = Gradient(Color("000000"), Color("ffffff"), steps=6)
+    bg_gradient = Gradient(Color("ffffff"), Color("000000"), steps=3)
+    symbols = ["a", "b", "c"]
+    new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=fg_gradient, bg_gradient=bg_gradient)
+    assert len(new_scene.frames) == 7
+    for i, frame in enumerate(new_scene.frames):
+        assert frame.character_visual._fg_color_code == fg_gradient.spectrum[i].rgb_color
+
+
+def test_scene_apply_gradient_to_symbols_fg_gradient_only(character: EffectCharacter):
+    new_scene = character.animation.new_scene(id="test_scene")
+    fg_gradient = Gradient(Color("000000"), Color("ffffff"), steps=3)
+    symbols = ["a", "b", "c"]
+    new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=fg_gradient)
+    assert len(new_scene.frames) == 4
+    for i, frame in enumerate(new_scene.frames):
+        assert frame.character_visual._fg_color_code == fg_gradient.spectrum[i].rgb_color
+
+
+def test_scene_apply_gradient_to_symbols_bg_gradient_only(character: EffectCharacter):
+    new_scene = character.animation.new_scene(id="test_scene")
+    bg_gradient = Gradient(Color("ffffff"), Color("000000"), steps=3)
+    symbols = ["a", "b", "c"]
+    new_scene.apply_gradient_to_symbols(symbols, duration=1, bg_gradient=bg_gradient)
+    assert len(new_scene.frames) == 4
+    for i, frame in enumerate(new_scene.frames):
+        assert frame.character_visual._bg_color_code == bg_gradient.spectrum[i].rgb_color
+
+
 def test_scene_reset_scene(character: EffectCharacter):
     new_scene = character.animation.new_scene(id="test_scene")
     new_scene.add_frame(symbol="a", duration=3)
