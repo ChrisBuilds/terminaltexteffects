@@ -15,6 +15,7 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import ColorPair
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -226,10 +227,14 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
             else:
                 colors = gradient.spectrum
             for color in colors:
-                gradient_scn.add_frame(character.input_symbol, self.config.gradient_frames, fg_color=color)
+                gradient_scn.add_frame(
+                    character.input_symbol, self.config.gradient_frames, colors=ColorPair(color, None)
+                )
             final_color_scn = character.animation.new_scene(id="final_gradient")
             for color in Gradient(colors[-1], self.character_final_color_map[character], steps=8):
-                final_color_scn.add_frame(character.input_symbol, self.config.gradient_frames, fg_color=color)
+                final_color_scn.add_frame(
+                    character.input_symbol, self.config.gradient_frames, colors=ColorPair(color, None)
+                )
             character.animation.activate_scene(gradient_scn)
             self.active_characters.add(character)
             character.event_handler.register_event(

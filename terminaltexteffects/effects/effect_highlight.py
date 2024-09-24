@@ -4,7 +4,7 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects import Animation, Color, EffectCharacter, Gradient, easing
+from terminaltexteffects import Animation, Color, ColorPair, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
@@ -152,10 +152,10 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
             highlight_gradient = Gradient(
                 base_color, highlight_color, highlight_color, base_color, steps=(3, self.config.highlight_width, 3)
             )
-            character.animation.set_appearance(character.input_symbol, base_color)
+            character.animation.set_appearance(character.input_symbol, ColorPair(base_color))
             specular_highlight_scn = character.animation.new_scene(id="highlight")
             for color in highlight_gradient:
-                specular_highlight_scn.add_frame(character.input_symbol, 2, fg_color=color)
+                specular_highlight_scn.add_frame(character.input_symbol, 2, colors=ColorPair(color))
             self.terminal.set_character_visibility(character, True)
             self.active_characters.add(character)
 

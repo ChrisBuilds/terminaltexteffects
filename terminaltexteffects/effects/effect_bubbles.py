@@ -16,6 +16,7 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Terminal, easing, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import ColorPair
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -193,7 +194,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 for character in self.characters:
                     sheen_scene = character.animation.new_scene()
                     for step in rainbow_gradient:
-                        sheen_scene.add_frame(character.input_symbol, 5, fg_color=step)
+                        sheen_scene.add_frame(character.input_symbol, 5, colors=ColorPair(step, None))
                     gradient_offset += 2
                     gradient_offset %= len(rainbow_gradient)
                     rainbow_gradient = rainbow_gradient[gradient_offset:] + rainbow_gradient[:gradient_offset]
@@ -205,7 +206,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 bubble_color = random.choice(self.effect.config.bubble_colors)
                 for character in self.characters:
                     sheen_scene = character.animation.new_scene()
-                    sheen_scene.add_frame(character.input_symbol, 1, fg_color=bubble_color)
+                    sheen_scene.add_frame(character.input_symbol, 1, colors=ColorPair(bubble_color, None))
                     character.animation.activate_scene(sheen_scene)
 
         def pop(self) -> None:
@@ -270,11 +271,11 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             character.layer = 1
             pop_1_scene = character.animation.new_scene(id="pop_1")
             pop_2_scene = character.animation.new_scene()
-            pop_1_scene.add_frame("*", 20, fg_color=self.config.pop_color)
-            pop_2_scene.add_frame("'", 20, fg_color=self.config.pop_color)
+            pop_1_scene.add_frame("*", 20, colors=ColorPair(self.config.pop_color, None))
+            pop_2_scene.add_frame("'", 20, colors=ColorPair(self.config.pop_color, None))
             final_scene = character.animation.new_scene()
             char_final_gradient = Gradient(self.config.pop_color, self.character_final_color_map[character], steps=10)
-            final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
+            final_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=char_final_gradient)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, pop_1_scene, EventHandler.Action.ACTIVATE_SCENE, pop_2_scene
             )

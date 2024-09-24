@@ -16,6 +16,7 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Scene
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import ColorPair
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -145,7 +146,9 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for character in self.terminal.get_characters():
             spawn_scene = character.animation.new_scene()
-            spawn_scene.add_frame(character.input_symbol, 1, fg_color=self.character_final_color_map[character])
+            spawn_scene.add_frame(
+                character.input_symbol, 1, colors=ColorPair(self.character_final_color_map[character])
+            )
             character.animation.activate_scene(spawn_scene)
             self.terminal.set_character_visibility(character, True)
         all_characters: list[EffectCharacter] = list(self.terminal._input_characters)
@@ -169,23 +172,23 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 first_block_wipe = character.animation.new_scene()
                 last_block_wipe = character.animation.new_scene()
                 for block in block_wipe_start:
-                    first_block_wipe.add_frame(block, 3, fg_color=self.config.error_color)
+                    first_block_wipe.add_frame(block, 3, colors=ColorPair(self.config.error_color))
                 for block in block_wipe_end:
-                    last_block_wipe.add_frame(block, 3, fg_color=self.config.correct_color)
+                    last_block_wipe.add_frame(block, 3, colors=ColorPair(self.config.correct_color))
                 initial_scene = character.animation.new_scene()
-                initial_scene.add_frame(character.input_symbol, 1, fg_color=self.config.error_color)
+                initial_scene.add_frame(character.input_symbol, 1, colors=ColorPair(self.config.error_color))
                 character.animation.activate_scene(initial_scene)
                 error_scene = character.animation.new_scene(id="error")
                 for _ in range(10):
-                    error_scene.add_frame(block_symbol, 3, fg_color=self.config.error_color)
-                    error_scene.add_frame(character.input_symbol, 3, fg_color=Color("ffffff"))
+                    error_scene.add_frame(block_symbol, 3, colors=ColorPair(self.config.error_color))
+                    error_scene.add_frame(character.input_symbol, 3, colors=ColorPair(Color("ffffff")))
                 correcting_scene = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
-                correcting_scene.apply_gradient_to_symbols(correcting_gradient, "█", 3)
+                correcting_scene.apply_gradient_to_symbols("█", 3, fg_gradient=correcting_gradient)
                 final_scene = character.animation.new_scene()
                 char_final_gradient = Gradient(
                     self.config.correct_color, self.character_final_color_map[character], steps=10
                 )
-                final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 3)
+                final_scene.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=char_final_gradient)
                 input_coord_path = character.motion.query_path("input_coord")
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,

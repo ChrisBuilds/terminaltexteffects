@@ -14,7 +14,7 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects import Animation, Color, Coord, EffectCharacter, Gradient, Terminal
+from terminaltexteffects import Animation, Color, ColorPair, Coord, EffectCharacter, Gradient, Terminal
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
@@ -291,7 +291,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         def fade_last_character(self) -> None:
             darker_color = Animation.adjust_color_brightness(random.choice(self.rain_colors[-3:]), 0.65)  # type: ignore
             self.visible_characters[0].animation.set_appearance(
-                self.visible_characters[0].animation.current_character_visual.symbol, fg_color=darker_color
+                self.visible_characters[0].animation.current_character_visual.symbol, colors=ColorPair(darker_color)
             )
 
         def resolve_char(self) -> EffectCharacter:
@@ -303,14 +303,16 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 if self.pending_characters:
                     next_char = self.pending_characters.pop(0)
                     next_char.animation.set_appearance(
-                        random.choice(self.matrix_symbols), fg_color=self.config.highlight_color
+                        random.choice(self.matrix_symbols), colors=ColorPair(self.config.highlight_color)
                     )
                     previous_character = self.visible_characters[-1] if self.visible_characters else None
                     # if there is a previous character, remove the highlight
                     if previous_character:
                         previous_character.animation.set_appearance(
                             previous_character.animation.current_character_visual.symbol,
-                            fg_color=random.choice(self.rain_colors),
+                            colors=ColorPair(
+                                random.choice(self.rain_colors),
+                            ),
                         )
                     self.terminal.set_character_visibility(next_char, True)
                     self.visible_characters.append(next_char)
@@ -326,12 +328,13 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                         # this is separately handled from the rest to prevent the
                         # highlight color from being replaced before appropriate
                         if (
-                            self.visible_characters[-1].animation.current_character_visual.fg_color
+                            self.visible_characters[-1].animation.current_character_visual.colors
+                            and self.visible_characters[-1].animation.current_character_visual.colors.fg_color
                             == self.config.highlight_color
                         ):
                             self.visible_characters[-1].animation.set_appearance(
                                 self.visible_characters[-1].animation.current_character_visual.symbol,
-                                fg_color=random.choice(self.rain_colors),
+                                colors=ColorPair(random.choice(self.rain_colors)),
                             )
 
                         if self.hold_time:
@@ -360,8 +363,11 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 if random.random() < self.config.color_swap_chance:
                     next_color = random.choice(self.rain_colors)
                 else:
-                    next_color = character.animation.current_character_visual.fg_color
-                character.animation.set_appearance(next_symbol, fg_color=next_color)
+                    if character.animation.current_character_visual.colors:
+                        next_color = character.animation.current_character_visual.colors.fg_color
+                    else:
+                        next_color = None
+                character.animation.set_appearance(next_symbol, colors=ColorPair(next_color))
 
     def __init__(self, effect: Matrix) -> None:
         super().__init__(effect)
@@ -390,7 +396,9 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         for character in self.terminal.get_characters():
             resolve_scn = character.animation.new_scene(id="resolve")
             for color in Gradient(self.config.highlight_color, final_gradient_mapping[character.input_coord], steps=8):
-                resolve_scn.add_frame(character.input_symbol, self.config.final_gradient_frames, fg_color=color)
+                resolve_scn.add_frame(
+                    character.input_symbol, self.config.final_gradient_frames, colors=ColorPair(color)
+                )
 
         for column_chars in self.terminal.get_characters_grouped(
             self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, outer_fill_chars=True, inner_fill_chars=True

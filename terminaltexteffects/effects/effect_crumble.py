@@ -17,6 +17,7 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import ColorPair
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -99,7 +100,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             self.terminal.set_character_visibility(character, True)
             # set up initial and falling stage
             initial_scn = character.animation.new_scene()
-            initial_scn.add_frame(character.input_symbol, 1, fg_color=weak_color)
+            initial_scn.add_frame(character.input_symbol, 1, colors=ColorPair(weak_color, None))
             character.animation.activate_scene(initial_scn)
             fall_path = character.motion.new_path(
                 speed=0.2,
@@ -107,7 +108,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             )
             fall_path.new_waypoint(Coord(character.input_coord.column, self.terminal.canvas.bottom))
             weaken_scn = character.animation.new_scene(id="weaken")
-            weaken_scn.apply_gradient_to_symbols(weaken_gradient, character.input_symbol, 6)
+            weaken_scn.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=weaken_gradient)
 
             top_path = character.motion.new_path(id="top", speed=0.5, ease=easing.out_quint)
             top_path.new_waypoint(
@@ -118,12 +119,14 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             input_path = character.motion.new_path(id="input", speed=0.3)
             input_path.new_waypoint(character.input_coord)
             strengthen_flash_scn = character.animation.new_scene()
-            strengthen_flash_scn.apply_gradient_to_symbols(strengthen_flash_gradient, character.input_symbol, 4)
+            strengthen_flash_scn.apply_gradient_to_symbols(
+                character.input_symbol, 4, fg_gradient=strengthen_flash_gradient
+            )
             strengthen_scn = character.animation.new_scene()
-            strengthen_scn.apply_gradient_to_symbols(strengthen_gradient, character.input_symbol, 6)
+            strengthen_scn.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=strengthen_gradient)
             dust_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
             for _ in range(5):
-                dust_scn.add_frame(random.choice(["*", ".", ","]), 1, fg_color=dust_color)
+                dust_scn.add_frame(random.choice(["*", ".", ","]), 1, colors=ColorPair(dust_color, None))
 
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.ACTIVATE_PATH, fall_path

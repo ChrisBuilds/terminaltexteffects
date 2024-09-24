@@ -272,21 +272,21 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                 beam_row_scn = character.animation.new_scene(id="beam_row")
                 beam_column_scn = character.animation.new_scene(id="beam_column")
                 beam_row_scn.apply_gradient_to_symbols(
-                    beam_gradient, self.config.beam_row_symbols, self.config.beam_gradient_frames
+                    self.config.beam_row_symbols, self.config.beam_gradient_frames, fg_gradient=beam_gradient
                 )
                 beam_column_scn.apply_gradient_to_symbols(
-                    beam_gradient, self.config.beam_column_symbols, self.config.beam_gradient_frames
+                    self.config.beam_column_symbols, self.config.beam_gradient_frames, fg_gradient=beam_gradient
                 )
                 faded_color = character.animation.adjust_color_brightness(
                     self.character_final_color_map[character], 0.3
                 )
                 fade_gradient = Gradient(self.character_final_color_map[character], faded_color, steps=10)
-                beam_row_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
-                beam_column_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
+                beam_row_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=fade_gradient)
+                beam_column_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=fade_gradient)
                 brighten_gradient = Gradient(faded_color, self.character_final_color_map[character], steps=10)
                 brigthen_scn = character.animation.new_scene(id="brighten")
                 brigthen_scn.apply_gradient_to_symbols(
-                    brighten_gradient, character.input_symbol, self.config.final_gradient_frames
+                    character.input_symbol, self.config.final_gradient_frames, fg_gradient=brighten_gradient
                 )
         self.pending_groups = groups
         random.shuffle(self.pending_groups)

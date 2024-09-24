@@ -11,7 +11,7 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -127,7 +127,7 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             character.animation.set_appearance(
                 character.input_symbol,
-                self.character_final_color_map[character],
+                ColorPair(self.character_final_color_map[character]),
             )
         if self.config.slice_direction == "vertical":
             self.rows = self.terminal.get_characters_grouped(grouping=slice_direction_map[self.config.slice_direction])

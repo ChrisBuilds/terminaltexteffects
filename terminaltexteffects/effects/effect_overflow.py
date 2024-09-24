@@ -13,7 +13,7 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, Terminal
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, Terminal
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
@@ -121,7 +121,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
 
         def set_color(self, fg_color: Color | None = None, bg_color: Color | None = None) -> None:
             for character in self.characters:
-                character.animation.set_appearance(character.input_symbol, fg_color, bg_color)
+                character.animation.set_appearance(character.input_symbol, ColorPair(fg_color, bg_color))
 
     def __init__(self, effect: "Overflow"):
         super().__init__(effect)
@@ -173,12 +173,12 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                 ):
                     character.animation.set_appearance(
                         character.animation.current_character_visual.symbol,
-                        character.animation.input_fg_color,
-                        character.animation.input_bg_color,
+                        ColorPair(character.animation.input_fg_color, character.animation.input_bg_color),
                     )
                 else:
                     character.animation.set_appearance(
-                        character.animation.current_character_visual.symbol, self.character_final_color_map[character]
+                        character.animation.current_character_visual.symbol,
+                        ColorPair(self.character_final_color_map[character]),
                     )
             self.pending_rows.append(OverflowIterator.Row(row, final=True))
         self._delay = 0

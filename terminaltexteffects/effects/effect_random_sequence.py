@@ -124,7 +124,9 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
             self.terminal.set_character_visibility(character, False)
             gradient_scn = character.animation.new_scene()
             gradient = Gradient(self.config.starting_color, self.character_final_color_map[character], steps=7)
-            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.config.final_gradient_frames)
+            gradient_scn.apply_gradient_to_symbols(
+                character.input_symbol, self.config.final_gradient_frames, fg_gradient=gradient
+            )
             character.animation.activate_scene(gradient_scn)
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)

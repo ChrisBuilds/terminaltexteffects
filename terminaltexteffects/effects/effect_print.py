@@ -124,7 +124,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 color_gradient = Gradient(typing_head_color, character_final_color_map[character], steps=5)
                 typed_animation = character.animation.new_scene()
                 typed_animation.apply_gradient_to_symbols(
-                    color_gradient, ("█", "▓", "▒", "░", character.input_symbol), 5
+                    ("█", "▓", "▒", "░", character.input_symbol), 5, fg_gradient=color_gradient
                 )
                 character.animation.activate_scene(typed_animation)
                 self.untyped_chars.append(character)

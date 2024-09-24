@@ -141,7 +141,9 @@ class ExpandIterator(BaseEffectIterator[ExpandConfig]):
             character.motion.activate_path(input_coord_path)
             gradient_scn = character.animation.new_scene()
             gradient = Gradient(final_gradient.spectrum[0], self.character_final_color_map[character], steps=10)
-            gradient_scn.apply_gradient_to_symbols(gradient, character.input_symbol, self.config.final_gradient_frames)
+            gradient_scn.apply_gradient_to_symbols(
+                character.input_symbol, self.config.final_gradient_frames, fg_gradient=gradient
+            )
             character.animation.activate_scene(gradient_scn)
 
     def __next__(self) -> str:

@@ -17,6 +17,7 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import ColorPair
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -146,10 +147,10 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
             color = random.choice(self.config.ball_colors)
             symbol = random.choice(self.config.ball_symbols)
             ball_scene = character.animation.new_scene()
-            ball_scene.add_frame(symbol, 1, fg_color=color)
+            ball_scene.add_frame(symbol, 1, colors=ColorPair(color, None))
             final_scene = character.animation.new_scene()
             char_final_gradient = Gradient(color, self.character_final_color_map[character], steps=10)
-            final_scene.apply_gradient_to_symbols(char_final_gradient, character.input_symbol, 10)
+            final_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=char_final_gradient)
             character.motion.set_coordinate(
                 Coord(character.input_coord.column, int(self.terminal.canvas.top * random.uniform(1.0, 1.5)))
             )

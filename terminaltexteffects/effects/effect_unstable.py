@@ -167,14 +167,10 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                 self.character_final_color_map[character], self.config.unstable_color, steps=25
             )
             rumble_scn = character.animation.new_scene(id="rumble")
-            rumble_scn.apply_gradient_to_symbols(
-                unstable_gradient,
-                character.input_symbol,
-                10,
-            )
+            rumble_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=unstable_gradient)
             final_color = Gradient(self.config.unstable_color, self.character_final_color_map[character], steps=12)
             final_scn = character.animation.new_scene(id="final")
-            final_scn.apply_gradient_to_symbols(final_color, character.input_symbol, 5)
+            final_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=final_color)
             character.animation.activate_scene(rumble_scn)
             self.terminal.set_character_visibility(character, True)
         self._explosion_hold_time = 50

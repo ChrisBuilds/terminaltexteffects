@@ -13,7 +13,7 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing, geometry
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing, geometry
 from terminaltexteffects.engine import animation, motion
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -185,7 +185,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         for character in chars_no_longer_in_range:
             character.animation.set_appearance(
                 character.input_symbol,
-                self.character_color_map[character][1],
+                ColorPair(self.character_color_map[character][1]),
             )
 
         for character in chars_in_range:
@@ -207,7 +207,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 )
             else:
                 adjusted_color = self.character_color_map[character][0]
-            character.animation.set_appearance(character.input_symbol, adjusted_color)
+            character.animation.set_appearance(character.input_symbol, ColorPair(adjusted_color))
         self.illuminated_chars = chars_in_range
 
     def build(self) -> None:
@@ -229,7 +229,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
             self.terminal.set_character_visibility(character, True)
             self.character_color_map[character] = (color_bright, color_dark)
-            character.animation.set_appearance(character.input_symbol, color_dark)
+            character.animation.set_appearance(character.input_symbol, ColorPair(color_dark))
         smallest_dimension = min(self.terminal.canvas.right, self.terminal.canvas.top)
         self.illuminate_range = max(
             int(

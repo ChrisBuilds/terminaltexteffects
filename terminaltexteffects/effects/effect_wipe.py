@@ -182,7 +182,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
                     steps=self.config.final_gradient_steps,
                 )
                 wipe_scn.apply_gradient_to_symbols(
-                    wipe_gradient, character.input_symbol, self.config.final_gradient_frames
+                    character.input_symbol, self.config.final_gradient_frames, fg_gradient=wipe_gradient
                 )
                 character.animation.activate_scene(wipe_scn)
             self.groups.append(group)

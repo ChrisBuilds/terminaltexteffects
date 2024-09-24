@@ -13,7 +13,7 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects.utils.argvalidators as argvalidators
-from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
@@ -169,11 +169,11 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
             # setup scenes
             full_scene = character.animation.new_scene(id="full")
             full_gradient = Gradient(self.config.starting_color, self.character_final_color_map[character], steps=10)
-            full_scene.apply_gradient_to_symbols(full_gradient, character.input_symbol, 10)
+            full_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=full_gradient)
 
             # initialize character state
             character.motion.activate_path(center_path)
-            character.animation.set_appearance(character.input_symbol, self.config.starting_color)
+            character.animation.set_appearance(character.input_symbol, ColorPair(self.config.starting_color))
             self.terminal.set_character_visibility(character, True)
             self.active_characters.add(character)
 
