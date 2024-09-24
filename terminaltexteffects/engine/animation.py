@@ -305,19 +305,20 @@ class Scene:
 
     def apply_gradient_to_symbols(
         self,
-        fg_gradient: graphics.Gradient | None,
-        bg_gradient: graphics.Gradient | None,
         symbols: typing.Sequence[str],
         duration: int,
+        *,
+        fg_gradient: graphics.Gradient | None = None,
+        bg_gradient: graphics.Gradient | None = None,
     ) -> None:
         """
         Applies a gradient effect to a sequence of symbols and adds each symbol as a frame to the Scene.
 
         Args:
-            fg_gradient (graphics.Gradient | None): The foreground gradient to apply.
-            bg_gradient (graphics.Gradient | None): The background gradient to apply.
             symbols (Sequence[str]): The sequence of symbols to apply the gradient to.
             duration (int): The duration to show each frame.
+            fg_gradient (graphics.Gradient | None): The foreground gradient to apply. Defaults to None.
+            bg_gradient (graphics.Gradient | None): The background gradient to apply. Defaults to None.
 
         Returns:
             None
