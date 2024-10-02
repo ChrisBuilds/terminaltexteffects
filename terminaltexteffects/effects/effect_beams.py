@@ -17,6 +17,7 @@ import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, Gradient, Terminal
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils.graphics import ColorPair
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -230,7 +231,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
     def __init__(self, effect: "Beams") -> None:
         super().__init__(effect)
         self.pending_groups: list[BeamsIterator.Group] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.active_groups: list[BeamsIterator.Group] = []
         self.delay = 0
         self.phase = "beams"
@@ -249,13 +250,21 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
-            try:
-                if self.terminal.config.existing_color_handling == "dynamic" and character.animation.input_fg_color:
-                    self.character_final_color_map[character] = character.animation.input_fg_color
-                else:
-                    self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            except KeyError:
-                self.character_final_color_map[character] = Color("000000")
+            if character.is_fill_character:
+                self.character_final_color_map[character] = ColorPair(Color("000000"), None)
+                continue
+            if self.terminal.config.existing_color_handling == "dynamic" and self.preexisting_colors_present:
+                fg_color = Color("ffffff")
+                bg_color = None
+                if character.animation.input_fg_color:
+                    fg_color = character.animation.input_fg_color
+                if character.animation.input_bg_color:
+                    bg_color = character.animation.input_bg_color
+                self.character_final_color_map[character] = ColorPair(fg_color, bg_color)
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    final_gradient_mapping[character.input_coord], None
+                )
 
         beam_gradient = Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
         groups: list[BeamsIterator.Group] = []
@@ -271,23 +280,38 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
             for character in group.characters:
                 beam_row_scn = character.animation.new_scene(id="beam_row")
                 beam_column_scn = character.animation.new_scene(id="beam_column")
+                brigthen_scn = character.animation.new_scene(id="brighten")
                 beam_row_scn.apply_gradient_to_symbols(
                     self.config.beam_row_symbols, self.config.beam_gradient_frames, fg_gradient=beam_gradient
                 )
                 beam_column_scn.apply_gradient_to_symbols(
                     self.config.beam_column_symbols, self.config.beam_gradient_frames, fg_gradient=beam_gradient
                 )
-                faded_color = character.animation.adjust_color_brightness(
-                    self.character_final_color_map[character], 0.3
+                fg_fade_gradient = bg_fade_gradient = fg_brighten_gradient = bg_brighten_gradient = None
+                char_fg_color = self.character_final_color_map[character].fg_color
+                char_bg_color = self.character_final_color_map[character].bg_color
+                if char_fg_color:
+                    faded_fg_color = character.animation.adjust_color_brightness(char_fg_color, 0.3)
+                    fg_fade_gradient = Gradient(char_fg_color, faded_fg_color, steps=10)
+                    fg_brighten_gradient = Gradient(faded_fg_color, char_fg_color, steps=10)
+                if char_bg_color:
+                    faded_bg_color = character.animation.adjust_color_brightness(char_bg_color, 0.3)
+                    bg_fade_gradient = Gradient(char_bg_color, faded_bg_color, steps=10)
+                    bg_brighten_gradient = Gradient(faded_bg_color, char_bg_color, steps=10)
+
+                beam_row_scn.apply_gradient_to_symbols(
+                    character.input_symbol, 5, fg_gradient=fg_fade_gradient, bg_gradient=bg_fade_gradient
                 )
-                fade_gradient = Gradient(self.character_final_color_map[character], faded_color, steps=10)
-                beam_row_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=fade_gradient)
-                beam_column_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=fade_gradient)
-                brighten_gradient = Gradient(faded_color, self.character_final_color_map[character], steps=10)
-                brigthen_scn = character.animation.new_scene(id="brighten")
+                beam_column_scn.apply_gradient_to_symbols(
+                    character.input_symbol, 5, fg_gradient=fg_fade_gradient, bg_gradient=bg_fade_gradient
+                )
                 brigthen_scn.apply_gradient_to_symbols(
-                    character.input_symbol, self.config.final_gradient_frames, fg_gradient=brighten_gradient
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    fg_gradient=fg_brighten_gradient,
+                    bg_gradient=bg_brighten_gradient,
                 )
+
         self.pending_groups = groups
         random.shuffle(self.pending_groups)
 

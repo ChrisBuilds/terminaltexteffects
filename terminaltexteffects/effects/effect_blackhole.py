@@ -114,29 +114,14 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             3,
         )
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.preexisting_colors_present = any(
+            any((character.animation.input_fg_color, character.animation.input_bg_color))
+            for character in self.terminal.get_characters()
+        )
         self.build()
 
     def prepare_blackhole(self) -> None:
-        star_symbols = [
-            "*",
-            "✸",
-            "✺",
-            "✹",
-            "✷",
-            "✵",
-            "✴",
-            "✶",
-            "⋆",
-            "'",
-            ".",
-            "⬫",
-            "⬪",
-            "⬩",
-            "⬨",
-            "⬧",
-            "⬦",
-            "⬥",
-        ]
+        star_symbols = ["*", "'", "`", "¤", "•", "°", "·"]
         starfield_colors = Gradient(Color("4a4a4d"), Color("ffffff"), steps=6).spectrum
         gradient_map = {}
         for color in starfield_colors:
@@ -154,7 +139,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             blackhole_path = character.motion.new_path(id="blackhole", speed=0.5, ease=easing.in_out_sine)
             blackhole_path.new_waypoint(starting_pos)
             blackhole_scn = character.animation.new_scene(id="blackhole")
-            blackhole_scn.add_frame("✸", 1, colors=ColorPair(self.config.blackhole_color, None))
+            blackhole_scn.add_frame("*", 1, colors=ColorPair(self.config.blackhole_color, None))
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED,
                 blackhole_path,
@@ -284,8 +269,30 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             explode_star_color = random.choice(star_colors)
             explode_scn.add_frame(character.input_symbol, 1, colors=ColorPair(explode_star_color, None))
             cooling_scn = character.animation.new_scene()
-            cooling_gradient = Gradient(explode_star_color, self.character_final_color_map[character], steps=10)
-            cooling_scn.apply_gradient_to_symbols(character.input_symbol, 20, fg_gradient=cooling_gradient)
+            if self.terminal.config.existing_color_handling == "dynamic" and self.preexisting_colors_present:
+                if not any((character.animation.input_fg_color, character.animation.input_bg_color)):
+                    cooling_scn.add_frame(character.input_symbol, 1, colors=ColorPair())
+                else:
+                    cooling_gradient_fg = None
+                    cooling_gradient_bg = None
+                    if character.animation.input_fg_color:
+                        cooling_gradient_fg = Gradient(
+                            explode_star_color,
+                            character.animation.input_fg_color,
+                            steps=10,
+                        )
+                    if character.animation.input_bg_color:
+                        cooling_gradient_bg = Gradient(
+                            explode_star_color,
+                            character.animation.input_bg_color,
+                            steps=10,
+                        )
+                    cooling_scn.apply_gradient_to_symbols(
+                        character.input_symbol, 20, fg_gradient=cooling_gradient_fg, bg_gradient=cooling_gradient_bg
+                    )
+            else:
+                cooling_gradient = Gradient(explode_star_color, self.character_final_color_map[character], steps=10)
+                cooling_scn.apply_gradient_to_symbols(character.input_symbol, 20, fg_gradient=cooling_gradient)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_COMPLETE,
                 nearby_path,
