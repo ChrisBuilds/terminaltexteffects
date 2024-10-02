@@ -36,7 +36,7 @@ class BaseEffectIterator(ABC, Generic[T]):
         config (T): Configuration for the effect.
         terminal (Terminal): Terminal to use for output.
         active_characters (list[EffectCharacter]): List of active characters in the effect.
-
+        preexisting_colors_present (bool): Whether any characters in the input data have preexisting colors.
     Properties:
         frame (str): Current frame of the effect.
 
@@ -55,6 +55,10 @@ class BaseEffectIterator(ABC, Generic[T]):
         self.config: T = deepcopy(effect.effect_config)
         self.terminal = Terminal(effect.input_data, deepcopy(effect.terminal_config))
         self.active_characters: set[EffectCharacter] = set()
+        self.preexisting_colors_present = any(
+            any((character.animation.input_fg_color, character.animation.input_bg_color))
+            for character in self.terminal.get_characters()
+        )
 
     @property
     def frame(self) -> str:
