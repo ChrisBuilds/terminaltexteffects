@@ -137,7 +137,7 @@ class Gradient:
 
     def __init__(self, *stops: Color, steps: tuple[int, ...] | int = 1, loop=False) -> None:
         """
-        Initializes a Graphics object.
+        Initializes a Gradient object.
 
         Args:
             stops (Color): One ore more variables of type Color representing the color stops.
