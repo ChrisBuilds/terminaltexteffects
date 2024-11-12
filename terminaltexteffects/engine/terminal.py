@@ -35,8 +35,8 @@ class TerminalConfig(ArgsDataClass):
         no_color (bool): Disable all colors in the effect.
         wrap_text (bool): Wrap text wider than the canvas width.
         frame_rate (float): Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting.
-        canvas_width (int): Cavas width, if set to 0 the canvas width is detected automatically based on the terminal device.
-        canvas_height (int): Canvas height, if set to 0 the canvas height is detected automatically based on the terminal device.
+        canvas_width (int): Canvas width, set to an integer > 0 to use a specific dimension, if set to 0 the canvas width is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data width.
+        canvas_height (int): Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas height is is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data height.
         anchor_canvas (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the Canvas. The Canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
         anchor_effect (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the effect within the Canvas. Effect text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
         ignore_terminal_dimensions (bool): Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. Useful for sending frames to another output handler.
@@ -96,20 +96,20 @@ class TerminalConfig(ArgsDataClass):
         metavar=argvalidators.CanvasDimension.METAVAR,
         type_parser=argvalidators.CanvasDimension.type_parser,
         default=-1,
-        help="Canvas width, set to an integer > 0 to use a specific dimension, or use 0, or -1 to set the dimension based off the input data or the terminal device, respectively.",
+        help="Canvas width, set to an integer > 0 to use a specific dimension, use 0 to match the terminal width, or use -1 to match the input text width.",
     )  # type: ignore[assignment]
 
-    "int : Canvas width, if set to 0 the canvas width is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data width."
+    "int : Canvas width, set to an integer > 0 to use a specific dimension, if set to 0 the canvas width is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data width."
 
     canvas_height: int = ArgField(
         cmd_name=["--canvas-height"],
         metavar=argvalidators.CanvasDimension.METAVAR,
         type_parser=argvalidators.CanvasDimension.type_parser,
         default=-1,
-        help="Canvas height, set to an integer > 0 to use a specific dimension, or use 0, or -1 to set the dimension based off the input data or the terminal device, respectively.",
+        help="Canvas height, set to an integer > 0 to use a specific dimension, use 0 to match the terminal height, or use -1 to match the input text height.",
     )  # type: ignore[assignment]
 
-    "int : Canvas height, if set to 0 the canvas height is is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data height."
+    "int : Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas height is is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data height."
 
     anchor_canvas: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"] = ArgField(
         cmd_name=["--anchor-canvas"],
