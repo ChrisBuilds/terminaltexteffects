@@ -1,6 +1,6 @@
 import pytest
 
-from terminaltexteffects.effects import effect_matrix
+from terminaltexteffects.effects import effect_colorshift, effect_matrix
 
 
 @pytest.mark.smoke
@@ -43,9 +43,14 @@ def test_effect_color_sequence_handling(
 @pytest.mark.visual
 @pytest.mark.parametrize("input_data", ["large"], indirect=True)
 def test_effect_visual(effect, input_data) -> None:
+    # customize some effect configs to shorten testing time or test
+    # specific features
     effect = effect(input_data)
     if isinstance(effect, effect_matrix.Matrix):
         effect.effect_config.rain_time = 5
+    if isinstance(effect, effect_colorshift.ColorShift):
+        effect.effect_config.travel = True
+        effect.effect_config.cycles = 2
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
