@@ -1,4 +1,4 @@
-"""This module contains the EffectCharacter class and EventHandler class used to manage the state of a single character from the input data."""
+"""EffectCharacter class and EventHandler class used to manage the state of a single character from the input data."""
 
 from __future__ import annotations
 
@@ -7,36 +7,42 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 from terminaltexteffects.engine import animation, motion
+from terminaltexteffects.utils.exceptions import (
+    InvalidEventRegistrationActionTargetError,
+    InvalidEventRegistrationEventCallerError,
+)
 from terminaltexteffects.utils.geometry import Coord
 
 
 class EventHandler:
     """Register and handle events related to a character.
 
-    Events related to character state changes (e.g. waypoint reached) can be registered with the EventHandler.
+    Events related to character state changes (e.g. scene complete) can be registered with the EventHandler.
     When an event is triggered, the EventHandler will take the specified action (e.g. activate a Path).
     The EventHandler is used by the EffectCharacter class to handle events related to the character.
 
     Attributes:
         character (EffectCharacter): The character that the EventHandler is handling events for.
         registered_events (dict[tuple[Event, str], list[tuple[Action, str]]]): A dictionary of registered events.
-            The key is a tuple of the event and the subject_id (waypoint id/scene id).
-            The value is a list of tuples of the action and the action target (waypoint id/scene id).
+            The key is a tuple of the event and the caller ID (waypoint id/scene id).
+            The value is a list of tuples of the action and the action target (path id/scene id).
         layer (int): The layer of the character. The layer determines the order in which characters are printed.
 
     Note:
         SEGMENT_ENTERED/EXITED events will trigger the first time the character enters or exits a segment.
-        If looping, each loop will trigger the event, but not backwards motion as is possible with the bounce easing functions.
+        If looping, each loop will trigger the event, but not backwards motion as is possible with
+        the bounce easing functions.
+
     """
 
-    def __init__(self, character: "EffectCharacter"):
-        """Initializes the instance with the EffectCharacter object.
+    def __init__(self, character: EffectCharacter) -> None:
+        """Initialize the instance with the EffectCharacter object.
 
         Args:
             character (EffectCharacter): The character for which the EventHandler is handling events.
+
         """
         self.character = character
-        self.layer: int = 0
         self.registered_events: dict[
             tuple[EventHandler.Event, animation.Scene | motion.Waypoint | motion.Path],
             list[
@@ -60,6 +66,7 @@ class EventHandler:
             PATH_HOLDING (Event): A path has entered the holding state.
             SCENE_ACTIVATED (Event): An animation scene has been activated.
             SCENE_COMPLETE (Event): An animation scene has completed.
+
         """
 
         SEGMENT_ENTERED = auto()
@@ -85,6 +92,7 @@ class EventHandler:
             SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
             SET_COORDINATE (Action): Sets the coordinate of the character. The action target is the coordinate.
             CALLBACK (Action): Calls a callback function. The action target is an EventHandler.Callback object.
+
         """
 
         ACTIVATE_PATH = auto()
@@ -107,12 +115,14 @@ class EventHandler:
         callback: typing.Callable
         args: tuple[typing.Any, ...]
 
-        def __init__(self, callback: typing.Callable, *args: typing.Any):
-            """Initializes the instance with the callback function and arguments.
+        def __init__(self, callback: typing.Callable, *args: typing.Any) -> None:
+            """Initialize the instance with the callback function and arguments.
 
             Args:
                 callback (typing.Callable): The callback function to call.
-                args (tuple[typing.Any,...]): A tuple of arguments to pass to the callback function. The first argument will be the character, followed by any additional arguments.
+                args (tuple[typing.Any,...]): A tuple of arguments to pass to the callback function. The first argument
+                    will be the character, followed by any additional arguments.
+
             """
             self.callback = callback
             self.args = args
@@ -122,7 +132,7 @@ class EventHandler:
         self,
         event: Event,
         caller: animation.Scene | motion.Waypoint | motion.Path,
-        action: typing.Literal[Action.ACTIVATE_SCENE] | typing.Literal[Action.DEACTIVATE_SCENE],
+        action: typing.Literal[Action.ACTIVATE_SCENE, Action.DEACTIVATE_SCENE],
         target: animation.Scene,
     ) -> None: ...
 
@@ -131,7 +141,7 @@ class EventHandler:
         self,
         event: Event,
         caller: animation.Scene | motion.Waypoint | motion.Path,
-        action: typing.Literal[Action.ACTIVATE_PATH] | typing.Literal[Action.DEACTIVATE_PATH],
+        action: typing.Literal[Action.ACTIVATE_PATH, Action.DEACTIVATE_PATH],
         target: motion.Path,
     ) -> None: ...
 
@@ -175,63 +185,67 @@ class EventHandler:
         event: Event,
         caller: animation.Scene | motion.Waypoint | motion.Path,
         action: Action,
-        target: animation.Scene | motion.Waypoint | motion.Path | int | Coord | Callback | None = None,
+        target: animation.Scene | motion.Path | int | Coord | Callback | None = None,
     ) -> None:
-        """Registers an event to be handled by the EventHandler.
+        """Register an event to be handled by the EventHandler.
 
         Args:
             event (Event): The event to register.
             caller (animation.Scene | motion.Waypoint | motion.Path): The object that triggers the event.
             action (Action): The action to take when the event is triggered.
-            target (animation.Scene | motion.Waypoint | motion.Path | int | Coord | Callback): The target of the action.
+            target (animation.Scene | motion.Path | int | Coord | Callback): The target of the action.
 
         Raises:
             ValueError: If the caller or target object is not the correct type for the event or action.
 
         Example:
             Register an event to activate a scene when a Path is complete:
-            `event_handler.register_event(EventHandler.Event.PATH_COMPLETE, some_path, EventHandler.Action.ACTIVATE_SCENE, some_scene)`
-        """
-        if event in (
-            EventHandler.Event.PATH_ACTIVATED,
-            EventHandler.Event.PATH_COMPLETE,
-            EventHandler.Event.PATH_HOLDING,
-            EventHandler.Event.SEGMENT_ENTERED,
-            EventHandler.Event.SEGMENT_EXITED,
-        ):
-            if not isinstance(caller, motion.Path):
-                raise ValueError(f"Event {event.name} requires a Path object as the caller.")
-        elif event in (EventHandler.Event.SCENE_ACTIVATED, EventHandler.Event.SCENE_COMPLETE):
-            if not isinstance(caller, animation.Scene):
-                raise ValueError(f"Event {event.name} requires a Scene object as the caller.")
+            `event_handler.register_event(EventHandler.Event.PATH_COMPLETE, some_path,
+                EventHandler.Action.ACTIVATE_SCENE, some_scene)`
 
-        if action in (EventHandler.Action.ACTIVATE_PATH, EventHandler.Action.DEACTIVATE_PATH):
-            if not isinstance(target, motion.Path):
-                raise ValueError(f"Action {action.name} requires a Path object as the target.")
-        elif action in (EventHandler.Action.ACTIVATE_SCENE, EventHandler.Action.DEACTIVATE_SCENE):
-            if not isinstance(target, animation.Scene):
-                raise ValueError(f"Action {action.name} requires a Scene object as the target.")
-        elif action == EventHandler.Action.CALLBACK and not isinstance(target, EventHandler.Callback):
-            raise ValueError("Action CALLBACK requires a Callback object as the target.")
-        elif action == EventHandler.Action.SET_LAYER and not isinstance(target, int):
-            raise ValueError("Action SET_LAYER requires an int as the target.")
-        elif action == EventHandler.Action.SET_COORDINATE and not isinstance(target, Coord):
-            raise ValueError("Action SET_COORDINATE requires a Coord as the target.")
-        elif action == EventHandler.Action.RESET_APPEARANCE and target is not None:
-            raise ValueError("Action RESET_APPEARANCE does not require a target.")
+        """
+        event_caller_map = {
+            EventHandler.Event.SEGMENT_ENTERED: motion.Waypoint,
+            EventHandler.Event.SEGMENT_EXITED: motion.Waypoint,
+            EventHandler.Event.PATH_ACTIVATED: motion.Path,
+            EventHandler.Event.PATH_COMPLETE: motion.Path,
+            EventHandler.Event.PATH_HOLDING: motion.Path,
+            EventHandler.Event.SCENE_ACTIVATED: animation.Scene,
+            EventHandler.Event.SCENE_COMPLETE: animation.Scene,
+        }
+
+        action_target_map = {
+            EventHandler.Action.ACTIVATE_PATH: motion.Path,
+            EventHandler.Action.ACTIVATE_SCENE: animation.Scene,
+            EventHandler.Action.DEACTIVATE_PATH: motion.Path,
+            EventHandler.Action.DEACTIVATE_SCENE: animation.Scene,
+            EventHandler.Action.RESET_APPEARANCE: type(None),
+            EventHandler.Action.SET_LAYER: int,
+            EventHandler.Action.SET_COORDINATE: Coord,
+            EventHandler.Action.CALLBACK: EventHandler.Callback,
+        }
+
+        if event_caller_map[event] != caller.__class__:
+            raise InvalidEventRegistrationEventCallerError(event, caller, event_caller_map[event])
+
+        if (action is EventHandler.Action.RESET_APPEARANCE and target is not None) or (
+            action_target_map[action] != target.__class__
+        ):
+            raise InvalidEventRegistrationActionTargetError(action, target, action_target_map[action])
 
         new_event = (event, caller)
         new_action = (action, target)
         if new_event not in self.registered_events:
-            self.registered_events[new_event] = list()
+            self.registered_events[new_event] = []
         self.registered_events[new_event].append(new_action)
 
     def _handle_event(self, event: Event, caller: animation.Scene | motion.Waypoint | motion.Path) -> None:
-        """Handles an event by taking the specified action.
+        """Handle an event by taking the specified action.
 
         Args:
             event (Event): An event to handle. If the event is not registered, nothing happens.
             caller (animation.Scene | motion.Waypoint | motion.Path): The object triggering the call.
+
         """
         action_map = {
             EventHandler.Action.ACTIVATE_PATH: self.character.motion.activate_path,
@@ -239,7 +253,7 @@ class EventHandler:
             EventHandler.Action.DEACTIVATE_PATH: self.character.motion.deactivate_path,
             EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
             EventHandler.Action.RESET_APPEARANCE: lambda _: self.character.animation.set_appearance(
-                self.character.input_symbol
+                self.character.input_symbol,
             ),
             EventHandler.Action.SET_LAYER: lambda layer: setattr(self.character, "layer", layer),
             EventHandler.Action.SET_COORDINATE: lambda coord: setattr(self.character.motion, "current_coord", coord),
@@ -250,14 +264,13 @@ class EventHandler:
             return
         for event_action in self.registered_events[(event, caller)]:
             action, target = event_action
-            action_map[action](target)  # type: ignore
+            action_map[action](target)  # type: ignore[operator]
 
 
 class EffectCharacter:
-    """
-    A class representing a single character from the input data. EffectCharacters are managed by the Terminal and are used
-    to apply animations and effects to individual characters.
+    """A class representing a single character from the input data.
 
+    EffectCharacters are managed by the Terminal and are used to apply animations and effects to individual characters.
     Add an EffectCharacter to the Terminal using the add_character method of the Terminal class.
 
     Methods:
@@ -272,17 +285,20 @@ class EffectCharacter:
         motion (motion.Motion): The motion object that controls the character's movement.
         event_handler (EventHandler): The event handler object that handles events related to the character.
         layer (int): The layer of the character. The layer determines the order in which characters are printed.
-        is_fill_character (bool): Whether the character is a fill character. Fill characters are used to fill the empty cells of the Canvas.
+        is_fill_character (bool): Whether the character is a fill character. Fill characters are used to fill
+            the empty cells of the Canvas.
+
     """
 
-    def __init__(self, character_id: int, symbol: str, input_column: int, input_row: int):
-        """Initializes the character instance with the character ID, symbol, and input coordinates.
+    def __init__(self, character_id: int, symbol: str, input_column: int, input_row: int) -> None:
+        """Initialize the character instance with the character ID, symbol, and input coordinates.
 
         Args:
             character_id (int): The unique ID of the character, generated by the Terminal.
             symbol (str): The symbol for the character in the input data.
             input_column (int): The column of the character in the input data.
             input_row (int): The row of the character in the input data.
+
         """
         self._character_id: int = character_id
         self._input_symbol: str = symbol
@@ -297,30 +313,35 @@ class EffectCharacter:
 
     @property
     def input_symbol(self) -> str:
+        """The symbol for the character in the input data."""
         return self._input_symbol
 
     @property
     def input_coord(self) -> Coord:
+        """The coordinate of the character in the input data."""
         return self._input_coord
 
     @property
     def is_visible(self) -> bool:
+        """Whether the character is currently visible and should be printed to the terminal."""
         return self._is_visible
 
     @property
     def character_id(self) -> int:
+        """The unique ID of the character, generated by the Terminal."""
         return self._character_id
 
     @property
     def is_active(self) -> bool:
-        """Returns whether the character is currently active. A character is active if its animation or motion is not complete.
+        """Returns whether the character is currently active.
+
+        A character is active if its animation or motion is not complete.
 
         Returns:
             bool: True if the character is active, False if not.
+
         """
-        if not self.animation.active_scene_is_complete() or not self.motion.movement_is_complete():
-            return True
-        return False
+        return bool(not self.animation.active_scene_is_complete() or not self.motion.movement_is_complete())
 
     def tick(self) -> None:
         """Progress the character's animation and motion by one step."""
@@ -328,9 +349,18 @@ class EffectCharacter:
         self.animation.step_animation()
 
     def __hash__(self) -> int:
+        """Return the hash value of the character."""
         return hash(self.character_id)
 
-    def __eq__(self, other: typing.Any) -> bool:
+    def __eq__(self, other: object) -> bool:
+        """Check if two EffectCharacter instances are equal based on their character_id."""
         if not isinstance(other, EffectCharacter):
             return NotImplemented
         return self.character_id == other.character_id
+
+    def __repr__(self) -> str:
+        """Return a string representation of the EffectCharacter instance."""
+        return (
+            f"EffectCharacter(character_id={self.character_id}, symbol={self.input_symbol}, "
+            f"input_column={self.input_coord.column}, input_row={self.input_coord.row})"
+        )
