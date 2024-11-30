@@ -79,6 +79,7 @@ nav:
         - engine/utils/argvalidators.md
         - engine/utils/colorterm.md
         - engine/utils/easing.md
+        - engine/utils/exceptions.md
         - engine/utils/geometry.md
         - engine/utils/color.md
         - engine/utils/gradient.md

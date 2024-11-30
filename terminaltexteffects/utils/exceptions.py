@@ -22,10 +22,10 @@ class InvalidEventRegistrationEventCallerError(TerminalTextEffectsError):
     The following are the valid caller types for each event:
 
     Event -> Caller
-    ---------------
-    SEGMENT_* -> Path
-    PATH_*    -> Path
-    SCENE_*   -> Scene
+
+        - SEGMENT_* -> Path
+        - PATH_*    -> Path
+        - SCENE_*   -> Scene
     """
 
     def __init__(
@@ -62,13 +62,13 @@ class InvalidEventRegistrationActionTargetError(TerminalTextEffectsError):
     The following are the valid target types for each action:
 
     Action -> Target
-    ---------------
-    *_SCENE -> Scene
-    *_PATH  -> Path
-    SET_LAYER -> Int
-    SET_COORDINATE -> Coord
-    CALLBACK -> EventHandler.Callback
-    RESET_APPEARANCE -> None
+
+        - *_SCENE          -> Scene
+        - *_PATH           -> Path
+        - SET_LAYER        -> Int
+        - SET_COORDINATE   -> Coord
+        - CALLBACK         -> EventHandler.Callback
+        - RESET_APPEARANCE -> None
     """
 
     def __init__(
