@@ -18,6 +18,24 @@ tte = "terminaltexteffects.__main__:main"
 show-fixes = true
 line-length = 120
 
+[tool.ruff.lint]
+ignore = [
+    "C90",
+    "ANN401",
+    "EXE",
+    "RUF009", # function-call-in-dataclass-default-argument
+    "S311",   # suspicious-non-cryptographic-random-usage
+]
+select = ["ALL"]
+fixable = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"**/tests/*" = [
+    "S101",   # assert
+    "SLF001", # private member access
+]
+
 [tool.pytest.ini_options]
 console_output_style = "progress"
 minversion = "6.0"
