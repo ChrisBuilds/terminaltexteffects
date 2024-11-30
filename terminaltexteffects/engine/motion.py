@@ -23,7 +23,7 @@ if typing.TYPE_CHECKING:
 class Waypoint:
     """A Waypoint comprises a coordinate, speed, and, optionally, bezier control point(s).
 
-    Args:
+    Attributes:
         waypoint_id (str): unique identifier for the waypoint
         coord (Coord): coordinate
         bezier_control (tuple[Coord, ...] | None): coordinate of the control point for a bezier curve. Defaults to None.
@@ -88,11 +88,11 @@ class Path:
         loop (bool): Whether the path should loop back to the beginning. Default is False.
 
     Methods:
-        new_waypoint(coord: Coord, bezier_control: tuple[Coord, ...] | Coord | None = None, id: str = "") -> Waypoint:
+        new_waypoint:
             Creates a new Waypoint and appends adds it to the Path.
-        query_waypoint(waypoint_id: str) -> Waypoint:
+        query_waypoint:
             Returns the waypoint with the given waypoint_id.
-        step(event_handler: base_character.EventHandler) -> Coord:
+        step:
             Progresses to the next step along the path and returns the coordinate at that step.
 
     """
@@ -294,30 +294,23 @@ class Motion:
         active_path (Path | None): active path
 
     Methods:
-        set_coordinate(coord: Coord) -> None:
+        set_coordinate:
             Sets the current coordinate to the given coordinate.
-        new_path(
-            speed: float = 1,
-            ease: easing.EasingFunction | None = None,
-            layer: int | None = None,
-            hold_time: int = 0,
-            loop: bool = False,
-            id: str = ""
-        ) -> Path:
+        new_path:
             Creates a new Path and adds it to the Motion.paths dictionary with the path_id as key.
-        query_path(path_id: str) -> Path:
+        query_path:
             Returns the path with the given path_id.
-        movement_is_complete() -> bool:
+        movement_is_complete:
             Returns whether the character has an active path.
-        chain_paths(paths: list[Path], loop=False):
+        chain_paths:
             Creates a chain of paths by registering activation events for each path such
             that paths[n] activates paths[n+1] when reached. If loop is True, paths[-1] activates
             paths[0] when reached.
-        activate_path(path: Path) -> None:
+        activate_path:
             Activates the first waypoint in the path.
-        deactivate_path(path: Path) -> None:
+        deactivate_path:
             Unsets the current path if the current path is path.
-        move() -> None:
+        move:
             Moves the character one step closer to the target position based on an easing function if
                 present, otherwise linearly.
 
