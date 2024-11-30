@@ -23,8 +23,11 @@ ignore = [
     "C90",
     "ANN401",
     "EXE",
-    "RUF009", # function-call-in-dataclass-default-argument
-    "S311",   # suspicious-non-cryptographic-random-usage
+    "PLR0913", # too many function args
+    "RUF009",  # function-call-in-dataclass-default-argument
+    "S311",    # suspicious-non-cryptographic-random-usage
+    "SLF001",  # private member access
+    "TRY003",  # f-strings in exception message
 ]
 select = ["ALL"]
 fixable = ["ALL"]
@@ -32,8 +35,8 @@ fixable = ["ALL"]
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "**/tests/*" = [
-    "S101",   # assert
-    "SLF001", # private member access
+    "S101", # assert
+
 ]
 
 [tool.pytest.ini_options]
