@@ -11,9 +11,9 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
@@ -45,6 +45,7 @@ class ColorShiftConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use for the final gradient. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient across the canvas.
+
     """
 
     gradient_stops: tuple[Color, ...] = ArgField(
@@ -173,7 +174,7 @@ class ColorShiftConfig(ArgsDataClass):
 
 
 class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
-    def __init__(self, effect: "ColorShift") -> None:
+    def __init__(self, effect: ColorShift) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
@@ -184,9 +185,8 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
         self.loop_tracker_map[character] = self.loop_tracker_map.get(character, 0) + 1
         if self.config.cycles == 0 or (self.loop_tracker_map[character] < self.config.cycles):
             character.animation.activate_scene(character.animation.query_scene("gradient"))
-        else:
-            if not self.config.skip_final_gradient:
-                character.animation.activate_scene(character.animation.query_scene("final_gradient"))
+        elif not self.config.skip_final_gradient:
+            character.animation.activate_scene(character.animation.query_scene("final_gradient"))
 
     def build(self) -> None:
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
@@ -202,7 +202,7 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
         gradient = Gradient(*self.config.gradient_stops, steps=self.config.gradient_steps, loop=not self.config.no_loop)
         for character in self.terminal.get_characters():
             self.terminal.set_character_visibility(character, True)
-            gradient_scn = character.animation.new_scene(id="gradient")
+            gradient_scn = character.animation.new_scene(scene_id="gradient")
             if self.config.travel:
                 if self.config.travel_direction == Gradient.Direction.HORIZONTAL:
                     direction_index = character.input_coord.column / self.terminal.canvas.right
@@ -228,12 +228,16 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
                 colors = gradient.spectrum
             for color in colors:
                 gradient_scn.add_frame(
-                    character.input_symbol, self.config.gradient_frames, colors=ColorPair(color, None)
+                    character.input_symbol,
+                    self.config.gradient_frames,
+                    colors=ColorPair(color, None),
                 )
-            final_color_scn = character.animation.new_scene(id="final_gradient")
+            final_color_scn = character.animation.new_scene(scene_id="final_gradient")
             for color in Gradient(colors[-1], self.character_final_color_map[character], steps=8):
                 final_color_scn.add_frame(
-                    character.input_symbol, self.config.gradient_frames, colors=ColorPair(color, None)
+                    character.input_symbol,
+                    self.config.gradient_frames,
+                    colors=ColorPair(color, None),
                 )
             character.animation.activate_scene(gradient_scn)
             self.active_characters.add(character)
@@ -249,8 +253,7 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
             # perform effect logic
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class ColorShift(BaseEffect[ColorShiftConfig]):
@@ -263,5 +266,7 @@ class ColorShift(BaseEffect[ColorShiftConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

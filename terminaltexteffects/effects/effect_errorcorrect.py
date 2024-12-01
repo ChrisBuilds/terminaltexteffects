@@ -182,7 +182,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 initial_scene = character.animation.new_scene()
                 initial_scene.add_frame(character.input_symbol, 1, colors=ColorPair(self.config.error_color))
                 character.animation.activate_scene(initial_scene)
-                error_scene = character.animation.new_scene(id="error")
+                error_scene = character.animation.new_scene(scene_id="error")
                 for _ in range(10):
                     error_scene.add_frame(block_symbol, 3, colors=ColorPair(self.config.error_color))
                     error_scene.add_frame(character.input_symbol, 3, colors=ColorPair(Color("ffffff")))

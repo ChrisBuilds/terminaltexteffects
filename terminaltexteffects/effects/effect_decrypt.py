@@ -37,7 +37,9 @@ class DecryptConfig(ArgsDataClass):
         ciphertext_colors (tuple[Color, ...]): Colors for the ciphertext. Color will be randomly selected for each character.
         final_gradient_stops (tuple[Color, ...]): Colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient."""
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
+    """
 
     typing_speed: int = ArgField(
         cmd_name="--typing-speed",
@@ -100,7 +102,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
         box_drawing = list(range(9472, 9599))
         misc = list(range(174, 452))
 
-    def __init__(self, effect: "Decrypt") -> None:
+    def __init__(self, effect: Decrypt) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.typing_pending_chars: list[EffectCharacter] = []
@@ -123,13 +125,13 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
             self.encrypted_symbols.append(chr(n))
 
     def make_decrypting_animation_scenes(self, character: EffectCharacter) -> None:
-        fast_decrypt_scene = character.animation.new_scene(id="fast_decrypt")
+        fast_decrypt_scene = character.animation.new_scene(scene_id="fast_decrypt")
         color = random.choice(self.config.ciphertext_colors)
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
             fast_decrypt_scene.add_frame(symbol, 3, colors=ColorPair(color))
             duration = 3
-        slow_decrypt_scene = character.animation.new_scene(id="slow_decrypt")
+        slow_decrypt_scene = character.animation.new_scene(scene_id="slow_decrypt")
         for _ in range(random.randint(1, 15)):  # 1-15 longer duration units
             symbol = random.choice(self.encrypted_symbols)
             if random.randint(0, 100) <= 30:  # 30% chance of extra long duration
@@ -137,18 +139,20 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
             else:
                 duration = random.randrange(5, 10)  # shorter duration creates flipping effect
             slow_decrypt_scene.add_frame(symbol, duration, colors=ColorPair(color))
-        discovered_scene = character.animation.new_scene(id="discovered")
+        discovered_scene = character.animation.new_scene(scene_id="discovered")
         discovered_gradient = Gradient(Color("ffffff"), self.character_final_color_map[character], steps=10)
         discovered_scene.apply_gradient_to_symbols(character.input_symbol, 8, fg_gradient=discovered_gradient)
 
     def prepare_data_for_type_effect(self) -> None:
         for character in self.terminal.get_characters():
-            typing_scene = character.animation.new_scene(id="typing")
+            typing_scene = character.animation.new_scene(scene_id="typing")
             for block_char in ["▉", "▓", "▒", "░"]:
                 typing_scene.add_frame(block_char, 2, colors=ColorPair(random.choice(self.config.ciphertext_colors)))
 
             typing_scene.add_frame(
-                random.choice(self.encrypted_symbols), 2, colors=ColorPair(random.choice(self.config.ciphertext_colors))
+                random.choice(self.encrypted_symbols),
+                2,
+                colors=ColorPair(random.choice(self.config.ciphertext_colors)),
             )
             self.typing_pending_chars.append(character)
 
@@ -197,20 +201,17 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
                                 self.active_characters.add(next_character)
                 self.update()
                 return self.frame
-            else:
-                self.active_characters = self.decrypting_pending_chars
-                for char in self.active_characters:
-                    char.animation.activate_scene(char.animation.query_scene("fast_decrypt"))
-                self.phase = "decrypting"
+            self.active_characters = self.decrypting_pending_chars
+            for char in self.active_characters:
+                char.animation.activate_scene(char.animation.query_scene("fast_decrypt"))
+            self.phase = "decrypting"
 
         if self.phase == "decrypting":
             if self.active_characters:
                 self.update()
                 return self.frame
-            else:
-                raise StopIteration
-        else:
             raise StopIteration
+        raise StopIteration
 
 
 class Decrypt(BaseEffect[DecryptConfig]):
@@ -229,7 +230,9 @@ class Decrypt(BaseEffect[DecryptConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)
 
     def __iter__(self) -> DecryptIterator:

@@ -528,12 +528,12 @@ class Animation:
         is_looping: bool = False,
         sync: Scene.SyncMetric | None = None,
         ease: easing.EasingFunction | None = None,
-        id: str = "",
+        scene_id: str = "",
     ) -> Scene:
         """Create a new Scene and adds it to the Animation. If no ID is provided, a unique ID is generated.
 
         Args:
-            id (str): Unique name for the scene. Used to query for the scene.
+            scene_id (str): Unique name for the scene. Used to query for the scene.
             is_looping (bool): Whether the scene should loop.
             sync (Scene.SyncMetric): The type of sync to use for the scene.
             ease (easing.EasingFunction): The easing function to use for the scene.
@@ -542,12 +542,12 @@ class Animation:
             Scene: the new Scene
 
         """
-        if not id:
+        if not scene_id:
             found_unique = False
             current_id = len(self.scenes)
             while not found_unique:
-                id = f"{current_id}"
-                if id not in self.scenes:
+                scene_id = f"{current_id}"
+                if scene_id not in self.scenes:
                     found_unique = True
                 else:
                     current_id += 1
@@ -556,7 +556,7 @@ class Animation:
         else:
             preexisting_colors = None
         new_scene = Scene(
-            scene_id=id,
+            scene_id=scene_id,
             is_looping=is_looping,
             sync=sync,
             ease=ease,
@@ -564,7 +564,7 @@ class Animation:
             use_xterm_colors=self.use_xterm_colors,
         )
         new_scene.preexisting_colors = preexisting_colors
-        self.scenes[id] = new_scene
+        self.scenes[scene_id] = new_scene
         return new_scene
 
     def query_scene(self, scene_id: str) -> Scene:

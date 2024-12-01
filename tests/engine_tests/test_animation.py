@@ -139,7 +139,7 @@ def test_animation_init(character: EffectCharacter):
 
 def test_animation_new_scene(character: EffectCharacter):
     animation = character.animation
-    scene = animation.new_scene(id="test_scene", is_looping=True)
+    scene = animation.new_scene(scene_id="test_scene", is_looping=True)
     assert isinstance(scene, Scene)
     assert scene.scene_id == "test_scene"
     assert scene.is_looping is True
@@ -163,7 +163,7 @@ def test_animation_new_scene_id_generation_deleted_scene(character: EffectCharac
 
 def test_animation_query_scene(character: EffectCharacter):
     animation = character.animation
-    scene = animation.new_scene(id="test_scene", is_looping=True)
+    scene = animation.new_scene(scene_id="test_scene", is_looping=True)
     assert animation.query_scene("test_scene") is scene
 
 
@@ -175,7 +175,7 @@ def test_animation_query_nonexistent_scene(character: EffectCharacter):
 
 def test_animation_looping_active_scene_is_complete(character: EffectCharacter):
     animation = character.animation
-    scene = animation.new_scene(id="test_scene", is_looping=True)
+    scene = animation.new_scene(scene_id="test_scene", is_looping=True)
     scene.add_frame(symbol="a", duration=2)
     animation.activate_scene(scene)
     assert animation.active_scene_is_complete() is True
@@ -183,7 +183,7 @@ def test_animation_looping_active_scene_is_complete(character: EffectCharacter):
 
 def test_animation_non_looping_active_scene_is_complete(character: EffectCharacter):
     animation = character.animation
-    scene = animation.new_scene(id="test_scene")
+    scene = animation.new_scene(scene_id="test_scene")
     scene.add_frame(symbol="a", duration=1)
     animation.activate_scene(scene)
     assert animation.active_scene_is_complete() is False
@@ -260,7 +260,7 @@ def test_animation_ease_animation_no_active_scene(character: EffectCharacter):
 
 
 def test_animation_ease_animation_active_scene(character: EffectCharacter):
-    scene = character.animation.new_scene(id="test_scene", ease=easing.in_sine)
+    scene = character.animation.new_scene(scene_id="test_scene", ease=easing.in_sine)
     scene.add_frame(symbol="a", duration=10)
     scene.add_frame(symbol="b", duration=10)
     character.animation.activate_scene(scene)
@@ -309,7 +309,7 @@ def test_animation_step_animation_sync_waypoint_deactivated(character: EffectCha
 
 
 def test_animation_step_animation_eased_scene(character: EffectCharacter):
-    scene = character.animation.new_scene(id="test_scene", ease=easing.in_sine)
+    scene = character.animation.new_scene(scene_id="test_scene", ease=easing.in_sine)
     scene.add_frame(symbol="a", duration=10)
     scene.add_frame(symbol="b", duration=10)
     character.animation.activate_scene(scene)
@@ -318,7 +318,7 @@ def test_animation_step_animation_eased_scene(character: EffectCharacter):
 
 
 def test_animation_step_animation_eased_scene_looping(character: EffectCharacter):
-    scene = character.animation.new_scene(id="test_scene", ease=easing.in_sine, is_looping=True)
+    scene = character.animation.new_scene(scene_id="test_scene", ease=easing.in_sine, is_looping=True)
     scene.add_frame(symbol="a", duration=10)
     scene.add_frame(symbol="b", duration=10)
     character.animation.activate_scene(scene)
@@ -327,7 +327,7 @@ def test_animation_step_animation_eased_scene_looping(character: EffectCharacter
 
 
 def test_animation_deactivate_scene(character: EffectCharacter):
-    scene = character.animation.new_scene(id="test_scene")
+    scene = character.animation.new_scene(scene_id="test_scene")
     scene.add_frame(symbol="a", duration=10)
     character.animation.activate_scene(scene)
     character.animation.deactivate_scene(scene)
@@ -367,13 +367,13 @@ def test_scene_add_frame_existing_colors(character: EffectCharacter):
 
 
 def test_activate_scene_with_no_frames(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     with pytest.raises(ActivateEmptySceneError):
         character.animation.activate_scene(new_scene)
 
 
 def test_scene_get_next_visual_looping(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene", is_looping=True)
+    new_scene = character.animation.new_scene(scene_id="test_scene", is_looping=True)
     new_scene.add_frame(symbol="a", duration=1)
     new_scene.add_frame(symbol="b", duration=1)
     character.animation.activate_scene(new_scene)
@@ -386,7 +386,7 @@ def test_scene_get_next_visual_looping(character: EffectCharacter):
 
 
 def test_scene_apply_gradient_to_symbols_empty_gradient(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     gradient = Gradient(Color("000000"), Color("ffffff"), steps=2)
     gradient.spectrum.clear()
     symbols = ["a", "b", "c"]
@@ -395,7 +395,7 @@ def test_scene_apply_gradient_to_symbols_empty_gradient(character: EffectCharact
 
 
 def test_scene_apply_gradient_to_symbols_both_gradients_empty(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     gradient = Gradient(Color("000000"), Color("ffffff"), steps=2)
     gradient.spectrum.clear()
     symbols = ["a", "b", "c"]
@@ -404,7 +404,7 @@ def test_scene_apply_gradient_to_symbols_both_gradients_empty(character: EffectC
 
 
 def test_scene_apply_gradient_to_symbols_single_single_step(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     gradient = Gradient(Color("000000"), Color("ffffff"), steps=1)
     symbols = ["a"]
     new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient, bg_gradient=gradient)
@@ -415,7 +415,7 @@ def test_scene_apply_gradient_to_symbols_single_single_step(character: EffectCha
 
 
 def test_scene_apply_gradient_to_symbols_fg_bg_spectrums_not_equal(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     fg_gradient = Gradient(Color("000000"), Color("ffffff"), steps=8)
     bg_gradient = Gradient(Color("ffffff"), Color("000000"), steps=6)
     symbols = ["a", "b", "c"]
@@ -426,7 +426,7 @@ def test_scene_apply_gradient_to_symbols_fg_bg_spectrums_not_equal(character: Ef
 
 
 def test_scene_apply_gradient_to_symbols_empty_spectrums(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     fg_gradient = Gradient(Color("000000"), Color("ffffff"), steps=1)
     bg_gradient = Gradient(Color("ffffff"), Color("000000"), steps=1)
     fg_gradient.spectrum.clear()
@@ -437,14 +437,14 @@ def test_scene_apply_gradient_to_symbols_empty_spectrums(character: EffectCharac
 
 
 def test_scene_apply_gradient_to_symbols_no_gradients(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     symbols = ["a", "b", "c"]
     with pytest.raises(ApplyGradientToSymbolsNoGradientsError):
         new_scene.apply_gradient_to_symbols(symbols, duration=1)
 
 
 def test_scene_apply_gradient_to_symbols_larger_bg_spectrum(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     fg_gradient = Gradient(Color("000000"), Color("ffffff"), steps=3)
     bg_gradient = Gradient(Color("ffffff"), Color("000000"), steps=6)
     symbols = ["a", "b", "c"]
@@ -455,7 +455,7 @@ def test_scene_apply_gradient_to_symbols_larger_bg_spectrum(character: EffectCha
 
 
 def test_scene_apply_gradient_to_symbols_larger_fg_spectrum(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     fg_gradient = Gradient(Color("000000"), Color("ffffff"), steps=6)
     bg_gradient = Gradient(Color("ffffff"), Color("000000"), steps=3)
     symbols = ["a", "b", "c"]
@@ -466,7 +466,7 @@ def test_scene_apply_gradient_to_symbols_larger_fg_spectrum(character: EffectCha
 
 
 def test_scene_apply_gradient_to_symbols_fg_gradient_only(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     fg_gradient = Gradient(Color("000000"), Color("ffffff"), steps=3)
     symbols = ["a", "b", "c"]
     new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=fg_gradient)
@@ -476,7 +476,7 @@ def test_scene_apply_gradient_to_symbols_fg_gradient_only(character: EffectChara
 
 
 def test_scene_apply_gradient_to_symbols_bg_gradient_only(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     bg_gradient = Gradient(Color("ffffff"), Color("000000"), steps=3)
     symbols = ["a", "b", "c"]
     new_scene.apply_gradient_to_symbols(symbols, duration=1, bg_gradient=bg_gradient)
@@ -486,7 +486,7 @@ def test_scene_apply_gradient_to_symbols_bg_gradient_only(character: EffectChara
 
 
 def test_scene_reset_scene(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     new_scene.add_frame(symbol="a", duration=3)
     new_scene.add_frame(symbol="b", duration=3)
     for _ in range(4):
@@ -498,11 +498,11 @@ def test_scene_reset_scene(character: EffectCharacter):
 
 
 def test_scene_id_equality(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
-    new_scene2 = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
+    new_scene2 = character.animation.new_scene(scene_id="test_scene")
     assert new_scene == new_scene2
 
 
 def test_scene_equality_incorrect_type(character: EffectCharacter):
-    new_scene = character.animation.new_scene(id="test_scene")
+    new_scene = character.animation.new_scene(scene_id="test_scene")
     assert new_scene != "test_scene"

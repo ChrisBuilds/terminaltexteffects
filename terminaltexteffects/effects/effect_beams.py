@@ -1,5 +1,4 @@
-"""
-Creates beams which travel over the canvas illuminating the characters.
+"""Creates beams which travel over the canvas illuminating the characters.
 
 Classes:
     Beams: Creates beams which travel over the canvas illuminating the characters.
@@ -13,9 +12,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, Gradient, Terminal
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
@@ -48,6 +47,7 @@ class BeamsConfig(ArgsDataClass):
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         final_wipe_speed (int): Speed of the final wipe as measured in diagonal groups activated per frame. Valid values are n > 0.
+
     """
 
     beam_row_symbols: tuple[str, ...] | str = ArgField(
@@ -228,7 +228,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         def complete(self) -> bool:
             return not self.characters
 
-    def __init__(self, effect: "Beams") -> None:
+    def __init__(self, effect: Beams) -> None:
         super().__init__(effect)
         self.pending_groups: list[BeamsIterator.Group] = []
         self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
@@ -236,7 +236,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         self.delay = 0
         self.phase = "beams"
         self.final_wipe_groups = self.terminal.get_characters_grouped(
-            Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
+            Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
         )
         self.build()
 
@@ -263,29 +263,38 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                 self.character_final_color_map[character] = ColorPair(fg_color, bg_color)
             else:
                 self.character_final_color_map[character] = ColorPair(
-                    final_gradient_mapping[character.input_coord], None
+                    final_gradient_mapping[character.input_coord],
+                    None,
                 )
 
         beam_gradient = Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
         groups: list[BeamsIterator.Group] = []
         for row in self.terminal.get_characters_grouped(
-            Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, outer_fill_chars=True, inner_fill_chars=True
+            Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            outer_fill_chars=True,
+            inner_fill_chars=True,
         ):
             groups.append(BeamsIterator.Group(row, "row", self.terminal, self.config))
         for column in self.terminal.get_characters_grouped(
-            Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, outer_fill_chars=True, inner_fill_chars=True
+            Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            outer_fill_chars=True,
+            inner_fill_chars=True,
         ):
             groups.append(BeamsIterator.Group(column, "column", self.terminal, self.config))
         for group in groups:
             for character in group.characters:
-                beam_row_scn = character.animation.new_scene(id="beam_row")
-                beam_column_scn = character.animation.new_scene(id="beam_column")
-                brigthen_scn = character.animation.new_scene(id="brighten")
+                beam_row_scn = character.animation.new_scene(scene_id="beam_row")
+                beam_column_scn = character.animation.new_scene(scene_id="beam_column")
+                brigthen_scn = character.animation.new_scene(scene_id="brighten")
                 beam_row_scn.apply_gradient_to_symbols(
-                    self.config.beam_row_symbols, self.config.beam_gradient_frames, fg_gradient=beam_gradient
+                    self.config.beam_row_symbols,
+                    self.config.beam_gradient_frames,
+                    fg_gradient=beam_gradient,
                 )
                 beam_column_scn.apply_gradient_to_symbols(
-                    self.config.beam_column_symbols, self.config.beam_gradient_frames, fg_gradient=beam_gradient
+                    self.config.beam_column_symbols,
+                    self.config.beam_gradient_frames,
+                    fg_gradient=beam_gradient,
                 )
                 fg_fade_gradient = bg_fade_gradient = fg_brighten_gradient = bg_brighten_gradient = None
                 char_fg_color = self.character_final_color_map[character].fg_color
@@ -300,10 +309,16 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                     bg_brighten_gradient = Gradient(faded_bg_color, char_bg_color, steps=10)
 
                 beam_row_scn.apply_gradient_to_symbols(
-                    character.input_symbol, 5, fg_gradient=fg_fade_gradient, bg_gradient=bg_fade_gradient
+                    character.input_symbol,
+                    5,
+                    fg_gradient=fg_fade_gradient,
+                    bg_gradient=bg_fade_gradient,
                 )
                 beam_column_scn.apply_gradient_to_symbols(
-                    character.input_symbol, 5, fg_gradient=fg_fade_gradient, bg_gradient=bg_fade_gradient
+                    character.input_symbol,
+                    5,
+                    fg_gradient=fg_fade_gradient,
+                    bg_gradient=bg_fade_gradient,
                 )
                 brigthen_scn.apply_gradient_to_symbols(
                     character.input_symbol,
@@ -351,8 +366,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                     self.phase = "complete"
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Beams(BaseEffect[BeamsConfig]):
@@ -361,6 +375,7 @@ class Beams(BaseEffect[BeamsConfig]):
     Attributes:
         effect_config (BeamsConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = BeamsConfig
@@ -370,5 +385,7 @@ class Beams(BaseEffect[BeamsConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

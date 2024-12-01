@@ -139,7 +139,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             starting_pos = black_hole_ring_positions[position_index]
             blackhole_path = character.motion.new_path(path_id="blackhole", speed=0.5, ease=easing.in_out_sine)
             blackhole_path.new_waypoint(starting_pos)
-            blackhole_scn = character.animation.new_scene(id="blackhole")
+            blackhole_scn = character.animation.new_scene(scene_id="blackhole")
             blackhole_scn.add_frame("*", 1, colors=ColorPair(self.config.blackhole_color, None))
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED,

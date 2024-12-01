@@ -13,9 +13,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
@@ -39,7 +39,9 @@ class BurnConfig(ArgsDataClass):
         burn_colors (tuple[Color, ...]): Colors transitioned through as the characters burn.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient."""
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
+    """
 
     starting_color: Color = ArgField(
         cmd_name="--starting-color",
@@ -95,7 +97,7 @@ class BurnConfig(ArgsDataClass):
 
 
 class BurnIterator(BaseEffectIterator[BurnConfig]):
-    def __init__(self, effect: "Burn"):
+    def __init__(self, effect: Burn):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
@@ -127,7 +129,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
         groups = {
             column_index: column
             for column_index, column in enumerate(
-                self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
+                self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT),
             )
         }
 
@@ -135,19 +137,23 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             return any(row for row in rows.values())
 
         while groups_remaining(groups):
-            keys = [key for key in groups.keys() if groups[key]]
+            keys = [key for key in groups if groups[key]]
             next_char = groups[random.choice(keys)].pop(0)
             self.terminal.set_character_visibility(next_char, True)
             next_char.animation.set_appearance(
-                next_char.input_symbol, colors=ColorPair(self.config.starting_color, None)
+                next_char.input_symbol,
+                colors=ColorPair(self.config.starting_color, None),
             )
-            burn_scn = next_char.animation.new_scene(id="burn")
+            burn_scn = next_char.animation.new_scene(scene_id="burn")
             burn_scn.apply_gradient_to_symbols(vertical_build_order, 12, fg_gradient=fire_gradient)
             final_color_scn = next_char.animation.new_scene()
             for color in Gradient(fire_gradient.spectrum[-1], self.character_final_color_map[next_char], steps=8):
                 final_color_scn.add_frame(next_char.input_symbol, 4, colors=ColorPair(color, None))
             next_char.event_handler.register_event(
-                EventHandler.Event.SCENE_COMPLETE, burn_scn, EventHandler.Action.ACTIVATE_SCENE, final_color_scn
+                EventHandler.Event.SCENE_COMPLETE,
+                burn_scn,
+                EventHandler.Action.ACTIVATE_SCENE,
+                final_color_scn,
             )
 
             self.pending_chars.append(next_char)
@@ -162,8 +168,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
 
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Burn(BaseEffect[BurnConfig]):
@@ -172,6 +177,7 @@ class Burn(BaseEffect[BurnConfig]):
     Attributes:
         effect_config (BurnConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = BurnConfig
@@ -181,5 +187,7 @@ class Burn(BaseEffect[BurnConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

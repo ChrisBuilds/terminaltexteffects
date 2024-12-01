@@ -13,9 +13,9 @@ import time
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Animation, Color, ColorPair, Coord, EffectCharacter, Gradient, Terminal
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 MATRIX_SYMBOLS_COMMON = (
@@ -102,6 +102,7 @@ class MatrixConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...] | int): Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     highlight_color: Color = ArgField(
@@ -233,7 +234,11 @@ class MatrixConfig(ArgsDataClass):
 class MatrixIterator(BaseEffectIterator[MatrixConfig]):
     class RainColumn:
         def __init__(
-            self, characters: list[EffectCharacter], terminal: Terminal, config: MatrixConfig, rain_colors: Gradient
+            self,
+            characters: list[EffectCharacter],
+            terminal: Terminal,
+            config: MatrixConfig,
+            rain_colors: Gradient,
         ) -> None:
             self.terminal = terminal
             self.config = config
@@ -254,11 +259,13 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             self.visible_characters: list[EffectCharacter] = []
             if self.phase == "fill":
                 self.base_rain_fall_delay = random.randint(
-                    max(self.config.rain_fall_delay_range[0] // 3, 1), max(self.config.rain_fall_delay_range[1] // 3, 1)
+                    max(self.config.rain_fall_delay_range[0] // 3, 1),
+                    max(self.config.rain_fall_delay_range[1] // 3, 1),
                 )
             else:
                 self.base_rain_fall_delay = random.randint(
-                    self.config.rain_fall_delay_range[0], self.config.rain_fall_delay_range[1]
+                    self.config.rain_fall_delay_range[0],
+                    self.config.rain_fall_delay_range[1],
                 )
             self.active_rain_fall_delay = 0
             if self.phase == "rain":
@@ -281,7 +288,8 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             out_of_canvas = []
             for character in self.visible_characters:
                 character.motion.current_coord = Coord(
-                    character.motion.current_coord.column, character.motion.current_coord.row - 1
+                    character.motion.current_coord.column,
+                    character.motion.current_coord.row - 1,
                 )
                 if character.motion.current_coord.row < self.terminal.canvas.bottom:
                     self.terminal.set_character_visibility(character, False)
@@ -291,7 +299,8 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         def fade_last_character(self) -> None:
             darker_color = Animation.adjust_color_brightness(random.choice(self.rain_colors[-3:]), 0.65)  # type: ignore
             self.visible_characters[0].animation.set_appearance(
-                self.visible_characters[0].animation.current_character_visual.symbol, colors=ColorPair(darker_color)
+                self.visible_characters[0].animation.current_character_visual.symbol,
+                colors=ColorPair(darker_color),
             )
 
         def resolve_char(self) -> EffectCharacter:
@@ -303,7 +312,8 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 if self.pending_characters:
                     next_char = self.pending_characters.pop(0)
                     next_char.animation.set_appearance(
-                        random.choice(self.matrix_symbols), colors=ColorPair(self.config.highlight_color)
+                        random.choice(self.matrix_symbols),
+                        colors=ColorPair(self.config.highlight_color),
                     )
                     previous_character = self.visible_characters[-1] if self.visible_characters else None
                     # if there is a previous character, remove the highlight
@@ -320,30 +330,28 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 # if no pending characters, but still visible characters, trim the column
                 # unless the column is the full height of the canvas, then respect the hold
                 # time before trimming
-                else:
-                    if self.visible_characters:
-                        # adjust the bottom character color to remove the lightlight.
-                        # always do this on the first hold frame, then
-                        # randomly adjust the bottom character's color
-                        # this is separately handled from the rest to prevent the
-                        # highlight color from being replaced before appropriate
-                        if (
-                            self.visible_characters[-1].animation.current_character_visual.colors
-                            and self.visible_characters[-1].animation.current_character_visual.colors.fg_color
-                            == self.config.highlight_color
-                        ):
-                            self.visible_characters[-1].animation.set_appearance(
-                                self.visible_characters[-1].animation.current_character_visual.symbol,
-                                colors=ColorPair(random.choice(self.rain_colors)),
-                            )
+                elif self.visible_characters:
+                    # adjust the bottom character color to remove the lightlight.
+                    # always do this on the first hold frame, then
+                    # randomly adjust the bottom character's color
+                    # this is separately handled from the rest to prevent the
+                    # highlight color from being replaced before appropriate
+                    if (
+                        self.visible_characters[-1].animation.current_character_visual.colors
+                        and self.visible_characters[-1].animation.current_character_visual.colors.fg_color
+                        == self.config.highlight_color
+                    ):
+                        self.visible_characters[-1].animation.set_appearance(
+                            self.visible_characters[-1].animation.current_character_visual.symbol,
+                            colors=ColorPair(random.choice(self.rain_colors)),
+                        )
 
-                        if self.hold_time:
-                            self.hold_time -= 1
-                        else:
-                            if self.phase == "rain":
-                                if random.random() < self.column_drop_chance:
-                                    self.drop_column()
-                                self.trim_column()
+                    if self.hold_time:
+                        self.hold_time -= 1
+                    elif self.phase == "rain":
+                        if random.random() < self.column_drop_chance:
+                            self.drop_column()
+                        self.trim_column()
 
                 # if the column is longer than the preset length while still adding characters, trim it
                 if len(self.visible_characters) > self.length:
@@ -362,11 +370,10 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                     next_symbol = character.animation.current_character_visual.symbol
                 if random.random() < self.config.color_swap_chance:
                     next_color = random.choice(self.rain_colors)
+                elif character.animation.current_character_visual.colors:
+                    next_color = character.animation.current_character_visual.colors.fg_color
                 else:
-                    if character.animation.current_character_visual.colors:
-                        next_color = character.animation.current_character_visual.colors.fg_color
-                    else:
-                        next_color = None
+                    next_color = None
                 character.animation.set_appearance(next_symbol, colors=ColorPair(next_color))
 
     def __init__(self, effect: Matrix) -> None:
@@ -394,18 +401,22 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            resolve_scn = character.animation.new_scene(id="resolve")
+            resolve_scn = character.animation.new_scene(scene_id="resolve")
             for color in Gradient(self.config.highlight_color, final_gradient_mapping[character.input_coord], steps=8):
                 resolve_scn.add_frame(
-                    character.input_symbol, self.config.final_gradient_frames, colors=ColorPair(color)
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    colors=ColorPair(color),
                 )
 
         for column_chars in self.terminal.get_characters_grouped(
-            self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT, outer_fill_chars=True, inner_fill_chars=True
+            self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            outer_fill_chars=True,
+            inner_fill_chars=True,
         ):
             column_chars.reverse()
             self.pending_columns.append(
-                MatrixIterator.RainColumn(column_chars, self.terminal, self.config, self.rain_colors)
+                MatrixIterator.RainColumn(column_chars, self.terminal, self.config, self.rain_colors),
             )
         random.shuffle(self.pending_columns)
 
@@ -421,7 +432,8 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                         self.active_columns.append(self.pending_columns.pop(0))
                 if self.phase == "rain":
                     self.column_delay = random.randint(
-                        self.config.rain_column_delay_range[0], self.config.rain_column_delay_range[1]
+                        self.config.rain_column_delay_range[0],
+                        self.config.rain_column_delay_range[1],
                     )
                 else:
                     self.column_delay = 1
@@ -433,15 +445,14 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 if not column.pending_characters:
                     if column.phase == "fill" and column not in self.full_columns:
                         self.full_columns.append(column)
-                    else:
-                        if not column.visible_characters:
-                            column.setup_column(self.phase)
-                            self.pending_columns.append(column)
+                    elif not column.visible_characters:
+                        column.setup_column(self.phase)
+                        self.pending_columns.append(column)
 
             self.active_columns = [column for column in self.active_columns if column.visible_characters]
             if self.phase == "fill":
                 if not self.pending_columns and all(
-                    [(not column.pending_characters and column.phase == "fill") for column in self.active_columns]
+                    [(not column.pending_characters and column.phase == "fill") for column in self.active_columns],
                 ):
                     self.phase = "resolve"
                     self.active_columns.clear()
@@ -484,12 +495,11 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         ):
             self.update()
             return self.frame
-        elif not self.final_frame_shown:
+        if not self.final_frame_shown:
             self.final_frame_shown = True
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Matrix(BaseEffect[MatrixConfig]):
@@ -497,7 +507,9 @@ class Matrix(BaseEffect[MatrixConfig]):
 
     Attributes:
         effect_config (MatrixConfig): Configuration for the Matrix effect.
-        terminal_config (TerminalConfig): Configuration for the terminal."""
+        terminal_config (TerminalConfig): Configuration for the terminal.
+
+    """
 
     _config_cls = MatrixConfig
     _iterator_cls = MatrixIterator
@@ -506,5 +518,7 @@ class Matrix(BaseEffect[MatrixConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

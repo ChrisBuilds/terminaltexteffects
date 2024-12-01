@@ -163,7 +163,9 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
             explosion_path = character.motion.new_path(path_id="explosion", speed=1.25, ease=self.config.explosion_ease)
             explosion_path.new_waypoint(Coord(col, row))
             reassembly_path = character.motion.new_path(
-                path_id="reassembly", speed=0.75, ease=self.config.reassembly_ease
+                path_id="reassembly",
+                speed=0.75,
+                ease=self.config.reassembly_ease,
             )
             reassembly_path.new_waypoint(character.input_coord)
             unstable_gradient = Gradient(
@@ -171,10 +173,10 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                 self.config.unstable_color,
                 steps=25,
             )
-            rumble_scn = character.animation.new_scene(id="rumble")
+            rumble_scn = character.animation.new_scene(scene_id="rumble")
             rumble_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=unstable_gradient)
             final_color = Gradient(self.config.unstable_color, self.character_final_color_map[character], steps=12)
-            final_scn = character.animation.new_scene(id="final")
+            final_scn = character.animation.new_scene(scene_id="final")
             final_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=final_color)
             character.animation.activate_scene(rumble_scn)
             self.terminal.set_character_visibility(character, True)

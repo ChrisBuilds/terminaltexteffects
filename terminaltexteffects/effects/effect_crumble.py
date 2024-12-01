@@ -109,7 +109,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
                 ease=easing.out_bounce,
             )
             fall_path.new_waypoint(Coord(character.input_coord.column, self.terminal.canvas.bottom))
-            weaken_scn = character.animation.new_scene(id="weaken")
+            weaken_scn = character.animation.new_scene(scene_id="weaken")
             weaken_scn.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=weaken_gradient)
 
             top_path = character.motion.new_path(path_id="top", speed=0.5, ease=easing.out_quint)

@@ -158,7 +158,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
 
         def add_character(self, character: EffectCharacter, clockwise: int) -> None:
             # make gradient scene
-            gradient_scn = character.animation.new_scene(id="gradient")
+            gradient_scn = character.animation.new_scene(scene_id="gradient")
             char_gradient = Gradient(self.character_color_map[character], self.ring_color, steps=8)
             gradient_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=char_gradient)
 
@@ -175,7 +175,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                 ring_paths.append(ring_path)
             self.character_last_ring_path[character] = ring_paths[0]
             # make disperse scene
-            disperse_scn = character.animation.new_scene(is_looping=False, id="disperse")
+            disperse_scn = character.animation.new_scene(is_looping=False, scene_id="disperse")
             disperse_gradient = Gradient(self.ring_color, self.character_color_map[character], steps=8)
             disperse_scn.apply_gradient_to_symbols(character.input_symbol, 16, fg_gradient=disperse_gradient)
             character.motion.chain_paths(ring_paths, loop=True)

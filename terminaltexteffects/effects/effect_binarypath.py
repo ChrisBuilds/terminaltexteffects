@@ -1,5 +1,4 @@
-"""
-Decodes characters into their binary form. Characters travel from outside the canvas towards their input coordinate, moving at right angles.
+"""Decodes characters into their binary form. Characters travel from outside the canvas towards their input coordinate, moving at right angles.
 
 Classes:
     BinaryPath: Decodes characters into their binary form. Characters travel from outside the canvas towards their input coordinate, moving at right angles.
@@ -14,9 +13,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, Terminal, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
@@ -41,7 +40,9 @@ class BinaryPathConfig(ArgsDataClass):
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         binary_colors (tuple[Color, ...]): Tuple of colors for the binary characters. Character color is randomly assigned from this list.
         movement_speed (float): Speed of the binary groups as they travel around the terminal. Valid values are n > 0.
-        active_binary_groups (float): Maximum number of binary groups that are active at any given time as a percentage of the total number of binary groups. Lower this to improve performance. Valid values are 0 < n <= 1."""
+        active_binary_groups (float): Maximum number of binary groups that are active at any given time as a percentage of the total number of binary groups. Lower this to improve performance. Valid values are 0 < n <= 1.
+
+    """
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -134,7 +135,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
             self.terminal.set_character_visibility(self.character, True)
             self.character.animation.activate_scene(self.character.animation.query_scene("collapse_scn"))
 
-    def __init__(self, effect: "BinaryPath") -> None:
+    def __init__(self, effect: BinaryPath) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.pending_binary_representations: list[BinaryPathIterator._BinaryRepresentation] = []
@@ -144,7 +145,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
         self.complete = False
         self.phase = "travel"
         self.final_wipe_chars = self.terminal.get_characters_grouped(
-            grouping=self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT
+            grouping=self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
         )
         self.max_active_binary_groups: int = 0
         self.build()
@@ -161,11 +162,13 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
         for character in self.terminal.get_characters():
             if self.terminal.config.existing_color_handling == "dynamic" and character.animation.input_fg_color:
                 self.character_final_color_map[character] = ColorPair(
-                    character.animation.input_fg_color, character.animation.input_bg_color
+                    character.animation.input_fg_color,
+                    character.animation.input_bg_color,
                 )
             else:
                 self.character_final_color_map[character] = ColorPair(
-                    final_gradient_mapping[character.input_coord], None
+                    final_gradient_mapping[character.input_coord],
+                    None,
                 )
 
         for character in self.terminal.get_characters():
@@ -236,7 +239,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                 bin_effectchar.animation.activate_scene(color_scn)
 
         for character in self.terminal.get_characters():
-            collapse_scn = character.animation.new_scene(ease=easing.in_quad, id="collapse_scn")
+            collapse_scn = character.animation.new_scene(ease=easing.in_quad, scene_id="collapse_scn")
             dim_color = character.animation.adjust_color_brightness(
                 self.character_final_color_map[character].fg_color,  # type: ignore
                 0.5,
@@ -244,11 +247,12 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
             dim_gradient = Gradient(Color("ffffff"), dim_color, steps=10)
             collapse_scn.apply_gradient_to_symbols(character.input_symbol, 7, fg_gradient=dim_gradient)
 
-            brighten_scn = character.animation.new_scene(id="brighten_scn")
+            brighten_scn = character.animation.new_scene(scene_id="brighten_scn")
             brighten_gradient = Gradient(dim_color, self.character_final_color_map[character].fg_color, steps=10)  # type: ignore
             brighten_scn.apply_gradient_to_symbols(character.input_symbol, 2, fg_gradient=brighten_gradient)
         self.max_active_binary_groups = max(
-            1, int(self.config.active_binary_groups * len(self.pending_binary_representations))
+            1,
+            int(self.config.active_binary_groups * len(self.pending_binary_representations)),
         )
 
     def __next__(self) -> str:
@@ -258,7 +262,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                     len(self.active_binary_reps) < self.max_active_binary_groups and self.pending_binary_representations
                 ):
                     next_binary_rep = self.pending_binary_representations.pop(
-                        random.randrange(len(self.pending_binary_representations))
+                        random.randrange(len(self.pending_binary_representations)),
                     )
                     next_binary_rep.is_active = True
                     self.active_binary_reps.append(next_binary_rep)
@@ -294,12 +298,11 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
             self.update()
             return self.frame
 
-        elif not self.last_frame_provided:
+        if not self.last_frame_provided:
             self.last_frame_provided = True
             return self.frame
 
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class BinaryPath(BaseEffect):
@@ -319,5 +322,7 @@ class BinaryPath(BaseEffect):
         """Initializes the BinaryPath effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the BinaryPath effect."""
+            input_data (str): The input data to use for the BinaryPath effect.
+
+        """
         super().__init__(input_data)

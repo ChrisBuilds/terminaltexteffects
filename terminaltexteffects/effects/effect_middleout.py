@@ -171,7 +171,7 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
             full_path.new_waypoint(character.input_coord, waypoint_id="full")
 
             # setup scenes
-            full_scene = character.animation.new_scene(id="full")
+            full_scene = character.animation.new_scene(scene_id="full")
             full_gradient = Gradient(self.config.starting_color, self.character_final_color_map[character], steps=10)
             full_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=full_gradient)
 

@@ -273,7 +273,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             character.layer = 1
-            pop_1_scene = character.animation.new_scene(id="pop_1")
+            pop_1_scene = character.animation.new_scene(scene_id="pop_1")
             pop_2_scene = character.animation.new_scene()
             pop_1_scene.add_frame("*", 20, colors=ColorPair(self.config.pop_color, None))
             pop_2_scene.add_frame("'", 20, colors=ColorPair(self.config.pop_color, None))

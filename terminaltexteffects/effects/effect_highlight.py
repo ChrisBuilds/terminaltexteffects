@@ -3,9 +3,9 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Animation, Color, ColorPair, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -30,6 +30,7 @@ class HighlightConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     highlight_brightness: float = ArgField(
@@ -150,10 +151,14 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
             self.character_final_color_map[character] = base_color
             highlight_color = Animation.adjust_color_brightness(base_color, self.config.highlight_brightness)
             highlight_gradient = Gradient(
-                base_color, highlight_color, highlight_color, base_color, steps=(3, self.config.highlight_width, 3)
+                base_color,
+                highlight_color,
+                highlight_color,
+                base_color,
+                steps=(3, self.config.highlight_width, 3),
             )
             character.animation.set_appearance(character.input_symbol, ColorPair(base_color))
-            specular_highlight_scn = character.animation.new_scene(id="highlight")
+            specular_highlight_scn = character.animation.new_scene(scene_id="highlight")
             for color in highlight_gradient:
                 specular_highlight_scn.add_frame(character.input_symbol, 2, colors=ColorPair(color))
             self.terminal.set_character_visibility(character, True)
@@ -174,8 +179,7 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
             self.update()
             return self.frame
 
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Highlight(BaseEffect[HighlightConfig]):
@@ -188,5 +192,7 @@ class Highlight(BaseEffect[HighlightConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

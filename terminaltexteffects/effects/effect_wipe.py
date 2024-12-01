@@ -11,9 +11,9 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -38,6 +38,7 @@ class WipeConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     wipe_direction: typing.Literal[
@@ -139,7 +140,7 @@ class WipeConfig(ArgsDataClass):
 
 
 class WipeIterator(BaseEffectIterator[WipeConfig]):
-    def __init__(self, effect: "Wipe") -> None:
+    def __init__(self, effect: Wipe) -> None:
         super().__init__(effect)
         self.groups: list[list[EffectCharacter]] = []
         self.active_groups: list[list[EffectCharacter]] = []
@@ -175,14 +176,16 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
         character_groups = self.terminal.get_characters_grouped(sort_map[direction])
         for group in character_groups:
             for character in group:
-                wipe_scn = character.animation.new_scene(id="wipe")
+                wipe_scn = character.animation.new_scene(scene_id="wipe")
                 wipe_gradient = Gradient(
                     final_gradient.spectrum[0],
                     self.character_final_color_map[character],
                     steps=self.config.final_gradient_steps,
                 )
                 wipe_scn.apply_gradient_to_symbols(
-                    character.input_symbol, self.config.final_gradient_frames, fg_gradient=wipe_gradient
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    fg_gradient=wipe_gradient,
                 )
                 character.animation.activate_scene(wipe_scn)
             self.groups.append(group)
@@ -226,8 +229,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
             self.update()
             return self.frame
 
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Wipe(BaseEffect[WipeConfig]):
@@ -236,6 +238,7 @@ class Wipe(BaseEffect[WipeConfig]):
     Attributes:
         effect_config (WipeConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = WipeConfig
@@ -245,5 +248,7 @@ class Wipe(BaseEffect[WipeConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)
