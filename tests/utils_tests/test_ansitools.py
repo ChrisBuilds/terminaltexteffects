@@ -28,60 +28,60 @@ def test_parse_ansi_color_sequence_invalid(escape, position):
 
 
 def test_DEC_SAVE_CURSOR_POSITION():
-    assert ansitools.DEC_SAVE_CURSOR_POSITION() == "\0337"
+    assert ansitools.dec_save_cursor_position() == "\0337"
 
 
 def test_DEC_RESTORE_CURSOR_POSITION():
-    assert ansitools.DEC_RESTORE_CURSOR_POSITION() == "\0338"
+    assert ansitools.dec_restore_cursor_position() == "\0338"
 
 
 def test_HIDE_CURSOR():
-    assert ansitools.HIDE_CURSOR() == "\033[?25l"
+    assert ansitools.hide_cursor() == "\033[?25l"
 
 
 def test_SHOW_CURSOR():
-    assert ansitools.SHOW_CURSOR() == "\033[?25h"
+    assert ansitools.show_cursor() == "\033[?25h"
 
 
 def test_MOVE_CURSOR_UP():
-    assert ansitools.MOVE_CURSOR_UP(5) == "\033[5A"
+    assert ansitools.move_cursor_up(5) == "\033[5A"
 
 
 def test_MOVE_CURSOR_TO_COLUMN():
-    assert ansitools.MOVE_CURSOR_TO_COLUMN(5) == "\033[5G"
+    assert ansitools.move_cursor_to_column(5) == "\033[5G"
 
 
 def test_RESET_ALL():
-    assert ansitools.RESET_ALL() == "\033[0m"
+    assert ansitools.reset_all() == "\033[0m"
 
 
 def test_APPLY_BOLD():
-    assert ansitools.APPLY_BOLD() == "\033[1m"
+    assert ansitools.apply_bold() == "\033[1m"
 
 
 def test_APPLY_DIM():
-    assert ansitools.APPLY_DIM() == "\033[2m"
+    assert ansitools.apply_dim() == "\033[2m"
 
 
 def test_APPLY_ITALIC():
-    assert ansitools.APPLY_ITALIC() == "\033[3m"
+    assert ansitools.apply_italic() == "\033[3m"
 
 
 def test_APPLY_UNDERLINE():
-    assert ansitools.APPLY_UNDERLINE() == "\033[4m"
+    assert ansitools.apply_underline() == "\033[4m"
 
 
 def test_APPLY_BLINK():
-    assert ansitools.APPLY_BLINK() == "\033[5m"
+    assert ansitools.apply_blink() == "\033[5m"
 
 
 def test_APPLY_REVERSE():
-    assert ansitools.APPLY_REVERSE() == "\033[7m"
+    assert ansitools.apply_reverse() == "\033[7m"
 
 
 def test_APPLY_HIDDEN():
-    assert ansitools.APPLY_HIDDEN() == "\033[8m"
+    assert ansitools.apply_hidden() == "\033[8m"
 
 
 def test_APPLY_STRIKETHROUGH():
-    assert ansitools.APPLY_STRIKETHROUGH() == "\033[9m"
+    assert ansitools.apply_strikethrough() == "\033[9m"

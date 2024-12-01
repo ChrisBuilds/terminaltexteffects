@@ -43,6 +43,7 @@ class Color:
 
         Raises:
             ValueError: If the color value is not a valid XTerm-256 color code or an RGB hex color string.
+
         """
         if isinstance(color_value, str):
             color_value = color_value.strip("#")
@@ -57,7 +58,7 @@ class Color:
                 self.xterm_color = None
         else:
             raise ValueError(
-                "Invalid color value. Color must be an XTerm-256 color code or an RGB hex color string. Example: 255 or 'ffffff' or '#ffffff'"
+                "Invalid color value. Color must be an XTerm-256 color code or an RGB hex color string. Example: 255 or 'ffffff' or '#ffffff'",
             )
 
     @property
@@ -66,6 +67,7 @@ class Color:
 
         Returns:
             tuple[int, int, int]: The RGB values as a tuple of integers.
+
         """
         return colorterm._hex_to_int(self.rgb_color)
 
@@ -73,7 +75,7 @@ class Color:
         return f"Color('{self.color_arg}')"
 
     def __str__(self) -> str:
-        color_block = f"{colorterm.fg(self.rgb_color)}█████{ansitools.RESET_ALL()}"
+        color_block = f"{colorterm.fg(self.rgb_color)}█████{ansitools.reset_all()}"
         return f"Color Code: {self.rgb_color}{f' | XTerm Color: {self.xterm_color}' if self.xterm_color else ''}\nColor Appearance: {color_block}"
 
     def __eq__(self, other: object) -> bool:
@@ -89,7 +91,7 @@ class Color:
     def __hash__(self) -> int:
         return hash(self.color_arg)
 
-    def __iter__(self) -> Iterator["Color"]:
+    def __iter__(self) -> Iterator[Color]:
         return iter((self,))
 
 
@@ -100,6 +102,7 @@ class ColorPair:
     Attributes:
         fg_color (Color | None): The foreground color. None if no foreground color is specified.
         bg_color (Color | None): The background color. None if no background color is specified.
+
     """
 
     fg_color: Color | None = None
@@ -136,8 +139,7 @@ class Gradient:
         DIAGONAL = auto()
 
     def __init__(self, *stops: Color, steps: tuple[int, ...] | int = 1, loop=False) -> None:
-        """
-        Initializes a Gradient object.
+        """Initializes a Gradient object.
 
         Args:
             stops (Color): One ore more variables of type Color representing the color stops.
@@ -157,6 +159,7 @@ class Gradient:
 
         Returns:
             None
+
         """
         self._stops = stops
         if len(self._stops) < 1:
@@ -174,14 +177,14 @@ class Gradient:
 
         Returns:
             Color: The color at the fraction of the gradient.
+
         """
         if fraction < 0 or fraction > 1:
             raise ValueError("Fraction must be 0 <= fraction <= 1.")
         for i in range(1, len(self.spectrum) + 1):
             if fraction <= i / len(self.spectrum):
                 return self.spectrum[i - 1]
-        else:
-            return self.spectrum[-1]
+        return self.spectrum[-1]
 
     def _generate(self, steps) -> list[Color]:
         """Calculate a gradient of colors between two colors using linear interpolation. If
@@ -201,6 +204,7 @@ class Gradient:
 
         Returns:
             list[str]: List (length=sum(steps) + 1) of RGB hex color strings. The first and last colors are the start and end stops, respectively.
+
         """
         if isinstance(steps, int):
             steps = (steps,)
@@ -253,7 +257,12 @@ class Gradient:
         return spectrum
 
     def build_coordinate_color_mapping(
-        self, min_row: int, max_row: int, min_column: int, max_column: int, direction: "Gradient.Direction"
+        self,
+        min_row: int,
+        max_row: int,
+        min_column: int,
+        max_column: int,
+        direction: Gradient.Direction,
     ) -> dict[geometry.Coord, Color]:
         """Builds a mapping of coordinates to colors based on the gradient and a direction.
 
@@ -268,6 +277,7 @@ class Gradient:
 
         Returns:
             dict[Coord, str]: A mapping of coordinates to colors.
+
         """
         if any(value < 1 for value in (max_row, max_column, min_row, min_column)):
             raise ValueError("max_row and max_column must be greater than 0.")
@@ -292,7 +302,11 @@ class Gradient:
             for row_value in range(min_row, max_row + 1):
                 for column_value in range(min_column, max_column + 1):
                     distance_from_center = geometry.find_normalized_distance_from_center(
-                        min_row, max_row, min_column, max_column, geometry.Coord(column_value, row_value)
+                        min_row,
+                        max_row,
+                        min_column,
+                        max_column,
+                        geometry.Coord(column_value, row_value),
                     )
                     color = self.get_color_at_fraction(distance_from_center)
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
@@ -323,9 +337,9 @@ class Gradient:
         return self.spectrum[index]
 
     def __str__(self) -> str:
-        color_blocks = [f"{colorterm.fg(color.rgb_color)}█{ansitools.RESET_ALL()}" for color in self.spectrum]
+        color_blocks = [f"{colorterm.fg(color.rgb_color)}█{ansitools.reset_all()}" for color in self.spectrum]
         return f"Gradient: Stops({', '.join(c.rgb_color for c in self._stops)}), Steps({self._steps})\n" + "".join(
-            color_blocks
+            color_blocks,
         )
 
 
@@ -334,5 +348,6 @@ def random_color() -> Color:
 
     Returns:
         Color: A random color in the range 000000 -> ffffff.
+
     """
     return Color(hex(random.randint(0, 0xFFFFFF))[2:].zfill(6))

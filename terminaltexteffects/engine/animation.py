@@ -76,25 +76,25 @@ class CharacterVisual:
         """Format the symbol for printing by applying ANSI sequences for any active modes and color."""
         formatting_string = ""
         if self.bold:
-            formatting_string += ansitools.APPLY_BOLD()
+            formatting_string += ansitools.apply_bold()
         if self.italic:
-            formatting_string += ansitools.APPLY_ITALIC()
+            formatting_string += ansitools.apply_italic()
         if self.underline:
-            formatting_string += ansitools.APPLY_UNDERLINE()
+            formatting_string += ansitools.apply_underline()
         if self.blink:
-            formatting_string += ansitools.APPLY_BLINK()
+            formatting_string += ansitools.apply_blink()
         if self.reverse:
-            formatting_string += ansitools.APPLY_REVERSE()
+            formatting_string += ansitools.apply_reverse()
         if self.hidden:
-            formatting_string += ansitools.APPLY_HIDDEN()
+            formatting_string += ansitools.apply_hidden()
         if self.strike:
-            formatting_string += ansitools.APPLY_STRIKETHROUGH()
+            formatting_string += ansitools.apply_strikethrough()
         if self._fg_color_code is not None:
             formatting_string += colorterm.fg(self._fg_color_code)
         if self._bg_color_code is not None:
             formatting_string += colorterm.bg(self._bg_color_code)
 
-        return f"{formatting_string}{self.symbol}{ansitools.RESET_ALL() if formatting_string else ''}"
+        return f"{formatting_string}{self.symbol}{ansitools.reset_all() if formatting_string else ''}"
 
 
 @dataclass

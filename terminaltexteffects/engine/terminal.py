@@ -1112,9 +1112,9 @@ class Terminal:
 
     def prep_canvas(self) -> None:
         """Prepare the terminal for the effect by adding empty lines and hiding the cursor."""
-        sys.stdout.write(ansitools.HIDE_CURSOR())
+        sys.stdout.write(ansitools.hide_cursor())
         sys.stdout.write("\n" * (self.visible_top))
-        sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
+        sys.stdout.write(ansitools.dec_save_cursor_position())
 
     def restore_cursor(self, end_symbol: str = "\n") -> None:
         """Restores the cursor visibility and prints the end_symbol.
@@ -1123,7 +1123,7 @@ class Terminal:
             end_symbol (str, optional): The symbol to print after the effect has completed. Defaults to newline.
 
         """
-        sys.stdout.write(ansitools.SHOW_CURSOR())
+        sys.stdout.write(ansitools.show_cursor())
         sys.stdout.write(end_symbol)
 
     def print(self, output_string: str) -> None:
@@ -1150,5 +1150,5 @@ class Terminal:
 
     def move_cursor_to_top(self) -> None:
         """Restores the cursor position to the top of the canvas."""
-        sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
-        sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.visible_top))
+        sys.stdout.write(ansitools.dec_restore_cursor_position())
+        sys.stdout.write(ansitools.move_cursor_up(self.visible_top))
