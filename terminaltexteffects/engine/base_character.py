@@ -8,8 +8,8 @@ from enum import Enum, auto
 
 from terminaltexteffects.engine import animation, motion
 from terminaltexteffects.utils.exceptions import (
-    InvalidEventRegistrationActionTargetError,
-    InvalidEventRegistrationEventCallerError,
+    EventRegistrationCallerError,
+    EventRegistrationTargetError,
 )
 from terminaltexteffects.utils.geometry import Coord
 
@@ -226,12 +226,12 @@ class EventHandler:
         }
 
         if event_caller_map[event] != caller.__class__:
-            raise InvalidEventRegistrationEventCallerError(event, caller, event_caller_map[event])
+            raise EventRegistrationCallerError(event, caller, event_caller_map[event])
 
         if (action is EventHandler.Action.RESET_APPEARANCE and target is not None) or (
             action_target_map[action] != target.__class__
         ):
-            raise InvalidEventRegistrationActionTargetError(action, target, action_target_map[action])
+            raise EventRegistrationTargetError(action, target, action_target_map[action])
 
         new_event = (event, caller)
         new_action = (action, target)
@@ -361,6 +361,6 @@ class EffectCharacter:
     def __repr__(self) -> str:
         """Return a string representation of the EffectCharacter instance."""
         return (
-            f"EffectCharacter(character_id={self.character_id}, symbol={self.input_symbol}, "
+            f"EffectCharacter(character_id={self.character_id}, symbol='{self.input_symbol}', "
             f"input_column={self.input_coord.column}, input_row={self.input_coord.row})"
         )
