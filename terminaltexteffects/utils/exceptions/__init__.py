@@ -19,3 +19,8 @@ from terminaltexteffects.utils.exceptions.motion_exceptions import (
     PathNotFoundError,
     WaypointNotFoundError,
 )
+from terminaltexteffects.utils.exceptions.terminal_exceptions import (
+    InvalidCharacterGroupError,
+    InvalidCharacterSortError,
+    InvalidColorSortError,
+)

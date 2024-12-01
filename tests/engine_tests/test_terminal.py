@@ -5,6 +5,11 @@ import pytest
 
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.terminal import Canvas, Terminal, TerminalConfig
+from terminaltexteffects.utils.exceptions import (
+    InvalidCharacterGroupError,
+    InvalidCharacterSortError,
+    InvalidColorSortError,
+)
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
 
@@ -300,7 +305,8 @@ def test_terminal_add_character():
 
 
 @pytest.mark.parametrize(
-    "sort", [Terminal.ColorSort.LEAST_TO_MOST, Terminal.ColorSort.MOST_TO_LEAST, Terminal.ColorSort.RANDOM]
+    "sort",
+    [Terminal.ColorSort.LEAST_TO_MOST, Terminal.ColorSort.MOST_TO_LEAST, Terminal.ColorSort.RANDOM],
 )
 def test_terminal_get_input_colors(sort):
     config = TerminalConfig()
@@ -327,7 +333,7 @@ def test_terminal_get_input_colors_invalid_sort():
     config = TerminalConfig()
     input_data = "\x1b[38;2;255;0;0maaaaaaa\x1b[38;2;0;255;0mb\x1b[48;2;0;0;255mcccc"
     terminal = Terminal(input_data=input_data, config=config)
-    with pytest.raises(ValueError):
+    with pytest.raises(InvalidColorSortError):
         terminal.get_input_colors(sort="invalid")
 
 
@@ -395,6 +401,13 @@ def test_terminal_get_characters_with_character_sort(sort):
         assert chars[-1].input_symbol == "k"
     else:
         assert len(chars) == 15
+
+
+def test_terminal_get_characters_invalid_character_sort():
+    config = TerminalConfig()
+    terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)
+    with pytest.raises(InvalidCharacterSortError):
+        terminal.get_characters(sort="invalid")
 
 
 @pytest.mark.parametrize("input_chars", [True, False])
@@ -486,7 +499,7 @@ def test_terminal_get_characters_grouped_with_grouping(grouping):
 def test_terminal_get_characters_grouped_invalid_grouping():
     config = TerminalConfig()
     terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)
-    with pytest.raises(ValueError):
+    with pytest.raises(InvalidCharacterGroupError):
         terminal.get_characters_grouped(grouping="invalid")
 
 

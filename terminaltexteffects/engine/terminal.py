@@ -2,7 +2,8 @@
 
 Classes:
     TerminalConfig: Configuration for the terminal.
-    Canvas: Represents the canvas in the terminal. The canvas is the area defined by the dimensions of the input data, unless specified otherwise in the TerminalConfig.
+    Canvas: Represents the canvas in the terminal. The canvas is the area defined by the dimensions of the input data,
+        unless specified otherwise in the TerminalConfig.
     Terminal: A class for managing the terminal state and output.
 """
 
@@ -13,14 +14,19 @@ import re
 import shutil
 import sys
 import time
+import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Literal
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects.engine.base_character import EffectCharacter
-from terminaltexteffects.utils import ansitools
+from terminaltexteffects.utils import ansitools, argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass
+from terminaltexteffects.utils.exceptions import (
+    InvalidCharacterGroupError,
+    InvalidCharacterSortError,
+    InvalidColorSortError,
+)
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
 
@@ -34,13 +40,27 @@ class TerminalConfig(ArgsDataClass):
         xterm_colors (bool): Convert any colors specified in RBG hex to the closest XTerm-256 color.
         no_color (bool): Disable all colors in the effect.
         wrap_text (bool): Wrap text wider than the canvas width.
-        frame_rate (float): Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting.
-        canvas_width (int): Canvas width, set to an integer > 0 to use a specific dimension, if set to 0 the canvas width is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data width.
-        canvas_height (int): Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas height is is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data height.
-        anchor_canvas (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the Canvas. The Canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
-        anchor_effect (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the effect within the Canvas. Effect text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
-        ignore_terminal_dimensions (bool): Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. Useful for sending frames to another output handler.
-        existing_color_handling (Literal['always','dynamic','ignore']): Specify handling of existing ANSI color sequences in the input data. 'always' will always use the input colors, ignoring any effect specific colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors in the input data. Default is 'ignore'.
+        frame_rate (float): Target frame rate for the animation in frames per second. Set to 0 to disable frame
+            rate limiting.
+        canvas_width (int): Canvas width, set to an integer > 0 to use a specific dimension, if set to 0 the canvas
+            width is detected automatically based on the terminal device, if set to -1 the canvas width is based on
+            the input data width.
+        canvas_height (int): Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas
+            height is is detected automatically based on the terminal device, if set to -1 the canvas width is
+            based on the input data height.
+        anchor_canvas (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the Canvas. The Canvas will
+            be anchored in the terminal to the location corresponding to the cardinal/diagonal direction.
+            Defaults to 'sw'.
+        anchor_effect (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the effect within the Canvas.
+            Effect text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction.
+            Defaults to 'sw'.
+        ignore_terminal_dimensions (bool): Ignore the terminal dimensions and utilize the full Canvas beyond the extents
+            of the terminal. Useful for sending frames to another output handler.
+        existing_color_handling (Literal['always','dynamic','ignore']): Specify handling of existing ANSI color
+            sequences in the input data. 'always' will always use the input colors, ignoring any effect specific colors.
+            'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors
+            in the input data. Default is 'ignore'.
+
     """
 
     tab_width: int = ArgField(
@@ -63,7 +83,10 @@ class TerminalConfig(ArgsDataClass):
     "bool : Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color."
 
     no_color: bool = ArgField(
-        cmd_name=["--no-color"], default=False, action="store_true", help="Disable all colors in the effect."
+        cmd_name=["--no-color"],
+        default=False,
+        action="store_true",
+        help="Disable all colors in the effect.",
     )  # type: ignore[assignment]
 
     "bool : Disable all colors in the effect."
@@ -72,13 +95,26 @@ class TerminalConfig(ArgsDataClass):
         cmd_name=["--existing-color-handling"],
         default="ignore",
         choices=["always", "dynamic", "ignore"],
-        help="Specify handling of existing 8-bit and 24-bit ANSI color sequences in the input data. 3-bit and 4-bit sequences are not supported. 'always' will always use the input colors, ignoring any effect specific colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors in the input data. Default is 'ignore'.",
+        help=(
+            "Specify handling of existing 8-bit and 24-bit ANSI color sequences in the input data. 3-bit and 4-bit "
+            "sequences are not supported. 'always' will always use the input colors, ignoring any effect specific "
+            "colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will "
+            "ignore the colors in the input data. Default is 'ignore'."
+        ),
     )  # type: ignore[assignment]
 
-    "Literal['always','dynamic','ignore'] : Specify handling of existing ANSI color sequences in the input data. 'always' will always use the input colors, ignoring any effect specific colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors in the input data. Default is 'ignore'."
+    (
+        "Literal['always','dynamic','ignore'] : Specify handling of existing ANSI color sequences in the input data. "
+        "'always' will always use the input colors, ignoring any effect specific colors. 'dynamic' will leave it to "
+        "the effect implementation to apply input colors. 'ignore' will ignore the colors in the input data. "
+        "Default is 'ignore'."
+    )
 
     wrap_text: int = ArgField(
-        cmd_name="--wrap-text", default=False, action="store_true", help="Wrap text wider than the canvas width."
+        cmd_name="--wrap-text",
+        default=False,
+        action="store_true",
+        help="Wrap text wider than the canvas width.",
     )  # type: ignore[assignment]
     "bool : Wrap text wider than the canvas width."
 
@@ -96,61 +132,98 @@ class TerminalConfig(ArgsDataClass):
         metavar=argvalidators.CanvasDimension.METAVAR,
         type_parser=argvalidators.CanvasDimension.type_parser,
         default=-1,
-        help="Canvas width, set to an integer > 0 to use a specific dimension, use 0 to match the terminal width, or use -1 to match the input text width.",
+        help=(
+            "Canvas width, set to an integer > 0 to use a specific dimension, use 0 to match the terminal width, "
+            "or use -1 to match the input text width."
+        ),
     )  # type: ignore[assignment]
 
-    "int : Canvas width, set to an integer > 0 to use a specific dimension, if set to 0 the canvas width is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data width."
+    (
+        "int : Canvas width, set to an integer > 0 to use a specific dimension, if set to 0 the canvas width is "
+        "detected automatically based on the terminal device, if set to -1 the canvas width is based on "
+        "the input data width."
+    )
 
     canvas_height: int = ArgField(
         cmd_name=["--canvas-height"],
         metavar=argvalidators.CanvasDimension.METAVAR,
         type_parser=argvalidators.CanvasDimension.type_parser,
         default=-1,
-        help="Canvas height, set to an integer > 0 to use a specific dimension, use 0 to match the terminal height, or use -1 to match the input text height.",
+        help=(
+            "Canvas height, set to an integer > 0 to use a specific dimension, use 0 to match the terminal "
+            "height, or use -1 to match the input text height."
+        ),
     )  # type: ignore[assignment]
 
-    "int : Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas height is is detected automatically based on the terminal device, if set to -1 the canvas width is based on the input data height."
+    (
+        "int : Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas height "
+        "is is detected automatically based on the terminal device, if set to -1 the canvas width is "
+        "based on the input data height."
+    )
 
     anchor_canvas: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"] = ArgField(
         cmd_name=["--anchor-canvas"],
         choices=["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"],
         default="sw",
-        help="Anchor point for the canvas. The canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction.",
+        help=(
+            "Anchor point for the canvas. The canvas will be anchored in the terminal to the location "
+            "corresponding to the cardinal/diagonal direction."
+        ),
     )  # type: ignore[assignment]
 
-    "Literal['sw','s','se','e','ne','n','nw','w','c'] : Anchor point for the canvas. The canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction."
+    (
+        "Literal['sw','s','se','e','ne','n','nw','w','c'] : Anchor point for the canvas. The canvas will be "
+        "anchored in the terminal to the location corresponding to the cardinal/diagonal direction."
+    )
 
     anchor_text: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgField(
         cmd_name=["--anchor-text"],
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
         default="sw",
-        help="Anchor point for the text within the Canvas. Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction.",
+        help=(
+            "Anchor point for the text within the Canvas. Input text will anchored in the Canvas to "
+            "the location corresponding to the cardinal/diagonal direction."
+        ),
     )  # type: ignore[assignment]
 
-    "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the text within the Canvas. Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction."
+    (
+        "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the text within the Canvas. "
+        "Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction."
+    )
 
     ignore_terminal_dimensions: bool = ArgField(
         cmd_name=["--ignore-terminal-dimensions"],
         default=False,
         action="store_true",
-        help="Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. Useful for sending frames to another output handler.",
+        help=(
+            "Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. "
+            "Useful for sending frames to another output handler."
+        ),
     )  # type: ignore[assignment]
-    "bool : Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. Useful for sending frames to another output handler."
+    (
+        "bool : Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. "
+        "Useful for sending frames to another output handler."
+    )
 
 
 @dataclass
 class Canvas:
-    """Represents the canvas in the terminal. The canvas is the area defined
-    by the dimensions of the input data, unless specified otherwise in the TerminalConfig.
+    """Represent the canvas in the terminal.
+
+    The canvas is the area defined by the dimensions of the input data, unless specified otherwise
+    in the TerminalConfig.
 
     This class provides methods for working with the canvas, such as checking if a coordinate is within the canvas,
     getting random coordinates within the canvas, and getting a random coordinate outside the canvas.
 
-    This class also provides attributes for the dimensions of the canvas, the extents of the text within the canvas, and the center of the canvas.
+    This class also provides attributes for the dimensions of the canvas, the extents of the text within the canvas,
+    and the center of the canvas.
 
     Args:
         top (int): top row of the canvas
         right (int): right column of the canvas
+        bottom (int): bottom row of the canvas. Defaults to 1.
+        left (int): left column of the canvas. Defaults to 1.
 
     Attributes:
         top (int): top row of the canvas
@@ -172,10 +245,14 @@ class Canvas:
         text_center_column (int): column of the center of the text within the canvas
 
     Methods:
-        coord_is_in_canvas(coord: Coord) -> bool: Checks whether a coordinate is within the canvas.
-        random_column() -> int: Get a random column position within the canvas.
-        random_row() -> int: Get a random row position within the canvas.
-        random_coord(outside_scope=False) -> Coord: Get a random coordinate within or outside the canvas.
+        coord_is_in_canvas:
+            Checks whether a coordinate is within the canvas.
+        random_column:
+            Get a random column position within the canvas.
+        random_row:
+            Get a random row position within the canvas.
+        random_coord:
+            Get a random coordinate within or outside the canvas.
 
     """
 
@@ -189,6 +266,7 @@ class Canvas:
     """int: left column of the canvas"""
 
     def __post_init__(self) -> None:
+        """After initialization, calculate the center, width, height, and text dimensions of the canvas."""
         self.center_row = max(self.top // 2, self.bottom)
         """int: row of the center of the canvas"""
         if self.top % 2 and self.top > 1:
@@ -221,17 +299,21 @@ class Canvas:
         """int: column of the center of the text within the canvas"""
 
     def _anchor_text(
-        self, characters: list[EffectCharacter], anchor: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]
+        self,
+        characters: list[EffectCharacter],
+        anchor: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
     ) -> list[EffectCharacter]:
         """Anchors the text within the canvas based on the specified anchor point.
 
         Args:
             characters (list[EffectCharacter]): _description_
-            anchor (Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]): Anchor point for the text within the Canvas.
+            anchor (Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]): Anchor point for the text
+                within the Canvas.
 
         Returns:
             list[EffectCharacter]: List of characters anchored within the canvas. Only returns characters with
             coordinates within the canvas after anchoring.
+
         """
         # translate coordinate based on anchor within the canvas
         input_width = max([character._input_coord.column for character in characters])
@@ -274,13 +356,14 @@ class Canvas:
         return characters
 
     def coord_is_in_canvas(self, coord: Coord) -> bool:
-        """Checks whether a coordinate is within the canvas.
+        """Check whether a coordinate is within the canvas.
 
         Args:
             coord (Coord): coordinate to check
 
         Returns:
             bool: whether the coordinate is within the canvas
+
         """
         return self.left <= coord.column <= self.right and self.bottom <= coord.row <= self.top
 
@@ -288,32 +371,37 @@ class Canvas:
         """Get a random column position. Position is within the canvas.
 
         Returns:
-            int: a random column position (1 <= x <= canvas.right)"""
+            int: a random column position (1 <= x <= canvas.right)
+
+        """
         return random.randint(self.left, self.right)
 
     def random_row(self) -> int:
         """Get a random row position. Position is within the canvas.
 
         Returns:
-            int: a random row position (1 <= x <= terminal.canvas.top)"""
+            int: a random row position (1 <= x <= terminal.canvas.top)
+
+        """
         return random.randint(self.bottom, self.top)
 
-    def random_coord(self, outside_scope=False) -> Coord:
+    def random_coord(self, *, outside_scope: bool = False) -> Coord:
         """Get a random coordinate. Coordinate is within the canvas unless outside_scope is True.
 
         Args:
             outside_scope (bool, optional): whether the coordinate should fall outside the canvas. Defaults to False.
 
         Returns:
-            Coord: a random coordinate . Coordinate is within the canvas unless outside_scope is True."""
+            Coord: a random coordinate . Coordinate is within the canvas unless outside_scope is True.
+
+        """
         if outside_scope is True:
             random_coord_above = Coord(self.random_column(), self.top + 1)
             random_coord_below = Coord(self.random_column(), self.bottom - 1)
             random_coord_left = Coord(self.left - 1, self.random_row())
             random_coord_right = Coord(self.right + 1, self.random_row())
             return random.choice([random_coord_above, random_coord_below, random_coord_left, random_coord_right])
-        else:
-            return Coord(self.random_column(), self.random_row())
+        return Coord(self.random_column(), self.random_row())
 
 
 class Terminal:
@@ -325,19 +413,28 @@ class Terminal:
         character_by_input_coord (dict[Coord, EffectCharacter]): A dictionary of characters by their input coordinates.
 
     Methods:
-        get_piped_input() -> str: Gets the piped input from stdin.
-        prep_canvas(): Prepares the terminal for the effect by adding empty lines and hiding the cursor.
-        restore_cursor(): Restores the cursor visibility.
-        get_characters(input_characters: bool = True, inner_fill_chars: bool = False, outer_fill_chars: bool = False, added_chars: bool = False, sort: CharacterSort = CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT) -> list[EffectCharacter]: Get a list of all EffectCharacters in the terminal with an optional sort.
-        get_characters_grouped(grouping: CharacterGroup = CharacterGroup.ROW_TOP_TO_BOTTOM, input_characters: bool = True, inner_fill_chars: bool = False, outer_fill_chars: bool = False, added_chars: bool = False) -> list[list[EffectCharacter]]: Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping.
-        get_character_by_input_coord(coord: Coord) -> EffectCharacter | None: Get an EffectCharacter by its input coordinates.
-        set_character_visibility(character: EffectCharacter, is_visible: bool): Set the visibility of a character.
-        get_formatted_output_string() -> str: Get the formatted output string based on the current terminal state.
-        print(output_string: str, enforce_frame_rate: bool = True): Prints the current terminal state to stdout while preserving the cursor position.
+        get_piped_input:
+            Gets the piped input from stdin.
+        prep_canvas:
+            Prepares the terminal for the effect by adding empty lines and hiding the cursor.
+        restore_cursor:
+            Restores the cursor visibility.
+        get_characters:
+            Get a list of all EffectCharacters in the terminal with an optional sort.
+        get_characters_grouped:
+            Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping.
+        get_character_by_input_coord:
+            Get an EffectCharacter by its input coordinates.
+        set_character_visibility:
+            Set the visibility of a character.
+        get_formatted_output_string:
+            Get the formatted output string based on the current terminal state.
+        print:
+            Prints the current terminal state to stdout while preserving the cursor position.
 
     """
 
-    ansi_sequence_color_map: dict[str, Color] = {}
+    ansi_sequence_color_map: typing.ClassVar[dict[str, Color]] = {}
 
     class CharacterGroup(Enum):
         """An enum specifying character groupings.
@@ -353,6 +450,7 @@ class Terminal:
             DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT: Group characters by diagonal from bottom right to top left.
             CENTER_TO_OUTSIDE_DIAMONDS: Group characters by distance from the center to the outside in diamond shapes.
             OUTSIDE_TO_CENTER_DIAMONDS: Group characters by distance from the outside to the center in diamond shapes.
+
         """
 
         COLUMN_LEFT_TO_RIGHT = auto()
@@ -377,6 +475,7 @@ class Terminal:
             BOTTOM_TO_TOP_RIGHT_TO_LEFT: Bottom to top, right to left.
             OUTSIDE_ROW_TO_MIDDLE: Outside row to middle.
             MIDDLE_ROW_TO_OUTSIDE: Middle row to outside.
+
         """
 
         RANDOM = auto()
@@ -394,6 +493,7 @@ class Terminal:
             LEAST_TO_MOST: Sort colors from least to most frequent.
             MOST_TO_LEAST: Sort colors from most to least frequent.
             RANDOM: Random order.
+
         """
 
         LEAST_TO_MOST = auto()
@@ -401,11 +501,12 @@ class Terminal:
         RANDOM = auto()
 
     def __init__(self, input_data: str, config: TerminalConfig | None = None) -> None:
-        """Initializes the Terminal object.
+        """Initialize the Terminal.
 
         Args:
             input_data (str): The input data to be displayed in the terminal.
             config (TerminalConfig, optional): Configuration for the terminal. Defaults to None.
+
         """
         if config is None:
             self.config = TerminalConfig()
@@ -445,8 +546,10 @@ class Terminal:
         self._last_time_printed = time.time()
         self._update_terminal_state()
 
-    def _preprocess_input_data(self, input_data: str) -> list[list[EffectCharacter]]:
-        """Preprocess the input data by replacing tabs with spaces and decomposing the input data into a list of
+    def _preprocess_input_data(self, input_data: str) -> list[list[EffectCharacter]]:  # noqa: PLR0912, PLR0915
+        """Preprocess the input data.
+
+        Preprocess the input data by replacing tabs with spaces and decomposing the input data into a list of
         characters while applying any active SGR foreground/background ANSI escape sequences discovered in the data.
 
         Args:
@@ -454,24 +557,24 @@ class Terminal:
 
         Returns:
             list[EffectCharacter]: A list of characters decomposed from the input data.
+
         """
 
-        def find_ansi_sequences_with_positions(text) -> list[tuple[int, int]]:  # [(start,end), ...]
+        def find_ansi_sequences_with_positions(text: str) -> list[tuple[int, int]]:  # [(start,end), ...]
             """Find SGR foreground and background ANSI escape sequences in the input text and return their positions.
 
             Args:
                 text (str): The input text.
 
             Returns:
-                list[tuple[int, int]]: A list of tuples containing the start and end positions of the ANSI escape sequences.
+                list[tuple[int, int]]: A list of tuples containing the start and end positions of the
+                    ANSI escape sequences.
+
             """
-            sequence_list: list[tuple[int, int]] = []
             # match all SGR sequences, though only 8bit and 24bit color sequences will be used, the others are ignored
             ansi_escape_pattern = r"(\x1b|\x1B|\033)\[[\d;]*m"
             matches = re.finditer(ansi_escape_pattern, text)
-            for match in matches:
-                sequence_list.append((match.start(), match.end() - 1))
-            return sequence_list
+            return [(match.start(), match.end() - 1) for match in matches]
 
         characters: list[list[EffectCharacter]] = []
         # replace tabs with spaces
@@ -543,6 +646,7 @@ class Terminal:
 
         Returns:
             tuple[int, int]: Canvas column offset, row offset
+
         """
         canvas_column_offset = canvas_row_offset = 0
         if self.config.anchor_canvas in ("s", "n", "c"):
@@ -560,6 +664,7 @@ class Terminal:
 
         Returns:
             tuple[int, int]: Canvas height, width.
+
         """
         if self.config.canvas_width > 0:
             canvas_width = self.config.canvas_width
@@ -581,7 +686,8 @@ class Terminal:
                 canvas_height = input_height
             elif self.config.wrap_text:
                 canvas_height = min(
-                    len(self._wrap_lines(self._preprocessed_character_lines, canvas_width)), self._terminal_height
+                    len(self._wrap_lines(self._preprocessed_character_lines, canvas_width)),
+                    self._terminal_height,
                 )
             else:
                 canvas_height = min(self._terminal_height, input_height)
@@ -589,10 +695,14 @@ class Terminal:
         return canvas_height, canvas_width
 
     def _get_terminal_dimensions(self) -> tuple[int, int]:
-        """Gets the terminal dimensions.
+        """Get the terminal dimensions.
+
+        Use shutil.get_terminal_size() to get the terminal dimensions. If the terminal size cannot be determined,
+        default values of 80 columns and 24 rows are returned.
 
         Returns:
             tuple[int, int]: terminal width and height
+
         """
         try:
             terminal_width, terminal_height = shutil.get_terminal_size()
@@ -603,7 +713,7 @@ class Terminal:
 
     @staticmethod
     def get_piped_input() -> str:
-        """Gets the piped input from stdin.
+        """Get the piped input from stdin.
 
         This method checks if there is any piped input from the standard input (stdin).
         If there is no piped input, it returns an empty string.
@@ -615,14 +725,14 @@ class Terminal:
 
         Returns:
             str: The piped input from stdin as a string, or an empty string if there is no piped input.
+
         """
         if sys.stdin.isatty():
             return ""
         return sys.stdin.read()
 
     def _wrap_lines(self, lines: list[list[EffectCharacter]], width: int) -> list[list[EffectCharacter]]:
-        """
-        Wraps the given lines of text to fit within the width of the canvas.
+        """Wrap the given lines of text to fit within the width of the canvas.
 
         Args:
             lines (list[list[EffectCharacter]]): The lines of text to be wrapped.
@@ -630,26 +740,29 @@ class Terminal:
 
         Returns:
             list: The wrapped lines of text.
+
         """
         wrapped_lines = []
         for line in lines:
-            while len(line) > width:
-                wrapped_lines.append(line[:width])
-                line = line[width:]
-            wrapped_lines.append(line)
+            current_line = line
+            while len(current_line) > width:
+                wrapped_lines.append(current_line[:width])
+                current_line = current_line[width:]
+            wrapped_lines.append(current_line)
         return wrapped_lines
 
     def _setup_input_characters(self) -> list[EffectCharacter]:
-        """Sets up the input characters discovered during preprocessing and positions them based on row/column coordinates
-        relative to the anchor point in the Canvas.
+        """Set up the input characters discovered during preprocessing.
 
-        Coordinates are relative to the cursor row position at the time of execution. 1,1 is the bottom left corner of the row
-        above the cursor.
+        Characters are positioned based on row/column coordinates relative to the anchor point in the Canvas.
+
+        Coordinates are relative to the cursor row position at the time of execution. 1,1 is the bottom left
+        corner of the row above the cursor.
 
         Returns:
             list[Character]: list of EffectCharacter objects
-        """
 
+        """
         formatted_lines = []
         formatted_lines = (
             self._wrap_lines(self._preprocessed_character_lines, self.canvas.right)
@@ -668,12 +781,14 @@ class Terminal:
         return [char for char in anchored_characters if self.canvas.coord_is_in_canvas(char._input_coord)]
 
     def _make_inner_fill_characters(self) -> list[EffectCharacter]:
-        """Creates a list of characters to fill the empty spaces in the bounding box which encloses the input text. The
-        characters input_symbol is a space. The characters are added to the character_by_input_coord dictionary.
+        """Create a list of characters to fill the empty spaces in the bounding box which encloses the input text.
+
+        The characters input_symbol is a space. The characters are added to the character_by_input_coord dictionary.
 
 
         Returns:
             list[EffectCharacter]: list of characters
+
         """
         inner_fill_characters = []
         # account for space between input text and canvas edges
@@ -692,11 +807,13 @@ class Terminal:
         return inner_fill_characters
 
     def _make_outer_fill_characters(self) -> list[EffectCharacter]:
-        """Creates a list of characters to fill the empty spaces in the canvas around the bounding box which encloses
-        the input text. The characters input_symbol is a space. The characters are added to the character_by_input_coord dictionary.
+        """Create a list of characters to fill the empty spaces in the canvas around the text bounding box.
+
+        The character's input_symbol is a space. The characters are added to the character_by_input_coord dictionary.
 
         Returns:
             list[EffectCharacter]: list of characters
+
         """
         outer_fill_characters = []
         for row in range(1, self.canvas.top + 1):
@@ -714,7 +831,9 @@ class Terminal:
         return outer_fill_characters
 
     def add_character(self, symbol: str, coord: Coord) -> EffectCharacter:
-        """Adds a character to the terminal for printing. Used to create characters that are not in the input data.
+        """Add a character to the terminal for printing.
+
+        Used to create characters that are not in the input data.
 
         Args:
             symbol (str): symbol to add
@@ -722,6 +841,7 @@ class Terminal:
 
         Returns:
             EffectCharacter: the character that was added
+
         """
         character = EffectCharacter(self._next_character_id, symbol, coord.column, coord.row)
         character.animation.no_color = self.config.no_color
@@ -743,19 +863,21 @@ class Terminal:
 
         Returns:
             list[Color]: list of Colors
+
         """
         if sort == self.ColorSort.MOST_TO_LEAST:
             return sorted(
-                self._input_colors_frequency.keys(), key=lambda color: self._input_colors_frequency[color], reverse=True
+                self._input_colors_frequency.keys(),
+                key=lambda color: self._input_colors_frequency[color],
+                reverse=True,
             )
-        elif sort == self.ColorSort.RANDOM:
+        if sort == self.ColorSort.RANDOM:
             colors = list(self._input_colors_frequency.keys())
             random.shuffle(colors)
             return colors
-        elif sort == self.ColorSort.LEAST_TO_MOST:
+        if sort == self.ColorSort.LEAST_TO_MOST:
             return sorted(self._input_colors_frequency.keys(), key=lambda color: self._input_colors_frequency[color])
-        else:
-            raise ValueError("Invalid sort option.")
+        raise InvalidColorSortError(sort)
 
     def get_characters(
         self,
@@ -773,10 +895,12 @@ class Terminal:
             inner_fill_chars (bool, optional): whether to include inner fill characters. Defaults to False.
             outer_fill_chars (bool, optional): whether to include outer fill characters. Defaults to False.
             added_chars (bool, optional): whether to include added characters. Defaults to False.
-            sort (CharacterSort, optional): order to sort the characters. Defaults to CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT.
+            sort (CharacterSort, optional): order to sort the characters.
+                Defaults to CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT.
 
         Returns:
             list[EffectCharacter]: list of EffectCharacters in the terminal
+
         """
         all_characters: list[EffectCharacter] = []
         if input_chars:
@@ -809,10 +933,12 @@ class Terminal:
             ]
             if sort is self.CharacterSort.MIDDLE_ROW_TO_OUTSIDE:
                 all_characters.reverse()
+        else:
+            raise InvalidCharacterSortError(sort)
 
         return all_characters
 
-    def get_characters_grouped(
+    def get_characters_grouped(  # noqa: PLR0912
         self,
         grouping: CharacterGroup = CharacterGroup.ROW_TOP_TO_BOTTOM,
         *,
@@ -831,7 +957,9 @@ class Terminal:
             added_chars (bool, optional): whether to include added characters. Defaults to False.
 
         Returns:
-            list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond to groups as specified in the grouping.
+            list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond
+                to groups as specified in the grouping.
+
         """
         all_characters: list[EffectCharacter] = []
         if input_chars:
@@ -857,7 +985,7 @@ class Terminal:
                 columns.reverse()
             return columns
 
-        elif grouping in (self.CharacterGroup.ROW_BOTTOM_TO_TOP, self.CharacterGroup.ROW_TOP_TO_BOTTOM):
+        if grouping in (self.CharacterGroup.ROW_BOTTOM_TO_TOP, self.CharacterGroup.ROW_TOP_TO_BOTTOM):
             rows = []
             for row_index in range(self.canvas.top + 1):
                 characters_in_row = [
@@ -868,7 +996,7 @@ class Terminal:
             if grouping == self.CharacterGroup.ROW_TOP_TO_BOTTOM:
                 rows.reverse()
             return rows
-        elif grouping in (
+        if grouping in (
             self.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
             self.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
         ):
@@ -884,7 +1012,7 @@ class Terminal:
             if grouping == self.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT:
                 diagonals.reverse()
             return diagonals
-        elif grouping in (
+        if grouping in (
             self.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
             self.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         ):
@@ -900,7 +1028,7 @@ class Terminal:
             if grouping == self.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT:
                 diagonals.reverse()
             return diagonals
-        elif grouping in (
+        if grouping in (
             self.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS,
             self.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
         ):
@@ -908,19 +1036,25 @@ class Terminal:
             center_out = []
             for character in all_characters:
                 distance = abs(character.input_coord.column - self.canvas.center.column) + abs(
-                    character.input_coord.row - self.canvas.center.row
+                    character.input_coord.row - self.canvas.center.row,
                 )
                 if distance not in distance_map:
                     distance_map[distance] = []
                 distance_map[distance].append(character)
             for distance in sorted(
-                distance_map.keys(), reverse=grouping is self.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS
+                distance_map.keys(),
+                reverse=grouping is self.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
             ):
-                center_out.append(distance_map[distance])
+                center_out = [
+                    distance_map[distance]
+                    for distance in sorted(
+                        distance_map.keys(),
+                        reverse=grouping is self.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
+                    )
+                ]
             return center_out
 
-        else:
-            raise ValueError(f"Invalid sort_order: {grouping}")
+        raise InvalidCharacterGroupError(grouping)
 
     def get_character_by_input_coord(self, coord: Coord) -> EffectCharacter | None:
         """Get an EffectCharacter by its input coordinates.
@@ -930,17 +1064,19 @@ class Terminal:
 
         Returns:
             EffectCharacter | None: the character at the specified coordinates, or None if no character is found
+
         """
         if coord not in self.character_by_input_coord:
             return None
         return self.character_by_input_coord[coord]
 
-    def set_character_visibility(self, character: EffectCharacter, is_visible: bool) -> None:
+    def set_character_visibility(self, character: EffectCharacter, is_visible: bool) -> None:  # noqa: FBT001
         """Set the visibility of a character.
 
         Args:
             character (EffectCharacter): the character to set visibility for
             is_visible (bool): whether the character should be visible
+
         """
         character._is_visible = is_visible
         if is_visible:
@@ -955,14 +1091,15 @@ class Terminal:
 
         Returns:
             str: The formatted output string.
+
         """
         self._update_terminal_state()
-        output_string = "\n".join(self.terminal_state[::-1])
-        return output_string
+        return "\n".join(self.terminal_state[::-1])
 
-    def _update_terminal_state(self):
-        """Update the internal representation of the terminal state with the current position
-        of all visible characters.
+    def _update_terminal_state(self) -> None:
+        """Update the internal representation of the terminal state.
+
+        The terminal state is updated with the current position of all visible characters.
         """
         rows = [[" " for _ in range(self.visible_right)] for _ in range(self.visible_top)]
         for character in sorted(self._visible_characters, key=lambda c: c.layer):
@@ -974,9 +1111,9 @@ class Terminal:
         self.terminal_state = terminal_state
 
     def prep_canvas(self) -> None:
-        """Prepares the terminal for the effect by adding empty lines and hiding the cursor."""
+        """Prepare the terminal for the effect by adding empty lines and hiding the cursor."""
         sys.stdout.write(ansitools.HIDE_CURSOR())
-        sys.stdout.write(("\n" * (self.visible_top)))
+        sys.stdout.write("\n" * (self.visible_top))
         sys.stdout.write(ansitools.DEC_SAVE_CURSOR_POSITION())
 
     def restore_cursor(self, end_symbol: str = "\n") -> None:
@@ -984,30 +1121,34 @@ class Terminal:
 
         Args:
             end_symbol (str, optional): The symbol to print after the effect has completed. Defaults to newline.
+
         """
         sys.stdout.write(ansitools.SHOW_CURSOR())
         sys.stdout.write(end_symbol)
 
     def print(self, output_string: str) -> None:
-        """Prints the current terminal state to stdout while preserving the cursor position.
+        """Print the current terminal state to stdout while preserving the cursor position.
 
         Args:
             output_string (str): The string to be printed.
+
         """
         self.move_cursor_to_top()
         sys.stdout.write(output_string)
         sys.stdout.flush()
 
-    def enforce_framerate(self):
-        """Enforces the frame rate set in the terminal config by sleeping if the time since
-        the last frame is shorter than the expected frame delay."""
+    def enforce_framerate(self) -> None:
+        """Enforce the frame rate set in the terminal config.
+
+        Frame rate is enforced by sleeping if the time since the last frame is shorter than the expected frame delay.
+        """
         frame_delay = 1 / self._frame_rate
         time_since_last_print = time.time() - self._last_time_printed
         if time_since_last_print < frame_delay:
             time.sleep(frame_delay - time_since_last_print)
         self._last_time_printed = time.time()
 
-    def move_cursor_to_top(self):
+    def move_cursor_to_top(self) -> None:
         """Restores the cursor position to the top of the canvas."""
         sys.stdout.write(ansitools.DEC_RESTORE_CURSOR_POSITION())
         sys.stdout.write(ansitools.MOVE_CURSOR_UP(self.visible_top))
