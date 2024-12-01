@@ -11,3 +11,11 @@ from terminaltexteffects.utils.exceptions.base_character_exceptions import (
     EventRegistrationCallerError,
     EventRegistrationTargetError,
 )
+from terminaltexteffects.utils.exceptions.motion_exceptions import (
+    ActivateEmptyPathError,
+    DuplicatePathIDError,
+    DuplicateWaypointIDError,
+    PathInvalidSpeedError,
+    PathNotFoundError,
+    WaypointNotFoundError,
+)
