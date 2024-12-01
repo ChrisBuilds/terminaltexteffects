@@ -12,9 +12,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, Scene
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -42,6 +42,7 @@ class VHSTapeConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     glitch_line_colors: tuple[Color, ...] = ArgField(
@@ -157,27 +158,31 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
             hold_time = random.randint(1, 50)
             for character in self.characters:
                 # make glitch and restore waypoints
-                glitch_path = character.motion.new_path(id="glitch", speed=2, hold_time=hold_time)
+                glitch_path = character.motion.new_path(path_id="glitch", speed=2, hold_time=hold_time)
                 glitch_path.new_waypoint(
                     Coord(character.input_coord.column + (offset * direction), character.input_coord.row),
-                    id="glitch",
+                    waypoint_id="glitch",
                 )
-                restore_path = character.motion.new_path(id="restore", speed=2)
-                restore_path.new_waypoint(character.input_coord, id="restore")
+                restore_path = character.motion.new_path(path_id="restore", speed=2)
+                restore_path.new_waypoint(character.input_coord, waypoint_id="restore")
                 # make glitch wave waypoints
-                glitch_wave_mid_path = character.motion.new_path(id="glitch_wave_mid", speed=2)
+                glitch_wave_mid_path = character.motion.new_path(path_id="glitch_wave_mid", speed=2)
                 glitch_wave_mid_path.new_waypoint(
-                    Coord(character.input_coord.column + 8, character.input_coord.row), id="glitch_wave_mid"
+                    Coord(character.input_coord.column + 8, character.input_coord.row),
+                    waypoint_id="glitch_wave_mid",
                 )
-                glitch_wave_end_path = character.motion.new_path(id="glitch_wave_end", speed=2)
+                glitch_wave_end_path = character.motion.new_path(path_id="glitch_wave_end", speed=2)
                 glitch_wave_end_path.new_waypoint(
-                    Coord(character.input_coord.column + 14, character.input_coord.row), id="glitch_wave_end"
+                    Coord(character.input_coord.column + 14, character.input_coord.row),
+                    waypoint_id="glitch_wave_end",
                 )
 
                 # make glitch scenes
                 base_scn = character.animation.new_scene(id="base")
                 base_scn.add_frame(
-                    character.input_symbol, duration=1, colors=ColorPair(self.character_final_color_map[character])
+                    character.input_symbol,
+                    duration=1,
+                    colors=ColorPair(self.character_final_color_map[character]),
                 )
                 glitch_scn_forward = character.animation.new_scene(id="rgb_glitch_fwd", sync=Scene.SyncMetric.STEP)
                 for color in glitch_line_colors:
@@ -188,25 +193,36 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 snow_scn = character.animation.new_scene(id="snow")
                 for _ in range(25):
                     snow_scn.add_frame(
-                        random.choice(snow_chars), duration=2, colors=ColorPair(random.choice(noise_colors))
+                        random.choice(snow_chars),
+                        duration=2,
+                        colors=ColorPair(random.choice(noise_colors)),
                     )
                 snow_scn.add_frame(
-                    character.input_symbol, duration=1, colors=ColorPair(self.character_final_color_map[character])
+                    character.input_symbol,
+                    duration=1,
+                    colors=ColorPair(self.character_final_color_map[character]),
                 )
                 final_snow_scn = character.animation.new_scene(id="final_snow")
                 final_redraw_scn = character.animation.new_scene(id="final_redraw")
                 final_redraw_scn.add_frame("█", duration=10, colors=ColorPair(Color("ffffff")))
                 final_redraw_scn.add_frame(
-                    character.input_symbol, duration=1, colors=ColorPair(self.character_final_color_map[character])
+                    character.input_symbol,
+                    duration=1,
+                    colors=ColorPair(self.character_final_color_map[character]),
                 )
 
                 for _ in range(50):
                     final_snow_scn.add_frame(
-                        random.choice(snow_chars), duration=2, colors=ColorPair(random.choice(noise_colors))
+                        random.choice(snow_chars),
+                        duration=2,
+                        colors=ColorPair(random.choice(noise_colors)),
                     )
                 # register events
                 character.event_handler.register_event(
-                    EventHandler.Event.PATH_COMPLETE, glitch_path, EventHandler.Action.ACTIVATE_PATH, restore_path
+                    EventHandler.Event.PATH_COMPLETE,
+                    glitch_path,
+                    EventHandler.Action.ACTIVATE_PATH,
+                    restore_path,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
@@ -233,7 +249,10 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                     glitch_scn_forward,
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.SCENE_COMPLETE, glitch_scn_backward, EventHandler.Action.ACTIVATE_SCENE, base_scn
+                    EventHandler.Event.SCENE_COMPLETE,
+                    glitch_scn_backward,
+                    EventHandler.Action.ACTIVATE_SCENE,
+                    base_scn,
                 )
 
         def snow(self) -> None:
@@ -268,7 +287,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
         def line_movement_complete(self):
             return all(character.motion.movement_is_complete() for character in self.characters)
 
-    def __init__(self, effect: "VHSTape") -> None:
+    def __init__(self, effect: VHSTape) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.lines: dict[int, VHSTapeIterator.Line] = {}
@@ -290,7 +309,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for row_index, characters in enumerate(
-            self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP)
+            self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP),
         ):
             self.lines[row_index] = VHSTapeIterator.Line(characters, self.config, self.character_final_color_map)
         for character in self.terminal.get_characters():
@@ -306,7 +325,8 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
             if self.terminal.canvas.text_height >= 3:
                 # choose a wave top index in the top half of the canvas or at least 3 rows up
                 self.active_glitch_wave_top = self.terminal.canvas.text_bottom + random.randint(
-                    max((3, round(self.terminal.canvas.text_height * 0.5))), self.terminal.canvas.text_height
+                    max((3, round(self.terminal.canvas.text_height * 0.5))),
+                    self.terminal.canvas.text_height,
                 )
             else:
                 # not enough room for a wave
@@ -351,7 +371,8 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
 
             else:
                 for line, path_id in zip(
-                    self.active_glitch_wave_lines, ("glitch_wave_mid", "glitch_wave_end", "glitch_wave_mid")
+                    self.active_glitch_wave_lines,
+                    ("glitch_wave_mid", "glitch_wave_end", "glitch_wave_mid"),
                 ):
                     line.activate_path(path_id)
                     self.active_characters = self.active_characters.union(line.characters)
@@ -414,8 +435,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                         self._phase = "complete"
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class VHSTape(BaseEffect[VHSTapeConfig]):
@@ -424,6 +444,7 @@ class VHSTape(BaseEffect[VHSTapeConfig]):
     Attributes:
         effect_config (VHSTapeConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = VHSTapeConfig
@@ -433,5 +454,7 @@ class VHSTape(BaseEffect[VHSTapeConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

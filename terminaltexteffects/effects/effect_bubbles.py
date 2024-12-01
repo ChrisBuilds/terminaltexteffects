@@ -12,9 +12,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Terminal, easing, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
@@ -46,6 +46,7 @@ class BubblesConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     rainbow: bool = ArgField(
@@ -148,7 +149,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
     class Bubble:
         def __init__(
             self,
-            effect: "BubblesIterator",
+            effect: BubblesIterator,
             origin: Coord,
             characters: list[EffectCharacter],
             terminal: Terminal,
@@ -171,7 +172,10 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
         def set_character_coordinates(self) -> None:
             for i, char in enumerate(self.characters):
                 point = geometry.find_coords_on_circle(
-                    self.anchor_char.motion.current_coord, self.radius, len(self.characters), unique=False
+                    self.anchor_char.motion.current_coord,
+                    self.radius,
+                    len(self.characters),
+                    unique=False,
                 )[i]
                 char.motion.set_coordinate(point)
                 if point.row == self.lowest_row:
@@ -220,7 +224,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                     len(self.characters),
                 ),
             ):
-                pop_out_path = char.motion.new_path(id="pop_out", speed=0.2, ease=easing.out_expo)
+                pop_out_path = char.motion.new_path(path_id="pop_out", speed=0.2, ease=easing.out_expo)
                 pop_out_path.new_waypoint(point)
                 char.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
@@ -242,7 +246,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             for character in self.characters:
                 character.animation.step_animation()
 
-    def __init__(self, effect: "Bubbles"):
+    def __init__(self, effect: Bubbles):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.bubbles: list[BubblesIterator.Bubble] = []
@@ -277,7 +281,10 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             char_final_gradient = Gradient(self.config.pop_color, self.character_final_color_map[character], steps=10)
             final_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=char_final_gradient)
             character.event_handler.register_event(
-                EventHandler.Event.SCENE_COMPLETE, pop_1_scene, EventHandler.Action.ACTIVATE_SCENE, pop_2_scene
+                EventHandler.Event.SCENE_COMPLETE,
+                pop_1_scene,
+                EventHandler.Action.ACTIVATE_SCENE,
+                pop_2_scene,
             )
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
@@ -286,13 +293,16 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 final_scene,
             )
             final_path = character.motion.new_path(
-                id="final",
+                path_id="final",
                 speed=0.3,
                 ease=easing.in_out_expo,
             )
             final_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, final_path, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.PATH_COMPLETE,
+                final_path,
+                EventHandler.Action.SET_LAYER,
+                0,
             )
 
         unbubbled_chars = []
@@ -336,8 +346,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
 
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Bubbles(BaseEffect[BubblesConfig]):
@@ -346,6 +355,7 @@ class Bubbles(BaseEffect[BubblesConfig]):
     Attributes:
         effect_config (BubblesConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = BubblesConfig
@@ -355,5 +365,7 @@ class Bubbles(BaseEffect[BubblesConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

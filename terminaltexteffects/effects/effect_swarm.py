@@ -12,7 +12,6 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import (
     Color,
     ColorPair,
@@ -25,6 +24,7 @@ from terminaltexteffects import (
     geometry,
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -51,6 +51,7 @@ class SwarmConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     base_color: tuple[Color, ...] = ArgField(
@@ -136,7 +137,7 @@ class SwarmConfig(ArgsDataClass):
 class SwarmIterator(BaseEffectIterator[SwarmConfig]):
     def __init__(
         self,
-        effect: "Swarm",
+        effect: Swarm,
     ) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
@@ -146,7 +147,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
 
     def make_swarms(self, swarm_size: int) -> None:
         unswarmed_characters = self.terminal.get_characters(
-            sort=self.terminal.CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT
+            sort=self.terminal.CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT,
         )
 
         while unswarmed_characters:
@@ -184,7 +185,8 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
             swarm_spawn = self.terminal.canvas.random_coord(outside_scope=True)
             swarm_areas: list[Coord] = []
             swarm_area_count = random.randint(
-                self.config.swarm_area_count_range[0], self.config.swarm_area_count_range[1]
+                self.config.swarm_area_count_range[0],
+                self.config.swarm_area_count_range[1],
             )
             # create areas where characters will swarm
             last_focus_coord = swarm_spawn
@@ -215,13 +217,19 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 for _, swarm_area_coords in swarm_area_coordinate_map.items():
                     swarm_area_name = f"{swarm_area_count}_swarm_area"
                     swarm_area_count += 1
-                    origin_path = character.motion.new_path(id=swarm_area_name, speed=0.25, ease=easing.out_sine)
-                    origin_path.new_waypoint(random.choice(swarm_area_coords), id=swarm_area_name)
+                    origin_path = character.motion.new_path(path_id=swarm_area_name, speed=0.25, ease=easing.out_sine)
+                    origin_path.new_waypoint(random.choice(swarm_area_coords), waypoint_id=swarm_area_name)
                     character.event_handler.register_event(
-                        EventHandler.Event.PATH_ACTIVATED, origin_path, EventHandler.Action.ACTIVATE_SCENE, flash_scn
+                        EventHandler.Event.PATH_ACTIVATED,
+                        origin_path,
+                        EventHandler.Action.ACTIVATE_SCENE,
+                        flash_scn,
                     )
                     character.event_handler.register_event(
-                        EventHandler.Event.PATH_ACTIVATED, origin_path, EventHandler.Action.SET_LAYER, 1
+                        EventHandler.Event.PATH_ACTIVATED,
+                        origin_path,
+                        EventHandler.Action.SET_LAYER,
+                        1,
                     )
                     character.event_handler.register_event(
                         EventHandler.Event.PATH_COMPLETE,
@@ -235,9 +243,11 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                         next_coord = random.choice(swarm_area_coords)
                         inner_paths += 1
                         inner_path = character.motion.new_path(
-                            id=str(len(character.motion.paths)), speed=0.1, ease=easing.in_out_sine
+                            path_id=str(len(character.motion.paths)),
+                            speed=0.1,
+                            ease=easing.in_out_sine,
                         )
-                        inner_path.new_waypoint(next_coord, id=str(len(character.motion.paths)))
+                        inner_path.new_waypoint(next_coord, waypoint_id=str(len(character.motion.paths)))
                 # create landing waypoint and scene
                 input_path = character.motion.new_path(speed=0.3, ease=easing.in_out_quad)
                 input_path.new_waypoint(character.input_coord)
@@ -245,13 +255,22 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 for step in Gradient(self.config.flash_color, self.character_final_color_map[character], steps=10):
                     input_scn.add_frame(character.input_symbol, 3, colors=ColorPair(step))
                 character.event_handler.register_event(
-                    EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.ACTIVATE_SCENE, input_scn
+                    EventHandler.Event.PATH_COMPLETE,
+                    input_path,
+                    EventHandler.Action.ACTIVATE_SCENE,
+                    input_scn,
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.SET_LAYER, 0
+                    EventHandler.Event.PATH_COMPLETE,
+                    input_path,
+                    EventHandler.Action.SET_LAYER,
+                    0,
                 )
                 character.event_handler.register_event(
-                    EventHandler.Event.PATH_ACTIVATED, input_path, EventHandler.Action.ACTIVATE_SCENE, flash_scn
+                    EventHandler.Event.PATH_ACTIVATED,
+                    input_path,
+                    EventHandler.Action.ACTIVATE_SCENE,
+                    flash_scn,
                 )
                 character.motion.chain_paths(list(character.motion.paths.values()))
         self.call_next = True
@@ -285,8 +304,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
 
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Swarm(BaseEffect[SwarmConfig]):
@@ -295,6 +313,7 @@ class Swarm(BaseEffect[SwarmConfig]):
     Attributes:
         effect_config (SwarmConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = SwarmConfig
@@ -304,5 +323,7 @@ class Swarm(BaseEffect[SwarmConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

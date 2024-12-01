@@ -13,9 +13,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
@@ -37,7 +37,9 @@ class CrumbleConfig(ArgsDataClass):
     Attributes:
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient."""
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
+    """
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -74,7 +76,7 @@ class CrumbleConfig(ArgsDataClass):
 
 
 class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
-    def __init__(self, effect: "Crumble"):
+    def __init__(self, effect: Crumble):
         super().__init__(effect)
 
         self.pending_chars: list[EffectCharacter] = []
@@ -110,17 +112,19 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             weaken_scn = character.animation.new_scene(id="weaken")
             weaken_scn.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=weaken_gradient)
 
-            top_path = character.motion.new_path(id="top", speed=0.5, ease=easing.out_quint)
+            top_path = character.motion.new_path(path_id="top", speed=0.5, ease=easing.out_quint)
             top_path.new_waypoint(
                 Coord(character.input_coord.column, self.terminal.canvas.top),
                 bezier_control=Coord(self.terminal.canvas.center_column, self.terminal.canvas.center_row),
             )
             # set up reset stage
-            input_path = character.motion.new_path(id="input", speed=0.3)
+            input_path = character.motion.new_path(path_id="input", speed=0.3)
             input_path.new_waypoint(character.input_coord)
             strengthen_flash_scn = character.animation.new_scene()
             strengthen_flash_scn.apply_gradient_to_symbols(
-                character.input_symbol, 4, fg_gradient=strengthen_flash_gradient
+                character.input_symbol,
+                4,
+                fg_gradient=strengthen_flash_gradient,
             )
             strengthen_scn = character.animation.new_scene()
             strengthen_scn.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=strengthen_gradient)
@@ -129,13 +133,22 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
                 dust_scn.add_frame(random.choice(["*", ".", ","]), 1, colors=ColorPair(dust_color, None))
 
             character.event_handler.register_event(
-                EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.ACTIVATE_PATH, fall_path
+                EventHandler.Event.SCENE_COMPLETE,
+                weaken_scn,
+                EventHandler.Action.ACTIVATE_PATH,
+                fall_path,
             )
             character.event_handler.register_event(
-                EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.SET_LAYER, 1
+                EventHandler.Event.SCENE_COMPLETE,
+                weaken_scn,
+                EventHandler.Action.SET_LAYER,
+                1,
             )
             character.event_handler.register_event(
-                EventHandler.Event.SCENE_COMPLETE, weaken_scn, EventHandler.Action.ACTIVATE_SCENE, dust_scn
+                EventHandler.Event.SCENE_COMPLETE,
+                weaken_scn,
+                EventHandler.Action.ACTIVATE_SCENE,
+                dust_scn,
             )
 
             character.event_handler.register_event(
@@ -205,8 +218,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
 
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Crumble(BaseEffect[CrumbleConfig]):
@@ -215,6 +227,7 @@ class Crumble(BaseEffect[CrumbleConfig]):
     Attributes:
         effect_config (CrumbleConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = CrumbleConfig
@@ -224,5 +237,7 @@ class Crumble(BaseEffect[CrumbleConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

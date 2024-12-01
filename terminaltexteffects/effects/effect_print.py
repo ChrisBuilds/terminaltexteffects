@@ -11,9 +11,9 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -40,6 +40,7 @@ class PrintConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     print_head_return_speed: float = ArgField(
@@ -124,7 +125,9 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 color_gradient = Gradient(typing_head_color, character_final_color_map[character], steps=5)
                 typed_animation = character.animation.new_scene()
                 typed_animation.apply_gradient_to_symbols(
-                    ("█", "▓", "▒", "░", character.input_symbol), 5, fg_gradient=color_gradient
+                    ("█", "▓", "▒", "░", character.input_symbol),
+                    5,
+                    fg_gradient=color_gradient,
                 )
                 character.animation.activate_scene(typed_animation)
                 self.untyped_chars.append(character)
@@ -141,7 +144,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 return next_char
             return None
 
-    def __init__(self, effect: "Print"):
+    def __init__(self, effect: Print):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.pending_rows: list[PrintIterator.Row] = []
@@ -161,10 +164,13 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             self.character_final_color_map[character] = final_gradient_mapping.get(
-                character.input_coord, Color("ffffff")
+                character.input_coord,
+                Color("ffffff"),
             )
         input_rows = self.terminal.get_characters_grouped(
-            grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, outer_fill_chars=True, inner_fill_chars=True
+            grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            outer_fill_chars=True,
+            inner_fill_chars=True,
         )
         for input_row in input_rows:
             self.pending_rows.append(
@@ -172,7 +178,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                     input_row,
                     self.character_final_color_map,
                     Color("ffffff"),
-                )
+                ),
             )
         self._current_row: PrintIterator.Row = self.pending_rows.pop(0)
         self._typing = True
@@ -182,65 +188,63 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         if self.active_characters or self._typing:
             if self.typing_head.motion.active_path:
                 pass
+            elif self._current_row.untyped_chars:
+                for _ in range(min(len(self._current_row.untyped_chars), self.config.print_speed)):
+                    next_char = self._current_row.type_char()
+                    if next_char:
+                        self.terminal.set_character_visibility(next_char, True)
+                        self.active_characters.add(next_char)
+                        self._last_column = next_char.input_coord.column
             else:
-                if self._current_row.untyped_chars:
-                    for _ in range(min(len(self._current_row.untyped_chars), self.config.print_speed)):
-                        next_char = self._current_row.type_char()
-                        if next_char:
-                            self.terminal.set_character_visibility(next_char, True)
-                            self.active_characters.add(next_char)
-                            self._last_column = next_char.input_coord.column
-                else:
-                    self.processed_rows.append(self._current_row)
-                    if self.pending_rows:
-                        for row in self.processed_rows:
-                            row.move_up()
-                        self._current_row = self.pending_rows.pop(0)
-                        if not all(
-                            character.is_fill_character for character in self.processed_rows[-1].typed_chars
-                        ) and not all(character.is_fill_character for character in self._current_row.untyped_chars):
-                            left_extent = min(
-                                [
-                                    character.input_coord.column
-                                    for character in self._current_row.untyped_chars
-                                    if not character.is_fill_character
-                                ]
-                            )
-                            self._current_row.untyped_chars = [
-                                char
-                                for char in self._current_row.untyped_chars
-                                if left_extent <= char.input_coord.column <= self.terminal.canvas.text_right
-                            ]
-                        self.typing_head.motion.set_coordinate(Coord(self._last_column, 1))
-                        self.terminal.set_character_visibility(self.typing_head, True)
-                        self.typing_head.motion.paths.clear()
-                        carriage_return_path = self.typing_head.motion.new_path(
-                            speed=self.config.print_head_return_speed,
-                            ease=self.config.print_head_easing,
-                            id="carriage_return_path",
+                self.processed_rows.append(self._current_row)
+                if self.pending_rows:
+                    for row in self.processed_rows:
+                        row.move_up()
+                    self._current_row = self.pending_rows.pop(0)
+                    if not all(
+                        character.is_fill_character for character in self.processed_rows[-1].typed_chars
+                    ) and not all(character.is_fill_character for character in self._current_row.untyped_chars):
+                        left_extent = min(
+                            [
+                                character.input_coord.column
+                                for character in self._current_row.untyped_chars
+                                if not character.is_fill_character
+                            ],
                         )
-                        # if self.pending_rows and self.pending_rows[0].untyped_chars:
-                        #     next_left_extent = self.pending_rows[0].untyped_chars[0].input_coord.column
-                        #     carriage_return_path.new_waypoint(Coord(next_left_extent, 1))
-                        # else:
-                        carriage_return_path.new_waypoint(
-                            Coord(self._current_row.untyped_chars[0].input_coord.column, 1)
-                        )
-                        self.typing_head.motion.activate_path(carriage_return_path)
+                        self._current_row.untyped_chars = [
+                            char
+                            for char in self._current_row.untyped_chars
+                            if left_extent <= char.input_coord.column <= self.terminal.canvas.text_right
+                        ]
+                    self.typing_head.motion.set_coordinate(Coord(self._last_column, 1))
+                    self.terminal.set_character_visibility(self.typing_head, True)
+                    self.typing_head.motion.paths.clear()
+                    carriage_return_path = self.typing_head.motion.new_path(
+                        speed=self.config.print_head_return_speed,
+                        ease=self.config.print_head_easing,
+                        path_id="carriage_return_path",
+                    )
+                    # if self.pending_rows and self.pending_rows[0].untyped_chars:
+                    #     next_left_extent = self.pending_rows[0].untyped_chars[0].input_coord.column
+                    #     carriage_return_path.new_waypoint(Coord(next_left_extent, 1))
+                    # else:
+                    carriage_return_path.new_waypoint(
+                        Coord(self._current_row.untyped_chars[0].input_coord.column, 1),
+                    )
+                    self.typing_head.motion.activate_path(carriage_return_path)
 
-                        self.typing_head.event_handler.register_event(
-                            EventHandler.Event.PATH_COMPLETE,
-                            carriage_return_path,
-                            EventHandler.Action.CALLBACK,
-                            EventHandler.Callback(self.terminal.set_character_visibility, False),
-                        )
-                        self.active_characters.add(self.typing_head)
-                    else:
-                        self._typing = False
+                    self.typing_head.event_handler.register_event(
+                        EventHandler.Event.PATH_COMPLETE,
+                        carriage_return_path,
+                        EventHandler.Action.CALLBACK,
+                        EventHandler.Callback(self.terminal.set_character_visibility, False),
+                    )
+                    self.active_characters.add(self.typing_head)
+                else:
+                    self._typing = False
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Print(BaseEffect[PrintConfig]):
@@ -249,6 +253,7 @@ class Print(BaseEffect[PrintConfig]):
     Attributes:
         effect_config (PrintConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal
+
     """
 
     _config_cls = PrintConfig
@@ -258,5 +263,7 @@ class Print(BaseEffect[PrintConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

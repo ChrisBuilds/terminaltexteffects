@@ -1,5 +1,4 @@
-"""
-Creates a blackhole in a starfield, consumes the stars, explodes the input data back into position.
+"""Creates a blackhole in a starfield, consumes the stars, explodes the input data back into position.
 
 Classes:
     BlackholeConfig: Configuration for the Blackhole effect.
@@ -14,9 +13,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
@@ -40,7 +39,9 @@ class BlackholeConfig(ArgsDataClass):
         star_colors (tuple[Color, ...]): Tuple of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient."""
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
+    """
 
     blackhole_color: Color = ArgField(
         cmd_name=["--blackhole-color"],
@@ -101,7 +102,7 @@ class BlackholeConfig(ArgsDataClass):
 
 
 class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
-    def __init__(self, effect: "Blackhole") -> None:
+    def __init__(self, effect: Blackhole) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.blackhole_chars: list[EffectCharacter] = []
@@ -136,7 +137,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         )
         for position_index, character in enumerate(self.blackhole_chars):
             starting_pos = black_hole_ring_positions[position_index]
-            blackhole_path = character.motion.new_path(id="blackhole", speed=0.5, ease=easing.in_out_sine)
+            blackhole_path = character.motion.new_path(path_id="blackhole", speed=0.5, ease=easing.in_out_sine)
             blackhole_path.new_waypoint(starting_pos)
             blackhole_scn = character.animation.new_scene(id="blackhole")
             blackhole_scn.add_frame("*", 1, colors=ColorPair(self.config.blackhole_color, None))
@@ -147,9 +148,9 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                 1,
             )
             # make rotation waypoints
-            blackhole_rotation_path = character.motion.new_path(id="blackhole_rotation", speed=0.2, loop=True)
+            blackhole_rotation_path = character.motion.new_path(path_id="blackhole_rotation", speed=0.2, loop=True)
             for coord in black_hole_ring_positions[position_index:] + black_hole_ring_positions[:position_index]:
-                blackhole_rotation_path.new_waypoint(coord, id=str(len(blackhole_rotation_path.waypoints)))
+                blackhole_rotation_path.new_waypoint(coord, waypoint_id=str(len(blackhole_rotation_path.waypoints)))
         for character in self.terminal.get_characters():
             self.terminal.set_character_visibility(character, True)
             starting_scn = character.animation.new_scene()
@@ -181,7 +182,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                         control_point = Coord(starfield_coord.column, self.terminal.canvas.center_row)
                 else:
                     control_point = self.terminal.canvas.center
-                singularity_path = character.motion.new_path(id="singularity", speed=0.3, ease=easing.in_expo)
+                singularity_path = character.motion.new_path(path_id="singularity", speed=0.3, ease=easing.in_expo)
                 singularity_path.new_waypoint(self.terminal.canvas.center, bezier_control=control_point)
                 consumed_scn = character.animation.new_scene()
                 for color in gradient_map[star_color]:
@@ -288,7 +289,10 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                             steps=10,
                         )
                     cooling_scn.apply_gradient_to_symbols(
-                        character.input_symbol, 20, fg_gradient=cooling_gradient_fg, bg_gradient=cooling_gradient_bg
+                        character.input_symbol,
+                        20,
+                        fg_gradient=cooling_gradient_fg,
+                        bg_gradient=cooling_gradient_bg,
                     )
             else:
                 cooling_gradient = Gradient(explode_star_color, self.character_final_color_map[character], steps=10)
@@ -340,10 +344,9 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                         self.f_delay = self.formation_delay
                     else:
                         self.f_delay -= 1
-                else:
-                    if not self.active_characters:
-                        self.rotate_blackhole()
-                        self.phase = "consuming"
+                elif not self.active_characters:
+                    self.rotate_blackhole()
+                    self.phase = "consuming"
             elif self.phase == "consuming":
                 if self.awaiting_consumption_chars:
                     if not self.next_char_consuming_delay:
@@ -359,9 +362,8 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                     else:
                         self.next_char_consuming_delay -= 1
 
-                else:
-                    if all(character in self.blackhole_chars for character in self.active_characters):
-                        self.phase = "collapsing"
+                elif all(character in self.blackhole_chars for character in self.active_characters):
+                    self.phase = "collapsing"
 
             elif self.phase == "collapsing":
                 self.collapse_blackhole()
@@ -371,7 +373,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                     [
                         character.motion.active_path is None and character.animation.active_scene is None
                         for character in self.blackhole_chars
-                    ]
+                    ],
                 ):
                     self.explode_singularity()
                     self.phase = "complete"
@@ -379,8 +381,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             self.update()
             return self.frame
 
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Blackhole(BaseEffect[BlackholeConfig]):
@@ -389,6 +390,7 @@ class Blackhole(BaseEffect[BlackholeConfig]):
     Attributes:
         effect_config (BlackholeConfig): Configuration for the Blackhole effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = BlackholeConfig
@@ -399,5 +401,6 @@ class Blackhole(BaseEffect[BlackholeConfig]):
 
         Args:
             input_data (str): The input data to use for the Blackhole effect.
+
         """
         super().__init__(input_data)

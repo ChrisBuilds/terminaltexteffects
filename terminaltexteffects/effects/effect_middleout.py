@@ -12,9 +12,9 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -43,6 +43,7 @@ class MiddleOutConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     starting_color: Color = ArgField(
@@ -131,7 +132,7 @@ class MiddleOutConfig(ArgsDataClass):
 
 
 class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
-    def __init__(self, effect: "MiddleOut"):
+    def __init__(self, effect: MiddleOut):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
@@ -158,13 +159,16 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
                 column = self.terminal.canvas.center_column
                 row = character.input_coord.row
             center_path = character.motion.new_path(
-                speed=self.config.center_movement_speed, ease=self.config.center_easing
+                speed=self.config.center_movement_speed,
+                ease=self.config.center_easing,
             )
             center_path.new_waypoint(Coord(column, row))
             full_path = character.motion.new_path(
-                id="full", speed=self.config.full_movement_speed, ease=self.config.full_easing
+                path_id="full",
+                speed=self.config.full_movement_speed,
+                ease=self.config.full_easing,
             )
-            full_path.new_waypoint(character.input_coord, id="full")
+            full_path.new_waypoint(character.input_coord, waypoint_id="full")
 
             # setup scenes
             full_scene = character.animation.new_scene(id="full")
@@ -187,8 +191,7 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
         if self.active_characters:
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class MiddleOut(BaseEffect[MiddleOutConfig]):
@@ -197,6 +200,7 @@ class MiddleOut(BaseEffect[MiddleOutConfig]):
     Attributes:
         effect_config (MiddleOutConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = MiddleOutConfig
@@ -206,5 +210,7 @@ class MiddleOut(BaseEffect[MiddleOutConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

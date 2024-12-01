@@ -51,7 +51,9 @@ class FireworksConfig(ArgsDataClass):
         explode_distance (float): Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width. Valid values are 0 < n <= 1.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient."""
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
+    """
 
     explode_anywhere: bool = ArgField(
         cmd_name="--explode-anywhere",
@@ -142,7 +144,7 @@ class FireworksConfig(ArgsDataClass):
 
 
 class FireworksIterator(BaseEffectIterator[FireworksConfig]):
-    def __init__(self, effect: "Fireworks"):
+    def __init__(self, effect: Fireworks):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.shells: list[list[EffectCharacter]] = []
@@ -167,19 +169,21 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 origin_coord = Coord(origin_x, origin_y)
                 explode_waypoint_coords = geometry.find_coords_in_circle(origin_coord, self.explode_distance)
             character.motion.set_coordinate(Coord(origin_x, self.terminal.canvas.bottom))
-            apex_path = character.motion.new_path(id="apex_pth", speed=0.2, ease=easing.out_expo, layer=2)
+            apex_path = character.motion.new_path(path_id="apex_pth", speed=0.2, ease=easing.out_expo, layer=2)
             apex_wpt = apex_path.new_waypoint(origin_coord)
             explode_path = character.motion.new_path(speed=random.uniform(0.09, 0.2), ease=easing.out_circ, layer=2)
             explode_wpt = explode_path.new_waypoint(random.choice(explode_waypoint_coords))
 
             bloom_control_point = geometry.find_coord_at_distance(
-                apex_wpt.coord, explode_wpt.coord, self.explode_distance // 2
+                apex_wpt.coord,
+                explode_wpt.coord,
+                self.explode_distance // 2,
             )
             bloom_wpt = explode_path.new_waypoint(
                 Coord(bloom_control_point.column, max(1, bloom_control_point.row - 7)),
                 bezier_control=bloom_control_point,
             )
-            input_path = character.motion.new_path(id="input_pth", speed=0.3, ease=easing.in_out_quart, layer=2)
+            input_path = character.motion.new_path(path_id="input_pth", speed=0.3, ease=easing.in_out_quart, layer=2)
             input_control_point = Coord(bloom_wpt.coord.column, 1)
             input_path.new_waypoint(character.input_coord, bezier_control=input_control_point)
             character.event_handler.register_event(
@@ -189,10 +193,16 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 explode_path,
             )
             character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, explode_path, EventHandler.Action.ACTIVATE_PATH, input_path
+                EventHandler.Event.PATH_COMPLETE,
+                explode_path,
+                EventHandler.Action.ACTIVATE_PATH,
+                input_path,
             )
             character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.PATH_COMPLETE,
+                input_path,
+                EventHandler.Action.SET_LAYER,
+                0,
             )
 
             character.motion.activate_path(apex_path)
@@ -259,8 +269,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             self.update()
             return self.frame
 
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Fireworks(BaseEffect[FireworksConfig]):
@@ -279,5 +288,7 @@ class Fireworks(BaseEffect[FireworksConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

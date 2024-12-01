@@ -13,6 +13,14 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects.utils import easing, geometry
+from terminaltexteffects.utils.exceptions import (
+    ActivateEmptyPathError,
+    DuplicatePathIDError,
+    DuplicateWaypointIDError,
+    PathInvalidSpeedError,
+    PathNotFoundError,
+    WaypointNotFoundError,
+)
 from terminaltexteffects.utils.geometry import Coord
 
 if typing.TYPE_CHECKING:
@@ -116,19 +124,19 @@ class Path:
         self.last_distance_reached: float = 0  # used for animation syncing to distance
         self.origin_segment: Segment | None = None
         if self.speed <= 0:
-            raise ValueError(f"({self.speed=}) Speed must be greater than 0.")
+            raise PathInvalidSpeedError(self.speed)
 
     def new_waypoint(
         self,
         coord: Coord,
         *,
         bezier_control: tuple[Coord, ...] | Coord | None = None,
-        id: str = "",
+        waypoint_id: str = "",
     ) -> Waypoint:
         """Create a new Waypoint and appends adds it to the Path.
 
         Args:
-            id (str): Unique identifier for the waypoint. Used to query for the waypoint.
+            waypoint_id (str): Unique identifier for the waypoint. Used to query for the waypoint.
             coord (Coord): coordinate
             bezier_control (tuple[Coord, ...] | Coord | None): coordinate of the control point for a bezier
                 curve. Defaults to None.
@@ -137,15 +145,17 @@ class Path:
             Waypoint: The new waypoint.
 
         """
-        if not id:
+        if not waypoint_id:
             found_unique = False
             current_id = len(self.waypoints)
             while not found_unique:
-                id = f"{current_id}"
-                if id not in self.waypoint_lookup:
+                waypoint_id = f"{current_id}"
+                if waypoint_id not in self.waypoint_lookup:
                     found_unique = True
                 else:
                     current_id += 1
+        if waypoint_id in self.waypoint_lookup:
+            raise DuplicateWaypointIDError(waypoint_id)
         bezier_control_tuple: tuple[Coord, ...] | None
         if bezier_control and isinstance(bezier_control, Coord):
             bezier_control_tuple = (bezier_control,)
@@ -153,7 +163,7 @@ class Path:
             bezier_control_tuple = bezier_control
         else:
             bezier_control_tuple = None
-        new_waypoint = Waypoint(id, coord, bezier_control=bezier_control_tuple)
+        new_waypoint = Waypoint(waypoint_id, coord, bezier_control=bezier_control_tuple)
         self._add_waypoint_to_path(new_waypoint)
         return new_waypoint
 
@@ -196,7 +206,7 @@ class Path:
         """
         waypoint = self.waypoint_lookup.get(waypoint_id, None)
         if not waypoint:
-            raise ValueError(f"Waypoint with id {waypoint_id} not found.")
+            raise WaypointNotFoundError(waypoint_id)
         return waypoint
 
     def step(self, event_handler: base_character.EventHandler) -> Coord:
@@ -346,7 +356,7 @@ class Motion:
         layer: int | None = None,
         hold_time: int = 0,
         loop: bool = False,
-        id: str = "",
+        path_id: str = "",
     ) -> Path:
         """Create a new Path and add it to the Motion.paths dictionary with the path_id as key.
 
@@ -356,7 +366,7 @@ class Motion:
             layer (int | None, optional): layer to move the character to, if None, layer is unchanged. Defaults to None.
             hold_time (int, optional): number of frames to hold the character at the end of the path. Defaults to 0.
             loop (bool, optional): Whether the path should loop back to the beginning. Default is False.
-            id (str, optional): Unique identifier for the path. Used to query for the path. Defaults to "".
+            path_id (str, optional): Unique identifier for the path. Used to query for the path. Defaults to "".
 
         Raises:
             ValueError: If a path with the provided id already exists.
@@ -365,19 +375,19 @@ class Motion:
             Path: The new path.
 
         """
-        if not id:
+        if not path_id:
             found_unique = False
             current_id = len(self.paths)
             while not found_unique:
-                id = f"{current_id}"
-                if id not in self.paths:
+                path_id = f"{current_id}"
+                if path_id not in self.paths:
                     found_unique = True
                 else:
                     current_id += 1
-        if id in self.paths:
-            raise ValueError(f"Path with id {id} already exists.")
-        new_path = Path(id, speed, ease, layer, hold_time, loop)
-        self.paths[id] = new_path
+        if path_id in self.paths:
+            raise DuplicatePathIDError(path_id)
+        new_path = Path(path_id, speed, ease, layer, hold_time, loop)
+        self.paths[path_id] = new_path
         return new_path
 
     def query_path(self, path_id: str) -> Path:
@@ -392,7 +402,7 @@ class Motion:
         """
         path = self.paths.get(path_id, None)
         if not path:
-            raise ValueError(f"Path with id {path_id} not found.")
+            raise PathNotFoundError(path_id)
         return path
 
     def movement_is_complete(self) -> bool:
@@ -403,21 +413,6 @@ class Motion:
 
         """
         return self.active_path is None
-
-    def _get_easing_factor(self, easing_func: easing.EasingFunction) -> float:
-        """Return the percentage of total distance that should be moved based on the easing function.
-
-        Args:
-            easing_func (easing.EasingFunction): The easing function to use.
-
-        Returns:
-            float: The percentage of total distance to move.
-
-        """
-        if not self.active_path:
-            raise ValueError("No active path.")
-        elapsed_step_ratio = self.active_path.current_step / self.active_path.max_steps
-        return easing_func(elapsed_step_ratio)
 
     def chain_paths(self, paths: list[Path], *, loop: bool = False) -> None:
         """Create a chain of paths.
@@ -468,7 +463,7 @@ class Motion:
 
         """
         if not path.waypoints:
-            raise ValueError(f"Cannot active path: {path.path_id} | Path has no waypoints.")
+            raise ActivateEmptyPathError(path.path_id)
         self.active_path = path
         first_waypoint = self.active_path.waypoints[0]
         if first_waypoint.bezier_control:

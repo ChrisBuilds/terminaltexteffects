@@ -12,10 +12,10 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing, geometry
 from terminaltexteffects.engine import animation, motion
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -43,6 +43,7 @@ class SpotlightsConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     beam_width_ratio: float = ArgField(
@@ -125,7 +126,7 @@ class SpotlightsConfig(ArgsDataClass):
 
 
 class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
-    def __init__(self, effect: "Spotlights") -> None:
+    def __init__(self, effect: Spotlights) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.illuminated_chars: set[EffectCharacter] = set()
@@ -152,13 +153,13 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 path = spotlight.motion.new_path(
                     speed=random.uniform(self.config.search_speed_range[0], self.config.search_speed_range[1]),
                     ease=easing.in_out_quad,
-                    id=str(len(paths)),
+                    path_id=str(len(paths)),
                 )
                 path.new_waypoint(coord, bezier_control=self.terminal.canvas.random_coord(outside_scope=True))
                 paths.append(path)
             spotlight.motion.chain_paths(paths, loop=True)
 
-            path = spotlight.motion.new_path(speed=0.5, ease=easing.in_out_sine, id="center")
+            path = spotlight.motion.new_path(speed=0.5, ease=easing.in_out_sine, path_id="center")
             path.new_waypoint(self.terminal.canvas.center)
 
         return spotlights
@@ -192,18 +193,22 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
             distance = min(
                 [
                     geometry.find_length_of_line(
-                        spotlight.motion.current_coord, character.input_coord, double_row_diff=True
+                        spotlight.motion.current_coord,
+                        character.input_coord,
+                        double_row_diff=True,
                     )
                     for spotlight in self.spotlights
-                ]
+                ],
             )
 
             if distance > range * (1 - self.config.beam_falloff):
                 brightness_factor = max(
-                    1 - (distance - range * (1 - self.config.beam_falloff)) / (range * self.config.beam_falloff), 0.2
+                    1 - (distance - range * (1 - self.config.beam_falloff)) / (range * self.config.beam_falloff),
+                    0.2,
                 )
                 adjusted_color = animation.Animation.adjust_color_brightness(
-                    self.character_color_map[character][0], brightness_factor
+                    self.character_color_map[character][0],
+                    brightness_factor,
                 )
             else:
                 adjusted_color = self.character_color_map[character][0]
@@ -236,7 +241,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 min(
                     smallest_dimension // self.config.beam_width_ratio,
                     smallest_dimension,
-                )
+                ),
             ),
             1,
         )
@@ -267,8 +272,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
 
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Spotlights(BaseEffect[SpotlightsConfig]):
@@ -277,6 +281,7 @@ class Spotlights(BaseEffect[SpotlightsConfig]):
     Attributes:
         effect_config (SpotlightsConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = SpotlightsConfig
@@ -286,5 +291,7 @@ class Spotlights(BaseEffect[SpotlightsConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

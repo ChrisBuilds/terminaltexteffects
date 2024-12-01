@@ -12,9 +12,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Scene
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
@@ -43,7 +43,9 @@ class ErrorCorrectConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        movement_speed (float): Speed of the characters while moving to the correct position. Valid values are n > 0."""
+        movement_speed (float): Speed of the characters while moving to the correct position. Valid values are n > 0.
+
+    """
 
     error_pairs: float = ArgField(
         cmd_name="--error-pairs",
@@ -125,7 +127,7 @@ class ErrorCorrectConfig(ArgsDataClass):
 
 
 class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
-    def __init__(self, effect: "ErrorCorrect") -> None:
+    def __init__(self, effect: ErrorCorrect) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.swapped: list[tuple[EffectCharacter, EffectCharacter]] = []
@@ -147,7 +149,9 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
         for character in self.terminal.get_characters():
             spawn_scene = character.animation.new_scene()
             spawn_scene.add_frame(
-                character.input_symbol, 1, colors=ColorPair(self.character_final_color_map[character])
+                character.input_symbol,
+                1,
+                colors=ColorPair(self.character_final_color_map[character]),
             )
             character.animation.activate_scene(spawn_scene)
             self.terminal.set_character_visibility(character, True)
@@ -162,10 +166,10 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
             char1 = all_characters.pop(random.randrange(len(all_characters)))
             char2 = all_characters.pop(random.randrange(len(all_characters)))
             char1.motion.set_coordinate(char2.input_coord)
-            char1_input_coord_path = char1.motion.new_path(id="input_coord", speed=self.config.movement_speed)
+            char1_input_coord_path = char1.motion.new_path(path_id="input_coord", speed=self.config.movement_speed)
             char1_input_coord_path.new_waypoint(char1.input_coord)
             char2.motion.set_coordinate(char1.input_coord)
-            char2_input_coord_path = char2.motion.new_path(id="input_coord", speed=self.config.movement_speed)
+            char2_input_coord_path = char2.motion.new_path(path_id="input_coord", speed=self.config.movement_speed)
             char2_input_coord_path.new_waypoint(char2.input_coord)
             self.swapped.append((char1, char2))
             for character in (char1, char2):
@@ -186,7 +190,9 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 correcting_scene.apply_gradient_to_symbols("█", 3, fg_gradient=correcting_gradient)
                 final_scene = character.animation.new_scene()
                 char_final_gradient = Gradient(
-                    self.config.correct_color, self.character_final_color_map[character], steps=10
+                    self.config.correct_color,
+                    self.character_final_color_map[character],
+                    steps=10,
                 )
                 final_scene.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=char_final_gradient)
                 input_coord_path = character.motion.query_path("input_coord")
@@ -246,8 +252,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
         if self.active_characters:
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class ErrorCorrect(BaseEffect[ErrorCorrectConfig]):
@@ -256,6 +261,7 @@ class ErrorCorrect(BaseEffect[ErrorCorrectConfig]):
     Attributes:
         effect_config (ErrorCorrectConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = ErrorCorrectConfig
@@ -265,5 +271,7 @@ class ErrorCorrect(BaseEffect[ErrorCorrectConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

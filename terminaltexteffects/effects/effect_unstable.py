@@ -12,9 +12,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -43,6 +43,7 @@ class UnstableConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     unstable_color: Color = ArgField(
@@ -123,7 +124,7 @@ class UnstableConfig(ArgsDataClass):
 
 
 class UnstableIterator(BaseEffectIterator[UnstableConfig]):
-    def __init__(self, effect: "Unstable") -> None:
+    def __init__(self, effect: Unstable) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.jumbled_coords: dict[EffectCharacter, Coord] = dict()
@@ -159,12 +160,16 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
             jumbled_coord = character_coords.pop(random.randint(0, len(character_coords) - 1))
             self.jumbled_coords[character] = jumbled_coord
             character.motion.set_coordinate(jumbled_coord)
-            explosion_path = character.motion.new_path(id="explosion", speed=1.25, ease=self.config.explosion_ease)
+            explosion_path = character.motion.new_path(path_id="explosion", speed=1.25, ease=self.config.explosion_ease)
             explosion_path.new_waypoint(Coord(col, row))
-            reassembly_path = character.motion.new_path(id="reassembly", speed=0.75, ease=self.config.reassembly_ease)
+            reassembly_path = character.motion.new_path(
+                path_id="reassembly", speed=0.75, ease=self.config.reassembly_ease
+            )
             reassembly_path.new_waypoint(character.input_coord)
             unstable_gradient = Gradient(
-                self.character_final_color_map[character], self.config.unstable_color, steps=25
+                self.character_final_color_map[character],
+                self.config.unstable_color,
+                steps=25,
             )
             rumble_scn = character.animation.new_scene(id="rumble")
             rumble_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=unstable_gradient)
@@ -191,7 +196,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                             Coord(
                                 character.motion.current_coord.column + column_offset,
                                 character.motion.current_coord.row + row_offset,
-                            )
+                            ),
                         )
                         character.animation.step_animation()
                     next_frame = self.frame
@@ -218,7 +223,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                 self.active_characters = {
                     character
                     for character in self.active_characters
-                    if not character.motion.current_coord == character.motion.query_path("explosion").waypoints[0].coord
+                    if character.motion.current_coord != character.motion.query_path("explosion").waypoints[0].coord
                 }
                 next_frame = self.frame
 
@@ -241,16 +246,14 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                 self.active_characters = {
                     character
                     for character in self.active_characters
-                    if not character.motion.current_coord
-                    == character.motion.query_path("reassembly").waypoints[0].coord
+                    if character.motion.current_coord != character.motion.query_path("reassembly").waypoints[0].coord
                     or not character.animation.active_scene_is_complete()
                 }
                 next_frame = self.frame
 
         if next_frame is not None:
             return next_frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Unstable(BaseEffect[UnstableConfig]):
@@ -259,6 +262,7 @@ class Unstable(BaseEffect[UnstableConfig]):
     Attributes:
         effect_config (UnstableConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = UnstableConfig
@@ -268,5 +272,7 @@ class Unstable(BaseEffect[UnstableConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

@@ -12,9 +12,9 @@ import typing
 from dataclasses import dataclass
 from itertools import cycle
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, Terminal, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -47,6 +47,7 @@ class OrbittingVolleyConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     top_launcher_symbol: str = ArgField(
@@ -180,7 +181,9 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
 
             waypoint_start_index = waypoints.index(self.character.input_coord)
             perimeter_path = self.character.motion.new_path(
-                speed=self.args.launcher_movement_speed, id="perimeter", layer=2
+                speed=self.args.launcher_movement_speed,
+                path_id="perimeter",
+                layer=2,
             )
             for waypoint in waypoints[waypoint_start_index:] + waypoints[:waypoint_start_index]:
                 perimeter_path.new_waypoint(waypoint)
@@ -196,7 +199,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
                 next_char = None
             return next_char
 
-    def __init__(self, effect: "OrbittingVolley"):
+    def __init__(self, effect: OrbittingVolley):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
@@ -224,15 +227,19 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
             input_path = character.motion.new_path(
                 speed=self.config.character_movement_speed,
                 ease=self.config.character_easing,
-                id="input_path",
+                path_id="input_path",
                 layer=1,
             )
             input_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, input_path, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.PATH_COMPLETE,
+                input_path,
+                EventHandler.Action.SET_LAYER,
+                0,
             )
             character.animation.set_appearance(
-                character.input_symbol, ColorPair(self.character_final_color_map[character])
+                character.input_symbol,
+                ColorPair(self.character_final_color_map[character]),
             )
         self._launchers: list[OrbittingVolleyIterator.Launcher] = []
         for coord, symbol in (
@@ -260,7 +267,8 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
             self._launchers.append(launcher)
         self._main_launcher = self._launchers[0]
         self._main_launcher.character.animation.set_appearance(
-            self._main_launcher.character.input_symbol, ColorPair(self.final_gradient.spectrum[-1])
+            self._main_launcher.character.input_symbol,
+            ColorPair(self.final_gradient.spectrum[-1]),
         )
         self._main_launcher.build_paths()
         self._main_launcher.character.motion.activate_path(self._main_launcher.character.motion.query_path("perimeter"))
@@ -274,15 +282,15 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
     def _set_launcher_coordinates(self, parent: Launcher, child: Launcher) -> None:
         parent_progress = parent.character.motion.current_coord.column / self.terminal.canvas.right
         if child.character.input_coord == Coord(self.terminal.canvas.right, self.terminal.canvas.top):
-            child_row = self.terminal.canvas.top - int((self.terminal.canvas.top * parent_progress))
+            child_row = self.terminal.canvas.top - int(self.terminal.canvas.top * parent_progress)
             child.character.motion.set_coordinate(Coord(self.terminal.canvas.right, max(1, child_row)))
         elif child.character.input_coord == Coord(self.terminal.canvas.right, self.terminal.canvas.bottom):
-            child_column = self.terminal.canvas.right - int((self.terminal.canvas.right * parent_progress))
+            child_column = self.terminal.canvas.right - int(self.terminal.canvas.right * parent_progress)
             child.character.motion.set_coordinate(Coord(max(1, child_column), self.terminal.canvas.bottom))
         elif child.character.input_coord == Coord(self.terminal.canvas.left, self.terminal.canvas.bottom):
-            child_row = self.terminal.canvas.bottom + int((self.terminal.canvas.top * parent_progress))
+            child_row = self.terminal.canvas.bottom + int(self.terminal.canvas.top * parent_progress)
             child.character.motion.set_coordinate(
-                Coord(self.terminal.canvas.left, min(self.terminal.canvas.top, child_row))
+                Coord(self.terminal.canvas.left, min(self.terminal.canvas.top, child_row)),
             )
         color = self.launcher_gradient_coordinate_map[child.character.motion.current_coord]
         child.character.animation.set_appearance(child.character.input_symbol, ColorPair(color))
@@ -303,7 +311,8 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
             if not self._delay:
                 for launcher in self._launchers:
                     characters_to_launch = max(
-                        int((self.config.volley_size * len(self.terminal._input_characters)) / 4), 1
+                        int((self.config.volley_size * len(self.terminal._input_characters)) / 4),
+                        1,
                     )
                     for _ in range(characters_to_launch):
                         next_char = launcher.launch()
@@ -315,14 +324,12 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
 
             self.update()
             return self.frame
-        else:
-            if not self.complete:
-                self.complete = True
-                for launcher in self._launchers:
-                    self.terminal.set_character_visibility(launcher.character, False)
-                return self.frame
-            else:
-                raise StopIteration
+        if not self.complete:
+            self.complete = True
+            for launcher in self._launchers:
+                self.terminal.set_character_visibility(launcher.character, False)
+            return self.frame
+        raise StopIteration
 
 
 class OrbittingVolley(BaseEffect[OrbittingVolleyConfig]):
@@ -331,6 +338,7 @@ class OrbittingVolley(BaseEffect[OrbittingVolleyConfig]):
     Attributes:
         effect_config (OrbittingVolleyConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = OrbittingVolleyConfig
@@ -340,5 +348,7 @@ class OrbittingVolley(BaseEffect[OrbittingVolleyConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

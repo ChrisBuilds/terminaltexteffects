@@ -11,9 +11,9 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, Gradient, easing, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -43,6 +43,7 @@ class SlideConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the gradient.
+
     """
 
     movement_speed: float = ArgField(
@@ -136,7 +137,7 @@ class SlideConfig(ArgsDataClass):
 
 
 class SlideIterator(BaseEffectIterator[SlideConfig]):
-    def __init__(self, effect: "Slide") -> None:
+    def __init__(self, effect: Slide) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.pending_groups: list[list[EffectCharacter]] = []
@@ -162,12 +163,14 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
             groups = self.terminal.get_characters_grouped(self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
         elif self.config.grouping == "diagonal":
             groups = self.terminal.get_characters_grouped(
-                self.terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
+                self.terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
             )
         for group in groups:
             for character in group:
                 input_path = character.motion.new_path(
-                    id="input_path", speed=self.config.movement_speed, ease=self.config.movement_easing
+                    path_id="input_path",
+                    speed=self.config.movement_speed,
+                    ease=self.config.movement_easing,
                 )
                 input_path.new_waypoint(character.input_coord)
 
@@ -220,10 +223,14 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
             for character in group:
                 gradient_scn = character.animation.new_scene()
                 char_gradient = Gradient(
-                    self.config.final_gradient_stops[0], self.character_final_color_map[character], steps=10
+                    self.config.final_gradient_stops[0],
+                    self.character_final_color_map[character],
+                    steps=10,
                 )
                 gradient_scn.apply_gradient_to_symbols(
-                    character.input_symbol, self.config.final_gradient_frames, fg_gradient=char_gradient
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    fg_gradient=char_gradient,
                 )
                 character.animation.activate_scene(gradient_scn)
 
@@ -236,9 +243,8 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
             if self._current_gap == self.config.gap and self.pending_groups:
                 self._active_groups.append(self.pending_groups.pop(0))
                 self._current_gap = 0
-            else:
-                if self.pending_groups:
-                    self._current_gap += 1
+            elif self.pending_groups:
+                self._current_gap += 1
             for group in self._active_groups:
                 if group:
                     next_char = group.pop(0)
@@ -248,8 +254,7 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
             self._active_groups = [group for group in self._active_groups if group]
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Slide(BaseEffect[SlideConfig]):
@@ -258,6 +263,7 @@ class Slide(BaseEffect[SlideConfig]):
     Attributes:
         effect_config (SlideConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = SlideConfig
@@ -267,5 +273,7 @@ class Slide(BaseEffect[SlideConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)
