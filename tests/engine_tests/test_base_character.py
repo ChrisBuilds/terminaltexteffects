@@ -6,9 +6,9 @@ import pytest
 
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.motion import Path
-from terminaltexteffects.utils.exceptions import (
-    InvalidEventRegistrationActionTargetError,
-    InvalidEventRegistrationEventCallerError,
+from terminaltexteffects.utils.exceptions.base_character_exceptions import (
+    EventRegistrationCallerError,
+    EventRegistrationTargetError,
 )
 from terminaltexteffects.utils.geometry import Coord
 
@@ -61,7 +61,7 @@ def test_eventhandler_register_event_invalid_event_caller(
     eventhandler: EventHandler,
 ) -> None:
     """Test registering an event with an invalid event caller."""
-    with pytest.raises(InvalidEventRegistrationEventCallerError):
+    with pytest.raises(EventRegistrationCallerError):
         eventhandler.register_event(event, "invalid_caller", EventHandler.Action.ACTIVATE_PATH, Path("a"))  # type: ignore[call-overload]
 
 
@@ -84,7 +84,7 @@ def test_eventhandler_register_event_invalid_target(
 ) -> None:
     """Test registering an event with an invalid target."""
     event, caller, action, target = event_caller_action_target
-    with pytest.raises(InvalidEventRegistrationActionTargetError):
+    with pytest.raises(EventRegistrationTargetError):
         eventhandler.register_event(event, caller, action, target)  # type: ignore[call-overload]
 
 
@@ -119,6 +119,22 @@ def test_effectcharacter_init(effectcharacter: EffectCharacter) -> None:
     assert effectcharacter._is_visible is False
     assert effectcharacter.layer == 0
     assert effectcharacter.is_fill_character is False
+
+
+def test_effectcharacter_repr(effectcharacter: EffectCharacter) -> None:
+    """Test the __repr__ method of EffectCharacter."""
+    assert repr(effectcharacter) == "EffectCharacter(character_id=0, symbol='a', input_column=1, input_row=1)"
+
+
+def test_effectcharacter_hash_consistency(effectcharacter: EffectCharacter) -> None:
+    """Test the consistency of the __hash__ method of EffectCharacter."""
+    assert hash(effectcharacter) == hash(effectcharacter)
+
+
+def test_effectcharacter_objects_have_same_hash(effectcharacter: EffectCharacter) -> None:
+    """Test that two EffectCharacter objects with the same attributes have the same hash."""
+    effectcharacter2 = EffectCharacter(0, "a", 1, 1)
+    assert hash(effectcharacter) == hash(effectcharacter2)
 
 
 def test_effectcharacter_properties(effectcharacter: EffectCharacter) -> None:

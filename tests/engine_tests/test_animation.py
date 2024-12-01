@@ -1,8 +1,15 @@
 import pytest
 
-import terminaltexteffects.utils.easing as easing
 from terminaltexteffects.engine.animation import CharacterVisual, Frame, Scene
 from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects.utils import easing
+from terminaltexteffects.utils.exceptions import (
+    ActivateEmptySceneError,
+    ApplyGradientToSymbolsEmptyGradientsError,
+    ApplyGradientToSymbolsNoGradientsError,
+    FrameDurationError,
+    SceneNotFoundError,
+)
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
@@ -89,7 +96,7 @@ def test_scene_add_frame():
 
 def test_scene_add_frame_invalid_duration():
     scene = Scene(scene_id="test_scene")
-    with pytest.raises(ValueError, match="duration must be greater than 0"):
+    with pytest.raises(FrameDurationError):
         scene.add_frame(symbol="a", duration=0, colors=ColorPair(Color("ffffff"), Color("ffffff")))
 
 
@@ -107,7 +114,8 @@ def test_scene_apply_gradient_to_symbols_equal_colors_and_symbols():
 def test_scene_apply_gradient_to_symbols_unequal_colors_and_symbols():
     """Test that all colors in the gradient are represented in the scene frames and
     the symbols are progressed such that the first and final symbols align to the
-    first and final colors."""
+    first and final colors.
+    """
     scene = Scene(scene_id="test_scene")
     gradient = Gradient(Color("000000"), Color("ffffff"), steps=4)
     symbols = ["q", "z"]
@@ -161,7 +169,7 @@ def test_animation_query_scene(character: EffectCharacter):
 
 def test_animation_query_nonexistent_scene(character: EffectCharacter):
     animation = character.animation
-    with pytest.raises(ValueError):
+    with pytest.raises(SceneNotFoundError):
         animation.query_scene("nonexistent_scene")
 
 
@@ -360,7 +368,7 @@ def test_scene_add_frame_existing_colors(character: EffectCharacter):
 
 def test_activate_scene_with_no_frames(character: EffectCharacter):
     new_scene = character.animation.new_scene(id="test_scene")
-    with pytest.raises(ValueError):
+    with pytest.raises(ActivateEmptySceneError):
         character.animation.activate_scene(new_scene)
 
 
@@ -382,7 +390,7 @@ def test_scene_apply_gradient_to_symbols_empty_gradient(character: EffectCharact
     gradient = Gradient(Color("000000"), Color("ffffff"), steps=2)
     gradient.spectrum.clear()
     symbols = ["a", "b", "c"]
-    with pytest.raises(ValueError):
+    with pytest.raises(ApplyGradientToSymbolsEmptyGradientsError):
         new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient)
 
 
@@ -391,7 +399,7 @@ def test_scene_apply_gradient_to_symbols_both_gradients_empty(character: EffectC
     gradient = Gradient(Color("000000"), Color("ffffff"), steps=2)
     gradient.spectrum.clear()
     symbols = ["a", "b", "c"]
-    with pytest.raises(ValueError):
+    with pytest.raises(ApplyGradientToSymbolsEmptyGradientsError):
         new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient, bg_gradient=gradient)
 
 
@@ -424,8 +432,15 @@ def test_scene_apply_gradient_to_symbols_empty_spectrums(character: EffectCharac
     fg_gradient.spectrum.clear()
     bg_gradient.spectrum.clear()
     symbols = ["a", "b", "c"]
-    with pytest.raises(ValueError):
+    with pytest.raises(ApplyGradientToSymbolsEmptyGradientsError):
         new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=fg_gradient, bg_gradient=bg_gradient)
+
+
+def test_scene_apply_gradient_to_symbols_no_gradients(character: EffectCharacter):
+    new_scene = character.animation.new_scene(id="test_scene")
+    symbols = ["a", "b", "c"]
+    with pytest.raises(ApplyGradientToSymbolsNoGradientsError):
+        new_scene.apply_gradient_to_symbols(symbols, duration=1)
 
 
 def test_scene_apply_gradient_to_symbols_larger_bg_spectrum(character: EffectCharacter):
