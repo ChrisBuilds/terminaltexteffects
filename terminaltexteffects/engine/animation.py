@@ -1,3 +1,13 @@
+"""Classes for handling animations in terminal text effects.
+
+Classes:
+    CharacterVisual: A class for storing symbol, color, and terminal graphical modes for the character.
+    Frame: A class representing a frame in an animation.
+    Scene: A class representing a sequence of frames that can be played in an animation.
+    Animation: A class for handling animations for an EffectCharacter.
+
+"""
+
 from __future__ import annotations
 
 import typing
@@ -5,6 +15,13 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, hexterm
+from terminaltexteffects.utils.exceptions import (
+    ActivateEmptySceneError,
+    ApplyGradientToSymbolsEmptyGradientsError,
+    ApplyGradientToSymbolsNoGradientsError,
+    FrameDurationError,
+    SceneNotFoundError,
+)
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character  # pragma: no cover
@@ -15,21 +32,25 @@ class CharacterVisual:
     """A class for storing symbol, color, and terminal graphical modes for the character.
 
     Args:
-        symbol (str): the unformatted symbol
-        bold (bool): bold mode
-        dim (bool): dim mode
-        italic (bool): italic mode
-        underline (bool): underline mode
-        blink (bool): blink mode
-        reverse (bool): reverse mode
-        hidden (bool): hidden mode
-        strike (bool): strike mode
-        colors (graphics.ColorPair | None): the symbol's colors
-        fg_color (graphics.Color | None): the symbol's foreground color
-        bg_color (graphics.Color | None): the symbol's background color
+        symbol (str): The unformatted symbol.
+        bold (bool): Bold mode.
+        dim (bool): Dim mode.
+        italic (bool): Italic mode.
+        underline (bool): Underline mode.
+        blink (bool): Blink mode.
+        reverse (bool): Reverse mode.
+        hidden (bool): Hidden mode.
+        strike (bool): Strike mode.
+        colors (graphics.ColorPair | None): The symbol's colors.
+        _fg_color_code (str | int | None): The symbol's foreground color code.
+        _bg_color_code (str | int | None): The symbol's background color code.
 
     Attributes:
-        formatted_symbol (str): the current symbol with all ANSI sequences applied
+        formatted_symbol (str): The current symbol with all ANSI sequences applied.
+
+    Methods:
+        format_symbol: Formats the symbol for printing by applying ANSI sequences for any active modes and color.
+
     """
 
     symbol: str
@@ -42,17 +63,17 @@ class CharacterVisual:
     hidden: bool = False
     strike: bool = False
     colors: graphics.ColorPair | None = None  # the Color object provided during initialization
-    # the _*_color_code attributes are used to store the actual 8-bit int or 24-bit hex str after applying terminal config args
-    # these are used by colorterm to produce the ansi sequences, the *_color Color objects are present to enable
-    # programmatic access to the character's current visual color
+    # the _*_color_code attributes are used to store the actual 8-bit int or 24-bit hex str after applying terminal
+    # config args these are used by colorterm to produce the ansi sequences
     _fg_color_code: str | int | None = None
     _bg_color_code: str | int | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Create the formatted symbol by applying ANSI sequences for any active modes and color."""
         self.formatted_symbol = self.format_symbol()
 
     def format_symbol(self) -> str:
-        """Formats the symbol for printing by applying ANSI sequences for any active modes and color."""
+        """Format the symbol for printing by applying ANSI sequences for any active modes and color."""
         formatting_string = ""
         if self.bold:
             formatting_string += ansitools.APPLY_BOLD()
@@ -88,26 +109,19 @@ class Frame:
         character_visual (CharacterVisual): the CharacterVisual object for the Frame
         duration (int): the number of ticks to display the Frame
         ticks_elapsed (int): the number of ticks that have elapsed displaying this frame
+
     """
 
     character_visual: CharacterVisual
     duration: int
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Initialize the ticks_elapsed attribute to 0."""
         self.ticks_elapsed = 0
 
 
 class Scene:
     """A Scene is a collection of Frames that can be played in sequence. Scenes can be looped and synced to movement.
-
-    Args:
-        scene_id (str): the ID of the Scene
-        is_looping (bool, optional): Whether the Scene should loop. Defaults to False.
-        sync (Scene.SyncMetric | None, optional): The type of sync to use for the Scene. Defaults to None.
-        ease (easing.EasingFunction | None, optional): The easing function to use for the Scene. Defaults to None.
-        no_color (bool, optional): Whether to ignore colors. Defaults to False.
-        use_xterm_colors (bool, optional): Whether to convert all colors to XTerm-256 colors. Defaults to False.
-        preexisting_colors (graphics.ColorPair | None, optional): The preexisting colors to use for the Scene. Defaults to None.
 
     Methods:
         add_frame: Adds a Frame to the Scene.
@@ -128,9 +142,11 @@ class Scene:
         frame_index_map (dict[int, Frame]): A mapping of frame index to Frame
         easing_total_steps (int): The total number of steps in the easing function
         easing_current_step (int): The current step in the easing function
+        preexisting_colors (graphics.ColorPair | None): The preexisting colors parsed from the input.
+
     """
 
-    xterm_color_map: dict[str, int] = {}
+    xterm_color_map: typing.ClassVar[dict[str, int]] = {}
 
     class SyncMetric(Enum):
         """Enum for specifying the type of sync to use for a Scene.
@@ -138,6 +154,7 @@ class Scene:
         Attributes:
             DISTANCE (int): Sync to a Waypoint based on distance from the Waypoint
             STEP (int): Sync to a Waypoint based on the number of steps taken towards the Waypoint
+
         """
 
         DISTANCE = auto()
@@ -146,14 +163,14 @@ class Scene:
     def __init__(
         self,
         scene_id: str,
+        *,
         is_looping: bool = False,
         sync: SyncMetric | None = None,
         ease: easing.EasingFunction | None = None,
         no_color: bool = False,
         use_xterm_colors: bool = False,
-        preexisting_colors: graphics.ColorPair | None = None,
-    ):
-        """Initializes a Scene.
+    ) -> None:
+        """Initialize a Scene.
 
         Args:
             scene_id (str): the ID of the Scene
@@ -162,6 +179,7 @@ class Scene:
             ease (easing.EasingFunction | None, optional): The easing function to use for the Scene. Defaults to None.
             no_color (bool, optional): Whether to colors should be ignored. Defaults to False.
             use_xterm_colors (bool, optional): Whether to convert all colors to XTerm-256 colors. Defaults to False.
+
         """
         self.scene_id = scene_id
         self.is_looping = is_looping
@@ -169,37 +187,38 @@ class Scene:
         self.ease: easing.EasingFunction | None = ease
         self.no_color = no_color
         self.use_xterm_colors = use_xterm_colors
-        self.preexisting_colors: graphics.ColorPair | None = preexisting_colors
         self.frames: list[Frame] = []
         self.played_frames: list[Frame] = []
         self.frame_index_map: dict[int, Frame] = {}
         self.easing_total_steps: int = 0
         self.easing_current_step: int = 0
+        self.preexisting_colors: graphics.ColorPair | None = None
 
     def _get_color_code(self, color: graphics.Color | None) -> str | int | None:
-        """Get the color code for the given color. RGB colors are converted to XTerm-256 colors if use_xterm_colors
-        is True. If no_color is True, returns None. Otherwise, returns the RGB color.
+        """Get the color code for the given color.
+
+        RGB colors are converted to XTerm-256 colors if use_xterm_colors is True.
+        If no_color is True, returns None. Otherwise, returns the RGB color.
 
         Args:
             color (graphics.Color | None): the color to get the code for
 
         Returns:
             str | int | None: the color code
+
         """
         if color:
             if self.no_color:
                 return None
-            elif self.use_xterm_colors:
+            if self.use_xterm_colors:
                 if color.xterm_color is not None:
                     return color.xterm_color
-                elif color.rgb_color in self.xterm_color_map:
+                if color.rgb_color in self.xterm_color_map:
                     return self.xterm_color_map[color.rgb_color]
-                else:
-                    xterm_color = hexterm.hex_to_xterm(color.rgb_color)
-                    self.xterm_color_map[color.rgb_color] = xterm_color
-                    return xterm_color
-            else:
-                return color.rgb_color
+                xterm_color = hexterm.hex_to_xterm(color.rgb_color)
+                self.xterm_color_map[color.rgb_color] = xterm_color
+                return xterm_color
+            return color.rgb_color
         return None
 
     def add_frame(
@@ -208,16 +227,16 @@ class Scene:
         duration: int,
         *,
         colors: graphics.ColorPair | None = None,
-        bold=False,
-        dim=False,
-        italic=False,
-        underline=False,
-        blink=False,
-        reverse=False,
-        hidden=False,
-        strike=False,
+        bold: bool = False,
+        dim: bool = False,
+        italic: bool = False,
+        underline: bool = False,
+        blink: bool = False,
+        reverse: bool = False,
+        hidden: bool = False,
+        strike: bool = False,
     ) -> None:
-        """Adds a Frame to the Scene with the given symbol, duration, color, and graphical modes.
+        """Add a Frame to the Scene with the given symbol, duration, color, and graphical modes.
 
         Args:
             symbol (str): the symbol to show
@@ -231,6 +250,10 @@ class Scene:
             reverse (bool, optional): reverse mode. Defaults to False.
             hidden (bool, optional): hidden mode. Defaults to False.
             strike (bool, optional): strike mode. Defaults to False.
+
+        Raises:
+            FrameDurationError: if the frame duration is less than 1
+
         """
         # override fg and bg colors if they are set in the Scene due to existing color handling = always
         if self.preexisting_colors:
@@ -245,7 +268,7 @@ class Scene:
             char_vis_bg_color = None
 
         if duration < 1:
-            raise ValueError("duration must be greater than 0")
+            raise FrameDurationError(duration)
         char_vis = CharacterVisual(
             symbol,
             bold=bold,
@@ -267,31 +290,34 @@ class Scene:
             self.easing_total_steps += 1
 
     def activate(self) -> CharacterVisual:
-        """Activates the Scene by returning the first frame CharacterVisual. Called by the Animation object when the Scene is activated.
+        """Activate the Scene by returning the first frame `CharacterVisual`.
+
+        Called by the `Animation` object when the Scene is activated.
 
         Raises:
-            ValueError: if the Scene has no frames
+            ActivateEmptySceneError: if the Scene has no frames
 
         Returns:
             CharacterVisual: the next CharacterVisual in the Scene
+
         """
         if self.frames:
             return self.frames[0].character_visual
-        else:
-            raise ValueError(f"Scene {self.scene_id} - Unable to activate, scene has no frames.")
+        raise ActivateEmptySceneError(self)
 
     def get_next_visual(self) -> CharacterVisual:
-        """
-        This method is used to get the next CharacterVisual in the Scene. It first retrieves the current frame from the frames list.
-        It then increments the ticks_elapsed attribute of the Frame. If the ticks_elapsed equals the duration
-        of the current frame, it resets ticks_elapsed to 0 and moves the current frame from the frames list to the
-        played_frames list. If the Scene is set to loop and all frames have been played, it refills the frames list with the
-        frames from played_frames and clears played_frames. Finally, it returns the CharacterVisual of the current frame.
+        """Get the next CharacterVisual in the Scene.
+
+        Retrieve the current frame from `frames`, then increment the `ticks_elapsed` attribute of the Frame.
+        If the `ticks_elapsed` equals the duration of the current frame, reset `ticks_elapsed` to `0` and move the
+        current frame from `frames` to `played_frames`. If the `Scene` is set to `loop` and
+        all frames have been played, refill `frames` with the frames from `played_frames` and clear
+        `played_frames`. Return the `CharacterVisual` of the current frame.
 
         Returns:
             CharacterVisual: The visual of the current frame in the Scene.
-        """
 
+        """
         current_frame = self.frames[0]
         next_visual = current_frame.character_visual
         current_frame.ticks_elapsed += 1
@@ -311,8 +337,7 @@ class Scene:
         fg_gradient: graphics.Gradient | None = None,
         bg_gradient: graphics.Gradient | None = None,
     ) -> None:
-        """
-        Applies a gradient effect to a sequence of symbols and adds each symbol as a frame to the Scene.
+        """Apply a gradient effect to a sequence of symbols and add each symbol as a frame to the Scene.
 
         Args:
             symbols (Sequence[str]): The sequence of symbols to apply the gradient to.
@@ -324,13 +349,16 @@ class Scene:
             None
 
         Raises:
-            ValueError: If fg and bg are both False or if the gradient has no colors in the spectrum.
+            ApplyGradientToSymbolsNoGradientsError: if both fg_gradient and bg_gradient are None
+            ApplyGradientToSymbolsEmptyGradientsError: if both fg_gradient and bg_gradient are empty
+
         """
         T = typing.TypeVar("T")
         R = typing.TypeVar("R")
 
         def cyclic_distribution(
-            larger_seq: typing.Sequence[T], smaller_seq: typing.Sequence[R]
+            larger_seq: typing.Sequence[T],
+            smaller_seq: typing.Sequence[R],
         ) -> typing.Generator[tuple[T, R], None, None]:
             """Distributes the elements of a smaller sequence cyclically across a larger sequence with overflow.
 
@@ -342,7 +370,9 @@ class Scene:
                 smaller_seq (typing.Sequence[R]): the smaller sequence
 
             Yields:
-                typing.Generator[tuple[T, R], None, None]: a generator yielding tuples of elements from the larger and smaller sequences
+                typing.Generator[tuple[T, R], None, None]: a generator yielding tuples of elements from the
+                    larger and smaller sequences
+
             """
             repeat_factor = len(larger_seq) // len(smaller_seq)
             overflow_count = len(larger_seq) % len(smaller_seq)
@@ -366,12 +396,10 @@ class Scene:
                 current_repeat_factor += 1
                 yield larger_seq_element, smaller_seq[smaller_index]
 
-        if not fg_gradient and not bg_gradient:
-            raise ValueError("Must provide at least one gradient to apply.")
+        if fg_gradient is None and bg_gradient is None:
+            raise ApplyGradientToSymbolsNoGradientsError
         if not ((fg_gradient and fg_gradient.spectrum) or (bg_gradient and bg_gradient.spectrum)):
-            raise ValueError(
-                "fg_gradient and bg_gradient have empty spectrums. Gradient must have at least one color in the spectrum."
-            )
+            raise ApplyGradientToSymbolsEmptyGradientsError
         color_pairs: list[graphics.ColorPair] = []
         if fg_gradient and fg_gradient.spectrum and bg_gradient and bg_gradient.spectrum:
             if len(fg_gradient.spectrum) >= len(bg_gradient.spectrum):
@@ -384,11 +412,10 @@ class Scene:
                     graphics.ColorPair(fg_color=fg_color, bg_color=bg_color)
                     for bg_color, fg_color in cyclic_distribution(bg_gradient.spectrum, fg_gradient.spectrum)
                 ]
-        else:
-            if fg_gradient and fg_gradient.spectrum:
-                color_pairs = [graphics.ColorPair(fg_color=color, bg_color=None) for color in fg_gradient.spectrum]
-            elif bg_gradient and bg_gradient.spectrum:
-                color_pairs = [graphics.ColorPair(fg_color=None, bg_color=color) for color in bg_gradient.spectrum]
+        elif fg_gradient and fg_gradient.spectrum:
+            color_pairs = [graphics.ColorPair(fg_color=color, bg_color=None) for color in fg_gradient.spectrum]
+        elif bg_gradient and bg_gradient.spectrum:
+            color_pairs = [graphics.ColorPair(fg_color=None, bg_color=color) for color in bg_gradient.spectrum]
 
         if len(symbols) >= len(color_pairs):
             for symbol, colors in cyclic_distribution(symbols, color_pairs):
@@ -398,7 +425,7 @@ class Scene:
                 self.add_frame(symbol, duration, colors=colors)
 
     def reset_scene(self) -> None:
-        """Resets the Scene."""
+        """Reset the Scene."""
         for sequence in self.frames:
             sequence.ticks_elapsed = 0
             self.played_frames.append(sequence)
@@ -406,45 +433,55 @@ class Scene:
         self.frames.extend(self.played_frames)
         self.played_frames.clear()
 
-    def __eq__(self, other: typing.Any):
+    def __eq__(self, other: object) -> bool:
+        """Check if two Scene objects are equal based on their scene_id."""
         if not isinstance(other, Scene):
             return NotImplemented
         return self.scene_id == other.scene_id
 
-    def __hash__(self):
+    def __hash__(self) -> int:
+        """Return the hash value of the Scene based on its scene_id."""
         return hash(self.scene_id)
 
 
 class Animation:
-    def __init__(self, character: "base_character.EffectCharacter"):
-        """Animation handles the animations of a character. It contains a scene_name -> Scene mapping and the active Scene. Calls to step_animation()
-        progress the Scene and apply the next visual to the character.
+    """Animation handler for an EffectCharacter.
+
+    It contains a scene_name -> Scene mapping and the active Scene. Calls to step_animation()
+    progress the Scene and apply the next visual to the character.
+
+
+    Attributes:
+        scenes (dict[str, Scene]): a mapping of scene IDs to Scene objects
+        character (base_character.EffectCharacter): the EffectCharacter object to animate
+        active_scene (Scene | None): the active Scene
+        use_xterm_colors (bool): whether to convert all colors to XTerm-256 colors
+        no_color (bool): whether to ignore colors
+        existing_color_handling (str): how to handle color ANSI sequences from the input data
+        input_fg_color (graphics.Color | None): the input foreground Color
+        input_bg_color (graphics.Color | None): the input background Color
+        xterm_color_map (dict[str, int]): a mapping of RGB color codes to XTerm-256 color codes
+        active_scene_current_step (int): the current step in the active Scene
+        current_character_visual (CharacterVisual): the current visual of the character
+
+    Methods:
+        new_scene: Creates a new Scene and adds it to the Animation.
+        query_scene: Returns a Scene from the Animation.
+        active_scene_is_complete: Returns whether the active scene is complete.
+        set_appearance: Applies a symbol and color to the character.
+        adjust_color_brightness: Adjusts the brightness of a given color.
+        _ease_animation: Returns the percentage of total distance that should be moved based on the easing function.
+        step_animation: Apply the next symbol in the scene to the character.
+        activate_scene: Activates a Scene.
+
+    """
+
+    def __init__(self, character: base_character.EffectCharacter) -> None:
+        """Initialize the Animation object.
 
         Args:
             character (base_character.EffectCharacter): the EffectCharacter object to animate
 
-        Attributes:
-            scenes (dict[str, Scene]): a mapping of scene IDs to Scene objects
-            character (base_character.EffectCharacter): the EffectCharacter object to animate
-            active_scene (Scene | None): the active Scene
-            use_xterm_colors (bool): whether to convert all colors to XTerm-256 colors
-            no_color (bool): whether to ignore colors
-            existing_color_handling (str): how to handle color ANSI sequences from the input data
-            input_fg_color (graphics.Color | None): the input foreground Color
-            input_bg_color (graphics.Color | None): the input background Color
-            xterm_color_map (dict[str, int]): a mapping of RGB color codes to XTerm-256 color codes
-            active_scene_current_step (int): the current step in the active Scene
-            current_character_visual (CharacterVisual): the current visual of the character
-
-        Methods:
-            new_scene: Creates a new Scene and adds it to the Animation.
-            query_scene: Returns a Scene from the Animation.
-            active_scene_is_complete: Returns whether the active scene is complete.
-            set_appearance: Applies a symbol and color to the character.
-            adjust_color_brightness: Adjusts the brightness of a given color.
-            _ease_animation: Returns the percentage of total distance that should be moved based on the easing function.
-            step_animation: Apply the next symbol in the scene to the character.
-            activate_scene: Activates a Scene.
         """
         self.scenes: dict[str, Scene] = {}
         self.character = character
@@ -459,7 +496,9 @@ class Animation:
         self.current_character_visual: CharacterVisual = CharacterVisual(character.input_symbol)
 
     def _get_color_code(self, color: graphics.Color | None) -> str | int | None:
-        """Get the color code for the given color. RGB colors are converted to XTerm-256 colors if use_xterm_colors
+        """Get the color code for the given color.
+
+        RGB colors are converted to XTerm-256 colors if use_xterm_colors
         is True. If no_color is True, returns None. Otherwise, returns the RGB color.
 
         Args:
@@ -467,21 +506,20 @@ class Animation:
 
         Returns:
             str | int | None: the color code
+
         """
         if color:
             if self.no_color:
                 return None
-            elif self.use_xterm_colors:
+            if self.use_xterm_colors:
                 if color.xterm_color is not None:
                     return color.xterm_color
-                elif color.rgb_color in self.xterm_color_map:
+                if color.rgb_color in self.xterm_color_map:
                     return self.xterm_color_map[color.rgb_color]
-                else:
-                    xterm_color = hexterm.hex_to_xterm(color.rgb_color)
-                    self.xterm_color_map[color.rgb_color] = xterm_color
-                    return xterm_color
-            else:
-                return color.rgb_color
+                xterm_color = hexterm.hex_to_xterm(color.rgb_color)
+                self.xterm_color_map[color.rgb_color] = xterm_color
+                return xterm_color
+            return color.rgb_color
         return None
 
     def new_scene(
@@ -492,7 +530,7 @@ class Animation:
         ease: easing.EasingFunction | None = None,
         id: str = "",
     ) -> Scene:
-        """Creates a new Scene and adds it to the Animation. If no ID is provided, a unique ID is generated.
+        """Create a new Scene and adds it to the Animation. If no ID is provided, a unique ID is generated.
 
         Args:
             id (str): Unique name for the scene. Used to query for the scene.
@@ -502,6 +540,7 @@ class Animation:
 
         Returns:
             Scene: the new Scene
+
         """
         if not id:
             found_unique = False
@@ -523,13 +562,13 @@ class Animation:
             ease=ease,
             no_color=self.no_color,
             use_xterm_colors=self.use_xterm_colors,
-            preexisting_colors=preexisting_colors,
         )
+        new_scene.preexisting_colors = preexisting_colors
         self.scenes[id] = new_scene
         return new_scene
 
     def query_scene(self, scene_id: str) -> Scene:
-        """Returns a Scene from the Animation. If the scene doesn't exist, raises a ValueError.
+        """Return a Scene from the Animation. If the scene doesn't exist, raises a ValueError.
 
         Args:
             scene_id (str): the ID of the Scene
@@ -539,33 +578,34 @@ class Animation:
 
         Returns:
             Scene: the Scene
+
         """
         scene = self.scenes.get(scene_id, None)
         if not scene:
-            raise ValueError(f"Scene {scene_id} does not exist.")
+            raise SceneNotFoundError(scene_id)
         return scene
 
     def active_scene_is_complete(self) -> bool:
-        """Returns whether the active scene is complete. A scene is complete if all sequences have been played.
-        Looping scenes are always complete.
+        """Return whether the active scene is complete.
+
+        A scene is complete if all sequences have been played. Looping scenes are always complete.
 
         Returns:
             bool: True if complete, False otherwise
-        """
-        if not self.active_scene:
-            return True
-        elif not self.active_scene.frames or self.active_scene.is_looping:
-            return True
 
-        return False
+        """
+        return bool(not self.active_scene or not self.active_scene.frames or self.active_scene.is_looping)
 
     def set_appearance(self, symbol: str, colors: graphics.ColorPair | None = None) -> None:
-        """Updates the current character visual with the symbol and colors provided. If the character has an active scene, any appearance set with this method
+        """Update the current character visual with the symbol and colors provided.
+
+        If the character has an active scene, any appearance set with this method
         will be overwritten when the scene is stepped to the next frame.
 
         Args:
             symbol (str): The symbol to apply.
             colors (graphics.ColorPair | None): The colors to apply.
+
         """
         # override fg and bg colors if they are set in the Scene due to existing color handling = always
         if colors is None:
@@ -588,8 +628,7 @@ class Animation:
 
     @staticmethod
     def adjust_color_brightness(color: graphics.Color, brightness: float) -> graphics.Color:
-        """
-        Adjusts the brightness of a given color.
+        """Adjust the brightness of a given color.
 
         Args:
             color (Color): The color code to adjust.
@@ -597,11 +636,11 @@ class Animation:
 
         Returns:
             Color: The adjusted color code.
+
         """
 
         def hue_to_rgb(lightness_scaled: float, color_intensity: float, hue_value: float) -> float:
-            """
-            Converts a hue value to an RGB value component.
+            """Convert a hue value to an RGB value component.
 
             This function is a helper function used in the conversion from HSL (Hue, Saturation, Lightness)
             color space to RGB (Red, Green, Blue) color space. It takes in three parameters: lightness_scaled,
@@ -609,14 +648,15 @@ class Animation:
             to calculate the corresponding RGB value.
 
             Args:
-                lightness_scaled (float): The lightness value from the HSL color space, scaled and shifted to be used in the RGB conversion.
+                lightness_scaled (float): The lightness value from the HSL color space, scaled and shifted to be used in
+                    the RGB conversion.
                 color_intensity (float): The intensity of the color, used to adjust the RGB values.
                 hue_value (float): The hue value from the HSL color space, used to calculate the RGB values.
 
             Returns:
                 float: The calculated RGB component.
-            """
 
+            """
             if hue_value < 0:
                 hue_value += 1
             if hue_value > 1:
@@ -642,7 +682,10 @@ class Animation:
             hue_value = saturation = 0.0  # achromatic
         else:
             diff = max_val - min_val
-            saturation = diff / (2 - max_val - min_val) if lightness > 0.5 else diff / (max_val + min_val)
+            lightness_threshold = 0.5
+            saturation = (
+                diff / (2 - max_val - min_val) if lightness > lightness_threshold else diff / (max_val + min_val)
+            )
             if max_val == normalized_red:
                 hue_value = (normalized_green - normalized_blue) / diff + (
                     6 if normalized_green < normalized_blue else 0
@@ -661,7 +704,9 @@ class Animation:
             red = green = blue = lightness  # achromatic
         else:
             color_intensity = (
-                lightness * (1 + saturation) if lightness < 0.5 else lightness + saturation - lightness * saturation
+                lightness * (1 + saturation)
+                if lightness < lightness_threshold
+                else lightness + saturation - lightness * saturation
             )
             lightness_scaled = 2 * lightness - color_intensity
             red = hue_to_rgb(lightness_scaled, color_intensity, hue_value + 1 / 3)
@@ -669,26 +714,29 @@ class Animation:
             blue = hue_to_rgb(lightness_scaled, color_intensity, hue_value - 1 / 3)
 
         # Convert to hex
-        adjusted_color = "{:02x}{:02x}{:02x}".format(int(red * 255), int(green * 255), int(blue * 255))
+        adjusted_color = f"{int(red * 255):02x}{int(green * 255):02x}{int(blue * 255):02x}"
         return graphics.Color(adjusted_color)
 
     def _ease_animation(self, easing_func: easing.EasingFunction) -> float:
-        """Returns the percentage of total distance that should be moved based on the easing function.
+        """Return the percentage of total distance that should be moved based on the easing function.
 
         Args:
             easing_func (easing.EasingFunction): The easing function to use.
 
         Returns:
             float: The percentage of total distance to move.
-        """
 
+        """
         if self.active_scene is None:
             return 0
         elapsed_step_ratio = self.active_scene.easing_current_step / self.active_scene.easing_total_steps
         return easing_func(elapsed_step_ratio)
 
-    def step_animation(self) -> None:
-        """Progresses the Scene and applies the next visual to the character. If the active scene is complete, a SCENE_COMPLETE event is triggered."""
+    def step_animation(self) -> None:  # noqa: PLR0912
+        """Progress the Scene and apply the next visual to the character.
+
+        If the active scene is complete, a SCENE_COMPLETE event is triggered.
+        """
         if self.active_scene and self.active_scene.frames:
             # if the active scene is synced to movement, calculate the sequence index based on the
             # current waypoint progress
@@ -700,7 +748,7 @@ class Animation:
                             * (
                                 max(self.character.motion.active_path.current_step, 1)
                                 / max(self.character.motion.active_path.max_steps, 1)
-                            )
+                            ),
                         )
                     elif self.active_scene.sync == Scene.SyncMetric.DISTANCE:
                         sequence_index = round(
@@ -716,13 +764,14 @@ class Animation:
                                     1,
                                 )
                                 / max(self.character.motion.active_path.total_distance, 1)
-                            )
+                            ),
                         )
                     try:
                         self.current_character_visual = self.active_scene.frames[sequence_index].character_visual
                     except IndexError:
                         self.current_character_visual = self.active_scene.frames[-1].character_visual
-                else:  # when the active waypoint has been deactivated, use the final symbol in the scene and finish the scene
+                # when the active waypoint has been deactivated, use the final symbol in the scene and finish the scene
+                else:
                     self.current_character_visual = self.active_scene.frames[-1].character_visual
                     self.active_scene.played_frames.extend(self.active_scene.frames)
                     self.active_scene.frames.clear()
@@ -750,14 +799,18 @@ class Animation:
                     self.active_scene = None
 
                 self.character.event_handler._handle_event(
-                    self.character.event_handler.Event.SCENE_COMPLETE, completed_scene
+                    self.character.event_handler.Event.SCENE_COMPLETE,
+                    completed_scene,
                 )
 
     def activate_scene(self, scene: Scene) -> None:
-        """Sets the active scene and updates the current character visual. A SCENE_ACTIVATED event is triggered.
+        """Set the active scene and updates the current character visual.
+
+        A SCENE_ACTIVATED event is triggered.
 
         Args:
             scene (Scene): the Scene to set as active
+
         """
         self.active_scene = scene
         self.active_scene_current_step = 0
@@ -769,6 +822,7 @@ class Animation:
 
         Args:
             scene (Scene): the Scene to deactivate
+
         """
         if self.active_scene is scene:
             self.active_scene = None
