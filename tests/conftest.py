@@ -1,4 +1,8 @@
+"""Pytest fixtures and constants for terminaltexteffects package."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Literal
 
 import pytest
 
@@ -37,7 +41,6 @@ from terminaltexteffects.effects import (
     effect_waves,
     effect_wipe,
 )
-from terminaltexteffects.engine.base_effect import BaseEffect
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils import geometry
 from terminaltexteffects.utils.easing import (
@@ -74,6 +77,11 @@ from terminaltexteffects.utils.easing import (
     out_sine,
 )
 from terminaltexteffects.utils.graphics import Color, Gradient
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from terminaltexteffects.engine.base_effect import BaseEffect
 
 INPUT_EMPTY = ""
 INPUT_SINGLE_CHAR = "a"
@@ -118,7 +126,11 @@ T        |              |                       H
 -                       |                       @
 BL--------------------BOTTOM...................BR"""
 
-COLOR_SEQUENCES = """[38;5;231m....[39m....| [38;5;95m[48;5;128mggggggg[0m [38;5;180mggggggg [38;5;146m:gggggg; [38;5;64mggggggg [38;5;182mggggggg [38;5;195m:gggggg; [38;5;214mggggggg [38;5;146m;gggggg  [38;5;174mggggggg [0m"""
+COLOR_SEQUENCES = (
+    "\x1b[38;5;231m....\x1b[39m....| \x1b[38;5;95m\x1b[48;5;128mggggggg\x1b[0m \x1b[38;5;180mggggggg "
+    "\x1b[38;5;146m:gggggg; \x1b[38;5;64mggggggg \x1b[38;5;182mggggggg \x1b[38;5;195m:gggggg; "
+    "\x1b[38;5;214mggggggg \x1b[38;5;146m;gggggg  \x1b[38;5;174mggggggg \x1b[0m"
+)
 
 TEST_INPUTS = {
     "empty": INPUT_EMPTY,
@@ -204,67 +216,78 @@ EASING_FUNCTIONS = [
 ANCHORS = ["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"]
 
 
-@pytest.fixture(scope="function", autouse=True)
-def clear_lru_cache():
+@pytest.fixture(autouse=True)
+def clear_lru_cache() -> Generator[None, Any, None]:
+    """Fixture to clear the LRU caches for geometry functions."""
     yield
-    geometry.find_coords_on_circle.cache_clear()
-    geometry.find_coords_in_circle.cache_clear()
-    geometry.find_coords_in_rect.cache_clear()
-    geometry.find_coord_at_distance.cache_clear()
-    geometry.find_coord_on_bezier_curve.cache_clear()
-    geometry.find_coord_on_line.cache_clear()
-    geometry.find_length_of_bezier_curve.cache_clear()
-    geometry.find_length_of_line.cache_clear()
-    geometry.find_normalized_distance_from_center.cache_clear()
+    geometry.find_coords_on_circle.cache_clear()  # type: ignore[attr-defined]
+    geometry.find_coords_in_circle.cache_clear()  # type: ignore[attr-defined]
+    geometry.find_coords_in_rect.cache_clear()  # type: ignore[attr-defined]
+    geometry.find_coord_at_distance.cache_clear()  # type: ignore[attr-defined]
+    geometry.find_coord_on_bezier_curve.cache_clear()  # type: ignore[attr-defined]
+    geometry.find_coord_on_line.cache_clear()  # type: ignore[attr-defined]
+    geometry.find_length_of_bezier_curve.cache_clear()  # type: ignore[attr-defined]
+    geometry.find_length_of_line.cache_clear()  # type: ignore[attr-defined]
+    geometry.find_normalized_distance_from_center.cache_clear()  # type: ignore[attr-defined]
 
 
-@pytest.fixture()
+@pytest.fixture
 def input_data(request: pytest.FixtureRequest) -> str:
+    """Fixture to provide input data for tests."""
     return TEST_INPUTS[request.param]
 
 
 @pytest.fixture(params=EFFECTS)
 def effect(request: pytest.FixtureRequest) -> BaseEffect:
+    """Fixture to provide effect instances for tests."""
     return request.param
 
 
 @pytest.fixture(params=EASING_FUNCTIONS)
 def easing_function_1(request: pytest.FixtureRequest) -> EasingFunction:
+    """Fixture to provide the first easing function for tests."""
     return request.param
 
 
 @pytest.fixture(params=EASING_FUNCTIONS)
 def easing_function_2(request: pytest.FixtureRequest) -> EasingFunction:
+    """Fixture to provide the second easing function for tests."""
     return request.param
 
 
 @pytest.fixture(params=[True, False])
 def no_color(request: pytest.FixtureRequest) -> bool:
+    """Fixture to provide a boolean indicating whether to disable color."""
     return request.param
 
 
 @pytest.fixture(params=[True, False])
 def xterm_colors(request: pytest.FixtureRequest) -> bool:
+    """Fixture to provide a boolean indicating whether to use xterm colors."""
     return request.param
 
 
 @pytest.fixture(params=ANCHORS)
 def canvas_anchor(request: pytest.FixtureRequest) -> str:
+    """Fixture to provide canvas anchor positions for tests."""
     return request.param
 
 
 @pytest.fixture(params=ANCHORS)
 def text_anchor(request: pytest.FixtureRequest) -> str:
+    """Fixture to provide text anchor positions for tests."""
     return request.param
 
 
 @pytest.fixture(params=[(60, 30), (25, 8)], ids=["60x30", "25x8"])
 def canvas_dimensions(request: pytest.FixtureRequest) -> tuple[int, int]:
+    """Fixture to provide canvas dimensions for tests."""
     return request.param
 
 
-@pytest.fixture()
-def terminal_config_with_color_options(xterm_colors, no_color) -> TerminalConfig:
+@pytest.fixture
+def terminal_config_with_color_options(xterm_colors: bool, no_color: bool) -> TerminalConfig:  # noqa: FBT001
+    """Fixture to provide terminal configuration with color options."""
     terminal_config = TerminalConfig()
     terminal_config.xterm_colors = xterm_colors
     terminal_config.no_color = no_color
@@ -272,15 +295,21 @@ def terminal_config_with_color_options(xterm_colors, no_color) -> TerminalConfig
     return terminal_config
 
 
-@pytest.fixture()
+@pytest.fixture
 def terminal_config_default_no_framerate() -> TerminalConfig:
+    """Fixture to provide terminal configuration with default settings and no frame rate."""
     terminal_config = TerminalConfig()
     terminal_config.frame_rate = 0
     return terminal_config
 
 
-@pytest.fixture()
-def terminal_config_with_anchoring(canvas_dimensions, canvas_anchor, text_anchor) -> TerminalConfig:
+@pytest.fixture
+def terminal_config_with_anchoring(
+    canvas_dimensions: tuple[int, int],
+    canvas_anchor: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"],
+    text_anchor: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"],
+) -> TerminalConfig:
+    """Fixture to provide terminal configuration with anchoring options."""
     terminal_config = TerminalConfig()
     terminal_config.frame_rate = 0
     terminal_config.canvas_width = canvas_dimensions[0]
@@ -292,16 +321,19 @@ def terminal_config_with_anchoring(canvas_dimensions, canvas_anchor, text_anchor
 
 @pytest.fixture(params=[(Color("000000"), Color("ff00ff"), Color("0ffff0")), (Color("ff0fff"),)])
 def gradient_stops(request: pytest.FixtureRequest) -> Color | tuple[Color, ...]:
+    """Fixture to provide gradient stops for tests."""
     return request.param
 
 
 @pytest.fixture(params=[1, 4, (1, 3)])
 def gradient_steps(request: pytest.FixtureRequest) -> int | tuple[int, ...]:
+    """Fixture to provide gradient steps for tests."""
     return request.param
 
 
 @pytest.fixture(params=[1, 4])
 def gradient_frames(request: pytest.FixtureRequest) -> int:
+    """Fixture to provide gradient frames for tests."""
     return request.param
 
 
@@ -311,12 +343,14 @@ def gradient_frames(request: pytest.FixtureRequest) -> int:
         Gradient.Direction.HORIZONTAL,
         Gradient.Direction.VERTICAL,
         Gradient.Direction.RADIAL,
-    ]
+    ],
 )
 def gradient_direction(request: pytest.FixtureRequest) -> Gradient.Direction:
+    """Fixture to provide gradient direction for tests."""
     return request.param
 
 
 @pytest.fixture(params=[True, False])
 def bool_arg(request: pytest.FixtureRequest) -> bool:
+    """Fixture to provide boolean arguments for tests."""
     return request.param
