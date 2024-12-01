@@ -1,8 +1,7 @@
-"""
-This module provides utility functions for geometric calculations and operations.
+"""Utility functions for geometric calculations and operations.
 
-The purpose of these functions is to find terminal coordinates that fall within certain regions or along certain paths. These functions are
-used by effects to enable more complex animations and movement paths.
+The purpose of these functions is to find terminal coordinates that fall within certain regions or along certain paths.
+These functions are used by effects to enable more complex animations and movement paths.
 
 Functions:
     find_coords_on_circle: Finds points on a circle given the origin, radius, and number of points.
@@ -29,23 +28,27 @@ class Coord:
 
     Args:
         column (int): column value
-        row (int): row value"""
+        row (int): row value
+
+    """
 
     column: int
     row: int
 
 
-def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, unique: bool = True) -> list[Coord]:
-    """Finds points on a circle.
+def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, unique: bool = True) -> list[Coord]:
+    """Find points on a circle.
 
     Args:
         origin (Coord): origin of the circle
         radius (int): radius of the circle
-        coords_limit (int): limit the number of coords returned, if 0, the number of points is calculated based on the circumference of the circle
+        coords_limit (int): limit the number of coords returned, if 0, the number of points is calculated based on the
+            circumference of the circle
         unique (bool): whether to remove duplicate points. Defaults to True.
 
     Returns:
         list (Coord): list of Coord points on the circle
+
     """
     points: list[Coord] = []
     if not radius:
@@ -76,8 +79,7 @@ find_coords_on_circle = functools.wraps(find_coords_on_circle)(functools.lru_cac
 
 
 def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
-    """
-    Find the coordinates within an circle given the center and diameter. The actual
+    """Find the coordinates within an circle given the center and diameter. The actual
     shape calculated is an ellipse with a major axis of length diameter, however the
     terminal cell height/width ratio creates a circle visually.
 
@@ -87,8 +89,8 @@ def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
 
     Returns:
         list[Coord]: A list of coordinates within the circle.
-    """
 
+    """
     h, k = center.column, center.row
     coords_in_ellipse: list[Coord] = []
     if not diameter:
@@ -120,6 +122,7 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
 
     Returns:
         list[Coord]: list of Coord points in the rectangle
+
     """
     left_boundary = origin.column - distance
     right_boundary = origin.column + distance
@@ -150,6 +153,7 @@ def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coo
 
     Returns:
         Coord: Coordinate at the given distance (c).
+
     """
     total_distance = find_length_of_line(origin, target) + distance
     if total_distance == 0 or origin == target:
@@ -163,13 +167,12 @@ def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coo
 
 
 find_coord_at_distance = functools.wraps(find_coord_at_distance)(
-    functools.lru_cache(maxsize=8192)(find_coord_at_distance)
+    functools.lru_cache(maxsize=8192)(find_coord_at_distance),
 )
 
 
 def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Coord, t: float) -> Coord:
-    """
-    Finds points on a bezier curve of any degree.
+    """Finds points on a bezier curve of any degree.
 
     Args:
         start (Coord): The starting coordinate of the curve.
@@ -179,6 +182,7 @@ def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Co
 
     Returns:
         Coord: The coordinate on the bezier curve corresponding to the given parameter value.
+
     """
     if not 0 <= t <= 1:
         raise ValueError("t must be between 0 and 1.")
@@ -199,13 +203,12 @@ def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Co
 
 
 find_coord_on_bezier_curve = functools.wraps(find_coord_on_bezier_curve)(
-    functools.lru_cache(maxsize=16384)(find_coord_on_bezier_curve)
+    functools.lru_cache(maxsize=16384)(find_coord_on_bezier_curve),
 )
 
 
 def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
-    """
-    Finds points on a line.
+    """Finds points on a line.
 
     Args:
         start (Coord): The starting coordinate of the line.
@@ -214,6 +217,7 @@ def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
 
     Returns:
         Coord: The coordinate on the line corresponding to the given parameter value.
+
     """
     if not 0 <= round(t) <= 1:
         raise ValueError("t must be between 0 and 1.")
@@ -226,8 +230,7 @@ find_coord_on_line = functools.wraps(find_coord_on_line)(functools.lru_cache(max
 
 
 def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord) -> float:
-    """
-    Finds the length of a bezier curve.
+    """Finds the length of a bezier curve.
 
     Args:
         start (Coord): The starting coordinate of the curve.
@@ -236,6 +239,7 @@ def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord
 
     Returns:
         float: The length of the bezier curve.
+
     """
     if isinstance(control, Coord):
         control = (control,)
@@ -250,7 +254,7 @@ def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord
 
 
 find_length_of_bezier_curve = functools.wraps(find_length_of_bezier_curve)(
-    functools.lru_cache(maxsize=4096)(find_length_of_bezier_curve)
+    functools.lru_cache(maxsize=4096)(find_length_of_bezier_curve),
 )
 
 
@@ -265,6 +269,7 @@ def find_length_of_line(coord1: Coord, coord2: Coord, double_row_diff: bool = Fa
 
     Returns:
         float: length of the line
+
     """
     column_diff = coord2.column - coord1.column
     row_diff = coord2.row - coord1.row
@@ -290,6 +295,7 @@ def find_normalized_distance_from_center(bottom: int, top: int, left: int, right
 
     Returns:
         float: Normalized distance from the center of the rectangle on the Canvas, float between 0 and 1.
+
     """
     y_offset = bottom - 1
     x_offset = left - 1
@@ -313,5 +319,5 @@ def find_normalized_distance_from_center(bottom: int, top: int, left: int, right
 
 
 find_normalized_distance_from_center = functools.wraps(find_normalized_distance_from_center)(
-    functools.lru_cache(maxsize=8192)(find_normalized_distance_from_center)
+    functools.lru_cache(maxsize=8192)(find_normalized_distance_from_center),
 )
