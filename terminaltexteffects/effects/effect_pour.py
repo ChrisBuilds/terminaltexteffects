@@ -12,9 +12,9 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, Terminal, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -43,7 +43,9 @@ class PourConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        easing (easing.EasingFunction): Easing function to use for character movement."""
+        easing (easing.EasingFunction): Easing function to use for character movement.
+
+    """
 
     pour_direction: typing.Literal["up", "down", "left", "right"] = ArgField(
         cmd_name=["--pour-direction"],
@@ -146,7 +148,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
         LEFT = auto()
         RIGHT = auto()
 
-    def __init__(self, effect: "Pour") -> None:
+    def __init__(self, effect: Pour) -> None:
         super().__init__(effect)
         self.pending_groups: list[list[EffectCharacter]] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
@@ -201,7 +203,9 @@ class PourIterator(BaseEffectIterator[PourConfig]):
                 )
                 pour_scn = character.animation.new_scene()
                 pour_scn.apply_gradient_to_symbols(
-                    character.input_symbol, self.config.final_gradient_frames, fg_gradient=pour_gradient
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    fg_gradient=pour_gradient,
                 )
                 character.animation.activate_scene(pour_scn)
             if i % 2 == 0:
@@ -228,8 +232,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
                     self.gap -= 1
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Pour(BaseEffect[PourConfig]):
@@ -238,6 +241,7 @@ class Pour(BaseEffect[PourConfig]):
     Attributes:
         effect_config (PourConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = PourConfig
@@ -247,5 +251,7 @@ class Pour(BaseEffect[PourConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

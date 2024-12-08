@@ -12,9 +12,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, Gradient
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -39,6 +39,7 @@ class RandomSequenceConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     starting_color: Color = ArgField(
@@ -103,7 +104,7 @@ class RandomSequenceConfig(ArgsDataClass):
 
 
 class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
-    def __init__(self, effect: "RandomSequence") -> None:
+    def __init__(self, effect: RandomSequence) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
@@ -125,7 +126,9 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
             gradient_scn = character.animation.new_scene()
             gradient = Gradient(self.config.starting_color, self.character_final_color_map[character], steps=7)
             gradient_scn.apply_gradient_to_symbols(
-                character.input_symbol, self.config.final_gradient_frames, fg_gradient=gradient
+                character.input_symbol,
+                self.config.final_gradient_frames,
+                fg_gradient=gradient,
             )
             character.animation.activate_scene(gradient_scn)
             self.pending_chars.append(character)
@@ -149,6 +152,7 @@ class RandomSequence(BaseEffect[RandomSequenceConfig]):
     Attributes:
         effect_config (PourConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = RandomSequenceConfig
@@ -158,5 +162,7 @@ class RandomSequence(BaseEffect[RandomSequenceConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

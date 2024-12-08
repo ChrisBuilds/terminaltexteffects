@@ -42,7 +42,9 @@ class SynthGridConfig(ArgsDataClass):
         grid_row_symbol (str): Symbol to use for grid row lines.
         grid_column_symbol (str): Symbol to use for grid column lines.
         text_generation_symbols (tuple[str, ...] | str): Tuple of characters for the text generation animation.
-        max_active_blocks (float): Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time. Valid values are 0 < n <= 1."""
+        max_active_blocks (float): Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent of the blocks will be active at any given time. Valid values are 0 < n <= 1.
+
+    """
 
     grid_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--grid-gradient-stops"],
@@ -223,7 +225,7 @@ class GridLine:
 
 
 class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
-    def __init__(self, effect: "SynthGrid") -> None:
+    def __init__(self, effect: SynthGrid) -> None:
         super().__init__(effect)
         self.pending_groups: list[tuple[int, list[EffectCharacter]]] = []
         self.grid_lines: list[GridLine] = []
@@ -238,6 +240,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
 
         Returns:
             int: The gap that is closest to 20% of the dimension length.
+
         """
         potential_gaps: list[int] = []
         dimension = dimension - 2
@@ -253,7 +256,11 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
     def build(self) -> None:
         grid_gradient = Gradient(*self.config.grid_gradient_stops, steps=self.config.grid_gradient_steps)
         grid_gradient_mapping = grid_gradient.build_coordinate_color_mapping(
-            1, self.terminal.canvas.top, 1, self.terminal.canvas.right, self.config.grid_gradient_direction
+            1,
+            self.terminal.canvas.top,
+            1,
+            self.terminal.canvas.right,
+            self.config.grid_gradient_direction,
         )
         text_gradient = Gradient(*self.config.text_gradient_stops, steps=self.config.text_gradient_steps)
         text_gradient_mapping = text_gradient.build_coordinate_color_mapping(
@@ -271,7 +278,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                 Coord(self.terminal.canvas.left, self.terminal.canvas.bottom),
                 "horizontal",
                 grid_gradient_mapping,
-            )
+            ),
         )
         self.grid_lines.append(
             GridLine(
@@ -280,7 +287,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                 Coord(self.terminal.canvas.left, self.terminal.canvas.top),
                 "horizontal",
                 grid_gradient_mapping,
-            )
+            ),
         )
         self.grid_lines.append(
             GridLine(
@@ -289,7 +296,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                 Coord(self.terminal.canvas.left, self.terminal.canvas.bottom),
                 "vertical",
                 grid_gradient_mapping,
-            )
+            ),
         )
         self.grid_lines.append(
             GridLine(
@@ -298,7 +305,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                 Coord(self.terminal.canvas.right, self.terminal.canvas.bottom),
                 "vertical",
                 grid_gradient_mapping,
-            )
+            ),
         )
         column_indexes: list[int] = []
         row_indexes: list[int] = []
@@ -320,10 +327,12 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                     Coord(self.terminal.canvas.left, row_index),
                     "horizontal",
                     grid_gradient_mapping,
-                )
+                ),
             )
         for column_index in range(
-            self.terminal.canvas.left + column_gap, self.terminal.canvas.right, max(column_gap, 1)
+            self.terminal.canvas.left + column_gap,
+            self.terminal.canvas.right,
+            max(column_gap, 1),
         ):
             if self.terminal.canvas.right - column_index < 2:
                 continue
@@ -335,7 +344,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                     Coord(column_index, self.terminal.canvas.bottom),
                     "vertical",
                     grid_gradient_mapping,
-                )
+                ),
             )
         row_indexes.append(self.terminal.canvas.top + 1)
         column_indexes.append(self.terminal.canvas.right + 1)
@@ -371,7 +380,9 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                     dissolve_scn.add_frame(character.input_symbol, 1)
                 else:
                     dissolve_scn.add_frame(
-                        character.input_symbol, 1, colors=ColorPair(text_gradient_mapping[character.input_coord])
+                        character.input_symbol,
+                        1,
+                        colors=ColorPair(text_gradient_mapping[character.input_coord]),
                     )
                 character.animation.activate_scene(dissolve_scn)
                 character.event_handler.register_event(
@@ -426,8 +437,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                 if active_count:
                     self._active_groups += 1
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class SynthGrid(BaseEffect[SynthGridConfig]):
@@ -436,6 +446,7 @@ class SynthGrid(BaseEffect[SynthGridConfig]):
     Attributes:
         effect_config (SynthGridConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = SynthGridConfig
@@ -445,5 +456,7 @@ class SynthGrid(BaseEffect[SynthGridConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

@@ -12,9 +12,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, Terminal
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -39,6 +39,7 @@ class OverflowConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     overflow_gradient_stops: tuple[Color, ...] = ArgField(
@@ -123,7 +124,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
             for character in self.characters:
                 character.animation.set_appearance(character.input_symbol, ColorPair(fg_color, bg_color))
 
-    def __init__(self, effect: "Overflow"):
+    def __init__(self, effect: Overflow):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.pending_rows: list[OverflowIterator.Row] = []
@@ -142,7 +143,8 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             self.character_final_color_map[character] = final_gradient_mapping.get(
-                character.input_coord, Color("000000")
+                character.input_coord,
+                Color("000000"),
             )
         lower_range, upper_range = self.config.overflow_cycles_range
         rows = self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
@@ -164,12 +166,14 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                     self.pending_rows.append(OverflowIterator.Row(copied_characters))
         # add rows in correct order to the end of self.pending_rows
         for row in self.terminal.get_characters_grouped(
-            Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM, outer_fill_chars=True, inner_fill_chars=True
+            Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            outer_fill_chars=True,
+            inner_fill_chars=True,
         ):
             next_row = OverflowIterator.Row(row)
             for character in next_row.characters:
                 if self.terminal.config.existing_color_handling == "dynamic" and any(
-                    (character.animation.input_fg_color, character.animation.input_bg_color)
+                    (character.animation.input_fg_color, character.animation.input_bg_color),
                 ):
                     character.animation.set_appearance(
                         character.animation.current_character_visual.symbol,
@@ -201,7 +205,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                                             row.characters[0].motion.current_coord.row,
                                             len(self._overflow_gradient.spectrum) - 1,
                                         )
-                                    ]
+                                    ],
                                 )
                         next_row = self.pending_rows.pop(0)
                         next_row.setup()
@@ -222,8 +226,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
             ]
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Overflow(BaseEffect[OverflowConfig]):
@@ -232,6 +235,7 @@ class Overflow(BaseEffect[OverflowConfig]):
     Attributes:
         effect_config (OverflowConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = OverflowConfig
@@ -241,5 +245,7 @@ class Overflow(BaseEffect[OverflowConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

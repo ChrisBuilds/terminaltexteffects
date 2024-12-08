@@ -13,9 +13,9 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -42,6 +42,7 @@ class SprayConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     spray_position: typing.Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"] = ArgField(
@@ -124,7 +125,7 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
         NW = auto()
         CENTER = auto()
 
-    def __init__(self, effect: "Spray") -> None:
+    def __init__(self, effect: Spray) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
@@ -172,14 +173,22 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
             )
             input_coord_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
-                EventHandler.Event.PATH_ACTIVATED, input_coord_path, EventHandler.Action.SET_LAYER, 1
+                EventHandler.Event.PATH_ACTIVATED,
+                input_coord_path,
+                EventHandler.Action.SET_LAYER,
+                1,
             )
             character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.PATH_COMPLETE,
+                input_coord_path,
+                EventHandler.Action.SET_LAYER,
+                0,
             )
             droplet_scn = character.animation.new_scene()
             spray_gradient = Gradient(
-                random.choice(final_gradient.spectrum), self.character_final_color_map[character], steps=7
+                random.choice(final_gradient.spectrum),
+                self.character_final_color_map[character],
+                steps=7,
             )
             droplet_scn.apply_gradient_to_symbols(character.input_symbol, 20, fg_gradient=spray_gradient)
             character.animation.activate_scene(droplet_scn)
@@ -199,8 +208,7 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
 
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Spray(BaseEffect[SprayConfig]):
@@ -209,6 +217,7 @@ class Spray(BaseEffect[SprayConfig]):
     Attributes:
         effect_config (SprayConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = SprayConfig
@@ -218,5 +227,7 @@ class Spray(BaseEffect[SprayConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

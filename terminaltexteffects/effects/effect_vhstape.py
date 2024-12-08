@@ -185,12 +185,14 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                     colors=ColorPair(self.character_final_color_map[character]),
                 )
                 glitch_scn_forward = character.animation.new_scene(
-                    scene_id="rgb_glitch_fwd", sync=Scene.SyncMetric.STEP
+                    scene_id="rgb_glitch_fwd",
+                    sync=Scene.SyncMetric.STEP,
                 )
                 for color in glitch_line_colors:
                     glitch_scn_forward.add_frame(character.input_symbol, duration=1, colors=ColorPair(color))
                 glitch_scn_backward = character.animation.new_scene(
-                    scene_id="rgb_glitch_bwd", sync=Scene.SyncMetric.STEP
+                    scene_id="rgb_glitch_bwd",
+                    sync=Scene.SyncMetric.STEP,
                 )
                 for color in glitch_line_colors[::-1]:
                     glitch_scn_backward.add_frame(character.input_symbol, duration=1, colors=ColorPair(color))

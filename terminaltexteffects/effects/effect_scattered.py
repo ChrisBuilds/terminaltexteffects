@@ -38,7 +38,9 @@ class ScatteredConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient."""
+        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
+    """
 
     movement_speed: float = ArgField(
         cmd_name="--movement-speed",
@@ -100,7 +102,7 @@ class ScatteredConfig(ArgsDataClass):
 
 
 class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
-    def __init__(self, effect: "Scattered") -> None:
+    def __init__(self, effect: Scattered) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
@@ -122,21 +124,30 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
             else:
                 character.motion.set_coordinate(self.terminal.canvas.random_coord())
             input_coord_path = character.motion.new_path(
-                speed=self.config.movement_speed, ease=self.config.movement_easing
+                speed=self.config.movement_speed,
+                ease=self.config.movement_easing,
             )
             input_coord_path.new_waypoint(character.input_coord)
             character.event_handler.register_event(
-                EventHandler.Event.PATH_ACTIVATED, input_coord_path, EventHandler.Action.SET_LAYER, 1
+                EventHandler.Event.PATH_ACTIVATED,
+                input_coord_path,
+                EventHandler.Action.SET_LAYER,
+                1,
             )
             character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.PATH_COMPLETE,
+                input_coord_path,
+                EventHandler.Action.SET_LAYER,
+                0,
             )
             character.motion.activate_path(input_coord_path)
             self.terminal.set_character_visibility(character, True)
             gradient_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
             char_gradient = Gradient(final_gradient.spectrum[0], self.character_final_color_map[character], steps=10)
             gradient_scn.apply_gradient_to_symbols(
-                character.input_symbol, self.config.final_gradient_frames, fg_gradient=char_gradient
+                character.input_symbol,
+                self.config.final_gradient_frames,
+                fg_gradient=char_gradient,
             )
             character.animation.activate_scene(gradient_scn)
             self.active_characters.add(character)
@@ -149,8 +160,7 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
                 return self.frame
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Scattered(BaseEffect[ScatteredConfig]):
@@ -159,6 +169,7 @@ class Scattered(BaseEffect[ScatteredConfig]):
     Attributes:
         effect_config (ScatteredConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = ScatteredConfig
@@ -168,5 +179,7 @@ class Scattered(BaseEffect[ScatteredConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

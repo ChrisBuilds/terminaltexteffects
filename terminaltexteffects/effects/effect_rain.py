@@ -13,9 +13,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -41,7 +41,9 @@ class RainConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        movement_easing (easing.EasingFunction): Easing function to use for character movement."""
+        movement_easing (easing.EasingFunction): Easing function to use for character movement.
+
+    """
 
     rain_colors: tuple[Color, ...] = ArgField(
         cmd_name=["--rain-colors"],
@@ -125,7 +127,7 @@ class RainConfig(ArgsDataClass):
 
 
 class RainIterator(BaseEffectIterator[RainConfig]):
-    def __init__(self, effect: "Rain") -> None:
+    def __init__(self, effect: Rain) -> None:
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
@@ -188,8 +190,7 @@ class RainIterator(BaseEffectIterator[RainConfig]):
                         break
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Rain(BaseEffect[RainConfig]):
@@ -198,6 +199,7 @@ class Rain(BaseEffect[RainConfig]):
     Attributes:
         effect_config (PourConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = RainConfig
@@ -207,5 +209,7 @@ class Rain(BaseEffect[RainConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

@@ -11,9 +11,9 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -40,6 +40,7 @@ class ExpandConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     expand_easing: easing.EasingFunction = ArgField(
@@ -105,7 +106,7 @@ class ExpandConfig(ArgsDataClass):
 class ExpandIterator(BaseEffectIterator[ExpandConfig]):
     def __init__(
         self,
-        effect: "Expand",
+        effect: Expand,
     ):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
@@ -133,16 +134,24 @@ class ExpandIterator(BaseEffectIterator[ExpandConfig]):
             self.terminal.set_character_visibility(character, True)
             self.active_characters.add(character)
             character.event_handler.register_event(
-                EventHandler.Event.PATH_ACTIVATED, input_coord_path, EventHandler.Action.SET_LAYER, 1
+                EventHandler.Event.PATH_ACTIVATED,
+                input_coord_path,
+                EventHandler.Action.SET_LAYER,
+                1,
             )
             character.event_handler.register_event(
-                EventHandler.Event.PATH_COMPLETE, input_coord_path, EventHandler.Action.SET_LAYER, 0
+                EventHandler.Event.PATH_COMPLETE,
+                input_coord_path,
+                EventHandler.Action.SET_LAYER,
+                0,
             )
             character.motion.activate_path(input_coord_path)
             gradient_scn = character.animation.new_scene()
             gradient = Gradient(final_gradient.spectrum[0], self.character_final_color_map[character], steps=10)
             gradient_scn.apply_gradient_to_symbols(
-                character.input_symbol, self.config.final_gradient_frames, fg_gradient=gradient
+                character.input_symbol,
+                self.config.final_gradient_frames,
+                fg_gradient=gradient,
             )
             character.animation.activate_scene(gradient_scn)
 
@@ -150,8 +159,7 @@ class ExpandIterator(BaseEffectIterator[ExpandConfig]):
         if self.active_characters:
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Expand(BaseEffect[ExpandConfig]):
@@ -170,5 +178,7 @@ class Expand(BaseEffect[ExpandConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

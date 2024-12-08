@@ -11,9 +11,9 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, ColorPair, EffectCharacter, EventHandler, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
@@ -43,6 +43,7 @@ class WavesConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     wave_symbols: tuple[str, ...] = ArgField(
@@ -157,7 +158,7 @@ class WavesConfig(ArgsDataClass):
 
 
 class WavesIterator(BaseEffectIterator[WavesConfig]):
-    def __init__(self, effect: "Waves") -> None:
+    def __init__(self, effect: Waves) -> None:
         super().__init__(effect)
         self.pending_columns: list[list[EffectCharacter]] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
@@ -179,7 +180,9 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             wave_scn.ease = self.config.wave_easing
             for _ in range(self.config.wave_count):
                 wave_scn.apply_gradient_to_symbols(
-                    self.config.wave_symbols, duration=self.config.wave_length, fg_gradient=wave_gradient
+                    self.config.wave_symbols,
+                    duration=self.config.wave_length,
+                    fg_gradient=wave_gradient,
                 )
             final_scn = character.animation.new_scene()
             for step in Gradient(
@@ -189,7 +192,10 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             ):
                 final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(step))
             character.event_handler.register_event(
-                EventHandler.Event.SCENE_COMPLETE, wave_scn, EventHandler.Action.ACTIVATE_SCENE, final_scn
+                EventHandler.Event.SCENE_COMPLETE,
+                wave_scn,
+                EventHandler.Action.ACTIVATE_SCENE,
+                final_scn,
             )
             character.animation.activate_scene(wave_scn)
         grouping_map = {
@@ -213,8 +219,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                     self.active_characters.add(character)
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Waves(BaseEffect[WavesConfig]):
@@ -223,6 +228,7 @@ class Waves(BaseEffect[WavesConfig]):
     Attributes:
         effect_config (ExpandConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = WavesConfig
@@ -232,5 +238,7 @@ class Waves(BaseEffect[WavesConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

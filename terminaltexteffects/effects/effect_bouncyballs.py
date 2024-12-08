@@ -13,9 +13,9 @@ import random
 import typing
 from dataclasses import dataclass
 
-import terminaltexteffects.utils.argvalidators as argvalidators
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
@@ -43,7 +43,9 @@ class BouncyBallsConfig(ArgsDataClass):
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         ball_delay (int): Number of frames between ball drops, increase to reduce ball drop rate. Valid values are n > 0.
         movement_speed (float): Movement speed of the characters.  Valid values are n > 0.
-        easing (easing.EasingFunction): Easing function to use for character movement."""
+        easing (easing.EasingFunction): Easing function to use for character movement.
+
+    """
 
     ball_colors: tuple[Color, ...] = ArgField(
         cmd_name=["--ball-colors"],
@@ -126,7 +128,7 @@ class BouncyBallsConfig(ArgsDataClass):
 
 
 class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
-    def __init__(self, effect: "BouncyBalls"):
+    def __init__(self, effect: BouncyBalls):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
@@ -152,10 +154,11 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
             char_final_gradient = Gradient(color, self.character_final_color_map[character], steps=10)
             final_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=char_final_gradient)
             character.motion.set_coordinate(
-                Coord(character.input_coord.column, int(self.terminal.canvas.top * random.uniform(1.0, 1.5)))
+                Coord(character.input_coord.column, int(self.terminal.canvas.top * random.uniform(1.0, 1.5))),
             )
             input_coord_path = character.motion.new_path(
-                speed=self.config.movement_speed, ease=self.config.movement_easing
+                speed=self.config.movement_speed,
+                ease=self.config.movement_easing,
             )
             input_coord_path.new_waypoint(character.input_coord)
             character.motion.activate_path(input_coord_path)
@@ -193,8 +196,7 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
 
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class BouncyBalls(BaseEffect[BouncyBallsConfig]):
@@ -203,6 +205,7 @@ class BouncyBalls(BaseEffect[BouncyBallsConfig]):
     Attributes:
         effect_config (BouncyBallsConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = BouncyBallsConfig
@@ -212,5 +215,7 @@ class BouncyBalls(BaseEffect[BouncyBallsConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)

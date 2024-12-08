@@ -41,6 +41,7 @@ class SliceConfig(ArgsDataClass):
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+
     """
 
     slice_direction: typing.Literal["vertical", "horizontal", "diagonal"] = ArgField(
@@ -103,7 +104,7 @@ class SliceConfig(ArgsDataClass):
 
 
 class SliceIterator(BaseEffectIterator[SliceConfig]):
-    def __init__(self, effect: "Slice") -> None:
+    def __init__(self, effect: Slice) -> None:
         super().__init__(effect)
         self.pending_groups: list[list[EffectCharacter]] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
@@ -142,7 +143,8 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                 for character in left_half:
                     character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.canvas.top + 1))
                     input_coord_path = character.motion.new_path(
-                        speed=self.config.movement_speed, ease=self.config.movement_easing
+                        speed=self.config.movement_speed,
+                        ease=self.config.movement_easing,
                     )
                     input_coord_path.new_waypoint(character.input_coord)
                     character.motion.activate_path(input_coord_path)
@@ -150,10 +152,11 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                 right_half = [c for c in opposite_row if c.input_coord.column > self.terminal.canvas.text_center_column]
                 for character in right_half:
                     character.motion.set_coordinate(
-                        Coord(character.input_coord.column, self.terminal.canvas.bottom - 1)
+                        Coord(character.input_coord.column, self.terminal.canvas.bottom - 1),
                     )
                     input_coord_path = character.motion.new_path(
-                        speed=self.config.movement_speed, ease=self.config.movement_easing
+                        speed=self.config.movement_speed,
+                        ease=self.config.movement_easing,
                     )
                     input_coord_path.new_waypoint(character.input_coord)
                     character.motion.activate_path(input_coord_path)
@@ -163,7 +166,9 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
         elif self.config.slice_direction == "horizontal":
             self.config.movement_speed *= 2
             self.columns = self.terminal.get_characters_grouped(
-                grouping=slice_direction_map[self.config.slice_direction], outer_fill_chars=True, inner_fill_chars=True
+                grouping=slice_direction_map[self.config.slice_direction],
+                outer_fill_chars=True,
+                inner_fill_chars=True,
             )
             trimmed_columns = []
             for column in self.columns:
@@ -187,7 +192,8 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                 for character in bottom_half:
                     character.motion.set_coordinate(Coord(self.terminal.canvas.left - 1, character.input_coord.row))
                     input_coord_path = character.motion.new_path(
-                        speed=self.config.movement_speed, ease=self.config.movement_easing
+                        speed=self.config.movement_speed,
+                        ease=self.config.movement_easing,
                     )
                     input_coord_path.new_waypoint(character.input_coord)
                     character.motion.activate_path(input_coord_path)
@@ -196,7 +202,8 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                 for character in top_half:
                     character.motion.set_coordinate(Coord(self.terminal.canvas.right + 1, character.input_coord.row))
                     input_coord_path = character.motion.new_path(
-                        speed=self.config.movement_speed, ease=self.config.movement_easing
+                        speed=self.config.movement_speed,
+                        ease=self.config.movement_easing,
                     )
                     input_coord_path.new_waypoint(character.input_coord)
                     character.motion.activate_path(input_coord_path)
@@ -205,7 +212,7 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                 self.active_characters = self.active_characters.union(new_column)
         elif self.config.slice_direction == "diagonal":
             self.diagonals = self.terminal.get_characters_grouped(
-                grouping=slice_direction_map[self.config.slice_direction]
+                grouping=slice_direction_map[self.config.slice_direction],
             )
             left = self.diagonals[: len(self.diagonals) // 2]
             right = self.diagonals[len(self.diagonals) // 2 :]
@@ -217,7 +224,8 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                     for character in left_group:
                         character.motion.set_coordinate(origin_coord)
                         input_coord_path = character.motion.new_path(
-                            speed=self.config.movement_speed, ease=self.config.movement_easing
+                            speed=self.config.movement_speed,
+                            ease=self.config.movement_easing,
                         )
                         input_coord_path.new_waypoint(character.input_coord)
                         character.motion.activate_path(input_coord_path)
@@ -228,7 +236,8 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                     for character in right_group:
                         character.motion.set_coordinate(origin_coord)
                         input_coord_path = character.motion.new_path(
-                            speed=self.config.movement_speed, ease=self.config.movement_easing
+                            speed=self.config.movement_speed,
+                            ease=self.config.movement_easing,
                         )
                         input_coord_path.new_waypoint(character.input_coord)
                         character.motion.activate_path(input_coord_path)
@@ -241,8 +250,7 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
         if self.active_characters:
             self.update()
             return self.frame
-        else:
-            raise StopIteration
+        raise StopIteration
 
 
 class Slice(BaseEffect[SliceConfig]):
@@ -251,6 +259,7 @@ class Slice(BaseEffect[SliceConfig]):
     Attributes:
         effect_config (SliceConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
+
     """
 
     _config_cls = SliceConfig
@@ -260,5 +269,7 @@ class Slice(BaseEffect[SliceConfig]):
         """Initialize the effect with the provided input data.
 
         Args:
-            input_data (str): The input data to use for the effect."""
+            input_data (str): The input data to use for the effect.
+
+        """
         super().__init__(input_data)
