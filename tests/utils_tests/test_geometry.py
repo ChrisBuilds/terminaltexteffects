@@ -7,7 +7,7 @@ from terminaltexteffects.utils import geometry
 pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
 
-@pytest.fixture()
+@pytest.fixture
 def coord():
     return geometry.Coord(1, 2)
 
@@ -23,17 +23,17 @@ def test_coord_equalities(coord):
 
 
 def test_find_coords_on_circle_coords_limit(coord):
-    coords = geometry.find_coords_on_circle(coord, 5, 5, False)
+    coords = geometry.find_coords_on_circle(coord, 5, 5, unique=False)
     assert len(coords) == 5
 
 
 def test_find_coords_on_circle_zero_radius(coord):
-    coords = geometry.find_coords_on_circle(coord, 0, 5, False)
+    coords = geometry.find_coords_on_circle(coord, 0, 5, unique=False)
     assert len(coords) == 0
 
 
 def test_find_coords_on_circle_unique(coord):
-    coords = geometry.find_coords_on_circle(coord, 5, 0, True)
+    coords = geometry.find_coords_on_circle(coord, 5, 0, unique=True)
     assert len(set(coords)) == len(coords)
 
 
