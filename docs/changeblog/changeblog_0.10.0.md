@@ -2,7 +2,7 @@
 
 ## Release 0.10.0
 
-### ColorShift, Canvas, Better Compatibililty, and more Customization
+### ColorShift, Canvas, Better Compatibility, and more Customization
 
 This release comes with a shiny new effect [ColorShift](../showroom.md#colorshift), increased customization for
 [Waves](../showroom.md#waves) and [Wipe](../showroom.md#wipe) as well as renaming the
