@@ -5,7 +5,7 @@ effect iterator interface as well as the effect configuration and terminal confi
 
 Classes:
     BaseEffectIterator(Generic[T]): An abstract base class that defines the basic structure for an iterator
-        that applies a certain effect to the input data. Provides initilization for the effect configuration and terminal
+        that applies a certain effect to the input data. Provides initialization for the effect configuration and terminal
         as well as the `__iter__` method.
 
     BaseEffect(Generic[T]): An abstract base class that defines the basic structure for an effect. Provides the `__iter__`

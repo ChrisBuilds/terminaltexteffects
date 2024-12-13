@@ -70,7 +70,7 @@ All effect configuration options are available within each effect via the `effec
     in from alternating sides of the terminal.
     2. Columns will slide in, rather than rows.
     3. Change the gradient colors from the defaults.
-    4. Set the canvas width manually rather than automatically detect. Canvas heigth will be automatically detected as it has not been set.
+    4. Set the canvas width manually rather than automatically detect. Canvas height will be automatically detected as it has not been set.
 
 === "Output"
     ![t](./img/lib_demos/libguide_configuration_output.gif)

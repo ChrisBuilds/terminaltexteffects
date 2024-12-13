@@ -127,7 +127,7 @@ class Gradient:
         Initializes a Graphics object.
 
         Args:
-            stops (Color): One ore more variables of type Color representing the color stops.
+            stops (Color): One or more variables of type Color representing the color stops.
             steps (int | tuple[int, ...], optional): Number of steps or a tuple of step values for generating the
                 spectrum. Defaults to 1.
             loop (bool, optional): Loop the gradient. This causes the final gradient color to transition back to the first gradient color. Defaults to False.

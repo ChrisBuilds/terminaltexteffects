@@ -74,7 +74,7 @@ Here is the result of my analysis.
 
     `Symbols and Colors in a given cell change randomly and separately`
 
-    : The changes to symbol and color for a given character cell are not linked and must be calculcated separately.
+    : The changes to symbol and color for a given character cell are not linked and must be calculated separately.
 
     `The number of visible characters in a column varies from just a few, to the entire column`
 
@@ -325,7 +325,7 @@ resulting effect looks better.
 ![spray_wide_canvas](../img/changeblog_media/0.11.0/spray_wide_canvas_anchored.gif)
 
 All these changes with the Canvas has led to some additional complexity when ensuring all effects operate in reference
-to the Canvas dimensions properly in addition to the complexity handling the interactions between achoring, text wrapping,
+to the Canvas dimensions properly in addition to the complexity handling the interactions between anchoring, text wrapping,
 and ignoring the terminal dimensions when appropriate. I'm sure there are edge cases somebody will find and report.
 Looking forward to fixing those.
 

@@ -555,7 +555,7 @@ Text expands in a single row or column in the middle of the canvas then out.
     --expand-direction {vertical,horizontal}
                         Direction the text will expand. (default: vertical)
     --center-movement-speed (float > 0)
-                        Speed of the characters during the initial expansion of the center vertical/horiztonal line. Note: Speed effects the number of steps in the easing function. Adjust speed and animation
+                        Speed of the characters during the initial expansion of the center vertical/horizontal line. Note: Speed effects the number of steps in the easing function. Adjust speed and animation
                         rate separately to fine tune the effect. (default: 0.35)
     --full-movement-speed (float > 0)
                         Speed of the characters during the final full expansion. Note: Speed effects the number of steps in the easing function. Adjust speed and animation rate separately to fine tune the

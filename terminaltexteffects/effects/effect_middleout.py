@@ -42,7 +42,7 @@ class MiddleOutConfig(ArgsDataClass):
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         expand_direction (typing.Literal["vertical", "horizontal"]): Direction the text will expand. Choices: vertical, horizontal.
-        center_movement_speed (float): Speed of the characters during the initial expansion of the center vertical/horiztonal. Valid values are n > 0.
+        center_movement_speed (float): Speed of the characters during the initial expansion of the center vertical/horizontal. Valid values are n > 0.
         full_movement_speed (float): Speed of the characters during the final full expansion. Valid values are n > 0.
         center_easing (easing.EasingFunction): Easing function to use for initial expansion.
         full_easing (easing.EasingFunction): Easing function to use for full expansion."""
@@ -98,9 +98,9 @@ class MiddleOutConfig(ArgsDataClass):
         type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.35,
         metavar=argvalidators.PositiveFloat.METAVAR,
-        help="Speed of the characters during the initial expansion of the center vertical/horiztonal line. ",
+        help="Speed of the characters during the initial expansion of the center vertical/horizontal line. ",
     )  # type: ignore[assignment]
-    """float : Speed of the characters during the initial expansion of the center vertical/horiztonal line. """
+    """float : Speed of the characters during the initial expansion of the center vertical/horizontal line. """
 
     full_movement_speed: float = ArgField(
         cmd_name="--full-movement-speed",

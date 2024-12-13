@@ -274,8 +274,8 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                 beam_row_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
                 beam_column_scn.apply_gradient_to_symbols(fade_gradient, character.input_symbol, 5)
                 brighten_gradient = Gradient(faded_color, self.character_final_color_map[character], steps=10)
-                brigthen_scn = character.animation.new_scene(id="brighten")
-                brigthen_scn.apply_gradient_to_symbols(
+                brighten_scn = character.animation.new_scene(id="brighten")
+                brighten_scn.apply_gradient_to_symbols(
                     brighten_gradient, character.input_symbol, self.config.final_gradient_frames
                 )
         self.pending_groups = groups
