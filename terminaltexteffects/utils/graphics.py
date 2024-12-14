@@ -1,9 +1,11 @@
 """Classes for storing and manipulating character graphics.
 
 Classes:
-    Color: A Color object represents a color in the RGB color space. The color can be initialized with an XTerm-256 color code or an RGB hex color string. Can be printed to display the color code and appearance as a color block.
-    ColorPair: A ColorPair object represents a pair of colors to specify a character's foreground and background colors.
-    Gradient: A Gradient is a list of RGB hex color strings transitioning from one color to another. Can be printed to display the gradient color spectrum.
+    Color: Represents a color in the RGB color space. Can be initialized with an XTerm-256 color code or an RGB hex
+        color string.
+    ColorPair: Represents a pair of colors to specify a character's foreground and background colors.
+    Gradient: A list of RGB hex color strings transitioning from one color to another. Supports various gradient
+        directions.
 """
 
 from __future__ import annotations
@@ -11,16 +13,20 @@ from __future__ import annotations
 import itertools
 import random
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum, auto
 
 from terminaltexteffects.utils import ansitools, colorterm, geometry, hexterm
 
+if typing.TYPE_CHECKING:
+    from collections.abc import Iterator
+
 
 class Color:
-    """A Color object represents a color in the RGB color space. The color can be initialized with an XTerm-256 color
-    code or an RGB hex color string. Can be printed to display the color code and appearance as a color block.
+    """Represents a color in the RGB color space.
+
+    The color can be initialized with an XTerm-256 color code or an RGB hex color string. Can be printed
+    to display the color code and appearance as a color block.
 
     Attributes:
         color_arg (int | str): The color value as an XTerm-256 color code or an RGB hex color string.
@@ -36,10 +42,11 @@ class Color:
     """
 
     def __init__(self, color_value: int | str) -> None:
-        """Initializes a Color object.
+        """Initialize a Color object.
 
         Args:
-            color_value (int | str): The color value as an XTerm-256 color code or an RGB hex color string. Example: 255 or 'ffffff' or '#ffffff'
+            color_value (int | str): The color value as an XTerm-256 color code or an RGB hex color string.
+                Example: 255 or 'ffffff' or '#ffffff'
 
         Raises:
             ValueError: If the color value is not a valid XTerm-256 color code or an RGB hex color string.
@@ -57,8 +64,12 @@ class Color:
                 self.rgb_color = color_value
                 self.xterm_color = None
         else:
+            msg = (
+                "Invalid color value. Color must be an XTerm-256 color code or an RGB hex color string. "
+                "Example: 255 or 'ffffff' or '#ffffff'"
+            )
             raise ValueError(
-                "Invalid color value. Color must be an XTerm-256 color code or an RGB hex color string. Example: 255 or 'ffffff' or '#ffffff'",
+                msg,
             )
 
     @property
@@ -72,32 +83,41 @@ class Color:
         return colorterm._hex_to_int(self.rgb_color)
 
     def __repr__(self) -> str:
+        """Return a string representation of the Color object."""
         return f"Color('{self.color_arg}')"
 
     def __str__(self) -> str:
+        """Return a string representation of the Color object."""
         color_block = f"{colorterm.fg(self.rgb_color)}█████{ansitools.reset_all()}"
-        return f"Color Code: {self.rgb_color}{f' | XTerm Color: {self.xterm_color}' if self.xterm_color else ''}\nColor Appearance: {color_block}"
+        return (
+            f"Color Code: {self.rgb_color}{f' | XTerm Color: {self.xterm_color}' if self.xterm_color else ''}"
+            f"\nColor Appearance: {color_block}"
+        )
 
     def __eq__(self, other: object) -> bool:
+        """Check if two Color objects are equal."""
         if not isinstance(other, Color):
             return NotImplemented
         return self.color_arg == other.color_arg
 
     def __ne__(self, other: object) -> bool:
+        """Check if two Color objects are not equal."""
         if not isinstance(other, Color):
             return NotImplemented
         return self.color_arg != other.color_arg
 
     def __hash__(self) -> int:
+        """Return the hash value of the Color object."""
         return hash(self.color_arg)
 
     def __iter__(self) -> Iterator[Color]:
+        """Return an iterator over the Color object."""
         return iter((self,))
 
 
 @dataclass
 class ColorPair:
-    """A ColorPair object represents a pair of colors to specify a character's foreground and background colors.
+    """Represents a pair of colors to specify a character's foreground and background colors.
 
     Attributes:
         fg_color (Color | None): The foreground color. None if no foreground color is specified.
@@ -110,10 +130,11 @@ class ColorPair:
 
 
 class Gradient:
-    """A Gradient is a list of RGB hex color strings transitioning from one color to another. The gradient color
-    list is calculated using linear interpolation based on the provided start and end colors and the number of steps. Gradients
-    can be iterated over to get the next color in the gradient color list. If there is only one color in the stops list,
-    the gradient will be a list of the same color.
+    """A Gradient is a list of RGB hex color strings transitioning from one color to another.
+
+    The gradient color list is calculated using linear interpolation based on the provided start and end colors
+    and the number of steps. Gradients can be iterated over to get the next color in the gradient color list.
+    If there is only one color in the stops list, the gradient will be a list of the same color.
 
     If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps for the pair
     based on the order of stops and steps.
@@ -122,8 +143,8 @@ class Gradient:
 
     "fffffff" -> (6 steps) -> "aaaaaa" -> (3 steps) -> "000000"
 
-    The step count includes the stop for each pair. Total number of colors in the resulting gradient spectrum is the sum of the steps between
-    each pair of stops plus 1.
+    The step count includes the stop for each pair. Total number of colors in the resulting gradient spectrum
+    is the sum of the steps between each pair of stops plus 1.
 
     Attributes:
         spectrum (list[str]): List (length=sum(steps) + 1) of RGB hex color strings
@@ -138,14 +159,15 @@ class Gradient:
         RADIAL = auto()
         DIAGONAL = auto()
 
-    def __init__(self, *stops: Color, steps: tuple[int, ...] | int = 1, loop=False) -> None:
-        """Initializes a Gradient object.
+    def __init__(self, *stops: Color, steps: tuple[int, ...] | int = 1, loop: bool = False) -> None:
+        """Initialize a Gradient object.
 
         Args:
             stops (Color): One ore more variables of type Color representing the color stops.
             steps (int | tuple[int, ...], optional): Number of steps or a tuple of step values for generating the
                 spectrum. Defaults to 1.
-            loop (bool, optional): Loop the gradient. This causes the final gradient color to transition back to the first gradient color. Defaults to False.
+            loop (bool, optional): Loop the gradient. This causes the final gradient color to transition back to the
+                first gradient color. Defaults to False.
 
         Raises:
             ValueError: If no color stops are provided.
@@ -153,7 +175,8 @@ class Gradient:
         Attributes:
             _stops (tuple[Color]): Tuple of Color objects representing the color stops.
             _steps (int | tuple[int, ...]): Number of steps or a tuple of step values for generating the spectrum.
-            _loop (bool): Loop the gradient. This causes the final gradient color to transition back to the first gradient color.
+            _loop (bool): Loop the gradient. This causes the final gradient color to transition back to the
+                first gradient color.
             spectrum (list[str]): List of strings representing the generated spectrum.
             _index (int): Current index of the spectrum.
 
@@ -163,14 +186,15 @@ class Gradient:
         """
         self._stops = stops
         if len(self._stops) < 1:
-            raise ValueError("At least one stop must be provided.")
+            msg = "At least one stop must be provided."
+            raise ValueError(msg)
         self._steps = steps
         self._loop = loop
         self.spectrum: list[Color] = self._generate(self._steps)
         self._index: int = 0
 
     def get_color_at_fraction(self, fraction: float) -> Color:
-        """Returns the color at a fraction of the gradient.
+        """Return the color at a fraction of the gradient.
 
         Args:
             fraction (float): The fraction of the gradient to get the color for.
@@ -180,45 +204,49 @@ class Gradient:
 
         """
         if fraction < 0 or fraction > 1:
-            raise ValueError("Fraction must be 0 <= fraction <= 1.")
+            msg = "Fraction must be 0 <= fraction <= 1."
+            raise ValueError(msg)
         for i in range(1, len(self.spectrum) + 1):
             if fraction <= i / len(self.spectrum):
                 return self.spectrum[i - 1]
         return self.spectrum[-1]
 
-    def _generate(self, steps) -> list[Color]:
-        """Calculate a gradient of colors between two colors using linear interpolation. If
-        there is only one color in the stops tuple, the gradient will be a list of the same color.
+    def _generate(self, steps: int | tuple[int, ...]) -> list[Color]:
+        """Calculate a gradient of colors between two colors using linear interpolation.
 
-        If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps for the pair
-        based on the order of stops and steps.
+        If there is only one color in the stops tuple, the gradient will be a list of the same color.
+
+        If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps
+        for the pair based on the order of stops and steps.
 
         Ex: stops = ("ffffff", "aaaaaa", "000000"), steps = (6, 3)
         Distance from "ffffff" to "aaaaaa" = 6 steps (7 colors including start and end)
         Distance from "aaaaaa" to "000000" = 3 steps (4 colors including start and end)
-        Total colors in the gradient spectrum = 10 ("aaaaaa" is not repeated when transitioning from "ffffff" to "aaaaaa" and from "aaaaaa" to "000000")
+        Total colors in the gradient spectrum = 10 ("aaaaaa" is not repeated when transitioning from
+        "ffffff" to "aaaaaa" and from "aaaaaa" to "000000")
 
 
         The step count includes the stop for each pair. Total number of colors in the resulting gradient spectrum:
         sum(steps) + 1
 
         Returns:
-            list[str]: List (length=sum(steps) + 1) of RGB hex color strings. The first and last colors are the start and end stops, respectively.
+            list[str]: List (length=sum(steps) + 1) of RGB hex color strings. The first and last colors are
+                the start and end stops, respectively.
 
         """
         if isinstance(steps, int):
             steps = (steps,)
             for step in steps:
                 if step < 1:
-                    raise ValueError("Steps must be greater than 0.")
+                    msg = "Steps must be greater than 0."
+                    raise ValueError(msg)
         spectrum: list[Color] = []
         if len(self._stops) == 1:
             color = self._stops[0]
-            for _ in range(steps[0]):
-                spectrum.append(color)
+            spectrum.extend(color for _ in range(steps[0]))
             return spectrum
         if self._loop:
-            self._stops = self._stops + (self._stops[0],)
+            self._stops = (*self._stops, self._stops[0])
         a, b = itertools.tee(self._stops)
         next(b, None)
         color_pairs = list(zip(a, b))
@@ -227,7 +255,8 @@ class Gradient:
         color_pair: tuple[Color, Color]
         for color_pair, steps in itertools.zip_longest(color_pairs, steps, fillvalue=steps[-1]):
             if steps < 1:
-                raise ValueError(f"Invalid steps: {steps} | Steps must be greater than 0.")
+                msg = f"Invalid steps: {steps} | Steps must be greater than 0."
+                raise ValueError(msg)
             start, end = color_pair
             start_color_ints = start.rgb_ints
             end_color_ints = end.rgb_ints
@@ -264,9 +293,10 @@ class Gradient:
         max_column: int,
         direction: Gradient.Direction,
     ) -> dict[geometry.Coord, Color]:
-        """Builds a mapping of coordinates to colors based on the gradient and a direction.
+        """Build a mapping of coordinates to colors based on the gradient and a direction.
 
-        For example, a vertical gradient will have the same color for each column in a row. When applied across all characters in the canvas, the gradient will be visible as a vertical gradient.
+        For example, a vertical gradient will have the same color for each column in a row. When applied across all
+        characters in the canvas, the gradient will be visible as a vertical gradient.
 
         Args:
             min_row (int): The minimum row value. Must be greater than 0 and less than or equal to max_row.
@@ -280,9 +310,11 @@ class Gradient:
 
         """
         if any(value < 1 for value in (max_row, max_column, min_row, min_column)):
-            raise ValueError("max_row and max_column must be greater than 0.")
+            msg = "max_row and max_column must be greater than 0."
+            raise ValueError(msg)
         if min_row > max_row or min_column > max_column:
-            raise ValueError("min_row and min_column must be less than or equal to max_row and max_column.")
+            msg = "min_row and min_column must be less than or equal to max_row and max_column."
+            raise ValueError(msg)
         row_offset = min_row - 1
         column_offset = min_column - 1
         gradient_mapping: dict[geometry.Coord, Color] = {}
@@ -322,9 +354,11 @@ class Gradient:
         return gradient_mapping
 
     def __iter__(self) -> Iterator[Color]:
+        """Return an iterator over the Gradient object."""
         yield from self.spectrum
 
     def __len__(self) -> int:
+        """Return the length of the Gradient object."""
         return len(self.spectrum)
 
     @typing.overload
@@ -334,9 +368,11 @@ class Gradient:
     def __getitem__(self, index: slice) -> list[Color]: ...
 
     def __getitem__(self, index: int | slice) -> Color | list[Color]:
+        """Return the color at the given index or a list of colors based on the slice."""
         return self.spectrum[index]
 
     def __str__(self) -> str:
+        """Return a string representation of the Gradient object."""
         color_blocks = [f"{colorterm.fg(color.rgb_color)}█{ansitools.reset_all()}" for color in self.spectrum]
         return f"Gradient: Stops({', '.join(c.rgb_color for c in self._stops)}), Steps({self._steps})\n" + "".join(
             color_blocks,
@@ -344,7 +380,7 @@ class Gradient:
 
 
 def random_color() -> Color:
-    """Returns a random color in the range 000000 -> ffffff.
+    """Return a random color in the range 000000 -> ffffff.
 
     Returns:
         Color: A random color in the range 000000 -> ffffff.

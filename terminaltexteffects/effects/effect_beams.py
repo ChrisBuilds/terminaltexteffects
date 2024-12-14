@@ -20,6 +20,7 @@ from terminaltexteffects.utils.graphics import ColorPair
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Return the Beams effect class and its configuration class."""
     return Beams, BeamsConfig
 
 
@@ -27,26 +28,44 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="beams",
     help="Create beams which travel over the canvas illuminating the characters behind them.",
     description="beams | Create beams which travel over the canvas illuminating the characters behind them.",
-    epilog="""Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay 10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF 8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical --final-wipe-speed 1""",
+    epilog=(
+        "Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay "
+        "10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF "
+        "8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF "
+        "ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical "
+        "--final-wipe-speed 1"
+    ),
 )
 @dataclass
 class BeamsConfig(ArgsDataClass):
     """Configuration for the Beams effect.
 
     Attributes:
-        beam_row_symbols (tuple[str, ...] | str): Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation.
-        beam_column_symbols (tuple[str, ...] | str): Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation.
-        beam_delay (int): Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5). Valid values are n > 0.
+        beam_row_symbols (tuple[str, ...] | str): Symbols to use for the beam effect when moving along a row. Strings
+            will be used in sequence to create an animation.
+        beam_column_symbols (tuple[str, ...] | str): Symbols to use for the beam effect when moving along a column.
+            Strings will be used in sequence to create an animation.
+        beam_delay (int): Number of frames to wait before adding the next group of beams. Beams are added in groups
+            of size random(1, 5). Valid values are n > 0.
         beam_row_speed_range (tuple[int, int]): Speed range of the beam when moving along a row. Valid values are n > 0.
-        beam_column_speed_range (tuple[int, int]): Speed range of the beam when moving along a column. Valid values are n > 0.
-        beam_gradient_stops (tuple[Color, ...]): Tuple of colors for the beam, a gradient will be created between the colors.
-        beam_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
-        beam_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation. Valid values are n > 0.
+        beam_column_speed_range (tuple[int, int]): Speed range of the beam when moving along a column.
+            Valid values are n > 0.
+        beam_gradient_stops (tuple[Color, ...]): Tuple of colors for the beam, a gradient will be created between
+            the colors.
+        beam_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+            create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
+            Valid values are n > 0.
+        beam_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient
+            animation. Valid values are n > 0.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the wipe gradient.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops. Valid values are n > 0.
-        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+            create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
+            Valid values are n > 0.
+        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the
+            gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        final_wipe_speed (int): Speed of the final wipe as measured in diagonal groups activated per frame. Valid values are n > 0.
+        final_wipe_speed (int): Speed of the final wipe as measured in diagonal groups activated per frame.
+            Valid values are n > 0.
 
     """
 
@@ -56,10 +75,16 @@ class BeamsConfig(ArgsDataClass):
         nargs="+",
         default=("▂", "▁", "_"),
         metavar=argvalidators.Symbol.METAVAR,
-        help="Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation.",
+        help=(
+            "Symbols to use for the beam effect when moving along a row. "
+            "Strings will be used in sequence to create an animation."
+        ),
     )  # type: ignore[assignment]
 
-    "tuple[str, ...] | str : Symbols to use for the beam effect when moving along a row. Strings will be used in sequence to create an animation."
+    (
+        "tuple[str, ...] | str : Symbols to use for the beam effect when moving along a row. "
+        "Strings will be used in sequence to create an animation."
+    )
 
     beam_column_symbols: tuple[str, ...] | str = ArgField(
         cmd_name="--beam-column-symbols",
@@ -67,20 +92,32 @@ class BeamsConfig(ArgsDataClass):
         nargs="+",
         default=("▌", "▍", "▎", "▏"),
         metavar=argvalidators.Symbol.METAVAR,
-        help="Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation.",
+        help=(
+            "Symbols to use for the beam effect when moving along a column. "
+            "Strings will be used in sequence to create an animation."
+        ),
     )  # type: ignore[assignment]
 
-    "tuple[str, ...] | str : Symbols to use for the beam effect when moving along a column. Strings will be used in sequence to create an animation."
+    (
+        "tuple[str, ...] | str : Symbols to use for the beam effect when moving along a column. "
+        "Strings will be used in sequence to create an animation."
+    )
 
     beam_delay: int = ArgField(
         cmd_name="--beam-delay",
         type_parser=argvalidators.PositiveInt.type_parser,
         default=10,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5).",
+        help=(
+            "Number of frames to wait before adding the next group of beams. "
+            "Beams are added in groups of size random(1, 5)."
+        ),
     )  # type: ignore[assignment]
 
-    "int : Number of frames to wait before adding the next group of beams. Beams are added in groups of size random(1, 5)."
+    (
+        "int : Number of frames to wait before adding the next group of beams. "
+        "Beams are added in groups of size random(1, 5)."
+    )
 
     beam_row_speed_range: tuple[int, int] = ArgField(
         cmd_name="--beam-row-speed-range",
@@ -119,10 +156,18 @@ class BeamsConfig(ArgsDataClass):
         nargs="+",
         default=(2, 8),
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
+        help=(
+            "Space separated, unquoted, numbers for the of gradient steps to use. "
+            "More steps will create a smoother and longer gradient animation. "
+            "Steps are paired with the colors in final-gradient-stops."
+        ),
     )  # type: ignore[assignment]
 
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. "
+        "More steps will create a smoother and longer gradient animation. "
+        "Steps are paired with the colors in final-gradient-stops."
+    )
 
     beam_gradient_frames: int = ArgField(
         cmd_name="--beam-gradient-frames",
@@ -151,10 +196,18 @@ class BeamsConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, numbers for the of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.",
+        help=(
+            "Space separated, unquoted, numbers for the of gradient steps to use. "
+            "More steps will create a smoother and longer gradient animation. "
+            "Steps are paired with the colors in final-gradient-stops."
+        ),
     )  # type: ignore[assignment]
 
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. "
+        "More steps will create a smoother and longer gradient animation. "
+        "Steps are paired with the colors in final-gradient-stops."
+    )
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
@@ -187,13 +240,25 @@ class BeamsConfig(ArgsDataClass):
     "int : Speed of the final wipe as measured in diagonal groups activated per frame."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[BaseEffect]:
+        """Return the effect class associated with this configuration."""
         return Beams
 
 
 class BeamsIterator(BaseEffectIterator[BeamsConfig]):
+    """Iterator for the Beams effect."""
+
     class Group:
-        def __init__(self, characters: list[EffectCharacter], direction: str, terminal: Terminal, args: BeamsConfig):
+        """Represents a group of characters."""
+
+        def __init__(
+            self,
+            characters: list[EffectCharacter],
+            direction: str,
+            terminal: Terminal,
+            args: BeamsConfig,
+        ) -> None:
+            """Initialize the Group."""
             self.characters = characters
             self.direction: str = direction
             self.terminal = terminal
@@ -211,24 +276,47 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                 self.characters.reverse()
 
         def increment_next_character_counter(self) -> None:
+            """Increment the counter for the next character."""
             self.next_character_counter += self.speed
 
         def get_next_character(self) -> EffectCharacter | None:
+            """Get the next character in the group.
+
+            If the next character is already active, determined by having an active scene, the active
+            scene is reset and None is returned. Otherwise, the next character is returned and the character
+            is made visible.
+
+            Returns:
+                EffectCharacter | None: The next character if the character or None if the character is already active.
+
+            """
             self.next_character_counter -= 1
             next_character = self.characters.pop(0)
             if next_character.animation.active_scene:
                 next_character.animation.active_scene.reset_scene()
                 return_value = None
             else:
-                self.terminal.set_character_visibility(next_character, True)
+                self.terminal.set_character_visibility(next_character, is_visible=True)
                 return_value = next_character
             next_character.animation.activate_scene(next_character.animation.query_scene("beam_" + self.direction))
             return return_value
 
         def complete(self) -> bool:
+            """Check if the group is complete.
+
+            Returns:
+                bool: True if the group is complete, False otherwise.
+
+            """
             return not self.characters
 
     def __init__(self, effect: Beams) -> None:
+        """Initialize the BeamsIterator.
+
+        Args:
+            effect (Beams): The Beams effect instance.
+
+        """
         super().__init__(effect)
         self.pending_groups: list[BeamsIterator.Group] = []
         self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
@@ -241,6 +329,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         self.build()
 
     def build(self) -> None:
+        """Build the initial state for the Beams effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -274,13 +363,13 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):
-            groups.append(BeamsIterator.Group(row, "row", self.terminal, self.config))
+            groups.append(BeamsIterator.Group(row, "row", self.terminal, self.config))  # noqa: PERF401
         for column in self.terminal.get_characters_grouped(
             Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):
-            groups.append(BeamsIterator.Group(column, "column", self.terminal, self.config))
+            groups.append(BeamsIterator.Group(column, "column", self.terminal, self.config))  # noqa: PERF401
         for group in groups:
             for character in group.characters:
                 beam_row_scn = character.animation.new_scene(scene_id="beam_row")
@@ -331,6 +420,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         random.shuffle(self.pending_groups)
 
     def __next__(self) -> str:
+        """Return the next frame in the effect."""
         if self.phase != "complete" or self.active_characters:
             if self.phase == "beams":
                 if not self.delay:
@@ -360,7 +450,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                         next_group = self.final_wipe_groups.pop(0)
                         for character in next_group:
                             character.animation.activate_scene(character.animation.query_scene("brighten"))
-                            self.terminal.set_character_visibility(character, True)
+                            self.terminal.set_character_visibility(character, is_visible=True)
                             self.active_characters.add(character)
                 else:
                     self.phase = "complete"
