@@ -28,7 +28,7 @@ def test_fg_invalid_xterm():
 
 
 def test_fg_invalid_type():
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         colorterm.fg(3.14)
 
 
@@ -55,5 +55,5 @@ def test_bg_invalid_xterm():
 
 
 def test_bg_invalid_type():
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         colorterm.bg(3.14)

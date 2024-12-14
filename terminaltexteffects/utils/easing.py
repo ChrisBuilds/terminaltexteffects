@@ -1,4 +1,4 @@
-"""This module contains functions for easing calculations.
+"""Functions for easing calculations.
 
 Functions:
     linear: Linear easing function.
@@ -32,7 +32,8 @@ Functions:
     in_bounce: Ease in using a bounce function.
     out_bounce: Ease out using a bounce function.
     in_out_bounce: Ease in/out using a bounce function.
-    eased_step_function: Create a closure that returns the eased value of each step from 0 to 1 increasing by the step_size.
+    eased_step_function: Create a closure that returns the eased value of each step from 0 to 1 increasing
+        by the step_size.
 """
 
 from __future__ import annotations
@@ -42,79 +43,76 @@ import typing
 
 # EasingFunction is a type alias for a function that takes a float between 0 and 1 and returns a float between 0 and 1.
 EasingFunction = typing.Callable[[float], float]
-"EasingFunctions are Callable[[float], float] functions that take a float between 0 and 1 and return a float between 0 and 1."
+"EasingFunctions take a float between 0 and 1 and return a float between 0 and 1."
 
 
 def linear(progress_ratio: float) -> float:
-    """
-    Linear easing function.
+    """Linear easing function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     return progress_ratio
 
 
 def in_sine(progress_ratio: float) -> float:
-    """
-    Ease in using a sine function.
+    """Ease in using a sine function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     return 1 - math.cos((progress_ratio * math.pi) / 2)
 
 
 def out_sine(progress_ratio: float) -> float:
-    """
-    Ease out using a sine function.
+    """Ease out using a sine function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     return math.sin((progress_ratio * math.pi) / 2)
 
 
 def in_out_sine(progress_ratio: float) -> float:
-    """
-    Ease in/out using a sine function.
+    """Ease in/out using a sine function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
-    """
 
+    """
     return -(math.cos(math.pi * progress_ratio) - 1) / 2
 
 
 def in_quad(progress_ratio: float) -> float:
-    """
-    Ease in using a quadratic function.
+    """Ease in using a quadratic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
-    """
 
+    """
     return progress_ratio**2
 
 
 def out_quad(progress_ratio: float) -> float:
-    """
-    Ease out using a quadratic function.
+    """Ease out using a quadratic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
@@ -127,8 +125,7 @@ def out_quad(progress_ratio: float) -> float:
 
 
 def in_out_quad(progress_ratio: float) -> float:
-    """
-    Ease in/out using a quadratic function.
+    """Ease in/out using a quadratic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
@@ -139,39 +136,37 @@ def in_out_quad(progress_ratio: float) -> float:
     """
     if progress_ratio < 0.5:
         return 2 * progress_ratio**2
-    else:
-        return 1 - (-2 * progress_ratio + 2) ** 2 / 2
+    return 1 - (-2 * progress_ratio + 2) ** 2 / 2
 
 
 def in_cubic(progress_ratio: float) -> float:
-    """
-    Ease in using a cubic function.
+    """Ease in using a cubic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     return progress_ratio**3
 
 
 def out_cubic(progress_ratio: float) -> float:
-    """
-    Ease out using a cubic function.
+    """Ease out using a cubic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     return 1 - (1 - progress_ratio) ** 3
 
 
 def in_out_cubic(progress_ratio: float) -> float:
-    """
-    Ease in/out using a cubic function.
+    """Ease in/out using a cubic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
@@ -179,16 +174,15 @@ def in_out_cubic(progress_ratio: float) -> float:
     Returns:
         float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the
         character
+
     """
     if progress_ratio < 0.5:
         return 4 * progress_ratio**3
-    else:
-        return 1 - (-2 * progress_ratio + 2) ** 3 / 2
+    return 1 - (-2 * progress_ratio + 2) ** 3 / 2
 
 
 def in_quart(progress_ratio: float) -> float:
-    """
-    Ease in using a quartic function.
+    """Ease in using a quartic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
@@ -196,184 +190,179 @@ def in_quart(progress_ratio: float) -> float:
     Returns:
         float: 0 <= n <= 1 representing the percentage
         of the current waypoint speed to apply to the character
+
     """
     return progress_ratio**4
 
 
 def out_quart(progress_ratio: float) -> float:
-    """
-    Ease out using a quartic function.
+    """Ease out using a quartic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     return 1 - (1 - progress_ratio) ** 4
 
 
 def in_out_quart(progress_ratio: float) -> float:
-    """
-    Ease in/out using a quartic function.
+    """Ease in/out using a quartic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     if progress_ratio < 0.5:
         return 8 * progress_ratio**4
-    else:
-        return 1 - (-2 * progress_ratio + 2) ** 4 / 2
+    return 1 - (-2 * progress_ratio + 2) ** 4 / 2
 
 
 def in_quint(progress_ratio: float) -> float:
-    """
-    Ease in using a quintic function.
+    """Ease in using a quintic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     return progress_ratio**5
 
 
 def out_quint(progress_ratio: float) -> float:
-    """
-    Ease out using a quintic function.
+    """Ease out using a quintic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     return 1 - (1 - progress_ratio) ** 5
 
 
 def in_out_quint(progress_ratio: float) -> float:
-    """
-    Ease in/out using a quintic function.
+    """Ease in/out using a quintic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     if progress_ratio < 0.5:
         return 16 * progress_ratio**5
-    else:
-        return 1 - (-2 * progress_ratio + 2) ** 5 / 2
+    return 1 - (-2 * progress_ratio + 2) ** 5 / 2
 
 
 def in_expo(progress_ratio: float) -> float:
-    """
-    Ease in using an exponential function.
+    """Ease in using an exponential function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     if progress_ratio == 0:
         return 0
-    else:
-        return 2 ** (10 * progress_ratio - 10)
+    return 2 ** (10 * progress_ratio - 10)
 
 
 def out_expo(progress_ratio: float) -> float:
-    """
-    Ease out using an exponential function.
+    """Ease out using an exponential function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     if progress_ratio == 1:
         return 1
-    else:
-        return 1 - 2 ** (-10 * progress_ratio)
+    return 1 - 2 ** (-10 * progress_ratio)
 
 
 def in_out_expo(progress_ratio: float) -> float:
-    """
-    Ease in/out using an exponential function.
+    """Ease in/out using an exponential function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     if progress_ratio == 0:
         return 0
-    elif progress_ratio == 1:
+    if progress_ratio == 1:
         return 1
-    elif progress_ratio < 0.5:
+    if progress_ratio < 0.5:
         return 2 ** (20 * progress_ratio - 10) / 2
-    else:
-        return (2 - 2 ** (-20 * progress_ratio + 10)) / 2
+    return (2 - 2 ** (-20 * progress_ratio + 10)) / 2
 
 
 def in_circ(progress_ratio: float) -> float:
-    """
-    Ease in using a circular function.
+    """Ease in using a circular function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     return 1 - math.sqrt(1 - progress_ratio**2)
 
 
 def out_circ(progress_ratio: float) -> float:
-    """
-    Ease out using a circular function.
+    """Ease out using a circular function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     return math.sqrt(1 - (progress_ratio - 1) ** 2)
 
 
 def in_out_circ(progress_ratio: float) -> float:
-    """
-    Ease in/out using a circular function.
+    """Ease in/out using a circular function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     if progress_ratio < 0.5:
         return (1 - math.sqrt(1 - (2 * progress_ratio) ** 2)) / 2
-    else:
-        return (math.sqrt(1 - (-2 * progress_ratio + 2) ** 2) + 1) / 2
+    return (math.sqrt(1 - (-2 * progress_ratio + 2) ** 2) + 1) / 2
 
 
 def in_back(progress_ratio: float) -> float:
-    """
-    Ease in using a back function.
+    """Ease in using a back function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     c1 = 1.70158
     c3 = c1 + 1
@@ -381,14 +370,14 @@ def in_back(progress_ratio: float) -> float:
 
 
 def out_back(progress_ratio: float) -> float:
-    """
-    Ease out using a back function.
+    """Ease out using a back function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     c1 = 1.70158
     c3 = c1 + 1
@@ -396,139 +385,134 @@ def out_back(progress_ratio: float) -> float:
 
 
 def in_out_back(progress_ratio: float) -> float:
-    """
-    Ease in/out using a back function.
+    """Ease in/out using a back function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     c1 = 1.70158
     c2 = c1 * 1.525
     if progress_ratio < 0.5:
         return ((2 * progress_ratio) ** 2 * ((c2 + 1) * 2 * progress_ratio - c2)) / 2
-    else:
-        return ((2 * progress_ratio - 2) ** 2 * ((c2 + 1) * (progress_ratio * 2 - 2) + c2) + 2) / 2
+    return ((2 * progress_ratio - 2) ** 2 * ((c2 + 1) * (progress_ratio * 2 - 2) + c2) + 2) / 2
 
 
 def in_elastic(progress_ratio: float) -> float:
-    """
-    Ease in using an elastic function.
+    """Ease in using an elastic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
-    """
 
+    """
     c4 = (2 * math.pi) / 3
     if progress_ratio == 0:
         return 0
-    elif progress_ratio == 1:
+    if progress_ratio == 1:
         return 1
-    else:
-        return -(2 ** (10 * progress_ratio - 10)) * math.sin((progress_ratio * 10 - 10.75) * c4)
+    return -(2 ** (10 * progress_ratio - 10)) * math.sin((progress_ratio * 10 - 10.75) * c4)
 
 
 def out_elastic(progress_ratio: float) -> float:
-    """
-    Ease out using an elastic function.
+    """Ease out using an elastic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+
     """
     c4 = (2 * math.pi) / 3
     if progress_ratio == 0:
         return 0
-    elif progress_ratio == 1:
+    if progress_ratio == 1:
         return 1
-    else:
-        return 2 ** (-10 * progress_ratio) * math.sin((progress_ratio * 10 - 0.75) * c4) + 1
+    return 2 ** (-10 * progress_ratio) * math.sin((progress_ratio * 10 - 0.75) * c4) + 1
 
 
 def in_out_elastic(progress_ratio: float) -> float:
-    """
-    Ease in/out using an elastic function.
+    """Ease in/out using an elastic function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+
     """
     c5 = (2 * math.pi) / 4.5
     if progress_ratio == 0:
         return 0
-    elif progress_ratio == 1:
+    if progress_ratio == 1:
         return 1
-    elif progress_ratio < 0.5:
+    if progress_ratio < 0.5:
         return -(2 ** (20 * progress_ratio - 10) * math.sin((20 * progress_ratio - 11.125) * c5)) / 2
-    else:
-        return (2 ** (-20 * progress_ratio + 10) * math.sin((20 * progress_ratio - 11.125) * c5)) / 2 + 1
+    return (2 ** (-20 * progress_ratio + 10) * math.sin((20 * progress_ratio - 11.125) * c5)) / 2 + 1
 
 
 def in_bounce(progress_ratio: float) -> float:
-    """
-    Ease in using a bounce function.
+    """Ease in using a bounce function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+
     """
     return 1 - out_bounce(1 - progress_ratio)
 
 
 def out_bounce(progress_ratio: float) -> float:
-    """
-    Ease out using a bounce function.
+    """Ease out using a bounce function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     n1 = 7.5625
     d1 = 2.75
     if progress_ratio < 1 / d1:
         return n1 * progress_ratio**2
-    elif progress_ratio < 2 / d1:
+    if progress_ratio < 2 / d1:
         return n1 * (progress_ratio - 1.5 / d1) ** 2 + 0.75
-    elif progress_ratio < 2.5 / d1:
+    if progress_ratio < 2.5 / d1:
         return n1 * (progress_ratio - 2.25 / d1) ** 2 + 0.9375
-    else:
-        return n1 * (progress_ratio - 2.625 / d1) ** 2 + 0.984375
+    return n1 * (progress_ratio - 2.625 / d1) ** 2 + 0.984375
 
 
 def in_out_bounce(progress_ratio: float) -> float:
-    """
-    Ease in/out using a bounce function.
+    """Ease in/out using a bounce function.
 
     Args:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
         float: 0 <= n <= 1 eased value
+
     """
     if progress_ratio < 0.5:
         return (1 - out_bounce(1 - 2 * progress_ratio)) / 2
-    else:
-        return (1 + out_bounce(2 * progress_ratio - 1)) / 2
+    return (1 + out_bounce(2 * progress_ratio - 1)) / 2
 
 
 def eased_step_function(
-    easing_func: EasingFunction, step_size: float, clamp: bool = False
+    easing_func: EasingFunction,
+    step_size: float,
+    *,
+    clamp: bool = False,
 ) -> typing.Callable[[], tuple[float, float]]:
-    """
-    Create a closure that returns the eased value of each step from 0 to 1 increasing by the step_size.
+    """Create a closure that returns the eased value of each step from 0 to 1 increasing by the step_size.
 
     Args:
         easing_func (EasingFunction): The easing function to use.
@@ -536,10 +520,13 @@ def eased_step_function(
         clamp (bool): If True, the easing function will be limited to 0 <= n <= 1. Defaults to False.
 
     Returns:
-        callable[[],tuple[float,float]]: A closure that returns a tuple of the current input step and eased value of the current input step.
+        callable[[],tuple[float,float]]: A closure that returns a tuple of the current input step and eased value of
+        the current input step.
+
     """
     if not 0 < step_size <= 1:
-        raise ValueError("Step size must be 0 < n <= 1.")
+        msg = "Step size must be 0 < n <= 1."
+        raise ValueError(msg)
 
     current_step = 0.0
 

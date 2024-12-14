@@ -79,8 +79,9 @@ find_coords_on_circle = functools.wraps(find_coords_on_circle)(functools.lru_cac
 
 
 def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
-    """Find the coordinates within an circle given the center and diameter. The actual
-    shape calculated is an ellipse with a major axis of length diameter, however the
+    """Find the coordinates within a circle with the given center and diameter.
+
+    The actual shape calculated is an ellipse with a major axis of length diameter, however the
     terminal cell height/width ratio creates a circle visually.
 
     Args:
@@ -103,7 +104,7 @@ def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
         x_component = ((x - h) ** 2) / a_squared
         max_y_offset = int((b_squared * (1 - x_component)) ** 0.5)
         for y in range(k - max_y_offset, k + max_y_offset + 1):
-            coords_in_ellipse.append(Coord(x, y))
+            coords_in_ellipse.append(Coord(x, y))  # noqa: PERF401
 
     return coords_in_ellipse
 
@@ -112,8 +113,9 @@ find_coords_in_circle = functools.wraps(find_coords_in_circle)(functools.lru_cac
 
 
 def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
-    """Find coords that fall within a rectangle with the given origin and distance
-    from the origin. Distance specifies the number of units in each direction from the origin.
+    """Find coords that fall within a rectangle.
+
+    Distance specifies the number of units in each direction from the origin.
     Final width = 2 * distance + 1, final height = 2 * distance + 1.
 
     Args:
@@ -133,7 +135,7 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
         return coords
     for column in range(left_boundary, right_boundary + 1):
         for row in range(top_boundary, bottom_boundary + 1):
-            coords.append(Coord(column, row))
+            coords.append(Coord(column, row))  # noqa: PERF401
 
     return coords
 
@@ -142,9 +144,10 @@ find_coords_in_rect = functools.wraps(find_coords_in_rect)(functools.lru_cache(m
 
 
 def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coord:
-    """Finds the coordinate at the given distance along the line defined by the origin and target coordinates.
+    """Find the coordinate at the given distance along the line defined by the origin and target coordinates.
 
-    The coordinate returned is approximately [distance] units away from the target coordinate, away from the origin coordinate.
+    The coordinate returned is approximately [distance] units away from the target coordinate,
+    away from the origin coordinate.
 
     Args:
         origin (Coord): origin coordinate (a)
@@ -172,7 +175,7 @@ find_coord_at_distance = functools.wraps(find_coord_at_distance)(
 
 
 def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Coord, t: float) -> Coord:
-    """Finds points on a bezier curve of any degree.
+    """Find points on a bezier curve of any degree.
 
     Args:
         start (Coord): The starting coordinate of the curve.
@@ -185,17 +188,18 @@ def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Co
 
     """
     if not 0 <= t <= 1:
-        raise ValueError("t must be between 0 and 1.")
-    points = [start] + list(control) + [end]
+        msg = "t must be between 0 and 1."
+        raise ValueError(msg)
+    points = [start, *list(control), end]
 
-    def de_casteljau(points: list[Coord], t: float):
+    def de_casteljau(points: list[Coord], t: float):  # noqa: ANN202
         if len(points) == 1:
             return points[0]
         new_points = []
         for i in range(len(points) - 1):
             x = (1 - t) * points[i].column + t * points[i + 1].column
             y = (1 - t) * points[i].row + t * points[i + 1].row
-            new_points.append(Coord(x, y))  # type: ignore
+            new_points.append(Coord(x, y))  # type: ignore[arg-type]
         return de_casteljau(new_points, t)
 
     result = de_casteljau(points, t)
@@ -208,7 +212,7 @@ find_coord_on_bezier_curve = functools.wraps(find_coord_on_bezier_curve)(
 
 
 def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
-    """Finds points on a line.
+    """Find points on a line.
 
     Args:
         start (Coord): The starting coordinate of the line.
@@ -220,7 +224,8 @@ def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
 
     """
     if not 0 <= round(t) <= 1:
-        raise ValueError("t must be between 0 and 1.")
+        msg = "t must be between 0 and 1."
+        raise ValueError(msg)
     x = (1 - t) * start.column + t * end.column
     y = (1 - t) * start.row + t * end.row
     return Coord(round(x), round(y))
@@ -230,7 +235,7 @@ find_coord_on_line = functools.wraps(find_coord_on_line)(functools.lru_cache(max
 
 
 def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord) -> float:
-    """Finds the length of a bezier curve.
+    """Find the length of a bezier curve.
 
     Args:
         start (Coord): The starting coordinate of the curve.
@@ -258,14 +263,16 @@ find_length_of_bezier_curve = functools.wraps(find_length_of_bezier_curve)(
 )
 
 
-def find_length_of_line(coord1: Coord, coord2: Coord, double_row_diff: bool = False) -> float:
-    """Returns the length of the line intersecting coord1 and coord2. If double_row_diff is True, the distance is
-    doubled to account for the terminal character height/width ratio.
+def find_length_of_line(coord1: Coord, coord2: Coord, *, double_row_diff: bool = False) -> float:
+    """Return the length of the line intersecting coord1 and coord2.
+
+    If double_row_diff is True, the distance is doubled to account for the terminal character height/width ratio.
 
     Args:
         coord1 (Coord): first coordinate.
         coord2 (Coord): second coordinate.
-        double_row_diff (bool, optional): whether to double the row difference to account for terminal character height/width ratio. Defaults to False.
+        double_row_diff (bool, optional): whether to double the row difference to account for terminal character
+            height/width ratio. Defaults to False.
 
     Returns:
         float: length of the line
@@ -282,7 +289,7 @@ find_length_of_line = functools.wraps(find_length_of_line)(functools.lru_cache(m
 
 
 def find_normalized_distance_from_center(bottom: int, top: int, left: int, right: int, other_coord: Coord) -> float:
-    """Returns the normalized distance from the center of a rectangle on the Canvas as a float between 0 and 1.
+    """Return the normalized distance from the center of a rectangle on the Canvas as a float between 0 and 1.
 
     The distance is calculated using the Pythagorean theorem and accounts for the aspect ratio of the terminal.
 
@@ -307,7 +314,8 @@ def find_normalized_distance_from_center(bottom: int, top: int, left: int, right
     if (other_coord.column - x_offset) not in range(left - x_offset, right + 1) or (
         other_coord.row - y_offset
     ) not in range(bottom - y_offset, top + 1):
-        raise ValueError("Coordinate is not within the rectangle.")
+        msg = "Coordinate is not within the rectangle."
+        raise ValueError(msg)
 
     max_distance = ((right**2) + ((top * 2) ** 2)) ** 0.5
 

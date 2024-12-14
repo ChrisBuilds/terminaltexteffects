@@ -1,6 +1,24 @@
 """Collection of functions that generate ANSI escape codes for various terminal formatting effects.
 
 These escape codes can be used to modify the appearance of text in a terminal.
+
+Functions:
+    parse_ansi_color_sequence(sequence: str) -> int | str: Parse an 8-bit or 24-bit ANSI color sequence.
+    dec_save_cursor_position() -> str: Save the cursor position using DEC sequence.
+    dec_restore_cursor_position() -> str: Restore the cursor position using DEC sequence.
+    hide_cursor() -> str: Hide the cursor.
+    show_cursor() -> str: Show the cursor.
+    move_cursor_up(y: int) -> str: Move the cursor up y lines.
+    move_cursor_to_column(x: int) -> str: Move the cursor to the specified column.
+    reset_all() -> str: Reset all formatting.
+    apply_bold() -> str: Apply bold formatting.
+    apply_dim() -> str: Apply dim formatting.
+    apply_italic() -> str: Apply italic formatting.
+    apply_underline() -> str: Apply underline formatting.
+    apply_blink() -> str: Apply blink formatting.
+    apply_reverse() -> str: Apply reverse formatting.
+    apply_hidden() -> str: Apply hidden formatting.
+    apply_strikethrough() -> str: Apply strikethrough formatting.
 """
 
 from __future__ import annotations
@@ -94,7 +112,7 @@ def move_cursor_up(y: int) -> str:
 
 
 def move_cursor_to_column(x: int) -> str:
-    """Move the cursor to the x column.
+    """Move the cursor to the specified column.
 
     Args:
         x (int): column number

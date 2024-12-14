@@ -17,7 +17,7 @@ def test_ease_progress_ratios(progress, easing_function_1):
 
 @pytest.mark.parametrize("clamp", [True, False])
 def test_eased_step_function(easing_function_1, clamp):
-    f = eased_step_function(easing_function_1, 0.01, clamp)
+    f = eased_step_function(easing_function_1, 0.01, clamp=clamp)
     used_step = 0
     while used_step < 1:
         used_step, eased_value = f()
