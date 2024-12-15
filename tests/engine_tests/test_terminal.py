@@ -579,7 +579,7 @@ def test_terminal_print(capsys):
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
     terminal.print("abcd\nefgh\nijkl")
     captured = capsys.readouterr()
-    assert captured.out == "\x1b8\x1b[3Aabcd\nefgh\nijkl"
+    assert captured.out == "\x1b8\x1b7\x1b[3Aabcd\nefgh\nijkl"
 
 
 def test_terminal_enforce_framerate(monkeypatch: pytest.MonkeyPatch):
@@ -604,4 +604,4 @@ def test_terminal_move_cursor_to_top(capsys):
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
     terminal.move_cursor_to_top()
     captured = capsys.readouterr()
-    assert captured.out == "\x1b8\x1b[3A"
+    assert captured.out == "\x1b8\x1b7\x1b[3A"
