@@ -250,12 +250,13 @@ class Gradient:
         a, b = itertools.tee(self._stops)
         next(b, None)
         color_pairs = list(zip(a, b))
-        # color_pairs = list(itertools.pairwise(self._stops))
         steps = steps[: len(color_pairs)]
+        if len(steps) < len(color_pairs):
+            steps = steps + (steps[-1],) * (len(color_pairs) - len(steps))
         color_pair: tuple[Color, Color]
-        for color_pair, steps in itertools.zip_longest(color_pairs, steps, fillvalue=steps[-1]):
-            if steps < 1:
-                msg = f"Invalid steps: {steps} | Steps must be greater than 0."
+        for color_pair, step_count in zip(color_pairs, steps):
+            if step_count < 1:
+                msg = f"Invalid steps: {step_count} | Steps must be greater than 0."
                 raise ValueError(msg)
             start, end = color_pair
             start_color_ints = start.rgb_ints
@@ -263,12 +264,12 @@ class Gradient:
             # Initialize an empty list to store the gradient colors
             gradient_colors: list[Color] = []
             # Calculate the color deltas for each RGB value
-            red_delta = (end_color_ints[0] - start_color_ints[0]) // steps
-            green_delta = (end_color_ints[1] - start_color_ints[1]) // steps
-            blue_delta = (end_color_ints[2] - start_color_ints[2]) // steps
+            red_delta = (end_color_ints[0] - start_color_ints[0]) // step_count
+            green_delta = (end_color_ints[1] - start_color_ints[1]) // step_count
+            blue_delta = (end_color_ints[2] - start_color_ints[2]) // step_count
             # Calculate the intermediate colors and add them to the gradient colors list
             range_start = int(len(spectrum) > 0)  # if this is the first pair, add the start color to the spectrum
-            for i in range(range_start, max(steps, 0)):
+            for i in range(range_start, max(step_count, 0)):
                 red = start_color_ints[0] + (red_delta * i)
                 green = start_color_ints[1] + (green_delta * i)
                 blue = start_color_ints[2] + (blue_delta * i)
