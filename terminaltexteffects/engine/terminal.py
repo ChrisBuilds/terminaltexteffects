@@ -546,7 +546,7 @@ class Terminal:
         self._last_time_printed = time.time()
         self._update_terminal_state()
 
-    def _preprocess_input_data(self, input_data: str) -> list[list[EffectCharacter]]:  # noqa: PLR0912, PLR0915
+    def _preprocess_input_data(self, input_data: str) -> list[list[EffectCharacter]]:  # noqa: PLR0915
         """Preprocess the input data.
 
         Preprocess the input data by replacing tabs with spaces and decomposing the input data into a list of
@@ -938,7 +938,7 @@ class Terminal:
 
         return all_characters
 
-    def get_characters_grouped(  # noqa: PLR0912
+    def get_characters_grouped(
         self,
         grouping: CharacterGroup = CharacterGroup.ROW_TOP_TO_BOTTOM,
         *,
@@ -1151,4 +1151,5 @@ class Terminal:
     def move_cursor_to_top(self) -> None:
         """Restores the cursor position to the top of the canvas."""
         sys.stdout.write(ansitools.dec_restore_cursor_position())
+        sys.stdout.write(ansitools.dec_save_cursor_position())
         sys.stdout.write(ansitools.move_cursor_up(self.visible_top))
