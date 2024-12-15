@@ -176,7 +176,7 @@ class Path:
         """
         self.waypoint_lookup[waypoint.waypoint_id] = waypoint
         self.waypoints.append(waypoint)
-        if len(self.waypoints) < 2:  # noqa: PLR2004
+        if len(self.waypoints) < 2:
             return
 
         if waypoint.bezier_control:
@@ -426,7 +426,7 @@ class Motion:
             loop (bool, optional): Whether the chain should loop. Defaults to False.
 
         """
-        if len(paths) < 2:  # noqa: PLR2004
+        if len(paths) < 2:
             return
         for i, path in enumerate(paths):
             if i == 0:
