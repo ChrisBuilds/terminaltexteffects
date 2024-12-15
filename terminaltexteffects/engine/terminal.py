@@ -539,8 +539,7 @@ class Terminal:
         self.character_by_input_coord: dict[Coord, EffectCharacter] = {
             (character.input_coord): character for character in self._input_characters
         }
-        self._inner_fill_characters = self._make_inner_fill_characters()
-        self._outer_fill_characters = self._make_outer_fill_characters()
+        self._inner_fill_characters, self._outer_fill_characters = self._make_fill_characters()
         self._visible_characters: set[EffectCharacter] = set()
         self._frame_rate = self.config.frame_rate
         self._last_time_printed = time.time()
@@ -780,41 +779,16 @@ class Terminal:
         anchored_characters = self.canvas._anchor_text(input_characters, self.config.anchor_text)
         return [char for char in anchored_characters if self.canvas.coord_is_in_canvas(char._input_coord)]
 
-    def _make_inner_fill_characters(self) -> list[EffectCharacter]:
-        """Create a list of characters to fill the empty spaces in the bounding box which encloses the input text.
+    def _make_fill_characters(self) -> tuple[list[EffectCharacter], list[EffectCharacter]]:
+        """Create lists of characters to fill the empty spaces in the canvas.
 
         The characters input_symbol is a space. The characters are added to the character_by_input_coord dictionary.
 
-
         Returns:
-            list[EffectCharacter]: list of characters
+            tuple[list[EffectCharacter], list[EffectCharacter]]: lists of inner and outer fill characters
 
         """
         inner_fill_characters = []
-        # account for space between input text and canvas edges
-        for row in range(self.canvas.text_top, self.canvas.text_bottom - 1, -1):
-            for column in range(self.canvas.text_left, self.canvas.text_right + 1):
-                coord = Coord(column, row)
-                if coord not in self.character_by_input_coord:
-                    fill_char = EffectCharacter(self._next_character_id, " ", column, row)
-                    fill_char.is_fill_character = True
-                    fill_char.animation.no_color = self.config.no_color
-                    fill_char.animation.use_xterm_colors = self.config.xterm_colors
-                    fill_char.animation.existing_color_handling = self.config.existing_color_handling
-                    self.character_by_input_coord[coord] = fill_char
-                    self._next_character_id += 1
-                    inner_fill_characters.append(fill_char)
-        return inner_fill_characters
-
-    def _make_outer_fill_characters(self) -> list[EffectCharacter]:
-        """Create a list of characters to fill the empty spaces in the canvas around the text bounding box.
-
-        The character's input_symbol is a space. The characters are added to the character_by_input_coord dictionary.
-
-        Returns:
-            list[EffectCharacter]: list of characters
-
-        """
         outer_fill_characters = []
         for row in range(1, self.canvas.top + 1):
             for column in range(1, self.canvas.right + 1):
@@ -825,10 +799,16 @@ class Terminal:
                     fill_char.animation.no_color = self.config.no_color
                     fill_char.animation.use_xterm_colors = self.config.xterm_colors
                     fill_char.animation.existing_color_handling = self.config.existing_color_handling
-                    outer_fill_characters.append(fill_char)
                     self.character_by_input_coord[coord] = fill_char
                     self._next_character_id += 1
-        return outer_fill_characters
+                    if (
+                        self.canvas.text_left <= column <= self.canvas.text_right
+                        and self.canvas.text_bottom <= row <= self.canvas.text_top
+                    ):
+                        inner_fill_characters.append(fill_char)
+                    else:
+                        outer_fill_characters.append(fill_char)
+        return inner_fill_characters, outer_fill_characters
 
     def add_character(self, symbol: str, coord: Coord) -> EffectCharacter:
         """Add a character to the terminal for printing.
@@ -1066,9 +1046,7 @@ class Terminal:
             EffectCharacter | None: the character at the specified coordinates, or None if no character is found
 
         """
-        if coord not in self.character_by_input_coord:
-            return None
-        return self.character_by_input_coord[coord]
+        return self.character_by_input_coord.get(coord, None)
 
     def set_character_visibility(self, character: EffectCharacter, is_visible: bool) -> None:  # noqa: FBT001
         """Set the visibility of a character.
