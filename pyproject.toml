@@ -23,7 +23,9 @@ ignore = [
     "C90",
     "ANN401",
     "EXE",
+    "PLR0912", # too many branches
     "PLR0913", # too many function args
+    "PLR2004", # magic numbers
     "RUF009",  # function-call-in-dataclass-default-argument
     "S311",    # suspicious-non-cryptographic-random-usage
     "SLF001",  # private member access
@@ -31,13 +33,15 @@ ignore = [
 ]
 select = ["ALL"]
 fixable = ["ALL"]
+extend-fixable = ["EM102"]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
+"__init__.py" = ["F401", "D104"]
 "**/tests/*" = [
     "S101", # assert
 
 ]
+
 
 [tool.pytest.ini_options]
 console_output_style = "progress"
