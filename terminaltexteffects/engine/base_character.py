@@ -110,6 +110,16 @@ class EventHandler:
 
         Register callback actions with the EventHandler using the register_event method of the EventHandler class.
 
+        The callback function will be called with the character and any additional arguments when the event
+        is triggered. The character will be the first argument passed to the callback function followed by any
+        additional arguments in the order they were passed to the Callback object.
+
+        Example:
+            Create a callback to set the character's visibility to False. The following code would be
+            used within an effect where 'self' is the EffectIterator instance:
+
+                cb = EventHandler.Callback(lambda c: self.terminal.set_character_visibility(c, is_visible=False))
+
         """
 
         callback: typing.Callable
