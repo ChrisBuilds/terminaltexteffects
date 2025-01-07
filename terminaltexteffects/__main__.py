@@ -1,9 +1,12 @@
+"""Provides the command line interface for the TerminalTextEffects application."""
+
 from __future__ import annotations
 
 import argparse
 import importlib
 import pkgutil
 import sys
+from pathlib import Path
 
 import terminaltexteffects.effects
 import terminaltexteffects.engine.terminal as term
@@ -11,11 +14,13 @@ from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.argsdataclass import ArgsDataClass
 
 
-def main():
+def main() -> None:
+    """Run the terminaltexteffects command line interface."""
     parser = (argparse.ArgumentParser)(
         prog="tte",
         description="A terminal visual effects engine, application, and library",
-        epilog="Ex: ls -a | tte decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 --final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical",
+        epilog="Ex: ls -a | tte decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 "
+        "--final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical",
     )
 
     parser.add_argument("--input-file", "-i", type=str, help="File to read input from")
@@ -36,7 +41,8 @@ def main():
     )
 
     for module_info in pkgutil.iter_modules(
-        terminaltexteffects.effects.__path__, terminaltexteffects.effects.__name__ + "."
+        terminaltexteffects.effects.__path__,
+        terminaltexteffects.effects.__name__ + ".",
     ):
         module = importlib.import_module(module_info.name)
 
@@ -47,12 +53,11 @@ def main():
     args = parser.parse_args()
     if args.input_file:
         try:
-            with open(args.input_file, "r", encoding="UTF-8") as f:
-                input_data = f.read()
+            input_data = Path(args.input_file).read_text(encoding="UTF-8")
         except FileNotFoundError:
             print(f"File not found: {args.input_file}")
             return
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"Error reading file: {args.input_file} - {e}")
             return
     else:
