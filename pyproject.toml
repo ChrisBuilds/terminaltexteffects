@@ -30,6 +30,7 @@ ignore = [
     "S311",    # suspicious-non-cryptographic-random-usage
     "SLF001",  # private member access
     "TRY003",  # f-strings in exception message
+    "T201",    # printing
 ]
 select = ["ALL"]
 fixable = ["ALL"]
