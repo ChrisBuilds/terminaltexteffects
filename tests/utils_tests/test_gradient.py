@@ -11,13 +11,13 @@ def test_random_color() -> None:
 
 
 def test_color_pair_init() -> None:
-    cp = ColorPair(Color("ffffff"), Color("000000"))
+    cp = ColorPair(fg_color=Color("ffffff"), bg_color=Color("000000"))
     assert cp.fg_color == Color("ffffff")
     assert cp.bg_color == Color("000000")
 
 
 def test_color_pair_init_single_color() -> None:
-    cp = ColorPair(Color("ffffff"))
+    cp = ColorPair(fg_color=Color("ffffff"))
     assert cp.fg_color == Color("ffffff")
     assert cp.bg_color is None
 
@@ -163,7 +163,11 @@ def test_gradient_build_coordinate_color_mapping(direction) -> None:
 @pytest.mark.parametrize("min_row", [1, 5])
 @pytest.mark.parametrize("max_row", [5, 10])
 def test_gradient_build_coordinate_color_mapping_no_exceptions(
-    direction, min_column, max_column, min_row, max_row
+    direction,
+    min_column,
+    max_column,
+    min_row,
+    max_row,
 ) -> None:
     g = Gradient(Color("ffffff"), Color("000000"), steps=4)
     if min_column > max_column or min_row > max_row:
@@ -235,7 +239,7 @@ def test_color_not_equal():
 
 def test_color_not_equal_different_types():
     assert Color("ffffff") != 0
-    assert not Color(0) == "ffffff"
+    assert Color(0) != "ffffff"
 
 
 def test_color_is_hashable():

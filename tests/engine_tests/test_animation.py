@@ -35,7 +35,7 @@ def character_visual_all_modes_enabled() -> CharacterVisual:
         reverse=True,
         hidden=True,
         strike=True,
-        colors=ColorPair(Color("ffffff"), Color("ffffff")),
+        colors=ColorPair(fg_color=Color("ffffff"), bg_color=Color("ffffff")),
         _fg_color_code="ffffff",
         _bg_color_code="ffffff",
     )
@@ -77,7 +77,7 @@ def test_scene_add_frame():
     scene.add_frame(
         symbol="a",
         duration=5,
-        colors=ColorPair(Color("ffffff"), Color("ffffff")),
+        colors=ColorPair(fg_color=Color("ffffff"), bg_color=Color("ffffff")),
         bold=True,
         italic=True,
         blink=True,
@@ -90,14 +90,14 @@ def test_scene_add_frame():
         == "\x1b[1m\x1b[3m\x1b[5m\x1b[8m\x1b[38;2;255;255;255m\x1b[48;2;255;255;255ma\x1b[0m"
     )
     assert frame.duration == 5
-    assert frame.character_visual.colors == ColorPair(Color("ffffff"), Color("ffffff"))
+    assert frame.character_visual.colors == ColorPair(fg_color=Color("ffffff"), bg_color=Color("ffffff"))
     assert frame.character_visual.bold is True
 
 
 def test_scene_add_frame_invalid_duration():
     scene = Scene(scene_id="test_scene")
     with pytest.raises(FrameDurationError):
-        scene.add_frame(symbol="a", duration=0, colors=ColorPair(Color("ffffff"), Color("ffffff")))
+        scene.add_frame(symbol="a", duration=0, colors=ColorPair(fg_color=Color("ffffff"), bg_color=Color("ffffff")))
 
 
 def test_scene_apply_gradient_to_symbols_equal_colors_and_symbols():
@@ -111,7 +111,7 @@ def test_scene_apply_gradient_to_symbols_equal_colors_and_symbols():
         assert frame.character_visual._fg_color_code == gradient.spectrum[i].rgb_color
 
 
-def test_scene_apply_gradient_to_symbols_unequal_colors_and_symbols():
+def test_scene_apply_gradient_to_symbols_unequal_colors_and_symbols() -> None:
     """Test that all colors in the gradient are represented in the scene frames and
     the symbols are progressed such that the first and final symbols align to the
     first and final colors.
@@ -215,8 +215,11 @@ def test_animation_set_appearance_existing_colors(character: EffectCharacter):
     character.animation.existing_color_handling = "always"
     character.animation.input_fg_color = Color("ffffff")
     character.animation.input_bg_color = Color("000000")
-    character.animation.set_appearance("a", colors=ColorPair(Color("f0f0f0"), Color("0f0f0f")))
-    assert character.animation.current_character_visual.colors == ColorPair(Color("ffffff"), Color("000000"))
+    character.animation.set_appearance("a", colors=ColorPair(fg_color=Color("f0f0f0"), bg_color=Color("0f0f0f")))
+    assert character.animation.current_character_visual.colors == ColorPair(
+        fg_color=Color("ffffff"),
+        bg_color=Color("000000"),
+    )
 
 
 def test_animation_adjust_color_brightness_half(character: EffectCharacter):
@@ -353,7 +356,7 @@ def test_scene_input_color_from_existing(character: EffectCharacter):
     character.animation.input_fg_color = Color("ffffff")
     character.animation.input_bg_color = Color("000000")
     new_scene = character.animation.new_scene()
-    assert new_scene.preexisting_colors == ColorPair(Color("ffffff"), Color("000000"))
+    assert new_scene.preexisting_colors == ColorPair(fg_color=Color("ffffff"), bg_color=Color("000000"))
 
 
 def test_scene_add_frame_existing_colors(character: EffectCharacter):
@@ -361,9 +364,9 @@ def test_scene_add_frame_existing_colors(character: EffectCharacter):
     character.animation.input_fg_color = Color("ffffff")
     character.animation.input_bg_color = Color("000000")
     new_scene = character.animation.new_scene()
-    new_scene.add_frame(symbol="a", duration=1, colors=ColorPair(Color("f0f0f0"), Color("0f0f0f")))
+    new_scene.add_frame(symbol="a", duration=1, colors=ColorPair(fg_color=Color("f0f0f0"), bg_color=Color("0f0f0f")))
     # the frame colors should be overridden by the scene colors derived from the input
-    assert new_scene.frames[0].character_visual.colors == ColorPair(Color("ffffff"), Color("000000"))
+    assert new_scene.frames[0].character_visual.colors == ColorPair(fg_color=Color("ffffff"), bg_color=Color("000000"))
 
 
 def test_activate_scene_with_no_frames(character: EffectCharacter):
