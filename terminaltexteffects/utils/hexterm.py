@@ -293,7 +293,7 @@ def hex_to_xterm(hex_color: str) -> int:
             min_diff = diff
             closest_color = xterm_color
 
-    return closest_color
+    return closest_color  # type: ignore[unbound]
 
 
 def xterm_to_hex(xterm_color: int) -> str:
