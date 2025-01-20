@@ -58,7 +58,7 @@ Decodes characters into their binary form. Characters travel from outside the ca
 
     ```
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('00d500', '007500'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -92,7 +92,7 @@ Creates a blackhole in a starfield, consumes the stars, explodes the input data 
                         List of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color. (default: ('ffcc0d', 'ff7326', 'ff194d', 'bf2669',
                         '702a8c', '049dbf'))
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('8A008A', '00D1FF', 'ffffff'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -119,7 +119,7 @@ Characters fall from the top of the canvas as bouncy balls before settling into 
     --ball-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
                         Space separated list of symbols to use for the balls. (default: ('*', 'o', 'O', '0', '.'))
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('f8ffae', '43c6ac'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -176,7 +176,7 @@ Forms bubbles with the characters. Bubbles float down and pop.
     --pop-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                         Color for the spray emitted when a bubble pops. (default: ffffff)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('d33aff', '02ff7f'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -236,7 +236,7 @@ Characters are ignited and burn up the screen.
     --burn-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Colors transitioned through as the characters burn. (default: ('ffffff', 'fff75d', 'fe650d', '8A003C', '510100'))
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('00c3ff', 'ffff1c'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -309,7 +309,7 @@ Characters crumble into dust before being vacuumed up and reformed.
 
     ```
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('5CE1FF', 'FF8C00'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -336,7 +336,7 @@ Movie style text decryption effect.
     --ciphertext-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the ciphertext. Color will be randomly selected for each character. (default: ('008000', '00cb00', '00ff00'))
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('eda000',))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -367,7 +367,7 @@ Swaps characters from an incorrect initial position to the correct position.
     --correct-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                             Color for the characters once corrected, this is a gradient from error-color and fades to final-color. (default: 45bf55)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                             (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -418,7 +418,7 @@ Characters expand from the center.
 
     ```
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -479,7 +479,7 @@ Launches characters up the screen where they explode like fireworks and fall int
     --firework-volume (0 <= float(n) <= 1)
                         Percent of total characters in each firework shell. (default: 0.02)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -528,6 +528,49 @@ Run a specular highlight across the text.
     ```
 ---
 
+## LaserEtch
+
+A laser etches characters onto the terminal.
+
+![Demo](./img/effects_demos/laseretch_demo.gif)
+
+[Reference](./effects/laseretch.md){ .md-button } [Config](./effects/laseretch.md#terminaltexteffects.effects.effect_laseretch.LaserEtchConfig){ .md-button }
+
+??? example "LaserEtch Command Line Arguments"
+
+    ```
+    --etch-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,outside_to_center,center_to_outside}
+                        Pattern used to etch the text. (default: row_top_to_bottom)
+    --etch-speed (int > 0)
+                        Along with etch_delay, determines the speed at which the characters are etched onto the terminal. This value specifies the number of characters to etch simultaneously. (default: 1)
+    --etch-delay (int >= 0)
+                        Along with etch_speed, determines the speed at which the characters are etched onto the terminal. This values specifies the number of frames to wait before etching the next set of
+                        characters. (default: 3)
+    --cool-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the gradient used to cool the characters after etching. If only one color is provided, the characters will be displayed in that color.
+                        (default: (Color('ffe680'), Color('ff7b00')))
+    --laser-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the laser gradient. If only one color is provided, the characters will be displayed in that color. (default: (Color('ffffff'),
+                        Color('376cff')))
+    --spark-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the spark cooling gradient. If only one color is provided, the characters will be displayed in that color. (default: (Color('ffffff'),
+                        Color('ffe680'), Color('ff7b00'), Color('1a0900')))
+    --spark-cooling-frames (int > 0)
+                        Number of frames to display each spark cooling gradient step. Increase to slow down the rate of cooling. (default: 10)
+    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
+                        (default: (Color('8A008A'), Color('00D1FF'), Color('ffffff')))
+    --final-gradient-steps (int > 0) [(int > 0) ...]
+                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: 8)
+    --final-gradient-frames (int > 0)
+                        Number of frames to display each gradient step. Increase to slow down the gradient animation. (default: 5)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
+                        Direction of the final gradient. (default: Direction.VERTICAL)
+
+    Example: terminaltexteffects laseretch --etch-speed 2 --etch-delay 5 --etch-direction row_top_to_bottom --cool-gradient-stops ffe680 ff7b00 --laser-gradient-stops ffffff 376cff --spark-gradient-stops ffffff ffe680 ff7b00 1a0900 --spark-cooling-frames 10 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 8  --final-gradient-frames 5 --final-gradient-direction vertical    
+    ```
+---
+
 ## Matrix
 
 Matrix digital rain effect.
@@ -560,7 +603,7 @@ Matrix digital rain effect.
     --resolve-delay (int > 0)
                         Number of frames to wait between resolving the next group of characters. This is used to adjust the speed of the final resolve phase. (default: 5)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: Color Code: 389c38 Color Appearance: █████)
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: 12)
@@ -591,7 +634,7 @@ Text expands in a single row or column in the middle of the canvas then out.
     --starting-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                         Color for the initial text in the center of the canvas. (default: ffffff)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -658,7 +701,7 @@ Four launchers orbit the canvas firing volleys of characters inward to build the
     --left-launcher-symbol (ASCII/UTF-8 character)
                         Symbol for the left launcher. (default: █)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('FFA15C', '44D492'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -716,7 +759,7 @@ Input text overflows and scrolls the terminal in a random order until eventually
 
     ```
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -804,7 +847,7 @@ Prints the input data one line at at time with a carriage return and line feed.
 
     ```
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('02b8bd', 'c1f0e3', '00ffa0'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -864,7 +907,7 @@ Rain characters from the top of the canvas.
     --rain-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
                         Space separated list of symbols to use for the rain drops. Symbols are randomly chosen from the list. (default: ('o', '.', ',', '*', '|'))
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('488bff', 'b2e7de', '57eaf7'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -915,7 +958,7 @@ Prints the input data in a random sequence, one character at a time.
     --starting-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                         Color of the characters at spawn. (default: 000000)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -943,7 +986,7 @@ Characters are dispersed and form into spinning rings.
     --ring-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the rings. (default: ('ab48ff', 'e7b2b2', 'fffebd'))
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('ab48ff', 'e7b2b2', 'fffebd'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -1028,7 +1071,7 @@ Slices the input in half and slides it into place from opposite directions.
 
     ```
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: (Color(8A008A), Color(00D1FF), Color(FFFFFF)))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: 12)
@@ -1142,7 +1185,7 @@ Spotlights search the text area, illuminating characters, before converging in t
 
     ```
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('ab48ff', 'e7b2b2', 'fffebd'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -1199,7 +1242,7 @@ Sprays the characters from a single point.
 
     ```
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -1258,7 +1301,7 @@ Characters are grouped into swarms and move around the terminal before settling 
     --flash-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                         Color for the character flash. Characters flash when moving. (default: f2ea79)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('31b900', 'f0ff65'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -1325,7 +1368,7 @@ Spawns characters jumbled, explodes them to the edge of the canvas, then reassem
     --unstable-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                             Color transitioned to as the characters become unstable. (default: ff9200)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                            Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                            Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                             (default: ('8A008A', '00D1FF', 'FFFFFF'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                             Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -1381,7 +1424,7 @@ Lines of characters glitch left and right and lose detail like an old VHS tape.
 
     ```
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('ab48ff', 'e7b2b2', 'fffebd'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
@@ -1421,12 +1464,12 @@ Waves travel across the terminal leaving behind the characters.
                         Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an animation. (default: ('▁', '▂', '▃', '▄', '▅', '▆', '▇', '█', '▇', '▆', '▅', '▄',
                         '▃', '▂', '▁'))
     --wave-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: (Color(#f0ff65), Color(#ffb102), Color(#31a0d4), Color(#ffb102), Color(#f0ff65)))
     --wave-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (6,))
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: (Color(#ffb102), Color(#31a0d4), Color(#f0ff65)))
     --final-gradient-steps (int > 0) [(int > 0) ...]
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: 12)
