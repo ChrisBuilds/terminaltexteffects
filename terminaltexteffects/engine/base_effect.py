@@ -87,7 +87,7 @@ class BaseEffectIterator(ABC, Generic[T]):
         """
         for character in self.active_characters:
             character.tick()
-        self.active_characters = {character for character in self.active_characters if character.is_active}
+        self.active_characters -= {character for character in self.active_characters if not character.is_active}
 
     def __iter__(self) -> BaseEffectIterator:
         """Return the iterator object.
