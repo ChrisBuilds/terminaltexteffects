@@ -108,13 +108,13 @@ nav:
       - effects/randomsequence.md
       - effects/rings.md
       - effects/scattered.md
+      - effects/slice.md
       - effects/slide.md
       - effects/spotlights.md
       - effects/spray.md
       - effects/swarm.md
       - effects/synthgrid.md
       - effects/unstable.md
-      - effects/slice.md
       - effects/vhstape.md
       - effects/waves.md
       - effects/wipe.md
