@@ -3,7 +3,7 @@
 Classes:
     Expand: Characters expand from the center.
     ExpandConfig: Configuration for the Expand effect.
-    ExpandIterator: Iterates over the effect. Does not normally need to be called directly.
+    ExpandIterator: Iterates over the effect.
 """
 
 from __future__ import annotations
@@ -72,7 +72,7 @@ class ExpandConfig(ArgsDataClass):
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     (

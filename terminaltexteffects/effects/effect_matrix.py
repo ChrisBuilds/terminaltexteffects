@@ -218,7 +218,7 @@ class MatrixConfig(ArgsDataClass):
         nargs="+",
         default=(Color("92be92"), Color("336b33")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     (

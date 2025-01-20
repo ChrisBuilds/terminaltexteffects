@@ -77,7 +77,7 @@ class WavesConfig(ArgsDataClass):
         nargs="+",
         default=(Color("#f0ff65"), Color("#ffb102"), Color("#31a0d4"), Color("#ffb102"), Color("#f0ff65")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     (
@@ -152,7 +152,7 @@ class WavesConfig(ArgsDataClass):
         nargs="+",
         default=(Color("#ffb102"), Color("#31a0d4"), Color("#f0ff65")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
+        help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     (

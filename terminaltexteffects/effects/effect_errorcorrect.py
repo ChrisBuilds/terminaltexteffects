@@ -110,7 +110,7 @@ class ErrorCorrectConfig(ArgsDataClass):
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
+        help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     (

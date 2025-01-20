@@ -108,7 +108,7 @@ class BouncyBallsConfig(ArgsDataClass):
         nargs="+",
         default=(Color("f8ffae"), Color("43c6ac")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
+        help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "

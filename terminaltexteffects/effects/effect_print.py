@@ -81,7 +81,7 @@ class PrintConfig(ArgsDataClass):
         nargs="+",
         default=(Color("02b8bd"), Color("c1f0e3"), Color("00ffa0")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
+        help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     (

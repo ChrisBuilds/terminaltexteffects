@@ -119,7 +119,7 @@ class RingsConfig(ArgsDataClass):
         nargs="+",
         default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
+        help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     (

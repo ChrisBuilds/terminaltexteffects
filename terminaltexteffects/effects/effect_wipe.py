@@ -171,7 +171,6 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
 
     def build(self) -> None:
         """Build the effect."""
-        direction = self.config.wipe_direction
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -194,7 +193,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
             "center_to_outside": self.terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS,
             "outside_to_center": self.terminal.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
         }
-        character_groups = self.terminal.get_characters_grouped(sort_map[direction])
+        character_groups = self.terminal.get_characters_grouped(sort_map[self.config.wipe_direction])
         for group in character_groups:
             for character in group:
                 wipe_scn = character.animation.new_scene(scene_id="wipe")
