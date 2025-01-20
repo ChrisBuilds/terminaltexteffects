@@ -20,28 +20,39 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Spotlights, SpotlightsConfig
 
 
 @argclass(
     name="spotlights",
     help="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
-    description="spotlights | Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
-    epilog=f"""{argvalidators.EASING_EPILOG}
-Example: terminaltexteffects spotlights --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration 750 --search-speed-range 0.25-0.5 --spotlight-count 3""",
+    description="spotlights | Spotlights search the text area, illuminating characters, before converging in the "
+    "center and expanding.",
+    epilog=(
+        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects spotlights --final-gradient-stops ab48ff "
+        "e7b2b2 fffebd --final-gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration "
+        "750 --search-speed-range 0.25-0.5 --spotlight-count 3"
+    ),
 )
 @dataclass
 class SpotlightsConfig(ArgsDataClass):
     """Configuration for the Spotlights effect.
 
     Attributes:
-        beam_width_ratio (float): Width of the beam of light as min(width, height) // n of the input text. Valid values are n > 0. Values where n < 1 are raised to 1.
-        beam_falloff (float): Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width. Valid values are 0 <= n <= 1.
-        search_duration (int): Duration of the search phase, in frames, before the spotlights converge in the center. Valid values are n > 0.
-        search_speed_range (tuple[float, float]): Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values. Valid values are n > 0.
+        beam_width_ratio (float): Width of the beam of light as min(width, height) // n of the input text. Valid
+            values are n > 0. Values where n < 1 are raised to 1.
+        beam_falloff (float): Distance from the edge of the beam where the brightness begins to fall off, as a
+            percentage of total beam width. Valid values are 0 <= n <= 1.
+        search_duration (int): Duration of the search phase, in frames, before the spotlights converge in the center.
+            Valid values are n > 0.
+        search_speed_range (tuple[float, float]): Range of speeds for the spotlights during the search phase. The
+            speed is a random value between the two provided values. Valid values are n > 0.
         spotlight_count (int): Number of spotlights to use. Valid values are n > 0.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
+            provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+            create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -51,18 +62,26 @@ class SpotlightsConfig(ArgsDataClass):
         type_parser=argvalidators.PositiveFloat.type_parser,
         default=2.0,
         metavar=argvalidators.PositiveFloat.METAVAR,
-        help="Width of the beam of light as min(width, height) // n of the input text. Values less than 1 are raised to 1.",
+        help="Width of the beam of light as min(width, height) // n of the input text. Values less than 1 "
+        "are raised to 1.",
     )  # type: ignore[assignment]
-    "float : Width of the beam of light as min(width, height) // n of the input text. Values less than 1 are raised to 1."
+    (
+        "float : Width of the beam of light as min(width, height) // n of the input text. Values less than 1 "
+        "are raised to 1."
+    )
 
     beam_falloff: float = ArgField(
         cmd_name="--beam-falloff",
         type_parser=argvalidators.NonNegativeFloat.type_parser,
         default=0.3,
         metavar=argvalidators.NonNegativeFloat.METAVAR,
-        help="Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width.",
+        help="Distance from the edge of the beam where the brightness begins to fall off, as a percentage of "
+        "total beam width.",
     )  # type: ignore[assignment]
-    "float : Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width."
+    (
+        "float : Distance from the edge of the beam where the brightness begins to fall off, as a percentage "
+        "of total beam width."
+    )
 
     search_duration: int = ArgField(
         cmd_name="--search-duration",
@@ -78,9 +97,13 @@ class SpotlightsConfig(ArgsDataClass):
         type_parser=argvalidators.PositiveFloatRange.type_parser,
         default=(0.25, 0.5),
         metavar=argvalidators.PositiveFloatRange.METAVAR,
-        help="Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values.",
+        help="Range of speeds for the spotlights during the search phase. The speed is a random value between the "
+        "two provided values.",
     )  # type: ignore[assignment]
-    "tuple[float, float] : Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values."
+    (
+        "tuple[float, float] : Range of speeds for the spotlights during the search phase. The speed is a random "
+        "value between the two provided values."
+    )
 
     spotlight_count: int = ArgField(
         cmd_name="--spotlight-count",
@@ -97,9 +120,13 @@ class SpotlightsConfig(ArgsDataClass):
         nargs="+",
         default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
+        "If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -109,7 +136,10 @@ class SpotlightsConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -121,12 +151,21 @@ class SpotlightsConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Spotlights]:
+        """Get the effect class associated with this configuration."""
         return Spotlights
 
 
 class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
+    """Effect iterator for the Spotlights effect."""
+
     def __init__(self, effect: Spotlights) -> None:
+        """Initialize the effect iterator.
+
+        Args:
+            effect (Spotlights): The effect to use for the iterator.
+
+        """
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.illuminated_chars: set[EffectCharacter] = set()
@@ -134,6 +173,15 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         self.build()
 
     def make_spotlights(self, num_spotlights: int) -> list[EffectCharacter]:
+        """Create the spotlights.
+
+        Args:
+            num_spotlights (int): The number of spotlights to create.
+
+        Returns:
+            list[EffectCharacter]: The spotlights as a list of EffectCharacter instances.
+
+        """
         spotlights: list[EffectCharacter] = []
         minimum_distance = self.terminal.canvas.right // 4
         for _ in range(num_spotlights):
@@ -165,18 +213,34 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         return spotlights
 
     def find_coord_at_minimum_distance(self, origin_coord: Coord, minimum_distance: int) -> Coord:
+        """Find a coordinate at a minimum distance from the origin.
+
+        Args:
+            origin_coord (Coord): Origin coordinate.
+            minimum_distance (int): Minimum distance from the origin.
+
+        Returns:
+            Coord: The coordinate found.
+
+        """
         coord_found = False
         while not coord_found:
             coord = self.terminal.canvas.random_coord()
             distance = geometry.find_length_of_line(origin_coord, coord)
             if distance >= minimum_distance:
                 coord_found = True
-        return coord
+        return coord  # type: ignore[arg-type]
 
-    def illuminate_chars(self, range: int) -> None:
+    def illuminate_chars(self, range_: int) -> None:
+        """Illuminate characters within a range of the spotlights.
+
+        Args:
+            range_ (int): The range of the spotlights.
+
+        """
         coords_in_range: list[Coord] = []
         for spotlight in self.spotlights:
-            coords_in_range.extend(geometry.find_coords_in_circle(spotlight.motion.current_coord, range))
+            coords_in_range.extend(geometry.find_coords_in_circle(spotlight.motion.current_coord, range_))
         chars_in_range: set[EffectCharacter] = set()
         for coord in coords_in_range:
             character = self.terminal.get_character_by_input_coord(coord)
@@ -186,7 +250,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         for character in chars_no_longer_in_range:
             character.animation.set_appearance(
                 character.input_symbol,
-                ColorPair(self.character_color_map[character][1]),
+                ColorPair(fg_color=self.character_color_map[character][1]),
             )
 
         for character in chars_in_range:
@@ -201,9 +265,9 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 ],
             )
 
-            if distance > range * (1 - self.config.beam_falloff):
+            if distance > range_ * (1 - self.config.beam_falloff):
                 brightness_factor = max(
-                    1 - (distance - range * (1 - self.config.beam_falloff)) / (range * self.config.beam_falloff),
+                    1 - (distance - range_ * (1 - self.config.beam_falloff)) / (range_ * self.config.beam_falloff),
                     0.2,
                 )
                 adjusted_color = animation.Animation.adjust_color_brightness(
@@ -212,10 +276,11 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 )
             else:
                 adjusted_color = self.character_color_map[character][0]
-            character.animation.set_appearance(character.input_symbol, ColorPair(adjusted_color))
+            character.animation.set_appearance(character.input_symbol, ColorPair(fg_color=adjusted_color))
         self.illuminated_chars = chars_in_range
 
     def build(self) -> None:
+        """Build the initial state of the effect."""
         self.spotlights: list[EffectCharacter] = self.make_spotlights(self.config.spotlight_count)
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
@@ -232,9 +297,9 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
             else:
                 color_bright = final_gradient_mapping[character.input_coord]
                 color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
-            self.terminal.set_character_visibility(character, True)
+            self.terminal.set_character_visibility(character, is_visible=True)
             self.character_color_map[character] = (color_bright, color_dark)
-            character.animation.set_appearance(character.input_symbol, ColorPair(color_dark))
+            character.animation.set_appearance(character.input_symbol, ColorPair(fg_color=color_dark))
         smallest_dimension = min(self.terminal.canvas.right, self.terminal.canvas.top)
         self.illuminate_range = max(
             int(
@@ -254,6 +319,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
             self.active_characters.add(spotlight)
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if not self.complete:
             self.illuminate_chars(self.illuminate_range)
             if self.searching:
@@ -263,7 +329,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                         spotlight_path_center = spotlight.motion.query_path("center")
                         spotlight.motion.activate_path(spotlight_path_center)
                     self.searching = False
-            if not any([spotlight.motion.active_path for spotlight in self.spotlights]):
+            if not any(spotlight.motion.active_path for spotlight in self.spotlights):
                 while len(self.spotlights) > 1:
                     self.spotlights.pop()
                 self.illuminate_range += 1
@@ -284,8 +350,13 @@ class Spotlights(BaseEffect[SpotlightsConfig]):
 
     """
 
-    _config_cls = SpotlightsConfig
-    _iterator_cls = SpotlightsIterator
+    @property
+    def _config_cls(self) -> type[SpotlightsConfig]:
+        return SpotlightsConfig
+
+    @property
+    def _iterator_cls(self) -> type[SpotlightsIterator]:
+        return SpotlightsIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

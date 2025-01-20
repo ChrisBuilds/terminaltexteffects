@@ -13,13 +13,16 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, easing, geometry
-from terminaltexteffects.engine import motion
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
+if typing.TYPE_CHECKING:
+    from terminaltexteffects.engine import motion
+
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Rings, RingsConfig
 
 
@@ -27,7 +30,11 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="rings",
     help="Characters are dispersed and form into spinning rings.",
     description="rings | Characters are dispersed and form into spinning rings.",
-    epilog="""Example: terminaltexteffects rings --ring-colors ab48ff e7b2b2 fffebd --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 --disperse-duration 200 --spin-disperse-cycles 3""",
+    epilog=(
+        "Example: terminaltexteffects rings --ring-colors ab48ff e7b2b2 fffebd --final-gradient-stops ab48ff "
+        "e7b2b2 fffebd --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 "
+        "--disperse-duration 200 --spin-disperse-cycles 3"
+    ),
 )
 @dataclass
 class RingsConfig(ArgsDataClass):
@@ -35,13 +42,19 @@ class RingsConfig(ArgsDataClass):
 
     Attributes:
         ring_colors (tuple[Color, ...]): Tuple of colors for the rings.
-        ring_gap (float): Distance between rings as a percent of the smallest canvas dimension. Valid values are 0 < n <= 1.
+        ring_gap (float): Distance between rings as a percent of the smallest canvas dimension. "
+            "Valid values are 0 < n <= 1.
         spin_duration (int): Number of frames for each cycle of the spin phase. Valid values are n >= 0.
-        spin_speed (tuple[float, float]): Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring. Valid values are n > 0.
-        disperse_duration (int): Number of frames spent in the dispersed state between spinning cycles. Valid values are n >= 0.
-        spin_disperse_cycles (int): Number of times the animation will cycle between spinning rings and dispersed characters. Valid values are n > 0.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        spin_speed (tuple[float, float]): Range of speeds for the rotation of the rings. The speed is randomly "
+            "selected from this range for each ring. Valid values are n > 0.
+        disperse_duration (int): Number of frames spent in the dispersed state between spinning cycles. "
+            "Valid values are n >= 0.
+        spin_disperse_cycles (int): Number of times the animation will cycle between spinning rings and "
+            "dispersed characters. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color "
+            "is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a "
+            "smoother and longer gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -76,9 +89,13 @@ class RingsConfig(ArgsDataClass):
         type_parser=argvalidators.PositiveFloatRange.type_parser,
         default=(0.25, 1.0),
         metavar=argvalidators.PositiveFloatRange.METAVAR,
-        help="Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring.",
+        help="Range of speeds for the rotation of the rings. The speed is randomly selected from this "
+        "range for each ring.",
     )  # type: ignore[assignment]
-    "tuple[float, float] : Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring."
+    (
+        "tuple[float, float] : Range of speeds for the rotation of the rings. The speed is randomly selected "
+        "from this range for each ring."
+    )
 
     disperse_duration: int = ArgField(
         cmd_name=["--disperse-duration"],
@@ -102,9 +119,13 @@ class RingsConfig(ArgsDataClass):
         nargs="+",
         default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
+        "If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color] : Tuple of colors for the final color gradient. If only one color is provided, the characters "
+        "will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -112,9 +133,13 @@ class RingsConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
+        "smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Number of gradient steps to use. More steps will create a smoother and longer "
+        "gradient animation."
+    )
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -126,12 +151,17 @@ class RingsConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Rings]:
+        """Get the effect class associated with this configuration."""
         return Rings
 
 
 class RingsIterator(BaseEffectIterator[RingsConfig]):
+    """Iterator for the Rings effect."""
+
     class Ring:
+        """A ring of characters that spin around a central point."""
+
         def __init__(
             self,
             config: RingsConfig,
@@ -141,7 +171,19 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             ring_gap: int,
             ring_color: Color,
             character_color_map: dict[EffectCharacter, Color],
-        ):
+        ) -> None:
+            """Initialize the ring.
+
+            Args:
+                config (RingsConfig): Configuration for the effect.
+                radius (int): Radius of the ring.
+                origin (Coord): Center of the ring.
+                ring_coords (list[Coord]): Coordinates of the ring.
+                ring_gap (int): Distance between rings.
+                ring_color (Color): Color of the ring.
+                character_color_map (dict[EffectCharacter, Color]): Mapping of characters to colors.
+
+            """
             self.config = config
             self._built = False
             self.radius = radius
@@ -157,6 +199,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             self.character_color_map = character_color_map
 
         def add_character(self, character: EffectCharacter, clockwise: int) -> None:
+            """Add a character to the ring."""
             # make gradient scene
             gradient_scn = character.animation.new_scene(scene_id="gradient")
             char_gradient = Gradient(self.character_color_map[character], self.ring_color, steps=8)
@@ -165,10 +208,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             # make rotation waypoints
             ring_paths: list[motion.Path] = []
             character_starting_index = len(self.characters)
-            if clockwise:
-                coords = self.clockwise_coords
-            else:
-                coords = self.counter_clockwise_coords
+            coords = self.clockwise_coords if clockwise else self.counter_clockwise_coords
             for coord in coords[character_starting_index:] + coords[:character_starting_index]:
                 ring_path = character.motion.new_path(path_id=str(len(ring_paths)), speed=self.rotation_speed)
                 ring_path.new_waypoint(coord, waypoint_id=str(len(ring_path.waypoints)))
@@ -182,6 +222,16 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             self.characters.append(character)
 
         def make_disperse_waypoints(self, character: EffectCharacter, origin: Coord) -> motion.Path:
+            """Make waypoints for the disperse path.
+
+            Args:
+                character (EffectCharacter): Character to disperse.
+                origin (Coord): Origin of the disperse path.
+
+            Returns:
+                motion.Path: Disperse path.
+
+            """
             disperse_coords = geometry.find_coords_in_rect(origin, self.ring_gap)
             character.motion.paths.pop("disperse", None)
             disperse_path = character.motion.new_path(speed=0.1, loop=True, path_id="disperse")
@@ -190,6 +240,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             return disperse_path
 
         def disperse(self) -> None:
+            """Disperse the characters."""
             for character in self.characters:
                 if character.motion.active_path is not None:
                     self.character_last_ring_path[character] = character.motion.active_path
@@ -199,6 +250,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                 character.animation.activate_scene(character.animation.query_scene("disperse"))
 
         def spin(self) -> None:
+            """Spin the ring."""
             for character in self.characters:
                 condense_path = character.motion.new_path(speed=0.1)
                 condense_path.new_waypoint(self.character_last_ring_path[character].waypoints[0].coord)
@@ -212,6 +264,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                 character.animation.activate_scene(character.animation.query_scene("gradient"))
 
     def __init__(self, effect: Rings) -> None:
+        """Initialize the effect iterator."""
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.ring_chars: list[EffectCharacter] = []
@@ -224,6 +277,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
         self.build()
 
     def build(self) -> None:
+        """Build the initial state of the effect."""
         self.ring_gap = int(
             max(round(min(self.terminal.canvas.top, self.terminal.canvas.right) * self.config.ring_gap), 1),
         )
@@ -238,11 +292,15 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             start_scn = character.animation.new_scene()
-            start_scn.add_frame(character.input_symbol, 1, colors=ColorPair(self.character_final_color_map[character]))
+            start_scn.add_frame(
+                character.input_symbol,
+                1,
+                colors=ColorPair(fg_color=self.character_final_color_map[character]),
+            )
             home_path = character.motion.new_path(speed=0.8, ease=easing.out_quad, path_id="home")
             home_path.new_waypoint(character.input_coord)
             character.animation.activate_scene(start_scn)
-            self.terminal.set_character_visibility(character, True)
+            self.terminal.set_character_visibility(character, is_visible=True)
             self.pending_chars.append(character)
 
         random.shuffle(self.pending_chars)
@@ -267,15 +325,13 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                 self.character_final_color_map,
             )
         # assign characters to rings
-        ring_count = 0
-        for ring in self.rings.values():
+        for ring_count, ring in enumerate(self.rings.values()):
             for _ in ring.counter_clockwise_coords:
                 if self.pending_chars:
                     next_character = self.pending_chars.pop(0)
                     # set rings to rotate in opposite directions
                     ring.add_character(next_character, clockwise=ring_count % 2)
                     self.ring_chars.append(next_character)
-            ring_count += 1
 
         # make external waypoints for characters not in rings
         for character in self.terminal.get_characters():
@@ -288,7 +344,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                     EventHandler.Event.PATH_COMPLETE,
                     external_path,
                     EventHandler.Action.CALLBACK,
-                    EventHandler.Callback(self.terminal.set_character_visibility, False),
+                    EventHandler.Callback(self.terminal.set_character_visibility, False),  # noqa: FBT003
                 )
         self._rings_list = list(self.rings.values())
         self._phase = "start"
@@ -299,6 +355,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
         self._initial_phase_time_remaining = 100
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self._phase != "complete":
             if self._phase == "start":
                 if not self._initial_phase_time_remaining:
@@ -345,7 +402,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                     if not self._cycles_remaining:
                         self._phase = "final"
                         for character in self.terminal.get_characters():
-                            self.terminal.set_character_visibility(character, True)
+                            self.terminal.set_character_visibility(character, is_visible=True)
                             character.motion.activate_path(character.motion.query_path("home"))
                             self.active_characters.add(character)
                             if "external" in character.motion.paths:
@@ -360,9 +417,8 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                 else:
                     self._spin_time_remaining -= 1
 
-            elif self._phase == "final":
-                if not self.active_characters:
-                    self._phase = "complete"
+            elif self._phase == "final" and not self.active_characters:
+                self._phase = "complete"
 
             self.update()
             return self.frame
@@ -378,8 +434,13 @@ class Rings(BaseEffect[RingsConfig]):
 
     """
 
-    _config_cls = RingsConfig
-    _iterator_cls = RingsIterator
+    @property
+    def _config_cls(self) -> type[RingsConfig]:
+        return RingsConfig
+
+    @property
+    def _iterator_cls(self) -> type[RingsIterator]:
+        return RingsIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

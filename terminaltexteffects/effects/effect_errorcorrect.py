@@ -20,6 +20,7 @@ from terminaltexteffects.utils.graphics import ColorPair
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return ErrorCorrect, ErrorCorrectConfig
 
 
@@ -27,21 +28,28 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="errorcorrect",
     help="Some characters start in the wrong position and are corrected in sequence.",
     description="errorcorrect | Some characters start in the wrong position and are corrected in sequence.",
-    epilog=f"""{argvalidators.EASING_EPILOG}
-    
-Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c --correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5""",
+    epilog=(
+        f"{argvalidators.EASING_EPILOG}"
+        "Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c "
+        "--correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 "
+        "--movement-speed 0.5"
+    ),
 )
 @dataclass
 class ErrorCorrectConfig(ArgsDataClass):
     """Configuration for the ErrorCorrect effect.
 
     Attributes:
-        error_pairs (float): Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position. Valid values are 0 < n <= 1.0.
+        error_pairs (float): Percent of characters that are in the wrong position. This is a float between 0 and
+            1.0. 0.2 means 20 percent of the characters will be in the wrong position. Valid values are 0 < n <= 1.0.
         swap_delay (int): Number of frames between swaps. Valid values are n >= 0.
         error_color (Color): Color for the characters that are in the wrong position.
-        correct_color (Color): Color for the characters once corrected, this is a gradient from error-color and fades to final-color.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        correct_color (Color): Color for the characters once corrected, this is a gradient from error-color and
+            fades to final-color.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color
+            is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps
+            will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         movement_speed (float): Speed of the characters while moving to the correct position. Valid values are n > 0.
 
@@ -52,9 +60,13 @@ class ErrorCorrectConfig(ArgsDataClass):
         type_parser=argvalidators.PositiveFloat.type_parser,
         default=0.1,
         metavar="(int > 0)",
-        help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position.",
+        help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means "
+        "20 percent of the characters will be in the wrong position.",
     )  # type: ignore[assignment]
-    "float : Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position."
+    (
+        "float : Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 "
+        "means 20 percent of the characters will be in the wrong position."
+    )
 
     swap_delay: int = ArgField(
         cmd_name="--swap-delay",
@@ -98,9 +110,13 @@ class ErrorCorrectConfig(ArgsDataClass):
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
+        "If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -108,9 +124,13 @@ class ErrorCorrectConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar="(int > 0)",
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
+        "smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -122,12 +142,21 @@ class ErrorCorrectConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[ErrorCorrect]:
+        """Get the effect class associated with this configuration."""
         return ErrorCorrect
 
 
 class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
+    """Iterates over the ErrorCorrect effect."""
+
     def __init__(self, effect: ErrorCorrect) -> None:
+        """Initialize the iterator.
+
+        Args:
+            effect (ErrorCorrect): The effect to use for the iterator.
+
+        """
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.swapped: list[tuple[EffectCharacter, EffectCharacter]] = []
@@ -136,6 +165,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
         self.build()
 
     def build(self) -> None:
+        """Build the initial state of the effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -151,10 +181,10 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
             spawn_scene.add_frame(
                 character.input_symbol,
                 1,
-                colors=ColorPair(self.character_final_color_map[character]),
+                colors=ColorPair(fg_color=self.character_final_color_map[character]),
             )
             character.animation.activate_scene(spawn_scene)
-            self.terminal.set_character_visibility(character, True)
+            self.terminal.set_character_visibility(character, is_visible=True)
         all_characters: list[EffectCharacter] = list(self.terminal._input_characters)
         correcting_gradient = Gradient(self.config.error_color, self.config.correct_color, steps=10)
         block_symbol = "▓"
@@ -176,16 +206,16 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 first_block_wipe = character.animation.new_scene()
                 last_block_wipe = character.animation.new_scene()
                 for block in block_wipe_start:
-                    first_block_wipe.add_frame(block, 3, colors=ColorPair(self.config.error_color))
+                    first_block_wipe.add_frame(block, 3, colors=ColorPair(fg_color=self.config.error_color))
                 for block in block_wipe_end:
-                    last_block_wipe.add_frame(block, 3, colors=ColorPair(self.config.correct_color))
+                    last_block_wipe.add_frame(block, 3, colors=ColorPair(fg_color=self.config.correct_color))
                 initial_scene = character.animation.new_scene()
-                initial_scene.add_frame(character.input_symbol, 1, colors=ColorPair(self.config.error_color))
+                initial_scene.add_frame(character.input_symbol, 1, colors=ColorPair(fg_color=self.config.error_color))
                 character.animation.activate_scene(initial_scene)
                 error_scene = character.animation.new_scene(scene_id="error")
                 for _ in range(10):
-                    error_scene.add_frame(block_symbol, 3, colors=ColorPair(self.config.error_color))
-                    error_scene.add_frame(character.input_symbol, 3, colors=ColorPair(Color("ffffff")))
+                    error_scene.add_frame(block_symbol, 3, colors=ColorPair(fg_color=self.config.error_color))
+                    error_scene.add_frame(character.input_symbol, 3, colors=ColorPair(fg_color=Color("ffffff")))
                 correcting_scene = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
                 correcting_scene.apply_gradient_to_symbols("█", 3, fg_gradient=correcting_gradient)
                 final_scene = character.animation.new_scene()
@@ -241,6 +271,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 )
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self.swapped and not self.swap_delay:
             next_pair = self.swapped.pop(0)
             for char in next_pair:
@@ -264,8 +295,13 @@ class ErrorCorrect(BaseEffect[ErrorCorrectConfig]):
 
     """
 
-    _config_cls = ErrorCorrectConfig
-    _iterator_cls = ErrorCorrectIterator
+    @property
+    def _config_cls(self) -> type[ErrorCorrectConfig]:
+        return ErrorCorrectConfig
+
+    @property
+    def _iterator_cls(self) -> type[ErrorCorrectIterator]:
+        return ErrorCorrectIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

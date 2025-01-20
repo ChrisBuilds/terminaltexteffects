@@ -19,6 +19,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return VHSTape, VHSTapeConfig
 
 
@@ -26,21 +27,31 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="vhstape",
     help="Lines of characters glitch left and right and lose detail like an old VHS tape.",
     description="vhstape | Lines of characters glitch left and right and lose detail like an old VHS tape.",
-    epilog="""Example: terminaltexteffects vhstape --final-gradient-stops ab48ff e7b2b2 fffebd --final-gradient-steps 12 --glitch-line-colors ffffff ff0000 00ff00 0000ff ffffff --glitch-wave-colors ffffff ff0000 00ff00 0000ff ffffff --noise-colors 1e1e1f 3c3b3d 6d6c70 a2a1a6 cbc9cf ffffff --glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000""",
+    epilog=(
+        "Example: terminaltexteffects vhstape --final-gradient-stops ab48ff e7b2b2 fffebd "
+        "--final-gradient-steps 12 --glitch-line-colors ffffff ff0000 00ff00 0000ff ffffff --glitch-wave-colors "
+        "ffffff ff0000 00ff00 0000ff ffffff --noise-colors 1e1e1f 3c3b3d 6d6c70 a2a1a6 cbc9cf ffffff "
+        "--glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000"
+    ),
 )
 @dataclass
 class VHSTapeConfig(ArgsDataClass):
     """Configuration for the VHSTape effect.
 
     Attributes:
-        glitch_line_colors (tuple[Color, ...]): Tuple of colors for the characters when a single line is glitching. Colors are applied in order as an animation.
-        glitch_wave_colors (tuple[Color, ...]): Tuple of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.
+        glitch_line_colors (tuple[Color, ...]): Tuple of colors for the characters when a single line is glitching.
+            Colors are applied in order as an animation.
+        glitch_wave_colors (tuple[Color, ...]): Tuple of colors for the characters in lines that are part of the
+            glitch wave. Colors are applied in order as an animation.
         noise_colors (tuple[Color, ...]): Tuple of colors for the characters during the noise phase.
         glitch_line_chance (float): Chance that a line will glitch on any given frame.
-        noise_chance (float): Chance that all characters will experience noise on any given frame. Valid values are 0 <= n <= 1.
+        noise_chance (float): Chance that all characters will experience noise on any given frame. Valid values are 0
+            <= n <= 1.
         total_glitch_time (int): Total time, in frames, that the glitching phase will last. Valid values are n > 0.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
+            provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+            create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -51,9 +62,13 @@ class VHSTapeConfig(ArgsDataClass):
         nargs="+",
         default=(Color("ffffff"), Color("ff0000"), Color("00ff00"), Color("0000ff"), Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors are applied in order as an animation.",
+        help="Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors "
+        "are applied in order as an animation.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the characters when a single line is glitching. Colors are applied in order as an animation."
+    (
+        "tuple[Color, ...] : Tuple of colors for the characters when a single line is glitching. Colors are "
+        "applied in order as an animation."
+    )
 
     glitch_wave_colors: tuple[Color, ...] = ArgField(
         cmd_name="--glitch-wave-colors",
@@ -61,9 +76,13 @@ class VHSTapeConfig(ArgsDataClass):
         nargs="+",
         default=(Color("ffffff"), Color("ff0000"), Color("00ff00"), Color("0000ff"), Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation.",
+        help="Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. "
+        "Colors are applied in order as an animation.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the characters in lines that are part of the glitch wave. Colors are applied in order as an animation."
+    (
+        "tuple[Color, ...] : Tuple of colors for the characters in lines that are part of the glitch wave. Colors "
+        "are applied in order as an animation."
+    )
 
     noise_colors: tuple[Color, ...] = ArgField(
         cmd_name="--noise-colors",
@@ -108,9 +127,13 @@ class VHSTapeConfig(ArgsDataClass):
         nargs="+",
         default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -118,9 +141,13 @@ class VHSTapeConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create "
+        "a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -132,24 +159,38 @@ class VHSTapeConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[VHSTape]:
+        """Get the effect class associated with this configuration."""
         return VHSTape
 
 
 class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
+    """Effect iterator for the VHSTape effect."""
+
     class Line:
+        """Line of characters for the VHSTape effect."""
+
         def __init__(
             self,
             characters: list[EffectCharacter],
             args: VHSTapeConfig,
             character_final_color_map: dict[EffectCharacter, Color],
         ) -> None:
+            """Initialize the line of characters.
+
+            Args:
+                characters (list[EffectCharacter]): The characters in the line.
+                args (VHSTapeConfig): Configuration for the effect.
+                character_final_color_map (dict[EffectCharacter, Color]): Mapping of characters to their final colors.
+
+            """
             self.characters = characters
             self.args = args
             self.character_final_color_map = character_final_color_map
             self.build_line_effects()
 
         def build_line_effects(self) -> None:
+            """Build the effects for the line of characters."""
             glitch_line_colors = self.args.glitch_line_colors
             snow_chars = ["#", "*", ".", ":"]
             noise_colors = self.args.noise_colors
@@ -182,46 +223,46 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 base_scn.add_frame(
                     character.input_symbol,
                     duration=1,
-                    colors=ColorPair(self.character_final_color_map[character]),
+                    colors=ColorPair(fg_color=self.character_final_color_map[character]),
                 )
                 glitch_scn_forward = character.animation.new_scene(
                     scene_id="rgb_glitch_fwd",
                     sync=Scene.SyncMetric.STEP,
                 )
                 for color in glitch_line_colors:
-                    glitch_scn_forward.add_frame(character.input_symbol, duration=1, colors=ColorPair(color))
+                    glitch_scn_forward.add_frame(character.input_symbol, duration=1, colors=ColorPair(fg_color=color))
                 glitch_scn_backward = character.animation.new_scene(
                     scene_id="rgb_glitch_bwd",
                     sync=Scene.SyncMetric.STEP,
                 )
                 for color in glitch_line_colors[::-1]:
-                    glitch_scn_backward.add_frame(character.input_symbol, duration=1, colors=ColorPair(color))
+                    glitch_scn_backward.add_frame(character.input_symbol, duration=1, colors=ColorPair(fg_color=color))
                 snow_scn = character.animation.new_scene(scene_id="snow")
                 for _ in range(25):
                     snow_scn.add_frame(
                         random.choice(snow_chars),
                         duration=2,
-                        colors=ColorPair(random.choice(noise_colors)),
+                        colors=ColorPair(fg_color=random.choice(noise_colors)),
                     )
                 snow_scn.add_frame(
                     character.input_symbol,
                     duration=1,
-                    colors=ColorPair(self.character_final_color_map[character]),
+                    colors=ColorPair(fg_color=self.character_final_color_map[character]),
                 )
                 final_snow_scn = character.animation.new_scene(scene_id="final_snow")
                 final_redraw_scn = character.animation.new_scene(scene_id="final_redraw")
-                final_redraw_scn.add_frame("█", duration=10, colors=ColorPair(Color("ffffff")))
+                final_redraw_scn.add_frame("█", duration=10, colors=ColorPair(fg_color=Color("ffffff")))
                 final_redraw_scn.add_frame(
                     character.input_symbol,
                     duration=1,
-                    colors=ColorPair(self.character_final_color_map[character]),
+                    colors=ColorPair(fg_color=self.character_final_color_map[character]),
                 )
 
                 for _ in range(50):
                     final_snow_scn.add_frame(
                         random.choice(snow_chars),
                         duration=2,
-                        colors=ColorPair(random.choice(noise_colors)),
+                        colors=ColorPair(fg_color=random.choice(noise_colors)),
                     )
                 # register events
                 character.event_handler.register_event(
@@ -262,14 +303,22 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 )
 
         def snow(self) -> None:
+            """Activate the snow animation for the line."""
             for character in self.characters:
                 character.animation.activate_scene(character.animation.query_scene("snow"))
 
         def set_hold_time(self, hold_time: int) -> None:
+            """Set the hold time for the glitch and restore paths."""
             for character in self.characters:
                 character.motion.paths["glitch"].hold_time = hold_time
 
-        def glitch(self, final=False) -> None:
+        def glitch(self, *, final: bool = False) -> None:
+            """Activate the glitch animation for the line.
+
+            Args:
+                final (bool, optional): If final, set hold times to 0. Defaults to False.
+
+            """
             for character in self.characters:
                 glitch_path = character.motion.query_path("glitch")
                 restore_path = character.motion.query_path("restore")
@@ -281,19 +330,38 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 character.motion.activate_path(glitch_path)
 
         def restore(self) -> None:
+            """Activate the restore animation for the line."""
             for character in self.characters:
                 restore_path = character.motion.query_path("restore")
                 restore_path.speed = 40 / random.randint(20, 40)
                 character.motion.activate_path(restore_path)
 
         def activate_path(self, path_id: str) -> None:
+            """Activate the specified path for the line.
+
+            Args:
+                path_id (str): The ID of the path to activate.
+
+            """
             for character in self.characters:
                 character.motion.activate_path(character.motion.query_path(path_id))
 
-        def line_movement_complete(self):
+        def line_movement_complete(self) -> bool:
+            """Check if the movement of the line is complete.
+
+            Returns:
+                bool: True if the movement of the line is complete, False otherwise.
+
+            """
             return all(character.motion.movement_is_complete() for character in self.characters)
 
     def __init__(self, effect: VHSTape) -> None:
+        """Initialize the effect iterator.
+
+        Args:
+            effect (VHSTape): The effect to use for the iterator.
+
+        """
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.lines: dict[int, VHSTapeIterator.Line] = {}
@@ -304,6 +372,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
         self.build()
 
     def build(self) -> None:
+        """Build the initial state of the effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -319,7 +388,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
         ):
             self.lines[row_index] = VHSTapeIterator.Line(characters, self.config, self.character_final_color_map)
         for character in self.terminal.get_characters():
-            self.terminal.set_character_visibility(character, True)
+            self.terminal.set_character_visibility(character, is_visible=True)
             character.animation.activate_scene(character.animation.query_scene("base"))
         self._glitching_steps_elapsed = 0
         self._phase = "glitching"
@@ -327,6 +396,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
         self._redrawing = False
 
     def glitch_wave(self) -> None:
+        """Move the glitch wave."""
         if not self.active_glitch_wave_top:
             if self.terminal.canvas.text_height >= 3:
                 # choose a wave top index in the top half of the canvas or at least 3 rows up
@@ -342,14 +412,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
         if all(line.line_movement_complete() for line in self.active_glitch_wave_lines):
             if self.active_glitch_wave_lines:
                 # only move 30% of the time
-                if random.random() < 0.3:
-                    # if moving, only move up 10% of the time
-                    if random.random() < 0.3:
-                        wave_top_delta = 1
-                    else:
-                        wave_top_delta = -1
-                else:
-                    wave_top_delta = 0
+                wave_top_delta = (1 if random.random() < 0.3 else -1) if random.random() < 0.3 else 0
                 self.active_glitch_wave_top += wave_top_delta
                 # clamp wave top to canvas
                 self.active_glitch_wave_top = max(2, min(self.active_glitch_wave_top, self.terminal.canvas.text_top))
@@ -384,6 +447,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                     self.active_characters = self.active_characters.union(line.characters)
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self._phase != "complete" or self.active_characters:
             if self._phase == "glitching":
                 # Check if all active glitch wave lines have completed their movement, if so move the wave
@@ -453,8 +517,13 @@ class VHSTape(BaseEffect[VHSTapeConfig]):
 
     """
 
-    _config_cls = VHSTapeConfig
-    _iterator_cls = VHSTapeIterator
+    @property
+    def _config_cls(self) -> type[VHSTapeConfig]:
+        return VHSTapeConfig
+
+    @property
+    def _iterator_cls(self) -> type[VHSTapeIterator]:
+        return VHSTapeIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

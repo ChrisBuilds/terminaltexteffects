@@ -19,6 +19,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Pour, PourConfig
 
 
@@ -26,8 +27,11 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="pour",
     help="Pours the characters into position from the given direction.",
     description="pour | Pours the characters into position from the given direction.",
-    epilog=f"""{argvalidators.EASING_EPILOG}
-Example: terminaltexteffects pour --pour-direction down --movement-speed 0.2 --gap 1 --starting-color FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF --easing IN_QUAD""",
+    epilog=(
+        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects pour --pour-direction down "
+        "--movement-speed 0.2 --gap 1 --starting-color FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF "
+        "--easing IN_QUAD"
+    ),
 )
 @dataclass
 class PourConfig(ArgsDataClass):
@@ -35,13 +39,18 @@ class PourConfig(ArgsDataClass):
 
     Attributes:
         pour_direction (str): Direction the text will pour. Valid values are "up", "down", "left", and "right".
-        pour_speed (int): Number of characters poured in per tick. Increase to speed up the effect. Valid values are n > 0.
+        pour_speed (int): Number of characters poured in per tick. Increase to speed up the effect. "
+            "Valid values are n > 0.
         movement_speed (float): Movement speed of the characters. Valid values are n > 0.
-        gap (int): Number of frames to wait between each character in the pour effect. Increase to slow down effect and create a more defined back and forth motion. Valid values are n >= 0.
+        gap (int): Number of frames to wait between each character in the pour effect. Increase to slow down effect "
+            "and create a more defined back and forth motion. Valid values are n >= 0.
         starting_color (Color): Color of the characters before the gradient starts.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a smoother and longer gradient animation.
-        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color "
+            "is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will create a "
+            "smoother and longer gradient animation.
+        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the "
+            "gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         easing (easing.EasingFunction): Easing function to use for character movement.
 
@@ -78,7 +87,8 @@ class PourConfig(ArgsDataClass):
         type_parser=argvalidators.NonNegativeInt.type_parser,
         default=1,
         metavar=argvalidators.NonNegativeInt.METAVAR,
-        help="Number of frames to wait between each character in the pour effect. Increase to slow down effect and create a more defined back and forth motion.",
+        help="Number of frames to wait between each character in the pour effect. Increase to slow down effect "
+        "and create a more defined back and forth motion.",
     )  # type: ignore[assignment]
     "int : Number of frames to wait between each character in the pour effect."
 
@@ -97,7 +107,8 @@ class PourConfig(ArgsDataClass):
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, "
+        "the characters will be displayed in that color.",
     )  # type: ignore[assignment]
     "tuple[Color, ...] : Tuple of colors for the character gradient."
 
@@ -137,24 +148,36 @@ class PourConfig(ArgsDataClass):
     "easing.EasingFunction : Easing function to use for character movement."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Pour]:
+        """Get the effect class associated with this configuration."""
         return Pour
 
 
 class PourIterator(BaseEffectIterator[PourConfig]):
+    """Iterator for the Pour effect."""
+
     class PourDirection(Enum):
+        """Pour direction enumeration."""
+
         UP = auto()
         DOWN = auto()
         LEFT = auto()
         RIGHT = auto()
 
     def __init__(self, effect: Pour) -> None:
+        """Initialize the iterator with the provided effect.
+
+        Args:
+            effect (Pour): The effect to use for the iterator.
+
+        """
         super().__init__(effect)
         self.pending_groups: list[list[EffectCharacter]] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
+        """Build the initial state of the effect."""
         self._pour_direction = {
             "down": PourIterator.PourDirection.DOWN,
             "up": PourIterator.PourDirection.UP,
@@ -180,7 +203,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
         groups = self.terminal.get_characters_grouped(grouping=sort_map[self._pour_direction])
         for i, group in enumerate(groups):
             for character in group:
-                self.terminal.set_character_visibility(character, False)
+                self.terminal.set_character_visibility(character, is_visible=False)
                 if self._pour_direction == PourIterator.PourDirection.DOWN:
                     character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.canvas.top))
                 elif self._pour_direction == PourIterator.PourDirection.UP:
@@ -216,16 +239,16 @@ class PourIterator(BaseEffectIterator[PourConfig]):
         self.current_group = self.pending_groups.pop(0)
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self.pending_groups or self.active_characters or self.current_group:
-            if not self.current_group:
-                if self.pending_groups:
-                    self.current_group = self.pending_groups.pop(0)
+            if not self.current_group and self.pending_groups:
+                self.current_group = self.pending_groups.pop(0)
             if self.current_group:
                 if not self.gap:
                     for _ in range(self.config.pour_speed):
                         if self.current_group:
                             next_character = self.current_group.pop(0)
-                            self.terminal.set_character_visibility(next_character, True)
+                            self.terminal.set_character_visibility(next_character, is_visible=True)
                             self.active_characters.add(next_character)
                     self.gap = self.config.gap
                 else:
@@ -244,8 +267,13 @@ class Pour(BaseEffect[PourConfig]):
 
     """
 
-    _config_cls = PourConfig
-    _iterator_cls = PourIterator
+    @property
+    def _config_cls(self) -> type[PourConfig]:
+        return PourConfig
+
+    @property
+    def _iterator_cls(self) -> type[PourIterator]:
+        return PourIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

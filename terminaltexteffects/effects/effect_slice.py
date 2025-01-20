@@ -18,6 +18,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Slice, SliceConfig
 
 
@@ -25,10 +26,11 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="slice",
     help="Slices the input in half and slides it into place from opposite directions.",
     description="slice | Slices the input in half and slides it into place from opposite directions.",
-    epilog=f"""{argvalidators.EASING_EPILOG}
-    
-Example: terminaltexteffects slice --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12
---slice-direction vertical--movement-speed 0.15 --movement-easing IN_OUT_EXPO""",
+    epilog=(
+        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects slice --final-gradient-stops 8A008A 00D1FF "
+        "FFFFFF --final-gradient-steps 12 --slice-direction vertical--movement-speed 0.15 "
+        "--movement-easing IN_OUT_EXPO"
+    ),
 )
 @dataclass
 class SliceConfig(ArgsDataClass):
@@ -38,8 +40,10 @@ class SliceConfig(ArgsDataClass):
         slice_direction (typing.Literal["vertical", "horizontal", "diagonal"]): Direction of the slice.
         movement_speed (float): Movement speed of the characters. Valid values are n > 0.
         movement_easing (easing.EasingFunction): Easing function to use for character movement.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
+            provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+            create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -75,9 +79,13 @@ class SliceConfig(ArgsDataClass):
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -85,9 +93,13 @@ class SliceConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
+        "smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -99,18 +111,23 @@ class SliceConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Slice]:
+        """Get the effect class associated with this configuration."""
         return Slice
 
 
 class SliceIterator(BaseEffectIterator[SliceConfig]):
+    """Effect iterator for the Slice effect."""
+
     def __init__(self, effect: Slice) -> None:
+        """Initialize the effect iterator."""
         super().__init__(effect)
         self.pending_groups: list[list[EffectCharacter]] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
-    def build(self) -> None:
+    def build(self) -> None:  # noqa: PLR0915
+        """Build the effect."""
         slice_direction_map = {
             "vertical": self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
             "horizontal": self.terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
@@ -128,7 +145,7 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             character.animation.set_appearance(
                 character.input_symbol,
-                ColorPair(self.character_final_color_map[character]),
+                ColorPair(fg_color=self.character_final_color_map[character]),
             )
         if self.config.slice_direction == "vertical":
             self.rows = self.terminal.get_characters_grouped(grouping=slice_direction_map[self.config.slice_direction])
@@ -172,16 +189,16 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
             )
             trimmed_columns = []
             for column in self.columns:
-                new_column = []
-                for character in column:
+                new_column = [
+                    character
+                    for character in column
                     if (
                         self.terminal.canvas.text_left
                         <= character.input_coord.column
                         <= self.terminal.canvas.text_right
-                    ) and (
-                        self.terminal.canvas.text_bottom <= character.input_coord.row <= self.terminal.canvas.text_top
-                    ):
-                        new_column.append(character)
+                    )
+                    and (self.terminal.canvas.text_bottom <= character.input_coord.row <= self.terminal.canvas.text_top)
+                ]
                 if new_column:
                     trimmed_columns.append(new_column)
             self.columns = trimmed_columns
@@ -244,9 +261,10 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
                     new_group.extend(right_group)
                 self.active_characters = self.active_characters.union(new_group)
         for character in self.active_characters:
-            self.terminal.set_character_visibility(character, True)
+            self.terminal.set_character_visibility(character, is_visible=True)
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self.active_characters:
             self.update()
             return self.frame
@@ -262,8 +280,13 @@ class Slice(BaseEffect[SliceConfig]):
 
     """
 
-    _config_cls = SliceConfig
-    _iterator_cls = SliceIterator
+    @property
+    def _config_cls(self) -> type[SliceConfig]:
+        return SliceConfig
+
+    @property
+    def _iterator_cls(self) -> type[SliceIterator]:
+        return SliceIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

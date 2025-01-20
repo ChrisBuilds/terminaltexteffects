@@ -240,7 +240,7 @@ class BeamsConfig(ArgsDataClass):
     "int : Speed of the final wipe as measured in diagonal groups activated per frame."
 
     @classmethod
-    def get_effect_class(cls) -> type[BaseEffect]:
+    def get_effect_class(cls) -> type[Beams]:
         """Return the effect class associated with this configuration."""
         return Beams
 
@@ -340,7 +340,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             if character.is_fill_character:
-                self.character_final_color_map[character] = ColorPair(Color("000000"), None)
+                self.character_final_color_map[character] = ColorPair(fg_color=Color("000000"))
                 continue
             if self.terminal.config.existing_color_handling == "dynamic" and self.preexisting_colors_present:
                 fg_color = Color("ffffff")
@@ -349,11 +349,10 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                     fg_color = character.animation.input_fg_color
                 if character.animation.input_bg_color:
                     bg_color = character.animation.input_bg_color
-                self.character_final_color_map[character] = ColorPair(fg_color, bg_color)
+                self.character_final_color_map[character] = ColorPair(fg_color=fg_color, bg_color=bg_color)
             else:
                 self.character_final_color_map[character] = ColorPair(
-                    final_gradient_mapping[character.input_coord],
-                    None,
+                    fg_color=final_gradient_mapping[character.input_coord],
                 )
 
         beam_gradient = Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
@@ -468,8 +467,13 @@ class Beams(BaseEffect[BeamsConfig]):
 
     """
 
-    _config_cls = BeamsConfig
-    _iterator_cls = BeamsIterator
+    @property
+    def _config_cls(self) -> type[BeamsConfig]:
+        return BeamsConfig
+
+    @property
+    def _iterator_cls(self) -> type[BeamsIterator]:
+        return BeamsIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

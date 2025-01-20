@@ -186,8 +186,13 @@ class RandomSequence(BaseEffect[RandomSequenceConfig]):
 
     """
 
-    _config_cls = RandomSequenceConfig
-    _iterator_cls = RandomSequenceIterator
+    @property
+    def _config_cls(self) -> type[RandomSequenceConfig]:
+        return RandomSequenceConfig
+
+    @property
+    def _iterator_cls(self) -> type[RandomSequenceIterator]:
+        return RandomSequenceIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

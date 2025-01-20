@@ -19,16 +19,21 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Unstable, UnstableConfig
 
 
 @argclass(
     name="unstable",
-    help="Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the correct layout.",
-    description="unstable | Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the correct layout.",
-    epilog=f"""{argvalidators.EASING_EPILOG}
-    
-    Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75""",
+    help="Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the "
+    "correct layout.",
+    description="unstable | Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them "
+    "in the correct layout.",
+    epilog=(
+        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects unstable --unstable-color ff9200 "
+        "--final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO "
+        "--explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75"
+    ),
 )
 @dataclass
 class UnstableConfig(ArgsDataClass):
@@ -40,8 +45,10 @@ class UnstableConfig(ArgsDataClass):
         explosion_speed (float): Speed of characters during explosion. Valid values are n > 0.
         reassembly_ease (easing.EasingFunction): Easing function to use for character reassembly.
         reassembly_speed (float): Speed of characters during reassembly. Valid values are n > 0.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
+            provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+            create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -95,9 +102,13 @@ class UnstableConfig(ArgsDataClass):
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -105,9 +116,13 @@ class UnstableConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
+        "smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -119,19 +134,24 @@ class UnstableConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Unstable]:
+        """Get the effect class associated with this configuration."""
         return Unstable
 
 
 class UnstableIterator(BaseEffectIterator[UnstableConfig]):
+    """Effect iterator for the Unstable effect."""
+
     def __init__(self, effect: Unstable) -> None:
+        """Initialize the effect iterator."""
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
-        self.jumbled_coords: dict[EffectCharacter, Coord] = dict()
+        self.jumbled_coords: dict[EffectCharacter, Coord] = {}
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
+        """Build the initial effect state."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -179,7 +199,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
             final_scn = character.animation.new_scene(scene_id="final")
             final_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=final_color)
             character.animation.activate_scene(rumble_scn)
-            self.terminal.set_character_visibility(character, True)
+            self.terminal.set_character_visibility(character, is_visible=True)
         self._explosion_hold_time = 50
         self.phase = "rumble"
         self._max_rumble_steps = 250
@@ -187,6 +207,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
         self._rumble_mod_delay = 20
 
     def __next__(self) -> str:
+        """Return the next from in the effect."""
         next_frame = None
         if self.phase == "rumble":
             if self._current_rumble_steps < self._max_rumble_steps:
@@ -216,7 +237,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                 self.phase = "explosion"
                 for character in self.terminal.get_characters():
                     character.motion.activate_path(character.motion.query_path("explosion"))
-                self.active_characters = {character for character in self.terminal.get_characters()}
+                self.active_characters = set(self.terminal.get_characters())
 
         if self.phase == "explosion":
             if self.active_characters:
@@ -241,17 +262,16 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                     self.active_characters.add(character)
                     character.motion.activate_path(character.motion.query_path("reassembly"))
 
-        if self.phase == "reassembly":
-            if self.active_characters:
-                for character in self.active_characters:
-                    character.tick()
-                self.active_characters = {
-                    character
-                    for character in self.active_characters
-                    if character.motion.current_coord != character.motion.query_path("reassembly").waypoints[0].coord
-                    or not character.animation.active_scene_is_complete()
-                }
-                next_frame = self.frame
+        if self.phase == "reassembly" and self.active_characters:
+            for character in self.active_characters:
+                character.tick()
+            self.active_characters = {
+                character
+                for character in self.active_characters
+                if character.motion.current_coord != character.motion.query_path("reassembly").waypoints[0].coord
+                or not character.animation.active_scene_is_complete()
+            }
+            next_frame = self.frame
 
         if next_frame is not None:
             return next_frame
@@ -267,8 +287,13 @@ class Unstable(BaseEffect[UnstableConfig]):
 
     """
 
-    _config_cls = UnstableConfig
-    _iterator_cls = UnstableIterator
+    @property
+    def _config_cls(self) -> type[UnstableConfig]:
+        return UnstableConfig
+
+    @property
+    def _iterator_cls(self) -> type[UnstableIterator]:
+        return UnstableIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

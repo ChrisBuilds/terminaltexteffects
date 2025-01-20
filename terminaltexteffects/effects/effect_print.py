@@ -18,16 +18,20 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Print, PrintConfig
 
 
 @argclass(
     name="print",
     help="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
-    description="print | Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
-    epilog=f"""{argvalidators.EASING_EPILOG}
-    
-Example: terminaltexteffects print --final-gradient-stops 02b8bd c1f0e3 00ffa0 --final-gradient-steps 12 --print-head-return-speed 1.25 --print-speed 1 --print-head-easing IN_OUT_QUAD""",
+    description="print | Lines are printed one at a time following a print head. Print head performs line feed, "
+    "carriage return.",
+    epilog=(
+        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects print --final-gradient-stops 02b8bd "
+        "c1f0e3 00ffa0 --final-gradient-steps 12 --print-head-return-speed 1.25 --print-speed 1 "
+        "--print-head-easing IN_OUT_QUAD"
+    ),
 )
 @dataclass
 class PrintConfig(ArgsDataClass):
@@ -37,8 +41,10 @@ class PrintConfig(ArgsDataClass):
         print_head_return_speed (float): Speed of the print head when performing a carriage return.
         print_speed (int): Speed of the print head when printing characters.
         print_head_easing (easing.EasingFunction): Easing function to use for print head movement.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one "
+            "color is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps "
+            "will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -75,9 +81,13 @@ class PrintConfig(ArgsDataClass):
         nargs="+",
         default=(Color("02b8bd"), Color("c1f0e3"), Color("00ffa0")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
+        "If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -85,9 +95,13 @@ class PrintConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
+        "smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -99,18 +113,31 @@ class PrintConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Print]:
+        """Get the effect class associated with this configuration."""
         return Print
 
 
 class PrintIterator(BaseEffectIterator[PrintConfig]):
+    """Effect iterator for the Print effect."""
+
     class Row:
+        """Row of characters to print."""
+
         def __init__(
             self,
             characters: list[EffectCharacter],
             character_final_color_map: dict[EffectCharacter, Color],
             typing_head_color: Color,
-        ):
+        ) -> None:
+            """Initialize the row of characters to print.
+
+            Args:
+                characters (list[EffectCharacter]): List of characters to print.
+                character_final_color_map (dict[EffectCharacter, Color]): Mapping of characters to their final colors.
+                typing_head_color (Color): Color of the typing head.
+
+            """
             self.untyped_chars: list[EffectCharacter] = []
             self.typed_chars: list[EffectCharacter] = []
             if all(character.input_symbol == " " for character in characters):
@@ -132,19 +159,27 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 character.animation.activate_scene(typed_animation)
                 self.untyped_chars.append(character)
 
-        def move_up(self):
+        def move_up(self) -> None:
+            """Move the row up one row."""
             for character in self.typed_chars:
                 current_row = character.motion.current_coord.row
                 character.motion.set_coordinate(Coord(character.motion.current_coord.column, current_row + 1))
 
         def type_char(self) -> EffectCharacter | None:
+            """Type the next character in the row."""
             if self.untyped_chars:
                 next_char = self.untyped_chars.pop(0)
                 self.typed_chars.append(next_char)
                 return next_char
             return None
 
-    def __init__(self, effect: Print):
+    def __init__(self, effect: Print) -> None:
+        """Initialize the iterator with the Print effect.
+
+        Args:
+            effect (Print): Print effect to apply to the input data.
+
+        """
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.pending_rows: list[PrintIterator.Row] = []
@@ -154,6 +189,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         self.build()
 
     def build(self) -> None:
+        """Build the initial state of the effect."""
         self.final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = self.final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -185,6 +221,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         self._last_column = 0
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self.active_characters or self._typing:
             if self.typing_head.motion.active_path:
                 pass
@@ -192,7 +229,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 for _ in range(min(len(self._current_row.untyped_chars), self.config.print_speed)):
                     next_char = self._current_row.type_char()
                     if next_char:
-                        self.terminal.set_character_visibility(next_char, True)
+                        self.terminal.set_character_visibility(next_char, is_visible=True)
                         self.active_characters.add(next_char)
                         self._last_column = next_char.input_coord.column
             else:
@@ -217,17 +254,13 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                             if left_extent <= char.input_coord.column <= self.terminal.canvas.text_right
                         ]
                     self.typing_head.motion.set_coordinate(Coord(self._last_column, 1))
-                    self.terminal.set_character_visibility(self.typing_head, True)
+                    self.terminal.set_character_visibility(self.typing_head, is_visible=True)
                     self.typing_head.motion.paths.clear()
                     carriage_return_path = self.typing_head.motion.new_path(
                         speed=self.config.print_head_return_speed,
                         ease=self.config.print_head_easing,
                         path_id="carriage_return_path",
                     )
-                    # if self.pending_rows and self.pending_rows[0].untyped_chars:
-                    #     next_left_extent = self.pending_rows[0].untyped_chars[0].input_coord.column
-                    #     carriage_return_path.new_waypoint(Coord(next_left_extent, 1))
-                    # else:
                     carriage_return_path.new_waypoint(
                         Coord(self._current_row.untyped_chars[0].input_coord.column, 1),
                     )
@@ -237,7 +270,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                         EventHandler.Event.PATH_COMPLETE,
                         carriage_return_path,
                         EventHandler.Action.CALLBACK,
-                        EventHandler.Callback(self.terminal.set_character_visibility, False),
+                        EventHandler.Callback(self.terminal.set_character_visibility, False),  # noqa: FBT003
                     )
                     self.active_characters.add(self.typing_head)
                 else:
@@ -256,8 +289,13 @@ class Print(BaseEffect[PrintConfig]):
 
     """
 
-    _config_cls = PrintConfig
-    _iterator_cls = PrintIterator
+    @property
+    def _config_cls(self) -> type[PrintConfig]:
+        return PrintConfig
+
+    @property
+    def _iterator_cls(self) -> type[PrintIterator]:
+        return PrintIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

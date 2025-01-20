@@ -18,6 +18,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Waves, WavesConfig
 
 
@@ -25,26 +26,36 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="waves",
     help="Waves travel across the terminal leaving behind the characters.",
     description="waves | Waves travel across the terminal leaving behind the characters.",
-    epilog=f"""{argvalidators.EASING_EPILOG}
-Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▇ ▆ ▅ ▄ ▃ ▂ ▁ --wave-gradient-stops f0ff65 ffb102 31a0d4 ffb102 f0ff65 --wave-gradient-steps 6 --final-gradient-stops ffb102 31a0d4 f0ff65 --final-gradient-steps 12 --wave-count 7 --wave-length 2 --wave-easing IN_OUT_SINE""",
+    epilog=(
+        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ "
+        "▇ ▆ ▅ ▄ ▃ ▂ ▁ --wave-gradient-stops f0ff65 ffb102 31a0d4 ffb102 f0ff65 --wave-gradient-steps 6 "
+        "--final-gradient-stops ffb102 31a0d4 f0ff65 --final-gradient-steps 12 --wave-count 7 --wave-length 2 "
+        "--wave-easing IN_OUT_SINE"
+    ),
 )
 @dataclass
 class WavesConfig(ArgsDataClass):
     """Configuration for the Waves effect.
 
     Attributes:
-        wave_symbols (tuple[str, ...] | str): Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an animation.
-        wave_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        wave_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        wave_symbols (tuple[str, ...] | str): Symbols to use for the wave animation. Multi-character strings will be
+            used in sequence to create an animation.
+        wave_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
+            provided, the characters will be displayed in that color.
+        wave_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a
+            smoother and longer gradient animation. Valid values are n > 0.
         wave_count (int): Number of waves to generate. Valid values are n > 0.
-        wave_length (int): The number of frames for each step of the wave. Higher wave-lengths will create a slower wave. Valid values are n > 0.
+        wave_length (int): The number of frames for each step of the wave. Higher wave-lengths will create a slower
+            wave. Valid values are n > 0.
         wave_direction (typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','center_to_outside','outside_to_center']): Direction of the wave.
         wave_easing (easing.EasingFunction): Easing function to use for wave travel.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
+            provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+            create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
-    """
+    """  # noqa: E501
 
     wave_symbols: tuple[str, ...] = ArgField(
         cmd_name="--wave-symbols",
@@ -52,9 +63,13 @@ class WavesConfig(ArgsDataClass):
         default=("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█", "▇", "▆", "▅", "▄", "▃", "▂", "▁"),
         nargs="+",
         metavar=argvalidators.Symbol.METAVAR,
-        help="Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an animation.",
+        help="Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an "
+        "animation.",
     )  # type: ignore[assignment]
-    "tuple[str, ...] : Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an animation."
+    (
+        "tuple[str, ...] : Symbols to use for the wave animation. Multi-character strings will be used in sequence to "
+        "create an animation."
+    )
 
     wave_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name="--wave-gradient-stops",
@@ -62,9 +77,13 @@ class WavesConfig(ArgsDataClass):
         nargs="+",
         default=(Color("#f0ff65"), Color("#ffb102"), Color("#31a0d4"), Color("#ffb102"), Color("#f0ff65")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     wave_gradient_steps: tuple[int, ...] = ArgField(
         cmd_name="--wave-gradient-steps",
@@ -72,9 +91,13 @@ class WavesConfig(ArgsDataClass):
         nargs="+",
         default=(6,),
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
+        "smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] : Tuple of the number of gradient steps to use. More steps will create a smoother and "
+        "longer gradient animation."
+    )
 
     wave_count: int = ArgField(
         cmd_name="--wave-count",
@@ -129,9 +152,13 @@ class WavesConfig(ArgsDataClass):
         nargs="+",
         default=(Color("#ffb102"), Color("#31a0d4"), Color("#f0ff65")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
+        "If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -139,9 +166,13 @@ class WavesConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create "
+        "a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps "
+        "will create a smoother and longer gradient animation."
+    )
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -153,18 +184,28 @@ class WavesConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Waves]:
+        """Get the effect class associated with this configuration."""
         return Waves
 
 
 class WavesIterator(BaseEffectIterator[WavesConfig]):
+    """Iterator for the Waves effect."""
+
     def __init__(self, effect: Waves) -> None:
+        """Initialize the iterator with the provided effect.
+
+        Args:
+            effect (Waves): The effect to iterate over.
+
+        """
         super().__init__(effect)
         self.pending_columns: list[list[EffectCharacter]] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
+        """Build the effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -190,7 +231,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                 self.character_final_color_map[character],
                 steps=self.config.final_gradient_steps,
             ):
-                final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(step))
+                final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(fg_color=step))
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
                 wave_scn,
@@ -211,11 +252,12 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             self.pending_columns.append(column)
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self.pending_columns or self.active_characters:
             if self.pending_columns:
                 next_column = self.pending_columns.pop(0)
                 for character in next_column:
-                    self.terminal.set_character_visibility(character, True)
+                    self.terminal.set_character_visibility(character, is_visible=True)
                     self.active_characters.add(character)
             self.update()
             return self.frame
@@ -231,8 +273,13 @@ class Waves(BaseEffect[WavesConfig]):
 
     """
 
-    _config_cls = WavesConfig
-    _iterator_cls = WavesIterator
+    @property
+    def _config_cls(self) -> type[WavesConfig]:
+        return WavesConfig
+
+    @property
+    def _iterator_cls(self) -> type[WavesIterator]:
+        return WavesIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

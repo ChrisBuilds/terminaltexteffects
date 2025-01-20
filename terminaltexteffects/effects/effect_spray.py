@@ -20,6 +20,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Spray, SprayConfig
 
 
@@ -27,20 +28,27 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="spray",
     help="Draws the characters spawning at varying rates from a single point.",
     description="spray | Draws the characters spawning at varying rates from a single point.",
-    epilog=f"""{argvalidators.EASING_EPILOG}    
-Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 --movement-easing OUT_EXPO""",
+    epilog=(
+        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF "
+        "FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 "
+        "--movement-easing OUT_EXPO"
+    ),
 )
 @dataclass
 class SprayConfig(ArgsDataClass):
     """Configuration for the Spray effect.
 
     Attributes:
-        spray_position (typing.Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"]): Position for the spray origin. Valid values are n, ne, e, se, s, sw, w, nw, center.
-        spray_volume (float): Number of characters to spray per tick as a percent of the total number of characters. Valid values are 0 < n <= 1.
+        spray_position (typing.Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"]): Position for the
+            spray origin. Valid values are n, ne, e, se, s, sw, w, nw, center.
+        spray_volume (float): Number of characters to spray per tick as a percent of the total number of characters.
+            Valid values are 0 < n <= 1.
         movement_speed (tuple[float, float]): Movement speed of the characters. Valid values are n > 0.
         movement_easing (easing.EasingFunction): Easing function to use for character movement.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color
+            is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+            create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -85,9 +93,13 @@ class SprayConfig(ArgsDataClass):
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -95,9 +107,13 @@ class SprayConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
+        "smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -109,12 +125,17 @@ class SprayConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Spray]:
+        """Get the effect class associated with this configuration."""
         return Spray
 
 
 class SprayIterator(BaseEffectIterator[SprayConfig]):
+    """Iterator for the Spray effect."""
+
     class SprayPosition(Enum):
+        """Enum for the spray position."""
+
         N = auto()
         NE = auto()
         E = auto()
@@ -126,12 +147,19 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
         CENTER = auto()
 
     def __init__(self, effect: Spray) -> None:
+        """Initialize the effect iterator.
+
+        Args:
+            effect (Spray): The effect to iterate over.
+
+        """
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
+        """Build the effect."""
         self._spray_position = {
             "n": SprayIterator.SprayPosition.N,
             "ne": SprayIterator.SprayPosition.NE,
@@ -198,12 +226,13 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
         self._volume = max(int(len(self.pending_chars) * self.config.spray_volume), 1)
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self.pending_chars or self.active_characters:
             if self.pending_chars:
                 for _ in range(random.randint(1, self._volume)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop()
-                        self.terminal.set_character_visibility(next_character, True)
+                        self.terminal.set_character_visibility(next_character, is_visible=True)
                         self.active_characters.add(next_character)
 
             self.update()
@@ -220,8 +249,13 @@ class Spray(BaseEffect[SprayConfig]):
 
     """
 
-    _config_cls = SprayConfig
-    _iterator_cls = SprayIterator
+    @property
+    def _config_cls(self) -> type[SprayConfig]:
+        return SprayConfig
+
+    @property
+    def _iterator_cls(self) -> type[SprayIterator]:
+        return SprayIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

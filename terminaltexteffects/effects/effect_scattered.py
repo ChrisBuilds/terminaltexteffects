@@ -18,6 +18,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Scattered, ScatteredConfig
 
 
@@ -25,8 +26,11 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="scattered",
     help="Text is scattered across the canvas and moves into position.",
     description="scattered | Text is scattered across the canvas and moves into position.",
-    epilog=f"""{argvalidators.EASING_EPILOG}
-Example: terminaltexteffects scattered --final-gradient-stops ff9048 ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 --movement-easing IN_OUT_BACK""",
+    epilog=(
+        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects scattered --final-gradient-stops ff9048 "
+        "ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 "
+        "--movement-easing IN_OUT_BACK"
+    ),
 )
 @dataclass
 class ScatteredConfig(ArgsDataClass):
@@ -35,9 +39,12 @@ class ScatteredConfig(ArgsDataClass):
     Attributes:
         movement_speed (float): Movement speed of the characters. Valid values are n > 0.
         movement_easing (easing.EasingFunction): Easing function to use for character movement.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is "
+            "provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will "
+            "create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the "
+            "gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -65,9 +72,13 @@ class ScatteredConfig(ArgsDataClass):
         nargs="+",
         default=(Color("ff9048"), Color("ab9dff"), Color("bdffea")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, "
+        "the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the character gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -76,7 +87,10 @@ class ScatteredConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create "
+        "a smoother and longer gradient animation."
+    )
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
@@ -97,18 +111,23 @@ class ScatteredConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Scattered]:
+        """Get the effect class associated with this configuration."""
         return Scattered
 
 
 class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
+    """Effect iterator for the effect."""
+
     def __init__(self, effect: Scattered) -> None:
+        """Initialize the effect iterator."""
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
+        """Build the effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -141,7 +160,7 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
                 0,
             )
             character.motion.activate_path(input_coord_path)
-            self.terminal.set_character_visibility(character, True)
+            self.terminal.set_character_visibility(character, is_visible=True)
             gradient_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
             char_gradient = Gradient(final_gradient.spectrum[0], self.character_final_color_map[character], steps=10)
             gradient_scn.apply_gradient_to_symbols(
@@ -154,6 +173,7 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
         self._initial_hold_frames = 25
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self.pending_chars or self.active_characters:
             if self._initial_hold_frames:
                 self._initial_hold_frames -= 1
@@ -172,8 +192,13 @@ class Scattered(BaseEffect[ScatteredConfig]):
 
     """
 
-    _config_cls = ScatteredConfig
-    _iterator_cls = ScatteredIterator
+    @property
+    def _config_cls(self) -> type[ScatteredConfig]:
+        return ScatteredConfig
+
+    @property
+    def _iterator_cls(self) -> type[ScatteredIterator]:
+        return ScatteredIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

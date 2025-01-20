@@ -1,3 +1,11 @@
+"""Runs a specular highlight across the text.
+
+Classes:
+    Highlight: Runs a specular highlight across the text.
+    HighlightConfig: Configuration for the Highlight effect.
+    HighlightIterator: Effect iterator for the Highlight effect.
+"""
+
 from __future__ import annotations
 
 import typing
@@ -10,6 +18,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Highlight, HighlightConfig
 
 
@@ -17,30 +26,41 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="highlight",
     help="Run a specular highlight across the text.",
     description="highlight | Run a specular highlight across the text.",
-    epilog="""Example: terminaltexteffects highlight --highlight-brightness 1.5 --highlight-direction diagonal_bottom_left_to_top_right --highlight-width 8 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-direction vertical""",
+    epilog=(
+        "Example: terminaltexteffects highlight --highlight-brightness 1.5 --highlight-direction "
+        "diagonal_bottom_left_to_top_right --highlight-width 8 --final-gradient-stops 8A008A 00D1FF FFFFFF "
+        "--final-gradient-steps 12 --final-gradient-direction vertical"
+    ),
 )
 @dataclass
 class HighlightConfig(ArgsDataClass):
     """Configuration for the Highlight effect.
 
     Attributes:
-        highlight_brightness (float): Brightness of the highlight color. Values less than 1 will darken the highlight color, while values greater than 1 will brighten the highlight color.
-        highlight_direction (typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]): Direction the highlight will travel.
+        highlight_brightness (float): Brightness of the highlight color. Values less than 1 will darken the highlight
+            color, while values greater than 1 will brighten the highlight color.
+        highlight_direction (typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top', diagonal_top_left_to_bottom_right', 'diagonal_bottom_left_to_top_right', 'diagonal_top_right_to_bottom_left', 'diagonal_bottom_right_to_top_left',]): Direction the highlight will travel.
         highlight_width (int): Width of the highlight. n >= 1
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
+            provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Int or Tuple of ints for the number of gradient steps to use.
+            More steps will create a smoother and longer gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
-    """
+    """  # noqa: E501 # long type hint for highlight_direction required for mkdocs to associate the name: description pair
 
     highlight_brightness: float = ArgField(
         cmd_name="--highlight-brightness",
         type_parser=argvalidators.PositiveFloat.type_parser,
         default=1.75,
         metavar=argvalidators.PositiveFloat.METAVAR,
-        help="Brightness of the highlight color. Values less than 1 will darken the highlight color, while values greater than 1 will brighten the highlight color.",
+        help="Brightness of the highlight color. Values less than 1 will darken the highlight color, while values "
+        "greater than 1 will brighten the highlight color.",
     )  # type: ignore[assignment]
-    "float : Brightness of the highlight color. Values less than 1 will darken the highlight color, while values greater than 1 will brighten the highlight color."
+    (
+        "float : Brightness of the highlight color. Values less than 1 will darken the highlight color, while "
+        "values greater than 1 will brighten the highlight color."
+    )
 
     highlight_direction: typing.Literal[
         "column_left_to_right",
@@ -69,7 +89,12 @@ class HighlightConfig(ArgsDataClass):
         ],
         help="Direction the highlight will travel.",
     )  # type: ignore[assignment]
-    "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',] : Direction the highlight will travel."
+    (
+        "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top',"
+        "'diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right',"
+        "'diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',] : Direction the "
+        "highlight will travel."
+    )
 
     highlight_width: int = ArgField(
         cmd_name="--highlight-width",
@@ -86,9 +111,13 @@ class HighlightConfig(ArgsDataClass):
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -96,9 +125,13 @@ class HighlightConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
+        "smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -110,12 +143,21 @@ class HighlightConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Highlight]:
+        """Get the effect class associated with this configuration."""
         return Highlight
 
 
 class HighlightIterator(BaseEffectIterator[HighlightConfig]):
+    """Effect iterator for the Highlight effect."""
+
     def __init__(self, effect: Highlight) -> None:
+        """Initialize the Highlight effect iterator.
+
+        Args:
+            effect (Highlight): The Highlight effect to iterate over.
+
+        """
         super().__init__(effect)
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.pending_characters: list[list[EffectCharacter]] = []
@@ -138,6 +180,7 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
         self.build()
 
     def build(self) -> None:
+        """Build the effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -157,14 +200,15 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
                 base_color,
                 steps=(3, self.config.highlight_width, 3),
             )
-            character.animation.set_appearance(character.input_symbol, ColorPair(base_color))
+            character.animation.set_appearance(character.input_symbol, ColorPair(fg_color=base_color))
             specular_highlight_scn = character.animation.new_scene(scene_id="highlight")
             for color in highlight_gradient:
-                specular_highlight_scn.add_frame(character.input_symbol, 2, colors=ColorPair(color))
-            self.terminal.set_character_visibility(character, True)
+                specular_highlight_scn.add_frame(character.input_symbol, 2, colors=ColorPair(fg_color=color))
+            self.terminal.set_character_visibility(character, is_visible=True)
             self.active_characters.add(character)
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self.active_characters or self.pending_characters:
             _, eased_percentage = self.easer()
             while (self.groups_activated / self.total_groups) < eased_percentage:
@@ -185,8 +229,13 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
 class Highlight(BaseEffect[HighlightConfig]):
     """Run a specular highlight across the text."""
 
-    _config_cls = HighlightConfig
-    _iterator_cls = HighlightIterator
+    @property
+    def _config_cls(self) -> type[HighlightConfig]:
+        return HighlightConfig
+
+    @property
+    def _iterator_cls(self) -> type[HighlightIterator]:
+        return HighlightIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

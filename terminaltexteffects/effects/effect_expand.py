@@ -18,6 +18,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Expand, ExpandConfig
 
 
@@ -25,9 +26,11 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="expand",
     help="Expands the text from a single point.",
     description="expand | Expands the text from a single point.",
-    epilog=f"""{argvalidators.EASING_EPILOG}
-    
-Example: terminaltexteffects expand --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 5 --movement-speed 0.35 --expand-easing IN_OUT_QUART""",
+    epilog=(
+        f"{argvalidators.EASING_EPILOG}"
+        "Example: terminaltexteffects expand --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 "
+        "--final-gradient-frames 5 --movement-speed 0.35 --expand-easing IN_OUT_QUART"
+    ),
 )
 @dataclass
 class ExpandConfig(ArgsDataClass):
@@ -36,9 +39,12 @@ class ExpandConfig(ArgsDataClass):
     Attributes:
         movement_speed (float): Movement speed of the characters.
         expand_easing (easing.EasingFunction): Easing function to use for character movement.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
+            provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+            create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the
+            gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -66,9 +72,13 @@ class ExpandConfig(ArgsDataClass):
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -76,9 +86,13 @@ class ExpandConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
+        "smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
@@ -99,21 +113,31 @@ class ExpandConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Expand]:
+        """Get the effect class associated with this configuration."""
         return Expand
 
 
 class ExpandIterator(BaseEffectIterator[ExpandConfig]):
+    """Iterates over the Expand effect."""
+
     def __init__(
         self,
         effect: Expand,
-    ):
+    ) -> None:
+        """Initialize the Expand effect iterator.
+
+        Args:
+            effect (Expand): The effect to use for the iterator.
+
+        """
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
     def build(self) -> None:
+        """Build the Expand effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -131,7 +155,7 @@ class ExpandIterator(BaseEffectIterator[ExpandConfig]):
                 ease=self.config.expand_easing,
             )
             input_coord_path.new_waypoint(character.input_coord)
-            self.terminal.set_character_visibility(character, True)
+            self.terminal.set_character_visibility(character, is_visible=True)
             self.active_characters.add(character)
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED,
@@ -156,6 +180,7 @@ class ExpandIterator(BaseEffectIterator[ExpandConfig]):
             character.animation.activate_scene(gradient_scn)
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self.active_characters:
             self.update()
             return self.frame
@@ -171,8 +196,13 @@ class Expand(BaseEffect[ExpandConfig]):
 
     """
 
-    _config_cls = ExpandConfig
-    _iterator_cls = ExpandIterator
+    @property
+    def _config_cls(self) -> type[ExpandConfig]:
+        return ExpandConfig
+
+    @property
+    def _iterator_cls(self) -> type[ExpandIterator]:
+        return ExpandIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

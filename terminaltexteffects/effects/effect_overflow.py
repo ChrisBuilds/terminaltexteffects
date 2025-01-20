@@ -19,14 +19,20 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Overflow, OverflowConfig
 
 
 @argclass(
     name="overflow",
     help="Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.",
-    description="overflow | Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.",
-    epilog="""Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3""",
+    description="overflow | Input text overflows and scrolls the terminal in a random order until eventually "
+    "appearing ordered.",
+    epilog=(
+        "Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF "
+        "--final-gradient-steps 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 "
+        "--overflow-speed 3"
+    ),
 )
 @dataclass
 class OverflowConfig(ArgsDataClass):
@@ -34,10 +40,13 @@ class OverflowConfig(ArgsDataClass):
 
     Attributes:
         overflow_gradient_stops (tuple[Color, ...]): Tuple of colors for the overflow gradient.
-        overflow_cycles_range (tuple[int, int]): Lower and upper range of the number of cycles to overflow the text. Valid values are n >= 0.
+        overflow_cycles_range (tuple[int, int]): Lower and upper range of the number of cycles to overflow the text. "
+            "Valid values are n >= 0.
         overflow_speed (int): Speed of the overflow effect. Valid values are n > 0.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color "
+            "is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps "
+            "will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -76,9 +85,13 @@ class OverflowConfig(ArgsDataClass):
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name=["--final-gradient-steps"],
@@ -86,9 +99,13 @@ class OverflowConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
+        "smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_direction: Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -100,31 +117,50 @@ class OverflowConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Overflow]:
+        """Get the effect class associated with this configuration."""
         return Overflow
 
 
 class OverflowIterator(BaseEffectIterator[OverflowConfig]):
+    """Iterates over the effect."""
+
     class Row:
-        def __init__(self, characters: list[EffectCharacter], final: bool = False) -> None:
+        """Represents a row of characters in the overflow effect."""
+
+        def __init__(self, characters: list[EffectCharacter], *, final: bool = False) -> None:
+            """Initialize the row.
+
+            Args:
+                characters (list[EffectCharacter]): The characters in the row.
+                final (bool, optional): This is the final state of the row. Defaults to False.
+
+            """
             self.characters = characters
             self.current_index = 0
             self.final = final
 
         def move_up(self) -> None:
+            """Move the row up by one row."""
             for character in self.characters:
                 current_row = character.motion.current_coord.row
                 character.motion.set_coordinate(Coord(character.motion.current_coord.column, current_row + 1))
 
         def setup(self) -> None:
+            """Set up the row for display."""
             for character in self.characters:
                 character.motion.set_coordinate(Coord(character.input_coord.column, 0))
 
         def set_color(self, fg_color: Color | None = None, bg_color: Color | None = None) -> None:
+            """Set the color of the row."""
             for character in self.characters:
-                character.animation.set_appearance(character.input_symbol, ColorPair(fg_color, bg_color))
+                character.animation.set_appearance(
+                    character.input_symbol,
+                    ColorPair(fg_color=fg_color, bg_color=bg_color),
+                )
 
-    def __init__(self, effect: Overflow):
+    def __init__(self, effect: Overflow) -> None:
+        """Initialize the effect iterator."""
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.pending_rows: list[OverflowIterator.Row] = []
@@ -133,6 +169,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
         self.build()
 
     def build(self) -> None:
+        """Build the initial state of the effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -177,12 +214,15 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                 ):
                     character.animation.set_appearance(
                         character.animation.current_character_visual.symbol,
-                        ColorPair(character.animation.input_fg_color, character.animation.input_bg_color),
+                        ColorPair(
+                            fg_color=character.animation.input_fg_color,
+                            bg_color=character.animation.input_bg_color,
+                        ),
                     )
                 else:
                     character.animation.set_appearance(
                         character.animation.current_character_visual.symbol,
-                        ColorPair(self.character_final_color_map[character]),
+                        ColorPair(fg_color=self.character_final_color_map[character]),
                     )
             self.pending_rows.append(OverflowIterator.Row(row, final=True))
         self._delay = 0
@@ -192,6 +232,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
         )
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self.pending_rows:
             if not self._delay:
                 for _ in range(random.randint(1, self.config.overflow_speed)):
@@ -213,7 +254,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                         if not next_row.final:
                             next_row.set_color(self._overflow_gradient.spectrum[0])
                         for character in next_row.characters:
-                            self.terminal.set_character_visibility(character, True)
+                            self.terminal.set_character_visibility(character, is_visible=True)
                         self.active_rows.append(next_row)
                 self._delay = random.randint(0, 3)
 
@@ -238,8 +279,13 @@ class Overflow(BaseEffect[OverflowConfig]):
 
     """
 
-    _config_cls = OverflowConfig
-    _iterator_cls = OverflowIterator
+    @property
+    def _config_cls(self) -> type[OverflowConfig]:
+        return OverflowConfig
+
+    @property
+    def _iterator_cls(self) -> type[OverflowIterator]:
+        return OverflowIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

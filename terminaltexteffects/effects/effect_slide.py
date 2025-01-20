@@ -18,6 +18,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Slide, SlideConfig
 
 
@@ -25,8 +26,11 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="slide",
     help="Slide characters into view from outside the terminal.",
     description="slide | Slide characters into view from outside the terminal, grouped by row, column, or diagonal.",
-    epilog=f"""{argvalidators.EASING_EPILOG}
-Example: terminaltexteffects slide --movement-speed 0.5 --grouping row --final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 10 --final-gradient-direction vertical --gap 3 --reverse-direction --merge --movement-easing OUT_QUAD""",
+    epilog=(
+        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects slide --movement-speed 0.5 --grouping row "
+        "--final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 10 "
+        "--final-gradient-direction vertical --gap 3 --reverse-direction --merge --movement-easing OUT_QUAD"
+    ),
 )
 @dataclass
 class SlideConfig(ArgsDataClass):
@@ -34,14 +38,19 @@ class SlideConfig(ArgsDataClass):
 
     Attributes:
         movement_speed (float): Speed of the characters. Valid values are n > 0.
-        grouping (typing.Literal["row", "column", "diagonal"]): Direction to group characters. Valid values are 'row', 'column', 'diagonal'.
-        gap (int): Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect. Valid values are n >= 0.
+        grouping (typing.Literal["row", "column", "diagonal"]): Direction to group characters. Valid values are
+            'row', 'column', 'diagonal'.
+        gap (int): Number of frames to wait before adding the next group of characters. Increasing this value
+            creates a more staggered effect. Valid values are n >= 0.
         reverse_direction (bool): Reverse the direction of the characters.
         merge (bool): Merge the character groups originating.
         movement_easing (easing.EasingFunction): Easing function to use for character movement.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is
+            provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps
+            will create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the
+            gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the gradient.
 
     """
@@ -61,16 +70,23 @@ class SlideConfig(ArgsDataClass):
         choices=["row", "column", "diagonal"],
         help="Direction to group characters.",
     )  # type: ignore[assignment]
-    "typing.Literal['row', 'column', 'diagonal'] : Direction to group characters. Valid values are Literal['row', 'column', 'diagonal']."
+    (
+        "typing.Literal['row', 'column', 'diagonal'] : Direction to group characters. Valid values are "
+        "Literal['row', 'column', 'diagonal']."
+    )
 
     gap: int = ArgField(
         cmd_name="--gap",
         type_parser=argvalidators.NonNegativeInt.type_parser,
         default=3,
         metavar=argvalidators.NonNegativeInt.METAVAR,
-        help="Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect.",
+        help="Number of frames to wait before adding the next group of characters. Increasing this value creates a "
+        "more staggered effect.",
     )  # type: ignore[assignment]
-    "int : Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect."
+    (
+        "int : Number of frames to wait before adding the next group of characters. Increasing this value creates a "
+        "more staggered effect."
+    )
 
     reverse_direction: bool = ArgField(
         cmd_name="--reverse-direction",
@@ -82,7 +98,8 @@ class SlideConfig(ArgsDataClass):
     merge: bool = ArgField(
         cmd_name="--merge",
         action="store_true",
-        help="Merge the character groups originating from either side of the terminal. (--reverse-direction is ignored when merging)",
+        help="Merge the character groups originating from either side of the terminal. (--reverse-direction is "
+        "ignored when merging)",
     )  # type: ignore[assignment]
     "bool : Merge the character groups originating from either side of the terminal."
 
@@ -101,9 +118,13 @@ class SlideConfig(ArgsDataClass):
         nargs="+",
         default=(Color("#833ab4"), Color("#fd1d1d"), Color("#fcb045")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, "
+        "the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the character gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the character gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -112,7 +133,10 @@ class SlideConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
@@ -132,19 +156,24 @@ class SlideConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Slide]:
+        """Get the effect class associated with this configuration."""
         return Slide
 
 
 class SlideIterator(BaseEffectIterator[SlideConfig]):
+    """Effect iterator for the Slide effect."""
+
     def __init__(self, effect: Slide) -> None:
+        """Initialize the Slide effect iterator."""
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.pending_groups: list[list[EffectCharacter]] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
-    def build(self) -> None:
+    def build(self) -> None:  # noqa: PLR0915
+        """Build the effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -239,6 +268,7 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
         self._current_gap = 0
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if self.pending_groups or self.active_characters or self._active_groups:
             if self._current_gap == self.config.gap and self.pending_groups:
                 self._active_groups.append(self.pending_groups.pop(0))
@@ -248,7 +278,7 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
             for group in self._active_groups:
                 if group:
                     next_char = group.pop(0)
-                    self.terminal.set_character_visibility(next_char, True)
+                    self.terminal.set_character_visibility(next_char, is_visible=True)
                     next_char.motion.activate_path(next_char.motion.paths["input_path"])
                     self.active_characters.add(next_char)
             self._active_groups = [group for group in self._active_groups if group]
@@ -266,8 +296,13 @@ class Slide(BaseEffect[SlideConfig]):
 
     """
 
-    _config_cls = SlideConfig
-    _iterator_cls = SlideIterator
+    @property
+    def _config_cls(self) -> type[SlideConfig]:
+        return SlideConfig
+
+    @property
+    def _iterator_cls(self) -> type[SlideIterator]:
+        return SlideIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

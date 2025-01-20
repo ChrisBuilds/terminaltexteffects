@@ -18,6 +18,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Wipe, WipeConfig
 
 
@@ -25,7 +26,11 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="wipe",
     help="Wipes the text across the terminal to reveal characters.",
     description="wipe | Wipes the text across the terminal to reveal characters.",
-    epilog="""Example: terminaltexteffects wipe --wipe-direction diagonal_bottom_left_to_top_right --final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 5 --wipe-delay 0""",
+    epilog=(
+        "Example: terminaltexteffects wipe --wipe-direction diagonal_bottom_left_to_top_right "
+        "--final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 "
+        "--final-gradient-frames 5 --wipe-delay 0"
+    ),
 )
 @dataclass
 class WipeConfig(ArgsDataClass):
@@ -33,13 +38,16 @@ class WipeConfig(ArgsDataClass):
 
     Attributes:
         wipe_direction (typing.Literal["column_left_to_right","row_top_to_bottom","row_bottom_to_top","diagonal_top_left_to_bottom_right","diagonal_bottom_left_to_top_right","diagonal_top_right_to_bottom_left","diagonal_bottom_right_to_top_left","center_to_outside","outside_to_center"]): Direction the text will wipe.
-        wipe_delay (int): Number of frames to wait before adding the next character group. Increase, to slow down the effect. Valid values are n >= 0.
+        wipe_delay (int): Number of frames to wait before adding the next character group. Increase, to
+            slow down the effect. Valid values are n >= 0.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the wipe gradient.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
+        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+            create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the
+            gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
-    """
+    """  # noqa: E501
 
     wipe_direction: typing.Literal[
         "column_left_to_right",
@@ -114,7 +122,10 @@ class WipeConfig(ArgsDataClass):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
@@ -135,12 +146,21 @@ class WipeConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Wipe]:
+        """Get the effect class associated with this configuration."""
         return Wipe
 
 
 class WipeIterator(BaseEffectIterator[WipeConfig]):
+    """Effect iterator for the Wipe effect."""
+
     def __init__(self, effect: Wipe) -> None:
+        """Initialize the effect iterator.
+
+        Args:
+            effect (Wipe): The effect to use for the iterator.
+
+        """
         super().__init__(effect)
         self.groups: list[list[EffectCharacter]] = []
         self.active_groups: list[list[EffectCharacter]] = []
@@ -150,6 +170,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
         self.build()
 
     def build(self) -> None:
+        """Build the effect."""
         direction = self.config.wipe_direction
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
@@ -192,6 +213,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
         self._wipe_delay = self.config.wipe_delay
 
     def __next__(self) -> str:
+        """Return the next frame in the animation."""
         if not self.complete or self.active_characters:
             if not self._wipe_delay:
                 current_step, progress_ratio = self.wipe_ease()
@@ -201,7 +223,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
                 if target_active_group_count < len(self.active_groups):
                     for group in self.active_groups[target_active_group_count:]:
                         for character in group:
-                            self.terminal.set_character_visibility(character, False)
+                            self.terminal.set_character_visibility(character, is_visible=False)
                             scn = character.animation.active_scene
                             if scn:
                                 scn.reset_scene()
@@ -215,7 +237,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
                         if group in self.active_groups:
                             continue
                         for character in group:
-                            self.terminal.set_character_visibility(character, True)
+                            self.terminal.set_character_visibility(character, is_visible=True)
                             scn = character.animation.query_scene("wipe")
                             if scn:
                                 character.animation.activate_scene(scn)
@@ -241,8 +263,13 @@ class Wipe(BaseEffect[WipeConfig]):
 
     """
 
-    _config_cls = WipeConfig
-    _iterator_cls = WipeIterator
+    @property
+    def _config_cls(self) -> type[WipeConfig]:
+        return WipeConfig
+
+    @property
+    def _iterator_cls(self) -> type[WipeIterator]:
+        return WipeIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.

@@ -75,6 +75,7 @@ MATRIX_SYMBOLS_KATA = (
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
+    """Get the effect class and its configuration class."""
     return Matrix, MatrixConfig
 
 
@@ -82,7 +83,12 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="matrix",
     help="Matrix digital rain effect.",
     description="matrix | Matrix digital rain effect.",
-    epilog="""Example: tte matrix --rain-color-gradient 92be92 185318 --rain-symbols 2 5 9 8 Z : . = + - ¦ _ --rain-fall-delay-range 8-25 --rain-column-delay-range 5-15 --rain-time 15 --symbol-swap-chance 0.005 --color-swap-chance 0.001 --resolve-delay 5 --final-gradient-stops 389c38 --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical --highlight-color dbffdb""",
+    epilog=(
+        "Example: tte matrix --rain-color-gradient 92be92 185318 --rain-symbols 2 5 9 8 Z : . = + - ¦ _ "
+        "--rain-fall-delay-range 8-25 --rain-column-delay-range 5-15 --rain-time 15 --symbol-swap-chance 0.005 "
+        "--color-swap-chance 0.001 --resolve-delay 5 --final-gradient-stops 389c38 --final-gradient-steps 12 "
+        "--final-gradient-frames 5 --final-gradient-direction vertical --highlight-color dbffdb"
+    ),
 )
 @dataclass
 class MatrixConfig(ArgsDataClass):
@@ -90,17 +96,23 @@ class MatrixConfig(ArgsDataClass):
 
     Attributes:
         highlight_color (Color): Color for the bottom of the rain column.
-        rain_color_gradient (tuple[Color, ...]): Tuple of colors for the rain gradient. If only one color is provided, the characters will be displayed in that color.
+        rain_color_gradient (tuple[Color, ...]): Tuple of colors for the rain gradient. If only one color is "
+            "provided, the characters will be displayed in that color.
         rain_symbols (tuple[str, ...]): Tuple of symbols to use for the rain.
-        rain_fall_delay_range (tuple[int, int]): Speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range.
+        rain_fall_delay_range (tuple[int, int]): Speed of the falling rain as determined by the delay between rows. "
+            "Actual delay is randomly selected from the range.
         rain_column_delay_range (tuple[int, int]): Range of frames to wait between adding new rain columns.
         rain_time (int): Time, in seconds, to display the rain effect before transitioning to the input text.
         symbol_swap_chance (float): Chance of swapping a character's symbol on each tick.
         color_swap_chance (float): Chance of swapping a character's color on each tick.
-        resolve_delay (int): Number of frames to wait between resolving the next group of characters. This is used to adjust the speed of the final resolve phase.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation.
-        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient animation.
+        resolve_delay (int): Number of frames to wait between resolving the next group of characters. This is used "
+            "to adjust the speed of the final resolve phase.
+        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color "
+            "is provided, the characters will be displayed in that color.
+        final_gradient_steps (tuple[int, ...] | int): Int or Tuple of ints for the number of gradient steps to use. "
+            "More steps will create a smoother and longer gradient animation.
+        final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the "
+            "gradient animation.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -120,9 +132,13 @@ class MatrixConfig(ArgsDataClass):
         nargs="+",
         default=(Color("92be92"), Color("185318")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the rain gradient. Colors are selected from the gradient randomly. If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the rain gradient. Colors are selected from the "
+        "gradient randomly. If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the rain gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the rain gradient. If only one color is provided, the characters "
+        "will be displayed in that color."
+    )
 
     rain_symbols: tuple[str, ...] = ArgField(
         cmd_name=["--rain-symbols"],
@@ -139,9 +155,13 @@ class MatrixConfig(ArgsDataClass):
         type_parser=argvalidators.PositiveIntRange.type_parser,
         default=(3, 25),
         metavar=argvalidators.PositiveIntRange.METAVAR,
-        help="Range for the speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range.",
+        help="Range for the speed of the falling rain as determined by the delay between rows. Actual delay is "
+        "randomly selected from the range.",
     )  # type: ignore[assignment]
-    "tuple[int, int] : Speed of the falling rain as determined by the delay between rows. Actual delay is randomly selected from the range."
+    (
+        "tuple[int, int] : Speed of the falling rain as determined by the delay between rows. Actual delay is "
+        "randomly selected from the range."
+    )
 
     rain_column_delay_range: tuple[int, int] = ArgField(
         cmd_name=["--rain-column-delay-range"],
@@ -184,9 +204,13 @@ class MatrixConfig(ArgsDataClass):
         type_parser=argvalidators.PositiveInt.type_parser,
         default=5,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Number of frames to wait between resolving the next group of characters. This is used to adjust the speed of the final resolve phase.",
+        help="Number of frames to wait between resolving the next group of characters. "
+        "This is used to adjust the speed of the final resolve phase.",
     )  # type: ignore[assignment]
-    "int : Number of frames to wait between resolving the next group of characters. This is used to adjust the speed of the final resolve phase."
+    (
+        "int : Number of frames to wait between resolving the next group of characters. This is used to "
+        "adjust the speed of the final resolve phase."
+    )
 
     final_gradient_stops: tuple[Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -194,9 +218,13 @@ class MatrixConfig(ArgsDataClass):
         nargs="+",
         default=(Color("92be92"), Color("336b33")),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.",
+        help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If "
+        "only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
-    "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the characters will be displayed in that color."
+    (
+        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "characters will be displayed in that color."
+    )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -204,9 +232,13 @@ class MatrixConfig(ArgsDataClass):
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
-        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
+        help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
+        "smoother and longer gradient animation.",
     )  # type: ignore[assignment]
-    "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create a smoother and longer gradient animation."
+    (
+        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
+        "create a smoother and longer gradient animation."
+    )
 
     final_gradient_frames: int = ArgField(
         cmd_name="--final-gradient-frames",
@@ -227,12 +259,17 @@ class MatrixConfig(ArgsDataClass):
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
-    def get_effect_class(cls):
+    def get_effect_class(cls) -> type[Matrix]:
+        """Get the effect class associated with this configuration."""
         return Matrix
 
 
 class MatrixIterator(BaseEffectIterator[MatrixConfig]):
+    """Iterator for the Matrix effect."""
+
     class RainColumn:
+        """Rain column for the Matrix effect."""
+
         def __init__(
             self,
             characters: list[EffectCharacter],
@@ -240,6 +277,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             config: MatrixConfig,
             rain_colors: Gradient,
         ) -> None:
+            """Initialize the rain column."""
             self.terminal = terminal
             self.config = config
             self.characters: list[EffectCharacter] = characters
@@ -250,10 +288,11 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             self.setup_column("rain")
 
         def setup_column(self, phase: str) -> None:
+            """Set up the rain column for the specified phase."""
             self.pending_characters.clear()
             self.phase = phase
             for character in self.characters:
-                self.terminal.set_character_visibility(character, False)
+                self.terminal.set_character_visibility(character, is_visible=False)
                 self.pending_characters.append(character)
                 character.motion.current_coord = character.input_coord
             self.visible_characters: list[EffectCharacter] = []
@@ -277,14 +316,16 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 self.hold_time = random.randint(20, 45)
 
         def trim_column(self) -> None:
+            """Trim the rain column."""
             if not self.visible_characters:
                 return
             popped_char = self.visible_characters.pop(0)
-            self.terminal.set_character_visibility(popped_char, False)
+            self.terminal.set_character_visibility(popped_char, is_visible=False)
             if len(self.visible_characters) > 1:
                 self.fade_last_character()
 
         def drop_column(self) -> None:
+            """Drop the rain column."""
             out_of_canvas = []
             for character in self.visible_characters:
                 character.motion.current_coord = Coord(
@@ -292,28 +333,35 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                     character.motion.current_coord.row - 1,
                 )
                 if character.motion.current_coord.row < self.terminal.canvas.bottom:
-                    self.terminal.set_character_visibility(character, False)
+                    self.terminal.set_character_visibility(character, is_visible=False)
                     out_of_canvas.append(character)
             self.visible_characters = [char for char in self.visible_characters if char not in out_of_canvas]
 
         def fade_last_character(self) -> None:
-            darker_color = Animation.adjust_color_brightness(random.choice(self.rain_colors[-3:]), 0.65)  # type: ignore
+            """Fade the last character in the rain column."""
+            darker_color = Animation.adjust_color_brightness(random.choice(self.rain_colors[-3:]), 0.65)  # type: ignore[arg-type]
             self.visible_characters[0].animation.set_appearance(
                 self.visible_characters[0].animation.current_character_visual.symbol,
-                colors=ColorPair(darker_color),
+                colors=ColorPair(fg_color=darker_color),
             )
 
         def resolve_char(self) -> EffectCharacter:
-            random_char = self.visible_characters.pop(random.randint(0, len(self.visible_characters) - 1))
-            return random_char
+            """Resolve a character in the rain column.
+
+            Returns:
+                EffectCharacter: The resolved character.
+
+            """
+            return self.visible_characters.pop(random.randint(0, len(self.visible_characters) - 1))
 
         def tick(self) -> None:
+            """Advance the rain column by one tick."""
             if not self.active_rain_fall_delay:
                 if self.pending_characters:
                     next_char = self.pending_characters.pop(0)
                     next_char.animation.set_appearance(
                         random.choice(self.matrix_symbols),
-                        colors=ColorPair(self.config.highlight_color),
+                        colors=ColorPair(fg_color=self.config.highlight_color),
                     )
                     previous_character = self.visible_characters[-1] if self.visible_characters else None
                     # if there is a previous character, remove the highlight
@@ -321,10 +369,10 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                         previous_character.animation.set_appearance(
                             previous_character.animation.current_character_visual.symbol,
                             colors=ColorPair(
-                                random.choice(self.rain_colors),
+                                fg_color=random.choice(self.rain_colors),
                             ),
                         )
-                    self.terminal.set_character_visibility(next_char, True)
+                    self.terminal.set_character_visibility(next_char, is_visible=True)
                     self.visible_characters.append(next_char)
 
                 # if no pending characters, but still visible characters, trim the column
@@ -343,7 +391,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                     ):
                         self.visible_characters[-1].animation.set_appearance(
                             self.visible_characters[-1].animation.current_character_visual.symbol,
-                            colors=ColorPair(random.choice(self.rain_colors)),
+                            colors=ColorPair(fg_color=random.choice(self.rain_colors)),
                         )
 
                     if self.hold_time:
@@ -374,9 +422,10 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                     next_color = character.animation.current_character_visual.colors.fg_color
                 else:
                     next_color = None
-                character.animation.set_appearance(next_symbol, colors=ColorPair(next_color))
+                character.animation.set_appearance(next_symbol, colors=ColorPair(fg_color=next_color))
 
     def __init__(self, effect: Matrix) -> None:
+        """Initialize the Matrix effect iterator."""
         super().__init__(effect)
         self.pending_columns: list[MatrixIterator.RainColumn] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
@@ -392,6 +441,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         self.rain_start = time.time()
 
     def build(self) -> None:
+        """Build the initial state of the effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -406,7 +456,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 resolve_scn.add_frame(
                     character.input_symbol,
                     self.config.final_gradient_frames,
-                    colors=ColorPair(color),
+                    colors=ColorPair(fg_color=color),
                 )
 
         for column_chars in self.terminal.get_characters_grouped(
@@ -420,8 +470,9 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             )
         random.shuffle(self.pending_columns)
 
-    def __next__(self) -> str:
-        if self.phase == "rain" or self.phase == "fill":
+    def __next__(self) -> str:  # noqa: PLR0915
+        """Return the next frame in the animation."""
+        if self.phase in ("rain", "fill"):
             if not self.column_delay:
                 if self.phase == "rain":
                     for _ in range(random.randint(1, 3)):
@@ -450,22 +501,26 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                         self.pending_columns.append(column)
 
             self.active_columns = [column for column in self.active_columns if column.visible_characters]
-            if self.phase == "fill":
-                if not self.pending_columns and all(
-                    [(not column.pending_characters and column.phase == "fill") for column in self.active_columns],
-                ):
-                    self.phase = "resolve"
-                    self.active_columns.clear()
+            if (
+                self.phase == "fill"
+                and not self.pending_columns
+                and all((not column.pending_characters and column.phase == "fill") for column in self.active_columns)
+            ):
+                self.phase = "resolve"
+                self.active_columns.clear()
 
-            if self.phase == "rain" and self.config.rain_time > 0:
-                if time.time() - self.rain_start > self.config.rain_time:
-                    self.rain_complete = True
-                    self.phase = "fill"
-                    for column in self.active_columns:
-                        column.hold_time = 0
-                        column.column_drop_chance = 1
-                    for column in self.pending_columns:
-                        column.setup_column(self.phase)
+            if (
+                self.phase == "rain"
+                and self.config.rain_time > 0
+                and time.time() - self.rain_start > self.config.rain_time
+            ):
+                self.rain_complete = True
+                self.phase = "fill"
+                for column in self.active_columns:
+                    column.hold_time = 0
+                    column.column_drop_chance = 1
+                for column in self.pending_columns:
+                    column.setup_column(self.phase)
 
         elif self.phase == "resolve":
             for column in self.full_columns:
@@ -479,7 +534,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                                     next_char.animation.activate_scene(next_char.animation.query_scene("resolve"))
                                     self.active_characters.add(next_char)
                                 else:
-                                    self.terminal.set_character_visibility(next_char, False)
+                                    self.terminal.set_character_visibility(next_char, is_visible=False)
                         self.resolve_delay = self.config.resolve_delay
                     else:
                         self.resolve_delay -= 1
@@ -511,8 +566,13 @@ class Matrix(BaseEffect[MatrixConfig]):
 
     """
 
-    _config_cls = MatrixConfig
-    _iterator_cls = MatrixIterator
+    @property
+    def _config_cls(self) -> type[MatrixConfig]:
+        return MatrixConfig
+
+    @property
+    def _iterator_cls(self) -> type[MatrixIterator]:
+        return MatrixIterator
 
     def __init__(self, input_data: str) -> None:
         """Initialize the effect with the provided input data.
