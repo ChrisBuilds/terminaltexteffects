@@ -45,8 +45,8 @@ def test_canvas_single_col_row():
 
 @pytest.mark.parametrize("anchor", ["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"])
 def test_canvas_anchor_text(anchor):
-    c0 = EffectCharacter("0", symbol="a", input_column=1, input_row=1)
-    c1 = EffectCharacter("1", symbol="b", input_column=2, input_row=1)
+    c0 = EffectCharacter(0, symbol="a", input_column=1, input_row=1)
+    c1 = EffectCharacter(1, symbol="b", input_column=2, input_row=1)
     canvas = Canvas(10, 10)
     chars = canvas._anchor_text([c0, c1], anchor=anchor)
     if anchor == "sw":
@@ -183,8 +183,10 @@ def test_terminal_preprocess_input_data_existing_color():
     assert chars[6].animation.input_bg_color == Color(68)
     assert chars[6].animation.input_fg_color == Color("00FF00")
     chars = terminal._preprocess_input_data(input_data)[0]
-    assert chars[0].animation.current_character_visual.colors.bg_color is None
-    assert chars[0].animation.current_character_visual.colors.fg_color == Color("FF0000")
+    test_char_colors = chars[0].animation.current_character_visual.colors
+    assert test_char_colors is not None
+    assert test_char_colors.bg_color is None
+    assert test_char_colors.fg_color == Color("FF0000")
 
 
 @pytest.mark.parametrize("anchor", ["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"])
@@ -334,7 +336,7 @@ def test_terminal_get_input_colors_invalid_sort():
     input_data = "\x1b[38;2;255;0;0maaaaaaa\x1b[38;2;0;255;0mb\x1b[48;2;0;0;255mcccc"
     terminal = Terminal(input_data=input_data, config=config)
     with pytest.raises(InvalidColorSortError):
-        terminal.get_input_colors(sort="invalid")
+        terminal.get_input_colors(sort="invalid")  # type: ignore[arg-type] # testing invalid sort
 
 
 @pytest.mark.parametrize("input_chars", [True, False])
@@ -407,7 +409,7 @@ def test_terminal_get_characters_invalid_character_sort():
     config = TerminalConfig()
     terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)
     with pytest.raises(InvalidCharacterSortError):
-        terminal.get_characters(sort="invalid")
+        terminal.get_characters(sort="invalid")  # type: ignore[arg-type] # testing invalid sort
 
 
 @pytest.mark.parametrize("input_chars", [True, False])
@@ -500,13 +502,14 @@ def test_terminal_get_characters_grouped_invalid_grouping():
     config = TerminalConfig()
     terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)
     with pytest.raises(InvalidCharacterGroupError):
-        terminal.get_characters_grouped(grouping="invalid")
+        terminal.get_characters_grouped(grouping="invalid")  # type: ignore[arg-type] # testing invalid group
 
 
 def test_terminal_get_character_by_input_coord_valid():
     config = TerminalConfig()
     terminal = Terminal(input_data="abcd", config=config)
     char = terminal.get_character_by_input_coord(Coord(1, 1))
+    assert char is not None
     assert char.input_symbol == "a"
 
 
@@ -523,7 +526,7 @@ def test_terminal_set_character_visibility(visiblity):
     terminal = Terminal(input_data="abcd", config=config)
     assert len(terminal._visible_characters) == 0
     c = terminal.get_character_by_input_coord(Coord(1, 1))
-    terminal.set_character_visibility(c, visiblity)
+    terminal.set_character_visibility(c, visiblity)  # type: ignore[arg-type]
     if visiblity:
         assert len(terminal._visible_characters) == 1
     else:
@@ -535,7 +538,7 @@ def test_terminal_get_formatted_output_string():
     terminal = Terminal(input_data="abcd", config=config)
     output_string = terminal.get_formatted_output_string()
     assert output_string == "    "
-    terminal.set_character_visibility(terminal.get_character_by_input_coord(Coord(1, 1)), True)
+    terminal.set_character_visibility(terminal.get_character_by_input_coord(Coord(1, 1)), is_visible=True)  # type: ignore[arg-type]
     output_string = terminal.get_formatted_output_string()
     assert output_string == "a   "
 
@@ -545,7 +548,7 @@ def test_terminal_update_terminal_state():
     terminal = Terminal(input_data="abcd", config=config)
     terminal._update_terminal_state()
     assert terminal.terminal_state == ["    "]
-    terminal.set_character_visibility(terminal.get_character_by_input_coord(Coord(1, 1)), True)
+    terminal.set_character_visibility(terminal.get_character_by_input_coord(Coord(1, 1)), is_visible=True)  # type: ignore[arg-type]
     terminal._update_terminal_state()
     assert terminal.terminal_state == ["a   "]
 
