@@ -12,11 +12,10 @@ import random
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, EffectCharacter, Gradient, Terminal
+import terminaltexteffects as tte
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.graphics import ColorPair
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -50,20 +49,20 @@ class BeamsConfig(ArgsDataClass):
         beam_row_speed_range (tuple[int, int]): Speed range of the beam when moving along a row. Valid values are n > 0.
         beam_column_speed_range (tuple[int, int]): Speed range of the beam when moving along a column.
             Valid values are n > 0.
-        beam_gradient_stops (tuple[Color, ...]): Tuple of colors for the beam, a gradient will be created between
+        beam_gradient_stops (tuple[tte.Color, ...]): Tuple of colors for the beam, a gradient will be created between
             the colors.
         beam_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
             create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
             Valid values are n > 0.
         beam_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient
             animation. Valid values are n > 0.
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the wipe gradient.
+        final_gradient_stops (tuple[tte.Color, ...]): Tuple of colors for the wipe gradient.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
             create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
             Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the
             gradient animation.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
+        final_gradient_direction (tte.Gradient.Direction): Direction of the final gradient.
         final_wipe_speed (int): Speed of the final wipe as measured in diagonal groups activated per frame.
             Valid values are n > 0.
 
@@ -139,16 +138,16 @@ class BeamsConfig(ArgsDataClass):
 
     "tuple[int, int] : Speed range of the beam when moving along a column."
 
-    beam_gradient_stops: tuple[Color, ...] = ArgField(
+    beam_gradient_stops: tuple[tte.Color, ...] = ArgField(
         cmd_name="--beam-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=(Color("ffffff"), Color("00D1FF"), Color("8A008A")),
+        default=(tte.Color("ffffff"), tte.Color("00D1FF"), tte.Color("8A008A")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors.",
     )  # type: ignore[assignment]
 
-    "tuple[Color, ...] : Tuple of colors for the beam, a gradient will be created between the colors."
+    "tuple[tte.Color, ...] : Tuple of colors for the beam, a gradient will be created between the colors."
 
     beam_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--beam-gradient-steps",
@@ -179,16 +178,16 @@ class BeamsConfig(ArgsDataClass):
 
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
+    final_gradient_stops: tuple[tte.Color, ...] = ArgField(
         cmd_name="--final-gradient-stops",
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("ffffff")),
+        default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # type: ignore[assignment]
 
-    "tuple[Color, ...] : Tuple of colors for the wipe gradient."
+    "tuple[tte.Color, ...] : Tuple of colors for the wipe gradient."
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
         cmd_name="--final-gradient-steps",
@@ -219,15 +218,15 @@ class BeamsConfig(ArgsDataClass):
 
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_direction: Gradient.Direction = ArgField(
+    final_gradient_direction: tte.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=Gradient.Direction.VERTICAL,
+        default=tte.Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
 
-    "Gradient.Direction : Direction of the final gradient."
+    "tte.Gradient.Direction : Direction of the final gradient."
 
     final_wipe_speed: int = ArgField(
         cmd_name="--final-wipe-speed",
@@ -253,9 +252,9 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
 
         def __init__(
             self,
-            characters: list[EffectCharacter],
+            characters: list[tte.EffectCharacter],
             direction: str,
-            terminal: Terminal,
+            terminal: tte.Terminal,
             args: BeamsConfig,
         ) -> None:
             """Initialize the Group."""
@@ -279,7 +278,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
             """Increment the counter for the next character."""
             self.next_character_counter += self.speed
 
-        def get_next_character(self) -> EffectCharacter | None:
+        def get_next_character(self) -> tte.EffectCharacter | None:
             """Get the next character in the group.
 
             If the next character is already active, determined by having an active scene, the active
@@ -287,7 +286,8 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
             is made visible.
 
             Returns:
-                EffectCharacter | None: The next character if the character or None if the character is already active.
+                tte.EffectCharacter | None: The next character if the character or None if the character is
+                    already active.
 
             """
             self.next_character_counter -= 1
@@ -319,18 +319,18 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         """
         super().__init__(effect)
         self.pending_groups: list[BeamsIterator.Group] = []
-        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
+        self.character_final_color_map: dict[tte.EffectCharacter, tte.ColorPair] = {}
         self.active_groups: list[BeamsIterator.Group] = []
         self.delay = 0
         self.phase = "beams"
         self.final_wipe_groups = self.terminal.get_characters_grouped(
-            Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            tte.Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
         )
         self.build()
 
     def build(self) -> None:
         """Build the initial state for the Beams effect."""
-        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = tte.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
             self.terminal.canvas.text_top,
@@ -340,31 +340,31 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             if character.is_fill_character:
-                self.character_final_color_map[character] = ColorPair(fg_color=Color("000000"))
+                self.character_final_color_map[character] = tte.ColorPair(fg_color=tte.Color("000000"))
                 continue
             if self.terminal.config.existing_color_handling == "dynamic" and self.preexisting_colors_present:
-                fg_color = Color("ffffff")
+                fg_color = tte.Color("ffffff")
                 bg_color = None
                 if character.animation.input_fg_color:
                     fg_color = character.animation.input_fg_color
                 if character.animation.input_bg_color:
                     bg_color = character.animation.input_bg_color
-                self.character_final_color_map[character] = ColorPair(fg_color=fg_color, bg_color=bg_color)
+                self.character_final_color_map[character] = tte.ColorPair(fg_color=fg_color, bg_color=bg_color)
             else:
-                self.character_final_color_map[character] = ColorPair(
+                self.character_final_color_map[character] = tte.ColorPair(
                     fg_color=final_gradient_mapping[character.input_coord],
                 )
 
-        beam_gradient = Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
+        beam_gradient = tte.Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
         groups: list[BeamsIterator.Group] = []
         for row in self.terminal.get_characters_grouped(
-            Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            tte.Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):
             groups.append(BeamsIterator.Group(row, "row", self.terminal, self.config))  # noqa: PERF401
         for column in self.terminal.get_characters_grouped(
-            Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            tte.Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):
@@ -389,12 +389,12 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                 char_bg_color = self.character_final_color_map[character].bg_color
                 if char_fg_color:
                     faded_fg_color = character.animation.adjust_color_brightness(char_fg_color, 0.3)
-                    fg_fade_gradient = Gradient(char_fg_color, faded_fg_color, steps=10)
-                    fg_brighten_gradient = Gradient(faded_fg_color, char_fg_color, steps=10)
+                    fg_fade_gradient = tte.Gradient(char_fg_color, faded_fg_color, steps=10)
+                    fg_brighten_gradient = tte.Gradient(faded_fg_color, char_fg_color, steps=10)
                 if char_bg_color:
                     faded_bg_color = character.animation.adjust_color_brightness(char_bg_color, 0.3)
-                    bg_fade_gradient = Gradient(char_bg_color, faded_bg_color, steps=10)
-                    bg_brighten_gradient = Gradient(faded_bg_color, char_bg_color, steps=10)
+                    bg_fade_gradient = tte.Gradient(char_bg_color, faded_bg_color, steps=10)
+                    bg_brighten_gradient = tte.Gradient(faded_bg_color, char_bg_color, steps=10)
 
                 beam_row_scn.apply_gradient_to_symbols(
                     character.input_symbol,
@@ -463,7 +463,7 @@ class Beams(BaseEffect[BeamsConfig]):
 
     Attributes:
         effect_config (BeamsConfig): Configuration for the effect.
-        terminal_config (TerminalConfig): Configuration for the terminal.
+        terminal_config (tte.TerminalConfig): Configuration for the terminal.
 
     """
 
@@ -474,12 +474,3 @@ class Beams(BaseEffect[BeamsConfig]):
     @property
     def _iterator_cls(self) -> type[BeamsIterator]:
         return BeamsIterator
-
-    def __init__(self, input_data: str) -> None:
-        """Initialize the effect with the provided input data.
-
-        Args:
-            input_data (str): The input data to use for the effect.
-
-        """
-        super().__init__(input_data)
