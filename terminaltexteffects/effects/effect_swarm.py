@@ -357,12 +357,3 @@ class Swarm(BaseEffect[SwarmConfig]):
     @property
     def _iterator_cls(self) -> type[SwarmIterator]:
         return SwarmIterator
-
-    def __init__(self, input_data: str) -> None:
-        """Initialize the effect with the provided input data.
-
-        Args:
-            input_data (str): The input data to use for the effect.
-
-        """
-        super().__init__(input_data)

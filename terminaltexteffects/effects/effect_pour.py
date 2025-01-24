@@ -274,12 +274,3 @@ class Pour(BaseEffect[PourConfig]):
     @property
     def _iterator_cls(self) -> type[PourIterator]:
         return PourIterator
-
-    def __init__(self, input_data: str) -> None:
-        """Initialize the effect with the provided input data.
-
-        Args:
-            input_data (str): The input data to use for the effect.
-
-        """
-        super().__init__(input_data)

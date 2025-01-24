@@ -433,12 +433,3 @@ class Blackhole(BaseEffect[BlackholeConfig]):
     @property
     def _iterator_cls(self) -> type[BlackholeIterator]:
         return BlackholeIterator
-
-    def __init__(self, input_data: str) -> None:
-        """Initialize the Blackhole effect with the provided input data.
-
-        Args:
-            input_data (str): The input data to use for the Blackhole effect.
-
-        """
-        super().__init__(input_data)
