@@ -1318,6 +1318,41 @@ Characters are grouped into swarms and move around the terminal before settling 
     ```
 ---
 
+## Sweep
+
+Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.
+
+![Demo](./img/effects_demos/sweep_demo.gif)
+
+[Reference](./effects/sweep.md){ .md-button } [Config](./effects/sweep.md#terminaltexteffects.effects.effect_sweep.SweepConfig){ .md-button }
+
+??? example "Sweep Command Line Arguments"
+
+    ```
+    --sweep-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                        Space separated list of symbols to use for the sweep shimmer. (default: ('█',
+                        '▓', '▒', '░'))
+    --first-sweep-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,outside_to_center,center_to_outside}
+                        Direction of the first sweep, revealing uncolored characters. (default:
+                        column_right_to_left)
+    --second-sweep-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,outside_to_center,center_to_outside}
+                        Direction of the second sweep, coloring the characters. (default:
+                        column_left_to_right)
+    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the character gradient (applied
+                        from bottom to top). If only one color is provided, the characters will be
+                        displayed in that color. (default: (Color('8A008A'), Color('00D1FF'),
+                        Color('ffffff')))
+    --final-gradient-steps (int > 0) [(int > 0) ...]
+                        Space separated, unquoted, list of the number of gradient steps to use. More
+                        steps will create a smoother and longer gradient animation. (default: 8)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
+                        Direction of the final gradient. (default: Direction.VERTICAL)
+
+    Example: terminaltexteffects sweep --sweep-symbols '█' '▓' '▒' '░' --first-sweep-direction column_right_to_left --second-sweep-direction column_left_to_right --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 8 8 8 --final-gradient-direction vertical
+    ```
+---
+
 ## SynthGrid
 
 Create a grid which fills with characters dissolving into the final text.

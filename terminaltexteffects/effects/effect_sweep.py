@@ -1,6 +1,9 @@
 """Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.
 
 Classes:
+    Sweep: Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.
+    SweepConfig: Configuration for the Sweep effect.
+    SweepIterator: Iterator for the Sweep effect.
 
 
 """
@@ -31,8 +34,11 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     name="sweep",
     help="Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.",
     description="sweep | Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.",
-    epilog=f"""{argvalidators.EASING_EPILOG}
-    """,
+    epilog=(
+        "Example: terminaltexteffects sweep --sweep-symbols '█' '▓' '▒' '░' --first-sweep-direction "
+        "column_right_to_left --second-sweep-direction column_left_to_right --final-gradient-stops 8A008A "
+        "00D1FF ffffff --final-gradient-steps 8 8 8 --final-gradient-direction vertical"
+    ),
 )
 @dataclass
 class SweepConfig(ArgsDataClass):
@@ -47,6 +53,64 @@ class SweepConfig(ArgsDataClass):
         help="Space separated list of symbols to use for the sweep shimmer.",
     )  # type: ignore[assignment]
     "tuple[str, ...] | str : Tuple of symbols to use for the sweep shimmer."
+
+    first_sweep_direction: typing.Literal[
+        "column_left_to_right",
+        "row_top_to_bottom",
+        "row_bottom_to_top",
+        "diagonal_top_left_to_bottom_right",
+        "diagonal_bottom_left_to_top_right",
+        "diagonal_top_right_to_bottom_left",
+        "diagonal_bottom_right_to_top_left",
+        "outside_to_center",
+        "center_to_outside",
+    ] = ArgField(
+        cmd_name="--first-sweep-direction",
+        default="column_right_to_left",
+        choices=[
+            "column_left_to_right",
+            "column_right_to_left",
+            "row_top_to_bottom",
+            "row_bottom_to_top",
+            "diagonal_top_left_to_bottom_right",
+            "diagonal_bottom_left_to_top_right",
+            "diagonal_top_right_to_bottom_left",
+            "diagonal_bottom_right_to_top_left",
+            "outside_to_center",
+            "center_to_outside",
+        ],
+        help="Direction of the first sweep, revealing uncolored characters.",
+    )  # type: ignore[assignment]
+    "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]"
+
+    second_sweep_direction: typing.Literal[
+        "column_left_to_right",
+        "row_top_to_bottom",
+        "row_bottom_to_top",
+        "diagonal_top_left_to_bottom_right",
+        "diagonal_bottom_left_to_top_right",
+        "diagonal_top_right_to_bottom_left",
+        "diagonal_bottom_right_to_top_left",
+        "outside_to_center",
+        "center_to_outside",
+    ] = ArgField(
+        cmd_name="--second-sweep-direction",
+        default="column_left_to_right",
+        choices=[
+            "column_left_to_right",
+            "column_right_to_left",
+            "row_top_to_bottom",
+            "row_bottom_to_top",
+            "diagonal_top_left_to_bottom_right",
+            "diagonal_bottom_left_to_top_right",
+            "diagonal_top_right_to_bottom_left",
+            "diagonal_bottom_right_to_top_left",
+            "outside_to_center",
+            "center_to_outside",
+        ],
+        help="Direction of the second sweep, coloring the characters.",
+    )  # type: ignore[assignment]
+    "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]"
 
     final_gradient_stops: tuple[tte.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
@@ -71,15 +135,6 @@ class SweepConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "tuple[int, ...] | int: Space separated, unquoted, list of the number of gradient steps to use. More steps will "
     "create a smoother and longer gradient animation."
-
-    final_gradient_frames: int = ArgField(
-        cmd_name="--final-gradient-frames",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=5,
-        metavar=argvalidators.PositiveInt.METAVAR,
-        help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
-    )  # type: ignore[assignment]
-    "int: Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     final_gradient_direction: tte.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
@@ -130,6 +185,19 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
             tte.Color("202020"),
             tte.Color("101010"),
         ]
+        grouping_map = {
+            "column_left_to_right": self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            "column_right_to_left": self.terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            "row_top_to_bottom": self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            "row_bottom_to_top": self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
+            "diagonal_top_left_to_bottom_right": self.terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            "diagonal_bottom_left_to_top_right": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+            "diagonal_top_right_to_bottom_left": self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+            "diagonal_bottom_right_to_top_left": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+            "center_to_outside": self.terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS,
+            "outside_to_center": self.terminal.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
+        }
+
         for character in self.terminal.get_characters(inner_fill_chars=True, outer_fill_chars=True):
             if not character.is_fill_character:
                 self.character_final_color_map[character] = tte.ColorPair(
@@ -155,12 +223,12 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
             )
 
         self.pending_groups_initial_sweep = self.terminal.get_characters_grouped(
-            tte.Terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            grouping_map[self.config.first_sweep_direction],
             inner_fill_chars=True,
             outer_fill_chars=True,
         )
         self.pending_groups_second_sweep = self.terminal.get_characters_grouped(
-            tte.Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            grouping_map[self.config.second_sweep_direction],
             inner_fill_chars=True,
             outer_fill_chars=True,
         )
@@ -200,7 +268,7 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
 
 
 class Sweep(BaseEffect[SweepConfig]):
-    """Effect description."""
+    """Sweep across the canvas to reveal uncolored text, reverse sweep to color the text."""
 
     @property
     def _config_cls(self) -> type[SweepConfig]:
