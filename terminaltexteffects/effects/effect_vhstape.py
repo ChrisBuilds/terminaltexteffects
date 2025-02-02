@@ -223,46 +223,46 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 base_scn.add_frame(
                     character.input_symbol,
                     duration=1,
-                    colors=ColorPair(fg_color=self.character_final_color_map[character]),
+                    colors=ColorPair(fg=self.character_final_color_map[character]),
                 )
                 glitch_scn_forward = character.animation.new_scene(
                     scene_id="rgb_glitch_fwd",
                     sync=Scene.SyncMetric.STEP,
                 )
                 for color in glitch_line_colors:
-                    glitch_scn_forward.add_frame(character.input_symbol, duration=1, colors=ColorPair(fg_color=color))
+                    glitch_scn_forward.add_frame(character.input_symbol, duration=1, colors=ColorPair(fg=color))
                 glitch_scn_backward = character.animation.new_scene(
                     scene_id="rgb_glitch_bwd",
                     sync=Scene.SyncMetric.STEP,
                 )
                 for color in glitch_line_colors[::-1]:
-                    glitch_scn_backward.add_frame(character.input_symbol, duration=1, colors=ColorPair(fg_color=color))
+                    glitch_scn_backward.add_frame(character.input_symbol, duration=1, colors=ColorPair(fg=color))
                 snow_scn = character.animation.new_scene(scene_id="snow")
                 for _ in range(25):
                     snow_scn.add_frame(
                         random.choice(snow_chars),
                         duration=2,
-                        colors=ColorPair(fg_color=random.choice(noise_colors)),
+                        colors=ColorPair(fg=random.choice(noise_colors)),
                     )
                 snow_scn.add_frame(
                     character.input_symbol,
                     duration=1,
-                    colors=ColorPair(fg_color=self.character_final_color_map[character]),
+                    colors=ColorPair(fg=self.character_final_color_map[character]),
                 )
                 final_snow_scn = character.animation.new_scene(scene_id="final_snow")
                 final_redraw_scn = character.animation.new_scene(scene_id="final_redraw")
-                final_redraw_scn.add_frame("█", duration=10, colors=ColorPair(fg_color=Color("ffffff")))
+                final_redraw_scn.add_frame("█", duration=10, colors=ColorPair(fg="ffffff"))
                 final_redraw_scn.add_frame(
                     character.input_symbol,
                     duration=1,
-                    colors=ColorPair(fg_color=self.character_final_color_map[character]),
+                    colors=ColorPair(fg=self.character_final_color_map[character]),
                 )
 
                 for _ in range(50):
                     final_snow_scn.add_frame(
                         random.choice(snow_chars),
                         duration=2,
-                        colors=ColorPair(fg_color=random.choice(noise_colors)),
+                        colors=ColorPair(fg=random.choice(noise_colors)),
                     )
                 # register events
                 character.event_handler.register_event(

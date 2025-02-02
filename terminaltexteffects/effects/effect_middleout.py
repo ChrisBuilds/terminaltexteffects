@@ -204,7 +204,7 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
 
             # initialize character state
             character.motion.activate_path(center_path)
-            character.animation.set_appearance(character.input_symbol, ColorPair(fg_color=self.config.starting_color))
+            character.animation.set_appearance(character.input_symbol, ColorPair(fg=self.config.starting_color))
             self.terminal.set_character_visibility(character, is_visible=True)
             self.active_characters.add(character)
 

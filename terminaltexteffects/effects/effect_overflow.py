@@ -156,7 +156,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
             for character in self.characters:
                 character.animation.set_appearance(
                     character.input_symbol,
-                    ColorPair(fg_color=fg_color, bg_color=bg_color),
+                    ColorPair(fg=fg_color, bg=bg_color),
                 )
 
     def __init__(self, effect: Overflow) -> None:
@@ -215,14 +215,14 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                     character.animation.set_appearance(
                         character.animation.current_character_visual.symbol,
                         ColorPair(
-                            fg_color=character.animation.input_fg_color,
-                            bg_color=character.animation.input_bg_color,
+                            fg=character.animation.input_fg_color,
+                            bg=character.animation.input_bg_color,
                         ),
                     )
                 else:
                     character.animation.set_appearance(
                         character.animation.current_character_visual.symbol,
-                        ColorPair(fg_color=self.character_final_color_map[character]),
+                        ColorPair(fg=self.character_final_color_map[character]),
                     )
             self.pending_rows.append(OverflowIterator.Row(row, final=True))
         self._delay = 0

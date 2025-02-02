@@ -14,11 +14,10 @@ import random
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, Terminal, easing
+import terminaltexteffects as tte
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
-from terminaltexteffects.utils.graphics import ColorPair
 
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
@@ -40,12 +39,12 @@ class BinaryPathConfig(ArgsDataClass):
     """Configuration for the BinaryPath effect.
 
     Attributes:
-        final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color
+        final_gradient_stops (tuple[tte.Color, ...]): Tuple of colors for the final color gradient. If only one color
             is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
             create a smoother and longer gradient animation. Valid values are n > 0.
-        final_gradient_direction (Gradient.Direction): Direction of the final gradient.
-        binary_colors (tuple[Color, ...]): Tuple of colors for the binary characters. Character color is randomly
+        final_gradient_direction (tte.Gradient.Direction): Direction of the final gradient.
+        binary_colors (tuple[tte.Color, ...]): Tuple of colors for the binary characters. Character color is randomly
             assigned from this list.
         movement_speed (float): Speed of the binary groups as they travel around the terminal. Valid values are n > 0.
         active_binary_groups (float): Maximum number of binary groups that are active at any given time as a
@@ -54,18 +53,18 @@ class BinaryPathConfig(ArgsDataClass):
 
     """
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
+    final_gradient_stops: tuple[tte.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=(Color("00d500"), Color("007500")),
+        default=(tte.Color("00d500"), tte.Color("007500")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # type: ignore[assignment]
 
     (
-        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, "
+        "tuple[tte.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, "
         "the characters will be displayed in that color."
     )
 
@@ -84,28 +83,28 @@ class BinaryPathConfig(ArgsDataClass):
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
+    final_gradient_direction: tte.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=Gradient.Direction.RADIAL,
+        default=tte.Gradient.Direction.RADIAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
 
-    "Gradient.Direction : Direction of the final gradient."
+    "tte.Gradient.Direction : Direction of the final gradient."
 
-    binary_colors: tuple[Color, ...] = ArgField(
+    binary_colors: tuple[tte.Color, ...] = ArgField(
         cmd_name=["--binary-colors"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=(Color("044E29"), Color("157e38"), Color("45bf55"), Color("95ed87")),
+        default=(tte.Color("044E29"), tte.Color("157e38"), tte.Color("45bf55"), tte.Color("95ed87")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the binary characters. Character color is randomly "
         "assigned from this list.",
     )  # type: ignore[assignment]
 
     (
-        "tuple[Color, ...] : Tuple of colors for the binary characters. Character color is randomly assigned from "
+        "tuple[tte.Color, ...] : Tuple of colors for the binary characters. Character color is randomly assigned from "
         "this list."
     )
 
@@ -145,12 +144,12 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
     class _BinaryRepresentation:
         """Binary representation of a character. Used to animate the characters moving towards the input coordinate."""
 
-        def __init__(self, character: EffectCharacter, terminal: Terminal) -> None:
+        def __init__(self, character: tte.EffectCharacter, terminal: tte.Terminal) -> None:
             self.character = character
             self.terminal = terminal
             self.binary_string = format(ord(self.character.animation.current_character_visual.symbol), "08b")
-            self.binary_characters: list[EffectCharacter] = []
-            self.pending_binary_characters: list[EffectCharacter] = []
+            self.binary_characters: list[tte.EffectCharacter] = []
+            self.pending_binary_characters: list[tte.EffectCharacter] = []
             self.input_coord = self.character.input_coord
             self.is_active = False
 
@@ -174,9 +173,9 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
 
         """
         super().__init__(effect)
-        self.pending_chars: list[EffectCharacter] = []
+        self.pending_chars: list[tte.EffectCharacter] = []
         self.pending_binary_representations: list[BinaryPathIterator._BinaryRepresentation] = []
-        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
+        self.character_final_color_map: dict[tte.EffectCharacter, tte.ColorPair] = {}
         self.last_frame_provided = False
         self.active_binary_reps: list[BinaryPathIterator._BinaryRepresentation] = []
         self.complete = False
@@ -189,7 +188,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
 
     def build(self) -> None:  # noqa: PLR0915
         """Build the BinaryPath effect."""
-        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = tte.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
             self.terminal.canvas.text_top,
@@ -199,24 +198,24 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
         )
         for character in self.terminal.get_characters():
             if self.terminal.config.existing_color_handling == "dynamic" and character.animation.input_fg_color:
-                self.character_final_color_map[character] = ColorPair(
-                    fg_color=character.animation.input_fg_color,
-                    bg_color=character.animation.input_bg_color,
+                self.character_final_color_map[character] = tte.ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
                 )
             else:
-                self.character_final_color_map[character] = ColorPair(
-                    fg_color=final_gradient_mapping[character.input_coord],
+                self.character_final_color_map[character] = tte.ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
                 )
 
         for character in self.terminal.get_characters():
             bin_rep = BinaryPathIterator._BinaryRepresentation(character, self.terminal)
             for binary_char in bin_rep.binary_string:
-                bin_rep.binary_characters.append(self.terminal.add_character(binary_char, Coord(0, 0)))
+                bin_rep.binary_characters.append(self.terminal.add_character(binary_char, tte.Coord(0, 0)))
                 bin_rep.pending_binary_characters.append(bin_rep.binary_characters[-1])
             self.pending_binary_representations.append(bin_rep)
 
         for bin_rep in self.pending_binary_representations:
-            path_coords: list[Coord] = []
+            path_coords: list[tte.Coord] = []
             starting_coord = self.terminal.canvas.random_coord(outside_scope=True)
             path_coords.append(starting_coord)
             last_orientation = random.choice(("col", "row"))
@@ -238,7 +237,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                 max_column_distance = abs(last_coord.column - bin_rep.character.input_coord.column)
                 max_row_distance = abs(last_coord.row - bin_rep.character.input_coord.row)
                 if last_orientation == "col" and max_row_distance > 0:
-                    next_coord = Coord(
+                    next_coord = tte.Coord(
                         last_coord.column,
                         last_coord.row
                         + (
@@ -248,7 +247,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                     )
                     last_orientation = "row"
                 elif last_orientation == "row" and max_column_distance > 0:
-                    next_coord = Coord(
+                    next_coord = tte.Coord(
                         last_coord.column + (random.randint(1, min(max_column_distance, 4)) * column_direction),
                         last_coord.row,
                     )
@@ -272,21 +271,21 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                 color_scn.add_frame(
                     bin_effectchar.animation.current_character_visual.symbol,
                     1,
-                    colors=ColorPair(fg_color=random.choice(self.config.binary_colors)),
+                    colors=tte.ColorPair(fg=random.choice(self.config.binary_colors)),
                 )
                 bin_effectchar.animation.activate_scene(color_scn)
 
         for character in self.terminal.get_characters():
-            collapse_scn = character.animation.new_scene(ease=easing.in_quad, scene_id="collapse_scn")
+            collapse_scn = character.animation.new_scene(ease=tte.easing.in_quad, scene_id="collapse_scn")
             dim_color = character.animation.adjust_color_brightness(
                 self.character_final_color_map[character].fg_color,  # type: ignore[arg-type]
                 0.5,
             )
-            dim_gradient = Gradient(Color("ffffff"), dim_color, steps=10)
+            dim_gradient = tte.Gradient(tte.Color("ffffff"), dim_color, steps=10)
             collapse_scn.apply_gradient_to_symbols(character.input_symbol, 7, fg_gradient=dim_gradient)
 
             brighten_scn = character.animation.new_scene(scene_id="brighten_scn")
-            brighten_gradient = Gradient(dim_color, self.character_final_color_map[character].fg_color, steps=10)  # type: ignore[arg-type]
+            brighten_gradient = tte.Gradient(dim_color, self.character_final_color_map[character].fg_color, steps=10)  # type: ignore[arg-type]
             brighten_scn.apply_gradient_to_symbols(character.input_symbol, 2, fg_gradient=brighten_gradient)
         self.max_active_binary_groups = max(
             1,

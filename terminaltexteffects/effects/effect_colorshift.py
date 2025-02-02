@@ -270,14 +270,14 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
                 gradient_scn.add_frame(
                     character.input_symbol,
                     self.config.gradient_frames,
-                    colors=ColorPair(fg_color=color),
+                    colors=ColorPair(fg=color),
                 )
             final_color_scn = character.animation.new_scene(scene_id="final_gradient")
             for color in Gradient(colors[-1], self.character_final_color_map[character], steps=8):
                 final_color_scn.add_frame(
                     character.input_symbol,
                     self.config.gradient_frames,
-                    colors=ColorPair(fg_color=color),
+                    colors=ColorPair(fg=color),
                 )
             character.animation.activate_scene(gradient_scn)
             self.active_characters.add(character)

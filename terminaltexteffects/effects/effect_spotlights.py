@@ -250,7 +250,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         for character in chars_no_longer_in_range:
             character.animation.set_appearance(
                 character.input_symbol,
-                ColorPair(fg_color=self.character_color_map[character][1]),
+                ColorPair(fg=self.character_color_map[character][1]),
             )
 
         for character in chars_in_range:
@@ -276,7 +276,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 )
             else:
                 adjusted_color = self.character_color_map[character][0]
-            character.animation.set_appearance(character.input_symbol, ColorPair(fg_color=adjusted_color))
+            character.animation.set_appearance(character.input_symbol, ColorPair(fg=adjusted_color))
         self.illuminated_chars = chars_in_range
 
     def build(self) -> None:
@@ -299,7 +299,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
             self.terminal.set_character_visibility(character, is_visible=True)
             self.character_color_map[character] = (color_bright, color_dark)
-            character.animation.set_appearance(character.input_symbol, ColorPair(fg_color=color_dark))
+            character.animation.set_appearance(character.input_symbol, ColorPair(fg=color_dark))
         smallest_dimension = min(self.terminal.canvas.right, self.terminal.canvas.top)
         self.illuminate_range = max(
             int(

@@ -11,13 +11,13 @@ def test_random_color() -> None:
 
 
 def test_color_pair_init() -> None:
-    cp = ColorPair(fg_color=Color("ffffff"), bg_color=Color("000000"))
+    cp = ColorPair(fg="ffffff", bg="000000")
     assert cp.fg_color == Color("ffffff")
     assert cp.bg_color == Color("000000")
 
 
 def test_color_pair_init_single_color() -> None:
-    cp = ColorPair(fg_color=Color("ffffff"))
+    cp = ColorPair(fg="ffffff")
     assert cp.fg_color == Color("ffffff")
     assert cp.bg_color is None
 

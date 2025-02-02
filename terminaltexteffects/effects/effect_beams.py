@@ -340,7 +340,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             if character.is_fill_character:
-                self.character_final_color_map[character] = tte.ColorPair(fg_color=tte.Color("000000"))
+                self.character_final_color_map[character] = tte.ColorPair(fg="000000")
                 continue
             if self.terminal.config.existing_color_handling == "dynamic" and self.preexisting_colors_present:
                 fg_color = tte.Color("ffffff")
@@ -349,10 +349,10 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                     fg_color = character.animation.input_fg_color
                 if character.animation.input_bg_color:
                     bg_color = character.animation.input_bg_color
-                self.character_final_color_map[character] = tte.ColorPair(fg_color=fg_color, bg_color=bg_color)
+                self.character_final_color_map[character] = tte.ColorPair(fg=fg_color, bg=bg_color)
             else:
                 self.character_final_color_map[character] = tte.ColorPair(
-                    fg_color=final_gradient_mapping[character.input_coord],
+                    fg=final_gradient_mapping[character.input_coord],
                 )
 
         beam_gradient = tte.Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)

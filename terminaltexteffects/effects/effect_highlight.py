@@ -200,10 +200,10 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
                 base_color,
                 steps=(3, self.config.highlight_width, 3),
             )
-            character.animation.set_appearance(character.input_symbol, ColorPair(fg_color=base_color))
+            character.animation.set_appearance(character.input_symbol, ColorPair(fg=base_color))
             specular_highlight_scn = character.animation.new_scene(scene_id="highlight")
             for color in highlight_gradient:
-                specular_highlight_scn.add_frame(character.input_symbol, 2, colors=ColorPair(fg_color=color))
+                specular_highlight_scn.add_frame(character.input_symbol, 2, colors=ColorPair(fg=color))
             self.terminal.set_character_visibility(character, is_visible=True)
             self.active_characters.add(character)
 

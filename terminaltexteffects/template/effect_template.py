@@ -9,7 +9,7 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, EffectCharacter, Gradient, easing
+import terminaltexteffects as tte
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -17,7 +17,7 @@ from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, arg
 
 def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
     """Return the effect class and the effect configuration dataclass."""
-    return NamedEffect, EffectConfig
+    return Effect, EffectConfig
 
 
 @argclass(
@@ -31,29 +31,29 @@ def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
 class EffectConfig(ArgsDataClass):
     """Effect configuration dataclass."""
 
-    color_single: Color = ArgField(
+    color_single: tte.Color = ArgField(
         cmd_name=["--color-single"],
         type_parser=argvalidators.ColorArg.type_parser,
-        default=Color(0),
+        default=tte.Color(0),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color for the ___.",
     )  # type: ignore[assignment]
     "Color: Color for the ___."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
+    final_gradient_stops: tuple[tte.Color, ...] = ArgField(
         cmd_name=["--final-gradient-stops"],
         type_parser=argvalidators.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
+        default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help=(
-            "Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
+            "Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
             "If only one color is provided, the characters will be displayed in that color."
         ),
     )  # type: ignore[assignment]
     (
         "tuple[Color, ...]: Space separated, unquoted, list of colors for the character gradient "
-        "(applied from bottom to top). If only one color is provided, the characters will be displayed in that color."
+        "(applied across the canvas). If only one color is provided, the characters will be displayed in that color."
     )
 
     final_gradient_steps: tuple[int, ...] | int = ArgField(
@@ -81,10 +81,10 @@ class EffectConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "int: Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_direction: Gradient.Direction = ArgField(
+    final_gradient_direction: tte.Gradient.Direction = ArgField(
         cmd_name="--final-gradient-direction",
         type_parser=argvalidators.GradientDirection.type_parser,
-        default=Gradient.Direction.VERTICAL,
+        default=tte.Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # type: ignore[assignment]
@@ -99,24 +99,24 @@ class EffectConfig(ArgsDataClass):
     )  # type: ignore[assignment]
     "float: Speed of the ___."
 
-    easing: easing.EasingFunction = ArgField(
+    easing: tte.easing.EasingFunction = ArgField(
         cmd_name=["--easing"],
-        default=easing.in_out_sine,
+        default=tte.easing.in_out_sine,
         type_parser=argvalidators.Ease.type_parser,
         help="Easing function to use for character movement.",
     )  # type: ignore[assignment]
     "easing.EasingFunction: Easing function to use for character movement."
 
     @classmethod
-    def get_effect_class(cls) -> type[NamedEffect]:
+    def get_effect_class(cls) -> type[Effect]:
         """Return the effect class associated with this configuration class."""
-        return NamedEffect
+        return Effect
 
 
-class NamedEffectIterator(BaseEffectIterator[EffectConfig]):
+class EffectIterator(BaseEffectIterator[EffectConfig]):
     """Effect iterator for the NamedEffect effect."""
 
-    def __init__(self, effect: NamedEffect) -> None:
+    def __init__(self, effect: Effect) -> None:
         """Initialize the effect iterator.
 
         Args:
@@ -124,13 +124,13 @@ class NamedEffectIterator(BaseEffectIterator[EffectConfig]):
 
         """
         super().__init__(effect)
-        self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.pending_chars: list[tte.EffectCharacter] = []
+        self.character_final_color_map: dict[tte.EffectCharacter, tte.Color] = {}
         self.build()
 
     def build(self) -> None:
         """Build the effect."""
-        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_gradient = tte.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
             self.terminal.canvas.text_top,
@@ -152,17 +152,13 @@ class NamedEffectIterator(BaseEffectIterator[EffectConfig]):
         raise StopIteration
 
 
-class NamedEffect(BaseEffect[EffectConfig]):
+class Effect(BaseEffect[EffectConfig]):
     """Effect description."""
 
-    _config_cls = EffectConfig
-    _iterator_cls = NamedEffectIterator
+    @property
+    def _config_cls(self) -> type[EffectConfig]:
+        return EffectConfig
 
-    def __init__(self, input_data: str) -> None:
-        """Initialize the effect with the provided input data.
-
-        Args:
-            input_data (str): The input data to use for the effect.
-
-        """
-        super().__init__(input_data)
+    @property
+    def _iterator_cls(self) -> type[EffectIterator]:
+        return EffectIterator

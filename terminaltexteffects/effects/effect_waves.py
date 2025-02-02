@@ -231,7 +231,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                 self.character_final_color_map[character],
                 steps=self.config.final_gradient_steps,
             ):
-                final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(fg_color=step))
+                final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(fg=step))
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
                 wave_scn,

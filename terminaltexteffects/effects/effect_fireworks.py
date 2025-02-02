@@ -266,13 +266,13 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             for character in firework_shell:
                 # launch scene
                 launch_scn = character.animation.new_scene()
-                launch_scn.add_frame(self.config.firework_symbol, 2, colors=ColorPair(fg_color=shell_color))
-                launch_scn.add_frame(self.config.firework_symbol, 1, colors=ColorPair(fg_color=Color("FFFFFF")))
+                launch_scn.add_frame(self.config.firework_symbol, 2, colors=ColorPair(fg=shell_color))
+                launch_scn.add_frame(self.config.firework_symbol, 1, colors=ColorPair(fg="FFFFFF"))
                 launch_scn.is_looping = True
                 # bloom scene
                 bloom_scn = character.animation.new_scene(sync=Scene.SyncMetric.STEP)
                 for color in shell_gradient:
-                    bloom_scn.add_frame(character.input_symbol, 3, colors=ColorPair(fg_color=color))
+                    bloom_scn.add_frame(character.input_symbol, 3, colors=ColorPair(fg=color))
                 # fall scene
                 fall_scn = character.animation.new_scene()
                 fall_gradient = Gradient(shell_color, self.character_final_color_map[character], steps=15)

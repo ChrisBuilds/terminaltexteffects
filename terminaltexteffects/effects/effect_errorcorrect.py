@@ -181,7 +181,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
             spawn_scene.add_frame(
                 character.input_symbol,
                 1,
-                colors=ColorPair(fg_color=self.character_final_color_map[character]),
+                colors=ColorPair(fg=self.character_final_color_map[character]),
             )
             character.animation.activate_scene(spawn_scene)
             self.terminal.set_character_visibility(character, is_visible=True)
@@ -206,16 +206,16 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 first_block_wipe = character.animation.new_scene()
                 last_block_wipe = character.animation.new_scene()
                 for block in block_wipe_start:
-                    first_block_wipe.add_frame(block, 3, colors=ColorPair(fg_color=self.config.error_color))
+                    first_block_wipe.add_frame(block, 3, colors=ColorPair(fg=self.config.error_color))
                 for block in block_wipe_end:
-                    last_block_wipe.add_frame(block, 3, colors=ColorPair(fg_color=self.config.correct_color))
+                    last_block_wipe.add_frame(block, 3, colors=ColorPair(fg=self.config.correct_color))
                 initial_scene = character.animation.new_scene()
-                initial_scene.add_frame(character.input_symbol, 1, colors=ColorPair(fg_color=self.config.error_color))
+                initial_scene.add_frame(character.input_symbol, 1, colors=ColorPair(fg=self.config.error_color))
                 character.animation.activate_scene(initial_scene)
                 error_scene = character.animation.new_scene(scene_id="error")
                 for _ in range(10):
-                    error_scene.add_frame(block_symbol, 3, colors=ColorPair(fg_color=self.config.error_color))
-                    error_scene.add_frame(character.input_symbol, 3, colors=ColorPair(fg_color=Color("ffffff")))
+                    error_scene.add_frame(block_symbol, 3, colors=ColorPair(fg=self.config.error_color))
+                    error_scene.add_frame(character.input_symbol, 3, colors=ColorPair(fg="ffffff"))
                 correcting_scene = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
                 correcting_scene.apply_gradient_to_symbols("█", 3, fg_gradient=correcting_gradient)
                 final_scene = character.animation.new_scene()

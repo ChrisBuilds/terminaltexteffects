@@ -201,7 +201,7 @@ class GridLine:
                 grid_scn.add_frame(
                     self.grid_symbol,
                     1,
-                    colors=ColorPair(fg_color=grid_gradient_mapping[geometry.Coord(column_index, origin.row)]),
+                    colors=ColorPair(fg=grid_gradient_mapping[geometry.Coord(column_index, origin.row)]),
                 )
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
@@ -214,7 +214,7 @@ class GridLine:
                 grid_scn.add_frame(
                     self.grid_symbol,
                     1,
-                    colors=ColorPair(fg_color=grid_gradient_mapping[geometry.Coord(origin.column, row_index)]),
+                    colors=ColorPair(fg=grid_gradient_mapping[geometry.Coord(origin.column, row_index)]),
                 )
                 effect_char.animation.activate_scene(grid_scn)
                 effect_char.layer = 2
@@ -419,7 +419,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                     dissolve_scn.add_frame(
                         random.choice(self.config.text_generation_symbols),
                         3,
-                        colors=ColorPair(fg_color=random.choice(text_gradient.spectrum)),
+                        colors=ColorPair(fg=random.choice(text_gradient.spectrum)),
                     )
                 if character.input_symbol == " ":
                     dissolve_scn.add_frame(character.input_symbol, 1)
@@ -427,7 +427,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                     dissolve_scn.add_frame(
                         character.input_symbol,
                         1,
-                        colors=ColorPair(fg_color=text_gradient_mapping[character.input_coord]),
+                        colors=ColorPair(fg=text_gradient_mapping[character.input_coord]),
                     )
                 character.animation.activate_scene(dissolve_scn)
                 character.event_handler.register_event(

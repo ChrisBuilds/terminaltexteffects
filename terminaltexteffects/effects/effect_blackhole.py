@@ -167,7 +167,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             blackhole_path = character.motion.new_path(path_id="blackhole", speed=0.5, ease=easing.in_out_sine)
             blackhole_path.new_waypoint(starting_pos)
             blackhole_scn = character.animation.new_scene(scene_id="blackhole")
-            blackhole_scn.add_frame("*", 1, colors=ColorPair(fg_color=self.config.blackhole_color))
+            blackhole_scn.add_frame("*", 1, colors=ColorPair(fg=self.config.blackhole_color))
             character.event_handler.register_event(
                 EventHandler.Event.PATH_ACTIVATED,
                 blackhole_path,
@@ -183,7 +183,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             starting_scn = character.animation.new_scene()
             star_symbol = random.choice(star_symbols)
             star_color = random.choice(starfield_colors)
-            starting_scn.add_frame(star_symbol, 1, colors=ColorPair(fg_color=star_color))
+            starting_scn.add_frame(star_symbol, 1, colors=ColorPair(fg=star_color))
             character.animation.activate_scene(starting_scn)
             if character not in self.blackhole_chars:
                 starfield_coord = self.terminal.canvas.random_coord()
@@ -213,7 +213,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                 singularity_path.new_waypoint(self.terminal.canvas.center, bezier_control=control_point)
                 consumed_scn = character.animation.new_scene()
                 for color in gradient_map[star_color]:
-                    consumed_scn.add_frame(star_symbol, 1, colors=ColorPair(fg_color=color))
+                    consumed_scn.add_frame(star_symbol, 1, colors=ColorPair(fg=color))
                 consumed_scn.add_frame(" ", 1)
                 consumed_scn.sync = Scene.SyncMetric.DISTANCE
                 character.event_handler.register_event(
@@ -265,7 +265,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                         point_scn.add_frame(
                             symbol,
                             6,
-                            colors=ColorPair(fg_color=random.choice(self.config.star_colors)),
+                            colors=ColorPair(fg=random.choice(self.config.star_colors)),
                         )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
@@ -302,7 +302,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             input_path.new_waypoint(character.input_coord)
             explode_scn = character.animation.new_scene()
             explode_star_color = random.choice(star_colors)
-            explode_scn.add_frame(character.input_symbol, 1, colors=ColorPair(fg_color=explode_star_color))
+            explode_scn.add_frame(character.input_symbol, 1, colors=ColorPair(fg=explode_star_color))
             cooling_scn = character.animation.new_scene()
             if self.terminal.config.existing_color_handling == "dynamic" and self.preexisting_colors_present:
                 if not any((character.animation.input_fg_color, character.animation.input_bg_color)):

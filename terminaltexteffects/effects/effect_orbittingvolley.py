@@ -285,7 +285,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
             )
             character.animation.set_appearance(
                 character.input_symbol,
-                ColorPair(fg_color=self.character_final_color_map[character]),
+                ColorPair(fg=self.character_final_color_map[character]),
             )
         self._launchers: list[OrbittingVolleyIterator.Launcher] = []
         for coord, symbol in (
@@ -314,7 +314,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
         self._main_launcher = self._launchers[0]
         self._main_launcher.character.animation.set_appearance(
             self._main_launcher.character.input_symbol,
-            ColorPair(fg_color=self.final_gradient.spectrum[-1]),
+            ColorPair(fg=self.final_gradient.spectrum[-1]),
         )
         self._main_launcher.build_paths()
         self._main_launcher.character.motion.activate_path(self._main_launcher.character.motion.query_path("perimeter"))
@@ -339,7 +339,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
                 Coord(self.terminal.canvas.left, min(self.terminal.canvas.top, child_row)),
             )
         color = self.launcher_gradient_coordinate_map[child.character.motion.current_coord]
-        child.character.animation.set_appearance(child.character.input_symbol, ColorPair(fg_color=color))
+        child.character.animation.set_appearance(child.character.input_symbol, ColorPair(fg=color))
 
     def __next__(self) -> str:
         """Return the next frame in the animation."""
@@ -352,7 +352,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
             self._main_launcher.character.animation.set_appearance(
                 self.config.top_launcher_symbol,
                 ColorPair(
-                    fg_color=self.launcher_gradient_coordinate_map[self._main_launcher.character.motion.current_coord],
+                    fg=self.launcher_gradient_coordinate_map[self._main_launcher.character.motion.current_coord],
                 ),
             )
             for launcher in self._launchers[1:]:

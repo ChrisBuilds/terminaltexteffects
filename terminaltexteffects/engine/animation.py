@@ -404,18 +404,18 @@ class Scene:
         if fg_gradient and fg_gradient.spectrum and bg_gradient and bg_gradient.spectrum:
             if len(fg_gradient.spectrum) >= len(bg_gradient.spectrum):
                 color_pairs = [
-                    graphics.ColorPair(fg_color=fg_color, bg_color=bg_color)
+                    graphics.ColorPair(fg=fg_color, bg=bg_color)
                     for fg_color, bg_color in cyclic_distribution(fg_gradient.spectrum, bg_gradient.spectrum)
                 ]
             else:
                 color_pairs = [
-                    graphics.ColorPair(fg_color=fg_color, bg_color=bg_color)
+                    graphics.ColorPair(fg=fg_color, bg=bg_color)
                     for bg_color, fg_color in cyclic_distribution(bg_gradient.spectrum, fg_gradient.spectrum)
                 ]
         elif fg_gradient and fg_gradient.spectrum:
-            color_pairs = [graphics.ColorPair(fg_color=color, bg_color=None) for color in fg_gradient.spectrum]
+            color_pairs = [graphics.ColorPair(fg=color, bg=None) for color in fg_gradient.spectrum]
         elif bg_gradient and bg_gradient.spectrum:
-            color_pairs = [graphics.ColorPair(fg_color=None, bg_color=color) for color in bg_gradient.spectrum]
+            color_pairs = [graphics.ColorPair(fg=None, bg=color) for color in bg_gradient.spectrum]
 
         if len(symbols) >= len(color_pairs):
             for symbol, colors in cyclic_distribution(symbols, color_pairs):
@@ -552,7 +552,7 @@ class Animation:
                 else:
                     current_id += 1
         if self.existing_color_handling == "always":
-            preexisting_colors = graphics.ColorPair(fg_color=self.input_fg_color, bg_color=self.input_bg_color)
+            preexisting_colors = graphics.ColorPair(fg=self.input_fg_color, bg=self.input_bg_color)
         else:
             preexisting_colors = None
         new_scene = Scene(
@@ -609,12 +609,12 @@ class Animation:
         """
         # override fg and bg colors if they are set in the Scene due to existing color handling = always
         if colors is None:
-            colors = graphics.ColorPair(fg_color=None, bg_color=None)
+            colors = graphics.ColorPair(fg=None, bg=None)
         if self.existing_color_handling == "always":
             if self.input_fg_color:
-                colors.fg_color = self.input_fg_color
+                colors = graphics.ColorPair(fg=self.input_fg_color, bg=colors.bg_color)
             if self.input_bg_color:
-                colors.bg_color = self.input_bg_color
+                colors = graphics.ColorPair(fg=colors.fg_color, bg=self.input_bg_color)
 
         char_vis_fg_color: str | int | None = self._get_color_code(colors.fg_color)
         char_vis_bg_color: str | int | None = self._get_color_code(colors.bg_color)
@@ -705,7 +705,7 @@ class Animation:
         else:
             color_intensity = (
                 lightness * (1 + saturation)
-                if lightness < lightness_threshold
+                if lightness < lightness_threshold  # type: ignore[unbound]
                 else lightness + saturation - lightness * saturation
             )
             lightness_scaled = 2 * lightness - color_intensity
@@ -732,7 +732,7 @@ class Animation:
         elapsed_step_ratio = self.active_scene.easing_current_step / self.active_scene.easing_total_steps
         return easing_func(elapsed_step_ratio)
 
-    def step_animation(self) -> None:  # noqa: PLR0912
+    def step_animation(self) -> None:
         """Progress the Scene and apply the next visual to the character.
 
         If the active scene is complete, a SCENE_COMPLETE event is triggered.
@@ -767,7 +767,7 @@ class Animation:
                             ),
                         )
                     try:
-                        self.current_character_visual = self.active_scene.frames[sequence_index].character_visual
+                        self.current_character_visual = self.active_scene.frames[sequence_index].character_visual  # type: ignore[unbound]
                     except IndexError:
                         self.current_character_visual = self.active_scene.frames[-1].character_visual
                 # when the active waypoint has been deactivated, use the final symbol in the scene and finish the scene

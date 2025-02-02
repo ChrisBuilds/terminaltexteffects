@@ -295,7 +295,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             start_scn.add_frame(
                 character.input_symbol,
                 1,
-                colors=ColorPair(fg_color=self.character_final_color_map[character]),
+                colors=ColorPair(fg=self.character_final_color_map[character]),
             )
             home_path = character.motion.new_path(speed=0.8, ease=easing.out_quad, path_id="home")
             home_path.new_waypoint(character.input_coord)

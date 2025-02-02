@@ -174,7 +174,7 @@ class RainIterator(BaseEffectIterator[RainConfig]):
         for character in self.terminal.get_characters():
             raindrop_color = random.choice(self.config.rain_colors)
             rain_scn = character.animation.new_scene()
-            rain_scn.add_frame(random.choice(self.config.rain_symbols), 1, colors=ColorPair(fg_color=raindrop_color))
+            rain_scn.add_frame(random.choice(self.config.rain_symbols), 1, colors=ColorPair(fg=raindrop_color))
             raindrop_gradient = Gradient(raindrop_color, self.character_final_color_map[character], steps=7)
             fade_scn = character.animation.new_scene()
             fade_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=raindrop_gradient)

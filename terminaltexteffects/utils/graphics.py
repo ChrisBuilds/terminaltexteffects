@@ -13,7 +13,7 @@ from __future__ import annotations
 import itertools
 import random
 import typing
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass, field
 from enum import Enum, auto
 
 from terminaltexteffects.utils import ansitools, colorterm, geometry, hexterm
@@ -115,18 +115,36 @@ class Color:
         return iter((self,))
 
 
-@dataclass
+@dataclass(slots=True, kw_only=True)
 class ColorPair:
     """Represents a pair of colors to specify a character's foreground and background colors.
+
+    On init, if fg or bg is not a Color object, create a Color object with the value.
 
     Attributes:
         fg_color (Color | None): The foreground color. None if no foreground color is specified.
         bg_color (Color | None): The background color. None if no background color is specified.
+        fg (InitVar[Color | str | int | None]): The initial foreground color value.
+        bg (InitVar[Color | str | int | None]): The initial background color value.
 
     """
 
-    fg_color: Color | None = None
-    bg_color: Color | None = None
+    fg_color: Color | None = field(init=False, default=None)
+    bg_color: Color | None = field(init=False, default=None)
+    fg: InitVar[Color | str | int | None] = None
+    bg: InitVar[Color | str | int | None] = None
+
+    def __post_init__(self, init_fg_color: Color | str | int | None, init_bg_color: Color | str | int | None) -> None:
+        """If either fg or bg is not a Color object, create a Color object with the value."""
+        if init_fg_color is not None and not isinstance(init_fg_color, Color):
+            self.fg_color = Color(init_fg_color)
+        else:
+            self.fg_color = init_fg_color
+
+        if init_bg_color is not None and not isinstance(init_bg_color, Color):
+            self.bg_color = Color(init_bg_color)
+        else:
+            self.bg_color = init_bg_color
 
 
 class Gradient:
@@ -388,3 +406,39 @@ def random_color() -> Color:
 
     """
     return Color(hex(random.randint(0, 0xFFFFFF))[2:].zfill(6))
+
+
+def shift_color_towards(color: Color, target_color: Color, factor: float) -> Color:
+    """Shift one color towards another by a given factor.
+
+    Args:
+        color (Color): The original color.
+        target_color (Color): The target color to shift towards.
+        factor (float): The factor by which to shift the color (0.0 to 1.0).
+
+    Returns:
+        Color: The resulting color after shifting.
+
+    """
+
+    def interpolate(start: float, end: float, factor: float) -> float:
+        """Interpolate between two values by a given factor."""
+        return start + (end - start) * factor
+
+    # Normalize RGB values
+    color_red = int(color.rgb_color[0:2], 16) / 255
+    color_green = int(color.rgb_color[2:4], 16) / 255
+    color_blue = int(color.rgb_color[4:6], 16) / 255
+
+    target_red = int(target_color.rgb_color[0:2], 16) / 255
+    target_green = int(target_color.rgb_color[2:4], 16) / 255
+    target_blue = int(target_color.rgb_color[4:6], 16) / 255
+
+    # Interpolate RGB values
+    new_red = interpolate(color_red, target_red, factor)
+    new_green = interpolate(color_green, target_green, factor)
+    new_blue = interpolate(color_blue, target_blue, factor)
+
+    # Convert back to hex
+    shifted_color = f"{int(new_red * 255):02x}{int(new_green * 255):02x}{int(new_blue * 255):02x}"
+    return Color(shifted_color)

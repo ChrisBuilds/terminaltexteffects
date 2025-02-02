@@ -276,7 +276,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                 self.beam_chars.append(char)
                 laser_scn = char.animation.new_scene(scene_id="laser", is_looping=True)
                 for color in laser_gradient:
-                    laser_scn.add_frame(char.input_symbol, 3, colors=tte.ColorPair(fg_color=color))
+                    laser_scn.add_frame(char.input_symbol, 3, colors=tte.ColorPair(fg=color))
                 laser_gradient.rotate(-1)
                 char.animation.activate_scene(laser_scn)
 
@@ -290,7 +290,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                     spark_scn.add_frame(
                         new_char.input_symbol,
                         self.config.spark_cooling_frames,
-                        colors=tte.ColorPair(fg_color=color),
+                        colors=tte.ColorPair(fg=color),
                     )
 
                 new_char.event_handler.register_event(
@@ -393,7 +393,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = tte.ColorPair(
-                fg_color=final_gradient_mapping[character.input_coord],
+                fg=final_gradient_mapping[character.input_coord],
             )
             cool_gradient = tte.Gradient(
                 *self.config.cool_gradient_stops,
@@ -401,9 +401,9 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                 steps=8,
             )
             spawn_scn = character.animation.new_scene(scene_id="spawn")
-            spawn_scn.add_frame("^", duration=3, colors=tte.ColorPair(fg_color=tte.Color("ffe680")))
+            spawn_scn.add_frame("^", duration=3, colors=tte.ColorPair(fg="ffe680"))
             for color in cool_gradient:
-                spawn_scn.add_frame(character.input_symbol, 4, colors=tte.ColorPair(fg_color=color))
+                spawn_scn.add_frame(character.input_symbol, 4, colors=tte.ColorPair(fg=color))
             character.animation.activate_scene(spawn_scn)
 
         for n, char_list in enumerate(

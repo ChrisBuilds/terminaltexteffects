@@ -145,7 +145,7 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
             character.animation.set_appearance(
                 character.input_symbol,
-                ColorPair(fg_color=self.character_final_color_map[character]),
+                ColorPair(fg=self.character_final_color_map[character]),
             )
         if self.config.slice_direction == "vertical":
             self.rows = self.terminal.get_characters_grouped(grouping=slice_direction_map[self.config.slice_direction])

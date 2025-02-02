@@ -229,7 +229,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 for character in self.characters:
                     sheen_scene = character.animation.new_scene()
                     for step in rainbow_gradient:
-                        sheen_scene.add_frame(character.input_symbol, 5, colors=ColorPair(fg_color=step))
+                        sheen_scene.add_frame(character.input_symbol, 5, colors=ColorPair(fg=step))
                     gradient_offset += 2
                     gradient_offset %= len(rainbow_gradient)
                     rainbow_gradient = rainbow_gradient[gradient_offset:] + rainbow_gradient[:gradient_offset]
@@ -241,7 +241,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 bubble_color = random.choice(self.effect.config.bubble_colors)
                 for character in self.characters:
                     sheen_scene = character.animation.new_scene()
-                    sheen_scene.add_frame(character.input_symbol, 1, colors=ColorPair(fg_color=bubble_color))
+                    sheen_scene.add_frame(character.input_symbol, 1, colors=ColorPair(fg=bubble_color))
                     character.animation.activate_scene(sheen_scene)
 
         def pop(self) -> None:
@@ -311,8 +311,8 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             character.layer = 1
             pop_1_scene = character.animation.new_scene(scene_id="pop_1")
             pop_2_scene = character.animation.new_scene()
-            pop_1_scene.add_frame("*", 20, colors=ColorPair(fg_color=self.config.pop_color))
-            pop_2_scene.add_frame("'", 20, colors=ColorPair(fg_color=self.config.pop_color))
+            pop_1_scene.add_frame("*", 20, colors=ColorPair(fg=self.config.pop_color))
+            pop_2_scene.add_frame("'", 20, colors=ColorPair(fg=self.config.pop_color))
             final_scene = character.animation.new_scene()
             char_final_gradient = Gradient(self.config.pop_color, self.character_final_color_map[character], steps=10)
             final_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=char_final_gradient)
