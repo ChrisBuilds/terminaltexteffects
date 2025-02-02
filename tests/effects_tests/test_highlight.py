@@ -4,7 +4,9 @@ from terminaltexteffects.effects import effect_highlight
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_highlight_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_highlight.Highlight(input_data)
@@ -37,7 +39,6 @@ def test_highlight_final_gradient(
     effect.effect_config.final_gradient_steps = gradient_steps
     effect.effect_config.final_gradient_direction = gradient_direction
     effect.terminal_config = terminal_config_default_no_framerate
-    effect.effect_config
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
@@ -61,7 +62,11 @@ def test_highlight_final_gradient(
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 @pytest.mark.parametrize("highlight_brightness", [0.5, 2])
 def test_highlight_args(
-    terminal_config_default_no_framerate, input_data, highlight_direction, highlight_brightness, highlight_width
+    terminal_config_default_no_framerate,
+    input_data,
+    highlight_direction,
+    highlight_brightness,
+    highlight_width,
 ) -> None:
     effect = effect_highlight.Highlight(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
