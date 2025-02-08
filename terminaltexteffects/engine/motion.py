@@ -252,6 +252,8 @@ class Path:
             distance_to_travel += active_segment.distance
         if active_segment.distance == 0:
             segment_distance_to_travel_factor = 0.0
+        elif self.ease == easing.out_elastic:
+            segment_distance_to_travel_factor = distance_to_travel / active_segment.distance
         else:
             segment_distance_to_travel_factor = min((distance_to_travel / active_segment.distance, 1))
 
