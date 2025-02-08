@@ -86,27 +86,11 @@ def test_find_coord_on_bezier_curve_two_control_points():
     assert isinstance(geometry.find_coord_on_bezier_curve(start, (control1, control2), end, 0.5), geometry.Coord)
 
 
-def test_find_coord_on_bezier_curve_invalid_t():
-    geometry.find_coord_at_distance.cache_clear()  # type: ignore[reportFunctionMemberAccess]
-    start = geometry.Coord(0, 0)
-    end = geometry.Coord(10, 10)
-    control = geometry.Coord(5, 0)
-    with pytest.raises(ValueError):
-        geometry.find_coord_on_bezier_curve(start, (control,), end, 1.5)
-
-
 def test_find_coord_on_line():
     start = geometry.Coord(0, 0)
     end = geometry.Coord(10, 10)
     coord = geometry.find_coord_on_line(start, end, 0.5)
     assert coord.column == 5 and coord.row == 5
-
-
-def test_find_coord_on_line_invalid_t():
-    start = geometry.Coord(0, 0)
-    end = geometry.Coord(10, 10)
-    with pytest.raises(ValueError):
-        geometry.find_coord_on_line(start, end, 1.5)
 
 
 def test_find_length_of_bezier_curve():

@@ -181,15 +181,12 @@ def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Co
         start (Coord): The starting coordinate of the curve.
         control (tuple[Coord, ...]): The control points of the curve.
         end (Coord): The ending coordinate of the curve.
-        t (float): The parameter value between 0 and 1 that determines the position on the curve.
+        t (float): The distance factor between the start and end coordinates.
 
     Returns:
         Coord: The coordinate on the bezier curve corresponding to the given parameter value.
 
     """
-    if not 0 <= t <= 1:
-        msg = "t must be between 0 and 1."
-        raise ValueError(msg)
     points = [start, *list(control), end]
 
     def de_casteljau(points: list[Coord], t: float):  # noqa: ANN202
@@ -217,15 +214,12 @@ def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
     Args:
         start (Coord): The starting coordinate of the line.
         end (Coord): The ending coordinate of the line.
-        t (float): The parameter value between 0 and 1 representing the position on the line.
+        t (float): The distance factor between the start and end coordinates.
 
     Returns:
         Coord: The coordinate on the line corresponding to the given parameter value.
 
     """
-    if not 0 <= round(t) <= 1:
-        msg = "t must be between 0 and 1."
-        raise ValueError(msg)
     x = (1 - t) * start.column + t * end.column
     y = (1 - t) * start.row + t * end.row
     return Coord(round(x), round(y))
