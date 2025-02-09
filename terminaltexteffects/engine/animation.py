@@ -18,6 +18,7 @@ from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, he
 from terminaltexteffects.utils.exceptions import (
     ActivateEmptySceneError,
     ApplyGradientToSymbolsEmptyGradientsError,
+    ApplyGradientToSymbolsInvalidSymbolError,
     ApplyGradientToSymbolsNoGradientsError,
     FrameDurationError,
     SceneNotFoundError,
@@ -400,6 +401,9 @@ class Scene:
             raise ApplyGradientToSymbolsNoGradientsError
         if not ((fg_gradient and fg_gradient.spectrum) or (bg_gradient and bg_gradient.spectrum)):
             raise ApplyGradientToSymbolsEmptyGradientsError
+        for symbol in symbols:
+            if len(symbol) > 1:
+                raise ApplyGradientToSymbolsInvalidSymbolError(symbol)
         color_pairs: list[graphics.ColorPair] = []
         if fg_gradient and fg_gradient.spectrum and bg_gradient and bg_gradient.spectrum:
             if len(fg_gradient.spectrum) >= len(bg_gradient.spectrum):
