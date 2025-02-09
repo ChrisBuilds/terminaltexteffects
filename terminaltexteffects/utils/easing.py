@@ -38,6 +38,7 @@ Functions:
 
 from __future__ import annotations
 
+import functools
 import math
 import typing
 
@@ -504,6 +505,72 @@ def in_out_bounce(progress_ratio: float) -> float:
     if progress_ratio < 0.5:
         return (1 - out_bounce(1 - 2 * progress_ratio)) / 2
     return (1 + out_bounce(2 * progress_ratio - 1)) / 2
+
+
+def make_easing(x1: float, y1: float, x2: float, y2: float) -> EasingFunction:
+    """Create a cubic Bezier easing function using the provided control points.
+
+    The easing function maps an input progress ratio (0 to 1) to an output value (0 to 1)
+    according to a cubic Bezier curve defined by four points:
+      - Start point: (0, 0)
+      - First control point: (x1, y1)
+      - Second control point: (x2, y2)
+      - End point: (1, 1)
+
+    Args:
+      x1 (float): Determines the horizontal position of the first control point. Smaller values make the
+          curve start off steeper, while larger values delay the initial acceleration.
+      y1 (float): Determines the vertical position of the first control point. Smaller values create a
+          gentler ease-in effect; larger values increase the initial acceleration.
+      x2 (float): Determines the horizontal position of the second control point. Larger values extend
+          the period of change, affecting how late the acceleration or deceleration begins.
+      y2 (float): Determines the vertical position of the second control point. Larger values can create a
+          more abrupt ease-out effect; smaller values result in a smoother finish.
+
+    Note: Use a resource such as cubic-bezier.com to design an appropriate easing curve for your needs.
+
+    Returns:
+        EasingFunction: A function that takes a progress_ratio (0 <= progress_ratio <= 1) and returns
+        the eased value computed from the cubic Bezier curve.
+
+    """
+
+    # Compute Bezier curve x for a given parameter t.
+    def sample_curve_x(t: float) -> float:
+        return 3 * x1 * (1 - t) ** 2 * t + 3 * x2 * (1 - t) * t**2 + t**3
+
+    # Compute Bezier curve y for a given parameter t.
+    def sample_curve_y(t: float) -> float:
+        return 3 * y1 * (1 - t) ** 2 * t + 3 * y2 * (1 - t) * t**2 + t**3
+
+    # Compute derivative of curve x with respect to t.
+    def sample_curve_derivative_x(t: float) -> float:
+        return 3 * (1 - t) ** 2 * x1 + 6 * (1 - t) * t * (x2 - x1) + 3 * t**2 * (1 - x2)
+
+    def bezier_easing(progress: float) -> float:
+        # Clamp progress between 0 and 1.
+        if progress <= 0:
+            return 0
+        if progress >= 1:
+            return 1
+
+        # Find t such that sample_curve_x(t) is close to progress.
+        t = progress  # initial guess
+        for _ in range(20):
+            x_est = sample_curve_x(t)
+            dx = x_est - progress
+            if abs(dx) < 1e-5:
+                break
+            d = sample_curve_derivative_x(t)
+            if abs(d) < 1e-6:
+                break
+            t -= dx / d
+        return sample_curve_y(t)
+
+    return functools.wraps(bezier_easing)(functools.lru_cache(maxsize=8192)(bezier_easing))
+
+
+make_easing = functools.wraps(make_easing)(functools.lru_cache(maxsize=8192)(make_easing))
 
 
 def eased_step_function(
