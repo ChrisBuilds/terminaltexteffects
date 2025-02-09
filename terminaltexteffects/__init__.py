@@ -12,9 +12,10 @@ from terminaltexteffects.engine.motion import (
     Waypoint,
 )
 from terminaltexteffects.engine.terminal import Terminal
-from terminaltexteffects.utils import easing, geometry
+from terminaltexteffects.utils import easing, geometry, graphics
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils import graphics
 from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
+Event = EventHandler.Event
+Action = EventHandler.Action
 __version__ = "0.12.0"
