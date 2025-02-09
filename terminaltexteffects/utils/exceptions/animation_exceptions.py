@@ -89,6 +89,25 @@ class ApplyGradientToSymbolsEmptyGradientsError(TerminalTextEffectsError):
         super().__init__(self.message)
 
 
+class ApplyGradientToSymbolsInvalidSymbolError(TerminalTextEffectsError):
+    """Raised when calling `apply_gradient_to_symbols` with an invalid symbol.
+
+    The symbol provided to `apply_gradient_to_symbols` must be a string with a length of 1.
+
+    """
+
+    def __init__(self, symbol: str) -> None:
+        """Initialize an ApplyGradientToSymbolsInvalidSymbolError.
+
+        Args:
+            symbol (str): The symbol provided to `apply_gradient_to_symbols`.
+
+        """
+        self.symbol = symbol
+        self.message = f"Symbol must be a string with a length of 1. Received: `{symbol}`."
+        super().__init__(self.message)
+
+
 class SceneNotFoundError(TerminalTextEffectsError):
     """Raised when `query_scene` is called with a scene_id that does not exist."""
 
