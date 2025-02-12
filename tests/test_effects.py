@@ -27,7 +27,10 @@ def test_effect(effect, input_data, terminal_config_default_no_framerate) -> Non
 @pytest.mark.parametrize("input_data", ["medium", "color_sequences"], indirect=True)
 @pytest.mark.parametrize("existing_color_handling", ["always", "dynamic", "ignore"])
 def test_effect_color_sequence_handling(
-    effect, input_data, terminal_config_default_no_framerate, existing_color_handling
+    effect,
+    input_data,
+    terminal_config_default_no_framerate,
+    existing_color_handling,
 ) -> None:
     effect = effect(input_data)
     if isinstance(effect, effect_matrix.Matrix):
