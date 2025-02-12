@@ -611,9 +611,9 @@ class Animation:
             colors (graphics.ColorPair | None): The colors to apply.
 
         """
-        # override fg and bg colors if they are set in the Scene due to existing color handling = always
         if colors is None:
             colors = graphics.ColorPair(fg=None, bg=None)
+        # override fg and bg colors if they are set in the Scene due to existing color handling = always
         if self.existing_color_handling == "always":
             if self.input_fg_color:
                 colors = graphics.ColorPair(fg=self.input_fg_color, bg=colors.bg_color)
