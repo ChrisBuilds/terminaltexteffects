@@ -292,7 +292,7 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 #### Print
 
-![print_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/5d902350-e5d3-400c-9496-119c88d40643)
+![print_demo](/docs/img/effects_demos/print_demo.gif)
 
 #### Rain
 
@@ -309,10 +309,6 @@ View all of the effects and related information in the [Effects Showroom](https:
 #### Spotlights
 
 ![spotlights_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/4ab93725-0c8a-4bdf-af91-057338f4e007)
-
-#### Swarm
-
-![swarm_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/305e8390-a0fb-4edb-a541-7b52cef77c09)
 
 #### VHSTape
 
