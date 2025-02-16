@@ -146,6 +146,20 @@ class ColorPair:
         else:
             self.bg_color = init_bg_color
 
+    def __str__(self) -> str:
+        """Return a string representation of the ColorPair object."""
+        color_block = (
+            f"{colorterm.fg(self.fg_color.rgb_color) if self.fg_color else ''}"
+            f"{colorterm.bg(self.bg_color.rgb_color) if self.bg_color else ''}####{ansitools.reset_all()}"
+        )
+        return (
+            f"Foreground Color Code: {self.fg_color.rgb_color if self.fg_color else ''}"
+            f"{f' | Foreground XTerm Color: {self.fg_color.xterm_color}' if self.fg_color and self.fg_color.xterm_color else ''}\n"
+            f"Background Color Code: {self.bg_color.rgb_color if self.bg_color else ''}"
+            f"{f' | Background XTerm Color: {self.bg_color.xterm_color}' if self.bg_color and self.bg_color.xterm_color else ''}"
+            f"\nColor Appearance: {color_block}"
+        )
+
 
 class Gradient:
     """A Gradient is a list of RGB hex color strings transitioning from one color to another.
