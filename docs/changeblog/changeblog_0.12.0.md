@@ -1,4 +1,4 @@
-# 0.12.0 (Background Test)
+# 0.12.0 (Color Parsing)
 
 ## Release 0.12.0
 
