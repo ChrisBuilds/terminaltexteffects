@@ -115,7 +115,7 @@ class Color:
         return iter((self,))
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass()
 class ColorPair:
     """Represents a pair of colors to specify a character's foreground and background colors.
 
