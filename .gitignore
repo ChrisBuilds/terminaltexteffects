@@ -172,3 +172,4 @@ effect_canvas_test.py
 .vscode/*
 lib_tests/*
 dev_notes/*
+38_venv/*
