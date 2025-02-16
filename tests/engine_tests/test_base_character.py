@@ -1,5 +1,7 @@
 """Tests for the base_character module including the BaseCharacter class and the EventHandler class."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import pytest
