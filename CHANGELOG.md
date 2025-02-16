@@ -2,6 +2,91 @@
 
 ---
 
+## 0.12.0
+
+---
+
+### New Features (0.12.0)
+
+---
+
+#### New Effects (0.12.0)
+
+* Highlight - Run a specular highlight across the text. Highlight direction, brightness, and width can be specified.
+* Laseretch - A laser travels across the terminal, etching characters and emitting sparks.
+* Sweep - Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.
+
+#### New Engine Features (0.12.0)
+
+* Background color specification is supported throughout the engine. Methods which accept Color arguments expect a
+`ColorPair` object to specify both the foreground and background color.
+* New `EventHandler.Action`: `Action.RESET_APPEARANCE` will reset the character appearance to the input character with
+no modifications. This eliminates the need to make a `Scene` for this purpose.
+* Existing 8/24 bit color sequences in the input data are parsed and handled by the engine. A new `TerminalConfig`
+option `--existing-color-handling` is used to control how these sequences are handled.
+* `easing.eased_step_function()` allows easing functions to be used generically by returning a closure that produces an
+eased value based on the easing function and step size provided when called.
+* A new easing function has been added which returns a custom easing fuction based on cubic bezier controls.
+* Added custom exceptions.
+
+### Changes (0.12.0)
+
+---
+
+#### Effects Changes (0.12.0)
+
+* Spotlights - The maximum size of the beam is limited to the smaller of the two canvas dimensions and the minimum size
+is limited to 1.
+* Spray - Argument spray_volume is limited to 0 < n <= 1.
+* Colorshift - `--loop` has been renamed `--no-loop`. Looping the gradient is now default.
+* All effects which apply a gradient across the text build the gradient mapping based on the text dimensions regardless
+of the canvas size. This fixes truncated gradients where parts of the gradient map were assigned to empty coordinates.
+* Some effects support dynamic handling of color sequences in the input data.
+* Blackhole - Star characters changed to ASCII only to improve supported fonts.
+
+#### Engine Changes (0.12.0)
+
+* Frame rate timing is enforced within the `BaseEffectIterator` when accessing the `frame` property, rather than within the
+`Terminal` on calls to `print()`. This enables frame timing when iterating without requiring the use of the `terminal_output()` context manager.
+* The frame rate can be set to `0` to run without a limit.
+* Removed unused method Segment.get_coord_on_segment().
+* Activating a Path with no segments will raise a ValueError.
+* `base_effect.active_characters` was refactored from a list to a set.
+* Bezier curves are no longer limited to two control points. Any number of control points can be specified in calls to
+`Path.new_waypoint()`, however, performance may suffer with large numbers of control points along unique paths.
+* Caching has been implemented for all geometry functions significantly improving performance in cases where many
+characters are traveling along the same Path.
+* Reorganized the most common API class imports up to the package level.
+* Moved the SyncMetric Enum from the Animation module top level into the Scene class.
+* `Scene.apply_gradient_symbols()` accepts two gradients, one for the foreground and one for the background.
+
+### Bug Fixes (0.12.0)
+
+---
+
+#### Effects Fixes (0.12.0)
+
+* VHSTape - Fixed glitch wave lines not appearing for some canvas/input_text size ratios.
+* Fireworks - Fixed launch_delay set to 0 causing an infinite loop.
+* Spotlights - Fixed infinite loop caused by very small beam_width_ratio values.
+* Overflow - Fixed effect ignoring `--final-gradient-direction` argument.
+
+#### Engine Fixes (0.12.0)
+
+* Fixed Color() objects not treating rgb colors initialized with/without the hash as equal. Ex: Color('#ffffff') and Color('ffffff')
+* Gradients initialized with a tuple of steps including the value 0 will raise a ValueError as expected. Ex: Gradient(Color('ff0000'), Color('00ff00'), Color('0000ff'), steps=(4,0))
+* Fixed infinite loop when a new scene is created without an id and a scene has been deleted resuling in the length of the scenes dict corresponding to an existing scene id.
+* Fixed `Canvas` center calculations being off by one for odd widths/heights due to floor division.
+* Fixed `Gradient.get_color_at_fraction` rounding resulting in over-representing colors in the middle of the spectrum.
+* `Gradient.build_coordinate_color_mapping` signature changed to required full bounding box specification. This allows the effect to selectively build based on the text/canvas/terminal dimensions and reduces build time by by reducing the map size when possible.
+* Adds a call to `ansitools.dec_save_cursor_position` after each call to `ansitools.dec_restore_cursor_position` to address some terminals clearing the saved data after the restore.
+
+#### Other (0.12.0)
+
+* Fixed Canvas width/height docstrings and help output to correctly indicate 0/-1 matching terminal device/input text.
+
+---
+
 ## 0.11.0
 
 ---

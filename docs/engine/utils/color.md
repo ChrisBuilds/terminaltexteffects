@@ -54,4 +54,8 @@ with effect.terminal_output() as terminal:
         terminal.print(frame)
 ```
 
+---
+
+## Color Reference
+
 ::: terminaltexteffects.utils.graphics.Color
