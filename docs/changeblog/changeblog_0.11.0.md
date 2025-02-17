@@ -24,7 +24,11 @@ only noticed it had been shared after seeing the repo star count jump from ~200 
 google query for "TerminalTextEffects" presented the source of this attention.
 
 Not only was TTE on the front page of HN,
-it was in the number one spot, where it stayed for the entire day. Even more surprising, the comments were overwhelmingly
+it was in the number one spot, where it stayed for the entire day.
+
+[Hacker News 2024-05-28](https://news.ycombinator.com/front?day=2024-05-28)
+
+Even more surprising, the comments were overwhelmingly
 positive. And yet more surprising still, the number of issues reported was quite low and easily managed. By the time it
 was all over, TTE made the top spot in the HN best-of and held it until it aged off three days later. Overall, an
 excellent, if unplanned, "launch".
