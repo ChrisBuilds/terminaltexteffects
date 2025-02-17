@@ -258,3 +258,9 @@ Now that TTE has grown in scale beyond that which I can meaningfully test manual
 Pytest is fun, and parameterization has enabled the testing of all effects, with all of their arguments, and a representative
 sample of the acceptable ranges for those arguments. This was simply impossible manually. All together, there are approximately
 30,000 tests run against the codebase, taking about seven minutes.
+
+---
+
+### Plain Old Changelog
+
+[0.12.0](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CHANGELOG.md)
