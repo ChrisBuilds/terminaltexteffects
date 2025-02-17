@@ -49,7 +49,7 @@ without color. On the second pass, the text is colored.
 
 ![sweep_demo](../img/effects_demos/sweep_demo.gif)
 
-The sweep directions and sweep noise symbols are customizable.
+The sweep directions and sweep noise symbols are customizable. On the second sweep, the noise takes on colors from the final gradient.
 
 ### Color Sequence Parsing
 
