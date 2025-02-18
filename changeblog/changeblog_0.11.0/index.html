@@ -2542,7 +2542,7 @@ override and use a custom collection of characters.</p>
 </dd>
 <dt><code>Symbols and Colors in a given cell change randomly and separately</code></dt>
 <dd>
-<p>The changes to symbol and color for a given character cell are not linked and must be calculcated separately.</p>
+<p>The changes to symbol and color for a given character cell are not linked and must be calculated separately.</p>
 </dd>
 <dt><code>The number of visible characters in a column varies from just a few, to the entire column</code></dt>
 <dd>
@@ -2733,7 +2733,7 @@ wrapped based on the Terminal dimensions.</li>
 <ul>
 <li>If the <code>--ignore-terminal-dimensions</code> option is passed, wrapping will occur based on the Canvas size or not at
 all (if the Canvas is set to match the text), however the output will exceed the dimensions of the terminal and will be
-wrapped by the terminal emulator (resulting in expected effect behavior) unless the output is directed somewhere else.</li>
+wrapped by the terminal emulator (resulting in unexpected effect behavior) unless the output is directed somewhere else.</li>
 </ul>
 </dd>
 </dl>
@@ -2750,12 +2750,12 @@ supported:</p>
 </ul>
 <p>Either dimension can be specified with any of the three options.</p>
 <p>By sizing the Canvas greater than the input text, you can expand the total effect area and give the effects more room
-the breath.</p>
+the breathe.</p>
 <h3 id="anchoring">Anchoring</h3>
 <p><em>...my adventure in off-by-one errors...</em></p>
 <hr />
 <h4 id="anchoring-the-canvas-andor-input-text">Anchoring the Canvas and/or Input Text</h4>
-<p>The Canvas and/or Input Text can be anchored around the respective container using the <code>--anchor-[canavs/text]</code> option. Acceptable values are any of the
+<p>The Canvas and/or Input Text can be anchored around the respective container using the <code>--anchor-[canvas/text]</code> option. Acceptable values are any of the
 Cardinal/Diagonal directions, or centered.</p>
 <ul>
 <li><code>sw</code> = South West (bottom left corner) (<strong>default</strong>)</li>
@@ -2789,7 +2789,7 @@ resulting effect looks better.</p>
 <p><code>cat testinput/demo.txt | tte --canvas-width 150 --canvas-height -1 --anchor-text sw spray</code></p>
 <p><img alt="spray_wide_canvas" src="../../img/changeblog_media/0.11.0/spray_wide_canvas_anchored.gif" /></p>
 <p>All these changes with the Canvas has led to some additional complexity when ensuring all effects operate in reference
-to the Canvas dimensions properly in addition to the complexity handling the interactions between achoring, text wrapping,
+to the Canvas dimensions properly in addition to the complexity handling the interactions between anchoring, text wrapping,
 and ignoring the terminal dimensions when appropriate. I'm sure there are edge cases somebody will find and report.
 Looking forward to fixing those.</p>
 <h2 id="other-changes">Other Changes</h2>
