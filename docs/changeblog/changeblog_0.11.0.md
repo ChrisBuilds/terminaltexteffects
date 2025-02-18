@@ -78,7 +78,7 @@ Here is the result of my analysis.
 
     `Symbols and Colors in a given cell change randomly and separately`
 
-    : The changes to symbol and color for a given character cell are not linked and must be calculcated separately.
+    : The changes to symbol and color for a given character cell are not linked and must be calculated separately.
 
     `The number of visible characters in a column varies from just a few, to the entire column`
 
@@ -253,7 +253,7 @@ wrapped based on the Terminal dimensions.
 
 : - If the `--ignore-terminal-dimensions` option is passed, wrapping will occur based on the Canvas size or not at
 all (if the Canvas is set to match the text), however the output will exceed the dimensions of the terminal and will be
-wrapped by the terminal emulator (resulting in expected effect behavior) unless the output is directed somewhere else.
+wrapped by the terminal emulator (resulting in unexpected effect behavior) unless the output is directed somewhere else.
 
 Now that you understand how TTE handles the space where the effect is drawn, you can appreciate the latest updates to
 the Canvas.
@@ -271,7 +271,7 @@ supported:
 Either dimension can be specified with any of the three options.
 
 By sizing the Canvas greater than the input text, you can expand the total effect area and give the effects more room
-the breath.
+the breathe.
 
 ### Anchoring
 
@@ -281,7 +281,7 @@ the breath.
 
 #### Anchoring the Canvas and/or Input Text
 
-The Canvas and/or Input Text can be anchored around the respective container using the `--anchor-[canavs/text]` option. Acceptable values are any of the
+The Canvas and/or Input Text can be anchored around the respective container using the `--anchor-[canvas/text]` option. Acceptable values are any of the
 Cardinal/Diagonal directions, or centered.
 
 - `sw` = South West (bottom left corner) (**default**)
@@ -329,7 +329,7 @@ resulting effect looks better.
 ![spray_wide_canvas](../img/changeblog_media/0.11.0/spray_wide_canvas_anchored.gif)
 
 All these changes with the Canvas has led to some additional complexity when ensuring all effects operate in reference
-to the Canvas dimensions properly in addition to the complexity handling the interactions between achoring, text wrapping,
+to the Canvas dimensions properly in addition to the complexity handling the interactions between anchoring, text wrapping,
 and ignoring the terminal dimensions when appropriate. I'm sure there are edge cases somebody will find and report.
 Looking forward to fixing those.
 
