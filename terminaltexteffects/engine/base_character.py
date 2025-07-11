@@ -188,6 +188,7 @@ class EventHandler:
         event: Event,
         caller: animation.Scene | motion.Waypoint | motion.Path,
         action: typing.Literal[Action.RESET_APPEARANCE],
+        target: None = None,
     ) -> None: ...
 
     def register_event(
@@ -198,6 +199,8 @@ class EventHandler:
         target: animation.Scene | motion.Path | int | Coord | Callback | None = None,
     ) -> None:
         """Register an event to be handled by the EventHandler.
+
+        Note: Action.RESET_APPEARANCE does not accept a target.
 
         Args:
             event (Event): The event to register.
