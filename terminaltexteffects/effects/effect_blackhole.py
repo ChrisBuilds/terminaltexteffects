@@ -13,7 +13,7 @@ import random
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
+from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
@@ -188,29 +188,13 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             if character not in self.blackhole_chars:
                 starfield_coord = self.terminal.canvas.random_coord()
                 character.motion.set_coordinate(starfield_coord)
-                if starfield_coord.row > self.terminal.canvas.center_row:
-                    if starfield_coord.column in range(
-                        round(self.terminal.canvas.right * 0.4),
-                        round(self.terminal.canvas.right * 0.7),
-                    ):
-                        # if within the top center 40% of the screen
-                        control_point = Coord(self.terminal.canvas.center.column, starfield_coord.row)
-                    else:
-                        control_point = Coord(starfield_coord.column, self.terminal.canvas.center_row)
 
-                elif starfield_coord.row < self.terminal.canvas.center_row:
-                    if starfield_coord.column in range(
-                        round(self.terminal.canvas.right * 0.4),
-                        round(self.terminal.canvas.right * 0.7),
-                    ):
-                        # if within the bottom center 40% of the screen
-                        control_point = Coord(self.terminal.canvas.center.column, starfield_coord.row)
-                    else:
-                        control_point = Coord(starfield_coord.column, self.terminal.canvas.center_row)
-                else:
-                    control_point = self.terminal.canvas.center
-                singularity_path = character.motion.new_path(path_id="singularity", speed=0.3, ease=easing.in_expo)
-                singularity_path.new_waypoint(self.terminal.canvas.center, bezier_control=control_point)
+                singularity_path = character.motion.new_path(
+                    path_id="singularity",
+                    speed=random.uniform(0.11, 0.23),
+                    ease=easing.in_expo,
+                )
+                singularity_path.new_waypoint(self.terminal.canvas.center)
                 consumed_scn = character.animation.new_scene()
                 for color in gradient_map[star_color]:
                     consumed_scn.add_frame(star_symbol, 1, colors=ColorPair(fg=color))
@@ -248,7 +232,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         point_char_made = False
         for character in self.blackhole_chars:
             next_pos = black_hole_ring_positions.pop(0)
-            expand_path = character.motion.new_path(speed=0.1, ease=easing.in_expo)
+            expand_path = character.motion.new_path(speed=0.2, ease=easing.in_expo)
             expand_path.new_waypoint(next_pos)
             collapse_path = character.motion.new_path(speed=0.3, ease=easing.in_expo)
             collapse_path.new_waypoint(self.terminal.canvas.center)
@@ -362,8 +346,6 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         self.prepare_blackhole()
         self.formation_delay = max(100 // len(self.blackhole_chars), 10)
         self.f_delay = self.formation_delay
-        self.next_char_consuming_delay = 0
-        self.max_consume = max(min(int(0.1 * len(self.terminal._input_characters)), 15), 2)
         self.phase = "forming"
         self.awaiting_blackhole_chars = list(self.blackhole_chars)
 
@@ -385,18 +367,11 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                     self.phase = "consuming"
             elif self.phase == "consuming":
                 if self.awaiting_consumption_chars:
-                    if not self.next_char_consuming_delay:
-                        for _ in range(random.randrange(1, self.max_consume)):
-                            if self.awaiting_consumption_chars:
-                                next_char = self.awaiting_consumption_chars.pop(0)
-                                next_char.motion.activate_path(next_char.motion.query_path("singularity"))
-                                self.active_characters.add(next_char)
-                            else:
-                                break
-                        self.max_consume += 1
-                        self.next_char_consuming_delay = random.randrange(0, 10)
-                    else:
-                        self.next_char_consuming_delay -= 1
+                    for char in self.awaiting_consumption_chars:
+                        char.motion.activate_path(char.motion.query_path("singularity"))
+
+                        self.active_characters.add(char)
+                    self.awaiting_consumption_chars.clear()
 
                 elif all(character in self.blackhole_chars for character in self.active_characters):
                     self.phase = "collapsing"
