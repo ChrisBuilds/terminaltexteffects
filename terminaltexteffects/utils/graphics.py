@@ -328,7 +328,7 @@ class Gradient:
     ) -> dict[geometry.Coord, Color]:
         """Build a mapping of coordinates to colors based on the gradient and a direction.
 
-        For example, a vertical gradient will have the same color for each column in a row. When applied across all
+        For example, a vertical gradient will have the same color for each character in a row. When applied across all
         characters in the canvas, the gradient will be visible as a vertical gradient.
 
         Args:
