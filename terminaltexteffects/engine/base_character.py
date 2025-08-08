@@ -209,7 +209,10 @@ class EventHandler:
             target (animation.Scene | motion.Path | int | Coord | Callback): The target of the action.
 
         Raises:
-            ValueError: If the caller or target object is not the correct type for the event or action.
+            EventRegistrationCallerError: If the caller object is not the required type for the
+                specified event.
+            EventRegistrationTargetError: If the target is not the correct type for the action or if
+                ``Action.RESET_APPEARANCE`` is provided with a target.
 
         Example:
             Register an event to activate a scene when a Path is complete:
