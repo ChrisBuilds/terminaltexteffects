@@ -60,6 +60,12 @@ class AnimationSceneError(TerminalTextEffectsError):
     """Generic Scene/animation error with a provided message."""
 
     def __init__(self, message: str) -> None:
+        """Initialize an AnimationSceneError.
+
+        Args:
+            message (str): The message to display.
+
+        """
         self.message = message
         super().__init__(message)
 
