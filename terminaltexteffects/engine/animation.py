@@ -17,9 +17,7 @@ from enum import Enum, auto
 from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, hexterm
 from terminaltexteffects.utils.exceptions import (
     ActivateEmptySceneError,
-    ApplyGradientToSymbolsEmptyGradientsError,
-    ApplyGradientToSymbolsInvalidSymbolError,
-    ApplyGradientToSymbolsNoGradientsError,
+    AnimationSceneError,
     FrameDurationError,
     SceneNotFoundError,
 )
@@ -350,8 +348,7 @@ class Scene:
             None
 
         Raises:
-            ApplyGradientToSymbolsNoGradientsError: if both fg_gradient and bg_gradient are None
-            ApplyGradientToSymbolsEmptyGradientsError: if both fg_gradient and bg_gradient are empty
+            AnimationSceneError: if gradients are invalid or symbols are invalid
 
         """
         T = typing.TypeVar("T")
@@ -398,12 +395,19 @@ class Scene:
                 yield larger_seq_element, smaller_seq[smaller_index]
 
         if fg_gradient is None and bg_gradient is None:
-            raise ApplyGradientToSymbolsNoGradientsError
+            message = "Foreground and background gradient are None. At least one gradient must be provided."
+            raise AnimationSceneError(
+                message,
+            )
         if not ((fg_gradient and fg_gradient.spectrum) or (bg_gradient and bg_gradient.spectrum)):
-            raise ApplyGradientToSymbolsEmptyGradientsError
+            message = (
+                "Foreground and background gradient are empty. At least one gradient must have at least one color."
+            )
+            raise AnimationSceneError(message)
         for symbol in symbols:
             if len(symbol) > 1:
-                raise ApplyGradientToSymbolsInvalidSymbolError(symbol)
+                message = f"Symbol must be a string with a length of 1. Received: `{symbol}`."
+                raise AnimationSceneError(message)
         color_pairs: list[graphics.ColorPair] = []
         if fg_gradient and fg_gradient.spectrum and bg_gradient and bg_gradient.spectrum:
             if len(fg_gradient.spectrum) >= len(bg_gradient.spectrum):
