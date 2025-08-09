@@ -2,9 +2,7 @@
 
 from terminaltexteffects.utils.exceptions.animation_exceptions import (
     ActivateEmptySceneError,
-    ApplyGradientToSymbolsEmptyGradientsError,
-    ApplyGradientToSymbolsInvalidSymbolError,
-    ApplyGradientToSymbolsNoGradientsError,
+    AnimationSceneError,
     FrameDurationError,
     SceneNotFoundError,
 )
