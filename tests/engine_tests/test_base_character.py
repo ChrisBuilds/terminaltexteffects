@@ -9,6 +9,7 @@ import pytest
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.motion import Path
 from terminaltexteffects.utils.exceptions.base_character_exceptions import (
+    DuplicateEventRegistrationError,
     EventRegistrationCallerError,
     EventRegistrationTargetError,
 )
@@ -100,6 +101,19 @@ def test_eventhandler_register_event(eventhandler: EventHandler) -> None:
         is EventHandler.Action.ACTIVATE_PATH
     )
     assert eventhandler.registered_events[(EventHandler.Event.PATH_COMPLETE, p1)][0][1] is p2
+
+
+def test_eventhandler_register_event_duplicate_raises_error(eventhandler: EventHandler) -> None:
+    """Test that registering the same event-caller-action-target combination raises DuplicateEventRegistrationError."""
+    p1 = Path("a")
+    p2 = Path("b")
+
+    # Register the event once - should succeed
+    eventhandler.register_event(EventHandler.Event.PATH_COMPLETE, p1, EventHandler.Action.ACTIVATE_PATH, p2)
+
+    # Try to register the same combination again - should raise error
+    with pytest.raises(DuplicateEventRegistrationError):
+        eventhandler.register_event(EventHandler.Event.PATH_COMPLETE, p1, EventHandler.Action.ACTIVATE_PATH, p2)
 
 
 def test_eventhandler_handle_event(eventhandler: EventHandler) -> None:

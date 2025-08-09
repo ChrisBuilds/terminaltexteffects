@@ -1,4 +1,9 @@
-"""EffectCharacter class and EventHandler class used to manage the state of a single character from the input data."""
+"""Classes used to manage the state of a single character from the input data.
+
+Classes:
+    EffectCharacter: A class representing a single character from the input data.
+    EventHandler: A class used to register and handle events related to a character.
+"""
 
 from __future__ import annotations
 
@@ -8,6 +13,7 @@ from enum import Enum, auto
 
 from terminaltexteffects.engine import animation, motion
 from terminaltexteffects.utils.exceptions import (
+    DuplicateEventRegistrationError,
     EventRegistrationCallerError,
     EventRegistrationTargetError,
 )
@@ -213,6 +219,8 @@ class EventHandler:
                 specified event.
             EventRegistrationTargetError: If the target is not the correct type for the action or if
                 ``Action.RESET_APPEARANCE`` is provided with a target.
+            DuplicateEventRegistrationError: If the exact same event-caller-action-target combination
+                has already been registered.
 
         Example:
             Register an event to activate a scene when a Path is complete:
@@ -251,16 +259,50 @@ class EventHandler:
 
         new_event = (event, caller)
         new_action = (action, target)
+
         if new_event not in self.registered_events:
             self.registered_events[new_event] = []
+
+        # Check for duplicate event-action-target combination
+        if new_action in self.registered_events[new_event]:
+            raise DuplicateEventRegistrationError(event, caller, action, target)
+
         self.registered_events[new_event].append(new_action)
 
     def _handle_event(self, event: Event, caller: animation.Scene | motion.Waypoint | motion.Path) -> None:
-        """Handle an event by taking the specified action.
+        """Handle a registered event by executing all associated actions.
+
+        This method processes an event triggered by a caller object (Scene, Waypoint, or Path) and
+        executes all actions that were registered for this specific event-caller combination. If no
+        actions are registered for the given event and caller, the method returns without doing anything.
+
+        The method supports the following action types:
+        - ACTIVATE_PATH: Activates a motion path for the character
+        - ACTIVATE_SCENE: Activates an animation scene for the character
+        - DEACTIVATE_PATH: Deactivates a motion path for the character
+        - DEACTIVATE_SCENE: Deactivates an animation scene for the character
+        - RESET_APPEARANCE: Resets the character's appearance to its input symbol
+        - SET_LAYER: Sets the character's rendering layer
+        - SET_COORDINATE: Sets the character's current coordinate
+        - CALLBACK: Executes a custom callback function with the character and additional arguments
 
         Args:
-            event (Event): An event to handle. If the event is not registered, nothing happens.
-            caller (animation.Scene | motion.Waypoint | motion.Path): The object triggering the call.
+            event (Event): The event to handle. Must be one of the Event enum values.
+            caller (animation.Scene | motion.Waypoint | motion.Path): The object that triggered the event.
+                The caller type must match the expected type for the given event (e.g., PATH_COMPLETE
+                events must be triggered by motion.Path objects).
+
+        Note:
+            This method is typically called internally by the animation and motion systems when
+            specific state changes occur. Events and their associated actions are registered using
+            the register_event method.
+
+        Example:
+            When a path completes, this method might be called with:
+            - event: Event.PATH_COMPLETE
+            - caller: some_path_object
+
+            If actions were registered for this combination, they would all be executed in order.
 
         """
         action_map = {

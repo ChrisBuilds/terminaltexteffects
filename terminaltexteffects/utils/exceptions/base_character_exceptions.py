@@ -92,3 +92,40 @@ class EventRegistrationTargetError(TerminalTextEffectsError):
             f"Action `{action.name}` requires target type `{required.__name__}`."
         )
         super().__init__(self.message)
+
+
+class DuplicateEventRegistrationError(TerminalTextEffectsError):
+    """Raised when attempting to register a duplicate event-action combination.
+
+    This error is raised when trying to register the same event-caller-action-target combination
+    that has already been registered. Each unique combination can only be registered once to prevent
+    duplicate event handling.
+
+    """
+
+    def __init__(
+        self,
+        event: EventHandler.Event,
+        caller: Scene | Waypoint | Path,
+        action: EventHandler.Action,
+        target: Scene | Path | int | Coord | EventHandler.Callback | None,
+    ) -> None:
+        """Initialize a DuplicateEventRegistrationError.
+
+        Args:
+            event (EventHandler.Event): The event that was already registered.
+            caller (Scene | Waypoint | Path): The caller object that was already registered.
+            action (EventHandler.Action): The action that was already registered.
+            target (Scene | Path | int | Coord | EventHandler.Callback | None): The target that was already registered.
+
+        """
+        self.event = event
+        self.caller = caller
+        self.action = action
+        self.target = target
+        self.message = (
+            f"Duplicate event registration: Event `{event.name}` with caller `{caller.__class__.__name__}`, "
+            f"action `{action.name}`, and target `{target.__class__.__name__ if target is not None else 'None'}` "
+            f"has already been registered."
+        )
+        super().__init__(self.message)

@@ -2,6 +2,21 @@
 
 ---
 
+## 0.13.0
+
+---
+
+### Bug Fixes (0.13.0)
+
+---
+
+#### Engine Fixes (0.13.0)
+
+* Fixed duplicate event registrations by adding prevention logic to the EventHandler. The `register_event` method now raises a `DuplicateEventRegistrationError` when attempting to register the same event-caller-action-target combination.
+* Improved the `_handle_event` method docstring with comprehensive documentation.
+
+---
+
 ## 0.12.0
 
 ---

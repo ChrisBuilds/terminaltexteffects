@@ -9,6 +9,7 @@ from terminaltexteffects.utils.exceptions.animation_exceptions import (
     SceneNotFoundError,
 )
 from terminaltexteffects.utils.exceptions.base_character_exceptions import (
+    DuplicateEventRegistrationError,
     EventRegistrationCallerError,
     EventRegistrationTargetError,
 )
