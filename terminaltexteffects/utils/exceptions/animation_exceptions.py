@@ -3,8 +3,7 @@
 Classes:
     FrameDurationError: Raised when a frame is added to a Scene with an invalid duration.
     ActivateEmptySceneError: Raised when a Scene without any frames is activated.
-    ApplyGradientToSymbolsNoGradientsError: Raised when calling `apply_gradient_to_symbols` without gradients.
-    ApplyGradientToSymbolsEmptyGradientsError: Raised when calling `apply_gradient_to_symbols` with empty gradients.
+    AnimationSceneError: Generic Scene/animation error with a provided message.
 
 """
 
@@ -57,55 +56,12 @@ class ActivateEmptySceneError(TerminalTextEffectsError):
         super().__init__(self.message)
 
 
-class ApplyGradientToSymbolsNoGradientsError(TerminalTextEffectsError):
-    """Raised when calling `apply_gradient_to_symbols` without gradients.
+class AnimationSceneError(TerminalTextEffectsError):
+    """Generic Scene/animation error with a provided message."""
 
-    At least one gradient must be provided, either a foreground gradient or a
-    background gradient when calling `apply_gradient_to_symbols`.
-
-    """
-
-    def __init__(self) -> None:
-        """Initialize an ApplyGradientToSymbolsNoGradientsError."""
-        self.message = "Foreground and background gradient are None. At least one gradient must be provided."
-        super().__init__(self.message)
-
-
-class ApplyGradientToSymbolsEmptyGradientsError(TerminalTextEffectsError):
-    """Raised when calling `apply_gradient_to_symbols` with empty gradients.
-
-    At least one gradient must be provided, either a foreground gradient or a
-    background gradient when calling `apply_gradient_to_symbols`. In addition,
-    at least one of the gradients must have at least one color.
-
-    """
-
-    def __init__(self) -> None:
-        """Initialize an ApplyGradientToSymbolsEmptyGradientsError."""
-        self.message = (
-            "Foreground and background gradient are empty. At least one gradient must have at least "
-            "one color in the spectrum."
-        )
-        super().__init__(self.message)
-
-
-class ApplyGradientToSymbolsInvalidSymbolError(TerminalTextEffectsError):
-    """Raised when calling `apply_gradient_to_symbols` with an invalid symbol.
-
-    The symbol provided to `apply_gradient_to_symbols` must be a string with a length of 1.
-
-    """
-
-    def __init__(self, symbol: str) -> None:
-        """Initialize an ApplyGradientToSymbolsInvalidSymbolError.
-
-        Args:
-            symbol (str): The symbol provided to `apply_gradient_to_symbols`.
-
-        """
-        self.symbol = symbol
-        self.message = f"Symbol must be a string with a length of 1. Received: `{symbol}`."
-        super().__init__(self.message)
+    def __init__(self, message: str) -> None:
+        self.message = message
+        super().__init__(message)
 
 
 class SceneNotFoundError(TerminalTextEffectsError):
