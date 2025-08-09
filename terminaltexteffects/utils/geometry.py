@@ -143,6 +143,38 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
 find_coords_in_rect = functools.wraps(find_coords_in_rect)(functools.lru_cache(maxsize=8192)(find_coords_in_rect))
 
 
+def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> list[Coord]:
+    """Find coords that fall within a rectangle.
+
+    Half width and half height specify the distance in each direction from the origin.
+    Returns coordinates that fall on the perimeter (edges) of the rectangle only.
+
+    Args:
+        origin (Coord): center of the rectangle
+        half_width (int): half the width of the rectangle
+        half_height (int): half the height of the rectangle
+
+    Returns:
+        list[Coord]: list of Coord points in the rectangle
+
+    """
+    coords: list[Coord] = []
+    if not half_width or not half_height:
+        return coords
+    for column in range(origin.column - half_width, origin.column + half_width + 1):
+        if column == origin.column - half_width or column == origin.column + half_width:
+            for row in range(origin.row - half_height, origin.row + half_height + 1):
+                coords.append(Coord(column, row))  # noqa: PERF401
+        else:
+            coords.append(Coord(column, origin.row - half_height))
+            coords.append(Coord(column, origin.row + half_height))
+
+    return coords
+
+
+find_coords_on_rect = functools.wraps(find_coords_on_rect)(functools.lru_cache(maxsize=8192)(find_coords_on_rect))
+
+
 def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coord:
     """Find the coordinate at the given distance along the line defined by the origin and target coordinates.
 
