@@ -122,7 +122,10 @@ class TerminalConfig(ArgsDataClass):
         cmd_name="--frame-rate",
         type_parser=argvalidators.NonNegativeInt.type_parser,
         default=100,
-        help="""Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting.""",
+        help=(
+            "Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting. "
+            "Defaults to 100."
+        ),
     )  # type: ignore[assignment]
 
     "int : Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting."
@@ -134,14 +137,14 @@ class TerminalConfig(ArgsDataClass):
         default=-1,
         help=(
             "Canvas width, set to an integer > 0 to use a specific dimension, use 0 to match the terminal width, "
-            "or use -1 to match the input text width."
+            "or use -1 to match the input text width. Defaults to -1."
         ),
     )  # type: ignore[assignment]
 
     (
         "int : Canvas width, set to an integer > 0 to use a specific dimension, if set to 0 the canvas width is "
         "detected automatically based on the terminal device, if set to -1 the canvas width is based on "
-        "the input data width."
+        "the input data width. Defaults to -1."
     )
 
     canvas_height: int = ArgField(
@@ -151,14 +154,14 @@ class TerminalConfig(ArgsDataClass):
         default=-1,
         help=(
             "Canvas height, set to an integer > 0 to use a specific dimension, use 0 to match the terminal "
-            "height, or use -1 to match the input text height."
+            "height, or use -1 to match the input text height. Defaults to -1."
         ),
     )  # type: ignore[assignment]
 
     (
         "int : Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas height "
         "is is detected automatically based on the terminal device, if set to -1 the canvas width is "
-        "based on the input data height."
+        "based on the input data height. Defaults to -1."
     )
 
     anchor_canvas: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"] = ArgField(
@@ -167,13 +170,13 @@ class TerminalConfig(ArgsDataClass):
         default="sw",
         help=(
             "Anchor point for the canvas. The canvas will be anchored in the terminal to the location "
-            "corresponding to the cardinal/diagonal direction."
+            "corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
         ),
     )  # type: ignore[assignment]
 
     (
         "Literal['sw','s','se','e','ne','n','nw','w','c'] : Anchor point for the canvas. The canvas will be "
-        "anchored in the terminal to the location corresponding to the cardinal/diagonal direction."
+        "anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
     )
 
     anchor_text: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgField(
@@ -182,13 +185,14 @@ class TerminalConfig(ArgsDataClass):
         default="sw",
         help=(
             "Anchor point for the text within the Canvas. Input text will anchored in the Canvas to "
-            "the location corresponding to the cardinal/diagonal direction."
+            "the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
         ),
     )  # type: ignore[assignment]
 
     (
         "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the text within the Canvas. "
-        "Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction."
+        "Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. "
+        "Defaults to 'sw'."
     )
 
     ignore_terminal_dimensions: bool = ArgField(
