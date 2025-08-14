@@ -1,46 +1,58 @@
+"""Base effect configuration classes.
+
+The BaseConfig and ArgSpec classes facilitate specifying an effect configuration and using
+that specification to populate an argparse ArgumentParser. The resulting parsed argparse
+Namespace can be used to construct the effect configuration. If the concrete effect
+class is instantiated without passing an argparse Namespace, the class fields are
+parsed to determine the default values used in the dataclass constructor.
+"""
+
 from __future__ import annotations
-from dataclasses import dataclass, fields
+
 import argparse
 import typing
+from dataclasses import dataclass, fields
 
 MISSING = object()
-
-#### demo validator
-
-
-class PositiveInt:
-    METAVAR = "(int > 0)"
-
-    @staticmethod
-    def validator(arg: str) -> int:
-        try:
-            arg_int = int(arg)
-        except ValueError:
-            raise argparse.ArgumentTypeError
-        if arg_int <= 0:
-            raise argparse.ArgumentTypeError
-        return arg_int
-
-
-#### in base_config
 
 
 @dataclass(frozen=True)
 class ArgSpec:
+    """Specification for a command-line argument and default value.
+
+    The default value is used for both the argparse argument and to support direct
+    instantiation of a config.
+    """
+
     name: str
+    default: typing.Any
     metavar: str = MISSING  # type: ignore[arg-type]
     type: typing.Any = MISSING  # type: ignore[arg-type]
-    default: bool | int = MISSING  # type: ignore[arg-type]
     required: bool = MISSING  # type: ignore[arg-type]
     help: str = MISSING  # type: ignore[arg-type]
 
 
 @dataclass
 class BaseConfig:
+    """
+    Base configuration class for effects.
+
+    This class serves as a base for all effect configurations, providing a common
+    interface for argument parsing and configuration building. All sub-classes
+    must implement the `_get_config` method to return their specific configuration
+    class. Any config class intended to be used to populate a subparser must
+    define a `subparser_data` class variable.
+    """
+
     subparser_data: typing.ClassVar[dict[str, str]]
 
     @classmethod
-    def populate_parser(cls, parser: argparse.ArgumentParser | argparse._SubParsersAction) -> None:
+    def _populate_parser(cls, parser: argparse.ArgumentParser | argparse._SubParsersAction) -> None:
+        """Populate the argument parser with the effect's configuration options.
+
+        If a subparser is being populated, the subparser_data will be used to
+        configure the subparser defaults.
+        """
         if isinstance(parser, argparse._SubParsersAction):
             parser = parser.add_parser(**cls.subparser_data)  # type: ignore[arg-type]
 
@@ -52,9 +64,14 @@ class BaseConfig:
             parser.add_argument(add_args_sig.pop("name"), **add_args_sig)
 
     @classmethod
-    def from_parsed_args(cls, parsed_args: argparse.Namespace) -> BaseConfig:
-        return cls(**{field.name: getattr(parsed_args, field.name) for field in fields(cls)})
+    def _build_config(cls: type[CONFIG], parsed_args: argparse.Namespace | None = None) -> CONFIG:
+        """Build the effect configuration from the parsed arguments or argument specifications."""
+        if parsed_args is not None:
+            return cls(**{field.name: getattr(parsed_args, field.name) for field in fields(cls)})
+        return cls(**{field.name: field.default.default for field in fields(cls) if isinstance(field.default, ArgSpec)})
 
+
+CONFIG = typing.TypeVar("CONFIG", bound=BaseConfig)
 
 ### in effect module
 
@@ -68,8 +85,21 @@ class Config(BaseConfig):
         "epilog": "Example: stuff...",
     }
 
-    number: int = ArgSpec(name="--number", metavar=PositiveInt.METAVAR, type=PositiveInt.validator)  # type: ignore[arg-type]
+    number: int = ArgSpec(name="--number")  # type: ignore[arg-type]
     "int : positive integer"
+
+
+class BaseEffect(typing.Generic[CONFIG]):
+    def _get_config(self) -> type[CONFIG]:
+        raise NotImplementedError
+
+    def __init__(self) -> None:
+        self.config: CONFIG = self._get_config()._build_config()
+
+
+class MyEffect(BaseEffect[Config]):
+    def _get_config(self) -> type[Config]:
+        return Config
 
 
 def get_config() -> type[Config]:
@@ -78,11 +108,14 @@ def get_config() -> type[Config]:
 
 ### usage in main
 
+# building config from args
 parser = argparse.ArgumentParser()
 parser.add_argument("--global", type=str)
 subparsers = parser.add_subparsers(title="effects")
 config_class = get_config()
-config_class.populate_parser(subparsers)
+config_class._populate_parser(subparsers)
 args = parser.parse_args()
+config = config_class._build_config(args)
 
-config = config_class.from_parsed_args(args)
+# building config from spec
+effect = MyEffect()
