@@ -19,15 +19,15 @@ from contextlib import contextmanager
 from copy import deepcopy
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.utils.argsdataclass import ArgsDataClass
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from terminaltexteffects.engine.base_character import EffectCharacter
 
-T = TypeVar("T", bound=ArgsDataClass)
+T = TypeVar("T", bound=BaseConfig)
 
 
 class BaseEffectIterator(ABC, Generic[T]):
@@ -147,8 +147,8 @@ class BaseEffect(ABC, Generic[T]):
 
         """
         self.input_data = input_data
-        self.effect_config = self._config_cls()
-        self.terminal_config = TerminalConfig()
+        self.effect_config = self._config_cls._build_config()
+        self.terminal_config = TerminalConfig._build_config()
 
     def __iter__(self) -> BaseEffectIterator:
         """Return the iterator object.
