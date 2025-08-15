@@ -20,8 +20,8 @@ from enum import Enum, auto
 from typing import Literal
 
 from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig
 from terminaltexteffects.utils import ansitools, argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass
 from terminaltexteffects.utils.exceptions import (
     InvalidCharacterGroupError,
     InvalidCharacterSortError,
@@ -32,7 +32,7 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @dataclass
-class TerminalConfig(ArgsDataClass):
+class TerminalConfig(BaseConfig):
     """Configuration for the terminal.
 
     Attributes:
@@ -63,36 +63,36 @@ class TerminalConfig(ArgsDataClass):
 
     """
 
-    tab_width: int = ArgField(
-        cmd_name=["--tab-width"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    tab_width: int = ArgSpec(
+        name="--tab-width",
+        type=argvalidators.PositiveInt.type_parser,
         metavar=argvalidators.PositiveInt.METAVAR,
         default=4,
         help="Number of spaces to use for a tab character.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "int : Number of spaces to use for a tab character."
 
-    xterm_colors: bool = ArgField(
-        cmd_name=["--xterm-colors"],
+    xterm_colors: bool = ArgSpec(
+        name="--xterm-colors",
         default=False,
         action="store_true",
         help="Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "bool : Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color."
 
-    no_color: bool = ArgField(
-        cmd_name=["--no-color"],
+    no_color: bool = ArgSpec(
+        name="--no-color",
         default=False,
         action="store_true",
         help="Disable all colors in the effect.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "bool : Disable all colors in the effect."
 
-    existing_color_handling: Literal["always", "dynamic", "ignore"] = ArgField(
-        cmd_name=["--existing-color-handling"],
+    existing_color_handling: Literal["always", "dynamic", "ignore"] = ArgSpec(
+        name="--existing-color-handling",
         default="ignore",
         choices=["always", "dynamic", "ignore"],
         help=(
@@ -101,7 +101,7 @@ class TerminalConfig(ArgsDataClass):
             "colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will "
             "ignore the colors in the input data. Default is 'ignore'."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "Literal['always','dynamic','ignore'] : Specify handling of existing ANSI color sequences in the input data. "
@@ -110,17 +110,17 @@ class TerminalConfig(ArgsDataClass):
         "Default is 'ignore'."
     )
 
-    wrap_text: int = ArgField(
-        cmd_name="--wrap-text",
+    wrap_text: int = ArgSpec(
+        name="--wrap-text",
         default=False,
         action="store_true",
         help="Wrap text wider than the canvas width.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "bool : Wrap text wider than the canvas width."
 
-    frame_rate: int = ArgField(
-        cmd_name="--frame-rate",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
+    frame_rate: int = ArgSpec(
+        name="--frame-rate",
+        type=argvalidators.NonNegativeInt.type_parser,
         default=100,
         help=(
             "Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting. "
@@ -130,16 +130,16 @@ class TerminalConfig(ArgsDataClass):
 
     "int : Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting."
 
-    canvas_width: int = ArgField(
-        cmd_name=["--canvas-width"],
+    canvas_width: int = ArgSpec(
+        name="--canvas-width",
         metavar=argvalidators.CanvasDimension.METAVAR,
-        type_parser=argvalidators.CanvasDimension.type_parser,
+        type=argvalidators.CanvasDimension.type_parser,
         default=-1,
         help=(
             "Canvas width, set to an integer > 0 to use a specific dimension, use 0 to match the terminal width, "
             "or use -1 to match the input text width. Defaults to -1."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "int : Canvas width, set to an integer > 0 to use a specific dimension, if set to 0 the canvas width is "
@@ -147,16 +147,16 @@ class TerminalConfig(ArgsDataClass):
         "the input data width. Defaults to -1."
     )
 
-    canvas_height: int = ArgField(
-        cmd_name=["--canvas-height"],
+    canvas_height: int = ArgSpec(
+        name="--canvas-height",
         metavar=argvalidators.CanvasDimension.METAVAR,
-        type_parser=argvalidators.CanvasDimension.type_parser,
+        type=argvalidators.CanvasDimension.type_parser,
         default=-1,
         help=(
             "Canvas height, set to an integer > 0 to use a specific dimension, use 0 to match the terminal "
             "height, or use -1 to match the input text height. Defaults to -1."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "int : Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas height "
@@ -164,30 +164,30 @@ class TerminalConfig(ArgsDataClass):
         "based on the input data height. Defaults to -1."
     )
 
-    anchor_canvas: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"] = ArgField(
-        cmd_name=["--anchor-canvas"],
+    anchor_canvas: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"] = ArgSpec(
+        name="--anchor-canvas",
         choices=["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"],
         default="sw",
         help=(
             "Anchor point for the canvas. The canvas will be anchored in the terminal to the location "
             "corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "Literal['sw','s','se','e','ne','n','nw','w','c'] : Anchor point for the canvas. The canvas will be "
         "anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
     )
 
-    anchor_text: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgField(
-        cmd_name=["--anchor-text"],
+    anchor_text: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgSpec(
+        name="--anchor-text",
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
         default="sw",
         help=(
             "Anchor point for the text within the Canvas. Input text will anchored in the Canvas to "
             "the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the text within the Canvas. "
@@ -195,15 +195,15 @@ class TerminalConfig(ArgsDataClass):
         "Defaults to 'sw'."
     )
 
-    ignore_terminal_dimensions: bool = ArgField(
-        cmd_name=["--ignore-terminal-dimensions"],
+    ignore_terminal_dimensions: bool = ArgSpec(
+        name="--ignore-terminal-dimensions",
         default=False,
         action="store_true",
         help=(
             "Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. "
             "Useful for sending frames to another output handler."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "bool : Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. "
         "Useful for sending frames to another output handler."
@@ -513,7 +513,7 @@ class Terminal:
 
         """
         if config is None:
-            self.config = TerminalConfig()
+            self.config = TerminalConfig._build_config()
         else:
             self.config = config
         if not input_data:

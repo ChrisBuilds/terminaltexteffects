@@ -12,28 +12,23 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, EffectCharacter, Gradient, easing
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Wipe, WipeConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "wipe", Wipe, WipeConfig
 
 
-@argclass(
-    name="wipe",
-    help="Wipes the text across the terminal to reveal characters.",
-    description="wipe | Wipes the text across the terminal to reveal characters.",
-    epilog=(
-        "Example: terminaltexteffects wipe --wipe-direction diagonal_bottom_left_to_top_right "
-        "--final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 "
-        "--final-gradient-frames 5 --wipe-delay 0"
-    ),
-)
 @dataclass
-class WipeConfig(ArgsDataClass):
+class WipeConfig(BaseConfig):
     """Configuration for the Wipe effect.
 
     Attributes:
@@ -49,6 +44,17 @@ class WipeConfig(ArgsDataClass):
 
     """  # noqa: E501
 
+    parser_spec: ParserSpec = ParserSpec(
+        name="wipe",
+        help="Wipes the text across the terminal to reveal characters.",
+        description="wipe | Wipes the text across the terminal to reveal characters.",
+        epilog=(
+            "Example: terminaltexteffects wipe --wipe-direction diagonal_bottom_left_to_top_right "
+            "--final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 "
+            "--final-gradient-frames 5 --wipe-delay 0"
+        ),
+    )
+
     wipe_direction: typing.Literal[
         "column_left_to_right",
         "row_top_to_bottom",
@@ -59,8 +65,8 @@ class WipeConfig(ArgsDataClass):
         "diagonal_bottom_right_to_top_left",
         "outside_to_center",
         "center_to_outside",
-    ] = ArgField(
-        cmd_name="--wipe-direction",
+    ] = ArgSpec(
+        name="--wipe-direction",
         default="diagonal_bottom_left_to_top_right",
         choices=[
             "column_left_to_right",
@@ -75,80 +81,75 @@ class WipeConfig(ArgsDataClass):
             "center_to_outside",
         ],
         help="Direction the text will wipe.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]"
 
-    wipe_delay: int = ArgField(
-        cmd_name="--wipe-delay",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
+    wipe_delay: int = ArgSpec(
+        name="--wipe-delay",
+        type=argvalidators.NonNegativeInt.type_parser,
         default=0,
         metavar=argvalidators.NonNegativeInt.METAVAR,
         help="Number of frames to wait before adding the next character group. Increase, to slow down the effect.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to wait before adding the next character group. Increase, to slow down the effect."
 
-    wipe_ease: easing.EasingFunction = ArgField(
-        cmd_name="--wipe-ease",
-        type_parser=argvalidators.Ease.type_parser,
+    wipe_ease: easing.EasingFunction = ArgSpec(
+        name="--wipe-ease",
+        type=argvalidators.Ease.type_parser,
         default=easing.linear,
         help="Easing function to use for the wipe effect.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for the wipe effect."
 
-    wipe_ease_stepsize: float = ArgField(
-        cmd_name="--wipe-ease-stepsize",
-        type_parser=argvalidators.EasingStep.type_parser,
+    wipe_ease_stepsize: float = ArgSpec(
+        name="--wipe-ease-stepsize",
+        type=argvalidators.EasingStep.type_parser,
         default=0.01,
         metavar=argvalidators.EasingStep.METAVAR,
         help="Step size to use for the easing function.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Step size to use for the easing function."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name="--final-gradient-stops",
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("#833ab4"), Color("#fd1d1d"), Color("#fcb045")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the wipe gradient."
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_frames: int = ArgField(
-        cmd_name="--final-gradient-frames",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_frames: int = ArgSpec(
+        name="--final-gradient-frames",
+        type=argvalidators.PositiveInt.type_parser,
         default=5,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Wipe]:
-        """Get the effect class associated with this configuration."""
-        return Wipe
 
 
 class WipeIterator(BaseEffectIterator[WipeConfig]):

@@ -10,32 +10,27 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Crumble, CrumbleConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "crumble", Crumble, CrumbleConfig
 
 
-@argclass(
-    name="crumble",
-    help="Characters lose color and crumble into dust, vacuumed up, and reformed.",
-    description="crumble | Characters lose color and crumble into dust, vacuumed up, and reformed.",
-    epilog=(
-        "Example: terminaltexteffects crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 "
-        "--final-gradient-direction diagonal"
-    ),
-)
 @dataclass
-class CrumbleConfig(ArgsDataClass):
+class CrumbleConfig(BaseConfig):
     """Configuration for the Crumble effect.
 
     Attributes:
@@ -47,47 +42,51 @@ class CrumbleConfig(ArgsDataClass):
 
     """
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="crumble",
+        help="Characters lose color and crumble into dust, vacuumed up, and reformed.",
+        description="crumble | Characters lose color and crumble into dust, vacuumed up, and reformed.",
+        epilog=(
+            "Example: terminaltexteffects crumble --final-gradient-stops 5CE1FF FF8C00 --final-gradient-steps 12 "
+            "--final-gradient-direction diagonal"
+        ),
+    )
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("#5CE1FF"), Color("#FF8C00")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Crumble]:
-        """Get the effect class associated with this configuration."""
-        return Crumble
 
 
 class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):

@@ -10,32 +10,27 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return BouncyBalls, BouncyBallsConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "bouncyballs", BouncyBalls, BouncyBallsConfig
 
 
-@argclass(
-    name="bouncyballs",
-    help="Characters are bouncy balls falling from the top of the canvas.",
-    description="bouncyballs | Characters are bouncy balls falling from the top of the canvas.",
-    epilog=f"{argvalidators.EASING_EPILOG}"
-    "Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols o '*' O 0 . "
-    "--final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal "
-    "--ball-delay 7 --movement-speed 0.25 --easing OUT_BOUNCE",
-)
 @dataclass
-class BouncyBallsConfig(ArgsDataClass):
+class BouncyBallsConfig(BaseConfig):
     """Configuration for the BouncyBalls effect.
 
     Attributes:
@@ -54,91 +49,95 @@ class BouncyBallsConfig(ArgsDataClass):
 
     """
 
-    ball_colors: tuple[Color, ...] = ArgField(
-        cmd_name=["--ball-colors"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="bouncyballs",
+        help="Characters are bouncy balls falling from the top of the canvas.",
+        description="bouncyballs | Characters are bouncy balls falling from the top of the canvas.",
+        epilog=f"{argvalidators.EASING_EPILOG}"
+        "Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols o '*' O 0 . "
+        "--final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal "
+        "--ball-delay 7 --movement-speed 0.25 --easing OUT_BOUNCE",
+    )
+    ball_colors: tuple[Color, ...] = ArgSpec(
+        name="--ball-colors",
+        type=argvalidators.ColorArg.type_parser,
         metavar=argvalidators.ColorArg.METAVAR,
         nargs="+",
         default=(Color("d1f4a5"), Color("96e2a4"), Color("5acda9")),
         help="Space separated list of colors from which ball colors will be randomly selected. If no colors are "
         "provided, the colors are random.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors from which ball colors will be randomly selected. If no colors are "
     "provided, the colors are random."
 
-    ball_symbols: tuple[str, ...] = ArgField(
-        cmd_name="--ball-symbols",
-        type_parser=argvalidators.Symbol.type_parser,
+    ball_symbols: tuple[str, ...] = ArgSpec(
+        name="--ball-symbols",
+        type=argvalidators.Symbol.type_parser,
         nargs="+",
         default=("*", "o", "O", "0", "."),
         metavar=argvalidators.Symbol.METAVAR,
         help="Space separated list of symbols to use for the balls.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] | str : Tuple of symbols to use for the balls."
 
-    ball_delay: int = ArgField(
-        cmd_name="--ball-delay",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
+    ball_delay: int = ArgSpec(
+        name="--ball-delay",
+        type=argvalidators.NonNegativeInt.type_parser,
         default=7,
         metavar=argvalidators.NonNegativeInt.METAVAR,
         help="Number of frames between ball drops, increase to reduce ball drop rate.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames between ball drops, increase to reduce ball drop rate."
 
-    movement_speed: float = ArgField(
-        cmd_name="--movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
+    movement_speed: float = ArgSpec(
+        name="--movement-speed",
+        type=argvalidators.PositiveFloat.type_parser,
         default=0.25,
         metavar=argvalidators.PositiveFloat.METAVAR,
         help="Movement speed of the characters. ",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Movement speed of the characters. "
 
-    movement_easing: easing.EasingFunction = ArgField(
-        cmd_name="--movement-easing",
-        type_parser=argvalidators.Ease.type_parser,
+    movement_easing: easing.EasingFunction = ArgSpec(
+        name="--movement-easing",
+        type=argvalidators.Ease.type_parser,
         default=easing.out_bounce,
         help="Easing function to use for character movement.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("f8ffae"), Color("43c6ac")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
     "characters will be displayed in that color."
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name=["--final-gradient-steps"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create "
     "a smoother and longer gradient animation."
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[BouncyBalls]:
-        """Get the effect class associated with this configuration."""
-        return BouncyBalls
 
 
 class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
