@@ -139,16 +139,27 @@ class BaseEffect(ABC, Generic[T]):
         """Effect iterator class as a subclass of BaseEffectIterator."""
         raise NotImplementedError
 
-    def __init__(self, input_data: str) -> None:
+    def __init__(
+        self,
+        input_data: str,
+        effect_config: T | None = None,
+        terminal_config: TerminalConfig | None = None,
+    ) -> None:
         """Initialize the effect with the input data.
 
         Args:
             input_data (str): Text to which the effect will be applied.
+            effect_config (BaseConfig | None, optional): Effect configuration. If not
+                provided, a new configuration will be built with default values.
+                Defaults to None.
+            terminal_config (TerminalConfig | None, optional): Terminal configuration. If not
+                provided, a new configuration will be built with default values.
+                Defaults to None.
 
         """
         self.input_data = input_data
-        self.effect_config = self._config_cls._build_config()
-        self.terminal_config = TerminalConfig._build_config()
+        self.effect_config: T = effect_config or self._config_cls._build_config()
+        self.terminal_config: TerminalConfig = terminal_config or TerminalConfig._build_config()
 
     def __iter__(self) -> BaseEffectIterator:
         """Return the iterator object.
