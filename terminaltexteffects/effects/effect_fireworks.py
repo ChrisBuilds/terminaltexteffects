@@ -9,7 +9,6 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import (
@@ -23,28 +22,23 @@ from terminaltexteffects import (
     easing,
     geometry,
 )
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Fireworks, FireworksConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "fireworks", Fireworks, FireworksConfig
 
 
-@argclass(
-    name="fireworks",
-    help="Characters launch and explode like fireworks and fall into place.",
-    description="fireworks | Characters explode like fireworks and fall into place.",
-    epilog=(
-        "Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E "
-        "--firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF "
-        "--final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere"
-    ),
-)
 @dataclass
-class FireworksConfig(ArgsDataClass):
+class FireworksConfig(BaseConfig):
     """Configuration for the Fireworks effect.
 
     Attributes:
@@ -65,113 +59,119 @@ class FireworksConfig(ArgsDataClass):
 
     """
 
-    explode_anywhere: bool = ArgField(
-        cmd_name="--explode-anywhere",
+    parser_spec: ParserSpec = ParserSpec(
+        name="fireworks",
+        help="Characters launch and explode like fireworks and fall into place.",
+        description="fireworks | Characters explode like fireworks and fall into place.",
+        epilog=(
+            "Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E "
+            "--firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF "
+            "--final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere"
+        ),
+    )
+
+    explode_anywhere: bool = ArgSpec(
+        name="--explode-anywhere",
         action="store_true",
         default=False,
         help="If set, fireworks explode anywhere in the canvas. Otherwise, fireworks explode above highest settled "
         "row of text.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "bool : If set, fireworks explode anywhere in the canvas. Otherwise, fireworks explode above highest "
         "settled row of text."
     )
 
-    firework_colors: tuple[Color, ...] = ArgField(
-        cmd_name="--firework-colors",
-        type_parser=argvalidators.ColorArg.type_parser,
+    firework_colors: tuple[Color, ...] = ArgSpec(
+        name="--firework-colors",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("88F7E2"), Color("44D492"), Color("F5EB67"), Color("FFA15C"), Color("FA233E")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated list of colors from which firework colors will be randomly selected.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors from which firework colors will be randomly selected."
 
-    firework_symbol: str = ArgField(
-        cmd_name="--firework-symbol",
-        type_parser=argvalidators.Symbol.type_parser,
+    firework_symbol: str = ArgSpec(
+        name="--firework-symbol",
+        type=argvalidators.Symbol.type_parser,
         default="o",
         metavar=argvalidators.Symbol.METAVAR,
         help="Symbol to use for the firework shell.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "str : Symbol to use for the firework shell."
 
-    firework_volume: float = ArgField(
-        cmd_name="--firework-volume",
-        type_parser=argvalidators.NonNegativeRatio.type_parser,
+    firework_volume: float = ArgSpec(
+        name="--firework-volume",
+        type=argvalidators.NonNegativeRatio.type_parser,
         default=0.02,
         metavar=argvalidators.NonNegativeRatio.METAVAR,
         help="Percent of total characters in each firework shell.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Percent of total characters in each firework shell."
 
-    launch_delay: int = ArgField(
-        cmd_name="--launch-delay",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
+    launch_delay: int = ArgSpec(
+        name="--launch-delay",
+        type=argvalidators.NonNegativeInt.type_parser,
         default=60,
         metavar=argvalidators.NonNegativeInt.METAVAR,
         help="Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is "
         "applied to this value.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "int : Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is "
         "applied to this value."
     )
 
-    explode_distance: float = ArgField(
-        cmd_name="--explode-distance",
+    explode_distance: float = ArgSpec(
+        name="--explode-distance",
         default=0.1,
-        type_parser=argvalidators.NonNegativeRatio.type_parser,
+        type=argvalidators.NonNegativeRatio.type_parser,
         metavar=argvalidators.NonNegativeRatio.METAVAR,
         help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the "
         "total canvas width.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "float : Maximum distance from the firework shell origin to the explode waypoint as a percentage of "
         "the total canvas width."
     )
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name="--final-gradient-stops",
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=Gradient.Direction.HORIZONTAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Fireworks]:
-        """Get the effect class associated with this configuration."""
-        return Fireworks
 
 
 class FireworksIterator(BaseEffectIterator[FireworksConfig]):

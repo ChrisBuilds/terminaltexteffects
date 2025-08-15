@@ -9,34 +9,27 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing, geometry
 from terminaltexteffects.engine import animation, motion
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Spotlights, SpotlightsConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "spotlights", Spotlights, SpotlightsConfig
 
 
-@argclass(
-    name="spotlights",
-    help="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
-    description="spotlights | Spotlights search the text area, illuminating characters, before converging in the "
-    "center and expanding.",
-    epilog=(
-        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects spotlights --final-gradient-stops ab48ff "
-        "e7b2b2 fffebd --final-gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration "
-        "750 --search-speed-range 0.25-0.5 --spotlight-count 3"
-    ),
-)
 @dataclass
-class SpotlightsConfig(ArgsDataClass):
+class SpotlightsConfig(BaseConfig):
     """Configuration for the Spotlights effect.
 
     Attributes:
@@ -57,103 +50,110 @@ class SpotlightsConfig(ArgsDataClass):
 
     """
 
-    beam_width_ratio: float = ArgField(
-        cmd_name="--beam-width-ratio",
-        type_parser=argvalidators.PositiveFloat.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="spotlights",
+        help="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
+        description="spotlights | Spotlights search the text area, illuminating characters, before converging in the "
+        "center and expanding.",
+        epilog=(
+            f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects spotlights --final-gradient-stops ab48ff "
+            "e7b2b2 fffebd --final-gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration "
+            "750 --search-speed-range 0.25-0.5 --spotlight-count 3"
+        ),
+    )
+
+    beam_width_ratio: float = ArgSpec(
+        name="--beam-width-ratio",
+        type=argvalidators.PositiveFloat.type_parser,
         default=2.0,
         metavar=argvalidators.PositiveFloat.METAVAR,
         help="Width of the beam of light as min(width, height) // n of the input text. Values less than 1 "
         "are raised to 1.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "float : Width of the beam of light as min(width, height) // n of the input text. Values less than 1 "
         "are raised to 1."
     )
 
-    beam_falloff: float = ArgField(
-        cmd_name="--beam-falloff",
-        type_parser=argvalidators.NonNegativeFloat.type_parser,
+    beam_falloff: float = ArgSpec(
+        name="--beam-falloff",
+        type=argvalidators.NonNegativeFloat.type_parser,
         default=0.3,
         metavar=argvalidators.NonNegativeFloat.METAVAR,
         help="Distance from the edge of the beam where the brightness begins to fall off, as a percentage of "
         "total beam width.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "float : Distance from the edge of the beam where the brightness begins to fall off, as a percentage "
         "of total beam width."
     )
 
-    search_duration: int = ArgField(
-        cmd_name="--search-duration",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    search_duration: int = ArgSpec(
+        name="--search-duration",
+        type=argvalidators.PositiveInt.type_parser,
         default=750,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Duration of the search phase, in frames, before the spotlights converge in the center.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Duration of the search phase, in frames, before the spotlights converge in the center."
 
-    search_speed_range: tuple[float, float] = ArgField(
-        cmd_name="--search-speed-range",
-        type_parser=argvalidators.PositiveFloatRange.type_parser,
+    search_speed_range: tuple[float, float] = ArgSpec(
+        name="--search-speed-range",
+        type=argvalidators.PositiveFloatRange.type_parser,
         default=(0.25, 0.5),
         metavar=argvalidators.PositiveFloatRange.METAVAR,
         help="Range of speeds for the spotlights during the search phase. The speed is a random value between the "
         "two provided values.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[float, float] : Range of speeds for the spotlights during the search phase. The speed is a random "
         "value between the two provided values."
     )
 
-    spotlight_count: int = ArgField(
-        cmd_name="--spotlight-count",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    spotlight_count: int = ArgSpec(
+        name="--spotlight-count",
+        type=argvalidators.PositiveInt.type_parser,
         default=3,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of spotlights to use.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of spotlights to use."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Spotlights]:
-        """Get the effect class associated with this configuration."""
-        return Spotlights
 
 
 class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):

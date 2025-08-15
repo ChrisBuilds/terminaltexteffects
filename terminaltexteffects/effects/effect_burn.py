@@ -10,7 +10,6 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient
@@ -20,8 +19,13 @@ from terminaltexteffects.utils import argvalidators
 from terminaltexteffects.utils.graphics import ColorPair
 
 
-def get_effect_and_config() -> tuple[str, type[typing.Any], type[BaseConfig]]:
-    """Get the effect class and its configuration class."""
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
     return "burn", Burn, BurnConfig
 
 
@@ -56,7 +60,7 @@ class BurnConfig(BaseConfig):
         default=Color("837373"),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color of the characters before they start to burn.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Color : Color of the characters before they start to burn."
 
     burn_colors: tuple[Color, ...] = ArgSpec(
@@ -66,7 +70,7 @@ class BurnConfig(BaseConfig):
         nargs="+",
         metavar=argvalidators.ColorArg.METAVAR,
         help="Colors transitioned through as the characters burn.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Colors transitioned through as the characters burn."
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
@@ -77,7 +81,7 @@ class BurnConfig(BaseConfig):
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
@@ -91,7 +95,7 @@ class BurnConfig(BaseConfig):
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
@@ -103,7 +107,7 @@ class BurnConfig(BaseConfig):
         default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
 
 

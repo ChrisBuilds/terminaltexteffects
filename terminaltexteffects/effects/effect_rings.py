@@ -13,31 +13,26 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, easing, geometry
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import motion
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Rings, RingsConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "rings", Rings, RingsConfig
 
 
-@argclass(
-    name="rings",
-    help="Characters are dispersed and form into spinning rings.",
-    description="rings | Characters are dispersed and form into spinning rings.",
-    epilog=(
-        "Example: terminaltexteffects rings --ring-colors ab48ff e7b2b2 fffebd --final-gradient-stops ab48ff "
-        "e7b2b2 fffebd --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 "
-        "--disperse-duration 200 --spin-disperse-cycles 3"
-    ),
-)
 @dataclass
-class RingsConfig(ArgsDataClass):
+class RingsConfig(BaseConfig):
     """Configurations for the RingsEffect.
 
     Attributes:
@@ -59,101 +54,106 @@ class RingsConfig(ArgsDataClass):
 
     """
 
-    ring_colors: tuple[Color, ...] = ArgField(
-        cmd_name=["--ring-colors"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="rings",
+        help="Characters are dispersed and form into spinning rings.",
+        description="rings | Characters are dispersed and form into spinning rings.",
+        epilog=(
+            "Example: terminaltexteffects rings --ring-colors ab48ff e7b2b2 fffebd --final-gradient-stops ab48ff "
+            "e7b2b2 fffebd --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 "
+            "--disperse-duration 200 --spin-disperse-cycles 3"
+        ),
+    )
+    ring_colors: tuple[Color, ...] = ArgSpec(
+        name="--ring-colors",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the rings.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color] : Tuple of colors for the rings."
 
-    ring_gap: float = ArgField(
-        cmd_name=["--ring-gap"],
-        type_parser=argvalidators.PositiveFloat.type_parser,
+    ring_gap: float = ArgSpec(
+        name="--ring-gap",
+        type=argvalidators.PositiveFloat.type_parser,
         default=0.1,
         help="Distance between rings as a percent of the smallest canvas dimension.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Distance between rings as a percent of the smallest canvas dimension."
-    spin_duration: int = ArgField(
-        cmd_name=["--spin-duration"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    spin_duration: int = ArgSpec(
+        name="--spin-duration",
+        type=argvalidators.PositiveInt.type_parser,
         default=200,
         help="Number of frames for each cycle of the spin phase.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames for each cycle of the spin phase."
 
-    spin_speed: tuple[float, float] = ArgField(
-        cmd_name=["--spin-speed"],
-        type_parser=argvalidators.PositiveFloatRange.type_parser,
+    spin_speed: tuple[float, float] = ArgSpec(
+        name="--spin-speed",
+        type=argvalidators.PositiveFloatRange.type_parser,
         default=(0.25, 1.0),
         metavar=argvalidators.PositiveFloatRange.METAVAR,
         help="Range of speeds for the rotation of the rings. The speed is randomly selected from this "
         "range for each ring.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[float, float] : Range of speeds for the rotation of the rings. The speed is randomly selected "
         "from this range for each ring."
     )
 
-    disperse_duration: int = ArgField(
-        cmd_name=["--disperse-duration"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    disperse_duration: int = ArgSpec(
+        name="--disperse-duration",
+        type=argvalidators.PositiveInt.type_parser,
         default=200,
         help="Number of frames spent in the dispersed state between spinning cycles.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames spent in the dispersed state between spinning cycles."
 
-    spin_disperse_cycles: int = ArgField(
-        cmd_name=["--spin-disperse-cycles"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    spin_disperse_cycles: int = ArgSpec(
+        name="--spin-disperse-cycles",
+        type=argvalidators.PositiveInt.type_parser,
         default=3,
         help="Number of times the animation will cycles between spinning rings and dispersed characters.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of times the animation will cycles between spinning rings and dispersed characters."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color] : Tuple of colors for the final color gradient. If only one color is provided, the characters "
         "will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name=["--final-gradient-steps"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Number of gradient steps to use. More steps will create a smoother and longer "
         "gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Rings]:
-        """Get the effect class associated with this configuration."""
-        return Rings
 
 
 class RingsIterator(BaseEffectIterator[RingsConfig]):

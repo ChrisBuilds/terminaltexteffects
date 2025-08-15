@@ -8,33 +8,26 @@ Classes:
 
 from __future__ import annotations
 
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, easing
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Print, PrintConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "print", Print, PrintConfig
 
 
-@argclass(
-    name="print",
-    help="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
-    description="print | Lines are printed one at a time following a print head. Print head performs line feed, "
-    "carriage return.",
-    epilog=(
-        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects print --final-gradient-stops 02b8bd "
-        "c1f0e3 00ffa0 --final-gradient-steps 12 --print-head-return-speed 1.25 --print-speed 1 "
-        "--print-head-easing IN_OUT_QUAD"
-    ),
-)
 @dataclass
-class PrintConfig(ArgsDataClass):
+class PrintConfig(BaseConfig):
     """Configuration for the Print effect.
 
     Attributes:
@@ -49,73 +42,80 @@ class PrintConfig(ArgsDataClass):
 
     """
 
-    print_head_return_speed: float = ArgField(
-        cmd_name=["--print-head-return-speed"],
-        type_parser=argvalidators.PositiveFloat.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="print",
+        help="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
+        description="print | Lines are printed one at a time following a print head. Print head performs line feed, "
+        "carriage return.",
+        epilog=(
+            f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects print --final-gradient-stops 02b8bd "
+            "c1f0e3 00ffa0 --final-gradient-steps 12 --print-head-return-speed 1.25 --print-speed 1 "
+            "--print-head-easing IN_OUT_QUAD"
+        ),
+    )
+    print_head_return_speed: float = ArgSpec(
+        name="--print-head-return-speed",
+        type=argvalidators.PositiveFloat.type_parser,
         default=1.25,
         metavar=argvalidators.PositiveFloat.METAVAR,
         help="Speed of the print head when performing a carriage return.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the print head when performing a carriage return."
 
-    print_speed: int = ArgField(
-        cmd_name=["--print-speed"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    print_speed: int = ArgSpec(
+        name="--print-speed",
+        type=argvalidators.PositiveInt.type_parser,
         default=1,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Speed of the print head when printing characters.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Speed of the print head when printing characters."
 
-    print_head_easing: easing.EasingFunction = ArgField(
-        cmd_name=["--print-head-easing"],
+    print_head_easing: easing.EasingFunction = ArgSpec(
+        name="--print-head-easing",
         default=easing.in_out_quad,
-        type_parser=argvalidators.Ease.type_parser,
+        type=argvalidators.Ease.type_parser,
         help="Easing function to use for print head movement.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for print head movement."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("02b8bd"), Color("c1f0e3"), Color("00ffa0")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name=["--final-gradient-steps"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
 
-    @classmethod
-    def get_effect_class(cls) -> type[Print]:
-        """Get the effect class associated with this configuration."""
-        return Print
 
 
 class PrintIterator(BaseEffectIterator[PrintConfig]):

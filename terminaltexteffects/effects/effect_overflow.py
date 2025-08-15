@@ -9,33 +9,26 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, Terminal
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Overflow, OverflowConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "overflow", Overflow, OverflowConfig
 
 
-@argclass(
-    name="overflow",
-    help="Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.",
-    description="overflow | Input text overflows and scrolls the terminal in a random order until eventually "
-    "appearing ordered.",
-    epilog=(
-        "Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF "
-        "--final-gradient-steps 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 "
-        "--overflow-speed 3"
-    ),
-)
 @dataclass
-class OverflowConfig(ArgsDataClass):
+class OverflowConfig(BaseConfig):
     """Configuration for the Overflow effect.
 
     Attributes:
@@ -51,75 +44,81 @@ class OverflowConfig(ArgsDataClass):
 
     """
 
-    overflow_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--overflow-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="overflow",
+        help="Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.",
+        description="overflow | Input text overflows and scrolls the terminal in a random order until eventually "
+        "appearing ordered.",
+        epilog=(
+            "Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF "
+            "--final-gradient-steps 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 "
+            "--overflow-speed 3"
+        ),
+    )
+    overflow_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--overflow-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("f2ebc0"), Color("8dbfb3"), Color("f2ebc0")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the overflow gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the overflow gradient."
 
-    overflow_cycles_range: tuple[int, int] = ArgField(
-        cmd_name=["--overflow-cycles-range"],
-        type_parser=argvalidators.PositiveIntRange.type_parser,
+    overflow_cycles_range: tuple[int, int] = ArgSpec(
+        name="--overflow-cycles-range",
+        type=argvalidators.PositiveIntRange.type_parser,
         default=(2, 4),
         metavar=argvalidators.PositiveIntRange.METAVAR,
         help="Number of cycles to overflow the text.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[int, int] : Lower and upper range of the number of cycles to overflow the text."
 
-    overflow_speed: int = ArgField(
-        cmd_name=["--overflow-speed"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    overflow_speed: int = ArgSpec(
+        name="--overflow-speed",
+        type=argvalidators.PositiveInt.type_parser,
         default=3,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Speed of the overflow effect.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Speed of the overflow effect."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name=["--final-gradient-steps"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Overflow]:
-        """Get the effect class associated with this configuration."""
-        return Overflow
 
 
 class OverflowIterator(BaseEffectIterator[OverflowConfig]):

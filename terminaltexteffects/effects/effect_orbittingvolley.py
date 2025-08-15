@@ -9,40 +9,27 @@ Classes:
 
 from __future__ import annotations
 
-import typing
 from dataclasses import dataclass
 from itertools import cycle
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, Terminal, easing
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return OrbittingVolley, OrbittingVolleyConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "orbittingvolley", OrbittingVolley, OrbittingVolleyConfig
 
 
-@argclass(
-    name="orbittingvolley",
-    help=(
-        "Four launchers orbit the canvas firing volleys of characters inward to build the input text "
-        "from the center out."
-    ),
-    description=(
-        "orbittingvolley | Four launchers orbit the canvas firing volleys of characters inward to build "
-        "the input text from the center out."
-    ),
-    epilog=(
-        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ "
-        "--right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ "
-        "--final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 --launcher-movement-speed 0.5 "
-        "--character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE"
-    ),
-)
 @dataclass
-class OrbittingVolleyConfig(ArgsDataClass):
+class OrbittingVolleyConfig(BaseConfig):
     """Configuration for the OrbittingVolley effect.
 
     Attributes:
@@ -64,128 +51,140 @@ class OrbittingVolleyConfig(ArgsDataClass):
 
     """
 
-    top_launcher_symbol: str = ArgField(
-        cmd_name="--top-launcher-symbol",
-        type_parser=argvalidators.Symbol.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="orbittingvolley",
+        help=(
+            "Four launchers orbit the canvas firing volleys of characters inward to build the input text "
+            "from the center out."
+        ),
+        description=(
+            "orbittingvolley | Four launchers orbit the canvas firing volleys of characters inward to build "
+            "the input text from the center out."
+        ),
+        epilog=(
+            f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ "
+            "--right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ "
+            "--final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 --launcher-movement-speed 0.5 "
+            "--character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE"
+        ),
+    )
+    top_launcher_symbol: str = ArgSpec(
+        name="--top-launcher-symbol",
+        type=argvalidators.Symbol.type_parser,
         default="█",
         metavar=argvalidators.Symbol.METAVAR,
         help="Symbol for the top launcher.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "str : Symbol for the top launcher."
 
-    right_launcher_symbol: str = ArgField(
-        cmd_name="--right-launcher-symbol",
-        type_parser=argvalidators.Symbol.type_parser,
+    right_launcher_symbol: str = ArgSpec(
+        name="--right-launcher-symbol",
+        type=argvalidators.Symbol.type_parser,
         default="█",
         metavar=argvalidators.Symbol.METAVAR,
         help="Symbol for the right launcher.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "str : Symbol for the right launcher."
 
-    bottom_launcher_symbol: str = ArgField(
-        cmd_name="--bottom-launcher-symbol",
-        type_parser=argvalidators.Symbol.type_parser,
+    bottom_launcher_symbol: str = ArgSpec(
+        name="--bottom-launcher-symbol",
+        type=argvalidators.Symbol.type_parser,
         default="█",
         metavar=argvalidators.Symbol.METAVAR,
         help="Symbol for the bottom launcher.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "str : Symbol for the bottom launcher."
 
-    left_launcher_symbol: str = ArgField(
-        cmd_name="--left-launcher-symbol",
-        type_parser=argvalidators.Symbol.type_parser,
+    left_launcher_symbol: str = ArgSpec(
+        name="--left-launcher-symbol",
+        type=argvalidators.Symbol.type_parser,
         default="█",
         metavar=argvalidators.Symbol.METAVAR,
         help="Symbol for the left launcher.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "str : Symbol for the left launcher."
 
-    launcher_movement_speed: float = ArgField(
-        cmd_name="--launcher-movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
+    launcher_movement_speed: float = ArgSpec(
+        name="--launcher-movement-speed",
+        type=argvalidators.PositiveFloat.type_parser,
         default=0.5,
         metavar=argvalidators.PositiveFloat.METAVAR,
         help="Orbitting speed of the launchers.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Orbitting speed of the launchers."
 
-    character_movement_speed: float = ArgField(
-        cmd_name="--character-movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
+    character_movement_speed: float = ArgSpec(
+        name="--character-movement-speed",
+        type=argvalidators.PositiveFloat.type_parser,
         default=1,
         metavar=argvalidators.PositiveFloat.METAVAR,
         help="Speed of the launched characters.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the launched characters."
 
-    volley_size: float = ArgField(
-        cmd_name="--volley-size",
-        type_parser=argvalidators.NonNegativeRatio.type_parser,
+    volley_size: float = ArgSpec(
+        name="--volley-size",
+        type=argvalidators.NonNegativeRatio.type_parser,
         default=0.03,
         metavar=argvalidators.NonNegativeRatio.METAVAR,
         help="Percent of total input characters each launcher will fire per volley. Lower limit of one character.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Percent of total input characters each launcher will fire per volley. Lower limit of one character."
 
-    launch_delay: int = ArgField(
-        cmd_name="--launch-delay",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
+    launch_delay: int = ArgSpec(
+        name="--launch-delay",
+        type=argvalidators.NonNegativeInt.type_parser,
         default=50,
         metavar=argvalidators.NonNegativeInt.METAVAR,
         help="Number of animation ticks to wait between volleys of characters.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of animation ticks to wait between volleys of characters."
 
-    character_easing: easing.EasingFunction = ArgField(
-        cmd_name=["--character-easing"],
+    character_easing: easing.EasingFunction = ArgSpec(
+        name="--character-easing",
         default=easing.out_sine,
-        type_parser=argvalidators.Ease.type_parser,
+        type=argvalidators.Ease.type_parser,
         metavar=argvalidators.Ease.METAVAR,
         help="Easing function to use for launched character movement.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for launched character movement."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name="--final-gradient-stops",
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("FFA15C"), Color("44D492")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create "
         "a smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=Gradient.Direction.RADIAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[OrbittingVolley]:
-        """Get the effect class associated with this configuration."""
-        return OrbittingVolley
 
 
 class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):

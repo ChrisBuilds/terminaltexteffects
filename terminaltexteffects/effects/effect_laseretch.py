@@ -15,35 +15,23 @@ from collections import deque
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Return the effect class and the effect configuration dataclass.
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
 
     Returns:
-        tuple[type[typing.Any], type[ArgsDataClass]]: The effect class and the effect configuration dataclass.
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
 
     """
-    return LaserEtch, LaserEtchConfig
+    return "laseretch", LaserEtch, LaserEtchConfig
 
 
-@argclass(
-    name="laseretch",
-    help="A laser etches characters onto the terminal.",
-    description="A laser etches characters onto the terminal.",
-    epilog=(
-        "Example: terminaltexteffects laseretch --etch-speed 2 --etch-delay 5 --etch-direction "
-        "row_top_to_bottom --cool-gradient-stops ffe680 ff7b00 --laser-gradient-stops ffffff 376cff "
-        "--spark-gradient-stops ffffff ffe680 ff7b00 1a0900 --spark-cooling-frames 10 --final-gradient-stops "
-        "8A008A 00D1FF ffffff --final-gradient-steps 8  --final-gradient-frames 5 "
-        "--final-gradient-direction vertical"
-    ),
-)
 @dataclass
-class LaserEtchConfig(ArgsDataClass):
+class LaserEtchConfig(BaseConfig):
     """LaserEtch effect configuration dataclass.
 
     Attributes:
@@ -70,6 +58,19 @@ class LaserEtchConfig(ArgsDataClass):
 
     """  # noqa: E501
 
+    parser_spec: ParserSpec = ParserSpec(
+        name="laseretch",
+        help="A laser etches characters onto the terminal.",
+        description="A laser etches characters onto the terminal.",
+        epilog=(
+            "Example: terminaltexteffects laseretch --etch-speed 2 --etch-delay 5 --etch-direction "
+            "row_top_to_bottom --cool-gradient-stops ffe680 ff7b00 --laser-gradient-stops ffffff 376cff "
+            "--spark-gradient-stops ffffff ffe680 ff7b00 1a0900 --spark-cooling-frames 10 --final-gradient-stops "
+            "8A008A 00D1FF ffffff --final-gradient-steps 8  --final-gradient-frames 5 "
+            "--final-gradient-direction vertical"
+        ),
+    )
+
     etch_direction: typing.Literal[
         "column_left_to_right",
         "row_top_to_bottom",
@@ -80,8 +81,8 @@ class LaserEtchConfig(ArgsDataClass):
         "diagonal_bottom_right_to_top_left",
         "outside_to_center",
         "center_to_outside",
-    ] = ArgField(
-        cmd_name="--etch-direction",
+    ] = ArgSpec(
+        name="--etch-direction",
         default="row_top_to_bottom",
         choices=[
             "column_left_to_right",
@@ -96,126 +97,121 @@ class LaserEtchConfig(ArgsDataClass):
             "center_to_outside",
         ],
         help="Pattern used to etch the text.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]: Pattern used to etch the text."  # noqa: E501
 
-    etch_speed: int = ArgField(
-        cmd_name="--etch-speed",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    etch_speed: int = ArgSpec(
+        name="--etch-speed",
+        type=argvalidators.PositiveInt.type_parser,
         default=1,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Along with etch_delay, determines the speed at which the characters are etched onto the terminal. "
         "This value specifies the number of characters to etch simultaneously.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "int: Along with etch_delay, determines the speed at which the characters are etched onto the terminal. "
         "This value specifies the number of characters to etch simultaneously."
     )
 
-    etch_delay: int = ArgField(
-        cmd_name="--etch-delay",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
+    etch_delay: int = ArgSpec(
+        name="--etch-delay",
+        type=argvalidators.NonNegativeInt.type_parser,
         default=3,
         metavar=argvalidators.NonNegativeInt.METAVAR,
         help="Along with etch_speed, determines the speed at which the characters are etched onto the terminal. "
         "This values specifies the number of frames to wait before etching the next set of characters.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "int: Along with etch_speed, determines the speed at which the characters are etched onto the terminal. "
         "This values specifies the number of frames to wait before etching the next set of characters."
     )
 
-    cool_gradient_stops: tuple[tte.Color, ...] = ArgField(
-        cmd_name=["--cool-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    cool_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+        name="--cool-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("ffe680"), tte.Color("ff7b00")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the gradient used to cool the characters after etching. "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...]: Space separated, unquoted, list of colors for the cooling gradient "
     "If only one color is provided, the characters will be displayed in that color."
 
-    laser_gradient_stops: tuple[tte.Color, ...] = ArgField(
-        cmd_name=["--laser-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    laser_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+        name="--laser-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("ffffff"), tte.Color("376cff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the laser gradient. "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...]: Space separated, unquoted, list of colors for the laser gradient. "
     "If only one color is provided, the characters will be displayed in that color."
 
-    spark_gradient_stops: tuple[tte.Color, ...] = ArgField(
-        cmd_name=["--spark-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    spark_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+        name="--spark-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("ffffff"), tte.Color("ffe680"), tte.Color("ff7b00"), tte.Color("1a0900")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the spark cooling gradient. "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...]: Space separated, unquoted, list of colors for the spark cooling gradient. "
     "If only one color is provided, the characters will be displayed in that color."
 
-    spark_cooling_frames: int = ArgField(
-        cmd_name="--spark-cooling-frames",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    spark_cooling_frames: int = ArgSpec(
+        name="--spark-cooling-frames",
+        type=argvalidators.PositiveInt.type_parser,
         default=10,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames to display each spark cooling gradient step. Increase to slow down the rate of cooling.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int: Number of frames to display each spark cooling gradient step. Increase to slow down the rate of cooling."
 
-    final_gradient_stops: tuple[tte.Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...]: Space separated, unquoted, list of colors for the character gradient "
     "(applied across the canvas). If only one color is provided, the characters will be displayed in that color."
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=8,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[int, ...] | int: Space separated, unquoted, list of the number of gradient steps to use. More steps will "
     "create a smoother and longer gradient animation."
 
-    final_gradient_frames: int = ArgField(
-        cmd_name="--final-gradient-frames",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_frames: int = ArgSpec(
+        name="--final-gradient-frames",
+        type=argvalidators.PositiveInt.type_parser,
         default=5,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int: Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_direction: tte.Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: tte.Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=tte.Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[BaseEffect]:
-        """Return the effect class associated with this configuration dataclass."""
-        return LaserEtch
 
 
 class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):

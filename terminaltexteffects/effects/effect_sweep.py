@@ -15,43 +15,44 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Return the effect class and the effect configuration dataclass.
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
 
     Returns:
-        tuple[type[typing.Any], type[ArgsDataClass]]: The effect class and the effect configuration dataclass.
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
 
     """
-    return Sweep, SweepConfig
+    return "sweep", Sweep, SweepConfig
 
 
-@argclass(
-    name="sweep",
-    help="Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.",
-    description="sweep | Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.",
-    epilog=(
-        "Example: terminaltexteffects sweep --sweep-symbols '█' '▓' '▒' '░' --first-sweep-direction "
-        "column_right_to_left --second-sweep-direction column_left_to_right --final-gradient-stops 8A008A "
-        "00D1FF ffffff --final-gradient-steps 8 8 8 --final-gradient-direction vertical"
-    ),
-)
 @dataclass
-class SweepConfig(ArgsDataClass):
+class SweepConfig(BaseConfig):
     """Sweep effect configuration dataclass."""
 
-    sweep_symbols: tuple[str, ...] = ArgField(
-        cmd_name="--sweep-symbols",
-        type_parser=argvalidators.Symbol.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="sweep",
+        help="Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.",
+        description="sweep | Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.",
+        epilog=(
+            "Example: terminaltexteffects sweep --sweep-symbols '█' '▓' '▒' '░' --first-sweep-direction "
+            "column_right_to_left --second-sweep-direction column_left_to_right --final-gradient-stops 8A008A "
+            "00D1FF ffffff --final-gradient-steps 8 8 8 --final-gradient-direction vertical"
+        ),
+    )
+
+    sweep_symbols: tuple[str, ...] = ArgSpec(
+        name="--sweep-symbols",
+        type=argvalidators.Symbol.type_parser,
         nargs="+",
         default=("█", "▓", "▒", "░"),
         metavar=argvalidators.Symbol.METAVAR,
         help="Space separated list of symbols to use for the sweep shimmer.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] | str : Tuple of symbols to use for the sweep shimmer."
 
     first_sweep_direction: typing.Literal[
@@ -64,8 +65,8 @@ class SweepConfig(ArgsDataClass):
         "diagonal_bottom_right_to_top_left",
         "outside_to_center",
         "center_to_outside",
-    ] = ArgField(
-        cmd_name="--first-sweep-direction",
+    ] = ArgSpec(
+        name="--first-sweep-direction",
         default="column_right_to_left",
         choices=[
             "column_left_to_right",
@@ -80,7 +81,7 @@ class SweepConfig(ArgsDataClass):
             "center_to_outside",
         ],
         help="Direction of the first sweep, revealing uncolored characters.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]"
 
     second_sweep_direction: typing.Literal[
@@ -93,8 +94,8 @@ class SweepConfig(ArgsDataClass):
         "diagonal_bottom_right_to_top_left",
         "outside_to_center",
         "center_to_outside",
-    ] = ArgField(
-        cmd_name="--second-sweep-direction",
+    ] = ArgSpec(
+        name="--second-sweep-direction",
         default="column_left_to_right",
         choices=[
             "column_left_to_right",
@@ -109,46 +110,41 @@ class SweepConfig(ArgsDataClass):
             "center_to_outside",
         ],
         help="Direction of the second sweep, coloring the characters.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]"
 
-    final_gradient_stops: tuple[tte.Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...]: Space separated, unquoted, list of colors for the character gradient "
     "(applied from bottom to top). If only one color is provided, the characters will be displayed in that color."
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=8,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[int, ...] | int: Space separated, unquoted, list of the number of gradient steps to use. More steps will "
     "create a smoother and longer gradient animation."
 
-    final_gradient_direction: tte.Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: tte.Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=tte.Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[BaseEffect]:
-        """Return the effect class associated with this configuration dataclass."""
-        return Sweep
 
 
 class SweepIterator(BaseEffectIterator[SweepConfig]):

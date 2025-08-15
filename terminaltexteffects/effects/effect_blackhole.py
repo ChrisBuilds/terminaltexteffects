@@ -10,30 +10,27 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
 from terminaltexteffects.utils.graphics import ColorPair
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Return the Blackhole effect class and its configuration class."""
-    return Blackhole, BlackholeConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "blackhole", Blackhole, BlackholeConfig
 
 
-@argclass(
-    name="blackhole",
-    help="Characters are consumed by a black hole and explode outwards.",
-    description="blackhole | Characters are consumed by a black hole and explode outwards.",
-    epilog="Example: terminaltexteffects blackhole --star-colors ffcc0d ff7326 ff194d bf2669 702a8c 049dbf "
-    "--final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-direction vertical",
-)
 @dataclass
-class BlackholeConfig(ArgsDataClass):
+class BlackholeConfig(BaseConfig):
     """Configuration for the Blackhole effect.
 
     Attributes:
@@ -48,75 +45,77 @@ class BlackholeConfig(ArgsDataClass):
 
     """
 
-    blackhole_color: Color = ArgField(
-        cmd_name=["--blackhole-color"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="blackhole",
+        help="Characters are consumed by a black hole and explode outwards.",
+        description="blackhole | Characters are consumed by a black hole and explode outwards.",
+        epilog="Example: terminaltexteffects blackhole --star-colors ffcc0d ff7326 ff194d bf2669 702a8c 049dbf "
+        "--final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-direction vertical",
+    )
+    blackhole_color: Color = ArgSpec(
+        name="--blackhole-color",
+        type=argvalidators.ColorArg.type_parser,
         default=Color("ffffff"),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Color for the stars that comprise the blackhole border.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "Color : Color for the stars that comprise the blackhole border."
 
-    star_colors: tuple[Color, ...] = ArgField(
-        cmd_name=["--star-colors"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    star_colors: tuple[Color, ...] = ArgSpec(
+        name="--star-colors",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("ffcc0d"), Color("ff7326"), Color("ff194d"), Color("bf2669"), Color("702a8c"), Color("049dbf")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="List of colors from which character colors will be chosen and applied after the explosion, but before "
         "the cooldown to final color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "tuple[Color, ...] : Tuple of colors from which character colors will be chosen and applied after the "
         "explosion, but before the cooldown to final color."
     )
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argvalidators.ColorArg.type_parser,
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name=["--final-gradient-steps"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argvalidators.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create "
         "a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argvalidators.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Blackhole]:
-        """Return the effect class associated with this configuration."""
-        return Blackhole
 
 
 class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
