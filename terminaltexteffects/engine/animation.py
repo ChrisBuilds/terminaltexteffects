@@ -440,6 +440,7 @@ class Scene:
         self.frames.clear()
         self.frames.extend(self.played_frames)
         self.played_frames.clear()
+        self.easing_current_step = 0
 
     def __eq__(self, other: object) -> bool:
         """Check if two Scene objects are equal based on their scene_id."""
