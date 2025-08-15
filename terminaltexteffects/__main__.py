@@ -10,8 +10,9 @@ from pathlib import Path
 
 import terminaltexteffects.effects
 import terminaltexteffects.engine.terminal as term
+from terminaltexteffects.engine.base_config import BaseConfig
+from terminaltexteffects.engine.base_effect import BaseEffect
 from terminaltexteffects.engine.terminal import TerminalConfig
-from terminaltexteffects.utils.argsdataclass import ArgsDataClass
 
 
 def main() -> None:
@@ -31,24 +32,30 @@ def main() -> None:
         version="TerminalTextEffects " + terminaltexteffects.__version__,
     )
 
-    TerminalConfig._add_args_to_parser(parser)
+    TerminalConfig._populate_parser(parser)
 
     subparsers = parser.add_subparsers(
         title="Effect",
         description="Name of the effect to apply. Use <effect> -h for effect specific help.",
         help="Available Effects",
         required=True,
+        dest="effect",
     )
-
+    effect_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]] = {}
     for module_info in pkgutil.iter_modules(
         terminaltexteffects.effects.__path__,
         terminaltexteffects.effects.__name__ + ".",
     ):
         module = importlib.import_module(module_info.name)
 
-        if hasattr(module, "get_effect_and_args"):
+        if hasattr(module, "get_effect_and_config"):
+            effect_cmd, effect_class, args_class = module.get_effect_and_config()
+        else:
             effect_class, args_class = module.get_effect_and_args()
-            args_class._add_to_args_subparsers(subparsers)
+            effect_cmd = "unknown"
+        effect_map[effect_cmd] = (effect_class, args_class)
+        if "effect_burn" in str(effect_class):  # no commit
+            args_class._populate_parser(subparsers)
 
     args = parser.parse_args()
     if args.input_file:
@@ -65,12 +72,10 @@ def main() -> None:
     if not input_data.strip():
         print("NO INPUT.")
     else:
-        terminal_config = TerminalConfig._from_parsed_args_mapping(args, TerminalConfig)
-        effect_config = ArgsDataClass._from_parsed_args_mapping(args)
-        effect_class = effect_config.get_effect_class()
-        terminal_config.use_terminal_dimensions = True
+        terminal_config = TerminalConfig._build_config(args)
+        effect_class, effect_config = effect_map[args.effect]
         effect = effect_class(input_data)
-        effect.effect_config = effect_config
+        effect.effect_config = effect_config._build_config(args)
         effect.terminal_config = terminal_config
         try:
             with effect.terminal_output() as terminal:
