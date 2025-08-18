@@ -8,6 +8,7 @@ Classes:
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, easing
@@ -15,6 +16,7 @@ from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.exceptions import DuplicateEventRegistrationError
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -265,13 +267,14 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                         Coord(self._current_row.untyped_chars[0].input_coord.column, 1),
                     )
                     self.typing_head.motion.activate_path(carriage_return_path)
+                    with contextlib.suppress(DuplicateEventRegistrationError):
+                        self.typing_head.event_handler.register_event(
+                            EventHandler.Event.PATH_COMPLETE,
+                            carriage_return_path,
+                            EventHandler.Action.CALLBACK,
+                            EventHandler.Callback(self.terminal.set_character_visibility, False),  # noqa: FBT003
+                        )
 
-                    self.typing_head.event_handler.register_event(
-                        EventHandler.Event.PATH_COMPLETE,
-                        carriage_return_path,
-                        EventHandler.Action.CALLBACK,
-                        EventHandler.Callback(self.terminal.set_character_visibility, False),  # noqa: FBT003
-                    )
                     self.active_characters.add(self.typing_head)
                 else:
                     self._typing = False
