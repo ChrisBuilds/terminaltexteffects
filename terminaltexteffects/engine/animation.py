@@ -812,15 +812,20 @@ class Animation:
                     completed_scene,
                 )
 
-    def activate_scene(self, scene: Scene) -> None:
+    def activate_scene(self, scene: Scene | str) -> None:
         """Set the active scene and updates the current character visual.
+
+        If `scene` is a string, a scene query will be performed for a scene with
+        a `scene_id` matching the provided string.
 
         A SCENE_ACTIVATED event is triggered.
 
         Args:
-            scene (Scene): the Scene to set as active
+            scene (Scene : str): the Scene to set as active
 
         """
+        if isinstance(scene, str):
+            scene = self.query_scene(scene)
         self.active_scene = scene
         self.active_scene_current_step = 0
         self.current_character_visual = self.active_scene.activate()
