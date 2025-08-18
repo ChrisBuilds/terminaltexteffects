@@ -292,7 +292,7 @@ def canvas_dimensions(request: pytest.FixtureRequest) -> tuple[int, int]:
 @pytest.fixture
 def terminal_config_with_color_options(xterm_colors: bool, no_color: bool) -> TerminalConfig:  # noqa: FBT001
     """Fixture to provide terminal configuration with color options."""
-    terminal_config = TerminalConfig()
+    terminal_config = TerminalConfig._build_config()
     terminal_config.xterm_colors = xterm_colors
     terminal_config.no_color = no_color
     terminal_config.frame_rate = 0
@@ -302,7 +302,7 @@ def terminal_config_with_color_options(xterm_colors: bool, no_color: bool) -> Te
 @pytest.fixture
 def terminal_config_default_no_framerate() -> TerminalConfig:
     """Fixture to provide terminal configuration with default settings and no frame rate."""
-    terminal_config = TerminalConfig()
+    terminal_config = TerminalConfig._build_config()
     terminal_config.frame_rate = 0
     return terminal_config
 
@@ -314,7 +314,7 @@ def terminal_config_with_anchoring(
     text_anchor: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"],
 ) -> TerminalConfig:
     """Fixture to provide terminal configuration with anchoring options."""
-    terminal_config = TerminalConfig()
+    terminal_config = TerminalConfig._build_config()
     terminal_config.frame_rate = 0
     terminal_config.canvas_width = canvas_dimensions[0]
     terminal_config.canvas_height = canvas_dimensions[1]
@@ -329,8 +329,8 @@ def gradient_stops(request: pytest.FixtureRequest) -> Color | tuple[Color, ...]:
     return request.param
 
 
-@pytest.fixture(params=[1, 4, (1, 3)])
-def gradient_steps(request: pytest.FixtureRequest) -> int | tuple[int, ...]:
+@pytest.fixture(params=[(1,), (4,), (1, 3)])
+def gradient_steps(request: pytest.FixtureRequest) -> tuple[int, ...]:
     """Fixture to provide gradient steps for tests."""
     return request.param
 
