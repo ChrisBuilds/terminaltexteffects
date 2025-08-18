@@ -13,9 +13,10 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -54,7 +55,7 @@ class MiddleOutConfig(BaseConfig):
         help="Text expands in a single row or column in the middle of the canvas then out.",
         description="middleout | Text expands in a single row or column in the middle of the canvas then out.",
         epilog=(
-            f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects middleout --starting-color 8A008A "
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects middleout --starting-color 8A008A "
             "--final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical "
             "--center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE "
             "--full-easing IN_OUT_SINE"
@@ -63,9 +64,9 @@ class MiddleOutConfig(BaseConfig):
 
     starting_color: Color = ArgSpec(
         name="--starting-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=Color("ffffff"),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the initial text in the center of the canvas.",
     )  # pyright: ignore[reportAssignmentType]
     """Color : Color for the initial text in the center of the canvas."""
@@ -80,18 +81,18 @@ class MiddleOutConfig(BaseConfig):
 
     center_movement_speed: float = ArgSpec(
         name="--center-movement-speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.35,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the characters during the initial expansion of the center vertical/horiztonal line. ",
     )  # pyright: ignore[reportAssignmentType]
     """float : Speed of the characters during the initial expansion of the center vertical/horiztonal line. """
 
     full_movement_speed: float = ArgSpec(
         name="--full-movement-speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.35,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the characters during the final full expansion. ",
     )  # pyright: ignore[reportAssignmentType]
     """float : Speed of the characters during the final full expansion. """
@@ -99,7 +100,7 @@ class MiddleOutConfig(BaseConfig):
     center_easing: easing.EasingFunction = ArgSpec(
         name="--center-easing",
         default=easing.in_out_sine,
-        type=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         help="Easing function to use for initial expansion.",
     )  # pyright: ignore[reportAssignmentType]
     """easing.EasingFunction : Easing function to use for initial expansion."""
@@ -107,17 +108,17 @@ class MiddleOutConfig(BaseConfig):
     full_easing: easing.EasingFunction = ArgSpec(
         name="--full-easing",
         default=easing.in_out_sine,
-        type=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         help="Easing function to use for full expansion.",
     )  # pyright: ignore[reportAssignmentType]
     """easing.EasingFunction : Easing function to use for full expansion."""
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -128,10 +129,10 @@ class MiddleOutConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -142,9 +143,9 @@ class MiddleOutConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     """Gradient.Direction : Direction of the final gradient."""

@@ -13,9 +13,10 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, EffectCharacter, EventHandler, Gradient, Scene
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -55,19 +56,19 @@ class DecryptConfig(BaseConfig):
     )
     typing_speed: int = ArgSpec(
         name="--typing-speed",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=1,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of characters typed per keystroke.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of characters typed per keystroke."
 
     ciphertext_colors: tuple[Color, ...] = ArgSpec(
         name="--ciphertext-colors",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("008000"), Color("00cb00"), Color("00ff00")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the ciphertext. Color will be randomly selected for "
         "each character.",
     )  # pyright: ignore[reportAssignmentType]
@@ -75,10 +76,10 @@ class DecryptConfig(BaseConfig):
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("eda000"),),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -89,10 +90,10 @@ class DecryptConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -103,9 +104,9 @@ class DecryptConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

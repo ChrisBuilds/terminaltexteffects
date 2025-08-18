@@ -14,9 +14,10 @@ import random
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -60,10 +61,10 @@ class BinaryPathConfig(BaseConfig):
 
     final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("00d500"), tte.Color("007500")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -75,10 +76,10 @@ class BinaryPathConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -90,9 +91,9 @@ class BinaryPathConfig(BaseConfig):
 
     final_gradient_direction: tte.Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=tte.Gradient.Direction.RADIAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
 
@@ -100,10 +101,10 @@ class BinaryPathConfig(BaseConfig):
 
     binary_colors: tuple[tte.Color, ...] = ArgSpec(
         name="--binary-colors",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("044E29"), tte.Color("157e38"), tte.Color("45bf55"), tte.Color("95ed87")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the binary characters. Character color is randomly "
         "assigned from this list.",
     )  # pyright: ignore[reportAssignmentType]
@@ -115,9 +116,9 @@ class BinaryPathConfig(BaseConfig):
 
     movement_speed: float = ArgSpec(
         name="--movement-speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=1.0,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the binary groups as they travel around the terminal.",
     )  # pyright: ignore[reportAssignmentType]
 
@@ -125,9 +126,9 @@ class BinaryPathConfig(BaseConfig):
 
     active_binary_groups: float = ArgSpec(
         name="--active-binary-groups",
-        type=argvalidators.NonNegativeRatio.type_parser,
+        type=argutils.NonNegativeRatio.type_parser,
         default=0.05,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         help="Maximum number of binary groups that are active at any given time as a percentage of the total number "
         "of binary groups. Lower this to improve performance.",
     )  # pyright: ignore[reportAssignmentType]

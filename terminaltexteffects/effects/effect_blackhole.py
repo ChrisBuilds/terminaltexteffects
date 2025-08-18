@@ -12,10 +12,11 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Scene, easing, geometry
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -54,9 +55,9 @@ class BlackholeConfig(BaseConfig):
     )
     blackhole_color: Color = ArgSpec(
         name="--blackhole-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=Color("ffffff"),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the stars that comprise the blackhole border.",
     )  # pyright: ignore[reportAssignmentType]
 
@@ -64,10 +65,10 @@ class BlackholeConfig(BaseConfig):
 
     star_colors: tuple[Color, ...] = ArgSpec(
         name="--star-colors",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("ffcc0d"), Color("ff7326"), Color("ff194d"), Color("bf2669"), Color("702a8c"), Color("049dbf")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="List of colors from which character colors will be chosen and applied after the explosion, but before "
         "the cooldown to final color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -79,10 +80,10 @@ class BlackholeConfig(BaseConfig):
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("ffffff")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -94,10 +95,10 @@ class BlackholeConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -109,9 +110,9 @@ class BlackholeConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
 

@@ -22,9 +22,10 @@ from terminaltexteffects import (
     easing,
     geometry,
 )
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -84,37 +85,37 @@ class FireworksConfig(BaseConfig):
 
     firework_colors: tuple[Color, ...] = ArgSpec(
         name="--firework-colors",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("88F7E2"), Color("44D492"), Color("F5EB67"), Color("FFA15C"), Color("FA233E")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated list of colors from which firework colors will be randomly selected.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors from which firework colors will be randomly selected."
 
     firework_symbol: str = ArgSpec(
         name="--firework-symbol",
-        type=argvalidators.Symbol.type_parser,
+        type=argutils.Symbol.type_parser,
         default="o",
-        metavar=argvalidators.Symbol.METAVAR,
+        metavar=argutils.Symbol.METAVAR,
         help="Symbol to use for the firework shell.",
     )  # pyright: ignore[reportAssignmentType]
     "str : Symbol to use for the firework shell."
 
     firework_volume: float = ArgSpec(
         name="--firework-volume",
-        type=argvalidators.NonNegativeRatio.type_parser,
+        type=argutils.NonNegativeRatio.type_parser,
         default=0.02,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         help="Percent of total characters in each firework shell.",
     )  # pyright: ignore[reportAssignmentType]
     "float : Percent of total characters in each firework shell."
 
     launch_delay: int = ArgSpec(
         name="--launch-delay",
-        type=argvalidators.NonNegativeInt.type_parser,
+        type=argutils.NonNegativeInt.type_parser,
         default=60,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
+        metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is "
         "applied to this value.",
     )  # pyright: ignore[reportAssignmentType]
@@ -126,8 +127,8 @@ class FireworksConfig(BaseConfig):
     explode_distance: float = ArgSpec(
         name="--explode-distance",
         default=0.1,
-        type=argvalidators.NonNegativeRatio.type_parser,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+        type=argutils.NonNegativeRatio.type_parser,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the "
         "total canvas width.",
     )  # pyright: ignore[reportAssignmentType]
@@ -138,10 +139,10 @@ class FireworksConfig(BaseConfig):
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -152,10 +153,10 @@ class FireworksConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -166,9 +167,9 @@ class FireworksConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.HORIZONTAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

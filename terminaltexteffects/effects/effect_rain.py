@@ -13,9 +13,10 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -51,15 +52,15 @@ class RainConfig(BaseConfig):
         help="Rain characters from the top of the canvas.",
         description="rain | Rain characters from the top of the canvas.",
         epilog=(
-            f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects rain --rain-symbols o . , '*' '|' "
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects rain --rain-symbols o . , '*' '|' "
             "--rain-colors 00315C 004C8F 0075DB 3F91D9 78B9F2 9AC8F5 B8D8F8 E3EFFC --final-gradient-stops "
             "488bff b2e7de 57eaf7 --final-gradient-steps 12 --movement-speed 0.1-0.2 --easing IN_QUART"
         ),
     )
     rain_colors: tuple[Color, ...] = ArgSpec(
         name="--rain-colors",
-        type=argvalidators.ColorArg.type_parser,
-        metavar=argvalidators.ColorArg.METAVAR,
+        type=argutils.ColorArg.type_parser,
+        metavar=argutils.ColorArg.METAVAR,
         nargs="+",
         default=(
             Color("00315C"),
@@ -77,29 +78,29 @@ class RainConfig(BaseConfig):
 
     movement_speed: tuple[float, float] = ArgSpec(
         name="--movement-speed",
-        type=argvalidators.PositiveFloatRange.type_parser,
+        type=argutils.PositiveFloatRange.type_parser,
         default=(0.1, 0.2),
-        metavar=argvalidators.PositiveFloatRange.METAVAR,
+        metavar=argutils.PositiveFloatRange.METAVAR,
         help="Falling speed range of the rain drops.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[float, float] : Falling speed range of the rain drops."
 
     rain_symbols: tuple[str, ...] = ArgSpec(
         name="--rain-symbols",
-        type=argvalidators.Symbol.type_parser,
+        type=argutils.Symbol.type_parser,
         nargs="+",
         default=("o", ".", ",", "*", "|"),
-        metavar=argvalidators.Symbol.METAVAR,
+        metavar=argutils.Symbol.METAVAR,
         help="Space separated list of symbols to use for the rain drops. Symbols are randomly chosen from the list.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] : Tuple of symbols to use for the rain drops. Symbols are randomly chosen from the tuple."
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("488bff"), Color("b2e7de"), Color("57eaf7")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -110,10 +111,10 @@ class RainConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -124,9 +125,9 @@ class RainConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
@@ -134,8 +135,8 @@ class RainConfig(BaseConfig):
     movement_easing: easing.EasingFunction = ArgSpec(
         name="--movement-easing",
         default=easing.in_quart,
-        type=argvalidators.Ease.type_parser,
-        metavar=argvalidators.Ease.METAVAR,
+        type=argutils.Ease.type_parser,
+        metavar=argutils.Ease.METAVAR,
         help="Easing function to use for character movement.",
     )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement."

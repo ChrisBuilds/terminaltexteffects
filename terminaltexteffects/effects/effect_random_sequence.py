@@ -12,9 +12,10 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, EffectCharacter, Gradient
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -57,28 +58,28 @@ class RandomSequenceConfig(BaseConfig):
 
     starting_color: Color = ArgSpec(
         name="--starting-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=Color("000000"),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Color of the characters at spawn.",
     )  # pyright: ignore[reportAssignmentType]
     "Color : Color of the characters at spawn."
 
     speed: float = ArgSpec(
         name="--speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.004,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the animation as a percentage of the total number of characters to reveal in each tick.",
     )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the animation as a percentage of the total number of characters to reveal in each tick."
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help=(
             "Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
             "If only one color is provided, the characters will be displayed in that color."
@@ -91,10 +92,10 @@ class RandomSequenceConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Space separated, unquoted, list of the number of gradient steps to use. "
             "More steps will create a smoother and longer gradient animation."
@@ -107,18 +108,18 @@ class RandomSequenceConfig(BaseConfig):
 
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

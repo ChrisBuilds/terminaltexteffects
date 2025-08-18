@@ -22,9 +22,10 @@ from terminaltexteffects import (
     easing,
     geometry,
 )
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -70,27 +71,27 @@ class SwarmConfig(BaseConfig):
 
     base_color: tuple[Color, ...] = ArgSpec(
         name="--base-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("31a0d4"),),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the swarms",
     )  # pyright: ignore[reportAssignmentType]
     """tuple[Color, ...] : Tuple of colors for the swarms"""
 
     flash_color: Color = ArgSpec(
         name="--flash-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=Color("f2ea79"),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the character flash. Characters flash when moving.",
     )  # pyright: ignore[reportAssignmentType]
     """Color : Color for the character flash. Characters flash when moving."""
 
     swarm_size: float = ArgSpec(
         name="--swarm-size",
-        type=argvalidators.NonNegativeRatio.type_parser,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+        type=argutils.NonNegativeRatio.type_parser,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         default=0.1,
         help="Percent of total characters in each swarm.",
     )  # pyright: ignore[reportAssignmentType]
@@ -98,8 +99,8 @@ class SwarmConfig(BaseConfig):
 
     swarm_coordination: float = ArgSpec(
         name="--swarm-coordination",
-        type=argvalidators.NonNegativeRatio.type_parser,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+        type=argutils.NonNegativeRatio.type_parser,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         default=0.80,
         help="Percent of characters in a swarm that move as a group.",
     )  # pyright: ignore[reportAssignmentType]
@@ -107,8 +108,8 @@ class SwarmConfig(BaseConfig):
 
     swarm_area_count_range: tuple[int, int] = ArgSpec(
         name="--swarm-area-count-range",
-        type=argvalidators.PositiveIntRange.type_parser,
-        metavar=argvalidators.PositiveIntRange.METAVAR,
+        type=argutils.PositiveIntRange.type_parser,
+        metavar=argutils.PositiveIntRange.METAVAR,
         default=(2, 4),
         help="Range of the number of areas where characters will swarm.",
     )  # pyright: ignore[reportAssignmentType]
@@ -116,10 +117,10 @@ class SwarmConfig(BaseConfig):
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("31b900"), Color("f0ff65")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -130,10 +131,10 @@ class SwarmConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -144,9 +145,9 @@ class SwarmConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.HORIZONTAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

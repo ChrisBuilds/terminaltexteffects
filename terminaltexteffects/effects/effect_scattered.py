@@ -11,9 +11,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -48,7 +49,7 @@ class ScatteredConfig(BaseConfig):
         help="Text is scattered across the canvas and moves into position.",
         description="scattered | Text is scattered across the canvas and moves into position.",
         epilog=(
-            f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects scattered --final-gradient-stops ff9048 "
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects scattered --final-gradient-stops ff9048 "
             "ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 "
             "--movement-easing IN_OUT_BACK"
         ),
@@ -56,9 +57,9 @@ class ScatteredConfig(BaseConfig):
 
     movement_speed: float = ArgSpec(
         name="--movement-speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.3,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Movement speed of the characters. ",
     )  # pyright: ignore[reportAssignmentType]
     "float : Movement speed of the characters. "
@@ -66,17 +67,17 @@ class ScatteredConfig(BaseConfig):
     movement_easing: easing.EasingFunction = ArgSpec(
         name="--movement-easing",
         default=easing.in_out_back,
-        type=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         help="Easing function to use for character movement.",
     )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement."
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("ff9048"), Color("ab9dff"), Color("bdffea")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, "
         "the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -87,9 +88,9 @@ class ScatteredConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     (
@@ -99,18 +100,18 @@ class ScatteredConfig(BaseConfig):
 
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

@@ -77,7 +77,7 @@ nav:
       - Utils:
         - engine/utils/ansitools.md
         - engine/utils/argsdataclass.md
-        - engine/utils/argvalidators.md
+        - engine/utils/argutils.md
         - engine/utils/color.md
         - engine/utils/colorpair.md
         - engine/utils/colorterm.md

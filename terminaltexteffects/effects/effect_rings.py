@@ -13,9 +13,10 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, easing, geometry
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import motion
@@ -66,24 +67,24 @@ class RingsConfig(BaseConfig):
     )
     ring_colors: tuple[Color, ...] = ArgSpec(
         name="--ring-colors",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the rings.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color] : Tuple of colors for the rings."
 
     ring_gap: float = ArgSpec(
         name="--ring-gap",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.1,
         help="Distance between rings as a percent of the smallest canvas dimension.",
     )  # pyright: ignore[reportAssignmentType]
     "float : Distance between rings as a percent of the smallest canvas dimension."
     spin_duration: int = ArgSpec(
         name="--spin-duration",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=200,
         help="Number of frames for each cycle of the spin phase.",
     )  # pyright: ignore[reportAssignmentType]
@@ -91,9 +92,9 @@ class RingsConfig(BaseConfig):
 
     spin_speed: tuple[float, float] = ArgSpec(
         name="--spin-speed",
-        type=argvalidators.PositiveFloatRange.type_parser,
+        type=argutils.PositiveFloatRange.type_parser,
         default=(0.25, 1.0),
-        metavar=argvalidators.PositiveFloatRange.METAVAR,
+        metavar=argutils.PositiveFloatRange.METAVAR,
         help="Range of speeds for the rotation of the rings. The speed is randomly selected from this "
         "range for each ring.",
     )  # pyright: ignore[reportAssignmentType]
@@ -104,7 +105,7 @@ class RingsConfig(BaseConfig):
 
     disperse_duration: int = ArgSpec(
         name="--disperse-duration",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=200,
         help="Number of frames spent in the dispersed state between spinning cycles.",
     )  # pyright: ignore[reportAssignmentType]
@@ -112,7 +113,7 @@ class RingsConfig(BaseConfig):
 
     spin_disperse_cycles: int = ArgSpec(
         name="--spin-disperse-cycles",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=3,
         help="Number of times the animation will cycles between spinning rings and dispersed characters.",
     )  # pyright: ignore[reportAssignmentType]
@@ -120,10 +121,10 @@ class RingsConfig(BaseConfig):
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -134,10 +135,10 @@ class RingsConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -148,9 +149,9 @@ class RingsConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

@@ -13,9 +13,10 @@ from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing, geometry
 from terminaltexteffects.engine import animation, motion
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -56,7 +57,7 @@ class SpotlightsConfig(BaseConfig):
         description="spotlights | Spotlights search the text area, illuminating characters, before converging in the "
         "center and expanding.",
         epilog=(
-            f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects spotlights --final-gradient-stops ab48ff "
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects spotlights --final-gradient-stops ab48ff "
             "e7b2b2 fffebd --final-gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration "
             "750 --search-speed-range 0.25-0.5 --spotlight-count 3"
         ),
@@ -64,9 +65,9 @@ class SpotlightsConfig(BaseConfig):
 
     beam_width_ratio: float = ArgSpec(
         name="--beam-width-ratio",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=2.0,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Width of the beam of light as min(width, height) // n of the input text. Values less than 1 "
         "are raised to 1.",
     )  # pyright: ignore[reportAssignmentType]
@@ -77,9 +78,9 @@ class SpotlightsConfig(BaseConfig):
 
     beam_falloff: float = ArgSpec(
         name="--beam-falloff",
-        type=argvalidators.NonNegativeFloat.type_parser,
+        type=argutils.NonNegativeFloat.type_parser,
         default=0.3,
-        metavar=argvalidators.NonNegativeFloat.METAVAR,
+        metavar=argutils.NonNegativeFloat.METAVAR,
         help="Distance from the edge of the beam where the brightness begins to fall off, as a percentage of "
         "total beam width.",
     )  # pyright: ignore[reportAssignmentType]
@@ -90,18 +91,18 @@ class SpotlightsConfig(BaseConfig):
 
     search_duration: int = ArgSpec(
         name="--search-duration",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=750,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Duration of the search phase, in frames, before the spotlights converge in the center.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Duration of the search phase, in frames, before the spotlights converge in the center."
 
     search_speed_range: tuple[float, float] = ArgSpec(
         name="--search-speed-range",
-        type=argvalidators.PositiveFloatRange.type_parser,
+        type=argutils.PositiveFloatRange.type_parser,
         default=(0.25, 0.5),
-        metavar=argvalidators.PositiveFloatRange.METAVAR,
+        metavar=argutils.PositiveFloatRange.METAVAR,
         help="Range of speeds for the spotlights during the search phase. The speed is a random value between the "
         "two provided values.",
     )  # pyright: ignore[reportAssignmentType]
@@ -112,19 +113,19 @@ class SpotlightsConfig(BaseConfig):
 
     spotlight_count: int = ArgSpec(
         name="--spotlight-count",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=3,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of spotlights to use.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of spotlights to use."
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -135,10 +136,10 @@ class SpotlightsConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     (
@@ -148,9 +149,9 @@ class SpotlightsConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

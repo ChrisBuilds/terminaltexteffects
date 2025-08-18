@@ -13,38 +13,7 @@ import argparse
 import typing
 from dataclasses import dataclass, fields
 
-from terminaltexteffects.utils.argvalidators import CustomFormatter
-
-MISSING = object()
-
-
-@dataclass(frozen=True)
-class ParserSpec:
-    """Specification for a parser in the argument parser."""
-
-    name: str
-    help: str
-    description: str
-    epilog: str
-
-
-@dataclass(frozen=True)
-class ArgSpec:
-    """Specification for a command-line argument and default value.
-
-    The default value is used for both the argparse argument and to support direct
-    instantiation of a config.
-    """
-
-    name: str
-    default: typing.Any
-    metavar: str = MISSING  # type: ignore[arg-type]
-    type: typing.Any = MISSING  # type: ignore[arg-type]
-    required: bool = MISSING  # type: ignore[arg-type]
-    help: str = MISSING  # type: ignore[arg-type]
-    action: str | type[argparse.Action] = MISSING  # type: ignore[arg-type]
-    choices: list[typing.Any] = MISSING  # type: ignore[arg-type]
-    nargs: str | int = MISSING  # type: ignore[arg-type]
+from terminaltexteffects.utils.argutils import _MISSING, ArgSpec, CustomFormatter
 
 
 @dataclass
@@ -55,7 +24,7 @@ class BaseConfig:
     interface for argument parsing and configuration building. All sub-classes
     must implement the `_get_config` method to return their specific configuration
     class. Any config class intended to be used to populate a subparser must
-    define a `parser_spec` attribute with type `ParserSpec`.
+    define a `parser_spec` attribute with type `argutils.ParserSpec`.
     """
 
     @classmethod
@@ -75,7 +44,7 @@ class BaseConfig:
                 continue
             spec = field.default
             assert isinstance(spec, ArgSpec)
-            add_args_sig = {k: v for k, v in vars(spec).items() if v is not MISSING}
+            add_args_sig = {k: v for k, v in vars(spec).items() if v is not _MISSING}
             parser.add_argument(add_args_sig.pop("name"), **add_args_sig)
 
     @classmethod

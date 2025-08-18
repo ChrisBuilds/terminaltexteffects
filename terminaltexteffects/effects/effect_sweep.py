@@ -15,9 +15,10 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -47,10 +48,10 @@ class SweepConfig(BaseConfig):
 
     sweep_symbols: tuple[str, ...] = ArgSpec(
         name="--sweep-symbols",
-        type=argvalidators.Symbol.type_parser,
+        type=argutils.Symbol.type_parser,
         nargs="+",
         default=("█", "▓", "▒", "░"),
-        metavar=argvalidators.Symbol.METAVAR,
+        metavar=argutils.Symbol.METAVAR,
         help="Space separated list of symbols to use for the sweep shimmer.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] | str : Tuple of symbols to use for the sweep shimmer."
@@ -115,10 +116,10 @@ class SweepConfig(BaseConfig):
 
     final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("ffffff")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -127,10 +128,10 @@ class SweepConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=8,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -139,9 +140,9 @@ class SweepConfig(BaseConfig):
 
     final_gradient_direction: tte.Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=tte.Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

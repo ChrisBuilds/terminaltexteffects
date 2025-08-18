@@ -12,9 +12,10 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Scene
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -53,7 +54,7 @@ class ErrorCorrectConfig(BaseConfig):
         help="Some characters start in the wrong position and are corrected in sequence.",
         description="errorcorrect | Some characters start in the wrong position and are corrected in sequence.",
         epilog=(
-            f"{argvalidators.EASING_EPILOG}"
+            f"{argutils.EASING_EPILOG}"
             "Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c "
             "--correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 "
             "--movement-speed 0.5"
@@ -61,7 +62,7 @@ class ErrorCorrectConfig(BaseConfig):
     )
     error_pairs: float = ArgSpec(
         name="--error-pairs",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.1,
         metavar="(int > 0)",
         help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means "
@@ -74,7 +75,7 @@ class ErrorCorrectConfig(BaseConfig):
 
     swap_delay: int = ArgSpec(
         name="--swap-delay",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=10,
         metavar="(int > 0)",
         help="Number of frames between swaps.",
@@ -83,7 +84,7 @@ class ErrorCorrectConfig(BaseConfig):
 
     error_color: Color = ArgSpec(
         name="--error-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=Color("e74c3c"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters that are in the wrong position.",
@@ -92,7 +93,7 @@ class ErrorCorrectConfig(BaseConfig):
 
     correct_color: Color = ArgSpec(
         name="--correct-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=Color("45bf55"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters once corrected, this is a gradient from error-color and fades to final-color.",
@@ -101,7 +102,7 @@ class ErrorCorrectConfig(BaseConfig):
 
     movement_speed: float = ArgSpec(
         name="--movement-speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.5,
         metavar="(float > 0)",
         help="Speed of the characters while moving to the correct position. ",
@@ -110,7 +111,7 @@ class ErrorCorrectConfig(BaseConfig):
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
@@ -124,7 +125,7 @@ class ErrorCorrectConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar="(int > 0)",
@@ -138,9 +139,9 @@ class ErrorCorrectConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

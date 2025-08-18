@@ -13,9 +13,10 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Terminal, easing, geometry
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -57,7 +58,7 @@ class BubblesConfig(BaseConfig):
         name="bubbles",
         help="Characters are formed into bubbles that float down and pop.",
         description="bubbles | Characters are formed into bubbles that float down and pop.",
-        epilog=f"{argvalidators.EASING_EPILOG}"
+        epilog=f"{argutils.EASING_EPILOG}"
         "Example: terminaltexteffects bubbles --bubble-colors d33aff 7395c4 43c2a7 02ff7f --pop-color ffffff "
         "--final-gradient-stops d33aff 02ff7f --final-gradient-steps 12 --final-gradient-direction diagonal "
         "--bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE",
@@ -73,10 +74,10 @@ class BubblesConfig(BaseConfig):
 
     bubble_colors: tuple[Color, ...] = ArgSpec(
         name="--bubble-colors",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("d33aff"), Color("7395c4"), Color("43c2a7"), Color("02ff7f")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as "
         "default False.",
     )  # pyright: ignore[reportAssignmentType]
@@ -84,27 +85,27 @@ class BubblesConfig(BaseConfig):
 
     pop_color: Color = ArgSpec(
         name="--pop-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=Color("ffffff"),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the spray emitted when a bubble pops.",
     )  # pyright: ignore[reportAssignmentType]
     "Color : Color for the spray emitted when a bubble pops."
 
     bubble_speed: float = ArgSpec(
         name="--bubble-speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.1,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the floating bubbles. ",
     )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the floating bubbles. "
 
     bubble_delay: int = ArgSpec(
         name="--bubble-delay",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=50,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames between bubbles.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames between bubbles."
@@ -126,18 +127,18 @@ class BubblesConfig(BaseConfig):
     movement_easing: easing.EasingFunction = ArgSpec(
         name="--movement-easing",
         default=easing.in_out_sine,
-        type=argvalidators.Ease.type_parser,
-        metavar=argvalidators.Ease.METAVAR,
+        type=argutils.Ease.type_parser,
+        metavar=argutils.Ease.METAVAR,
         help="Easing function to use for character movement after a bubble pops.",
     )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement after a bubble pops."
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("d33aff"), Color("02ff7f")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -148,10 +149,10 @@ class BubblesConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -162,9 +163,9 @@ class BubblesConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

@@ -11,9 +11,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, geometry
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -66,7 +67,7 @@ class ColorShiftConfig(BaseConfig):
 
     gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(
             Color("e81416"),
@@ -77,7 +78,7 @@ class ColorShiftConfig(BaseConfig):
             Color("4b369d"),
             Color("70369d"),
         ),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the gradient.",
     )  # pyright: ignore[reportAssignmentType]
     (
@@ -87,10 +88,10 @@ class ColorShiftConfig(BaseConfig):
 
     gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     (
@@ -100,9 +101,9 @@ class ColorShiftConfig(BaseConfig):
 
     gradient_frames: int = ArgSpec(
         name="--gradient-frames",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=5,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
@@ -118,8 +119,8 @@ class ColorShiftConfig(BaseConfig):
     travel_direction: Gradient.Direction = ArgSpec(
         name="--travel-direction",
         default=Gradient.Direction.HORIZONTAL,
-        type=argvalidators.GradientDirection.type_parser,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        type=argutils.GradientDirection.type_parser,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction the gradient travels across the canvas.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction the gradient travels across the canvas."
@@ -146,9 +147,9 @@ class ColorShiftConfig(BaseConfig):
 
     cycles: int = ArgSpec(
         name="--cycles",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=3,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of times to cycle the gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of times to cycle the gradient. Use 0 for infinite."
@@ -163,7 +164,7 @@ class ColorShiftConfig(BaseConfig):
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(
             Color("e81416"),
@@ -174,7 +175,7 @@ class ColorShiftConfig(BaseConfig):
             Color("4b369d"),
             Color("70369d"),
         ),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -185,10 +186,10 @@ class ColorShiftConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -199,9 +200,9 @@ class ColorShiftConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

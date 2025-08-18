@@ -15,9 +15,10 @@ from collections import deque
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -102,9 +103,9 @@ class LaserEtchConfig(BaseConfig):
 
     etch_speed: int = ArgSpec(
         name="--etch-speed",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=1,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Along with etch_delay, determines the speed at which the characters are etched onto the terminal. "
         "This value specifies the number of characters to etch simultaneously.",
     )  # pyright: ignore[reportAssignmentType]
@@ -115,9 +116,9 @@ class LaserEtchConfig(BaseConfig):
 
     etch_delay: int = ArgSpec(
         name="--etch-delay",
-        type=argvalidators.NonNegativeInt.type_parser,
+        type=argutils.NonNegativeInt.type_parser,
         default=3,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
+        metavar=argutils.NonNegativeInt.METAVAR,
         help="Along with etch_speed, determines the speed at which the characters are etched onto the terminal. "
         "This values specifies the number of frames to wait before etching the next set of characters.",
     )  # pyright: ignore[reportAssignmentType]
@@ -128,10 +129,10 @@ class LaserEtchConfig(BaseConfig):
 
     cool_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
         name="--cool-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("ffe680"), tte.Color("ff7b00")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the gradient used to cool the characters after etching. "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -140,10 +141,10 @@ class LaserEtchConfig(BaseConfig):
 
     laser_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
         name="--laser-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("ffffff"), tte.Color("376cff")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the laser gradient. "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -152,10 +153,10 @@ class LaserEtchConfig(BaseConfig):
 
     spark_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
         name="--spark-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("ffffff"), tte.Color("ffe680"), tte.Color("ff7b00"), tte.Color("1a0900")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the spark cooling gradient. "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -164,19 +165,19 @@ class LaserEtchConfig(BaseConfig):
 
     spark_cooling_frames: int = ArgSpec(
         name="--spark-cooling-frames",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=10,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each spark cooling gradient step. Increase to slow down the rate of cooling.",
     )  # pyright: ignore[reportAssignmentType]
     "int: Number of frames to display each spark cooling gradient step. Increase to slow down the rate of cooling."
 
     final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("ffffff")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -185,10 +186,10 @@ class LaserEtchConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=8,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -197,18 +198,18 @@ class LaserEtchConfig(BaseConfig):
 
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=5,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     "int: Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     final_gradient_direction: tte.Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=tte.Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

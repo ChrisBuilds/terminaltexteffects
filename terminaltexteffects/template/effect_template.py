@@ -9,9 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -32,25 +33,25 @@ class EffectConfig(BaseConfig):
         name="effect",
         help="effect_description",
         description="effect_description",
-        epilog=f"""{argvalidators.EASING_EPILOG}
+        epilog=f"""{argutils.EASING_EPILOG}
     """,
     )
 
     color_single: tte.Color = ArgSpec(
         name="--color-single",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=tte.Color(0),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the ___.",
     )  # pyright: ignore[reportAssignmentType]
     "Color: Color for the ___."
 
     final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help=(
             "Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
             "If only one color is provided, the characters will be displayed in that color."
@@ -63,10 +64,10 @@ class EffectConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Space separated, unquoted, list of the number of gradient steps to use. More steps will "
             "create a smoother and longer gradient animation."
@@ -79,27 +80,27 @@ class EffectConfig(BaseConfig):
 
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=5,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     "int: Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     final_gradient_direction: tte.Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=tte.Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
 
     movement_speed: float = ArgSpec(
         name="--movement-speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=1,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the ___.",
     )  # pyright: ignore[reportAssignmentType]
     "float: Speed of the ___."
@@ -107,7 +108,7 @@ class EffectConfig(BaseConfig):
     easing: tte.easing.EasingFunction = ArgSpec(
         name="--easing",
         default=tte.easing.in_out_sine,
-        type=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         help="Easing function to use for character movement.",
     )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction: Easing function to use for character movement."

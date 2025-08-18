@@ -14,9 +14,10 @@ import typing
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine.base_character import EffectCharacter
@@ -53,78 +54,78 @@ class ThunderstormConfig(BaseConfig):
 
     lightning_color: tte.Color = ArgSpec(
         name="--lightning-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=tte.Color("68A3E8"),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the lightning strike.",
     )  # pyright: ignore[reportAssignmentType]
     "Color: Color for the lightning strike."
 
     glowing_text_color: tte.Color = ArgSpec(
         name="--glowing-text-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=tte.Color("EF5411"),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the text when glowing after a lightning strike.",
     )  # pyright: ignore[reportAssignmentType]
     "Color: Color for the text when glowing after a lightning strike."
 
     text_glow_time: int = ArgSpec(
         name="--text-glow-time",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=10,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Duration, in number of frames, for the glowing/cooling animation for post-lightning text glow.",
     )  # pyright: ignore[reportAssignmentType]
     "int: Duration, in number of frames, for the glowing/cooling animation for post-lightning text glow."
 
     raindrop_symbols: tuple[str, ...] = ArgSpec(
         name="--raindrop-symbols",
-        type=argvalidators.Symbol.type_parser,
+        type=argutils.Symbol.type_parser,
         default=("\\", ".", ","),
         nargs="+",
-        action=argvalidators.TupleAction,
-        metavar=argvalidators.Symbol.METAVAR,
+        action=argutils.TupleAction,
+        metavar=argutils.Symbol.METAVAR,
         help="Symbols to use for the raindrops.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...]: Symbols to use for the raindrops."
 
     spark_symbols: tuple[str, ...] = ArgSpec(
         name="--spark-symbols",
-        type=argvalidators.Symbol.type_parser,
+        type=argutils.Symbol.type_parser,
         default=("*", ".", "'"),
         nargs="+",
-        action=argvalidators.TupleAction,
-        metavar=argvalidators.Symbol.METAVAR,
+        action=argutils.TupleAction,
+        metavar=argutils.Symbol.METAVAR,
         help="Symbols to use for the lightning impact sparks.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...]: Symbols to use for the lightning impact sparks."
 
     spark_glow_color: tte.Color = ArgSpec(
         name="--spark-glow-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=tte.Color("ff4d00"),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the spark glow after a lightning strike.",
     )  # pyright: ignore[reportAssignmentType]
     "Color: Color for the spark glow after a lightning strike."
 
     spark_glow_time: int = ArgSpec(
         name="--spark-glow-time",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=30,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Duration, in number of frames, for the cooling animation for post-lightning sparks.",
     )  # pyright: ignore[reportAssignmentType]
     "int: Duration, in number of frames, for the cooling animation for post-lightning sparks."
 
     final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        action=argvalidators.TupleAction,
+        action=argutils.TupleAction,
         default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help=(
             "Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
             "If only one color is provided, the characters will be displayed in that color."
@@ -137,11 +138,11 @@ class ThunderstormConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=(12,),
-        action=argvalidators.TupleAction,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        action=argutils.TupleAction,
+        metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Space separated, unquoted, list of the number of gradient steps to use. More steps will "
             "create a smoother and longer gradient animation."
@@ -154,18 +155,18 @@ class ThunderstormConfig(BaseConfig):
 
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=5,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     "int: Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     final_gradient_direction: tte.Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=tte.Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

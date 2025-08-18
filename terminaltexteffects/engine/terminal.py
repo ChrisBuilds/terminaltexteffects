@@ -21,7 +21,7 @@ from typing import Literal
 
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig
-from terminaltexteffects.utils import ansitools, argvalidators
+from terminaltexteffects.utils import ansitools, argutils
 from terminaltexteffects.utils.exceptions import (
     InvalidCharacterGroupError,
     InvalidCharacterSortError,
@@ -65,8 +65,8 @@ class TerminalConfig(BaseConfig):
 
     tab_width: int = ArgSpec(
         name="--tab-width",
-        type=argvalidators.PositiveInt.type_parser,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        type=argutils.PositiveInt.type_parser,
+        metavar=argutils.PositiveInt.METAVAR,
         default=4,
         help="Number of spaces to use for a tab character.",
     )  # pyright: ignore[reportAssignmentType]
@@ -93,9 +93,9 @@ class TerminalConfig(BaseConfig):
 
     terminal_background_color: Color = ArgSpec(
         name="--terminal-background-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=Color("000000"),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help=(
             "The background color of you terminal. "
             "Used to determine the appropriate color for fade-in/out within effects."
@@ -132,7 +132,7 @@ class TerminalConfig(BaseConfig):
 
     frame_rate: int = ArgSpec(
         name="--frame-rate",
-        type=argvalidators.NonNegativeInt.type_parser,
+        type=argutils.NonNegativeInt.type_parser,
         default=100,
         help=(
             "Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting. "
@@ -144,8 +144,8 @@ class TerminalConfig(BaseConfig):
 
     canvas_width: int = ArgSpec(
         name="--canvas-width",
-        metavar=argvalidators.CanvasDimension.METAVAR,
-        type=argvalidators.CanvasDimension.type_parser,
+        metavar=argutils.CanvasDimension.METAVAR,
+        type=argutils.CanvasDimension.type_parser,
         default=-1,
         help=(
             "Canvas width, set to an integer > 0 to use a specific dimension, use 0 to match the terminal width, "
@@ -161,8 +161,8 @@ class TerminalConfig(BaseConfig):
 
     canvas_height: int = ArgSpec(
         name="--canvas-height",
-        metavar=argvalidators.CanvasDimension.METAVAR,
-        type=argvalidators.CanvasDimension.type_parser,
+        metavar=argutils.CanvasDimension.METAVAR,
+        type=argutils.CanvasDimension.type_parser,
         default=-1,
         help=(
             "Canvas height, set to an integer > 0 to use a specific dimension, use 0 to match the terminal "

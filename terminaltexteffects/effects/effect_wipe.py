@@ -12,9 +12,10 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, EffectCharacter, Gradient, easing
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -86,16 +87,16 @@ class WipeConfig(BaseConfig):
 
     wipe_delay: int = ArgSpec(
         name="--wipe-delay",
-        type=argvalidators.NonNegativeInt.type_parser,
+        type=argutils.NonNegativeInt.type_parser,
         default=0,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
+        metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames to wait before adding the next character group. Increase, to slow down the effect.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to wait before adding the next character group. Increase, to slow down the effect."
 
     wipe_ease: easing.EasingFunction = ArgSpec(
         name="--wipe-ease",
-        type=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         default=easing.linear,
         help="Easing function to use for the wipe effect.",
     )  # pyright: ignore[reportAssignmentType]
@@ -103,29 +104,29 @@ class WipeConfig(BaseConfig):
 
     wipe_ease_stepsize: float = ArgSpec(
         name="--wipe-ease-stepsize",
-        type=argvalidators.EasingStep.type_parser,
+        type=argutils.EasingStep.type_parser,
         default=0.01,
-        metavar=argvalidators.EasingStep.METAVAR,
+        metavar=argutils.EasingStep.METAVAR,
         help="Step size to use for the easing function.",
     )  # pyright: ignore[reportAssignmentType]
     "float : Step size to use for the easing function."
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("#833ab4"), Color("#fd1d1d"), Color("#fcb045")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the wipe gradient."
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     (
@@ -135,18 +136,18 @@ class WipeConfig(BaseConfig):
 
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=5,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

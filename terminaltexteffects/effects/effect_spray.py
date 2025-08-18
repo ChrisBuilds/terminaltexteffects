@@ -14,9 +14,10 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, easing
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -53,7 +54,7 @@ class SprayConfig(BaseConfig):
         help="Draws the characters spawning at varying rates from a single point.",
         description="spray | Draws the characters spawning at varying rates from a single point.",
         epilog=(
-            f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF "
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF "
             "FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 "
             "--movement-easing OUT_EXPO"
         ),
@@ -69,25 +70,25 @@ class SprayConfig(BaseConfig):
 
     spray_volume: float = ArgSpec(
         name="--spray-volume",
-        type=argvalidators.PositiveRatio.type_parser,
+        type=argutils.PositiveRatio.type_parser,
         default=0.005,
-        metavar=argvalidators.PositiveRatio.METAVAR,
+        metavar=argutils.PositiveRatio.METAVAR,
         help="Number of characters to spray per tick as a percent of the total number of characters.",
     )  # pyright: ignore[reportAssignmentType]
     "float : Number of characters to spray per tick as a percent of the total number of characters."
 
     movement_speed_range: tuple[float, float] = ArgSpec(
         name="--movement-speed-range",
-        type=argvalidators.PositiveFloatRange.type_parser,
+        type=argutils.PositiveFloatRange.type_parser,
         default=(0.4, 1.0),
-        metavar=argvalidators.PositiveFloatRange.METAVAR,
+        metavar=argutils.PositiveFloatRange.METAVAR,
         help="Movement speed range of the characters.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[float, float] : Movement speed range of the characters."
 
     movement_easing: easing.EasingFunction = ArgSpec(
         name="--movement-easing",
-        type=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         default=easing.out_expo,
         help="Easing function to use for character movement.",
     )  # pyright: ignore[reportAssignmentType]
@@ -95,10 +96,10 @@ class SprayConfig(BaseConfig):
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -109,10 +110,10 @@ class SprayConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -123,9 +124,9 @@ class SprayConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

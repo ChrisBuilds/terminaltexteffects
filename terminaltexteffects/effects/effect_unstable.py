@@ -12,9 +12,10 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -52,7 +53,7 @@ class UnstableConfig(BaseConfig):
         description="unstable | Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them "
         "in the correct layout.",
         epilog=(
-            f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects unstable --unstable-color ff9200 "
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects unstable --unstable-color ff9200 "
             "--final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO "
             "--explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75"
         ),
@@ -60,16 +61,16 @@ class UnstableConfig(BaseConfig):
 
     unstable_color: Color = ArgSpec(
         name="--unstable-color",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         default=Color("ff9200"),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Color transitioned to as the characters become unstable.",
     )  # pyright: ignore[reportAssignmentType]
     "Color : Color transitioned to as the characters become unstable."
 
     explosion_ease: easing.EasingFunction = ArgSpec(
         name="--explosion-ease",
-        type=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         default=easing.out_expo,
         help="Easing function to use for character movement during the explosion.",
     )  # pyright: ignore[reportAssignmentType]
@@ -77,16 +78,16 @@ class UnstableConfig(BaseConfig):
 
     explosion_speed: float = ArgSpec(
         name="--explosion-speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.75,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of characters during explosion. ",
     )  # pyright: ignore[reportAssignmentType]
     "float : Speed of characters during explosion. "
 
     reassembly_ease: easing.EasingFunction = ArgSpec(
         name="--reassembly-ease",
-        type=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         default=easing.out_expo,
         help="Easing function to use for character reassembly.",
     )  # pyright: ignore[reportAssignmentType]
@@ -94,19 +95,19 @@ class UnstableConfig(BaseConfig):
 
     reassembly_speed: float = ArgSpec(
         name="--reassembly-speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.75,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of characters during reassembly. ",
     )  # pyright: ignore[reportAssignmentType]
     "float : Speed of characters during reassembly."
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -117,10 +118,10 @@ class UnstableConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -131,9 +132,9 @@ class UnstableConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

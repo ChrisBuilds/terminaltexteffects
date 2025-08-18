@@ -12,9 +12,10 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, Terminal, geometry
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -61,20 +62,20 @@ class SynthGridConfig(BaseConfig):
 
     grid_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--grid-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("CC00CC"), Color("ffffff")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the grid gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the grid gradient."
 
     grid_gradient_steps: tuple[int, ...] = ArgSpec(
         name="--grid-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -85,29 +86,29 @@ class SynthGridConfig(BaseConfig):
 
     grid_gradient_direction: Gradient.Direction = ArgSpec(
         name="--grid-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the gradient for the grid color.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the gradient for the grid color."
 
     text_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--text-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the text gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the text gradient."
 
     text_gradient_steps: tuple[int, ...] = ArgSpec(
         name="--text-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -118,46 +119,46 @@ class SynthGridConfig(BaseConfig):
 
     text_gradient_direction: Gradient.Direction = ArgSpec(
         name="--text-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the gradient for the text color.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the gradient for the text color."
 
     grid_row_symbol: str = ArgSpec(
         name="--grid-row-symbol",
-        type=argvalidators.Symbol.type_parser,
+        type=argutils.Symbol.type_parser,
         default="─",
-        metavar=argvalidators.Symbol.METAVAR,
+        metavar=argutils.Symbol.METAVAR,
         help="Symbol to use for grid row lines.",
     )  # pyright: ignore[reportAssignmentType]
     "str : Symbol to use for grid row lines."
 
     grid_column_symbol: str = ArgSpec(
         name="--grid-column-symbol",
-        type=argvalidators.Symbol.type_parser,
+        type=argutils.Symbol.type_parser,
         default="│",
-        metavar=argvalidators.Symbol.METAVAR,
+        metavar=argutils.Symbol.METAVAR,
         help="Symbol to use for grid column lines.",
     )  # pyright: ignore[reportAssignmentType]
     "str : Symbol to use for grid column lines."
 
     text_generation_symbols: tuple[str, ...] = ArgSpec(
         name="--text-generation-symbols",
-        type=argvalidators.Symbol.type_parser,
+        type=argutils.Symbol.type_parser,
         nargs="+",
         default=("░", "▒", "▓"),
-        metavar=argvalidators.Symbol.METAVAR,
+        metavar=argutils.Symbol.METAVAR,
         help="Space separated, unquoted, list of characters for the text generation animation.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] : Tuple of characters for the text generation animation."
 
     max_active_blocks: float = ArgSpec(
         name="--max-active-blocks",
-        type=argvalidators.PositiveRatio.type_parser,
+        type=argutils.PositiveRatio.type_parser,
         default=0.1,
-        metavar=argvalidators.PositiveRatio.METAVAR,
+        metavar=argutils.PositiveRatio.METAVAR,
         help="Maximum percentage of blocks to have active at any given time. For example, if set to 0.1, 10 percent "
         "of the blocks will be active at any given time.",
     )  # pyright: ignore[reportAssignmentType]

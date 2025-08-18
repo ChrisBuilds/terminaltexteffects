@@ -12,9 +12,10 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, EffectCharacter, EventHandler, Gradient, easing
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -56,7 +57,7 @@ class WavesConfig(BaseConfig):
         help="Waves travel across the terminal leaving behind the characters.",
         description="waves | Waves travel across the terminal leaving behind the characters.",
         epilog=(
-            f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ "
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ "
             "▇ ▆ ▅ ▄ ▃ ▂ ▁ --wave-gradient-stops f0ff65 ffb102 31a0d4 ffb102 f0ff65 --wave-gradient-steps 6 "
             "--final-gradient-stops ffb102 31a0d4 f0ff65 --final-gradient-steps 12 --wave-count 7 --wave-length 2 "
             "--wave-easing IN_OUT_SINE"
@@ -65,10 +66,10 @@ class WavesConfig(BaseConfig):
 
     wave_symbols: tuple[str, ...] = ArgSpec(
         name="--wave-symbols",
-        type=argvalidators.Symbol.type_parser,
+        type=argutils.Symbol.type_parser,
         default=("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█", "▇", "▆", "▅", "▄", "▃", "▂", "▁"),
         nargs="+",
-        metavar=argvalidators.Symbol.METAVAR,
+        metavar=argutils.Symbol.METAVAR,
         help="Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an "
         "animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -79,10 +80,10 @@ class WavesConfig(BaseConfig):
 
     wave_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--wave-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("#f0ff65"), Color("#ffb102"), Color("#31a0d4"), Color("#ffb102"), Color("#f0ff65")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -93,10 +94,10 @@ class WavesConfig(BaseConfig):
 
     wave_gradient_steps: tuple[int, ...] = ArgSpec(
         name="--wave-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=(6,),
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -107,7 +108,7 @@ class WavesConfig(BaseConfig):
 
     wave_count: int = ArgSpec(
         name="--wave-count",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=7,
         help="Number of waves to generate. n > 0.",
     )  # pyright: ignore[reportAssignmentType]
@@ -115,9 +116,9 @@ class WavesConfig(BaseConfig):
 
     wave_length: int = ArgSpec(
         name="--wave-length",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=2,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="The number of frames for each step of the wave. Higher wave-lengths will create a slower wave.",
     )  # pyright: ignore[reportAssignmentType]
     "int : The number of frames for each step of the wave. Higher wave-lengths will create a slower wave."
@@ -146,7 +147,7 @@ class WavesConfig(BaseConfig):
 
     wave_easing: easing.EasingFunction = ArgSpec(
         name="--wave-easing",
-        type=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         default=easing.in_out_sine,
         help="Easing function to use for wave travel.",
     )  # pyright: ignore[reportAssignmentType]
@@ -154,10 +155,10 @@ class WavesConfig(BaseConfig):
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("#ffb102"), Color("#31a0d4"), Color("#f0ff65")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -168,10 +169,10 @@ class WavesConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create "
         "a smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -182,9 +183,9 @@ class WavesConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

@@ -13,9 +13,10 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -53,15 +54,15 @@ class BouncyBallsConfig(BaseConfig):
         name="bouncyballs",
         help="Characters are bouncy balls falling from the top of the canvas.",
         description="bouncyballs | Characters are bouncy balls falling from the top of the canvas.",
-        epilog=f"{argvalidators.EASING_EPILOG}"
+        epilog=f"{argutils.EASING_EPILOG}"
         "Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols o '*' O 0 . "
         "--final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal "
         "--ball-delay 7 --movement-speed 0.25 --easing OUT_BOUNCE",
     )
     ball_colors: tuple[Color, ...] = ArgSpec(
         name="--ball-colors",
-        type=argvalidators.ColorArg.type_parser,
-        metavar=argvalidators.ColorArg.METAVAR,
+        type=argutils.ColorArg.type_parser,
+        metavar=argutils.ColorArg.METAVAR,
         nargs="+",
         default=(Color("d1f4a5"), Color("96e2a4"), Color("5acda9")),
         help="Space separated list of colors from which ball colors will be randomly selected. If no colors are "
@@ -72,35 +73,35 @@ class BouncyBallsConfig(BaseConfig):
 
     ball_symbols: tuple[str, ...] = ArgSpec(
         name="--ball-symbols",
-        type=argvalidators.Symbol.type_parser,
+        type=argutils.Symbol.type_parser,
         nargs="+",
         default=("*", "o", "O", "0", "."),
-        metavar=argvalidators.Symbol.METAVAR,
+        metavar=argutils.Symbol.METAVAR,
         help="Space separated list of symbols to use for the balls.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] | str : Tuple of symbols to use for the balls."
 
     ball_delay: int = ArgSpec(
         name="--ball-delay",
-        type=argvalidators.NonNegativeInt.type_parser,
+        type=argutils.NonNegativeInt.type_parser,
         default=7,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
+        metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames between ball drops, increase to reduce ball drop rate.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames between ball drops, increase to reduce ball drop rate."
 
     movement_speed: float = ArgSpec(
         name="--movement-speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.25,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Movement speed of the characters. ",
     )  # pyright: ignore[reportAssignmentType]
     "float : Movement speed of the characters. "
 
     movement_easing: easing.EasingFunction = ArgSpec(
         name="--movement-easing",
-        type=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         default=easing.out_bounce,
         help="Easing function to use for character movement.",
     )  # pyright: ignore[reportAssignmentType]
@@ -108,10 +109,10 @@ class BouncyBallsConfig(BaseConfig):
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("f8ffae"), Color("43c6ac")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -120,10 +121,10 @@ class BouncyBallsConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -132,9 +133,9 @@ class BouncyBallsConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

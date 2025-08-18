@@ -12,9 +12,10 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, Scene
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -63,10 +64,10 @@ class VHSTapeConfig(BaseConfig):
 
     glitch_line_colors: tuple[Color, ...] = ArgSpec(
         name="--glitch-line-colors",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("ffffff"), Color("ff0000"), Color("00ff00"), Color("0000ff"), Color("ffffff")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors "
         "are applied in order as an animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -77,10 +78,10 @@ class VHSTapeConfig(BaseConfig):
 
     glitch_wave_colors: tuple[Color, ...] = ArgSpec(
         name="--glitch-wave-colors",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("ffffff"), Color("ff0000"), Color("00ff00"), Color("0000ff"), Color("ffffff")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. "
         "Colors are applied in order as an animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -91,47 +92,47 @@ class VHSTapeConfig(BaseConfig):
 
     noise_colors: tuple[Color, ...] = ArgSpec(
         name="--noise-colors",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("1e1e1f"), Color("3c3b3d"), Color("6d6c70"), Color("a2a1a6"), Color("cbc9cf"), Color("ffffff")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters during the noise phase.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the characters during the noise phase."
 
     glitch_line_chance: float = ArgSpec(
         name="--glitch-line-chance",
-        type=argvalidators.NonNegativeRatio.type_parser,
+        type=argutils.NonNegativeRatio.type_parser,
         default=0.05,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         help="Chance that a line will glitch on any given frame.",
     )  # pyright: ignore[reportAssignmentType]
     "float : Chance that a line will glitch on any given frame."
 
     noise_chance: float = ArgSpec(
         name="--noise-chance",
-        type=argvalidators.NonNegativeRatio.type_parser,
+        type=argutils.NonNegativeRatio.type_parser,
         default=0.004,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         help="Chance that all characters will experience noise on any given frame.",
     )  # pyright: ignore[reportAssignmentType]
     "float : Chance that all characters will experience noise on any given frame."
 
     total_glitch_time: int = ArgSpec(
         name="--total-glitch-time",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=1000,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Total time, frames, that the glitching phase will last.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Total time, frames, that the glitching phase will last."
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -142,10 +143,10 @@ class VHSTapeConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create "
         "a smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -156,9 +157,9 @@ class VHSTapeConfig(BaseConfig):
 
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."

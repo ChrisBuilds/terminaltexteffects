@@ -12,9 +12,10 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, EffectCharacter, Gradient, easing, geometry
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig, ParserSpec
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -57,7 +58,7 @@ class SlideConfig(BaseConfig):
             "slide | Slide characters into view from outside the terminal, grouped by row, column, or diagonal."
         ),
         epilog=(
-            f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects slide --movement-speed 0.5 --grouping row "
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects slide --movement-speed 0.5 --grouping row "
             "--final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 10 "
             "--final-gradient-direction vertical --gap 3 --reverse-direction --merge --movement-easing OUT_QUAD"
         ),
@@ -65,9 +66,9 @@ class SlideConfig(BaseConfig):
 
     movement_speed: float = ArgSpec(
         name="--movement-speed",
-        type=argvalidators.PositiveFloat.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=0.5,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the characters.",
     )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the characters."
@@ -85,9 +86,9 @@ class SlideConfig(BaseConfig):
 
     gap: int = ArgSpec(
         name="--gap",
-        type=argvalidators.NonNegativeInt.type_parser,
+        type=argutils.NonNegativeInt.type_parser,
         default=3,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
+        metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames to wait before adding the next group of characters. Increasing this value creates a "
         "more staggered effect.",
     )  # pyright: ignore[reportAssignmentType]
@@ -116,18 +117,18 @@ class SlideConfig(BaseConfig):
     movement_easing: easing.EasingFunction = ArgSpec(
         name="--movement-easing",
         default=easing.in_out_quad,
-        type=argvalidators.Ease.type_parser,
-        metavar=argvalidators.Ease.METAVAR,
+        type=argutils.Ease.type_parser,
+        metavar=argutils.Ease.METAVAR,
         help="Easing function to use for character movement.",
     )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement."
 
     final_gradient_stops: tuple[Color, ...] = ArgSpec(
         name="--final-gradient-stops",
-        type=argvalidators.ColorArg.type_parser,
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("#833ab4"), Color("#fd1d1d"), Color("#fcb045")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, "
         "the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -138,9 +139,9 @@ class SlideConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = ArgSpec(
         name="--final-gradient-steps",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     (
@@ -150,9 +151,9 @@ class SlideConfig(BaseConfig):
 
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
-        type=argvalidators.PositiveInt.type_parser,
+        type=argutils.PositiveInt.type_parser,
         default=10,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
@@ -160,7 +161,7 @@ class SlideConfig(BaseConfig):
     final_gradient_direction: Gradient.Direction = ArgSpec(
         name="--final-gradient-direction",
         default=Gradient.Direction.VERTICAL,
-        type=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         help="Direction of the gradient (vertical, horizontal, diagonal, center).",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the gradient."

@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import typing
+from dataclasses import dataclass
 
 from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.graphics import Color, Gradient
@@ -63,6 +64,37 @@ EASING_EPILOG = """\
 
     Visit: https://easings.net/ for visualizations of the easing functions.
 """
+
+_MISSING = object()
+
+
+@dataclass(frozen=True)
+class ParserSpec:
+    """Specification for a parser in the argument parser."""
+
+    name: str
+    help: str
+    description: str
+    epilog: str
+
+
+@dataclass(frozen=True)
+class ArgSpec:
+    """Specification for a command-line argument and default value.
+
+    The default value is used for both the argparse argument and to support direct
+    instantiation of a config.
+    """
+
+    name: str
+    default: typing.Any
+    metavar: str = _MISSING  # type: ignore[arg-type]
+    type: typing.Any = _MISSING  # type: ignore[arg-type]
+    required: bool = _MISSING  # type: ignore[arg-type]
+    help: str = _MISSING  # type: ignore[arg-type]
+    action: str | type[argparse.Action] = _MISSING  # type: ignore[arg-type]
+    choices: list[typing.Any] = _MISSING  # type: ignore[arg-type]
+    nargs: str | int = _MISSING  # type: ignore[arg-type]
 
 
 class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
