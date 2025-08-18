@@ -65,6 +65,31 @@ EASING_EPILOG = """\
 """
 
 
+class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
+    """Combine ArgumentDefaultsHelpFormatter and RawDescriptionHelpFormatter for argparse."""
+
+
+class TupleAction(argparse.Action):
+    """Custom action to convert a list of values into a tuple.
+
+    Used for arguments which utilize the `nargs` argument to
+    specify multiple values.
+    """
+
+    def __call__(
+        self,
+        _: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: typing.Sequence[typing.Any] | None,
+        __: str | None = None,
+    ) -> None:
+        """Convert a list of values into a tuple."""
+        if values is None:
+            setattr(namespace, self.dest, ())
+            return
+        setattr(namespace, self.dest, tuple(values))
+
+
 class PositiveInt:
     """Validate argument is a positive integer. n > 0.
 
@@ -376,10 +401,6 @@ class PositiveRatio:
             return float(arg)
         msg = f"invalid value: '{arg}' must be 0 < n <=1. Example: 0.5"
         raise argparse.ArgumentTypeError(msg)
-
-
-class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
-    """Combine ArgumentDefaultsHelpFormatter and RawDescriptionHelpFormatter for argparse."""
 
 
 class GradientDirection:
