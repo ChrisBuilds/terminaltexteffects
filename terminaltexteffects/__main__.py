@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import pkgutil
+import random
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -43,6 +44,13 @@ def main() -> None:
         required=True,
         dest="effect",
     )
+    subparsers.add_parser(
+        name="random_effect",
+        help=(
+            "Randomly select an effect to apply to the input text. All effect and effect-specific options are ignored."
+        ),
+        description=("Random effect."),
+    )
     effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]] = {}
     for module_info in pkgutil.iter_modules(
         terminaltexteffects.effects.__path__,
@@ -57,6 +65,12 @@ def main() -> None:
             effect_cmd, effect_class, config_class = module.get_effect_resources()
             effect_resource_map[effect_cmd] = (effect_class, config_class)
             config_class._populate_parser(subparsers)
+
+    # check for random_effect subparser selection and replace
+    # with an effect name prior to parsing, otherwise default
+    # config options are not processed
+    if "random_effect" in sys.argv:
+        sys.argv[sys.argv.index("random_effect")] = random.choice(list(effect_resource_map.keys()))
 
     args = parser.parse_args()
     if args.input_file:
@@ -73,8 +87,10 @@ def main() -> None:
     if not input_data.strip():
         print("NO INPUT.")
         return
-
-    effect_class, effect_config_class = effect_resource_map[args.effect]
+    if args.effect == "random":
+        effect_class, effect_config_class = random.choice(list(effect_resource_map.values()))
+    else:
+        effect_class, effect_config_class = effect_resource_map[args.effect]
     terminal_config = TerminalConfig._build_config(args)
     effect_config = effect_config_class._build_config(args)
     effect = effect_class(input_data, effect_config, terminal_config)
