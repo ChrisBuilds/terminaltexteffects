@@ -13,6 +13,7 @@
 #### New Engine Features (0.13.0)
 
 * Added `geometry.find_coords_on_rect()`, which returns coordinates along the perimeter of a rectangle given a center `Coord`, width, and height. Results are cached for performance.
+* Added `--terminal-background-color` to the `TerminalConfig` parser. This will enable terminal themes with background other than black to better display effects with fade in/out components.
 
 ---
 
