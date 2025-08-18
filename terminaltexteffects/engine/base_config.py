@@ -42,7 +42,7 @@ class ArgSpec:
     type: typing.Any = MISSING  # type: ignore[arg-type]
     required: bool = MISSING  # type: ignore[arg-type]
     help: str = MISSING  # type: ignore[arg-type]
-    action: str = MISSING  # type: ignore[arg-type]
+    action: str | type[argparse.Action] = MISSING  # type: ignore[arg-type]
     choices: list[typing.Any] = MISSING  # type: ignore[arg-type]
     nargs: str | int = MISSING  # type: ignore[arg-type]
 
