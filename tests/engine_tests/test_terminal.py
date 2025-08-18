@@ -121,11 +121,11 @@ def test_canvas_random_coord_outside_canvas():
 
 def test_terminal_init_no_config():
     terminal = Terminal("test")
-    assert terminal.config == TerminalConfig()
+    assert terminal.config == TerminalConfig._build_config()
 
 
 def test_terminal_init_with_config():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     config.frame_rate = 10
     terminal = Terminal("test", config=config)
     assert terminal.config.frame_rate == 10
@@ -137,7 +137,8 @@ def test_terminal_init_no_input():
 
 
 def test_terminal_init_ignore_terminal_dimensions():
-    config = TerminalConfig(ignore_terminal_dimensions=True)
+    config = TerminalConfig._build_config()
+    config.ignore_terminal_dimensions = True
     terminal = Terminal("test", config=config)
     terminal._terminal_height = 1
     terminal._terminal_width = 4
@@ -163,7 +164,8 @@ def test_terminal_preprocess_input_data_existing_color():
     # \033[48;5;68mf
     # \x1b[38;2;;255;mg
     # \x1b[0m
-    config = TerminalConfig(existing_color_handling="always")
+    config = TerminalConfig._build_config()
+    config.existing_color_handling = "always"
     terminal = Terminal(input_data="", config=config)
     input_data = "\x1b[38;2;255;0;0ma\x1b[38;2;0;255;0mb\x1b[48;2;0;0;255mc\x1b[0m\033[38;5;196md\033[48;5;106me\033[48;5;68mf\x1b[38;2;;255;mg\x1b[0m"
     chars = terminal._preprocess_input_data(input_data)[0]
@@ -192,7 +194,8 @@ def test_terminal_preprocess_input_data_existing_color():
 @pytest.mark.parametrize("anchor", ["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"])
 def test_terminal_calc_canvas_offsets(anchor, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(Terminal, "_get_terminal_dimensions", lambda _: (10, 10))
-    config = TerminalConfig(anchor_canvas=anchor)
+    config = TerminalConfig._build_config()
+    config.anchor_canvas = anchor
     terminal = Terminal(input_data="test", config=config)
     assert terminal._terminal_height == 10
     assert terminal._terminal_width == 10
@@ -213,7 +216,7 @@ def test_terminal_calc_canvas_offsets(anchor, monkeypatch: pytest.MonkeyPatch):
 
 def test_terminal_get_canvas_dimensions_exact(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(Terminal, "_get_terminal_dimensions", lambda _: (10, 10))
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     config.canvas_width = 5
     config.canvas_height = 5
     terminal = Terminal(input_data="test", config=config)
@@ -223,7 +226,7 @@ def test_terminal_get_canvas_dimensions_exact(monkeypatch: pytest.MonkeyPatch):
 
 def test_terminal_get_canvas_dimensions_match_terminal(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(Terminal, "_get_terminal_dimensions", lambda _: (10, 10))
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     config.canvas_width = 0
     config.canvas_height = 0
     terminal = Terminal(input_data="test", config=config)
@@ -233,7 +236,7 @@ def test_terminal_get_canvas_dimensions_match_terminal(monkeypatch: pytest.Monke
 
 def test_terminal_get_canvas_dimensions_match_input_text(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(Terminal, "_get_terminal_dimensions", lambda _: (10, 10))
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     config.canvas_width = -1
     config.canvas_height = -1
     terminal = Terminal(input_data="test", config=config)
@@ -243,7 +246,7 @@ def test_terminal_get_canvas_dimensions_match_input_text(monkeypatch: pytest.Mon
 
 def test_terminal_get_canvas_dimensions_match_input_text_wrap_text(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(Terminal, "_get_terminal_dimensions", lambda _: (10, 10))
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     config.canvas_width = -1
     config.canvas_height = -1
     config.wrap_text = True
@@ -256,7 +259,7 @@ def test_get_terminal_dimensions_raise_oserror(monkeypatch: pytest.MonkeyPatch):
     def raise_oserror():
         raise OSError
 
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="test", config=config)
     old_f = shutil.get_terminal_size
     monkeypatch.setattr(shutil, "get_terminal_size", raise_oserror)
@@ -278,27 +281,27 @@ def test_terminal_get_piped_input_is_not_tty(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_terminal_wrap_lines():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="testtesttest", config=config)
     lines = terminal._wrap_lines(terminal._preprocessed_character_lines, 4)
     assert len(lines) == 3
 
 
 def test_terminal_make_inner_fill_characters():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="test test test", config=config)
     assert len(terminal._inner_fill_characters) == 2
 
 
 def test_terminal_make_outer_fill_characters():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     config.canvas_width = 16
     terminal = Terminal(input_data="test test test", config=config)
     assert len(terminal._outer_fill_characters) == 2
 
 
 def test_terminal_add_character():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="test", config=config)
     terminal.add_character("a", Coord(0, 0))
     assert len(terminal.get_characters(added_chars=True)) == 5
@@ -311,7 +314,7 @@ def test_terminal_add_character():
     [Terminal.ColorSort.LEAST_TO_MOST, Terminal.ColorSort.MOST_TO_LEAST, Terminal.ColorSort.RANDOM],
 )
 def test_terminal_get_input_colors(sort):
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     input_data = "\x1b[38;2;255;0;0maaaaaaa\x1b[38;2;0;255;0mb\x1b[48;2;0;0;255mcccc"
     terminal = Terminal(input_data=input_data, config=config)
     colors = terminal.get_input_colors(sort=sort)
@@ -324,7 +327,7 @@ def test_terminal_get_input_colors(sort):
 
 
 def test_terminal_get_input_colors_no_colors():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     input_data = "test"
     terminal = Terminal(input_data=input_data, config=config)
     colors = terminal.get_input_colors()
@@ -332,7 +335,7 @@ def test_terminal_get_input_colors_no_colors():
 
 
 def test_terminal_get_input_colors_invalid_sort():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     input_data = "\x1b[38;2;255;0;0maaaaaaa\x1b[38;2;0;255;0mb\x1b[48;2;0;0;255mcccc"
     terminal = Terminal(input_data=input_data, config=config)
     with pytest.raises(InvalidColorSortError):
@@ -344,7 +347,7 @@ def test_terminal_get_input_colors_invalid_sort():
 @pytest.mark.parametrize("outer_fill_chars", [True, False])
 @pytest.mark.parametrize("added_chars", [True, False])
 def test_terminal_get_characters(input_chars, inner_fill_chars, outer_fill_chars, added_chars):
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     config.canvas_width = 6
     config.canvas_height = 2
     terminal = Terminal(input_data="abcd\nef gh", config=config)
@@ -380,7 +383,7 @@ def test_terminal_get_characters(input_chars, inner_fill_chars, outer_fill_chars
     ],
 )
 def test_terminal_get_characters_with_character_sort(sort):
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)
     chars = terminal.get_characters(sort=sort)
     if sort == Terminal.CharacterSort.BOTTOM_TO_TOP_LEFT_TO_RIGHT:
@@ -406,7 +409,7 @@ def test_terminal_get_characters_with_character_sort(sort):
 
 
 def test_terminal_get_characters_invalid_character_sort():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)
     with pytest.raises(InvalidCharacterSortError):
         terminal.get_characters(sort="invalid")  # type: ignore[arg-type] # testing invalid sort
@@ -417,7 +420,7 @@ def test_terminal_get_characters_invalid_character_sort():
 @pytest.mark.parametrize("outer_fill_chars", [True, False])
 @pytest.mark.parametrize("added_chars", [True, False])
 def test_terminal_get_characters_grouped(input_chars, inner_fill_chars, outer_fill_chars, added_chars):
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     config.canvas_width = 7
     terminal = Terminal(input_data="abcde\nfg hij\nklmno", config=config)
     terminal.add_character("a", Coord(0, 0))
@@ -462,7 +465,7 @@ def test_terminal_get_characters_grouped_with_grouping(grouping):
     # abcde
     # fghij
     # klmno
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)
     terminal.add_character("a", Coord(0, 0))
     chars = terminal.get_characters_grouped(grouping=grouping)
@@ -499,14 +502,14 @@ def test_terminal_get_characters_grouped_with_grouping(grouping):
 
 
 def test_terminal_get_characters_grouped_invalid_grouping():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)
     with pytest.raises(InvalidCharacterGroupError):
         terminal.get_characters_grouped(grouping="invalid")  # type: ignore[arg-type] # testing invalid group
 
 
 def test_terminal_get_character_by_input_coord_valid():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd", config=config)
     char = terminal.get_character_by_input_coord(Coord(1, 1))
     assert char is not None
@@ -514,7 +517,7 @@ def test_terminal_get_character_by_input_coord_valid():
 
 
 def test_terminal_get_character_by_input_coord_invalid():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd", config=config)
     char = terminal.get_character_by_input_coord(Coord(1, 2))
     assert char is None
@@ -522,7 +525,7 @@ def test_terminal_get_character_by_input_coord_invalid():
 
 @pytest.mark.parametrize("visiblity", [True, False])
 def test_terminal_set_character_visibility(visiblity):
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd", config=config)
     assert len(terminal._visible_characters) == 0
     c = terminal.get_character_by_input_coord(Coord(1, 1))
@@ -534,7 +537,7 @@ def test_terminal_set_character_visibility(visiblity):
 
 
 def test_terminal_get_formatted_output_string():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd", config=config)
     output_string = terminal.get_formatted_output_string()
     assert output_string == "    "
@@ -544,7 +547,7 @@ def test_terminal_get_formatted_output_string():
 
 
 def test_terminal_update_terminal_state():
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd", config=config)
     terminal._update_terminal_state()
     assert terminal.terminal_state == ["    "]
@@ -554,7 +557,7 @@ def test_terminal_update_terminal_state():
 
 
 def test_terminal_prep_canvas(capsys):
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
     terminal.prep_canvas()
     captured = capsys.readouterr()
@@ -562,7 +565,7 @@ def test_terminal_prep_canvas(capsys):
 
 
 def test_terminal_restore_cursor(capsys):
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
     terminal.restore_cursor()
     captured = capsys.readouterr()
@@ -570,7 +573,7 @@ def test_terminal_restore_cursor(capsys):
 
 
 def test_terminal_restore_cursor_end_symbol(capsys):
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
     terminal.restore_cursor(end_symbol="test")
     captured = capsys.readouterr()
@@ -578,7 +581,7 @@ def test_terminal_restore_cursor_end_symbol(capsys):
 
 
 def test_terminal_print(capsys):
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
     terminal.print("abcd\nefgh\nijkl")
     captured = capsys.readouterr()
@@ -592,7 +595,7 @@ def test_terminal_enforce_framerate(monkeypatch: pytest.MonkeyPatch):
         nonlocal slept
         slept = True
 
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
     time.sleep(0.01)
     monkeypatch.setattr(time, "sleep", patched_sleep)
@@ -603,7 +606,7 @@ def test_terminal_enforce_framerate(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_terminal_move_cursor_to_top(capsys):
-    config = TerminalConfig()
+    config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
     terminal.move_cursor_to_top()
     captured = capsys.readouterr()
