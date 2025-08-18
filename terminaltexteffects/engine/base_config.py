@@ -13,6 +13,8 @@ import argparse
 import typing
 from dataclasses import dataclass, fields
 
+from terminaltexteffects.utils.argvalidators import CustomFormatter
+
 MISSING = object()
 
 
@@ -64,7 +66,8 @@ class BaseConfig:
         configure the subparser defaults.
         """
         if isinstance(parser, argparse._SubParsersAction):
-            parser = parser.add_parser(**vars(cls.parser_spec))  # type: ignore[arg-type]
+            parser = parser.add_parser(**vars(cls.parser_spec))  # pyright: ignore[reportAttributeAccessIssue]
+            parser.formatter_class = CustomFormatter  # pyright: ignore[reportAttributeAccessIssue]
 
         assert isinstance(parser, argparse.ArgumentParser)
         for field in fields(cls):
