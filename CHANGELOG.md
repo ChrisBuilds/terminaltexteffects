@@ -10,9 +10,15 @@
 
 ---
 
+#### New Effects (0.12.0)
+
+* Thunderstorm - Rain falls across the canvas. Lightning strikes randomly around the canvas. Lightning flashes after reaching the bottom of the canvas, lighting up the text characters. Sparks explode from lightning impact. Text characters glow when lightning travels through them.
+
 #### New Engine Features (0.13.0)
 
 * Added `geometry.find_coords_on_rect()`, which returns coordinates along the perimeter of a rectangle given a center `Coord`, width, and height. Results are cached for performance.
+* `Coord` objects can be unpacked into `(column, row)` tuples for multiple assignment.
+* `motion.activate_path()` and `animation.activate_scene` accept `path_id`/`scene_id` strings OR `Path`/`Scene` instances. The corresponding `Path`/`Scene` must exist.
 
 ---
 
