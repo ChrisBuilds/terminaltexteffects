@@ -87,10 +87,8 @@ def main() -> None:
     if not input_data.strip():
         print("NO INPUT.")
         return
-    if args.effect == "random":
-        effect_class, effect_config_class = random.choice(list(effect_resource_map.values()))
-    else:
-        effect_class, effect_config_class = effect_resource_map[args.effect]
+
+    effect_class, effect_config_class = effect_resource_map[args.effect]
     terminal_config = TerminalConfig._build_config(args)
     effect_config = effect_config_class._build_config(args)
     effect = effect_class(input_data, effect_config, terminal_config)
