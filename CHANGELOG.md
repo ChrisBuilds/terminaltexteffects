@@ -16,6 +16,17 @@
 
 ---
 
+### Changes (0.13.0)
+
+---
+
+#### Engine Changes (0.13.0)
+
+* New BaseConfig class supplies class methods for populating argument parsers and building the config from parsed arguments or the argument specifications.
+* Removed argsdataclass module.
+* BaseEffect constructor accepts effect/terminal config arguments. Previously, the effect constructor would build a TerminalConfig which would be replaced when
+  running tte via command-line. The new design no longer builds an unnecessary TerminalConfig.
+
 ### Bug Fixes (0.13.0)
 
 ---
