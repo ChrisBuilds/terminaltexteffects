@@ -447,8 +447,10 @@ class Motion:
                 paths[0],
             )
 
-    def activate_path(self, path: Path) -> None:
+    def activate_path(self, path: Path | str) -> None:
         """Activates the first waypoint in the given path and updates the path's properties accordingly.
+
+        If the provided `path` arg is not a `Path` object, it must be a `path_id` string.
 
         This method sets the active path to the given path, calculates the distance to the first waypoint,
         and updates the total distance of the path. If the path has an origin segment, it removes it from
@@ -461,9 +463,11 @@ class Motion:
         for the character.
 
         Args:
-            path (Path): The path to activate.
+            path (Path | str): The path to activate. Must be the Path itself, or the Path's ID.
 
         """
+        if isinstance(path, str):
+            path = self.query_path(path)
         if not path.waypoints:
             raise ActivateEmptyPathError(path.path_id)
         self.active_path = path
