@@ -20,6 +20,7 @@ from __future__ import annotations
 import functools
 import math
 from dataclasses import dataclass
+from typing import Iterator
 
 
 @dataclass(eq=True, frozen=True)
@@ -31,6 +32,16 @@ class Coord:
         row (int): row value
 
     """
+
+    def __iter__(self) -> Iterator[int]:
+        """Allow tuple unpacking by yielding the column and row.
+
+        Yields:
+            column, row: yield the column, followed by the row
+
+        """
+        yield self.column
+        yield self.row
 
     column: int
     row: int
