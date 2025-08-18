@@ -13,6 +13,8 @@ import argparse
 import typing
 from dataclasses import dataclass, fields
 
+from terminaltexteffects.utils.argvalidators import CustomFormatter
+
 MISSING = object()
 
 
@@ -40,7 +42,7 @@ class ArgSpec:
     type: typing.Any = MISSING  # type: ignore[arg-type]
     required: bool = MISSING  # type: ignore[arg-type]
     help: str = MISSING  # type: ignore[arg-type]
-    action: str = MISSING  # type: ignore[arg-type]
+    action: str | type[argparse.Action] = MISSING  # type: ignore[arg-type]
     choices: list[typing.Any] = MISSING  # type: ignore[arg-type]
     nargs: str | int = MISSING  # type: ignore[arg-type]
 
@@ -64,7 +66,8 @@ class BaseConfig:
         configure the subparser defaults.
         """
         if isinstance(parser, argparse._SubParsersAction):
-            parser = parser.add_parser(**vars(cls.parser_spec))  # type: ignore[arg-type]
+            parser = parser.add_parser(**vars(cls.parser_spec))  # pyright: ignore[reportAttributeAccessIssue]
+            parser.formatter_class = CustomFormatter  # pyright: ignore[reportAttributeAccessIssue]
 
         assert isinstance(parser, argparse.ArgumentParser)
         for field in fields(cls):

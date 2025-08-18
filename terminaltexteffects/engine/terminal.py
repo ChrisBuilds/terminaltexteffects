@@ -91,6 +91,18 @@ class TerminalConfig(BaseConfig):
 
     "bool : Disable all colors in the effect."
 
+    terminal_background_color: Color = ArgSpec(
+        name="--terminal-background-color",
+        type=argvalidators.ColorArg.type_parser,
+        default=Color("000000"),
+        metavar=argvalidators.ColorArg.METAVAR,
+        help=(
+            "The background color of you terminal. "
+            "Used to determine the appropriate color for fade-in/out within effects."
+        ),
+    )  # type: ignore[assignment]
+    "Color: User-define background color of the terminal."
+
     existing_color_handling: Literal["always", "dynamic", "ignore"] = ArgSpec(
         name="--existing-color-handling",
         default="ignore",

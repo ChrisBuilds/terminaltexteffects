@@ -32,9 +32,9 @@ class BeamsConfig(BaseConfig):
     """Configuration for the Beams effect.
 
     Attributes:
-        beam_row_symbols (tuple[str, ...] | str): Symbols to use for the beam effect when moving along a row. Strings
+        beam_row_symbols (tuple[str, ...]): Symbols to use for the beam effect when moving along a row. Strings
             will be used in sequence to create an animation.
-        beam_column_symbols (tuple[str, ...] | str): Symbols to use for the beam effect when moving along a column.
+        beam_column_symbols (tuple[str, ...]): Symbols to use for the beam effect when moving along a column.
             Strings will be used in sequence to create an animation.
         beam_delay (int): Number of frames to wait before adding the next group of beams. Beams are added in groups
             of size random(1, 5). Valid values are n > 0.
@@ -43,13 +43,13 @@ class BeamsConfig(BaseConfig):
             Valid values are n > 0.
         beam_gradient_stops (tuple[tte.Color, ...]): Tuple of colors for the beam, a gradient will be created between
             the colors.
-        beam_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+        beam_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will
             create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
             Valid values are n > 0.
         beam_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient
             animation. Valid values are n > 0.
         final_gradient_stops (tuple[tte.Color, ...]): Tuple of colors for the wipe gradient.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will
             create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
             Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the
@@ -73,11 +73,12 @@ class BeamsConfig(BaseConfig):
         ),
     )
 
-    beam_row_symbols: tuple[str, ...] | str = ArgSpec(
+    beam_row_symbols: tuple[str, ...] = ArgSpec(
         name="--beam-row-symbols",
         type=argvalidators.Symbol.type_parser,
         nargs="+",
         default=("▂", "▁", "_"),
+        action=argvalidators.TupleAction,
         metavar=argvalidators.Symbol.METAVAR,
         help=(
             "Symbols to use for the beam effect when moving along a row. "
@@ -86,14 +87,15 @@ class BeamsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
 
     (
-        "tuple[str, ...] | str : Symbols to use for the beam effect when moving along a row. "
+        "tuple[str, ...]: Symbols to use for the beam effect when moving along a row. "
         "Strings will be used in sequence to create an animation."
     )
 
-    beam_column_symbols: tuple[str, ...] | str = ArgSpec(
+    beam_column_symbols: tuple[str, ...] = ArgSpec(
         name="--beam-column-symbols",
         type=argvalidators.Symbol.type_parser,
         nargs="+",
+        action=argvalidators.TupleAction,
         default=("▌", "▍", "▎", "▏"),
         metavar=argvalidators.Symbol.METAVAR,
         help=(
@@ -103,7 +105,7 @@ class BeamsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
 
     (
-        "tuple[str, ...] | str : Symbols to use for the beam effect when moving along a column. "
+        "tuple[str, ...]: Symbols to use for the beam effect when moving along a column. "
         "Strings will be used in sequence to create an animation."
     )
 
@@ -147,17 +149,19 @@ class BeamsConfig(BaseConfig):
         name="--beam-gradient-stops",
         type=argvalidators.ColorArg.type_parser,
         nargs="+",
+        action=argvalidators.TupleAction,
         default=(tte.Color("ffffff"), tte.Color("00D1FF"), tte.Color("8A008A")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors.",
     )  # pyright: ignore[reportAssignmentType]
 
-    "tuple[tte.Color, ...] : Tuple of colors for the beam, a gradient will be created between the colors."
+    "tuple[tte.Color, ...]: Tuple of colors for the beam, a gradient will be created between the colors."
 
-    beam_gradient_steps: tuple[int, ...] | int = ArgSpec(
+    beam_gradient_steps: tuple[int, ...] = ArgSpec(
         name="--beam-gradient-steps",
         type=argvalidators.PositiveInt.type_parser,
         nargs="+",
+        action=argvalidators.TupleAction,
         default=(2, 8),
         metavar=argvalidators.PositiveInt.METAVAR,
         help=(
@@ -168,7 +172,7 @@ class BeamsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
 
     (
-        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. "
+        "tuple[int, ...]: Int or Tuple of ints for the number of gradient steps to use. "
         "More steps will create a smoother and longer gradient animation. "
         "Steps are paired with the colors in final-gradient-stops."
     )
@@ -187,17 +191,19 @@ class BeamsConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argvalidators.ColorArg.type_parser,
         nargs="+",
+        action=argvalidators.TupleAction,
         default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("ffffff")),
         metavar=argvalidators.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # pyright: ignore[reportAssignmentType]
 
-    "tuple[tte.Color, ...] : Tuple of colors for the wipe gradient."
+    "tuple[tte.Color, ...]: Tuple of colors for the wipe gradient."
 
-    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+    final_gradient_steps: tuple[int, ...] = ArgSpec(
         name="--final-gradient-steps",
         type=argvalidators.PositiveInt.type_parser,
         nargs="+",
+        action=argvalidators.TupleAction,
         default=12,
         metavar=argvalidators.PositiveInt.METAVAR,
         help=(
@@ -208,7 +214,7 @@ class BeamsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
 
     (
-        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. "
+        "tuple[int, ...]: Int or Tuple of ints for the number of gradient steps to use. "
         "More steps will create a smoother and longer gradient animation. "
         "Steps are paired with the colors in final-gradient-stops."
     )

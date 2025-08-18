@@ -1,6 +1,9 @@
-"""Effect Description.
+"""Create a Thunderstorm in the terminal.
 
 Classes:
+    - Thunderstorm: Effect class for the Thunderstorm effect.
+    - ThunderstormConfig: Configuration for the Thunderstorm effect.
+    - ThunderstormIterator: Iterates over the effect. Does not normally need to be called directly.
 
 """
 
@@ -35,50 +38,117 @@ class ThunderstormConfig(BaseConfig):
 
     parser_spec: ParserSpec = ParserSpec(
         name="thunderstorm",
-        help="effect_description",
-        description="effect_description",
-        epilog=f"""{argvalidators.EASING_EPILOG}
-        """,
+        help="Create a thunderstorm in the terminal.",
+        description="thunderstorm | Create a thunderstorm in the terminal.",
+        epilog=(
+            "terminaltexteffects thunderstorm --lightning-color 68A3E8 "
+            "--glowing-text-color EF5411 --text-glow-time 10 "
+            "--raindrop-symbols '\\' '.' ',' --spark-symbols '*' '.' '`' "
+            "--spark-glow-color ff4d00 --spark-glow-time 30 "
+            "--final-gradient-stops 8A008A 00D1FF FFFFFF "
+            "--final-gradient-steps 12 --final-gradient-frames 5 "
+            "--final-gradient-direction vertical"
+        ),
     )
 
-    color_single: tte.Color = ArgSpec(
-        name="--color-single",
+    lightning_color: tte.Color = ArgSpec(
+        name="--lightning-color",
         type=argvalidators.ColorArg.type_parser,
-        default=tte.Color(0),
+        default=tte.Color("68A3E8"),
         metavar=argvalidators.ColorArg.METAVAR,
-        help="Color for the ___.",
-    )  # type: ignore[assignment]
-    "Color: Color for the ___."
+        help="Color for the lightning strike.",
+    )  # pyright: ignore[reportAssignmentType]
+    "Color: Color for the lightning strike."
+
+    glowing_text_color: tte.Color = ArgSpec(
+        name="--glowing-text-color",
+        type=argvalidators.ColorArg.type_parser,
+        default=tte.Color("EF5411"),
+        metavar=argvalidators.ColorArg.METAVAR,
+        help="Color for the text when glowing after a lightning strike.",
+    )  # pyright: ignore[reportAssignmentType]
+    "Color: Color for the text when glowing after a lightning strike."
+
+    text_glow_time: int = ArgSpec(
+        name="--text-glow-time",
+        type=argvalidators.PositiveInt.type_parser,
+        default=10,
+        metavar=argvalidators.PositiveInt.METAVAR,
+        help="Duration, in number of frames, for the glowing/cooling animation for post-lightning text glow.",
+    )  # pyright: ignore[reportAssignmentType]
+    "int: Duration, in number of frames, for the glowing/cooling animation for post-lightning text glow."
+
+    raindrop_symbols: tuple[str, ...] = ArgSpec(
+        name="--raindrop-symbols",
+        type=argvalidators.Symbol.type_parser,
+        default=("\\", ".", ","),
+        nargs="+",
+        action=argvalidators.TupleAction,
+        metavar=argvalidators.Symbol.METAVAR,
+        help="Symbols to use for the raindrops.",
+    )  # pyright: ignore[reportAssignmentType]
+    "tuple[str, ...]: Symbols to use for the raindrops."
+
+    spark_symbols: tuple[str, ...] = ArgSpec(
+        name="--spark-symbols",
+        type=argvalidators.Symbol.type_parser,
+        default=("*", ".", "'"),
+        nargs="+",
+        action=argvalidators.TupleAction,
+        metavar=argvalidators.Symbol.METAVAR,
+        help="Symbols to use for the lightning impact sparks.",
+    )  # pyright: ignore[reportAssignmentType]
+    "tuple[str, ...]: Symbols to use for the lightning impact sparks."
+
+    spark_glow_color: tte.Color = ArgSpec(
+        name="--spark-glow-color",
+        type=argvalidators.ColorArg.type_parser,
+        default=tte.Color("ff4d00"),
+        metavar=argvalidators.ColorArg.METAVAR,
+        help="Color for the spark glow after a lightning strike.",
+    )  # pyright: ignore[reportAssignmentType]
+    "Color: Color for the spark glow after a lightning strike."
+
+    spark_glow_time: int = ArgSpec(
+        name="--spark-glow-time",
+        type=argvalidators.PositiveInt.type_parser,
+        default=30,
+        metavar=argvalidators.PositiveInt.METAVAR,
+        help="Duration, in number of frames, for the cooling animation for post-lightning sparks.",
+    )  # pyright: ignore[reportAssignmentType]
+    "int: Duration, in number of frames, for the cooling animation for post-lightning sparks."
 
     final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
         name="--final-gradient-stops",
         type=argvalidators.ColorArg.type_parser,
         nargs="+",
+        action=argvalidators.TupleAction,
         default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("FFFFFF")),
         metavar=argvalidators.ColorArg.METAVAR,
         help=(
             "Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
             "If only one color is provided, the characters will be displayed in that color."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...]: Space separated, unquoted, list of colors for the character gradient "
         "(applied across the canvas). If only one color is provided, the characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+    final_gradient_steps: tuple[int, ...] = ArgSpec(
         name="--final-gradient-steps",
         type=argvalidators.PositiveInt.type_parser,
         nargs="+",
-        default=12,
+        default=(12,),
+        action=argvalidators.TupleAction,
         metavar=argvalidators.PositiveInt.METAVAR,
         help=(
             "Space separated, unquoted, list of the number of gradient steps to use. More steps will "
             "create a smoother and longer gradient animation."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
-        "tuple[int, ...] | int: Space separated, unquoted, list of the number of gradient steps to use. More "
+        "tuple[int, ...]: Space separated, unquoted, list of the number of gradient steps to use. More "
         "steps will create a smoother and longer gradient animation."
     )
 
@@ -88,7 +158,7 @@ class ThunderstormConfig(BaseConfig):
         default=5,
         metavar=argvalidators.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int: Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
     final_gradient_direction: tte.Gradient.Direction = ArgSpec(
@@ -97,25 +167,8 @@ class ThunderstormConfig(BaseConfig):
         default=tte.Gradient.Direction.VERTICAL,
         metavar=argvalidators.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    movement_speed: float = ArgSpec(
-        name="--movement-speed",
-        type=argvalidators.PositiveFloat.type_parser,
-        default=1,
-        metavar=argvalidators.PositiveFloat.METAVAR,
-        help="Speed of the ___.",
-    )  # type: ignore[assignment]
-    "float: Speed of the ___."
-
-    easing: tte.easing.EasingFunction = ArgSpec(
-        name="--easing",
-        default=tte.easing.in_out_sine,
-        type=argvalidators.Ease.type_parser,
-        help="Easing function to use for character movement.",
-    )  # type: ignore[assignment]
-    "easing.EasingFunction: Easing function to use for character movement."
 
 
 class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
@@ -139,7 +192,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         self.pending_sparks: list[EffectCharacter] = []
         self.available_sparks: list[EffectCharacter] = []
         self.pending_glow_chars: list[EffectCharacter] = []
-        self.striking: bool = False
+        self.strike_in_progress: bool = False
         self.flashing: bool = False
         self.strike_branch_chance = 0.06
         self.phase: str = "pre-storm"
@@ -167,10 +220,10 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 brightness=0.45,
             )
             # post-strike glow and cool scene
-            cool_gradient = tte.Gradient(tte.Color("EF5411"), faded_color, steps=7)
-            cool_scn = text_char.animation.new_scene(scene_id="cool")
-            for color in cool_gradient:
-                cool_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=10)
+            glow_gradient = tte.Gradient(self.config.glowing_text_color, faded_color, steps=7)
+            glow_scn = text_char.animation.new_scene(scene_id="glow")
+            for color in glow_gradient:
+                glow_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=10)
 
             # fade before storm scene
             fade_gradient = tte.Gradient(final_gradient_mapping[text_char.input_coord], faded_color, steps=7)
@@ -203,7 +256,8 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         )
 
     def set_strike_in_progress_false(self, *_: typing.Any) -> None:
-        self.striking = False
+        """Reset the strike in progress flag."""
+        self.strike_in_progress = False
 
     def make_char_glow(self, strike_char: tte.EffectCharacter) -> None:
         """Activate the 'cool' scene on any text character behind a strike character.
@@ -214,10 +268,18 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         """
         input_char = self.terminal.get_character_by_input_coord(strike_char.motion.current_coord)
         if input_char and input_char.is_visible:
-            input_char.animation.activate_scene("cool")
+            input_char.animation.activate_scene("glow")
             self.pending_glow_chars.append(input_char)
 
     def get_next_strike_char(self) -> tte.EffectCharacter:
+        """Get the next available strike character.
+
+        If no characters are available, new ones will be created.
+
+        Returns:
+            tte.EffectCharacter: The next available strike character.
+
+        """
         if not self.available_strike_chars:
             self.build_strike_characters(20)
         strike_char = self.available_strike_chars.pop()
@@ -226,6 +288,14 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         return strike_char
 
     def get_next_spark_char(self) -> tte.EffectCharacter:
+        """Get the next available spark character.
+
+        If no characters are available, new ones will be created.
+
+        Returns:
+            tte.EffectCharacter: The next available spark character.
+
+        """
         if not self.available_sparks:
             self.build_spark_characters(20)
         spark_char = self.available_sparks.pop()
@@ -234,6 +304,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         return spark_char
 
     def setup_sparks_for_impact(self) -> None:
+        """Configure sparks for the impact of a lightning strike."""
         # setup sparks at lightning strike bottom impact
         last_strike_char = self.pending_strike_chars[-1]
         for _ in range(random.randint(6, 10)):
@@ -269,11 +340,12 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 target=tte.EventHandler.Callback(lambda c: self.available_sparks.append(c)),
             )
 
-            spark_char.animation.activate_scene("cool")
+            spark_char.animation.activate_scene("glow")
             spark_char.motion.activate_path(spark_path)
             self.pending_sparks.append(spark_char)
 
     def setup_lightning_strike(self, branch_neighbor: tte.EffectCharacter | None = None) -> None:
+        """Build a lightning strike effect."""
         if branch_neighbor is not None:
             column, row = branch_neighbor.motion.current_coord
             row = branch_neighbor.motion.current_coord.row
@@ -300,7 +372,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
 
             strike_char = self.get_next_strike_char()
             strike_char.motion.set_coordinate(tte.Coord(column, row))
-            strike_char.animation.set_appearance(symbol=symbol, colors=tte.ColorPair(fg=tte.Color("68A3E8")))
+            strike_char.animation.set_appearance(symbol=symbol, colors=tte.ColorPair(fg=self.config.lightning_color))
             row -= 1
             if symbol == "\\":
                 column += 1
@@ -316,10 +388,11 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         self.setup_sparks_for_impact()
 
     def build_raindrop_characters(self, count: int = 50) -> None:
+        """Build raindrop characters."""
         for _ in range(count):
             spawn_column = random.randint(1 - self.terminal.canvas.top, self.terminal.canvas.right)
             rain_char = self.terminal.add_character(
-                symbol=random.choice(("\\", ".", ",")),
+                symbol=random.choice(self.config.raindrop_symbols),
                 coord=tte.Coord(column=spawn_column - 1, row=self.terminal.canvas.top + 1),
             )
             rain_char.layer = 1
@@ -344,20 +417,30 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             self.rain_drops.append(rain_char)
 
     def build_spark_characters(self, count: int = 100) -> None:
-        spark_gradient = tte.Gradient(tte.Color("ff4d00"), tte.Color("000000"), steps=7)
+        """Build spark characters for the lightning strike effect."""
+        spark_gradient = tte.Gradient(
+            self.config.spark_glow_color,
+            self.terminal.config.terminal_background_color,
+            steps=7,
+        )
         for _ in range(count):
             spark = self.terminal.add_character(
-                symbol=random.choice(("*", ".", "'")),
+                symbol=random.choice(self.config.spark_symbols),
                 coord=tte.Coord(1, 1),
             )
             spark.layer = 2
 
-            spark_scn = spark.animation.new_scene(scene_id="cool", ease=tte.easing.in_circ)
+            spark_scn = spark.animation.new_scene(scene_id="glow", ease=tte.easing.in_circ)
             for color in spark_gradient:
-                spark_scn.add_frame(symbol=spark.input_symbol, colors=tte.ColorPair(fg=color), duration=30)
+                spark_scn.add_frame(
+                    symbol=spark.input_symbol,
+                    colors=tte.ColorPair(fg=color),
+                    duration=self.config.spark_glow_time,
+                )
             self.available_sparks.append(spark)
 
     def build_strike_characters(self, count: int = 200) -> None:
+        """Build strike characters for the lightning strike effect."""
         for _ in range(count):
             strike_char = self.terminal.add_character(
                 symbol="|",
@@ -368,7 +451,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
     def lightning_strike(self) -> None:
         """Trigger a lightning strike effect."""
         self.setup_lightning_strike()
-        strike_base_color = tte.Color("68A3E8")
+        strike_base_color = self.config.lightning_color
         strike_flash_color = tte.Animation.adjust_color_brightness(strike_base_color, 1.7)
         strike_gradient = tte.Gradient(
             strike_base_color,
@@ -376,7 +459,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             steps=7,
             loop=True,
         )
-        fade_gradient = tte.Gradient(strike_base_color, tte.Color("000000"), steps=6)
+        fade_gradient = tte.Gradient(strike_base_color, self.terminal.config.terminal_background_color, steps=6)
         layer = 1
         flash_ease = tte.easing.make_easing(0, 1.6, 1, random.uniform(-0.6, 0.4))
         for strike_char in self.pending_strike_chars:
@@ -425,6 +508,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             flash_scene.ease = flash_ease
 
     def step_lightning_strike(self) -> None:
+        """Progress the lightning strike effect."""
         if self.strike_progression_delay:
             self.strike_progression_delay -= 1
             return
@@ -464,6 +548,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                         self.active_characters.add(text_char)
 
     def rain(self) -> None:
+        """Handle the rain effect."""
         if self.rain_drops:
             if not self.delay:
                 for _ in range(random.randint(1, 6)):
@@ -480,6 +565,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 self.delay -= 1
 
     def pre_storm_text_fade(self) -> None:
+        """Activate the fade effect for all text characters before the storm."""
         for char in self.terminal.get_characters():
             char.animation.activate_scene("fade")
             self.active_characters.add(char)
@@ -492,10 +578,10 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 self.phase = "waiting"
             elif self.phase == "storm":
                 self.rain()
-                if not self.striking and random.random() < 0.004:
-                    self.striking = True
+                if not self.strike_in_progress and random.random() < 0.004:
+                    self.strike_in_progress = True
                     self.lightning_strike()
-                if self.striking:
+                if self.strike_in_progress:
                     self.step_lightning_strike()
 
                 for char in self.pending_glow_chars:
@@ -506,7 +592,11 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
 
 
 class Thunderstorm(BaseEffect[ThunderstormConfig]):
-    """Effect description."""
+    """Create a thunderstorm in the terminal.
+
+    Rain falls across the canvas. Lightning strikes illuminate the scene and
+    cause sparks at the point of impact. Characters struck by lightning glow.
+    """
 
     @property
     def _config_cls(self) -> type[ThunderstormConfig]:
