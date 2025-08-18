@@ -10,7 +10,7 @@
 
 ---
 
-#### New Effects (0.12.0)
+#### New Effects (0.13.0)
 
 * Thunderstorm - Rain falls across the canvas. Lightning strikes randomly around the canvas. Lightning flashes after reaching the bottom of the canvas, lighting up the text characters. Sparks explode from lightning impact. Text characters glow when lightning travels through them.
 
