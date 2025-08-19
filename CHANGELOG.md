@@ -19,8 +19,6 @@
 #### New Engine Features (0.13.0)
 
 * Added `geometry.find_coords_on_rect()`, which returns coordinates along the perimeter of a rectangle given a center `Coord`, width, and height. Results are cached for performance.
-* `Coord` objects can be unpacked into `(column, row)` tuples for multiple assignment.
-* `motion.activate_path()` and `animation.activate_scene` accept `path_id`/`scene_id` strings OR `Path`/`Scene` instances. The corresponding `Path`/`Scene` must exist.
 * Added `--terminal-background-color` to the `TerminalConfig` parser. This will enable terminal themes with background other than black to better display effects with fade in/out components.
 
 ---
@@ -41,7 +39,11 @@
 
 #### Engine Changes (0.13.0)
 
-* `Animation.set_appearance()` `symbol` argument signature changed from `str` to `str | None`, defaulting to the character's `input_symbol` if not provided.
+* `animation.set_appearance()` `symbol` argument signature changed from `str` to `str | None`, defaulting to the character's `input_symbol` if not provided.
+* `Coord` objects can be unpacked into `(column, row)` tuples for multiple assignment.
+* `motion.activate_path()` and `animation.activate_scene()` accept `path_id`/`scene_id` strings OR `Path`/`Scene` instances. The corresponding `Path`/`Scene` must exist or  a `SceneNotFoundError`/`PathNotFoundError` will be raised.
+* `motion.query_path()` no longer raises   `PathNotFoundError` exception when the provided `path_id` does not exist. Instead, it will return `None`.
+* `animation.query_scene()` no longer raises a `SceneNotFoundError` exception when the provided `scene_id` does not exist. Instead, it will return `None`.
 
 ### Bug Fixes (0.13.0)
 
