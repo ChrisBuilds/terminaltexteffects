@@ -14,6 +14,8 @@
 
 * Thunderstorm - Rain falls across the canvas. Lightning strikes randomly around the canvas. Lightning flashes after reaching the bottom of the canvas, lighting up the text characters. Sparks explode from lightning impact. Text characters glow when lightning travels through them.
 
+---
+
 #### New Engine Features (0.13.0)
 
 * Added `geometry.find_coords_on_rect()`, which returns coordinates along the perimeter of a rectangle given a center `Coord`, width, and height. Results are cached for performance.
@@ -22,6 +24,24 @@
 * Added `--terminal-background-color` to the `TerminalConfig` parser. This will enable terminal themes with background other than black to better display effects with fade in/out components.
 
 ---
+
+#### New Application Features (0.13.0)
+
+* Support for random effect selection from the command-line. Use effect named `random_effect`. Global configuration options will apply.
+
+### Changes (0.13.0)
+
+---
+
+#### Effects Changes (0.13.0)
+
+* Blackhole - Initial consumption motion modified to create the apperance of an gravitational-wave propagating across the canvas.
+
+---
+
+#### Engine Changes (0.13.0)
+
+* `Animation.set_appearance()` `symbol` argument signature changed from `str` to `str | None`, defaulting to the character's `input_symbol` if not provided.
 
 ### Bug Fixes (0.13.0)
 
