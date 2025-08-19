@@ -576,23 +576,17 @@ class Animation:
         self.scenes[scene_id] = new_scene
         return new_scene
 
-    def query_scene(self, scene_id: str) -> Scene:
+    def query_scene(self, scene_id: str) -> Scene | None:
         """Return a Scene from the Animation. If the scene doesn't exist, raises a ValueError.
 
         Args:
             scene_id (str): the ID of the Scene
 
-        Raises:
-            ValueError: if the Scene does not exist
-
         Returns:
-            Scene: the Scene
+            Scene | None: the Scene
 
         """
-        scene = self.scenes.get(scene_id, None)
-        if not scene:
-            raise SceneNotFoundError(scene_id)
-        return scene
+        return self.scenes.get(scene_id, None)
 
     def active_scene_is_complete(self) -> bool:
         """Return whether the active scene is complete.
@@ -605,17 +599,21 @@ class Animation:
         """
         return bool(not self.active_scene or not self.active_scene.frames or self.active_scene.is_looping)
 
-    def set_appearance(self, symbol: str, colors: graphics.ColorPair | None = None) -> None:
+    def set_appearance(self, symbol: str | None = None, colors: graphics.ColorPair | None = None) -> None:
         """Update the current character visual with the symbol and colors provided.
+
+        If no symbol is provided, the character's input symbol is used.
 
         If the character has an active scene, any appearance set with this method
         will be overwritten when the scene is stepped to the next frame.
 
         Args:
-            symbol (str): The symbol to apply.
+            symbol (str | None): The symbol to apply.
             colors (graphics.ColorPair | None): The colors to apply.
 
         """
+        if symbol is None:
+            symbol = self.character.input_symbol
         if colors is None:
             colors = graphics.ColorPair(fg=None, bg=None)
         # override fg and bg colors if they are set in the Scene due to existing color handling = always
@@ -823,13 +821,21 @@ class Animation:
         Args:
             scene (Scene : str): the Scene to set as active
 
+        Raises:
+            SceneNotFoundError: Raised if the scene_id provided does not correspond to
+                a known scene.
+
         """
         if isinstance(scene, str):
-            scene = self.query_scene(scene)
-        self.active_scene = scene
+            found_scene = self.query_scene(scene)
+            if found_scene is None:
+                raise SceneNotFoundError(scene)
+        else:
+            found_scene = scene
+        self.active_scene = found_scene
         self.active_scene_current_step = 0
         self.current_character_visual = self.active_scene.activate()
-        self.character.event_handler._handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, scene)
+        self.character.event_handler._handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, found_scene)
 
     def deactivate_scene(self, scene: Scene) -> None:
         """Deactivates a scene.
