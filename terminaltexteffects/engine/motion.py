@@ -392,20 +392,17 @@ class Motion:
         self.paths[path_id] = new_path
         return new_path
 
-    def query_path(self, path_id: str) -> Path:
-        """Return the path with the given path_id.
+    def query_path(self, path_id: str) -> Path | None:
+        """Return the path with the given path_id, or None if no path with the given ID exists.
 
         Args:
             path_id (str): path_id
 
         Returns:
-            Path: The path with the given path_id.
+            Path | None: The path with the given path_id, or None.
 
         """
-        path = self.paths.get(path_id, None)
-        if not path:
-            raise PathNotFoundError(path_id)
-        return path
+        return self.paths.get(path_id, None)
 
     def movement_is_complete(self) -> bool:
         """Return whether the character has an active path.
@@ -467,10 +464,14 @@ class Motion:
 
         """
         if isinstance(path, str):
-            path = self.query_path(path)
-        if not path.waypoints:
-            raise ActivateEmptyPathError(path.path_id)
-        self.active_path = path
+            found_path = self.query_path(path)
+            if found_path is None:
+                raise PathNotFoundError(path)
+        else:
+            found_path = path
+        if not found_path.waypoints:
+            raise ActivateEmptyPathError(found_path.path_id)
+        self.active_path = found_path
         first_waypoint = self.active_path.waypoints[0]
         if first_waypoint.bezier_control:
             distance_to_first_waypoint = geometry.find_length_of_bezier_curve(
