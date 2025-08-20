@@ -576,17 +576,29 @@ class Animation:
         self.scenes[scene_id] = new_scene
         return new_scene
 
-    def query_scene(self, scene_id: str) -> Scene | None:
+    @typing.overload
+    def query_scene(self, scene_id: str) -> Scene: ...
+    @typing.overload
+    def query_scene(self, scene_id: str, not_found_action: typing.Literal["raise"]) -> Scene: ...
+    @typing.overload
+    def query_scene(self, scene_id: str, not_found_action: None) -> Scene | None: ...
+    def query_scene(self, scene_id: str, not_found_action: typing.Literal["raise"] | None = "raise") -> Scene | None:
         """Return a Scene from the Animation. If the scene doesn't exist, raises a ValueError.
 
         Args:
             scene_id (str): the ID of the Scene
+            not_found_action (Literal["raise"] | None, optional): Action to take if a path with the given
+                path_id is not found. If "raise", a PathNotFoundError will be raised. If `None`, method will
+                return `None`.
 
         Returns:
             Scene | None: the Scene
 
         """
-        return self.scenes.get(scene_id, None)
+        found_scene = self.scenes.get(scene_id, None)
+        if not_found_action and found_scene is None:
+            raise SceneNotFoundError(scene_id)
+        return found_scene
 
     def active_scene_is_complete(self) -> bool:
         """Return whether the active scene is complete.
