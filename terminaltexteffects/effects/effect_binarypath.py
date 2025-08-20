@@ -164,7 +164,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
 
         def _activate_source_character(self) -> None:
             self.terminal.set_character_visibility(self.character, is_visible=True)
-            self.character.animation.activate_scene(self.character.animation.query_scene("collapse_scn"))
+            self.character.animation.activate_scene("collapse_scn")
 
     def __init__(self, effect: BinaryPath) -> None:
         """Initialize the BinaryPath effect iterator.
@@ -328,7 +328,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                 if self.final_wipe_chars:
                     next_group = self.final_wipe_chars.pop(0)
                     for character in next_group:
-                        character.animation.activate_scene(character.animation.query_scene("brighten_scn"))
+                        character.animation.activate_scene("brighten_scn")
                         self.terminal.set_character_visibility(character, is_visible=True)
                         self.active_characters.add(character)
                 else:

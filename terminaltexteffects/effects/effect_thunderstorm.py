@@ -251,7 +251,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         reference_char = all_chars[0]
         reference_char.event_handler.register_event(
             event=tte.Event.SCENE_COMPLETE,
-            caller=reference_char.animation.query_scene("fade"),
+            caller="fade",
             action=tte.Action.CALLBACK,
             target=tte.EventHandler.Callback(fade_complete),
         )
@@ -506,7 +506,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
 
         for text_char in self.terminal.get_characters():
             flash_scene = text_char.animation.query_scene("flash")
-            flash_scene.ease = flash_ease
+            flash_scene.ease = flash_ease  # pyright: ignore[reportOptionalMemberAccess]
 
     def step_lightning_strike(self) -> None:
         """Progress the lightning strike effect."""
@@ -530,10 +530,9 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                         spark = self.pending_sparks.pop()
                         self.terminal.set_character_visibility(spark, is_visible=True)
                         self.active_characters.add(spark)
-                    fade_scn = next_strike_char.animation.query_scene("fade")
                     next_strike_char.event_handler.register_event(
                         event=tte.Event.SCENE_COMPLETE,
-                        caller=fade_scn,
+                        caller="fade",
                         action=tte.Action.CALLBACK,
                         target=tte.EventHandler.Callback(self.set_strike_in_progress_false),
                     )

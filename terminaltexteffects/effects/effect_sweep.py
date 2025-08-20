@@ -241,7 +241,7 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
                         group = self.pending_groups_initial_sweep.pop(0)
                         for character in group:
                             self.terminal.set_character_visibility(character, is_visible=True)
-                            character.animation.activate_scene(character.animation.query_scene("initial_sweep"))
+                            character.animation.activate_scene("initial_sweep")
                         self.active_characters.update(group)
                         self.groups_activated += 1
                 if self.groups_activated == self.total_groups:
@@ -253,7 +253,7 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
                     if self.pending_groups_second_sweep:
                         group = self.pending_groups_second_sweep.pop(0)
                         for character in group:
-                            character.animation.activate_scene(character.animation.query_scene("second_sweep"))
+                            character.animation.activate_scene("second_sweep")
                         self.active_characters.update(group)
                         self.groups_activated += 1
                 if self.groups_activated == self.total_groups:

@@ -218,7 +218,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
     def rotate_blackhole(self) -> None:
         """Rotate the blackhole characters."""
         for character in self.blackhole_chars:
-            character.motion.activate_path(character.motion.query_path("blackhole_rotation"))
+            character.motion.activate_path("blackhole_rotation")
             self.active_characters.add(character)
 
     def collapse_blackhole(self) -> None:
@@ -356,8 +356,8 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                 if self.awaiting_blackhole_chars:
                     if not self.f_delay:
                         next_char = self.awaiting_blackhole_chars.pop(0)
-                        next_char.motion.activate_path(next_char.motion.query_path("blackhole"))
-                        next_char.animation.activate_scene(next_char.animation.query_scene("blackhole"))
+                        next_char.motion.activate_path("blackhole")
+                        next_char.animation.activate_scene("blackhole")
                         self.active_characters.add(next_char)
                         self.f_delay = self.formation_delay
                     else:
@@ -368,7 +368,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             elif self.phase == "consuming":
                 if self.awaiting_consumption_chars:
                     for char in self.awaiting_consumption_chars:
-                        char.motion.activate_path(char.motion.query_path("singularity"))
+                        char.motion.activate_path("singularity")
 
                         self.active_characters.add(char)
                     self.awaiting_consumption_chars.clear()

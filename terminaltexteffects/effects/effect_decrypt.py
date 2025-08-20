@@ -195,17 +195,17 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
             self.make_decrypting_animation_scenes(character)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
-                character.animation.query_scene("fast_decrypt"),
+                "fast_decrypt",
                 EventHandler.Action.ACTIVATE_SCENE,
-                character.animation.query_scene("slow_decrypt"),
+                "slow_decrypt",
             )
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
-                character.animation.query_scene("slow_decrypt"),
+                "slow_decrypt",
                 EventHandler.Action.ACTIVATE_SCENE,
-                character.animation.query_scene("discovered"),
+                "discovered",
             )
-            character.animation.activate_scene(character.animation.query_scene("fast_decrypt"))
+            character.animation.activate_scene("fast_decrypt")
             self.decrypting_pending_chars.add(character)
 
     def build(self) -> None:
@@ -232,13 +232,13 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
                         if self.typing_pending_chars:
                             next_character = self.typing_pending_chars.pop(0)
                             self.terminal.set_character_visibility(next_character, is_visible=True)
-                            next_character.animation.activate_scene(next_character.animation.query_scene("typing"))
+                            next_character.animation.activate_scene("typing")
                             self.active_characters.add(next_character)
                 self.update()
                 return self.frame
             self.active_characters = self.decrypting_pending_chars
             for char in self.active_characters:
-                char.animation.activate_scene(char.animation.query_scene("fast_decrypt"))
+                char.animation.activate_scene("fast_decrypt")
             self.phase = "decrypting"
 
         if self.phase == "decrypting":

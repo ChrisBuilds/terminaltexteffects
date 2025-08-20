@@ -318,7 +318,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 self.current_swarm = self.swarms.pop()
                 self.active_swarm_area = "0_swarm_area"
                 for character in self.current_swarm:
-                    character.motion.activate_path(character.motion.query_path("0_swarm_area"))
+                    character.motion.activate_path("0_swarm_area")
                     self.terminal.set_character_visibility(character, is_visible=True)
                     self.active_characters.add(character)
             if len(self.active_characters) < len(self.current_swarm):  # some of the characters have landed

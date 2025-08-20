@@ -227,7 +227,7 @@ class EffectIterator(BaseEffectIterator[EffectConfig]):
                 if not self.active_characters:
                     next_path_id = self.path_ids.pop(0)
                     for character in self.terminal.get_characters():
-                        if path := character.motion.query_path(next_path_id):
+                        if path := character.motion.query_path(next_path_id, not_found_action=None):
                             character.motion.activate_path(path)
                             self.active_characters.add(character)
                 self.update()

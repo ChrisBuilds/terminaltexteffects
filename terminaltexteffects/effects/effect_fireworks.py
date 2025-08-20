@@ -281,13 +281,13 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
-                    character.motion.query_path("apex_pth"),
+                    "apex_pth",
                     EventHandler.Action.ACTIVATE_SCENE,
                     bloom_scn,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
-                    character.motion.query_path("input_pth"),
+                    "input_pth",
                     EventHandler.Action.ACTIVATE_SCENE,
                     fall_scn,
                 )

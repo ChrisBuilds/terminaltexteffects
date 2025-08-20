@@ -11,7 +11,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Scene
+from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Scene, Path
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
@@ -231,6 +231,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 )
                 final_scene.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=char_final_gradient)
                 input_coord_path = character.motion.query_path("input_coord")
+                assert isinstance(input_coord_path, Path)
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
                     error_scene,
@@ -247,24 +248,23 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                     EventHandler.Event.SCENE_COMPLETE,
                     first_block_wipe,
                     EventHandler.Action.ACTIVATE_PATH,
-                    input_coord_path,
+                    "input_coord",
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
-                    input_coord_path,
+                    "input_coord",
                     EventHandler.Action.SET_LAYER,
                     1,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
-                    input_coord_path,
+                    "input_coord",
                     EventHandler.Action.SET_LAYER,
                     0,
                 )
-
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
-                    input_coord_path,
+                    "input_coord",
                     EventHandler.Action.ACTIVATE_SCENE,
                     last_block_wipe,
                 )
@@ -280,7 +280,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
         if self.swapped and not self.swap_delay:
             next_pair = self.swapped.pop(0)
             for char in next_pair:
-                char.animation.activate_scene(char.animation.query_scene("error"))
+                char.animation.activate_scene("error")
                 self.active_characters.add(char)
             self.swap_delay = self.config.swap_delay
         elif self.swap_delay:

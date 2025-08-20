@@ -236,8 +236,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
             if self.magazine:
                 next_char = self.magazine.pop(0)
                 next_char.motion.set_coordinate(self.character.motion.current_coord)
-                input_path = next_char.motion.query_path("input_path")
-                next_char.motion.activate_path(input_path)
+                next_char.motion.activate_path("input_path")
                 self.terminal.set_character_visibility(next_char, is_visible=True)
             else:
                 next_char = None
@@ -317,7 +316,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
             ColorPair(fg=self.final_gradient.spectrum[-1]),
         )
         self._main_launcher.build_paths()
-        self._main_launcher.character.motion.activate_path(self._main_launcher.character.motion.query_path("perimeter"))
+        self._main_launcher.character.motion.activate_path("perimeter")
         self._sorted_chars = []
         for char_list in self.terminal.get_characters_grouped(Terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS):
             self._sorted_chars.extend(char_list)
@@ -346,8 +345,8 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
         if any(launcher.magazine for launcher in self._launchers) or len(self.active_characters) > 1:
             if self._main_launcher.character.motion.active_path is None:
                 perimeter_path = self._main_launcher.character.motion.query_path("perimeter")
-                self._main_launcher.character.motion.set_coordinate(perimeter_path.waypoints[0].coord)
-                self._main_launcher.character.motion.activate_path(perimeter_path)
+                self._main_launcher.character.motion.set_coordinate(perimeter_path.waypoints[0].coord)  # pyright: ignore[reportOptionalMemberAccess]
+                self._main_launcher.character.motion.activate_path(perimeter_path)  # pyright: ignore[reportArgumentType]
                 self.active_characters.add(self._main_launcher.character)
             self._main_launcher.character.animation.set_appearance(
                 self.config.top_launcher_symbol,

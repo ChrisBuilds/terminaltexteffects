@@ -531,7 +531,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                             if column.visible_characters:
                                 next_char = column.resolve_char()
                                 if next_char.input_symbol != " ":
-                                    next_char.animation.activate_scene(next_char.animation.query_scene("resolve"))
+                                    next_char.animation.activate_scene("resolve")
                                     self.active_characters.add(next_char)
                                 else:
                                     self.terminal.set_character_visibility(next_char, is_visible=False)

@@ -347,7 +347,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                     bezier_control=tte.Coord(fall_target_coord.column, self.position.row + random.randint(-10, 20)),
                 )
                 next_spark.motion.activate_path(spark_path)
-                next_spark.animation.activate_scene(next_spark.animation.query_scene("spark"))
+                next_spark.animation.activate_scene("spark")
                 self.active_chars.add(next_spark)
 
         def disable(self) -> None:

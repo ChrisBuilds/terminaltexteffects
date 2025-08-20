@@ -210,7 +210,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
                         for _ in range(fall_group_size):
                             if self.pending_chars:
                                 next_char = self.pending_chars.pop(0)
-                                next_char.animation.activate_scene(next_char.animation.query_scene("weaken"))
+                                next_char.animation.activate_scene("weaken")
                                 self.active_characters.add(next_char)
                         # Reset the fall delay and adjust the fall group size and delay range
                         self.fall_delay = random.randint(self.min_fall_delay, self.max_fall_delay)
@@ -227,7 +227,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
                     for _ in range(random.randint(3, 10)):
                         if self.unvacuumed_chars:
                             next_char = self.unvacuumed_chars.pop(0)
-                            next_char.motion.activate_path(next_char.motion.query_path("top"))
+                            next_char.motion.activate_path("top")
                             self.active_characters.add(next_char)
                 if not self.active_characters:
                     self.stage = "resetting"
@@ -235,7 +235,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             elif self.stage == "resetting":
                 if not self.reset:
                     for character in self.terminal.get_characters():
-                        character.motion.activate_path(character.motion.query_path("input"))
+                        character.motion.activate_path("input")
                         self.active_characters.add(character)
                     self.reset = True
                 if not self.active_characters:
