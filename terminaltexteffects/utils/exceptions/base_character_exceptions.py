@@ -29,14 +29,14 @@ class EventRegistrationCallerError(TerminalTextEffectsError):
     def __init__(
         self,
         event: EventHandler.Event,
-        caller: Scene | Waypoint | Path,
+        caller: Scene | Waypoint | Path | str,
         required: type[Scene | Waypoint | Path],
     ) -> None:
         """Initialize an EventRegistrationCallerError.
 
         Args:
             event (EventHandler.Event): The event that was registered.
-            caller (Scene | Waypoint | Path): The object provided to trigger the event.
+            caller (Scene | Waypoint | Path | str): The object provided to trigger the event.
             required (Scene | Waypoint | Path): The valid caller types for the event.
 
         """
@@ -72,15 +72,15 @@ class EventRegistrationTargetError(TerminalTextEffectsError):
     def __init__(
         self,
         action: EventHandler.Action,
-        target: Scene | Path | int | Coord | EventHandler.Callback | None,
-        required: type[Scene | Path | int | Coord | EventHandler.Callback | None],
+        target: Scene | Path | int | Coord | EventHandler.Callback | str | None,
+        required: type[Scene | Path | int | Coord | EventHandler.Callback | str | None],
     ) -> None:
         """Initialize an EventRegistrationTargetError.
 
         Args:
             action (EventHandler.Action): The action that was registered.
-            target (Scene | Path | int | Coord | EventHandler.Callback | None): The target provided to the action.
-            required (type[Scene  |  Path  |  int  |  Coord  |  EventHandler.Callback  |  None]): The valid target
+            target (Scene | Path | int | Coord | EventHandler.Callback | str | None): The target provided to the action.
+            required (type[Scene | Path | int | Coord | EventHandler.Callback | str | None]): The valid target
                 types.
 
         """
@@ -108,7 +108,7 @@ class DuplicateEventRegistrationError(TerminalTextEffectsError):
         event: EventHandler.Event,
         caller: Scene | Waypoint | Path,
         action: EventHandler.Action,
-        target: Scene | Path | int | Coord | EventHandler.Callback | None,
+        target: Scene | Path | int | Coord | EventHandler.Callback | str | None,
     ) -> None:
         """Initialize a DuplicateEventRegistrationError.
 
@@ -116,7 +116,7 @@ class DuplicateEventRegistrationError(TerminalTextEffectsError):
             event (EventHandler.Event): The event that was already registered.
             caller (Scene | Waypoint | Path): The caller object that was already registered.
             action (EventHandler.Action): The action that was already registered.
-            target (Scene | Path | int | Coord | EventHandler.Callback | None): The target that was already registered.
+            target (Scene | Path | int | Coord | EventHandler.Callback | str | None): The target that was already registered.
 
         """
         self.event = event
