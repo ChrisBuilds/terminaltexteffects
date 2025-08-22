@@ -216,8 +216,8 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
             self.phase = "full"
             self.active_characters = set(self.terminal.get_characters())
             for character in self.active_characters:
-                character.motion.activate_path(character.motion.query_path("full"))
-                character.animation.activate_scene(character.animation.query_scene("full"))
+                character.motion.activate_path("full")
+                character.animation.activate_scene("full")
         if self.active_characters:
             self.update()
             return self.frame

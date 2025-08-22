@@ -267,8 +267,8 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                     char.motion.paths["final"],
                 )
             for character in self.characters:
-                character.animation.activate_scene(character.animation.query_scene("pop_1"))
-                character.motion.activate_path(character.motion.query_path("pop_out"))
+                character.animation.activate_scene("pop_1")
+                character.motion.activate_path("pop_out")
 
         def activate(self) -> None:
             """Activate the bubble."""

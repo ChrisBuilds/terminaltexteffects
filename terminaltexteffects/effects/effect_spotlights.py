@@ -315,8 +315,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         self.searching = True
         self.complete = False
         for spotlight in self.spotlights:
-            spotlight_path_start = spotlight.motion.query_path("0")
-            spotlight.motion.activate_path(spotlight_path_start)
+            spotlight.motion.activate_path("0")
             self.active_characters.add(spotlight)
 
     def __next__(self) -> str:
@@ -327,8 +326,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 self.search_duration -= 1
                 if not self.search_duration:
                     for spotlight in self.spotlights:
-                        spotlight_path_center = spotlight.motion.query_path("center")
-                        spotlight.motion.activate_path(spotlight_path_center)
+                        spotlight.motion.activate_path("center")
                     self.searching = False
             if not any(spotlight.motion.active_path for spotlight in self.spotlights):
                 while len(self.spotlights) > 1:

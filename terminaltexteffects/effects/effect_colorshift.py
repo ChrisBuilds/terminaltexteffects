@@ -228,9 +228,9 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
         """Track the number of times a character has looped through the gradient."""
         self.loop_tracker_map[character] = self.loop_tracker_map.get(character, 0) + 1
         if self.config.cycles == 0 or (self.loop_tracker_map[character] < self.config.cycles):
-            character.animation.activate_scene(character.animation.query_scene("gradient"))
+            character.animation.activate_scene("gradient")
         elif not self.config.skip_final_gradient:
-            character.animation.activate_scene(character.animation.query_scene("final_gradient"))
+            character.animation.activate_scene("final_gradient")
 
     def build(self) -> None:
         """Build the initial state of the effect."""

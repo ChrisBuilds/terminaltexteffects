@@ -392,17 +392,33 @@ class Motion:
         self.paths[path_id] = new_path
         return new_path
 
-    def query_path(self, path_id: str) -> Path | None:
+    @typing.overload
+    def query_path(self, path_id: str) -> Path: ...
+    @typing.overload
+    def query_path(self, path_id: str, not_found_action: typing.Literal["raise"]) -> Path: ...
+    @typing.overload
+    def query_path(self, path_id: str, not_found_action: None) -> Path | None: ...
+    def query_path(self, path_id: str, not_found_action: typing.Literal["raise"] | None = "raise") -> Path | None:
         """Return the path with the given path_id, or None if no path with the given ID exists.
 
         Args:
             path_id (str): path_id
+            not_found_action (Literal["raise"] | None, optional): Action to take if a path with the given
+                path_id is not found. If "raise", a PathNotFoundError will be raised. If `None`, method will
+                return `None`.
 
         Returns:
             Path | None: The path with the given path_id, or None.
 
+        Raises:
+            PathNotFoundError: If `not_found_action` is "raise" and a Path with the given
+                `path_id` is not found.
+
         """
-        return self.paths.get(path_id, None)
+        found_path = self.paths.get(path_id, None)
+        if not_found_action and found_path is None:
+            raise PathNotFoundError(path_id)
+        return found_path
 
     def movement_is_complete(self) -> bool:
         """Return whether the character has an active path.

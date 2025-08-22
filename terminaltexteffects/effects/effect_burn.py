@@ -189,7 +189,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             for _ in range(random.randint(2, 4)):
                 if self.pending_chars:
                     next_char = self.pending_chars.pop(0)
-                    next_char.animation.activate_scene(next_char.animation.query_scene("burn"))
+                    next_char.animation.activate_scene("burn")
                     self.active_characters.add(next_char)
 
             self.update()

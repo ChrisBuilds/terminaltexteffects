@@ -41,9 +41,10 @@
 
 * `animation.set_appearance()` `symbol` argument signature changed from `str` to `str | None`, defaulting to the character's `input_symbol` if not provided.
 * `Coord` objects can be unpacked into `(column, row)` tuples for multiple assignment.
-* `motion.activate_path()` and `animation.activate_scene()` accept `path_id`/`scene_id` strings OR `Path`/`Scene` instances. The corresponding `Path`/`Scene` must exist or  a `SceneNotFoundError`/`PathNotFoundError` will be raised.
-* `motion.query_path()` no longer raises   `PathNotFoundError` exception when the provided `path_id` does not exist. Instead, it will return `None`.
-* `animation.query_scene()` no longer raises a `SceneNotFoundError` exception when the provided `scene_id` does not exist. Instead, it will return `None`.
+* `motion.activate_path()` and `animation.activate_scene()` accept `path_id`/`scene_id` strings OR `Path`/`Scene` instances. The `Path`/`Scene` corresponding to the provided `path_id`/`scene_id` must exist or  a `SceneNotFoundError`/`PathNotFoundError` will be raised.
+* `motion.query_path()` accepts an argument directing the action to take if a path with the given `path_id` cannot be found. The default action is to raise a `PathNotFoundError`, but this behavior can be changed to return `None`.
+* `animation.query_scene()` accepts an argument directing the action to take if a scene with the given `scene_id` cannot be found. The default action is to raise a `SceneNotFoundError`, but this behavior can be changed to return `None`.
+* Events can be registered using `path_id`/`scene_id` in place of the `Path`/`Scene` for `target` and `caller` arguments.
 
 ### Bug Fixes (0.13.0)
 

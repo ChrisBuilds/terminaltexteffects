@@ -305,7 +305,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
             else:
                 self.terminal.set_character_visibility(next_character, is_visible=True)
                 return_value = next_character
-            next_character.animation.activate_scene(next_character.animation.query_scene("beam_" + self.direction))
+            next_character.animation.activate_scene("beam_" + self.direction)
             return return_value
 
         def complete(self) -> bool:
@@ -455,7 +455,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                             break
                         next_group = self.final_wipe_groups.pop(0)
                         for character in next_group:
-                            character.animation.activate_scene(character.animation.query_scene("brighten"))
+                            character.animation.activate_scene("brighten")
                             self.terminal.set_character_visibility(character, is_visible=True)
                             self.active_characters.add(character)
                 else:

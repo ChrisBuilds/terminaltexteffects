@@ -16,6 +16,8 @@ from terminaltexteffects.utils.exceptions import (
     DuplicateEventRegistrationError,
     EventRegistrationCallerError,
     EventRegistrationTargetError,
+    PathNotFoundError,
+    SceneNotFoundError,
 )
 from terminaltexteffects.utils.geometry import Coord
 
@@ -54,7 +56,7 @@ class EventHandler:
             list[
                 tuple[
                     EventHandler.Action,
-                    animation.Scene | motion.Waypoint | motion.Path | int | Coord | EventHandler.Callback | None,
+                    animation.Scene | motion.Waypoint | motion.Path | int | Coord | EventHandler.Callback | str | None,
                 ]
             ],
         ] = {}
@@ -147,62 +149,56 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.ACTIVATE_SCENE, Action.DEACTIVATE_SCENE],
-        target: animation.Scene,
+        target: animation.Scene | str,
     ) -> None: ...
-
     @typing.overload
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.ACTIVATE_PATH, Action.DEACTIVATE_PATH],
-        target: motion.Path,
+        target: motion.Path | str,
     ) -> None: ...
-
     @typing.overload
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.SET_COORDINATE],
         target: Coord,
     ) -> None: ...
-
     @typing.overload
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.SET_LAYER],
         target: int,
     ) -> None: ...
-
     @typing.overload
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.CALLBACK],
         target: Callback,
     ) -> None: ...
-
     @typing.overload
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.RESET_APPEARANCE],
         target: None = None,
     ) -> None: ...
-
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: Action,
-        target: animation.Scene | motion.Path | int | Coord | Callback | None = None,
+        target: animation.Scene | motion.Path | int | Coord | Callback | str | None = None,
     ) -> None:
         """Register an event to be handled by the EventHandler.
 
@@ -210,9 +206,9 @@ class EventHandler:
 
         Args:
             event (Event): The event to register.
-            caller (animation.Scene | motion.Waypoint | motion.Path): The object that triggers the event.
+            caller (animation.Scene | motion.Waypoint | motion.Path | str): The object that triggers the event.
             action (Action): The action to take when the event is triggered.
-            target (animation.Scene | motion.Path | int | Coord | Callback): The target of the action.
+            target (animation.Scene | motion.Path | int | Coord | Callback | str | None): The target of the action.
 
         Raises:
             EventRegistrationCallerError: If the caller object is not the required type for the
@@ -248,15 +244,42 @@ class EventHandler:
             EventHandler.Action.SET_COORDINATE: Coord,
             EventHandler.Action.CALLBACK: EventHandler.Callback,
         }
+        # find caller Path when provided path_id
+        if event in (EventHandler.Event.PATH_ACTIVATED, EventHandler.Event.PATH_COMPLETE) and isinstance(caller, str):
+            if (path_query_result := self.character.motion.query_path(caller)) is None:
+                raise PathNotFoundError(path_id=caller)
+            caller = path_query_result
+
+        # find caller Scene when provided scene_id
+        elif event in (EventHandler.Event.SCENE_ACTIVATED, EventHandler.Event.SCENE_COMPLETE) and isinstance(
+            caller,
+            str,
+        ):
+            if (scene_query_result := self.character.animation.query_scene(caller)) is None:
+                raise SceneNotFoundError(scene_id=caller)
+            caller = scene_query_result
 
         if event_caller_map[event] != caller.__class__:
             raise EventRegistrationCallerError(event, caller, event_caller_map[event])
 
-        if (action is EventHandler.Action.RESET_APPEARANCE and target is not None) or (
+        # find target Path when provided path_id
+        if action is EventHandler.Action.ACTIVATE_PATH and isinstance(target, str):
+            if (path_query_result := self.character.motion.query_path(target)) is None:
+                raise PathNotFoundError(path_id=target)
+            target = path_query_result
+
+        # find target Scene when provided scene_id
+        elif action is EventHandler.Action.ACTIVATE_SCENE and isinstance(target, str):
+            if (scene_query_result := self.character.animation.query_scene(target)) is None:
+                raise SceneNotFoundError(scene_id=target)
+            target = scene_query_result
+
+        elif (action is EventHandler.Action.RESET_APPEARANCE and target is not None) or (
             action_target_map[action] != target.__class__
         ):
             raise EventRegistrationTargetError(action, target, action_target_map[action])
 
+        assert isinstance(caller, (motion.Path, animation.Scene, motion.Waypoint))
         new_event = (event, caller)
         new_action = (action, target)
 

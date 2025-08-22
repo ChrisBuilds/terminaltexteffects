@@ -248,7 +248,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                 else:
                     self.character_last_ring_path[character] = character.motion.paths["0"]
                 character.motion.activate_path(self.make_disperse_waypoints(character, character.motion.current_coord))
-                character.animation.activate_scene(character.animation.query_scene("disperse"))
+                character.animation.activate_scene("disperse")
 
         def spin(self) -> None:
             """Spin the ring."""
@@ -262,7 +262,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                     self.character_last_ring_path[character],
                 )
                 character.motion.activate_path(condense_path)
-                character.animation.activate_scene(character.animation.query_scene("gradient"))
+                character.animation.activate_scene("gradient")
 
     def __init__(self, effect: Rings) -> None:
         """Initialize the effect iterator."""
@@ -381,12 +381,12 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                                 EventHandler.Action.ACTIVATE_PATH,
                                 disperse_path,
                             )
-                            character.animation.activate_scene(character.animation.query_scene("disperse"))
+                            character.animation.activate_scene("disperse")
                             character.motion.activate_path(initial_path)
                             self.active_characters.add(character)
 
                     for character in self.non_ring_chars:
-                        character.motion.activate_path(character.motion.query_path("external"))
+                        character.motion.activate_path("external")
                         self.active_characters.add(character)
 
                 elif not self._disperse_time_remaining:
@@ -404,11 +404,11 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                         self._phase = "final"
                         for character in self.terminal.get_characters():
                             self.terminal.set_character_visibility(character, is_visible=True)
-                            character.motion.activate_path(character.motion.query_path("home"))
+                            character.motion.activate_path("home")
                             self.active_characters.add(character)
                             if "external" in character.motion.paths:
                                 continue
-                            character.animation.activate_scene(character.animation.query_scene("disperse"))
+                            character.animation.activate_scene("disperse")
                     else:
                         self._disperse_time_remaining = self.config.disperse_duration
                         for ring in self._rings_list:

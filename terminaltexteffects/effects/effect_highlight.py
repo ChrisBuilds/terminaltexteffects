@@ -217,8 +217,7 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
                 if self.pending_characters:
                     next_group = self.pending_characters.pop(0)
                     for character in next_group:
-                        scn = character.animation.query_scene("highlight")
-                        character.animation.activate_scene(scn)
+                        character.animation.activate_scene("highlight")
                         self.active_characters.add(character)
                     self.groups_activated += 1
 
