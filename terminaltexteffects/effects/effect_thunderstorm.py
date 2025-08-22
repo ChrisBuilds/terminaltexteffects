@@ -195,7 +195,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         self.pending_glow_chars: list[EffectCharacter] = []
         self.strike_in_progress: bool = False
         self.flashing: bool = False
-        self.strike_branch_chance = 0.06
+        self.strike_branch_chance = 0.05
         self.phase: str = "pre-storm"
         self.build()
 
@@ -218,7 +218,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         for text_char in all_chars:
             faded_color = tte.Animation.adjust_color_brightness(
                 final_gradient_mapping[text_char.input_coord],
-                brightness=0.45,
+                brightness=0.65,
             )
             # post-strike glow and cool scene
             glow_gradient = tte.Gradient(self.config.glowing_text_color, faded_color, steps=7)
@@ -385,7 +385,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 self.strike_branch_chance -= 0.01
                 self.setup_lightning_strike(branch_neighbor=strike_char)
             branch_neighbor = None
-        self.strike_branch_chance = 0.08
+        self.strike_branch_chance = 0.05
         self.setup_sparks_for_impact()
 
     def build_raindrop_characters(self, count: int = 50) -> None:
