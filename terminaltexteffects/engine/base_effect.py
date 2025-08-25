@@ -14,22 +14,21 @@ Classes:
 
 from __future__ import annotations
 
+import time
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import TYPE_CHECKING, Generic, TypeVar
 from enum import Enum, auto
-from terminaltexteffects.engine.animation import Scene
-from terminaltexteffects.engine.motion import Coord
-from terminaltexteffects.engine.base_config import BaseConfig
-from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-import time
+from typing import TYPE_CHECKING, Generic, TypeVar
 
-from terminaltexteffects.utils import easing
+from terminaltexteffects.engine.base_config import BaseConfig
+from terminaltexteffects.engine.motion import Coord
+from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+    from terminaltexteffects.engine.animation import Scene
     from terminaltexteffects.engine.base_character import EffectCharacter
 
 T = TypeVar("T", bound=BaseConfig)
@@ -49,7 +48,7 @@ class ParticleEmitter:
         self.active_particles: set[EffectCharacter] = set()
         self.last_emission_time = time.monotonic()
         self.host_character: EffectCharacter | None = None
-        for _ in range(30):
+        for _ in range(300):
             particle = self.terminal.add_character(symbol=symbol, coord=self.current_coord)
             self.available_particles.add(particle)
 
@@ -80,7 +79,7 @@ class ParticleEmitter:
         next_particle.motion.set_coordinate(self.current_coord)
         self.active_particles.add(next_particle)
         path = next_particle.motion.new_path(speed=0.1)
-        next_coord = Coord(column=self.current_coord.column, row=self.terminal.canvas.top)
+        next_coord = Coord(column=self.terminal.canvas.right, row=self.current_coord.row)
         path.new_waypoint(coord=next_coord)
 
         next_particle.event_handler.register_event(
@@ -158,7 +157,6 @@ class BaseEffectIterator(ABC, Generic[T]):
 
         Remove inactive characters from the active_characters set.
         """
-        self.terminal.now = time.monotonic()
         for emitter in self.emitters:
             particle = emitter.emit()
             if particle is not None:
