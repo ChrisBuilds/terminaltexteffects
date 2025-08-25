@@ -1137,10 +1137,17 @@ class Terminal:
 
         Frame rate is enforced by sleeping if the time since the last frame is shorter than the expected frame delay.
         """
+        self.now = time.monotonic()
+        # frame_delay = 1 / self._frame_rate
+        # if (time_since_last_print := self.now - self._last_time_printed) < frame_delay:
+        #     time.sleep(frame_delay - time_since_last_print)
+        # self._last_time_printed = self.now
+
         frame_delay = 1 / self._frame_rate
-        if (time_since_last_print := self.now - self._last_time_printed) < frame_delay:
+        time_since_last_print = self.now - self._last_time_printed
+        if time_since_last_print < frame_delay:
             time.sleep(frame_delay - time_since_last_print)
-        self._last_time_printed = self.now
+        self._last_time_printed = time.monotonic()
 
     def move_cursor_to_top(self) -> None:
         """Restores the cursor position to the top of the canvas."""
