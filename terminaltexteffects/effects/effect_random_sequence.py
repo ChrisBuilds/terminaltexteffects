@@ -17,6 +17,8 @@ from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterato
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
+# TODO: rename effect to dissolve and add a dissolve-out option
+
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
     """Get the command, effect class, and configuration class for the effect.

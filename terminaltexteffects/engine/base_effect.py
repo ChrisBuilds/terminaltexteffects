@@ -68,11 +68,11 @@ class ParticleEmitter:
             particle.animation.activate_scene(scene.scene_id)
 
     def emit(self) -> EffectCharacter | None:
-        if (self.terminal.now - self.last_emission_time) < self.time_between_emissions:
+        if (time.monotonic() - self.last_emission_time) < self.time_between_emissions:
             return None
         if self.host_character:
             self.current_coord = self.host_character.motion.current_coord
-        self.last_emission_time = self.terminal.now
+        self.last_emission_time = time.monotonic()
         if not self.available_particles:
             return None
         next_particle = self.available_particles.pop()

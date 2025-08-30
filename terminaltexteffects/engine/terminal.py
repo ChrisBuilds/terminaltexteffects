@@ -555,7 +555,6 @@ class Terminal:
         self.character_by_input_coord: dict[Coord, EffectCharacter] = {
             (character.input_coord): character for character in self._input_characters
         }
-        self.now = time.monotonic()
         self._inner_fill_characters, self._outer_fill_characters = self._make_fill_characters()
         self._visible_characters: set[EffectCharacter] = set()
         self._frame_rate = self.config.frame_rate
@@ -1137,15 +1136,8 @@ class Terminal:
 
         Frame rate is enforced by sleeping if the time since the last frame is shorter than the expected frame delay.
         """
-        self.now = time.monotonic()
-        # frame_delay = 1 / self._frame_rate
-        # if (time_since_last_print := self.now - self._last_time_printed) < frame_delay:
-        #     time.sleep(frame_delay - time_since_last_print)
-        # self._last_time_printed = self.now
-
         frame_delay = 1 / self._frame_rate
-        time_since_last_print = self.now - self._last_time_printed
-        if time_since_last_print < frame_delay:
+        if (time_since_last_print := time.monotonic() - self._last_time_printed) < frame_delay:
             time.sleep(frame_delay - time_since_last_print)
         self._last_time_printed = time.monotonic()
 
