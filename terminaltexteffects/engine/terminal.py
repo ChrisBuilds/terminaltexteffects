@@ -133,10 +133,10 @@ class TerminalConfig(BaseConfig):
     frame_rate: int = ArgSpec(
         name="--frame-rate",
         type=argutils.NonNegativeInt.type_parser,
-        default=100,
+        default=30,
         help=(
             "Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting. "
-            "Defaults to 100."
+            "Defaults to 30."
         ),
     )  # type: ignore[assignment]
 
