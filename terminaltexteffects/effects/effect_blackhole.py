@@ -248,7 +248,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                     for symbol in unstable_symbols:
                         point_scn.add_frame(
                             symbol,
-                            6,
+                            3,
                             colors=ColorPair(fg=random.choice(self.config.star_colors)),
                         )
                 character.event_handler.register_event(
