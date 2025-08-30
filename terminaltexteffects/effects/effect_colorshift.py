@@ -60,8 +60,8 @@ class ColorShiftConfig(BaseConfig):
         description="Display a gradient that shifts colors across the terminal.",
         epilog=(
             "Example: terminaltexteffects colorshift --gradient-stops 0000ff ffffff 0000ff "
-            "--gradient-steps 12 --gradient-frames 10 --cycles 3 --travel --travel-direction radial --final-gradient-stops "
-            "00c3ff ffff1c --final-gradient-steps 12"
+            "--gradient-steps 12 --gradient-frames 10 --cycles 3 --travel --travel-direction radial "
+            "--final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12"
         ),
     )
 
@@ -102,7 +102,7 @@ class ColorShiftConfig(BaseConfig):
     gradient_frames: int = ArgSpec(
         name="--gradient-frames",
         type=argutils.PositiveInt.type_parser,
-        default=5,
+        default=2,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]

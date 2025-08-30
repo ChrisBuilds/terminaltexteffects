@@ -95,7 +95,7 @@ class BubblesConfig(BaseConfig):
     bubble_speed: float = ArgSpec(
         name="--bubble-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.1,
+        default=0.2,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the floating bubbles. ",
     )  # pyright: ignore[reportAssignmentType]
@@ -104,7 +104,7 @@ class BubblesConfig(BaseConfig):
     bubble_delay: int = ArgSpec(
         name="--bubble-delay",
         type=argutils.PositiveInt.type_parser,
-        default=50,
+        default=30,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames between bubbles.",
     )  # pyright: ignore[reportAssignmentType]
@@ -231,7 +231,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 for character in self.characters:
                     sheen_scene = character.animation.new_scene()
                     for step in rainbow_gradient:
-                        sheen_scene.add_frame(character.input_symbol, 5, colors=ColorPair(fg=step))
+                        sheen_scene.add_frame(character.input_symbol, 4, colors=ColorPair(fg=step))
                     gradient_offset += 2
                     gradient_offset %= len(rainbow_gradient)
                     rainbow_gradient = rainbow_gradient[gradient_offset:] + rainbow_gradient[:gradient_offset]
@@ -258,7 +258,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                     len(self.characters),
                 ),
             ):
-                pop_out_path = char.motion.new_path(path_id="pop_out", speed=0.2, ease=easing.out_expo)
+                pop_out_path = char.motion.new_path(path_id="pop_out", speed=0.3, ease=easing.out_expo)
                 pop_out_path.new_waypoint(point)
                 char.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
@@ -313,11 +313,11 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             character.layer = 1
             pop_1_scene = character.animation.new_scene(scene_id="pop_1")
             pop_2_scene = character.animation.new_scene()
-            pop_1_scene.add_frame("*", 20, colors=ColorPair(fg=self.config.pop_color))
-            pop_2_scene.add_frame("'", 20, colors=ColorPair(fg=self.config.pop_color))
+            pop_1_scene.add_frame("*", 14, colors=ColorPair(fg=self.config.pop_color))
+            pop_2_scene.add_frame("'", 14, colors=ColorPair(fg=self.config.pop_color))
             final_scene = character.animation.new_scene()
-            char_final_gradient = Gradient(self.config.pop_color, self.character_final_color_map[character], steps=10)
-            final_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=char_final_gradient)
+            char_final_gradient = Gradient(self.config.pop_color, self.character_final_color_map[character], steps=8)
+            final_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=char_final_gradient)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
                 pop_1_scene,

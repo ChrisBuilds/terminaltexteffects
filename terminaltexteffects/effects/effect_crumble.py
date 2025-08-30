@@ -129,20 +129,20 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             initial_scn.add_frame(character.input_symbol, 1, colors=ColorPair(fg=weak_color))
             character.animation.activate_scene(initial_scn)
             fall_path = character.motion.new_path(
-                speed=0.2,
+                speed=0.35,
                 ease=easing.out_bounce,
             )
             fall_path.new_waypoint(Coord(character.input_coord.column, self.terminal.canvas.bottom))
             weaken_scn = character.animation.new_scene(scene_id="weaken")
-            weaken_scn.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=weaken_gradient)
+            weaken_scn.apply_gradient_to_symbols(character.input_symbol, 4, fg_gradient=weaken_gradient)
 
-            top_path = character.motion.new_path(path_id="top", speed=0.5, ease=easing.out_quint)
+            top_path = character.motion.new_path(path_id="top", speed=0.7, ease=easing.out_quint)
             top_path.new_waypoint(
                 Coord(character.input_coord.column, self.terminal.canvas.top),
                 bezier_control=Coord(self.terminal.canvas.center_column, self.terminal.canvas.center_row),
             )
             # set up reset stage
-            input_path = character.motion.new_path(path_id="input", speed=0.3)
+            input_path = character.motion.new_path(path_id="input", speed=0.5)
             input_path.new_waypoint(character.input_coord)
             strengthen_flash_scn = character.animation.new_scene()
             strengthen_flash_scn.apply_gradient_to_symbols(
@@ -151,7 +151,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
                 fg_gradient=strengthen_flash_gradient,
             )
             strengthen_scn = character.animation.new_scene()
-            strengthen_scn.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=strengthen_gradient)
+            strengthen_scn.apply_gradient_to_symbols(character.input_symbol, 4, fg_gradient=strengthen_gradient)
             dust_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
             for _ in range(5):
                 dust_scn.add_frame(random.choice(["*", ".", ","]), 1, colors=ColorPair(fg=dust_color))
@@ -189,9 +189,9 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             )
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
-        self.fall_delay = 20
-        self.max_fall_delay = 20
-        self.min_fall_delay = 15
+        self.fall_delay = 12
+        self.max_fall_delay = 12
+        self.min_fall_delay = 9
         self.reset = False
         self.fall_group_maxsize = 1
         self.stage = "falling"
