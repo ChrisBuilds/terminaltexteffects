@@ -113,7 +113,7 @@ class BeamsConfig(BaseConfig):
     beam_delay: int = ArgSpec(
         name="--beam-delay",
         type=argutils.PositiveInt.type_parser,
-        default=3,
+        default=6,
         metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Number of frames to wait before adding the next group of beams. "
@@ -129,7 +129,7 @@ class BeamsConfig(BaseConfig):
     beam_row_speed_range: tuple[int, int] = ArgSpec(
         name="--beam-row-speed-range",
         type=argutils.PositiveIntRange.type_parser,
-        default=(30, 120),
+        default=(15, 60),
         metavar=argutils.PositiveIntRange.METAVAR,
         help="Speed range of the beam when moving along a row.",
     )  # pyright: ignore[reportAssignmentType]
@@ -139,7 +139,7 @@ class BeamsConfig(BaseConfig):
     beam_column_speed_range: tuple[int, int] = ArgSpec(
         name="--beam-column-speed-range",
         type=argutils.PositiveIntRange.type_parser,
-        default=(18, 30),
+        default=(9, 15),
         metavar=argutils.PositiveIntRange.METAVAR,
         help="Speed range of the beam when moving along a column.",
     )  # pyright: ignore[reportAssignmentType]
@@ -181,7 +181,7 @@ class BeamsConfig(BaseConfig):
     beam_gradient_frames: int = ArgSpec(
         name="--beam-gradient-frames",
         type=argutils.PositiveInt.type_parser,
-        default=1,
+        default=2,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -223,7 +223,7 @@ class BeamsConfig(BaseConfig):
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
         type=argutils.PositiveInt.type_parser,
-        default=2,
+        default=4,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
