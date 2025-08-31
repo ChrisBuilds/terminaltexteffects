@@ -121,7 +121,7 @@ class VHSTapeConfig(BaseConfig):
     total_glitch_time: int = ArgSpec(
         name="--total-glitch-time",
         type=argutils.PositiveInt.type_parser,
-        default=1000,
+        default=600,
         metavar=argutils.PositiveInt.METAVAR,
         help="Total time, frames, that the glitching phase will last.",
     )  # pyright: ignore[reportAssignmentType]
@@ -252,14 +252,14 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 )
                 final_snow_scn = character.animation.new_scene(scene_id="final_snow")
                 final_redraw_scn = character.animation.new_scene(scene_id="final_redraw")
-                final_redraw_scn.add_frame("█", duration=10, colors=ColorPair(fg="ffffff"))
+                final_redraw_scn.add_frame("█", duration=6, colors=ColorPair(fg="ffffff"))
                 final_redraw_scn.add_frame(
                     character.input_symbol,
                     duration=1,
                     colors=ColorPair(fg=self.character_final_color_map[character]),
                 )
 
-                for _ in range(50):
+                for _ in range(30):
                     final_snow_scn.add_frame(
                         random.choice(snow_chars),
                         duration=2,
@@ -464,7 +464,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 if random.random() < self.config.glitch_line_chance and len(self.active_glitch_lines) < 3:
                     glitch_line: VHSTapeIterator.Line = random.choice(list(self.lines.values()))
                     if glitch_line not in self.active_glitch_wave_lines and glitch_line not in self.active_glitch_lines:
-                        glitch_line.set_hold_time(random.randint(30, 120))
+                        glitch_line.set_hold_time(random.randint(20, 75))
                         self.active_glitch_lines.append(glitch_line)
                         glitch_line.glitch()
                         self.active_characters = self.active_characters.union(glitch_line.characters)

@@ -166,7 +166,7 @@ class EffectIterator(BaseEffectIterator[EffectConfig]):
         for character, waypoint_coords in self.character_path_waypoint_map.items():
             if len(waypoint_coords) == 1:
                 continue
-            return_path = character.motion.new_path(speed=0.7, path_id=path_id, layer=1, ease=tte.easing.out_quad)
+            return_path = character.motion.new_path(speed=0.7, path_id=path_id, layer=1, ease=tte.easing.out_sine)
             for coord in reversed(waypoint_coords):
                 return_path.new_waypoint(coord)
             character.event_handler.register_event(
@@ -227,7 +227,7 @@ class EffectIterator(BaseEffectIterator[EffectConfig]):
                 if not self.active_characters:
                     next_path_id = self.path_ids.pop(0)
                     for character in self.terminal.get_characters():
-                        if path := character.motion.query_path(next_path_id):
+                        if path := character.motion.query_path(next_path_id, not_found_action=None):
                             character.motion.activate_path(path)
                             self.active_characters.add(character)
                 self.update()

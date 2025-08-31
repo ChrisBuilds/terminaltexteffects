@@ -79,7 +79,7 @@ class RainConfig(BaseConfig):
     movement_speed: tuple[float, float] = ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloatRange.type_parser,
-        default=(0.1, 0.2),
+        default=(0.15, 0.27),
         metavar=argutils.PositiveFloatRange.METAVAR,
         help="Falling speed range of the rain drops.",
     )  # pyright: ignore[reportAssignmentType]
@@ -182,7 +182,7 @@ class RainIterator(BaseEffectIterator[RainConfig]):
             rain_scn.add_frame(random.choice(self.config.rain_symbols), 1, colors=ColorPair(fg=raindrop_color))
             raindrop_gradient = Gradient(raindrop_color, self.character_final_color_map[character], steps=7)
             fade_scn = character.animation.new_scene()
-            fade_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=raindrop_gradient)
+            fade_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=raindrop_gradient)
             character.animation.activate_scene(rain_scn)
             character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.canvas.top))
             input_path = character.motion.new_path(
@@ -211,7 +211,7 @@ class RainIterator(BaseEffectIterator[RainConfig]):
             if not self.pending_chars and self.group_by_row:
                 self.pending_chars.extend(self.group_by_row.pop(min(self.group_by_row.keys())))  # type: ignore[arg-type]
             if self.pending_chars:
-                for _ in range(random.randint(1, 3)):
+                for _ in range(random.randint(1, 2)):
                     if self.pending_chars:
                         next_character = self.pending_chars.pop(random.randint(0, len(self.pending_chars) - 1))
                         self.terminal.set_character_visibility(next_character, is_visible=True)

@@ -204,7 +204,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             # make gradient scene
             gradient_scn = character.animation.new_scene(scene_id="gradient")
             char_gradient = Gradient(self.character_color_map[character], self.ring_color, steps=8)
-            gradient_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=char_gradient)
+            gradient_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=char_gradient)
 
             # make rotation waypoints
             ring_paths: list[motion.Path] = []
@@ -218,7 +218,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             # make disperse scene
             disperse_scn = character.animation.new_scene(is_looping=False, scene_id="disperse")
             disperse_gradient = Gradient(self.ring_color, self.character_color_map[character], steps=8)
-            disperse_scn.apply_gradient_to_symbols(character.input_symbol, 16, fg_gradient=disperse_gradient)
+            disperse_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=disperse_gradient)
             character.motion.chain_paths(ring_paths, loop=True)
             self.characters.append(character)
 
@@ -235,7 +235,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             """
             disperse_coords = geometry.find_coords_in_rect(origin, self.ring_gap)
             character.motion.paths.pop("disperse", None)
-            disperse_path = character.motion.new_path(speed=0.1, loop=True, path_id="disperse")
+            disperse_path = character.motion.new_path(speed=0.14, loop=True, path_id="disperse")
             for _ in range(5):
                 disperse_path.new_waypoint(disperse_coords[random.randrange(0, len(disperse_coords))])
             return disperse_path

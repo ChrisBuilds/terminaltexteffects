@@ -11,7 +11,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Scene, Path
+from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Path, Scene
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
@@ -76,7 +76,7 @@ class ErrorCorrectConfig(BaseConfig):
     swap_delay: int = ArgSpec(
         name="--swap-delay",
         type=argutils.PositiveInt.type_parser,
-        default=10,
+        default=6,
         metavar="(int > 0)",
         help="Number of frames between swaps.",
     )  # pyright: ignore[reportAssignmentType]
@@ -103,7 +103,7 @@ class ErrorCorrectConfig(BaseConfig):
     movement_speed: float = ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.5,
+        default=0.9,
         metavar="(float > 0)",
         help="Speed of the characters while moving to the correct position. ",
     )  # pyright: ignore[reportAssignmentType]

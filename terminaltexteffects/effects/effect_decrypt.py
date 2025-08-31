@@ -57,7 +57,7 @@ class DecryptConfig(BaseConfig):
     typing_speed: int = ArgSpec(
         name="--typing-speed",
         type=argutils.PositiveInt.type_parser,
-        default=1,
+        default=2,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of characters typed per keystroke.",
     )  # pyright: ignore[reportAssignmentType]
@@ -157,19 +157,19 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
         color = random.choice(self.config.ciphertext_colors)
         for _ in range(80):
             symbol = random.choice(self.encrypted_symbols)
-            fast_decrypt_scene.add_frame(symbol, 3, colors=ColorPair(fg=color))
-            duration = 3
+            fast_decrypt_scene.add_frame(symbol, 2, colors=ColorPair(fg=color))
+        duration = 2
         slow_decrypt_scene = character.animation.new_scene(scene_id="slow_decrypt")
         for _ in range(random.randint(1, 15)):  # 1-15 longer duration units
             symbol = random.choice(self.encrypted_symbols)
             # 30% chance of extra long duration
             # wide duration range reduces 'waves' in the animation
             # shorter duration creates flipping effect
-            duration = random.randrange(50, 125) if random.randint(0, 100) <= 30 else random.randrange(5, 10)
+            duration = random.randrange(35, 60) if random.randint(0, 100) <= 30 else random.randrange(3, 6)
             slow_decrypt_scene.add_frame(symbol, duration, colors=ColorPair(fg=color))
         discovered_scene = character.animation.new_scene(scene_id="discovered")
         discovered_gradient = Gradient(Color("ffffff"), self.character_final_color_map[character], steps=10)
-        discovered_scene.apply_gradient_to_symbols(character.input_symbol, 8, fg_gradient=discovered_gradient)
+        discovered_scene.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=discovered_gradient)
 
     def prepare_data_for_type_effect(self) -> None:
         """Prepare the data for the typing effect."""
@@ -184,7 +184,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
 
             typing_scene.add_frame(
                 random.choice(self.encrypted_symbols),
-                2,
+                1,
                 colors=ColorPair(fg=random.choice(self.config.ciphertext_colors)),
             )
             self.typing_pending_chars.append(character)

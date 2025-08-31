@@ -67,7 +67,7 @@ class SlideConfig(BaseConfig):
     movement_speed: float = ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.5,
+        default=0.8,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the characters.",
     )  # pyright: ignore[reportAssignmentType]
@@ -87,7 +87,7 @@ class SlideConfig(BaseConfig):
     gap: int = ArgSpec(
         name="--gap",
         type=argutils.NonNegativeInt.type_parser,
-        default=3,
+        default=2,
         metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames to wait before adding the next group of characters. Increasing this value creates a "
         "more staggered effect.",
@@ -152,7 +152,7 @@ class SlideConfig(BaseConfig):
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
         type=argutils.PositiveInt.type_parser,
-        default=10,
+        default=6,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]

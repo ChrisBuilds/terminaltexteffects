@@ -73,7 +73,7 @@ class PourConfig(BaseConfig):
     pour_speed: int = ArgSpec(
         name="--pour-speed",
         type=argutils.PositiveInt.type_parser,
-        default=1,
+        default=2,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of characters poured in per tick. Increase to speed up the effect.",
     )  # pyright: ignore[reportAssignmentType]
@@ -82,7 +82,7 @@ class PourConfig(BaseConfig):
     movement_speed: float = ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.2,
+        default=0.35,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Movement speed of the characters. ",
     )  # pyright: ignore[reportAssignmentType]
@@ -130,7 +130,7 @@ class PourConfig(BaseConfig):
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
         type=argutils.PositiveInt.type_parser,
-        default=10,
+        default=6,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]

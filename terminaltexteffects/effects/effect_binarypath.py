@@ -325,14 +325,15 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                     self.phase = "wipe"
 
             if self.phase == "wipe":
-                if self.final_wipe_chars:
-                    next_group = self.final_wipe_chars.pop(0)
-                    for character in next_group:
-                        character.animation.activate_scene("brighten_scn")
-                        self.terminal.set_character_visibility(character, is_visible=True)
-                        self.active_characters.add(character)
-                else:
-                    self.complete = True
+                for _ in range(2):
+                    if self.final_wipe_chars:
+                        next_group = self.final_wipe_chars.pop(0)
+                        for character in next_group:
+                            character.animation.activate_scene("brighten_scn")
+                            self.terminal.set_character_visibility(character, is_visible=True)
+                            self.active_characters.add(character)
+                    else:
+                        self.complete = True
 
             self.update()
             return self.frame

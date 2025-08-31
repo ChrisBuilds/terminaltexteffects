@@ -58,7 +58,7 @@ class ScatteredConfig(BaseConfig):
     movement_speed: float = ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.3,
+        default=0.5,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Movement speed of the characters. ",
     )  # pyright: ignore[reportAssignmentType]
@@ -101,7 +101,7 @@ class ScatteredConfig(BaseConfig):
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
         type=argutils.PositiveInt.type_parser,
-        default=12,
+        default=9,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]

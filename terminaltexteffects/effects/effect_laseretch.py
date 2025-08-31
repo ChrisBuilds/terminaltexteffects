@@ -117,7 +117,7 @@ class LaserEtchConfig(BaseConfig):
     etch_delay: int = ArgSpec(
         name="--etch-delay",
         type=argutils.NonNegativeInt.type_parser,
-        default=3,
+        default=1,
         metavar=argutils.NonNegativeInt.METAVAR,
         help="Along with etch_speed, determines the speed at which the characters are etched onto the terminal. "
         "This values specifies the number of frames to wait before etching the next set of characters.",
@@ -166,7 +166,7 @@ class LaserEtchConfig(BaseConfig):
     spark_cooling_frames: int = ArgSpec(
         name="--spark-cooling-frames",
         type=argutils.PositiveInt.type_parser,
-        default=10,
+        default=4,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each spark cooling gradient step. Increase to slow down the rate of cooling.",
     )  # pyright: ignore[reportAssignmentType]
@@ -199,7 +199,7 @@ class LaserEtchConfig(BaseConfig):
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
         type=argutils.PositiveInt.type_parser,
-        default=5,
+        default=4,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -337,7 +337,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                 if next_spark.animation.active_scene:
                     next_spark.animation.active_scene.reset_scene()
                 self.terminal.set_character_visibility(next_spark, is_visible=True)
-                spark_path = next_spark.motion.new_path(ease=tte.easing.out_sine, speed=0.15)
+                spark_path = next_spark.motion.new_path(ease=tte.easing.out_sine, speed=0.3)
                 fall_target_coord = tte.Coord(
                     random.randint(self.position.column - 20, self.position.column + 20),
                     self.terminal.canvas.bottom,
@@ -400,7 +400,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
             spawn_scn = character.animation.new_scene(scene_id="spawn")
             spawn_scn.add_frame("^", duration=3, colors=tte.ColorPair(fg="ffe680"))
             for color in cool_gradient:
-                spawn_scn.add_frame(character.input_symbol, 4, colors=tte.ColorPair(fg=color))
+                spawn_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair(fg=color))
             character.animation.activate_scene(spawn_scn)
 
         for n, char_list in enumerate(

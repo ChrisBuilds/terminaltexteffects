@@ -158,7 +158,7 @@ class MatrixConfig(BaseConfig):
     rain_fall_delay_range: tuple[int, int] = ArgSpec(
         name="--rain-fall-delay-range",
         type=argutils.PositiveIntRange.type_parser,
-        default=(3, 25),
+        default=(2, 15),
         metavar=argutils.PositiveIntRange.METAVAR,
         help="Range for the speed of the falling rain as determined by the delay between rows. Actual delay is "
         "randomly selected from the range.",
@@ -171,7 +171,7 @@ class MatrixConfig(BaseConfig):
     rain_column_delay_range: tuple[int, int] = ArgSpec(
         name="--rain-column-delay-range",
         type=argutils.PositiveIntRange.type_parser,
-        default=(5, 15),
+        default=(3, 9),
         metavar=argutils.PositiveIntRange.METAVAR,
         help="Range of frames to wait between adding new rain columns.",
     )  # pyright: ignore[reportAssignmentType]
@@ -207,7 +207,7 @@ class MatrixConfig(BaseConfig):
     resolve_delay: int = ArgSpec(
         name="--resolve-delay",
         type=argutils.PositiveInt.type_parser,
-        default=5,
+        default=3,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to wait between resolving the next group of characters. "
         "This is used to adjust the speed of the final resolve phase.",
@@ -248,7 +248,7 @@ class MatrixConfig(BaseConfig):
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
         type=argutils.PositiveInt.type_parser,
-        default=5,
+        default=3,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]

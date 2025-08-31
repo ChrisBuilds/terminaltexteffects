@@ -82,7 +82,7 @@ class MiddleOutConfig(BaseConfig):
     center_movement_speed: float = ArgSpec(
         name="--center-movement-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.35,
+        default=0.6,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the characters during the initial expansion of the center vertical/horiztonal line. ",
     )  # pyright: ignore[reportAssignmentType]
@@ -91,7 +91,7 @@ class MiddleOutConfig(BaseConfig):
     full_movement_speed: float = ArgSpec(
         name="--full-movement-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.35,
+        default=0.6,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the characters during the final full expansion. ",
     )  # pyright: ignore[reportAssignmentType]
@@ -202,7 +202,7 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
             # setup scenes
             full_scene = character.animation.new_scene(scene_id="full")
             full_gradient = Gradient(self.config.starting_color, self.character_final_color_map[character], steps=10)
-            full_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=full_gradient)
+            full_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=full_gradient)
 
             # initialize character state
             character.motion.activate_path(center_path)
