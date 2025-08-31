@@ -34,6 +34,7 @@
 #### Effects Changes (0.13.0)
 
 * Blackhole - Initial consumption motion modified to create the apperance of an gravitational-wave propagating across the canvas.
+* All effects have been adjusted for visual parity at 60 fps.
 
 ---
 
@@ -45,6 +46,7 @@
 * `motion.query_path()` accepts an argument directing the action to take if a path with the given `path_id` cannot be found. The default action is to raise a `PathNotFoundError`, but this behavior can be changed to return `None`.
 * `animation.query_scene()` accepts an argument directing the action to take if a scene with the given `scene_id` cannot be found. The default action is to raise a `SceneNotFoundError`, but this behavior can be changed to return `None`.
 * Events can be registered using `path_id`/`scene_id` in place of the `Path`/`Scene` for `target` and `caller` arguments.
+* Frame rate reduced from 100 fps to 60 fps.
 
 ### Bug Fixes (0.13.0)
 
@@ -54,6 +56,12 @@
 
 * Fixed duplicate event registrations by adding prevention logic to the EventHandler. The `register_event` method now raises a `DuplicateEventRegistrationError` when attempting to register the same event-caller-action-target combination.
 * Improved the `_handle_event` method docstring with comprehensive documentation.
+
+---
+
+#### Effect Fixes (0.13.0)
+
+* Unstable - Effect properly uses config values for reassembly/explosion speed. These were not referenced previously.
 
 ---
 
