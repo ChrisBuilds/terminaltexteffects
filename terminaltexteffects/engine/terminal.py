@@ -60,6 +60,8 @@ class TerminalConfig(BaseConfig):
             sequences in the input data. 'always' will always use the input colors, ignoring any effect specific colors.
             'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors
             in the input data. Default is 'ignore'.
+        reuse_canvas (bool): Do not create new rows at the start of the effect. The cursor will be restored to the
+            position of the previous canvas.
 
     """
 
