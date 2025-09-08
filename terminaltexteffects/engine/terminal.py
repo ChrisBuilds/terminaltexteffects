@@ -221,6 +221,22 @@ class TerminalConfig(BaseConfig):
         "Useful for sending frames to another output handler."
     )
 
+    reuse_canvas: bool = ArgSpec(
+        name="--reuse-canvas",
+        default=False,
+        action="store_true",
+        help=(
+            "Do not create new rows at the start of the effect. The cursor will be restored to the position "
+            "of the canvas during the previous run. If there is no previous run, the position of the cursor "
+            "may be unpredictable. If the previous canvas is above the current view, the top of the terminal "
+            "will likely be the start of the current canvas."
+        ),
+    )  # pyright: ignore[reportAssignmentType]
+    (
+        "bool : Do not create new rows at the start of the effect. The cursor will be restored to the position "
+        "of the previous canvas."
+    )
+
 
 @dataclass
 class Canvas:
@@ -1105,9 +1121,23 @@ class Terminal:
         self.terminal_state = terminal_state
 
     def prep_canvas(self) -> None:
-        """Prepare the terminal for the effect by adding empty lines and hiding the cursor."""
+        """Prepare the terminal for the effect by adding empty lines and hiding the cursor.
+
+        If `config.overwrite_rows` is `True`, the cursor will be restored to the last position
+        saved using the `DEC Save Cursor` terminal sequence. If a TTE effect was recently run,
+        the last saved cursor state should be the state at the start of the prior effect execution.
+
+        The intention of `config.overwrite_rows` is for the current effect output to align with
+        the prior effect output.
+
+        Note: Use of `config.overwrite_rows` will be less predictable if other canvas dimension options
+        differ between the last run and the current run.
+        """
         sys.stdout.write(ansitools.hide_cursor())
-        sys.stdout.write("\n" * (self.visible_top))
+        if self.config.reuse_canvas:
+            self.move_cursor_to_top()
+        for _ in range(self.visible_top):
+            sys.stdout.write((" " * self.visible_right) + "\n")
         sys.stdout.write(ansitools.dec_save_cursor_position())
 
     def restore_cursor(self, end_symbol: str = "\n") -> None:
