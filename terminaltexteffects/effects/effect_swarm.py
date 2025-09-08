@@ -251,7 +251,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 for swarm_area_coords in swarm_area_coordinate_map.values():
                     swarm_area_name = f"{swarm_area_count}_swarm_area"
                     swarm_area_count += 1
-                    origin_path = character.motion.new_path(path_id=swarm_area_name, speed=0.25, ease=easing.out_sine)
+                    origin_path = character.motion.new_path(path_id=swarm_area_name, speed=0.4, ease=easing.out_sine)
                     origin_path.new_waypoint(random.choice(swarm_area_coords), waypoint_id=swarm_area_name)
                     character.event_handler.register_event(
                         EventHandler.Event.PATH_ACTIVATED,
@@ -278,12 +278,12 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                         inner_paths += 1
                         inner_path = character.motion.new_path(
                             path_id=str(len(character.motion.paths)),
-                            speed=0.1,
+                            speed=0.18,
                             ease=easing.in_out_sine,
                         )
                         inner_path.new_waypoint(next_coord, waypoint_id=str(len(character.motion.paths)))
                 # create landing waypoint and scene
-                input_path = character.motion.new_path(speed=0.3, ease=easing.in_out_quad)
+                input_path = character.motion.new_path(speed=0.45, ease=easing.in_out_quad)
                 input_path.new_waypoint(character.input_coord)
                 input_scn = character.animation.new_scene()
                 for step in Gradient(self.config.flash_color, self.character_final_color_map[character], steps=10):

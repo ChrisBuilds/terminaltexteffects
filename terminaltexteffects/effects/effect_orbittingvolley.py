@@ -108,7 +108,7 @@ class OrbittingVolleyConfig(BaseConfig):
     launcher_movement_speed: float = ArgSpec(
         name="--launcher-movement-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.5,
+        default=0.8,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Orbitting speed of the launchers.",
     )  # pyright: ignore[reportAssignmentType]
@@ -117,7 +117,7 @@ class OrbittingVolleyConfig(BaseConfig):
     character_movement_speed: float = ArgSpec(
         name="--character-movement-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=1,
+        default=1.5,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the launched characters.",
     )  # pyright: ignore[reportAssignmentType]
@@ -135,7 +135,7 @@ class OrbittingVolleyConfig(BaseConfig):
     launch_delay: int = ArgSpec(
         name="--launch-delay",
         type=argutils.NonNegativeInt.type_parser,
-        default=50,
+        default=30,
         metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of animation ticks to wait between volleys of characters.",
     )  # pyright: ignore[reportAssignmentType]

@@ -170,7 +170,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
                 colors=ColorPair(fg=self.config.starting_color),
             )
             burn_scn = next_char.animation.new_scene(scene_id="burn")
-            burn_scn.apply_gradient_to_symbols(vertical_build_order, 12, fg_gradient=fire_gradient)
+            burn_scn.apply_gradient_to_symbols(vertical_build_order, 8, fg_gradient=fire_gradient)
             final_color_scn = next_char.animation.new_scene()
             for color in Gradient(fire_gradient.spectrum[-1], self.character_final_color_map[next_char], steps=8):
                 final_color_scn.add_frame(next_char.input_symbol, 4, colors=ColorPair(fg=color))
@@ -186,7 +186,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
     def __next__(self) -> str:
         """Return the next frame in the animation."""
         if self.pending_chars or self.active_characters:
-            for _ in range(random.randint(2, 4)):
+            for _ in range(random.randint(3, 5)):
                 if self.pending_chars:
                     next_char = self.pending_chars.pop(0)
                     next_char.animation.activate_scene("burn")

@@ -59,7 +59,7 @@ class PrintConfig(BaseConfig):
     print_head_return_speed: float = ArgSpec(
         name="--print-head-return-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=1.25,
+        default=1.5,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the print head when performing a carriage return.",
     )  # pyright: ignore[reportAssignmentType]
@@ -68,7 +68,7 @@ class PrintConfig(BaseConfig):
     print_speed: int = ArgSpec(
         name="--print-speed",
         type=argutils.PositiveInt.type_parser,
-        default=1,
+        default=2,
         metavar=argutils.PositiveInt.METAVAR,
         help="Speed of the print head when printing characters.",
     )  # pyright: ignore[reportAssignmentType]
@@ -155,7 +155,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 typed_animation = character.animation.new_scene()
                 typed_animation.apply_gradient_to_symbols(
                     ("█", "▓", "▒", "░", character.input_symbol),
-                    5,
+                    3,
                     fg_gradient=color_gradient,
                 )
                 character.animation.activate_scene(typed_animation)

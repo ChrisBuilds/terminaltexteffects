@@ -67,10 +67,10 @@ class BeamsConfig(BaseConfig):
         description="beams | Create beams which travel over the canvas illuminating the characters behind them.",
         epilog=(
             "Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay "
-            "10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF "
-            "8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF "
-            "ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical "
-            "--final-wipe-speed 1"
+            "3 --beam-row-speed-range 30-120 --beam-column-speed-range 18-30 --beam-gradient-stops ffffff 00D1FF "
+            "8A008A --beam-gradient-steps 2 6 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF "
+            "ffffff --final-gradient-steps 12 --final-gradient-frames 2 --final-gradient-direction vertical "
+            "--final-wipe-speed 3"
         ),
     )
 
@@ -113,7 +113,7 @@ class BeamsConfig(BaseConfig):
     beam_delay: int = ArgSpec(
         name="--beam-delay",
         type=argutils.PositiveInt.type_parser,
-        default=10,
+        default=6,
         metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Number of frames to wait before adding the next group of beams. "
@@ -129,7 +129,7 @@ class BeamsConfig(BaseConfig):
     beam_row_speed_range: tuple[int, int] = ArgSpec(
         name="--beam-row-speed-range",
         type=argutils.PositiveIntRange.type_parser,
-        default=(10, 40),
+        default=(15, 60),
         metavar=argutils.PositiveIntRange.METAVAR,
         help="Speed range of the beam when moving along a row.",
     )  # pyright: ignore[reportAssignmentType]
@@ -139,7 +139,7 @@ class BeamsConfig(BaseConfig):
     beam_column_speed_range: tuple[int, int] = ArgSpec(
         name="--beam-column-speed-range",
         type=argutils.PositiveIntRange.type_parser,
-        default=(6, 10),
+        default=(9, 15),
         metavar=argutils.PositiveIntRange.METAVAR,
         help="Speed range of the beam when moving along a column.",
     )  # pyright: ignore[reportAssignmentType]
@@ -163,7 +163,7 @@ class BeamsConfig(BaseConfig):
         type=argutils.PositiveInt.type_parser,
         nargs="+",
         action=argutils.TupleAction,
-        default=(2, 8),
+        default=(2, 6),
         metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Space separated, unquoted, numbers for the of gradient steps to use. "
@@ -223,7 +223,7 @@ class BeamsConfig(BaseConfig):
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
         type=argutils.PositiveInt.type_parser,
-        default=5,
+        default=4,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -243,7 +243,7 @@ class BeamsConfig(BaseConfig):
     final_wipe_speed: int = ArgSpec(
         name="--final-wipe-speed",
         type=argutils.PositiveInt.type_parser,
-        default=1,
+        default=3,
         metavar=argutils.PositiveInt.METAVAR,
         help="Speed of the final wipe as measured in diagonal groups activated per frame.",
     )  # pyright: ignore[reportAssignmentType]
@@ -405,13 +405,13 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
 
                 beam_row_scn.apply_gradient_to_symbols(
                     character.input_symbol,
-                    5,
+                    2,
                     fg_gradient=fg_fade_gradient,
                     bg_gradient=bg_fade_gradient,
                 )
                 beam_column_scn.apply_gradient_to_symbols(
                     character.input_symbol,
-                    5,
+                    2,
                     fg_gradient=fg_fade_gradient,
                     bg_gradient=bg_fade_gradient,
                 )

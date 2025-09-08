@@ -97,7 +97,7 @@ class BlackholeConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
-        default=12,
+        default=9,
         metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
@@ -136,7 +136,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         self.blackhole_radius = max(
             min(
                 round(self.terminal.canvas.width * 0.3),
-                round(self.terminal.canvas.height * 0.3),
+                round(self.terminal.canvas.height * 0.20),
             ),
             3,
         )
@@ -164,7 +164,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         )
         for position_index, character in enumerate(self.blackhole_chars):
             starting_pos = black_hole_ring_positions[position_index]
-            blackhole_path = character.motion.new_path(path_id="blackhole", speed=0.5, ease=easing.in_out_sine)
+            blackhole_path = character.motion.new_path(path_id="blackhole", speed=0.7, ease=easing.in_out_sine)
             blackhole_path.new_waypoint(starting_pos)
             blackhole_scn = character.animation.new_scene(scene_id="blackhole")
             blackhole_scn.add_frame("*", 1, colors=ColorPair(fg=self.config.blackhole_color))
@@ -175,7 +175,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                 1,
             )
             # make rotation waypoints
-            blackhole_rotation_path = character.motion.new_path(path_id="blackhole_rotation", speed=0.2, loop=True)
+            blackhole_rotation_path = character.motion.new_path(path_id="blackhole_rotation", speed=0.45, loop=True)
             for coord in black_hole_ring_positions[position_index:] + black_hole_ring_positions[:position_index]:
                 blackhole_rotation_path.new_waypoint(coord, waypoint_id=str(len(blackhole_rotation_path.waypoints)))
         for character in self.terminal.get_characters():
@@ -191,7 +191,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
 
                 singularity_path = character.motion.new_path(
                     path_id="singularity",
-                    speed=random.uniform(0.11, 0.23),
+                    speed=random.uniform(0.17, 0.30),
                     ease=easing.in_expo,
                 )
                 singularity_path.new_waypoint(self.terminal.canvas.center)
@@ -248,7 +248,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                     for symbol in unstable_symbols:
                         point_scn.add_frame(
                             symbol,
-                            6,
+                            3,
                             colors=ColorPair(fg=random.choice(self.config.star_colors)),
                         )
                 character.event_handler.register_event(
@@ -280,9 +280,9 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         ]
         for character in self.terminal.get_characters():
             nearby_coord = geometry.find_coords_on_circle(character.input_coord, 3, 5)[random.randrange(0, 5)]
-            nearby_path = character.motion.new_path(speed=random.randint(2, 3) / 10, ease=easing.out_expo)
+            nearby_path = character.motion.new_path(speed=random.randint(3, 4) / 10, ease=easing.out_expo)
             nearby_path.new_waypoint(nearby_coord)
-            input_path = character.motion.new_path(speed=random.randint(3, 5) / 100, ease=easing.in_cubic)
+            input_path = character.motion.new_path(speed=random.randint(4, 6) / 100, ease=easing.in_cubic)
             input_path.new_waypoint(character.input_coord)
             explode_scn = character.animation.new_scene()
             explode_star_color = random.choice(star_colors)
@@ -344,7 +344,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         self.prepare_blackhole()
-        self.formation_delay = max(100 // len(self.blackhole_chars), 10)
+        self.formation_delay = max(100 // len(self.blackhole_chars), 6)
         self.f_delay = self.formation_delay
         self.phase = "forming"
         self.awaiting_blackhole_chars = list(self.blackhole_chars)

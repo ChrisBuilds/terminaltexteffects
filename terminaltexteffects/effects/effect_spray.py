@@ -80,7 +80,7 @@ class SprayConfig(BaseConfig):
     movement_speed_range: tuple[float, float] = ArgSpec(
         name="--movement-speed-range",
         type=argutils.PositiveFloatRange.type_parser,
-        default=(0.4, 1.0),
+        default=(0.6, 1.4),
         metavar=argutils.PositiveFloatRange.METAVAR,
         help="Movement speed range of the characters.",
     )  # pyright: ignore[reportAssignmentType]

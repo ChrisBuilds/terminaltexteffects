@@ -73,7 +73,7 @@ class ThunderstormConfig(BaseConfig):
     text_glow_time: int = ArgSpec(
         name="--text-glow-time",
         type=argutils.PositiveInt.type_parser,
-        default=10,
+        default=6,
         metavar=argutils.PositiveInt.METAVAR,
         help="Duration, in number of frames, for the glowing/cooling animation for post-lightning text glow.",
     )  # pyright: ignore[reportAssignmentType]
@@ -113,7 +113,7 @@ class ThunderstormConfig(BaseConfig):
     spark_glow_time: int = ArgSpec(
         name="--spark-glow-time",
         type=argutils.PositiveInt.type_parser,
-        default=30,
+        default=18,
         metavar=argutils.PositiveInt.METAVAR,
         help="Duration, in number of frames, for the cooling animation for post-lightning sparks.",
     )  # pyright: ignore[reportAssignmentType]
@@ -156,7 +156,7 @@ class ThunderstormConfig(BaseConfig):
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
         type=argutils.PositiveInt.type_parser,
-        default=5,
+        default=3,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
@@ -224,13 +224,13 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             glow_gradient = tte.Gradient(self.config.glowing_text_color, faded_color, steps=7)
             glow_scn = text_char.animation.new_scene(scene_id="glow")
             for color in glow_gradient:
-                glow_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=10)
+                glow_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=6)
 
             # fade before storm scene
             fade_gradient = tte.Gradient(final_gradient_mapping[text_char.input_coord], faded_color, steps=7)
             fade_scn = text_char.animation.new_scene(scene_id="fade")
             for color in fade_gradient:
-                fade_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=20)
+                fade_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=12)
 
             # lightning flash scene
             lightning_flash_color = tte.Animation.adjust_color_brightness(
@@ -240,7 +240,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             strike_scn = text_char.animation.new_scene(scene_id="flash")
             flash_gradient = tte.Gradient(faded_color, lightning_flash_color, steps=7, loop=True)
             for color in flash_gradient:
-                strike_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=10)
+                strike_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=6)
 
             self.terminal.set_character_visibility(text_char, is_visible=True)
 
@@ -313,9 +313,9 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             spark_char.motion.set_coordinate(last_strike_char.motion.current_coord)
 
             spark_path = spark_char.motion.new_path(
-                speed=random.uniform(0.07, 0.2),
+                speed=random.uniform(0.1, 0.25),
                 ease=tte.easing.out_quint,
-                hold_time=50,
+                hold_time=30,
             )
             spark_target = tte.Coord(
                 column=last_strike_char.motion.current_coord.column + random.randint(4, 20) * random.choice((1, -1)),
@@ -469,7 +469,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 flash_scn.add_frame(
                     symbol=strike_char.animation.current_character_visual.symbol,
                     colors=tte.ColorPair(fg=color),
-                    duration=10,
+                    duration=6,
                 )
             fade_scn = strike_char.animation.new_scene(scene_id="fade")
             for color in fade_gradient:
@@ -520,7 +520,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 next_strike_char = self.pending_strike_chars.pop(0)
                 self.active_strike_chars.append(next_strike_char)
                 self.terminal.set_character_visibility(next_strike_char, is_visible=True)
-                self.strike_progression_delay = 2
+                self.strike_progression_delay = 1
 
                 # if the last strike_char was activated, activate the sparks
                 # and setup the post-fade callback to indicate the strike has
@@ -557,7 +557,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                     drop = self.rain_drops.pop(random.randint(0, len(self.rain_drops) - 1))
                     drop.motion.set_coordinate(drop.input_coord)
                     fall_path = drop.motion.query_path("fall")
-                    fall_path.speed = random.uniform(0.3, 1.5)
+                    fall_path.speed = random.uniform(0.5, 1.5)
                     drop.motion.activate_path(fall_path)
                     self.active_characters.add(drop)
                 self.delay = random.randint(1, 7)

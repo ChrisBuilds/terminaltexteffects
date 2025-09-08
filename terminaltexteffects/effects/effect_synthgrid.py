@@ -419,7 +419,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                 for _ in range(random.randint(15, 30)):
                     dissolve_scn.add_frame(
                         random.choice(self.config.text_generation_symbols),
-                        3,
+                        2,
                         colors=ColorPair(fg=random.choice(text_gradient.spectrum)),
                     )
                 if character.input_symbol == " ":

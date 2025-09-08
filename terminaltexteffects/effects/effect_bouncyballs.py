@@ -84,7 +84,7 @@ class BouncyBallsConfig(BaseConfig):
     ball_delay: int = ArgSpec(
         name="--ball-delay",
         type=argutils.NonNegativeInt.type_parser,
-        default=7,
+        default=4,
         metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames between ball drops, increase to reduce ball drop rate.",
     )  # pyright: ignore[reportAssignmentType]
@@ -93,7 +93,7 @@ class BouncyBallsConfig(BaseConfig):
     movement_speed: float = ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.25,
+        default=0.45,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Movement speed of the characters. ",
     )  # pyright: ignore[reportAssignmentType]
@@ -175,7 +175,7 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
             ball_scene.add_frame(symbol, 1, colors=ColorPair(fg=color))
             final_scene = character.animation.new_scene()
             char_final_gradient = Gradient(color, self.character_final_color_map[character], steps=10)
-            final_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=char_final_gradient)
+            final_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=char_final_gradient)
             character.motion.set_coordinate(
                 Coord(character.input_coord.column, int(self.terminal.canvas.top * random.uniform(1.0, 1.5))),
             )

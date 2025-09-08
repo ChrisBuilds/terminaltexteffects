@@ -70,7 +70,7 @@ class RandomSequenceConfig(BaseConfig):
     speed: float = ArgSpec(
         name="--speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.004,
+        default=0.007,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the animation as a percentage of the total number of characters to reveal in each tick.",
     )  # pyright: ignore[reportAssignmentType]
@@ -111,7 +111,7 @@ class RandomSequenceConfig(BaseConfig):
     final_gradient_frames: int = ArgSpec(
         name="--final-gradient-frames",
         type=argutils.PositiveInt.type_parser,
-        default=12,
+        default=8,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]

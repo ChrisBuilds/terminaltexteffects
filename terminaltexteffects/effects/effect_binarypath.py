@@ -117,7 +117,7 @@ class BinaryPathConfig(BaseConfig):
     movement_speed: float = ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=1.0,
+        default=1,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the binary groups as they travel around the terminal.",
     )  # pyright: ignore[reportAssignmentType]
@@ -127,7 +127,7 @@ class BinaryPathConfig(BaseConfig):
     active_binary_groups: float = ArgSpec(
         name="--active-binary-groups",
         type=argutils.NonNegativeRatio.type_parser,
-        default=0.05,
+        default=0.08,
         metavar=argutils.NonNegativeRatio.METAVAR,
         help="Maximum number of binary groups that are active at any given time as a percentage of the total number "
         "of binary groups. Lower this to improve performance.",
@@ -282,8 +282,8 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                 self.character_final_color_map[character].fg_color,  # type: ignore[arg-type]
                 0.5,
             )
-            dim_gradient = tte.Gradient(tte.Color("ffffff"), dim_color, steps=10)
-            collapse_scn.apply_gradient_to_symbols(character.input_symbol, 7, fg_gradient=dim_gradient)
+            dim_gradient = tte.Gradient(tte.Color("ffffff"), dim_color, steps=7)
+            collapse_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=dim_gradient)
 
             brighten_scn = character.animation.new_scene(scene_id="brighten_scn")
             brighten_gradient = tte.Gradient(dim_color, self.character_final_color_map[character].fg_color, steps=10)  # type: ignore[arg-type]
@@ -325,14 +325,15 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                     self.phase = "wipe"
 
             if self.phase == "wipe":
-                if self.final_wipe_chars:
-                    next_group = self.final_wipe_chars.pop(0)
-                    for character in next_group:
-                        character.animation.activate_scene("brighten_scn")
-                        self.terminal.set_character_visibility(character, is_visible=True)
-                        self.active_characters.add(character)
-                else:
-                    self.complete = True
+                for _ in range(2):
+                    if self.final_wipe_chars:
+                        next_group = self.final_wipe_chars.pop(0)
+                        for character in next_group:
+                            character.animation.activate_scene("brighten_scn")
+                            self.terminal.set_character_visibility(character, is_visible=True)
+                            self.active_characters.add(character)
+                    else:
+                        self.complete = True
 
             self.update()
             return self.frame

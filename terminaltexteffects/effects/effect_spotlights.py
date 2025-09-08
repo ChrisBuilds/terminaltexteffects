@@ -92,7 +92,7 @@ class SpotlightsConfig(BaseConfig):
     search_duration: int = ArgSpec(
         name="--search-duration",
         type=argutils.PositiveInt.type_parser,
-        default=750,
+        default=550,
         metavar=argutils.PositiveInt.METAVAR,
         help="Duration of the search phase, in frames, before the spotlights converge in the center.",
     )  # pyright: ignore[reportAssignmentType]
@@ -101,7 +101,7 @@ class SpotlightsConfig(BaseConfig):
     search_speed_range: tuple[float, float] = ArgSpec(
         name="--search-speed-range",
         type=argutils.PositiveFloatRange.type_parser,
-        default=(0.25, 0.5),
+        default=(0.35, 0.75),
         metavar=argutils.PositiveFloatRange.METAVAR,
         help="Range of speeds for the spotlights during the search phase. The speed is a random value between the "
         "two provided values.",

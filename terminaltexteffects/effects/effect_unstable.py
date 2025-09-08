@@ -79,7 +79,7 @@ class UnstableConfig(BaseConfig):
     explosion_speed: float = ArgSpec(
         name="--explosion-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.75,
+        default=1,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of characters during explosion. ",
     )  # pyright: ignore[reportAssignmentType]
@@ -96,7 +96,7 @@ class UnstableConfig(BaseConfig):
     reassembly_speed: float = ArgSpec(
         name="--reassembly-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.75,
+        default=1,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of characters during reassembly. ",
     )  # pyright: ignore[reportAssignmentType]
@@ -181,31 +181,35 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
             jumbled_coord = character_coords.pop(random.randint(0, len(character_coords) - 1))
             self.jumbled_coords[character] = jumbled_coord
             character.motion.set_coordinate(jumbled_coord)
-            explosion_path = character.motion.new_path(path_id="explosion", speed=1.25, ease=self.config.explosion_ease)
+            explosion_path = character.motion.new_path(
+                path_id="explosion",
+                speed=self.config.explosion_speed,
+                ease=self.config.explosion_ease,
+            )
             explosion_path.new_waypoint(Coord(col, row))
             reassembly_path = character.motion.new_path(
                 path_id="reassembly",
-                speed=0.75,
+                speed=self.config.reassembly_speed,
                 ease=self.config.reassembly_ease,
             )
             reassembly_path.new_waypoint(character.input_coord)
             unstable_gradient = Gradient(
                 self.character_final_color_map[character],
                 self.config.unstable_color,
-                steps=25,
+                steps=12,
             )
             rumble_scn = character.animation.new_scene(scene_id="rumble")
             rumble_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=unstable_gradient)
             final_color = Gradient(self.config.unstable_color, self.character_final_color_map[character], steps=12)
             final_scn = character.animation.new_scene(scene_id="final")
-            final_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=final_color)
+            final_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=final_color)
             character.animation.activate_scene(rumble_scn)
             self.terminal.set_character_visibility(character, is_visible=True)
-        self._explosion_hold_time = 50
+        self._explosion_hold_time = 30
         self.phase = "rumble"
-        self._max_rumble_steps = 250
+        self._max_rumble_steps = 150
         self._current_rumble_steps = 0
-        self._rumble_mod_delay = 20
+        self._rumble_mod_delay = 18
 
     def __next__(self) -> str:
         """Return the next from in the effect."""
