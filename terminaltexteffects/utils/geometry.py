@@ -303,7 +303,8 @@ find_length_of_bezier_curve = functools.wraps(find_length_of_bezier_curve)(
 def find_length_of_line(coord1: Coord, coord2: Coord, *, double_row_diff: bool = False) -> float:
     """Return the length of the line intersecting coord1 and coord2.
 
-    If double_row_diff is True, the distance is doubled to account for the terminal character height/width ratio.
+    If double_row_diff is True, the row (y) distance is doubled to account for the terminal character
+    height/width ratio.
 
     Args:
         coord1 (Coord): first coordinate.
