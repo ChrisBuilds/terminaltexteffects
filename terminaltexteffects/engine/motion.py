@@ -187,8 +187,7 @@ class Path:
             )
         else:
             distance_from_previous = geometry.find_length_of_line(
-                self.waypoints[-2].coord,
-                waypoint.coord,
+                self.waypoints[-2].coord, waypoint.coord, double_row_diff=True
             )
         self.total_distance += distance_from_previous
         self.segments.append(Segment(self.waypoints[-2], waypoint, distance_from_previous))
@@ -497,8 +496,7 @@ class Motion:
             )
         else:
             distance_to_first_waypoint = geometry.find_length_of_line(
-                self.current_coord,
-                first_waypoint.coord,
+                self.current_coord, first_waypoint.coord, double_row_diff=True
             )
         self.active_path.total_distance += distance_to_first_waypoint
         if self.active_path.origin_segment:
