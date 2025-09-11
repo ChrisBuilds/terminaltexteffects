@@ -79,7 +79,7 @@ class RainConfig(BaseConfig):
     movement_speed: tuple[float, float] = ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloatRange.type_parser,
-        default=(0.15, 0.27),
+        default=(0.33, 0.57),
         metavar=argutils.PositiveFloatRange.METAVAR,
         help="Falling speed range of the rain drops.",
     )  # pyright: ignore[reportAssignmentType]
