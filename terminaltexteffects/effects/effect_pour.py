@@ -82,7 +82,7 @@ class PourConfig(BaseConfig):
     movement_speed: float = ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.35,
+        default=0.5,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Movement speed of the characters. ",
     )  # pyright: ignore[reportAssignmentType]

@@ -105,7 +105,7 @@ class FireworksConfig(BaseConfig):
     firework_volume: float = ArgSpec(
         name="--firework-volume",
         type=argutils.NonNegativeRatio.type_parser,
-        default=0.02,
+        default=0.01,
         metavar=argutils.NonNegativeRatio.METAVAR,
         help="Percent of total characters in each firework shell.",
     )  # pyright: ignore[reportAssignmentType]
@@ -114,7 +114,7 @@ class FireworksConfig(BaseConfig):
     launch_delay: int = ArgSpec(
         name="--launch-delay",
         type=argutils.NonNegativeInt.type_parser,
-        default=60,
+        default=45,
         metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is "
         "applied to this value.",
@@ -126,7 +126,7 @@ class FireworksConfig(BaseConfig):
 
     explode_distance: float = ArgSpec(
         name="--explode-distance",
-        default=0.1,
+        default=0.2,
         type=argutils.NonNegativeRatio.type_parser,
         metavar=argutils.NonNegativeRatio.METAVAR,
         help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the "
@@ -189,7 +189,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.shells: list[list[EffectCharacter]] = []
         self.firework_volume = max(1, round(self.config.firework_volume * len(self.terminal._input_characters)))
-        self.explode_distance = max(1, round(self.terminal.canvas.right * self.config.explode_distance))
+        self.explode_distance = min(15, max(1, round(self.terminal.canvas.right * self.config.explode_distance)))
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.launch_delay: int = 0
         self.build()

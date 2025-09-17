@@ -95,7 +95,7 @@ class BubblesConfig(BaseConfig):
     bubble_speed: float = ArgSpec(
         name="--bubble-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.2,
+        default=0.5,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the floating bubbles. ",
     )  # pyright: ignore[reportAssignmentType]
@@ -104,7 +104,7 @@ class BubblesConfig(BaseConfig):
     bubble_delay: int = ArgSpec(
         name="--bubble-delay",
         type=argutils.PositiveInt.type_parser,
-        default=30,
+        default=20,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames between bubbles.",
     )  # pyright: ignore[reportAssignmentType]
@@ -313,8 +313,8 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             character.layer = 1
             pop_1_scene = character.animation.new_scene(scene_id="pop_1")
             pop_2_scene = character.animation.new_scene()
-            pop_1_scene.add_frame("*", 14, colors=ColorPair(fg=self.config.pop_color))
-            pop_2_scene.add_frame("'", 14, colors=ColorPair(fg=self.config.pop_color))
+            pop_1_scene.add_frame("*", 9, colors=ColorPair(fg=self.config.pop_color))
+            pop_2_scene.add_frame("'", 9, colors=ColorPair(fg=self.config.pop_color))
             final_scene = character.animation.new_scene()
             char_final_gradient = Gradient(self.config.pop_color, self.character_final_color_map[character], steps=8)
             final_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=char_final_gradient)
@@ -357,7 +357,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                     bubble_group.append(unbubbled_chars.pop(0))  # noqa: PERF401
             bubble_origin = Coord(
                 random.randint(self.terminal.canvas.left, self.terminal.canvas.right),
-                self.terminal.canvas.top,
+                self.terminal.canvas.top + 10,
             )
             new_bubble = BubblesIterator.Bubble(self, bubble_origin, bubble_group, self.terminal)
             self.bubbles.append(new_bubble)
