@@ -63,7 +63,7 @@ All effect configuration options are available within each effect via the `effec
     effect = Slide(text)
     effect.effect_config.merge = True  # (1)
     effect.effect_config.grouping = "column"  # (2)
-    effect.effect_config.final_gradient_stops = (Color("0ff000"), Color("000ff0"), Color("0f00f0"))  # (3)
+    effect.effect_config.final_gradient_stops = (Color("#0ff000"), Color("#000ff0"), Color("#0f00f0"))  # (3)
     effect.terminal_config.canvas_width = 30  # (4)
     with effect.terminal_output() as terminal:
         for frame in effect:

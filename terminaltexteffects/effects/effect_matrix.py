@@ -125,7 +125,7 @@ class MatrixConfig(BaseConfig):
     highlight_color: Color = ArgSpec(
         name="--highlight-color",
         type=argutils.ColorArg.type_parser,
-        default=Color("dbffdb"),
+        default=Color("#dbffdb"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the bottom of the rain column.",
     )  # pyright: ignore[reportAssignmentType]
@@ -135,7 +135,7 @@ class MatrixConfig(BaseConfig):
         name="--rain-color-gradient",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("92be92"), Color("185318")),
+        default=(Color("#92be92"), Color("#185318")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the rain gradient. Colors are selected from the "
         "gradient randomly. If only one color is provided, the characters will be displayed in that color.",
@@ -221,7 +221,7 @@ class MatrixConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("92be92"), Color("336b33")),
+        default=(Color("#92be92"), Color("#336b33")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",

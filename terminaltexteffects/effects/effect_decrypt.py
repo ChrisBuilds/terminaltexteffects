@@ -67,7 +67,7 @@ class DecryptConfig(BaseConfig):
         name="--ciphertext-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("008000"), Color("00cb00"), Color("00ff00")),
+        default=(Color("#008000"), Color("#00cb00"), Color("#00ff00")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the ciphertext. Color will be randomly selected for "
         "each character.",
@@ -78,7 +78,7 @@ class DecryptConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("eda000"),),
+        default=(Color("#eda000"),),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -168,7 +168,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
             duration = random.randrange(35, 60) if random.randint(0, 100) <= 30 else random.randrange(3, 6)
             slow_decrypt_scene.add_frame(symbol, duration, colors=ColorPair(fg=color))
         discovered_scene = character.animation.new_scene(scene_id="discovered")
-        discovered_gradient = Gradient(Color("ffffff"), self.character_final_color_map[character], steps=10)
+        discovered_gradient = Gradient(Color("#ffffff"), self.character_final_color_map[character], steps=10)
         discovered_scene.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=discovered_gradient)
 
     def prepare_data_for_type_effect(self) -> None:

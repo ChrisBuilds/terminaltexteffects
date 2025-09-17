@@ -323,7 +323,7 @@ def terminal_config_with_anchoring(
     return terminal_config
 
 
-@pytest.fixture(params=[(Color("000000"), Color("ff00ff"), Color("0ffff0")), (Color("ff0fff"),)])
+@pytest.fixture(params=[(Color("#000000"), Color("#ff00ff"), Color("#0ffff0")), (Color("#ff0fff"),)])
 def gradient_stops(request: pytest.FixtureRequest) -> Color | tuple[Color, ...]:
     """Fixture to provide gradient stops for tests."""
     return request.param

@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_binarypath_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_binarypath.BinaryPath(input_data)
@@ -26,7 +28,11 @@ def test_binarypath_effect_terminal_color_options(input_data, terminal_config_wi
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_binarypath_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_binarypath.BinaryPath(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -39,12 +45,16 @@ def test_binarypath_final_gradient(
             terminal.print(frame)
 
 
-@pytest.mark.parametrize("binary_colors", [(Color("ffffff"),), (Color("f0f0f0"), Color("0f0f0f"))])
+@pytest.mark.parametrize("binary_colors", [(Color("#ffffff"),), (Color("#f0f0f0"), Color("#0f0f0f"))])
 @pytest.mark.parametrize("movement_speed", [0.5, 1, 4])
 @pytest.mark.parametrize("active_binary_groups", [0.0001, 0.5, 1.0])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_binarypath_args(
-    terminal_config_default_no_framerate, input_data, binary_colors, movement_speed, active_binary_groups
+    terminal_config_default_no_framerate,
+    input_data,
+    binary_colors,
+    movement_speed,
+    active_binary_groups,
 ) -> None:
     effect = effect_binarypath.BinaryPath(input_data)
     effect.terminal_config = terminal_config_default_no_framerate

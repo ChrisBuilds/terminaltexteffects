@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_swarm_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_swarm.Swarm(input_data)
@@ -26,7 +28,11 @@ def test_swarm_effect_terminal_color_options(input_data, terminal_config_with_co
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_swarm_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_swarm.Swarm(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -39,8 +45,8 @@ def test_swarm_final_gradient(
             terminal.print(frame)
 
 
-@pytest.mark.parametrize("base_color", [(Color("ffffff"),), (Color("f0f0f0"), Color("00ff00"))])
-@pytest.mark.parametrize("flash_color", [Color("ff0000"), Color("0000ff")])
+@pytest.mark.parametrize("base_color", [(Color("#ffffff"),), (Color("#f0f0f0"), Color("#00ff00"))])
+@pytest.mark.parametrize("flash_color", [Color("#ff0000"), Color("#0000ff")])
 @pytest.mark.parametrize("swarm_size", [0.0001, 1])
 @pytest.mark.parametrize("swarm_coordination", [0.0001, 1])
 @pytest.mark.parametrize("swarm_area_count_range", [(1, 2), (3, 4)])

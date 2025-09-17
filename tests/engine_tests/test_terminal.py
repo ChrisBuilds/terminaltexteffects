@@ -171,11 +171,11 @@ def test_terminal_preprocess_input_data_existing_color():
     chars = terminal._preprocess_input_data(input_data)[0]
     assert len(chars) == 7
     assert chars[0].animation.input_bg_color is None
-    assert chars[0].animation.input_fg_color == Color("FF0000")
+    assert chars[0].animation.input_fg_color == Color("#FF0000")
     assert chars[1].animation.input_bg_color is None
-    assert chars[1].animation.input_fg_color == Color("00FF00")
-    assert chars[2].animation.input_bg_color == Color("0000FF")
-    assert chars[2].animation.input_fg_color == Color("00FF00")
+    assert chars[1].animation.input_fg_color == Color("#00FF00")
+    assert chars[2].animation.input_bg_color == Color("#0000FF")
+    assert chars[2].animation.input_fg_color == Color("#00FF00")
     assert chars[3].animation.input_bg_color is None
     assert chars[3].animation.input_fg_color == Color(196)
     assert chars[4].animation.input_bg_color == Color(106)
@@ -183,12 +183,12 @@ def test_terminal_preprocess_input_data_existing_color():
     assert chars[5].animation.input_bg_color == Color(68)
     assert chars[5].animation.input_fg_color == Color(196)
     assert chars[6].animation.input_bg_color == Color(68)
-    assert chars[6].animation.input_fg_color == Color("00FF00")
+    assert chars[6].animation.input_fg_color == Color("#00FF00")
     chars = terminal._preprocess_input_data(input_data)[0]
     test_char_colors = chars[0].animation.current_character_visual.colors
     assert test_char_colors is not None
     assert test_char_colors.bg_color is None
-    assert test_char_colors.fg_color == Color("FF0000")
+    assert test_char_colors.fg_color == Color("#FF0000")
 
 
 @pytest.mark.parametrize("anchor", ["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"])
@@ -319,9 +319,9 @@ def test_terminal_get_input_colors(sort):
     terminal = Terminal(input_data=input_data, config=config)
     colors = terminal.get_input_colors(sort=sort)
     if sort == Terminal.ColorSort.MOST_TO_LEAST:
-        assert colors[0] == Color("FF0000")
+        assert colors[0] == Color("#FF0000")
     elif sort == Terminal.ColorSort.LEAST_TO_MOST:
-        assert colors[0] == Color("0000FF")
+        assert colors[0] == Color("#0000FF")
     else:
         assert len(colors) == 3
 

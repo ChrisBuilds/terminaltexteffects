@@ -85,7 +85,7 @@ class ErrorCorrectConfig(BaseConfig):
     error_color: Color = ArgSpec(
         name="--error-color",
         type=argutils.ColorArg.type_parser,
-        default=Color("e74c3c"),
+        default=Color("#e74c3c"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters that are in the wrong position.",
     )  # pyright: ignore[reportAssignmentType]
@@ -94,7 +94,7 @@ class ErrorCorrectConfig(BaseConfig):
     correct_color: Color = ArgSpec(
         name="--correct-color",
         type=argutils.ColorArg.type_parser,
-        default=Color("45bf55"),
+        default=Color("#45bf55"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters once corrected, this is a gradient from error-color and fades to final-color.",
     )  # pyright: ignore[reportAssignmentType]
@@ -113,7 +113,7 @@ class ErrorCorrectConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -220,7 +220,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 error_scene = character.animation.new_scene(scene_id="error")
                 for _ in range(10):
                     error_scene.add_frame(block_symbol, 3, colors=ColorPair(fg=self.config.error_color))
-                    error_scene.add_frame(character.input_symbol, 3, colors=ColorPair(fg="ffffff"))
+                    error_scene.add_frame(character.input_symbol, 3, colors=ColorPair("#ffffff"))
                 correcting_scene = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
                 correcting_scene.apply_gradient_to_symbols("█", 3, fg_gradient=correcting_gradient)
                 final_scene = character.animation.new_scene()

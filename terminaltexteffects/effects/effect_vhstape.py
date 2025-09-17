@@ -66,7 +66,7 @@ class VHSTapeConfig(BaseConfig):
         name="--glitch-line-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("ffffff"), Color("ff0000"), Color("00ff00"), Color("0000ff"), Color("ffffff")),
+        default=(Color("#ffffff"), Color("#ff0000"), Color("#00ff00"), Color("#0000ff"), Color("#ffffff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors "
         "are applied in order as an animation.",
@@ -80,7 +80,7 @@ class VHSTapeConfig(BaseConfig):
         name="--glitch-wave-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("ffffff"), Color("ff0000"), Color("00ff00"), Color("0000ff"), Color("ffffff")),
+        default=(Color("#ffffff"), Color("#ff0000"), Color("#00ff00"), Color("#0000ff"), Color("#ffffff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. "
         "Colors are applied in order as an animation.",
@@ -94,7 +94,14 @@ class VHSTapeConfig(BaseConfig):
         name="--noise-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("1e1e1f"), Color("3c3b3d"), Color("6d6c70"), Color("a2a1a6"), Color("cbc9cf"), Color("ffffff")),
+        default=(
+            Color("#1e1e1f"),
+            Color("#3c3b3d"),
+            Color("#6d6c70"),
+            Color("#a2a1a6"),
+            Color("#cbc9cf"),
+            Color("#ffffff"),
+        ),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters during the noise phase.",
     )  # pyright: ignore[reportAssignmentType]
@@ -131,7 +138,7 @@ class VHSTapeConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
+        default=(Color("#ab48ff"), Color("#e7b2b2"), Color("#fffebd")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
@@ -252,7 +259,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 )
                 final_snow_scn = character.animation.new_scene(scene_id="final_snow")
                 final_redraw_scn = character.animation.new_scene(scene_id="final_redraw")
-                final_redraw_scn.add_frame("█", duration=6, colors=ColorPair(fg="ffffff"))
+                final_redraw_scn.add_frame("█", duration=6, colors=ColorPair("#ffffff"))
                 final_redraw_scn.add_frame(
                     character.input_symbol,
                     duration=1,

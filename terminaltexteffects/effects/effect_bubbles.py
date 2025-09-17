@@ -76,7 +76,7 @@ class BubblesConfig(BaseConfig):
         name="--bubble-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("d33aff"), Color("7395c4"), Color("43c2a7"), Color("02ff7f")),
+        default=(Color("#d33aff"), Color("#7395c4"), Color("#43c2a7"), Color("#02ff7f")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as "
         "default False.",
@@ -86,7 +86,7 @@ class BubblesConfig(BaseConfig):
     pop_color: Color = ArgSpec(
         name="--pop-color",
         type=argutils.ColorArg.type_parser,
-        default=Color("ffffff"),
+        default=Color("#ffffff"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the spray emitted when a bubble pops.",
     )  # pyright: ignore[reportAssignmentType]
@@ -137,7 +137,7 @@ class BubblesConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("d33aff"), Color("02ff7f")),
+        default=(Color("#d33aff"), Color("#02ff7f")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",

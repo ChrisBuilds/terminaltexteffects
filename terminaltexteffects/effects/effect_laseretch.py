@@ -131,7 +131,7 @@ class LaserEtchConfig(BaseConfig):
         name="--cool-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(tte.Color("ffe680"), tte.Color("ff7b00")),
+        default=(tte.Color("#ffe680"), tte.Color("#ff7b00")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the gradient used to cool the characters after etching. "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -143,7 +143,7 @@ class LaserEtchConfig(BaseConfig):
         name="--laser-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(tte.Color("ffffff"), tte.Color("376cff")),
+        default=(tte.Color("#ffffff"), tte.Color("#376cff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the laser gradient. "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -155,7 +155,7 @@ class LaserEtchConfig(BaseConfig):
         name="--spark-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(tte.Color("ffffff"), tte.Color("ffe680"), tte.Color("ff7b00"), tte.Color("1a0900")),
+        default=(tte.Color("#ffffff"), tte.Color("#ffe680"), tte.Color("#ff7b00"), tte.Color("#1a0900")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the spark cooling gradient. "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -176,7 +176,7 @@ class LaserEtchConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("ffffff")),
+        default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#ffffff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -398,7 +398,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                 steps=8,
             )
             spawn_scn = character.animation.new_scene(scene_id="spawn")
-            spawn_scn.add_frame("^", duration=3, colors=tte.ColorPair(fg="ffe680"))
+            spawn_scn.add_frame("^", duration=3, colors=tte.ColorPair("#ffe680"))
             for color in cool_gradient:
                 spawn_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair(fg=color))
             character.animation.activate_scene(spawn_scn)

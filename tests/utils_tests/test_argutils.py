@@ -105,7 +105,7 @@ def test_gradient_direction_invalid_direction():
 
 def test_color_arg_valid_color():
     assert argutils.ColorArg.type_parser("125") == Color(125)
-    assert argutils.ColorArg.type_parser("ffffff") == Color("ffffff")
+    assert argutils.ColorArg.type_parser("ffffff") == Color("#ffffff")
 
 
 @pytest.mark.parametrize("arg", ["-1", "256", "ffffzz", "aaa"])

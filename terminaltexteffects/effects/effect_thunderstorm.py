@@ -55,7 +55,7 @@ class ThunderstormConfig(BaseConfig):
     lightning_color: tte.Color = ArgSpec(
         name="--lightning-color",
         type=argutils.ColorArg.type_parser,
-        default=tte.Color("68A3E8"),
+        default=tte.Color("#68A3E8"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the lightning strike.",
     )  # pyright: ignore[reportAssignmentType]
@@ -64,7 +64,7 @@ class ThunderstormConfig(BaseConfig):
     glowing_text_color: tte.Color = ArgSpec(
         name="--glowing-text-color",
         type=argutils.ColorArg.type_parser,
-        default=tte.Color("EF5411"),
+        default=tte.Color("#EF5411"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the text when glowing after a lightning strike.",
     )  # pyright: ignore[reportAssignmentType]
@@ -104,7 +104,7 @@ class ThunderstormConfig(BaseConfig):
     spark_glow_color: tte.Color = ArgSpec(
         name="--spark-glow-color",
         type=argutils.ColorArg.type_parser,
-        default=tte.Color("ff4d00"),
+        default=tte.Color("#ff4d00"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the spark glow after a lightning strike.",
     )  # pyright: ignore[reportAssignmentType]
@@ -124,7 +124,7 @@ class ThunderstormConfig(BaseConfig):
         type=argutils.ColorArg.type_parser,
         nargs="+",
         action=argutils.TupleAction,
-        default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("FFFFFF")),
+        default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#FFFFFF")),
         metavar=argutils.ColorArg.METAVAR,
         help=(
             "Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
@@ -399,7 +399,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             rain_char.layer = 1
             rain_char.animation.set_appearance(
                 symbol=rain_char.input_symbol,
-                colors=tte.ColorPair(fg=tte.Color("aaaaff")),
+                colors=tte.ColorPair(fg=tte.Color("#aaaaff")),
             )
             fall_path = rain_char.motion.new_path(path_id="fall", speed=1)
             fall_path.new_waypoint(

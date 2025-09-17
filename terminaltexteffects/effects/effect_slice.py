@@ -84,7 +84,7 @@ class SliceConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",

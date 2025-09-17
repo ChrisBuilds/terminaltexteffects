@@ -63,7 +63,7 @@ class BinaryPathConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(tte.Color("00d500"), tte.Color("007500")),
+        default=(tte.Color("#00d500"), tte.Color("#007500")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -103,7 +103,7 @@ class BinaryPathConfig(BaseConfig):
         name="--binary-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(tte.Color("044E29"), tte.Color("157e38"), tte.Color("45bf55"), tte.Color("95ed87")),
+        default=(tte.Color("#044E29"), tte.Color("#157e38"), tte.Color("#45bf55"), tte.Color("#95ed87")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the binary characters. Character color is randomly "
         "assigned from this list.",
@@ -282,7 +282,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                 self.character_final_color_map[character].fg_color,  # type: ignore[arg-type]
                 0.5,
             )
-            dim_gradient = tte.Gradient(tte.Color("ffffff"), dim_color, steps=7)
+            dim_gradient = tte.Gradient(tte.Color("#ffffff"), dim_color, steps=7)
             collapse_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=dim_gradient)
 
             brighten_scn = character.animation.new_scene(scene_id="brighten_scn")

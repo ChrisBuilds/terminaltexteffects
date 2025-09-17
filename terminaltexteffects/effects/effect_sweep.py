@@ -118,7 +118,7 @@ class SweepConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("ffffff")),
+        default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#ffffff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -176,11 +176,11 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
             self.config.final_gradient_direction,
         )
         shades_of_gray = [
-            tte.Color("A0A0A0"),
-            tte.Color("808080"),
-            tte.Color("404040"),
-            tte.Color("202020"),
-            tte.Color("101010"),
+            tte.Color("#A0A0A0"),
+            tte.Color("#808080"),
+            tte.Color("#404040"),
+            tte.Color("#202020"),
+            tte.Color("#101010"),
         ]
         grouping_map = {
             "column_left_to_right": self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
@@ -203,7 +203,7 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
             initial_sweep_scn = character.animation.new_scene(scene_id="initial_sweep")
             for char in self.config.sweep_symbols:
                 initial_sweep_scn.add_frame(char, 5, colors=tte.ColorPair(fg=random.choice(shades_of_gray)))
-            initial_sweep_scn.add_frame(character.input_symbol, 1, colors=tte.ColorPair(fg="808080"))
+            initial_sweep_scn.add_frame(character.input_symbol, 1, colors=tte.ColorPair("#808080"))
             second_sweep_scn = character.animation.new_scene(scene_id="second_sweep")
             for char in self.config.sweep_symbols:
                 second_sweep_scn.add_frame(

@@ -151,7 +151,7 @@ class BeamsConfig(BaseConfig):
         type=argutils.ColorArg.type_parser,
         nargs="+",
         action=argutils.TupleAction,
-        default=(tte.Color("ffffff"), tte.Color("00D1FF"), tte.Color("8A008A")),
+        default=(tte.Color("#ffffff"), tte.Color("#00D1FF"), tte.Color("#8A008A")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors.",
     )  # pyright: ignore[reportAssignmentType]
@@ -193,7 +193,7 @@ class BeamsConfig(BaseConfig):
         type=argutils.ColorArg.type_parser,
         nargs="+",
         action=argutils.TupleAction,
-        default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("ffffff")),
+        default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#ffffff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # pyright: ignore[reportAssignmentType]
@@ -347,10 +347,10 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             if character.is_fill_character:
-                self.character_final_color_map[character] = tte.ColorPair(fg="000000")
+                self.character_final_color_map[character] = tte.ColorPair(fg="#000000")
                 continue
             if self.terminal.config.existing_color_handling == "dynamic" and self.preexisting_colors_present:
-                fg_color = tte.Color("ffffff")
+                fg_color = tte.Color("#ffffff")
                 bg_color = None
                 if character.animation.input_fg_color:
                     fg_color = character.animation.input_fg_color

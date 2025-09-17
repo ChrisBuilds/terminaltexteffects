@@ -87,7 +87,7 @@ class FireworksConfig(BaseConfig):
         name="--firework-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("88F7E2"), Color("44D492"), Color("F5EB67"), Color("FFA15C"), Color("FA233E")),
+        default=(Color("#88F7E2"), Color("#44D492"), Color("#F5EB67"), Color("#FFA15C"), Color("#FA233E")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated list of colors from which firework colors will be randomly selected.",
     )  # pyright: ignore[reportAssignmentType]
@@ -141,7 +141,7 @@ class FireworksConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -263,12 +263,12 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for firework_shell in self.shells:
             shell_color = random.choice(self.config.firework_colors)
-            shell_gradient = Gradient(shell_color, Color("FFFFFF"), shell_color, steps=5)
+            shell_gradient = Gradient(shell_color, Color("#FFFFFF"), shell_color, steps=5)
             for character in firework_shell:
                 # launch scene
                 launch_scn = character.animation.new_scene()
                 launch_scn.add_frame(self.config.firework_symbol, 2, colors=ColorPair(fg=shell_color))
-                launch_scn.add_frame(self.config.firework_symbol, 1, colors=ColorPair(fg="FFFFFF"))
+                launch_scn.add_frame(self.config.firework_symbol, 1, colors=ColorPair("#FFFFFF"))
                 launch_scn.is_looping = True
                 # bloom scene
                 bloom_scn = character.animation.new_scene(sync=Scene.SyncMetric.STEP)

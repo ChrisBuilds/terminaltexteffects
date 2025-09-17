@@ -62,7 +62,7 @@ class UnstableConfig(BaseConfig):
     unstable_color: Color = ArgSpec(
         name="--unstable-color",
         type=argutils.ColorArg.type_parser,
-        default=Color("ff9200"),
+        default=Color("#ff9200"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color transitioned to as the characters become unstable.",
     )  # pyright: ignore[reportAssignmentType]
@@ -106,7 +106,7 @@ class UnstableConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",

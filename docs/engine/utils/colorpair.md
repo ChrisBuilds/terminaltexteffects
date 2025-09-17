@@ -11,7 +11,7 @@ ColorPair objects are used to represent a foreground and background color pair.
 ```python
 import terminaltexteffects as tte
 
-color_pair = tte.ColorPair(fg=tte.Color("FF0000"), bg=tte.Color("00FF00"))
+color_pair = tte.ColorPair(fg=tte.Color("#FF0000"), bg=tte.Color("#00FF00"))
 ```
 
 ### Alternate Signature
@@ -21,7 +21,7 @@ Colors can be specified using strings or integers. Color objects will be created
 ```python
 import terminaltexteffects as tte
 
-color_pair = tte.ColorPair(fg="FF0000", bg="00FF00")
+color_pair = tte.ColorPair("#FF0000", "#00FF00")
 ```
 
 `fg` and/or `bg` are optional and default to `None`.

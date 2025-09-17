@@ -118,8 +118,8 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            strengthen_flash_gradient = Gradient(self.character_final_color_map[character], Color("ffffff"), steps=6)
-            strengthen_gradient = Gradient(Color("ffffff"), self.character_final_color_map[character], steps=9)
+            strengthen_flash_gradient = Gradient(self.character_final_color_map[character], Color("#ffffff"), steps=6)
+            strengthen_gradient = Gradient(Color("#ffffff"), self.character_final_color_map[character], steps=9)
             weak_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.65)
             dust_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.55)
             weaken_gradient = Gradient(weak_color, dust_color, steps=9)
