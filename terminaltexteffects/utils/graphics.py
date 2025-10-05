@@ -419,7 +419,7 @@ def random_color() -> Color:
         Color: A random color in the range 000000 -> ffffff.
 
     """
-    return Color(hex(random.randint(0, 0xFFFFFF))[2:].zfill(6))
+    return Color(f"{random.randint(0, 0xFFFFFF):06x}")
 
 
 def shift_color_towards(color: Color, target_color: Color, factor: float) -> Color:
