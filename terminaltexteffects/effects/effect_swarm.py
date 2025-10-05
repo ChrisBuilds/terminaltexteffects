@@ -73,7 +73,7 @@ class SwarmConfig(BaseConfig):
         name="--base-color",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("31a0d4"),),
+        default=(Color("#31a0d4"),),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the swarms",
     )  # pyright: ignore[reportAssignmentType]
@@ -82,7 +82,7 @@ class SwarmConfig(BaseConfig):
     flash_color: Color = ArgSpec(
         name="--flash-color",
         type=argutils.ColorArg.type_parser,
-        default=Color("f2ea79"),
+        default=Color("#f2ea79"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the character flash. Characters flash when moving.",
     )  # pyright: ignore[reportAssignmentType]
@@ -119,7 +119,7 @@ class SwarmConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("31b900"), Color("f0ff65")),
+        default=(Color("#31b900"), Color("#f0ff65")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",

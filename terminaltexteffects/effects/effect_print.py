@@ -86,7 +86,7 @@ class PrintConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("02b8bd"), Color("c1f0e3"), Color("00ffa0")),
+        default=(Color("#02b8bd"), Color("#c1f0e3"), Color("#00ffa0")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -203,7 +203,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             self.character_final_color_map[character] = final_gradient_mapping.get(
                 character.input_coord,
-                Color("ffffff"),
+                Color("#ffffff"),
             )
         input_rows = self.terminal.get_characters_grouped(
             grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
@@ -215,7 +215,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 PrintIterator.Row(
                     input_row,
                     self.character_final_color_map,
-                    Color("ffffff"),
+                    Color("#ffffff"),
                 ),
             )
         self._current_row: PrintIterator.Row = self.pending_rows.pop(0)

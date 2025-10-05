@@ -96,7 +96,7 @@ class TerminalConfig(BaseConfig):
     terminal_background_color: Color = ArgSpec(
         name="--terminal-background-color",
         type=argutils.ColorArg.type_parser,
-        default=Color("000000"),
+        default=Color("#000000"),
         metavar=argutils.ColorArg.METAVAR,
         help=(
             "The background color of you terminal. "

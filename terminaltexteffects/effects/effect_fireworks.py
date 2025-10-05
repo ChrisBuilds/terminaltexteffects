@@ -87,7 +87,7 @@ class FireworksConfig(BaseConfig):
         name="--firework-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("88F7E2"), Color("44D492"), Color("F5EB67"), Color("FFA15C"), Color("FA233E")),
+        default=(Color("#88F7E2"), Color("#44D492"), Color("#F5EB67"), Color("#FFA15C"), Color("#FA233E")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated list of colors from which firework colors will be randomly selected.",
     )  # pyright: ignore[reportAssignmentType]
@@ -105,7 +105,7 @@ class FireworksConfig(BaseConfig):
     firework_volume: float = ArgSpec(
         name="--firework-volume",
         type=argutils.NonNegativeRatio.type_parser,
-        default=0.02,
+        default=0.01,
         metavar=argutils.NonNegativeRatio.METAVAR,
         help="Percent of total characters in each firework shell.",
     )  # pyright: ignore[reportAssignmentType]
@@ -114,7 +114,7 @@ class FireworksConfig(BaseConfig):
     launch_delay: int = ArgSpec(
         name="--launch-delay",
         type=argutils.NonNegativeInt.type_parser,
-        default=60,
+        default=45,
         metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is "
         "applied to this value.",
@@ -126,7 +126,7 @@ class FireworksConfig(BaseConfig):
 
     explode_distance: float = ArgSpec(
         name="--explode-distance",
-        default=0.1,
+        default=0.2,
         type=argutils.NonNegativeRatio.type_parser,
         metavar=argutils.NonNegativeRatio.METAVAR,
         help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the "
@@ -141,7 +141,7 @@ class FireworksConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -189,7 +189,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.shells: list[list[EffectCharacter]] = []
         self.firework_volume = max(1, round(self.config.firework_volume * len(self.terminal._input_characters)))
-        self.explode_distance = max(1, round(self.terminal.canvas.right * self.config.explode_distance))
+        self.explode_distance = min(15, max(1, round(self.terminal.canvas.right * self.config.explode_distance)))
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.launch_delay: int = 0
         self.build()
@@ -263,12 +263,12 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for firework_shell in self.shells:
             shell_color = random.choice(self.config.firework_colors)
-            shell_gradient = Gradient(shell_color, Color("FFFFFF"), shell_color, steps=5)
+            shell_gradient = Gradient(shell_color, Color("#FFFFFF"), shell_color, steps=5)
             for character in firework_shell:
                 # launch scene
                 launch_scn = character.animation.new_scene()
                 launch_scn.add_frame(self.config.firework_symbol, 2, colors=ColorPair(fg=shell_color))
-                launch_scn.add_frame(self.config.firework_symbol, 1, colors=ColorPair(fg="FFFFFF"))
+                launch_scn.add_frame(self.config.firework_symbol, 1, colors=ColorPair("#FFFFFF"))
                 launch_scn.is_looping = True
                 # bloom scene
                 bloom_scn = character.animation.new_scene(sync=Scene.SyncMetric.STEP)

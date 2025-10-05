@@ -10,6 +10,7 @@ Classes:
 from __future__ import annotations
 
 import random
+import time
 import typing
 from dataclasses import dataclass
 
@@ -46,6 +47,7 @@ class ThunderstormConfig(BaseConfig):
             "--glowing-text-color EF5411 --text-glow-time 10 "
             "--raindrop-symbols '\\' '.' ',' --spark-symbols '*' '.' '`' "
             "--spark-glow-color ff4d00 --spark-glow-time 30 "
+            "--storm-time 10 "
             "--final-gradient-stops 8A008A 00D1FF FFFFFF "
             "--final-gradient-steps 12 --final-gradient-frames 5 "
             "--final-gradient-direction vertical"
@@ -55,7 +57,7 @@ class ThunderstormConfig(BaseConfig):
     lightning_color: tte.Color = ArgSpec(
         name="--lightning-color",
         type=argutils.ColorArg.type_parser,
-        default=tte.Color("68A3E8"),
+        default=tte.Color("#68A3E8"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the lightning strike.",
     )  # pyright: ignore[reportAssignmentType]
@@ -64,7 +66,7 @@ class ThunderstormConfig(BaseConfig):
     glowing_text_color: tte.Color = ArgSpec(
         name="--glowing-text-color",
         type=argutils.ColorArg.type_parser,
-        default=tte.Color("EF5411"),
+        default=tte.Color("#EF5411"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the text when glowing after a lightning strike.",
     )  # pyright: ignore[reportAssignmentType]
@@ -104,7 +106,7 @@ class ThunderstormConfig(BaseConfig):
     spark_glow_color: tte.Color = ArgSpec(
         name="--spark-glow-color",
         type=argutils.ColorArg.type_parser,
-        default=tte.Color("ff4d00"),
+        default=tte.Color("#ff4d00"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the spark glow after a lightning strike.",
     )  # pyright: ignore[reportAssignmentType]
@@ -119,12 +121,21 @@ class ThunderstormConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int: Duration, in number of frames, for the cooling animation for post-lightning sparks."
 
+    storm_time: int = ArgSpec(
+        name="--storm-time",
+        type=argutils.PositiveInt.type_parser,
+        default=12,
+        metavar=argutils.PositiveInt.METAVAR,
+        help="Duration, in seconds, the storm will occur.",
+    )  # pyright: ignore[reportAssignmentType]
+    "int: Duration, in seconds, the storm will occur."
+
     final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
         action=argutils.TupleAction,
-        default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("FFFFFF")),
+        default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#FFFFFF")),
         metavar=argutils.ColorArg.METAVAR,
         help=(
             "Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
@@ -197,6 +208,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         self.flashing: bool = False
         self.strike_branch_chance = 0.05
         self.phase: str = "pre-storm"
+        self.storm_start_time = time.monotonic()
         self.build()
 
     def build(self) -> None:
@@ -232,6 +244,11 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             for color in fade_gradient:
                 fade_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=12)
 
+            unfade_gradient = list(fade_gradient)[::-1]
+            unfade_scn = text_char.animation.new_scene(scene_id="unfade")
+            for color in unfade_gradient:
+                unfade_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=12)
+
             # lightning flash scene
             lightning_flash_color = tte.Animation.adjust_color_brightness(
                 final_gradient_mapping[text_char.input_coord],
@@ -247,6 +264,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         # setup a reference character callback to indicate when the pre-storm fade has completed
         def fade_complete(*_: typing.Any) -> None:
             self.phase = "storm"
+            self.storm_start_time = time.monotonic()
 
         reference_char = all_chars[0]
         reference_char.event_handler.register_event(
@@ -399,7 +417,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             rain_char.layer = 1
             rain_char.animation.set_appearance(
                 symbol=rain_char.input_symbol,
-                colors=tte.ColorPair(fg=tte.Color("aaaaff")),
+                colors=tte.ColorPair(fg=tte.Color("#aaaaff")),
             )
             fall_path = rain_char.motion.new_path(path_id="fall", speed=1)
             fall_path.new_waypoint(
@@ -570,6 +588,12 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             char.animation.activate_scene("fade")
             self.active_characters.add(char)
 
+    def post_storm_text_fade_in(self) -> None:
+        """Active the fade in scene for all text characters after the storm clears."""
+        for char in self.terminal.get_characters():
+            char.animation.activate_scene("unfade")
+            self.active_characters.add(char)
+
     def __next__(self) -> str:
         """Return the next frame of the effect."""
         if self.active_characters or self.phase != "complete":
@@ -586,6 +610,10 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
 
                 for char in self.pending_glow_chars:
                     self.active_characters.add(char)
+                self.pending_glow_chars.clear()
+                if (time.monotonic() - self.storm_start_time) >= self.config.storm_time and not self.strike_in_progress:
+                    self.post_storm_text_fade_in()
+                    self.phase = "complete"
             self.update()
             return self.frame
         raise StopIteration

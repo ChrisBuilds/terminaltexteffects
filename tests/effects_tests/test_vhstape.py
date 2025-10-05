@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_vhstape_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_vhstape.VHSTape(input_data)
@@ -26,7 +28,11 @@ def test_vhstape_effect_terminal_color_options(input_data, terminal_config_with_
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_vhstape_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_vhstape.VHSTape(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -39,9 +45,9 @@ def test_vhstape_final_gradient(
             terminal.print(frame)
 
 
-@pytest.mark.parametrize("glitch_line_colors", [(Color("ff00ff"), Color("0ffff0")), (Color("ff0fff"),)])
-@pytest.mark.parametrize("glitch_wave_colors", [(Color("ff00ff"), Color("0ffff0")), (Color("ff0fff"),)])
-@pytest.mark.parametrize("noise_colors", [(Color("ff00ff"), Color("0ffff0")), (Color("ff0fff"),)])
+@pytest.mark.parametrize("glitch_line_colors", [(Color("#ff00ff"), Color("#0ffff0")), (Color("#ff0fff"),)])
+@pytest.mark.parametrize("glitch_wave_colors", [(Color("#ff00ff"), Color("#0ffff0")), (Color("#ff0fff"),)])
+@pytest.mark.parametrize("noise_colors", [(Color("#ff00ff"), Color("#0ffff0")), (Color("#ff0fff"),)])
 @pytest.mark.parametrize("glitch_line_chance", [0, 0.5, 1])
 @pytest.mark.parametrize("noise_chance", [0, 0.5, 1])
 @pytest.mark.parametrize("total_glitch_time", [1, 20])

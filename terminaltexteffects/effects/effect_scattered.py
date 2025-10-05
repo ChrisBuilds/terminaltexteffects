@@ -76,7 +76,7 @@ class ScatteredConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("ff9048"), Color("ab9dff"), Color("bdffea")),
+        default=(Color("#ff9048"), Color("#ab9dff"), Color("#bdffea")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, "
         "the characters will be displayed in that color.",

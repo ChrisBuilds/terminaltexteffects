@@ -64,7 +64,7 @@ class BouncyBallsConfig(BaseConfig):
         type=argutils.ColorArg.type_parser,
         metavar=argutils.ColorArg.METAVAR,
         nargs="+",
-        default=(Color("d1f4a5"), Color("96e2a4"), Color("5acda9")),
+        default=(Color("#d1f4a5"), Color("#96e2a4"), Color("#5acda9")),
         help="Space separated list of colors from which ball colors will be randomly selected. If no colors are "
         "provided, the colors are random.",
     )  # pyright: ignore[reportAssignmentType]
@@ -111,7 +111,7 @@ class BouncyBallsConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("f8ffae"), Color("43c6ac")),
+        default=(Color("#f8ffae"), Color("#43c6ac")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",

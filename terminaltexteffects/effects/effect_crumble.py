@@ -118,8 +118,8 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            strengthen_flash_gradient = Gradient(self.character_final_color_map[character], Color("ffffff"), steps=6)
-            strengthen_gradient = Gradient(Color("ffffff"), self.character_final_color_map[character], steps=9)
+            strengthen_flash_gradient = Gradient(self.character_final_color_map[character], Color("#ffffff"), steps=6)
+            strengthen_gradient = Gradient(Color("#ffffff"), self.character_final_color_map[character], steps=9)
             weak_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.65)
             dust_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.55)
             weaken_gradient = Gradient(weak_color, dust_color, steps=9)
@@ -129,20 +129,20 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             initial_scn.add_frame(character.input_symbol, 1, colors=ColorPair(fg=weak_color))
             character.animation.activate_scene(initial_scn)
             fall_path = character.motion.new_path(
-                speed=0.35,
+                speed=0.65,
                 ease=easing.out_bounce,
             )
             fall_path.new_waypoint(Coord(character.input_coord.column, self.terminal.canvas.bottom))
             weaken_scn = character.animation.new_scene(scene_id="weaken")
             weaken_scn.apply_gradient_to_symbols(character.input_symbol, 4, fg_gradient=weaken_gradient)
 
-            top_path = character.motion.new_path(path_id="top", speed=0.7, ease=easing.out_quint)
+            top_path = character.motion.new_path(path_id="top", speed=1, ease=easing.out_quint)
             top_path.new_waypoint(
                 Coord(character.input_coord.column, self.terminal.canvas.top),
                 bezier_control=Coord(self.terminal.canvas.center_column, self.terminal.canvas.center_row),
             )
             # set up reset stage
-            input_path = character.motion.new_path(path_id="input", speed=0.5)
+            input_path = character.motion.new_path(path_id="input", speed=1)
             input_path.new_waypoint(character.input_coord)
             strengthen_flash_scn = character.animation.new_scene()
             strengthen_flash_scn.apply_gradient_to_symbols(

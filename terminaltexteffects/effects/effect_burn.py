@@ -58,7 +58,7 @@ class BurnConfig(BaseConfig):
     starting_color: Color = ArgSpec(
         name="--starting-color",
         type=argutils.ColorArg.type_parser,
-        default=Color("837373"),
+        default=Color("#837373"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color of the characters before they start to burn.",
     )  # pyright: ignore[reportAssignmentType]
@@ -67,7 +67,7 @@ class BurnConfig(BaseConfig):
     burn_colors: tuple[Color, ...] = ArgSpec(
         name="--burn-colors",
         type=argutils.ColorArg.type_parser,
-        default=(Color("ffffff"), Color("fff75d"), Color("fe650d"), Color("8A003C"), Color("510100")),
+        default=(Color("#ffffff"), Color("#fff75d"), Color("#fe650d"), Color("#8A003C"), Color("#510100")),
         nargs="+",
         metavar=argutils.ColorArg.METAVAR,
         help="Colors transitioned through as the characters burn.",
@@ -78,7 +78,7 @@ class BurnConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("00c3ff"), Color("ffff1c")),
+        default=(Color("#00c3ff"), Color("#ffff1c")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",

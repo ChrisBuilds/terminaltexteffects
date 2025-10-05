@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_matrix_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_matrix.Matrix(input_data)
@@ -28,7 +30,11 @@ def test_matrix_effect_terminal_color_options(input_data, terminal_config_with_c
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_matrix_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_matrix.Matrix(input_data)
     effect.effect_config.rain_time = 1
@@ -42,8 +48,8 @@ def test_matrix_final_gradient(
             terminal.print(frame)
 
 
-@pytest.mark.parametrize("highlight_color", [Color("ff00ff"), Color("0ffff0")])
-@pytest.mark.parametrize("rain_color_gradient", [(Color("ff0fff"),), (Color("ff0fff"), Color("ff0fff"))])
+@pytest.mark.parametrize("highlight_color", [Color("#ff00ff"), Color("#0ffff0")])
+@pytest.mark.parametrize("rain_color_gradient", [(Color("#ff0fff"),), (Color("#ff0fff"), Color("#ff0fff"))])
 @pytest.mark.parametrize("rain_symbols", [("a",), ("a", "b")])
 @pytest.mark.parametrize("rain_fall_delay_range", [(1, 2), (2, 3)])
 @pytest.mark.parametrize("rain_column_delay_range", [(1, 2), (2, 3)])

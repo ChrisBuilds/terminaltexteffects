@@ -76,7 +76,7 @@ class BubblesConfig(BaseConfig):
         name="--bubble-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("d33aff"), Color("7395c4"), Color("43c2a7"), Color("02ff7f")),
+        default=(Color("#d33aff"), Color("#7395c4"), Color("#43c2a7"), Color("#02ff7f")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as "
         "default False.",
@@ -86,7 +86,7 @@ class BubblesConfig(BaseConfig):
     pop_color: Color = ArgSpec(
         name="--pop-color",
         type=argutils.ColorArg.type_parser,
-        default=Color("ffffff"),
+        default=Color("#ffffff"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the spray emitted when a bubble pops.",
     )  # pyright: ignore[reportAssignmentType]
@@ -95,7 +95,7 @@ class BubblesConfig(BaseConfig):
     bubble_speed: float = ArgSpec(
         name="--bubble-speed",
         type=argutils.PositiveFloat.type_parser,
-        default=0.2,
+        default=0.5,
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the floating bubbles. ",
     )  # pyright: ignore[reportAssignmentType]
@@ -104,7 +104,7 @@ class BubblesConfig(BaseConfig):
     bubble_delay: int = ArgSpec(
         name="--bubble-delay",
         type=argutils.PositiveInt.type_parser,
-        default=30,
+        default=20,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames between bubbles.",
     )  # pyright: ignore[reportAssignmentType]
@@ -137,7 +137,7 @@ class BubblesConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("d33aff"), Color("02ff7f")),
+        default=(Color("#d33aff"), Color("#02ff7f")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
@@ -313,8 +313,8 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             character.layer = 1
             pop_1_scene = character.animation.new_scene(scene_id="pop_1")
             pop_2_scene = character.animation.new_scene()
-            pop_1_scene.add_frame("*", 14, colors=ColorPair(fg=self.config.pop_color))
-            pop_2_scene.add_frame("'", 14, colors=ColorPair(fg=self.config.pop_color))
+            pop_1_scene.add_frame("*", 9, colors=ColorPair(fg=self.config.pop_color))
+            pop_2_scene.add_frame("'", 9, colors=ColorPair(fg=self.config.pop_color))
             final_scene = character.animation.new_scene()
             char_final_gradient = Gradient(self.config.pop_color, self.character_final_color_map[character], steps=8)
             final_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=char_final_gradient)
@@ -357,7 +357,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                     bubble_group.append(unbubbled_chars.pop(0))  # noqa: PERF401
             bubble_origin = Coord(
                 random.randint(self.terminal.canvas.left, self.terminal.canvas.right),
-                self.terminal.canvas.top,
+                self.terminal.canvas.top + 10,
             )
             new_bubble = BubblesIterator.Bubble(self, bubble_origin, bubble_group, self.terminal)
             self.bubbles.append(new_bubble)

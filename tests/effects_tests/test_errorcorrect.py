@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_errorcorrect_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_errorcorrect.ErrorCorrect(input_data)
@@ -26,7 +28,11 @@ def test_errorcorrect_effect_terminal_color_options(input_data, terminal_config_
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_errorcorrect_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_errorcorrect.ErrorCorrect(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -41,8 +47,8 @@ def test_errorcorrect_final_gradient(
 
 @pytest.mark.parametrize("error_pairs", [0.001, 0.5, 1])
 @pytest.mark.parametrize("swap_delay", [1, 10])
-@pytest.mark.parametrize("error_color", [Color("ff00ff"), Color("0ffff0")])
-@pytest.mark.parametrize("correct_color", [Color("ff00ff"), Color("0ffff0")])
+@pytest.mark.parametrize("error_color", [Color("#ff00ff"), Color("#0ffff0")])
+@pytest.mark.parametrize("correct_color", [Color("#ff00ff"), Color("#0ffff0")])
 @pytest.mark.parametrize("movement_speed", [0.01, 4])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_errorcorrect_args(

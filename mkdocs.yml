@@ -59,6 +59,7 @@ nav:
     - Engine:
       - engine/baseeffect.md
       - engine/basecharacter.md
+      - engine/baseconfig.md
       - engine/eventhandler.md
       - Animation:
         - engine/animation/animation.md
@@ -76,7 +77,6 @@ nav:
         - engine/terminal/canvas.md
       - Utils:
         - engine/utils/ansitools.md
-        - engine/utils/argsdataclass.md
         - engine/utils/argutils.md
         - engine/utils/color.md
         - engine/utils/colorpair.md
@@ -118,6 +118,7 @@ nav:
       - effects/swarm.md
       - effects/sweep.md
       - effects/synthgrid.md
+      - effects/thunderstorm.md
       - effects/unstable.md
       - effects/vhstape.md
       - effects/waves.md

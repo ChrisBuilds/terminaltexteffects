@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_synthgrid_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_synthgrid.SynthGrid(input_data)
@@ -25,7 +27,8 @@ def test_synthgrid_effect_terminal_color_options(input_data, terminal_config_wit
 
 
 @pytest.mark.parametrize(
-    "grid_gradient_stops", [(Color("000000"), Color("ff00ff"), Color("0ffff0")), (Color("ff0fff"),)]
+    "grid_gradient_stops",
+    [(Color("#000000"), Color("#ff00ff"), Color("#0ffff0")), (Color("#ff0fff"),)],
 )
 @pytest.mark.parametrize("grid_gradient_steps", [1, 4, (1, 3)])
 @pytest.mark.parametrize(
@@ -38,7 +41,8 @@ def test_synthgrid_effect_terminal_color_options(input_data, terminal_config_wit
     ],
 )
 @pytest.mark.parametrize(
-    "text_gradient_stops", [(Color("000000"), Color("ff00ff"), Color("0ffff0")), (Color("ff0fff"),)]
+    "text_gradient_stops",
+    [(Color("#000000"), Color("#ff00ff"), Color("#0ffff0")), (Color("#ff0fff"),)],
 )
 @pytest.mark.parametrize("text_gradient_steps", [1, 4, (1, 3)])
 @pytest.mark.parametrize(

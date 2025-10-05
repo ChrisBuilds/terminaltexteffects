@@ -69,7 +69,7 @@ class RingsConfig(BaseConfig):
         name="--ring-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
+        default=(Color("#ab48ff"), Color("#e7b2b2"), Color("#fffebd")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the rings.",
     )  # pyright: ignore[reportAssignmentType]
@@ -123,7 +123,7 @@ class RingsConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("ab48ff"), Color("e7b2b2"), Color("fffebd")),
+        default=(Color("#ab48ff"), Color("#e7b2b2"), Color("#fffebd")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",

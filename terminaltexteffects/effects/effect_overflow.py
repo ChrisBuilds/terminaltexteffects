@@ -60,7 +60,7 @@ class OverflowConfig(BaseConfig):
         name="--overflow-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("f2ebc0"), Color("8dbfb3"), Color("f2ebc0")),
+        default=(Color("#f2ebc0"), Color("#8dbfb3"), Color("#f2ebc0")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the overflow gradient.",
     )  # pyright: ignore[reportAssignmentType]
@@ -88,7 +88,7 @@ class OverflowConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
@@ -181,7 +181,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             self.character_final_color_map[character] = final_gradient_mapping.get(
                 character.input_coord,
-                Color("000000"),
+                Color("#000000"),
             )
         lower_range, upper_range = self.config.overflow_cycles_range
         rows = self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)

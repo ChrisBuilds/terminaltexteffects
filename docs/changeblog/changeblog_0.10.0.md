@@ -30,7 +30,7 @@ argument which causes the final color stop to blend back to the first. Here's an
 ```python
 from terminaltexteffects.utils.graphics import Color, Gradient
 
-g = Gradient(Color("ff0000"), Color("00ff00"), Color("0000ff"), steps=10, loop=False)
+g = Gradient(Color("#ff0000"), Color("#00ff00"), Color("#0000ff"), steps=10, loop=False)
 print(g)
 ```
 
@@ -41,7 +41,7 @@ print(g)
 ```python
 from terminaltexteffects.utils.graphics import Color, Gradient
 
-g = Gradient(Color("ff0000"), Color("00ff00"), Color("0000ff"), steps=10, loop=True)
+g = Gradient(Color("#ff0000"), Color("#00ff00"), Color("#0000ff"), steps=10, loop=True)
 print(g)
 ```
 

@@ -56,7 +56,7 @@ class BlackholeConfig(BaseConfig):
     blackhole_color: Color = ArgSpec(
         name="--blackhole-color",
         type=argutils.ColorArg.type_parser,
-        default=Color("ffffff"),
+        default=Color("#ffffff"),
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the stars that comprise the blackhole border.",
     )  # pyright: ignore[reportAssignmentType]
@@ -67,7 +67,14 @@ class BlackholeConfig(BaseConfig):
         name="--star-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("ffcc0d"), Color("ff7326"), Color("ff194d"), Color("bf2669"), Color("702a8c"), Color("049dbf")),
+        default=(
+            Color("#ffcc0d"),
+            Color("#ff7326"),
+            Color("#ff194d"),
+            Color("#bf2669"),
+            Color("#702a8c"),
+            Color("#049dbf"),
+        ),
         metavar=argutils.ColorArg.METAVAR,
         help="List of colors from which character colors will be chosen and applied after the explosion, but before "
         "the cooldown to final color.",
@@ -82,7 +89,7 @@ class BlackholeConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("ffffff")),
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#ffffff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
@@ -150,10 +157,10 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
     def prepare_blackhole(self) -> None:
         """Prepare the blackhole and starfield characters."""
         star_symbols = ["*", "'", "`", "¤", "•", "°", "·"]
-        starfield_colors = Gradient(Color("4a4a4d"), Color("ffffff"), steps=6).spectrum
+        starfield_colors = Gradient(Color("#4a4a4d"), Color("#ffffff"), steps=6).spectrum
         gradient_map = {}
         for color in starfield_colors:
-            gradient_map[color] = Gradient(color, Color("000000"), steps=10)
+            gradient_map[color] = Gradient(color, Color("#000000"), steps=10)
         available_chars = list(self.terminal._input_characters)
         while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
             self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
@@ -271,12 +278,12 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
     def explode_singularity(self) -> None:
         """Explode the singularity characters."""
         star_colors = [
-            Color("ffcc0d"),
-            Color("ff7326"),
-            Color("ff194d"),
-            Color("bf2669"),
-            Color("702a8c"),
-            Color("049dbf"),
+            Color("#ffcc0d"),
+            Color("#ff7326"),
+            Color("#ff194d"),
+            Color("#bf2669"),
+            Color("#702a8c"),
+            Color("#049dbf"),
         ]
         for character in self.terminal.get_characters():
             nearby_coord = geometry.find_coords_on_circle(character.input_coord, 3, 5)[random.randrange(0, 5)]
