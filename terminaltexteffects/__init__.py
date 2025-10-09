@@ -18,4 +18,4 @@ from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
 Event = EventHandler.Event
 Action = EventHandler.Action
-__version__ = "0.12.0"
+__version__ = "0.12.1"

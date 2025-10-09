@@ -326,6 +326,16 @@ Any effects shown below are in development and will be available in the next rel
 
 Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/changeblog/) for release write-ups.
 
+## 0.12.1
+
+---
+
+### Bug Fixes (0.12.1)
+
+---
+
+* Fixed bug in ArgField caused by Field init signature change in Python 3.14. This class and parent module will be removed in 0.13.0.
+
 ### New Features (0.12.0)
 
 ---
