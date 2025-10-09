@@ -90,6 +90,7 @@ class ArgField(Field):
         hash=None,
         compare=True,
         kw_only=MISSING,
+        doc=""
     ) -> None:
         """Initialize the ArgField with the provided metadata and default values."""
         additional_metadata = ArgField.FieldAdditionalMetaData(
@@ -106,7 +107,18 @@ class ArgField(Field):
             default = False
         elif action == "store_false":
             default = True
-        if sys.version_info >= (3, 10):  # Field.__init__ signature changed in Python 3.10
+        if sys.version_info >= (3, 14):  # Field.__init__ signature changed in Python 3.14
+            super().__init__(
+                default,
+                default_factory,
+                init,
+                repr,
+                hash,
+                compare,
+                vars(additional_metadata),
+                kw_only=kw_only,
+                doc="")
+        elif sys.version_info >= (3, 10):  # Field.__init__ signature changed in Python 3.10
             super().__init__(
                 default,
                 default_factory,
