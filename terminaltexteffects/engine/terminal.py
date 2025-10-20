@@ -60,6 +60,7 @@ class TerminalConfig(ArgsDataClass):
             sequences in the input data. 'always' will always use the input colors, ignoring any effect specific colors.
             'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors
             in the input data. Default is 'ignore'.
+        no_eol (bool): Suppress the trailing newline emitted when an effect animation completes.
 
     """
 
@@ -203,6 +204,18 @@ class TerminalConfig(ArgsDataClass):
     (
         "bool : Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. "
         "Useful for sending frames to another output handler."
+    )
+
+    no_eol: bool = ArgField(
+        cmd_name=["--no-eol"],
+        default=False,
+        action="store_true",
+        help=(
+            "Suppress the trailing newline emitted when an effect animation completes. "
+        ),
+    )  # type: ignore[assignment]
+    (
+        "bool : Suppress the trailing newline emitted when an effect animation completes. "
     )
 
 
@@ -1095,12 +1108,14 @@ class Terminal:
         sys.stdout.write(ansitools.dec_save_cursor_position())
 
     def restore_cursor(self, end_symbol: str = "\n") -> None:
-        """Restores the cursor visibility and prints the end_symbol.
+        """Restores the cursor visibility and prints the end_symbol. Respects --no-eol switch
 
         Args:
             end_symbol (str, optional): The symbol to print after the effect has completed. Defaults to newline.
 
         """
+        if self.config.no_eol:
+            end_symbol = ""
         sys.stdout.write(ansitools.show_cursor())
         sys.stdout.write(end_symbol)
 
