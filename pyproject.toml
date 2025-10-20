@@ -1,17 +1,17 @@
-[tool.poetry]
+[project]
 name = "terminaltexteffects"
 version = "0.12.1"
 description = "TerminalTextEffects (TTE) is a terminal visual effects engine."
-authors = ["Chris <741258@pm.me>"]
-license = "MIT"
+authors = [{ name = "Chris", email = "741258@pm.me" }]
+requires-python = "~=3.8"
 readme = "README.md"
-repository = "https://github.com/ChrisBuilds/terminaltexteffects"
-documentation = "https://chrisbuilds.github.io/terminaltexteffects/"
+license = "MIT"
 
-[tool.poetry.dependencies]
-python = "^3.8"
+[project.urls]
+Repository = "https://github.com/ChrisBuilds/terminaltexteffects"
+Documentation = "https://chrisbuilds.github.io/terminaltexteffects/"
 
-[tool.poetry.scripts]
+[project.scripts]
 tte = "terminaltexteffects.__main__:main"
 
 [tool.ruff]
@@ -43,7 +43,6 @@ extend-fixable = ["EM102"]
 
 ]
 
-
 [tool.pytest.ini_options]
 console_output_style = "progress"
 minversion = "6.0"
@@ -63,5 +62,5 @@ markers = [
 testpaths = ["tests"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

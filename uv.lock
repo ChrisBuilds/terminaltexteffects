@@ -1,0 +1,8 @@
+version = 1
+revision = 3
+requires-python = ">=3.8, <4"
+
+[[package]]
+name = "terminaltexteffects"
+version = "0.12.1"
+source = { editable = "." }
