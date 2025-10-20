@@ -2,6 +2,20 @@
 
 ---
 
+## 0.12.2
+
+---
+
+### New Features (0.12.2)
+
+---
+
+#### New Engine Features (0.12.2)
+
+* `--no-eol` option prevents the newline from printing after an effect has ended.
+
+---
+
 ## 0.12.1
 
 ---
