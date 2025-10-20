@@ -66,6 +66,16 @@
 
 ---
 
+## 0.12.1
+
+---
+
+### Bug Fixes (0.12.1)
+
+---
+
+* Fixed bug in ArgField caused by Field init signature change in Python 3.14. This class and parent module will be removed in 0.13.0.
+
 ## 0.12.0
 
 ---
