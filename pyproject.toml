@@ -1,9 +1,9 @@
 [project]
 name = "terminaltexteffects"
-version = "0.12.1"
+version = "0.12.2"
 description = "TerminalTextEffects (TTE) is a terminal visual effects engine."
 authors = [{ name = "Chris", email = "741258@pm.me" }]
-requires-python = "~=3.8"
+requires-python = ">=3.8"
 readme = "README.md"
 license = "MIT"
 
@@ -61,6 +61,12 @@ markers = [
 ]
 testpaths = ["tests"]
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "docs/**",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
