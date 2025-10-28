@@ -580,6 +580,14 @@ def test_terminal_restore_cursor_end_symbol(capsys):
     assert captured.out == "\x1b[?25htest"
 
 
+def test_terminal_restore_cursor_end_symbol_no_eol(capsys):
+    config = TerminalConfig(no_eol=True)
+    terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
+    terminal.restore_cursor()
+    captured = capsys.readouterr()
+    assert captured.out == "\x1b[?25h"
+
+
 def test_terminal_print(capsys):
     config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)

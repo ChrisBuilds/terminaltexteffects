@@ -62,6 +62,7 @@ class TerminalConfig(BaseConfig):
             in the input data. Default is 'ignore'.
         reuse_canvas (bool): Do not create new rows at the start of the effect. The cursor will be restored to the
             position of the previous canvas.
+        no_eol (bool): Suppress the trailing newline emitted when an effect animation completes.
 
     """
 
@@ -237,6 +238,18 @@ class TerminalConfig(BaseConfig):
     (
         "bool : Do not create new rows at the start of the effect. The cursor will be restored to the position "
         "of the previous canvas."
+    )
+
+    no_eol: bool = ArgSpec(
+        name="--no-eol",
+        default=False,
+        action="store_true",
+        help=(
+            "Suppress the trailing newline emitted when an effect animation completes. "
+        ),
+    )  # pyright: ignore[reportAssignmentType]
+    (
+        "bool : Suppress the trailing newline emitted when an effect animation completes. "
     )
 
 
@@ -1143,12 +1156,14 @@ class Terminal:
         sys.stdout.write(ansitools.dec_save_cursor_position())
 
     def restore_cursor(self, end_symbol: str = "\n") -> None:
-        """Restores the cursor visibility and prints the end_symbol.
+        """Restores the cursor visibility and prints the end_symbol. Respects --no-eol switch
 
         Args:
             end_symbol (str, optional): The symbol to print after the effect has completed. Defaults to newline.
 
         """
+        if self.config.no_eol:
+            end_symbol = ""
         sys.stdout.write(ansitools.show_cursor())
         sys.stdout.write(end_symbol)
 
