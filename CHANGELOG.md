@@ -27,6 +27,9 @@
 
 * Support for random effect selection from the command-line. Use effect named `random_effect`. Global configuration options will apply.
 * Support for canvas re-use. Use tte option `--reuse-canvas` to restore the cursor to the position of the prior effect canvas.
+* Added `terminaltexteffects` entry point.
+
+---
 
 ### Changes (0.13.0)
 

@@ -13,6 +13,7 @@ Documentation = "https://chrisbuilds.github.io/terminaltexteffects/"
 
 [project.scripts]
 tte = "terminaltexteffects.__main__:main"
+terminaltexteffects = "terminaltexteffects.__main__:main"
 
 [tool.ruff]
 show-fixes = true
