@@ -244,13 +244,9 @@ class TerminalConfig(BaseConfig):
         name="--no-eol",
         default=False,
         action="store_true",
-        help=(
-            "Suppress the trailing newline emitted when an effect animation completes. "
-        ),
+        help=("Suppress the trailing newline emitted when an effect animation completes."),
     )  # pyright: ignore[reportAssignmentType]
-    (
-        "bool : Suppress the trailing newline emitted when an effect animation completes. "
-    )
+    ("bool : Suppress the trailing newline emitted when an effect animation completes. ")
 
 
 @dataclass
@@ -1156,7 +1152,9 @@ class Terminal:
         sys.stdout.write(ansitools.dec_save_cursor_position())
 
     def restore_cursor(self, end_symbol: str = "\n") -> None:
-        """Restores the cursor visibility and prints the end_symbol. Respects --no-eol switch
+        """Restores the cursor visibility and prints the end_symbol.
+
+        If the `--no-eol` command line option is passed, no end symbol will be printed.
 
         Args:
             end_symbol (str, optional): The symbol to print after the effect has completed. Defaults to newline.
