@@ -14,85 +14,20 @@ Classes:
 
 from __future__ import annotations
 
-import time
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from copy import deepcopy
-from enum import Enum, auto
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from terminaltexteffects.engine.base_config import BaseConfig
-from terminaltexteffects.engine.motion import Coord
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from terminaltexteffects.engine.animation import Scene
     from terminaltexteffects.engine.base_character import EffectCharacter
 
 T = TypeVar("T", bound=BaseConfig)
-
-
-class ParticleEmitter:
-    class Emittertype(Enum):
-        RADIAL = auto()
-
-    def __init__(self, symbol: str, coord: Coord, rate: float, terminal: Terminal) -> None:
-        self.symbol = symbol
-        self.current_coord = coord
-        self.rate = rate
-        self.time_between_emissions = 1 / rate
-        self.terminal = terminal
-        self.available_particles: set[EffectCharacter] = set()
-        self.active_particles: set[EffectCharacter] = set()
-        self.last_emission_time = time.monotonic()
-        self.host_character: EffectCharacter | None = None
-        for _ in range(300):
-            particle = self.terminal.add_character(symbol=symbol, coord=self.current_coord)
-            self.available_particles.add(particle)
-
-    def _reset_particle(self, particle: EffectCharacter) -> None:
-        self.active_particles.remove(particle)
-        self.available_particles.add(particle)
-        particle.motion.paths.clear()
-        particle.motion.set_coordinate(self.current_coord)
-        if particle.animation.active_scene:
-            particle.animation.active_scene.reset_scene()
-        particle.event_handler.registered_events.clear()
-        self.terminal.set_character_visibility(particle, is_visible=False)
-
-    def set_scene(self, scene: Scene) -> None:
-        for particle in self.available_particles:
-            particle.animation.scenes[scene.scene_id] = deepcopy(scene)
-            particle.animation.activate_scene(scene.scene_id)
-
-    def emit(self) -> EffectCharacter | None:
-        if (time.monotonic() - self.last_emission_time) < self.time_between_emissions:
-            return None
-        if self.host_character:
-            self.current_coord = self.host_character.motion.current_coord
-        self.last_emission_time = time.monotonic()
-        if not self.available_particles:
-            return None
-        next_particle = self.available_particles.pop()
-        next_particle.motion.set_coordinate(self.current_coord)
-        self.active_particles.add(next_particle)
-        path = next_particle.motion.new_path(speed=0.1)
-        next_coord = Coord(column=self.terminal.canvas.right, row=self.current_coord.row)
-        path.new_waypoint(coord=next_coord)
-
-        next_particle.event_handler.register_event(
-            event=next_particle.event_handler.Event.PATH_COMPLETE,
-            caller=path,
-            action=next_particle.event_handler.Action.CALLBACK,
-            target=next_particle.event_handler.Callback(self._reset_particle),
-        )
-
-        next_particle.motion.activate_path(path)
-        next_particle.animation.activate_scene("particle")
-        self.terminal.set_character_visibility(next_particle, is_visible=True)
-        return next_particle
 
 
 class BaseEffectIterator(ABC, Generic[T]):
@@ -130,7 +65,6 @@ class BaseEffectIterator(ABC, Generic[T]):
             any((character.animation.input_fg_color, character.animation.input_bg_color))
             for character in self.terminal.get_characters()
         )
-        self.emitters: list[ParticleEmitter] = []
 
     @property
     def frame(self) -> str:
@@ -146,22 +80,11 @@ class BaseEffectIterator(ABC, Generic[T]):
             self.terminal.enforce_framerate()
         return self.terminal.get_formatted_output_string()
 
-    def get_emitter(self, symbol: str, coord: Coord, rate: float) -> ParticleEmitter:
-        emitter = ParticleEmitter(symbol, coord, rate, self.terminal)
-        emitter.emit()
-        self.emitters.append(emitter)
-        return emitter
-
     def update(self) -> None:
         """Run the tick method for all active characters.
 
         Remove inactive characters from the active_characters set.
         """
-        for emitter in self.emitters:
-            particle = emitter.emit()
-            if particle is not None:
-                self.active_characters.add(particle)
-
         for character in self.active_characters:
             character.tick()
         self.active_characters -= {character for character in self.active_characters if not character.is_active}
