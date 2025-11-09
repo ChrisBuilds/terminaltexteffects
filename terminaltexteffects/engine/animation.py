@@ -831,7 +831,8 @@ class Animation:
         A SCENE_ACTIVATED event is triggered.
 
         Args:
-            scene (Scene : str): the Scene to set as active
+            scene (Scene | str): Scene instance of Scene ID for the scene that should
+                be activated.
 
         Raises:
             SceneNotFoundError: Raised if the scene_id provided does not correspond to
