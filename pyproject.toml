@@ -17,6 +17,7 @@ terminaltexteffects = "terminaltexteffects.__main__:main"
 
 [tool.ruff]
 show-fixes = true
+unsafe-fixes = true
 line-length = 120
 target-version = "py38"
 
