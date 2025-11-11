@@ -5,13 +5,13 @@ implementation. The algorithm builds a spanning tree over a graph of
 `EffectCharacter` nodes using the depth-first recursive backtracker
 approach (implemented iteratively with an explicit stack).
 
-- The algorithm starts from a chosen starting character (or a random one
-    from the terminal) and grows the tree by repeatedly linking to a
-    randomly selected unvisited neighbor. Linked cells are added to
-    the stack.
+The algorithm starts from a chosen starting character (or a random one
+from the terminal) and grows the tree by repeatedly linking to a
+randomly selected unvisited neighbor. Linked cells are added to
+the stack.
 
-- When a node has no unvisited neighbors the algorithm backtracks by
-    popping the stack until it finds a node with unvisited neighbors.
+When a node has no unvisited neighbors the algorithm backtracks by
+popping the stack until it finds a node with unvisited neighbors.
 """
 
 from __future__ import annotations
