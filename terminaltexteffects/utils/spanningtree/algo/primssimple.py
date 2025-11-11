@@ -1,8 +1,13 @@
-"""Use Prims algorithm to generated a tree.
+"""Simplified Prims minimum spanning tree algorithm.
 
-The returned cell list is based on the order in which cells are linked into the tree.
+A simplified Prims algorithm uses an equal weight for all links.
 
-This various of Prims is unweighted.
+The algorithm starts from a chosen starting character (or a random one
+from the terminal) and grows by randomly linking to an unlinked neighbor.
+
+When a neighbor is linked, the neighbor is checked for unlinked neighbors. If
+it has unlinked neighbors, it is considered an edge. On each step, a random edge
+is chosen and the process repeats.
 """
 
 from __future__ import annotations
@@ -10,51 +15,69 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
+from terminaltexteffects.utils.spanningtree.base_generator import SpanningTreeGenerator
+
 if TYPE_CHECKING:
-    from terminaltexteffects.engine.terminal import Coord
-    from terminaltexteffects.utils.spanningtree.cell import Cell
-    from terminaltexteffects.utils.spanningtree.grid import Grid
+    from terminaltexteffects.engine.base_character import EffectCharacter
+    from terminaltexteffects.engine.terminal import Terminal
 
 
-def generate_cell_list(grid: Grid, starting_coord: Coord | None) -> list[Cell]:
-    """Generate ordered list of cells using an unweighted Prims algorithm.
+class PrimsSimple(SpanningTreeGenerator):
+    """Prims simplified minimum spanning tree algorithm.
 
-    Args:
-        grid (Grid): Grid
-        starting_coord (Coord | None): Starting cell for the tree. If not provided, a random
-            cell will be used.
-
-    Returns:
-        list[Cell]: List of cells in link-order.
+    Attributes:
+        char_last_linked (EffectCharacter | None): Character linked into the tree on the
+            last step. None, if no character was linked during the last step.
+        char_link_order (list[EffectCharacter]): Characters in linked order.
+        edge_chars (list[EffectCharacter]): Characters considered edges.
+        edge_last_added (EffectCharacter | None): Character added to the edge list on the
+            last step. None, if no character was added during the last step.
+        edge_last_popped (EffectCharacter | None): Character popped off the edge list on the
+            last step. None if no character was popped during the last step.
 
     """
-    cell_list = []
-    cell_set = set()
-    total_unlinked_cells = len(list(grid.each_cell()))
-    if starting_coord is not None:
-        cell = grid.get_cell((starting_coord.row, starting_coord.column))
-    else:
-        cell = grid.random_cell()
-    cell = grid.random_cell()
-    edge_cells = []
-    edge_cells.append(cell)
 
-    while edge_cells:
-        working_cell = edge_cells.pop(random.randrange(len(edge_cells)))
-        neighbors = [neighbor for neighbor in grid.get_neighbors(working_cell).values() if neighbor]
-        unlinked_neighbors = [neighbor for neighbor in neighbors if not neighbor.links]
-        if unlinked_neighbors:
-            next_cell = unlinked_neighbors.pop(random.randrange(len(unlinked_neighbors)))
-            grid.link_cells(working_cell, next_cell)
-            if working_cell not in cell_set:
-                cell_list.append(working_cell)
-            if next_cell not in cell_set:
-                cell_list.append(next_cell)
-            cell_set.update({working_cell, next_cell})
-            total_unlinked_cells -= 1
+    def __init__(self, terminal: Terminal, starting_char: EffectCharacter | None = None) -> None:
+        """Initialize the algorithm.
+
+        Args:
+            terminal (Terminal): TTE Terminal.
+            starting_char (EffectCharacter | None, optional): Starting EffectCharacter. Defaults to None.
+
+        """
+        super().__init__(terminal)
+        starting_char = starting_char or terminal.get_character_by_input_coord(terminal.canvas.random_coord())
+        if starting_char is None:
+            msg = "Unable to find a starting character."
+            raise ValueError(msg)
+        self._current_char = starting_char
+        self.char_last_linked: EffectCharacter | None = self._current_char
+        self.char_link_order: list[EffectCharacter] = [self._current_char]
+        self.edge_chars = [self._current_char]
+        self.edge_last_added: EffectCharacter | None = self._current_char
+        self.edge_last_popped: EffectCharacter | None = None
+        self.complete = False
+
+    def step(self) -> None:
+        """Perform a single step of the algorithm."""
+        if self.edge_chars:
+            self._current_char = self.edge_chars.pop(random.randrange(len(self.edge_chars)))
+            self.edge_last_popped = self._current_char
+            unlinked_neighbors = [
+                neighbor for neighbor in self._current_char.neighbors.values() if neighbor and not neighbor.links
+            ]
             if unlinked_neighbors:
-                edge_cells.append(working_cell)
-            unlinked_neighbors = [n for n in grid.get_neighbors(next_cell).values() if n and not n.links]
-            if unlinked_neighbors:
-                edge_cells.append(next_cell)
-    return cell_list
+                next_char = unlinked_neighbors.pop(random.randrange(len(unlinked_neighbors)))
+                self._current_char._link(next_char)
+                self.char_link_order.append(next_char)
+                self.char_last_linked = next_char
+                if unlinked_neighbors:
+                    self.edge_chars.append(self._current_char)
+                unlinked_neighbors = [
+                    neighbor for neighbor in next_char.neighbors.values() if neighbor and not neighbor.links
+                ]
+                if unlinked_neighbors:
+                    self.edge_chars.append(next_char)
+                    self.edge_last_added = next_char
+        else:
+            self.complete = True
