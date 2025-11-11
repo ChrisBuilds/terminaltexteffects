@@ -1,4 +1,4 @@
-"""Recursive Backtracker spanning tree algorithm.
+"""Recursive Backtracker minimum spanning tree algorithm.
 
 This module provides the `RecursiveBacktracker` spanning tree generator
 implementation. The algorithm builds a spanning tree over a graph of
