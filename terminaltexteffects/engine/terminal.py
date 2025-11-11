@@ -583,6 +583,7 @@ class Terminal:
             (character.input_coord): character for character in self._input_characters
         }
         self._inner_fill_characters, self._outer_fill_characters = self._make_fill_characters()
+        self._setup_character_neighbors()
         self._visible_characters: set[EffectCharacter] = set()
         self._frame_rate = self.config.frame_rate
         self._last_time_printed = time.monotonic()
@@ -852,6 +853,14 @@ class Terminal:
                     else:
                         outer_fill_characters.append(fill_char)
         return inner_fill_characters, outer_fill_characters
+
+    def _setup_character_neighbors(self) -> None:
+        """Create the neighbor map for all characters."""
+        delta_map = {"north": (0, 1), "east": (1, 0), "south": (0, -1), "west": (-1, 0)}
+        for coord, char in self.character_by_input_coord.items():
+            for direction, delta in delta_map.items():
+                neighbor_coord = Coord(column=coord.column + delta[0], row=coord.row + delta[1])
+                char.neighbors[direction] = self.character_by_input_coord.get(neighbor_coord)
 
     def add_character(self, symbol: str, coord: Coord) -> EffectCharacter:
         """Add a character to the terminal for printing.
