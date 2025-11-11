@@ -36,6 +36,7 @@ class RecursiveBacktracker(SpanningTreeGenerator):
         stack (list[EffectCharacter]): Characters on the stack.
         stack_last_popped (EffectCharacter | None): Character popped off the stack on the
             last step. None if no character was popped during the last step.
+        complete (bool): Whether the algorithm is complete.
 
     """
 

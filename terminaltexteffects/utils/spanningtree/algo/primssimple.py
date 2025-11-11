@@ -34,6 +34,7 @@ class PrimsSimple(SpanningTreeGenerator):
             last step. None, if no character was added during the last step.
         edge_last_popped (EffectCharacter | None): Character popped off the edge list on the
             last step. None if no character was popped during the last step.
+        complete (bool): Whether the algorithm is complete.
 
     """
 
