@@ -391,6 +391,8 @@ class EffectCharacter:
         self.event_handler: EventHandler = EventHandler(self)
         self.layer: int = 0
         self.is_fill_character = False
+        self.links: set[EffectCharacter] = set()
+        self.neighbors: dict[str, EffectCharacter | None] = {}
 
     @property
     def input_symbol(self) -> str:
@@ -428,6 +430,20 @@ class EffectCharacter:
         """Progress the character's animation and motion by one step."""
         self.motion.move()
         self.animation.step_animation()
+
+    def _link(self, char: EffectCharacter, *, bidirectional: bool = True) -> None:
+        """Link this character with another character.
+
+        Used for spanning tree algorithms.
+
+        Args:
+            char (EffectCharacter): Character being linked to this character.
+            bidirectional (bool, optional): Apply the link on both characters. Defaults to True.
+
+        """
+        if bidirectional:
+            char._link(self, bidirectional=False)
+        self.links.add(char)
 
     def __hash__(self) -> int:
         """Return the hash value of the character."""
