@@ -112,7 +112,6 @@ class BaseEffectIterator(ABC, Generic[T]):
             str: Next frame of the effect.
 
         """
-        raise NotImplementedError
 
 
 class BaseEffect(ABC, Generic[T]):
@@ -131,13 +130,11 @@ class BaseEffect(ABC, Generic[T]):
     @abstractmethod
     def _config_cls(self) -> type[T]:
         """Effect configuration class as a subclass of ArgsDataClass."""
-        raise NotImplementedError
 
     @property
     @abstractmethod
     def _iterator_cls(self) -> type[BaseEffectIterator]:
         """Effect iterator class as a subclass of BaseEffectIterator."""
-        raise NotImplementedError
 
     def __init__(
         self,
