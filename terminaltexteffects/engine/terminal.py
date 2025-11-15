@@ -1116,7 +1116,8 @@ class Terminal:
         """
         if self.config.no_eol:
             end_symbol = ""
-        sys.stdout.write(ansitools.show_cursor())
+        else:
+            sys.stdout.write(ansitools.show_cursor())
         sys.stdout.write(end_symbol)
 
     def print(self, output_string: str) -> None:
