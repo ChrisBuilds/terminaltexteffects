@@ -248,6 +248,14 @@ class TerminalConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     ("bool : Suppress the trailing newline emitted when an effect animation completes. ")
 
+    no_restore_cursor: bool = ArgSpec(
+        name="--no-restore-cursor",
+        default=False,
+        action="store_true",
+        help=("Do not restore cursor visibility after the effect."),
+    )  # pyright: ignore[reportAssignmentType]
+    ("bool : Do not restore cursor visibility after the effect.")
+
 
 @dataclass
 class Canvas:
@@ -290,6 +298,8 @@ class Canvas:
     Methods:
         coord_is_in_canvas:
             Checks whether a coordinate is within the canvas.
+        coord_is_in_text:
+            Checks whether a coordinate is within the text boundary of the canvas.
         random_column:
             Get a random column position within the canvas.
         random_row:
@@ -410,29 +420,57 @@ class Canvas:
         """
         return self.left <= coord.column <= self.right and self.bottom <= coord.row <= self.top
 
-    def random_column(self) -> int:
-        """Get a random column position. Position is within the canvas.
+    def coord_is_in_text(self, coord: Coord) -> bool:
+        """Check whether a coordinate is within the text boundary.
+
+        Args:
+            coord (Coord): coordinate to check
 
         Returns:
-            int: a random column position (1 <= x <= canvas.right)
+            bool: whether the coordinate is within the text boundary
 
         """
+        return self.text_left <= coord.column <= self.text_right and self.text_bottom <= coord.row <= self.text_top
+
+    def random_column(self, *, within_text_boundary: bool = False) -> int:
+        """Get a random column position within the canvas.
+
+        Args:
+            within_text_boundary (bool, optional): If True, the column will be limited to the text boundary. Otherwise,
+                it can be anywhere within the canvas. Defaults to False.
+
+        Returns:
+            int: a random column position within the canvas
+
+        """
+        if within_text_boundary:
+            return random.randint(self.text_left, self.text_right)
         return random.randint(self.left, self.right)
 
-    def random_row(self) -> int:
-        """Get a random row position. Position is within the canvas.
+    def random_row(self, *, within_text_boundary: bool = False) -> int:
+        """Get a random row position within the canvas.
+
+        Args:
+            within_text_boundary (bool, optional): If True, the row will be limited to the text boundary. Otherwise,
+                it can be anywhere within the canvas. Defaults to False.
 
         Returns:
-            int: a random row position (1 <= x <= terminal.canvas.top)
+            int: a random row position within the canvas
 
         """
+        if within_text_boundary:
+            return random.randint(self.text_bottom, self.text_top)
         return random.randint(self.bottom, self.top)
 
-    def random_coord(self, *, outside_scope: bool = False) -> Coord:
+    def random_coord(self, *, outside_scope: bool = False, within_text_boundary: bool = False) -> Coord:
         """Get a random coordinate. Coordinate is within the canvas unless outside_scope is True.
+
+        `outside_scope` takes precedence over `within_text_boundary`, they are functionally mutually exclusive.
 
         Args:
             outside_scope (bool, optional): whether the coordinate should fall outside the canvas. Defaults to False.
+            within_text_boundary (bool, optional): If True, the coordinate will be limited to the text boundary.
+                Otherwise, it can be anywhere within the canvas. Defaults to False.
 
         Returns:
             Coord: a random coordinate . Coordinate is within the canvas unless outside_scope is True.
@@ -444,7 +482,10 @@ class Canvas:
             random_coord_left = Coord(self.left - 1, self.random_row())
             random_coord_right = Coord(self.right + 1, self.random_row())
             return random.choice([random_coord_above, random_coord_below, random_coord_left, random_coord_right])
-        return Coord(self.random_column(), self.random_row())
+        return Coord(
+            self.random_column(within_text_boundary=within_text_boundary),
+            self.random_row(within_text_boundary=within_text_boundary),
+        )
 
 
 class Terminal:
@@ -1171,7 +1212,8 @@ class Terminal:
         """
         if self.config.no_eol:
             end_symbol = ""
-        sys.stdout.write(ansitools.show_cursor())
+        if not self.config.no_restore_cursor:
+            sys.stdout.write(ansitools.show_cursor())
         sys.stdout.write(end_symbol)
 
     def print(self, output_string: str) -> None:
