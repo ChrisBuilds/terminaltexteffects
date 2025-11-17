@@ -86,6 +86,13 @@ nav:
         - engine/utils/geometry.md
         - engine/utils/gradient.md
         - engine/utils/hexterm.md
+        - SpanningTree:
+          - engine/utils/spanningtree/base_generator.md
+          - Algorithms:
+            - engine/utils/spanningtree/algos/recursive_backtracker.md
+            - engine/utils/spanningtree/algos/prims_simple.md
+            - engine/utils/spanningtree/algos/prims_weighted.md
+            - engine/utils/spanningtree/algos/breadthfirst.md
     - Effects:
       - effects/beams.md
       - effects/binarypath.md
