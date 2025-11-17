@@ -56,16 +56,25 @@ class PrimsWeighted(SpanningTreeGenerator):
 
     """
 
-    def __init__(self, terminal: Terminal, starting_char: EffectCharacter | None = None) -> None:
+    def __init__(
+        self,
+        terminal: Terminal,
+        starting_char: EffectCharacter | None = None,
+        *,
+        limit_to_text_boundary: bool = False,
+    ) -> None:
         """Initialize the algorithm.
 
         Args:
             terminal (Terminal): TTE Terminal.
             starting_char (EffectCharacter | None, optional): Starting EffectCharacter. Defaults to None.
+            limit_to_text_boundary (bool, optional): If True, the graph will not link to neighbors outside the text
+                boundary.
 
         """
         super().__init__(terminal)
         starting_char = starting_char or terminal.get_character_by_input_coord(terminal.canvas.random_coord())
+        self.limit_to_text_boundary = limit_to_text_boundary
         if starting_char is None:
             msg = "Unable to find a starting character."
             raise ValueError(msg)
@@ -88,10 +97,10 @@ class PrimsWeighted(SpanningTreeGenerator):
 
         """
         self.neighbors_last_added.clear()
-        for neighber in [n for n in char.neighbors.values() if n and not n.links]:
-            self.neighbors_last_added.append(neighber)
-            self._pending_weighted_links[self._char_weights[neighber]].append(
-                WeightedLink(char, neighber, self._char_weights[neighber]),
+        for neighbor in self.get_neighbors(char, limit_to_text_boundary=self.limit_to_text_boundary):
+            self.neighbors_last_added.append(neighbor)
+            self._pending_weighted_links[self._char_weights[neighbor]].append(
+                WeightedLink(char, neighbor, self._char_weights[neighbor]),
             )
 
     def get_lowest_weight_link(self) -> WeightedLink | None:
