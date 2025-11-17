@@ -73,7 +73,7 @@ class LaserEtchConfig(BaseConfig):
         ),
     )
 
-    etch_direction: typing.Literal[
+    etch_pattern: typing.Literal[
         "column_left_to_right",
         "row_top_to_bottom",
         "row_bottom_to_top",
@@ -84,7 +84,7 @@ class LaserEtchConfig(BaseConfig):
         "outside_to_center",
         "center_to_outside",
     ] = ArgSpec(
-        name="--etch-direction",
+        name="--etch-pattern",
         default="algorithm",
         choices=[
             "algorithm",
@@ -404,9 +404,9 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
             for color in cool_gradient:
                 spawn_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair(fg=color))
             character.animation.activate_scene(spawn_scn)
-        if self.config.etch_direction in sort_map:
+        if self.config.etch_pattern in sort_map:
             for n, char_list in enumerate(
-                self.terminal.get_characters_grouped(sort_map[self.config.etch_direction]),
+                self.terminal.get_characters_grouped(sort_map[self.config.etch_pattern]),
             ):
                 if n % 2:
                     self.pending_chars.extend(char_list[::-1])
