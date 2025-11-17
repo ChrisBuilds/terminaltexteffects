@@ -1,6 +1,6 @@
 import pytest
 
-from terminaltexteffects.effects import effect_colorshift, effect_matrix
+from terminaltexteffects.effects import effect_colorshift, effect_matrix, effect_thunderstorm
 
 
 @pytest.mark.smoke
@@ -15,6 +15,8 @@ def test_effect(effect, input_data, terminal_config_default_no_framerate) -> Non
     # customize some effect configs to shorten testing time
     if isinstance(effect, effect_matrix.Matrix):
         effect.effect_config.rain_time = 1
+    elif isinstance(effect, effect_thunderstorm.Thunderstorm):
+        effect.effect_config.storm_time = 1
     effect.terminal_config = terminal_config_default_no_framerate
 
     with effect.terminal_output() as terminal:
@@ -35,6 +37,8 @@ def test_effect_color_sequence_handling(
     effect = effect(input_data)
     if isinstance(effect, effect_matrix.Matrix):
         effect.effect_config.rain_time = 1
+    elif isinstance(effect, effect_thunderstorm.Thunderstorm):
+        effect.effect_config.storm_time = 1
     effect.terminal_config = terminal_config_default_no_framerate
     effect.terminal_config.existing_color_handling = existing_color_handling
 
@@ -51,7 +55,9 @@ def test_effect_visual(effect, input_data) -> None:
     effect = effect(input_data)
     if isinstance(effect, effect_matrix.Matrix):
         effect.effect_config.rain_time = 5
-    if isinstance(effect, effect_colorshift.ColorShift):
+    elif isinstance(effect, effect_thunderstorm.Thunderstorm):
+        effect.effect_config.storm_time = 1
+    elif isinstance(effect, effect_colorshift.ColorShift):
         effect.effect_config.travel = True
         effect.effect_config.cycles = 2
     with effect.terminal_output() as terminal:
@@ -65,7 +71,6 @@ def test_effect_visual(effect, input_data) -> None:
 def test_canvas_anchoring_large_small_canvas(input_data, effect, terminal_config_with_anchoring) -> None:
     effect = effect(input_data)
     effect.terminal_config = terminal_config_with_anchoring
-
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
