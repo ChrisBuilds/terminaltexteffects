@@ -29,7 +29,7 @@ def test_thunderstorm_effect_terminal_color_options(input_data, terminal_config_
 
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
-def test_randomsequence_final_gradient(
+def test_thunderstorm_final_gradient(
     terminal_config_default_no_framerate,
     input_data,
     gradient_direction,
@@ -55,7 +55,7 @@ def test_randomsequence_final_gradient(
 @pytest.mark.parametrize("spark_glow_color", [Color("#000000"), Color("#ff00ff")])
 @pytest.mark.parametrize("spark_glow_time", [1, 4])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
-def test_randomsequence_args(
+def test_thunderstorm_args(
     lightning_color,
     glowing_text_color,
     text_glow_time,
