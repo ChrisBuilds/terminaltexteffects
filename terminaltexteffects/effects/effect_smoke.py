@@ -1,6 +1,9 @@
-"""Effect Description.
+"""Smoke floods the canvas colorizing any characters it crosses.
 
 Classes:
+    Smoke: Smoke effect class.
+    SmokeConfig: Configuration dataclass for the Smoke effect.
+    SmokeIterator: Effect iterator for the Smoke effect.
 
 """
 
@@ -33,9 +36,12 @@ class SmokeConfig(BaseConfig):
 
     parser_spec: ParserSpec = ParserSpec(
         name="smoke",
-        help="Smoke floods the canvas colorizing any characters is crosses.",
-        description="Smoke floods the canvas colorizing any characters is crosses.",
-        epilog="",
+        help="Smoke floods the canvas colorizing any characters it crosses.",
+        description="Smoke floods the canvas colorizing any characters it crosses.",
+        epilog="Example: terminaltexteffects smoke --starting-color 7A7A7A --smoke-symbols ░ ▒ ▓ ▒ ░ "
+        "--smoke-gradient-stops 242424 FFFFFF --use-whole-canvas --final-gradient-stops 8A008A 00D1FF "
+        "ffffff --final-gradient-steps 12 --final-gradient-frames 2 --final-gradient-direction vertical "
+        "--final-wipe-speed 3",
     )
 
     starting_color: tte.Color = ArgSpec(
@@ -125,8 +131,8 @@ class SmokeConfig(BaseConfig):
     "Gradient.Direction : Direction of the final gradient."
 
 
-class FloodIterator(BaseEffectIterator[SmokeConfig]):
-    """Effect iterator for the NamedEffect effect."""
+class SmokeIterator(BaseEffectIterator[SmokeConfig]):
+    """Effect iterator for the Smoke effect."""
 
     def __init__(self, effect: Smoke) -> None:
         """Initialize the effect iterator.
@@ -218,12 +224,12 @@ class FloodIterator(BaseEffectIterator[SmokeConfig]):
 
 
 class Smoke(BaseEffect[SmokeConfig]):
-    """Smoke floods the canvas colorizing any characters is crosses."""
+    """Smoke floods the canvas colorizing any characters it crosses."""
 
     @property
     def _config_cls(self) -> type[SmokeConfig]:
         return SmokeConfig
 
     @property
-    def _iterator_cls(self) -> type[FloodIterator]:
-        return FloodIterator
+    def _iterator_cls(self) -> type[SmokeIterator]:
+        return SmokeIterator
