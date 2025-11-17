@@ -71,7 +71,7 @@ def test_laseretch_args(
 ) -> None:
     effect = effect_laseretch.LaserEtch(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
-    effect.effect_config.etch_direction = etch_direction
+    effect.effect_config.etch_pattern = etch_direction
     effect.effect_config.etch_speed = etch_speed
     effect.effect_config.etch_delay = etch_delay
     with effect.terminal_output() as terminal:
