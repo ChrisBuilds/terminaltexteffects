@@ -26,11 +26,13 @@ from terminaltexteffects.effects.effect_rings import Rings
 from terminaltexteffects.effects.effect_scattered import Scattered
 from terminaltexteffects.effects.effect_slice import Slice
 from terminaltexteffects.effects.effect_slide import Slide
+from terminaltexteffects.effects.effect_smoke import Smoke
 from terminaltexteffects.effects.effect_spotlights import Spotlights
 from terminaltexteffects.effects.effect_spray import Spray
 from terminaltexteffects.effects.effect_swarm import Swarm
 from terminaltexteffects.effects.effect_sweep import Sweep
 from terminaltexteffects.effects.effect_synthgrid import SynthGrid
+from terminaltexteffects.effects.effect_thunderstorm import Thunderstorm
 from terminaltexteffects.effects.effect_unstable import Unstable
 from terminaltexteffects.effects.effect_vhstape import VHSTape
 from terminaltexteffects.effects.effect_waves import Waves
