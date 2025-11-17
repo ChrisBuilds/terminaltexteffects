@@ -55,13 +55,6 @@ class RecursiveBacktracker(SpanningTreeGenerator):
             limit_to_text_boundary (bool, optional): If True, the graph will not link to neighbors outside the text
                 boundary.
 
-        Attributes:
-            char_last_linked (EffectCharacter | None): Last character linked into the tree.
-            char_link_order (list[EffectCharacter]): Characters in linked order.
-            stack (list[EffectCharacter]): Characters on the stack.
-            stack_last_popped (EffectCharacter | None): Last character popped off the stack.
-            complete (bool): Whether the algorithm is complete.
-
         Raises:
             ValueError: Unable to find a starting character.
 
