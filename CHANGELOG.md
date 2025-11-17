@@ -13,14 +13,18 @@
 #### New Effects (0.13.0)
 
 * Thunderstorm - Rain falls across the canvas. Lightning strikes randomly around the canvas. Lightning flashes after reaching the bottom of the canvas, lighting up the text characters. Sparks explode from lightning impact. Text characters glow when lightning travels through them.
-
+* Smoke - Smoke floods the canvas, colorizing any text it passes over.
 ---
 
 #### New Engine Features (0.13.0)
 
 * Added `geometry.find_coords_on_rect()`, which returns coordinates along the perimeter of a rectangle given a center `Coord`, width, and height. Results are cached for performance.
 * Added `--terminal-background-color` to the `TerminalConfig` parser. This will enable terminal themes with background other than black to better display effects with fade in/out components.
-
+* Spanning-tree and search algorithms have been added.
+  * PrimsSimple - Unweighted Prims
+  * PrimsWeighted
+  * RecursiveBacktracker
+* `EffectCharacter` has a new attribute `links` to support creating trees using spanning-tree algorithms.
 ---
 
 #### New Application Features (0.13.0)
@@ -28,7 +32,8 @@
 * Support for random effect selection from the command-line. Use effect named `random_effect`. Global configuration options will apply.
 * Support for canvas re-use. Use tte option `--reuse-canvas` to restore the cursor to the position of the prior effect canvas.
 * Added `terminaltexteffects` entry point.
-
+* `--no-eol` command-line option. Suppress the trailing newline character after an effect.
+* `--no-restore-cursor` command-line option. Do not restore cursor visibility after an effect ends.
 ---
 
 ### Changes (0.13.0)
@@ -38,6 +43,8 @@
 #### Effects Changes (0.13.0)
 
 * Blackhole - Initial consumption motion modified to create the apperance of an gravitational-wave propagating across the canvas.
+* Laseretch - New etch-pattern `algorithm` uses the link-order of a text-boundary-bound recursive backtracker algorithm.
+* Burn - Character ignite order is based on the link-order of a text-boundary-bound prims simple algorithm.
 * All effects have been adjusted for visual parity at 60 fps.
 
 ---
