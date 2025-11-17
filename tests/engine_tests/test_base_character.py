@@ -65,20 +65,20 @@ def test_eventhandler_register_event_invalid_event_caller(
 ) -> None:
     """Test registering an event with an invalid event caller."""
     with pytest.raises(EventRegistrationCallerError):
-        eventhandler.register_event(event, "invalid_caller", EventHandler.Action.ACTIVATE_PATH, Path("a"))  # type: ignore[call-overload]
+        eventhandler.register_event(event, 1, EventHandler.Action.ACTIVATE_PATH, Path("a"))  # type: ignore[call-overload]
 
 
 @pytest.mark.parametrize(
     "event_caller_action_target",
     [
-        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.ACTIVATE_PATH, "invalid_target"),
-        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.DEACTIVATE_PATH, "invalid_target"),
-        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.ACTIVATE_SCENE, "invalid_target"),
-        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.DEACTIVATE_SCENE, "invalid_target"),
-        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.CALLBACK, "invalid_target"),
-        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.SET_LAYER, "invalid_target"),
-        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.SET_COORDINATE, "invalid_target"),
-        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.RESET_APPEARANCE, "invalid_target"),
+        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.ACTIVATE_PATH, 1),
+        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.DEACTIVATE_PATH, 1),
+        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.ACTIVATE_SCENE, 1),
+        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.DEACTIVATE_SCENE, 1),
+        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.CALLBACK, 1),
+        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.SET_LAYER, ""),
+        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.SET_COORDINATE, 1),
+        (EventHandler.Event.PATH_COMPLETE, Path("a"), EventHandler.Action.RESET_APPEARANCE, 1),
     ],
 )
 def test_eventhandler_register_event_invalid_target(
