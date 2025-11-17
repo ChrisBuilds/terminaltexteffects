@@ -77,4 +77,5 @@ dev = [
     "mkdocstrings-python>=1.11.1",
     "pymdown-extensions>=10.15",
     "pytest>=8.3.5",
+    "pytest-cov>=5.0.0",
 ]
