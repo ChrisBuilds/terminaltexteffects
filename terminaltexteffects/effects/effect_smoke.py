@@ -108,6 +108,7 @@ class SmokeConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(12,),
         metavar=argutils.PositiveInt.METAVAR,
         help=(
