@@ -232,18 +232,24 @@ Characters are ignited and burn up the screen.
 
     ```
     --starting-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                        Color of the characters before they start to burn. (default: 837373)
+                        Color of the characters before they start to burn. (default: Color Code: 837373 Color
+                        Appearance: █████)
     --burn-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Colors transitioned through as the characters burn. (default: ('ffffff', 'fff75d', 'fe650d', '8A003C', '510100'))
+                        Colors transitioned through as the characters burn. (default: (Color('ffffff'),
+                        Color('fff75d'), Color('fe650d'), Color('8A003C'), Color('510100')))
+    --smoke-chance (0 <= float(n) <= 1)
+                        Chance a given character will produce smoke while burning. Use 0 for no smoke. (default: 0.2)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
-                        (default: ('00c3ff', 'ffff1c'))
+                        Space separated, unquoted, list of colors for the character gradient (applied across the
+                        canvas). If only one color is provided, the characters will be displayed in that color.
+                        (default: (Color('00c3ff'), Color('ffff1c')))
     --final-gradient-steps (int > 0) [(int > 0) ...]
-                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create
+                        a smoother and longer gradient animation. (default: 12)
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
 
-    Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12
+    Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --smoke-chance 0.2 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12
     ```
 ---
 
@@ -1170,6 +1176,43 @@ Slide characters into view from outside the terminal.
     Visit: https://easings.net/ for visualizations of the easing functions.
 
     Example: terminaltexteffects slide --movement-speed 0.5 --grouping row --final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 10 --final-gradient-direction vertical --gap 3 --reverse-direction --merge --movement-easing OUT_QUAD
+    ```
+---
+
+## Smoke
+
+Smoke floods the canvas colorizing any characters it crosses.
+
+![Demo](./img/effects_demos/smoke_demo.gif)
+
+[Reference](./effects/smoke.md){ .md-button } [Config](./effects/smoke.md#terminaltexteffects.effects.effect_smoke.SmokeConfig){ .md-button }
+
+??? example "Smoke Command Line Arguments"
+
+    ```
+    --starting-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                        Color of the text before being colorized by the smoke. (default: Color Code: 7A7A7A Color
+                        Appearance: █████)
+    --smoke-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                        Symbols to use for the smoke. Strings will be used in sequence to create an animation.
+                        (default: ('░', '▒', '▓', '▒', '░'))
+    --smoke-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the smoke gradient. Smoke will transition
+                        through this gradient before moving through the final gradient stops. (default:
+                        (Color('242424'), Color('FFFFFF')))
+    --use-whole-canvas    If True, the entire canvas will be flooded. Otherwise the effect is limited to the text
+                        boundary. (default: False)
+    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the character gradient (applied across the
+                        canvas). If only one color is provided, the characters will be displayed in that color.
+                        (default: (Color('8A008A'), Color('00D1FF'), Color('FFFFFF')))
+    --final-gradient-steps (int > 0) [(int > 0) ...]
+                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create
+                        a smoother and longer gradient animation. (default: (12,))
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
+                        Direction of the final gradient. (default: Direction.VERTICAL)
+
+    Example: terminaltexteffects smoke --starting-color 7A7A7A --smoke-symbols ░ ▒ ▓ ▒ ░ --smoke-gradient-stops 242424 FFFFFF --use-whole-canvas --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-direction vertical
     ```
 ---
 
