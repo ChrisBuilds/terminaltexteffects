@@ -40,12 +40,20 @@ class RecursiveBacktracker(SpanningTreeGenerator):
 
     """
 
-    def __init__(self, terminal: Terminal, starting_char: EffectCharacter | None = None) -> None:
+    def __init__(
+        self,
+        terminal: Terminal,
+        starting_char: EffectCharacter | None = None,
+        *,
+        limit_to_text_boundary: bool = False,
+    ) -> None:
         """Initialize the algorithm.
 
         Args:
             terminal (Terminal): TTE Terminal.
             starting_char (EffectCharacter | None, optional): Starting EffectCharacter. Defaults to None.
+            limit_to_text_boundary (bool, optional): If True, the graph will not link to neighbors outside the text
+                boundary.
 
         Attributes:
             char_last_linked (EffectCharacter | None): Last character linked into the tree.
@@ -59,7 +67,10 @@ class RecursiveBacktracker(SpanningTreeGenerator):
 
         """
         super().__init__(terminal)
-        starting_char = starting_char or terminal.get_character_by_input_coord(terminal.canvas.random_coord())
+        self.limit_to_text_boundary = limit_to_text_boundary
+        starting_char = starting_char or terminal.get_character_by_input_coord(
+            terminal.canvas.random_coord(within_text_boundary=limit_to_text_boundary),
+        )
         if starting_char is None:
             msg = "Unable to find a starting character."
             raise ValueError(msg)
@@ -75,8 +86,10 @@ class RecursiveBacktracker(SpanningTreeGenerator):
         self.char_last_linked = None
         self.stack_last_popped = None
         if self.stack:
-            neighbors = [neighbor for neighbor in self._current_char.neighbors.values() if neighbor]
-            unvisited_neighbors = [neighbor for neighbor in neighbors if not neighbor.links]
+            unvisited_neighbors = self.get_neighbors(
+                self._current_char,
+                limit_to_text_boundary=self.limit_to_text_boundary,
+            )
             if unvisited_neighbors:
                 next_char = random.choice(unvisited_neighbors)
                 self._current_char._link(next_char)
