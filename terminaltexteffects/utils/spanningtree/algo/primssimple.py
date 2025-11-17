@@ -38,19 +38,30 @@ class PrimsSimple(SpanningTreeGenerator):
 
     """
 
-    def __init__(self, terminal: Terminal, starting_char: EffectCharacter | None = None) -> None:
+    def __init__(
+        self,
+        terminal: Terminal,
+        starting_char: EffectCharacter | None = None,
+        *,
+        limit_to_text_boundary: bool = False,
+    ) -> None:
         """Initialize the algorithm.
 
         Args:
             terminal (Terminal): TTE Terminal.
             starting_char (EffectCharacter | None, optional): Starting EffectCharacter. Defaults to None.
+            limit_to_text_boundary (bool, optional): If True, the graph will not link to neighbors outside the text
+                boundary.
 
         """
         super().__init__(terminal)
-        starting_char = starting_char or terminal.get_character_by_input_coord(terminal.canvas.random_coord())
+        starting_char = starting_char or terminal.get_character_by_input_coord(
+            terminal.canvas.random_coord(within_text_boundary=limit_to_text_boundary),
+        )
         if starting_char is None:
             msg = "Unable to find a starting character."
             raise ValueError(msg)
+        self.limit_to_text_boundary = limit_to_text_boundary
         self._current_char = starting_char
         self.char_last_linked: EffectCharacter | None = self._current_char
         self.char_link_order: list[EffectCharacter] = [self._current_char]
@@ -64,9 +75,11 @@ class PrimsSimple(SpanningTreeGenerator):
         if self.edge_chars:
             self._current_char = self.edge_chars.pop(random.randrange(len(self.edge_chars)))
             self.edge_last_popped = self._current_char
-            unlinked_neighbors = [
-                neighbor for neighbor in self._current_char.neighbors.values() if neighbor and not neighbor.links
-            ]
+            unlinked_neighbors = self.get_neighbors(
+                self._current_char,
+                limit_to_text_boundary=self.limit_to_text_boundary,
+            )
+
             if unlinked_neighbors:
                 next_char = unlinked_neighbors.pop(random.randrange(len(unlinked_neighbors)))
                 self._current_char._link(next_char)
