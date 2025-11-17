@@ -20,6 +20,7 @@ from __future__ import annotations
 import functools
 import math
 from dataclasses import dataclass
+from typing import Iterator
 
 
 @dataclass(eq=True, frozen=True)
@@ -31,6 +32,16 @@ class Coord:
         row (int): row value
 
     """
+
+    def __iter__(self) -> Iterator[int]:
+        """Allow tuple unpacking by yielding the column and row.
+
+        Yields:
+            column, row: yield the column, followed by the row
+
+        """
+        yield self.column
+        yield self.row
 
     column: int
     row: int
@@ -143,6 +154,38 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
 find_coords_in_rect = functools.wraps(find_coords_in_rect)(functools.lru_cache(maxsize=8192)(find_coords_in_rect))
 
 
+def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> list[Coord]:
+    """Find coords that fall within a rectangle.
+
+    Half width and half height specify the distance in each direction from the origin.
+    Returns coordinates that fall on the perimeter (edges) of the rectangle only.
+
+    Args:
+        origin (Coord): center of the rectangle
+        half_width (int): half the width of the rectangle
+        half_height (int): half the height of the rectangle
+
+    Returns:
+        list[Coord]: list of Coord points in the rectangle
+
+    """
+    coords: list[Coord] = []
+    if not half_width or not half_height:
+        return coords
+    for column in range(origin.column - half_width, origin.column + half_width + 1):
+        if column == origin.column - half_width or column == origin.column + half_width:
+            for row in range(origin.row - half_height, origin.row + half_height + 1):
+                coords.append(Coord(column, row))  # noqa: PERF401
+        else:
+            coords.append(Coord(column, origin.row - half_height))
+            coords.append(Coord(column, origin.row + half_height))
+
+    return coords
+
+
+find_coords_on_rect = functools.wraps(find_coords_on_rect)(functools.lru_cache(maxsize=8192)(find_coords_on_rect))
+
+
 def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coord:
     """Find the coordinate at the given distance along the line defined by the origin and target coordinates.
 
@@ -246,7 +289,7 @@ def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord
     prev_coord = start
     for t in range(1, 10):
         coord = find_coord_on_bezier_curve(start, control, end, t / 10)
-        length += find_length_of_line(prev_coord, coord)
+        length += find_length_of_line(prev_coord, coord, double_row_diff=True)
         prev_coord = coord
         prev_coord = coord
     return length
@@ -260,7 +303,8 @@ find_length_of_bezier_curve = functools.wraps(find_length_of_bezier_curve)(
 def find_length_of_line(coord1: Coord, coord2: Coord, *, double_row_diff: bool = False) -> float:
     """Return the length of the line intersecting coord1 and coord2.
 
-    If double_row_diff is True, the distance is doubled to account for the terminal character height/width ratio.
+    If double_row_diff is True, the row (y) distance is doubled to account for the terminal character
+    height/width ratio.
 
     Args:
         coord1 (Coord): first coordinate.

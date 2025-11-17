@@ -23,7 +23,7 @@ Colors can be printed to show the code and resulting color appearance.
 ```python
 from terminaltexteffects.utils.graphics import Color
 
-red = Color("ff0000")
+red = Color("#ff0000")
 print(red)
 ```
 
@@ -34,7 +34,7 @@ print(red)
 ```python
 from terminaltexteffects.utils.graphics import Gradient, Color
 
-rgb = Gradient(Color("ff0000"), Color("00ff00"), Color("0000ff"), steps=5)
+rgb = Gradient(Color("#ff0000"), Color("#00ff00"), Color("#0000ff"), steps=5)
 for color in rgb:
     # color is a hex string
     ...
@@ -44,9 +44,9 @@ for color in rgb:
 
 ```python
 text = ("EXAMPLE" * 10 + "\n") * 10
-red = Color("ff0000")
-green = Color("00ff00")
-blue = Color("0000ff")
+red = Color("#ff0000")
+green = Color("#00ff00")
+blue = Color("#0000ff")
 effect = ColorShift(text)
 effect.effect_config.gradient_stops = (red, green, blue)
 with effect.terminal_output() as terminal:

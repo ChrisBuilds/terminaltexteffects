@@ -12,28 +12,24 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, EffectCharacter, Gradient, easing, geometry
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Slide, SlideConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "slide", Slide, SlideConfig
 
 
-@argclass(
-    name="slide",
-    help="Slide characters into view from outside the terminal.",
-    description="slide | Slide characters into view from outside the terminal, grouped by row, column, or diagonal.",
-    epilog=(
-        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects slide --movement-speed 0.5 --grouping row "
-        "--final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 10 "
-        "--final-gradient-direction vertical --gap 3 --reverse-direction --merge --movement-easing OUT_QUAD"
-    ),
-)
 @dataclass
-class SlideConfig(ArgsDataClass):
+class SlideConfig(BaseConfig):
     """Configuration for the Slide effect.
 
     Attributes:
@@ -55,110 +51,120 @@ class SlideConfig(ArgsDataClass):
 
     """
 
-    movement_speed: float = ArgField(
-        cmd_name="--movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.5,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+    parser_spec: ParserSpec = ParserSpec(
+        name="slide",
+        help="Slide characters into view from outside the terminal.",
+        description=(
+            "slide | Slide characters into view from outside the terminal, grouped by row, column, or diagonal."
+        ),
+        epilog=(
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects slide --movement-speed 0.5 --grouping row "
+            "--final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 10 "
+            "--final-gradient-direction vertical --gap 3 --reverse-direction --merge --movement-easing OUT_QUAD"
+        ),
+    )
+
+    movement_speed: float = ArgSpec(
+        name="--movement-speed",
+        type=argutils.PositiveFloat.type_parser,
+        default=0.8,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the characters.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the characters."
 
-    grouping: typing.Literal["row", "column", "diagonal"] = ArgField(
-        cmd_name="--grouping",
+    grouping: typing.Literal["row", "column", "diagonal"] = ArgSpec(
+        name="--grouping",
         default="row",
         choices=["row", "column", "diagonal"],
         help="Direction to group characters.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "typing.Literal['row', 'column', 'diagonal'] : Direction to group characters. Valid values are "
         "Literal['row', 'column', 'diagonal']."
     )
 
-    gap: int = ArgField(
-        cmd_name="--gap",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
-        default=3,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
+    gap: int = ArgSpec(
+        name="--gap",
+        type=argutils.NonNegativeInt.type_parser,
+        default=2,
+        metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames to wait before adding the next group of characters. Increasing this value creates a "
         "more staggered effect.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "int : Number of frames to wait before adding the next group of characters. Increasing this value creates a "
         "more staggered effect."
     )
 
-    reverse_direction: bool = ArgField(
-        cmd_name="--reverse-direction",
+    reverse_direction: bool = ArgSpec(
+        name="--reverse-direction",
+        default=False,
         action="store_true",
         help="Reverse the direction of the characters.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "bool : Reverse the direction of the characters."
 
-    merge: bool = ArgField(
-        cmd_name="--merge",
+    merge: bool = ArgSpec(
+        name="--merge",
+        default=False,
         action="store_true",
         help="Merge the character groups originating from either side of the terminal. (--reverse-direction is "
         "ignored when merging)",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "bool : Merge the character groups originating from either side of the terminal."
 
-    movement_easing: easing.EasingFunction = ArgField(
-        cmd_name=["--movement-easing"],
+    movement_easing: easing.EasingFunction = ArgSpec(
+        name="--movement-easing",
         default=easing.in_out_quad,
-        type_parser=argvalidators.Ease.type_parser,
-        metavar=argvalidators.Ease.METAVAR,
+        type=argutils.Ease.type_parser,
+        metavar=argutils.Ease.METAVAR,
         help="Easing function to use for character movement.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(Color("#833ab4"), Color("#fd1d1d"), Color("#fcb045")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, "
         "the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the character gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_frames: int = ArgField(
-        cmd_name="--final-gradient-frames",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=10,
-        metavar=argvalidators.PositiveInt.METAVAR,
+    final_gradient_frames: int = ArgSpec(
+        name="--final-gradient-frames",
+        type=argutils.PositiveInt.type_parser,
+        default=6,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
         default=Gradient.Direction.VERTICAL,
-        type_parser=argvalidators.GradientDirection.type_parser,
+        type=argutils.GradientDirection.type_parser,
         help="Direction of the gradient (vertical, horizontal, diagonal, center).",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Slide]:
-        """Get the effect class associated with this configuration."""
-        return Slide
 
 
 class SlideIterator(BaseEffectIterator[SlideConfig]):

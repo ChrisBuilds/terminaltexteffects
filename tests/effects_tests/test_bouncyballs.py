@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_bouncyballs_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_bouncyballs.BouncyBalls(input_data)
@@ -26,7 +28,11 @@ def test_bouncyballs_effect_terminal_color_options(input_data, terminal_config_w
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_bouncyballs_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_bouncyballs.BouncyBalls(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -39,7 +45,7 @@ def test_bouncyballs_final_gradient(
             terminal.print(frame)
 
 
-@pytest.mark.parametrize("ball_colors", [(Color("ffffff"),), (Color("f0f0f0"), Color("0f0f0f"))])
+@pytest.mark.parametrize("ball_colors", [(Color("#ffffff"),), (Color("#f0f0f0"), Color("#0f0f0f"))])
 @pytest.mark.parametrize("ball_symbols", [("a",), ("a", "b", "c")])
 @pytest.mark.parametrize("ball_delay", [0, 10])
 @pytest.mark.parametrize("movement_speed", [0.01, 0.5, 2.0])

@@ -45,7 +45,7 @@ def test_beams_final_gradient(
     terminal_config_default_no_framerate: TerminalConfig,
     input_data: str,
     gradient_direction: Gradient.Direction,
-    gradient_steps: int,
+    gradient_steps: tuple[int, ...],
     gradient_stops: tuple[Color, ...],
 ) -> None:
     """Test the final gradient configuration of the beams effect."""
@@ -74,7 +74,7 @@ def test_beams_effect_args(
     beam_row_speed_range: tuple[int, int],
     beam_column_speed_range: tuple[int, int],
     gradient_stops: tuple[Color, ...],
-    gradient_steps: int,
+    gradient_steps: tuple[int, ...],
     gradient_frames: int,
 ) -> None:
     """Test the beams effect with various configuration arguments."""

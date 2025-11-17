@@ -13,29 +13,24 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return MiddleOut, MiddleOutConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "middleout", MiddleOut, MiddleOutConfig
 
 
-@argclass(
-    name="middleout",
-    help="Text expands in a single row or column in the middle of the canvas then out.",
-    description="middleout | Text expands in a single row or column in the middle of the canvas then out.",
-    epilog=(
-        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects middleout --starting-color 8A008A "
-        "--final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical "
-        "--center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE "
-        "--full-easing IN_OUT_SINE"
-    ),
-)
 @dataclass
-class MiddleOutConfig(ArgsDataClass):
+class MiddleOutConfig(BaseConfig):
     """Configuration for the Middleout effect.
 
     Attributes:
@@ -55,98 +50,105 @@ class MiddleOutConfig(ArgsDataClass):
 
     """
 
-    starting_color: Color = ArgField(
-        cmd_name="--starting-color",
-        type_parser=argvalidators.ColorArg.type_parser,
-        default=Color("ffffff"),
-        metavar=argvalidators.ColorArg.METAVAR,
+    parser_spec: ParserSpec = ParserSpec(
+        name="middleout",
+        help="Text expands in a single row or column in the middle of the canvas then out.",
+        description="middleout | Text expands in a single row or column in the middle of the canvas then out.",
+        epilog=(
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects middleout --starting-color 8A008A "
+            "--final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical "
+            "--center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE "
+            "--full-easing IN_OUT_SINE"
+        ),
+    )
+
+    starting_color: Color = ArgSpec(
+        name="--starting-color",
+        type=argutils.ColorArg.type_parser,
+        default=Color("#ffffff"),
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the initial text in the center of the canvas.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     """Color : Color for the initial text in the center of the canvas."""
 
-    expand_direction: typing.Literal["vertical", "horizontal"] = ArgField(
-        cmd_name="--expand-direction",
+    expand_direction: typing.Literal["vertical", "horizontal"] = ArgSpec(
+        name="--expand-direction",
         default="vertical",
         choices=["vertical", "horizontal"],
         help="Direction the text will expand.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     """str : Direction the text will expand."""
 
-    center_movement_speed: float = ArgField(
-        cmd_name="--center-movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.35,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+    center_movement_speed: float = ArgSpec(
+        name="--center-movement-speed",
+        type=argutils.PositiveFloat.type_parser,
+        default=0.6,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the characters during the initial expansion of the center vertical/horiztonal line. ",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     """float : Speed of the characters during the initial expansion of the center vertical/horiztonal line. """
 
-    full_movement_speed: float = ArgField(
-        cmd_name="--full-movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.35,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+    full_movement_speed: float = ArgSpec(
+        name="--full-movement-speed",
+        type=argutils.PositiveFloat.type_parser,
+        default=0.6,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the characters during the final full expansion. ",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     """float : Speed of the characters during the final full expansion. """
 
-    center_easing: easing.EasingFunction = ArgField(
-        cmd_name="--center-easing",
+    center_easing: easing.EasingFunction = ArgSpec(
+        name="--center-easing",
         default=easing.in_out_sine,
-        type_parser=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         help="Easing function to use for initial expansion.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     """easing.EasingFunction : Easing function to use for initial expansion."""
 
-    full_easing: easing.EasingFunction = ArgField(
-        cmd_name="--full-easing",
+    full_easing: easing.EasingFunction = ArgSpec(
+        name="--full-easing",
         default=easing.in_out_sine,
-        type_parser=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         help="Easing function to use for full expansion.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     """easing.EasingFunction : Easing function to use for full expansion."""
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name="--final-gradient-stops",
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     """Gradient.Direction : Direction of the final gradient."""
-
-    @classmethod
-    def get_effect_class(cls) -> type[MiddleOut]:
-        """Get the effect class associated with this configuration."""
-        return MiddleOut
 
 
 class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
@@ -200,7 +202,7 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
             # setup scenes
             full_scene = character.animation.new_scene(scene_id="full")
             full_gradient = Gradient(self.config.starting_color, self.character_final_color_map[character], steps=10)
-            full_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=full_gradient)
+            full_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=full_gradient)
 
             # initialize character state
             character.motion.activate_path(center_path)
@@ -214,8 +216,8 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
             self.phase = "full"
             self.active_characters = set(self.terminal.get_characters())
             for character in self.active_characters:
-                character.motion.activate_path(character.motion.query_path("full"))
-                character.animation.activate_scene(character.animation.query_scene("full"))
+                character.motion.activate_path("full")
+                character.animation.activate_scene("full")
         if self.active_characters:
             self.update()
             return self.frame

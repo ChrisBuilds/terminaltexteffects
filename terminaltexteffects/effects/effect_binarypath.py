@@ -11,31 +11,27 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Return the BinaryPath effect class and its configuration class."""
-    return BinaryPath, BinaryPathConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "binarypath", BinaryPath, BinaryPathConfig
 
 
-@argclass(
-    name="binarypath",
-    help="Binary representations of each character move towards the home coordinate of the character.",
-    description="binarypath | Binary representations of each character move through the terminal towards the "
-    "home coordinate of the character.",
-    epilog="Example: terminaltexteffects binarypath --final-gradient-stops 00d500 007500 --final-gradient-steps 12 "
-    "--final-gradient-direction vertical --binary-colors 044E29 157e38 45bf55 95ed87 --movement-speed 1.0 "
-    "--active-binary-groups 0.05",
-)
 @dataclass
-class BinaryPathConfig(ArgsDataClass):
+class BinaryPathConfig(BaseConfig):
     """Configuration for the BinaryPath effect.
 
     Attributes:
@@ -53,89 +49,94 @@ class BinaryPathConfig(ArgsDataClass):
 
     """
 
-    final_gradient_stops: tuple[tte.Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="binarypath",
+        help="Binary representations of each character move towards the home coordinate of the character.",
+        description="binarypath | Binary representations of each character move through the terminal towards the "
+        "home coordinate of the character.",
+        epilog="Example: terminaltexteffects binarypath --final-gradient-stops 00d500 007500 --final-gradient-steps 12 "
+        "--final-gradient-direction vertical --binary-colors 044E29 157e38 45bf55 95ed87 --movement-speed 1.0 "
+        "--active-binary-groups 0.05",
+    )
+
+    final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(tte.Color("00d500"), tte.Color("007500")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(tte.Color("#00d500"), tte.Color("#007500")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "tuple[tte.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, "
         "the characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name=["--final-gradient-steps"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number (n > 0) of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: tte.Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: tte.Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=tte.Gradient.Direction.RADIAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "tte.Gradient.Direction : Direction of the final gradient."
 
-    binary_colors: tuple[tte.Color, ...] = ArgField(
-        cmd_name=["--binary-colors"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    binary_colors: tuple[tte.Color, ...] = ArgSpec(
+        name="--binary-colors",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(tte.Color("044E29"), tte.Color("157e38"), tte.Color("45bf55"), tte.Color("95ed87")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(tte.Color("#044E29"), tte.Color("#157e38"), tte.Color("#45bf55"), tte.Color("#95ed87")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the binary characters. Character color is randomly "
         "assigned from this list.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "tuple[tte.Color, ...] : Tuple of colors for the binary characters. Character color is randomly assigned from "
         "this list."
     )
 
-    movement_speed: float = ArgField(
-        cmd_name="--movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=1.0,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+    movement_speed: float = ArgSpec(
+        name="--movement-speed",
+        type=argutils.PositiveFloat.type_parser,
+        default=1,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the binary groups as they travel around the terminal.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "float : Speed of the binary groups as they travel around the terminal."
 
-    active_binary_groups: float = ArgField(
-        cmd_name="--active-binary-groups",
-        type_parser=argvalidators.NonNegativeRatio.type_parser,
-        default=0.05,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+    active_binary_groups: float = ArgSpec(
+        name="--active-binary-groups",
+        type=argutils.NonNegativeRatio.type_parser,
+        default=0.08,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         help="Maximum number of binary groups that are active at any given time as a percentage of the total number "
         "of binary groups. Lower this to improve performance.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "float : Maximum number of binary groups that are active at any given time as a percentage of the total number "
         "of binary groups. Lower this to improve performance."
     )
-
-    @classmethod
-    def get_effect_class(cls) -> type[BinaryPath]:
-        """Return the effect class associated with this configuration."""
-        return BinaryPath
 
 
 class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
@@ -163,7 +164,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
 
         def _activate_source_character(self) -> None:
             self.terminal.set_character_visibility(self.character, is_visible=True)
-            self.character.animation.activate_scene(self.character.animation.query_scene("collapse_scn"))
+            self.character.animation.activate_scene("collapse_scn")
 
     def __init__(self, effect: BinaryPath) -> None:
         """Initialize the BinaryPath effect iterator.
@@ -281,8 +282,8 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                 self.character_final_color_map[character].fg_color,  # type: ignore[arg-type]
                 0.5,
             )
-            dim_gradient = tte.Gradient(tte.Color("ffffff"), dim_color, steps=10)
-            collapse_scn.apply_gradient_to_symbols(character.input_symbol, 7, fg_gradient=dim_gradient)
+            dim_gradient = tte.Gradient(tte.Color("#ffffff"), dim_color, steps=7)
+            collapse_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=dim_gradient)
 
             brighten_scn = character.animation.new_scene(scene_id="brighten_scn")
             brighten_gradient = tte.Gradient(dim_color, self.character_final_color_map[character].fg_color, steps=10)  # type: ignore[arg-type]
@@ -324,14 +325,15 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                     self.phase = "wipe"
 
             if self.phase == "wipe":
-                if self.final_wipe_chars:
-                    next_group = self.final_wipe_chars.pop(0)
-                    for character in next_group:
-                        character.animation.activate_scene(character.animation.query_scene("brighten_scn"))
-                        self.terminal.set_character_visibility(character, is_visible=True)
-                        self.active_characters.add(character)
-                else:
-                    self.complete = True
+                for _ in range(2):
+                    if self.final_wipe_chars:
+                        next_group = self.final_wipe_chars.pop(0)
+                        for character in next_group:
+                            character.animation.activate_scene("brighten_scn")
+                            self.terminal.set_character_visibility(character, is_visible=True)
+                            self.active_characters.add(character)
+                    else:
+                        self.complete = True
 
             self.update()
             return self.frame

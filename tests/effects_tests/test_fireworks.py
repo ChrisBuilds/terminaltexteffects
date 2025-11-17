@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_fireworks_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_fireworks.Fireworks(input_data)
@@ -26,7 +28,11 @@ def test_fireworks_effect_terminal_color_options(input_data, terminal_config_wit
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_fireworks_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_fireworks.Fireworks(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -40,7 +46,7 @@ def test_fireworks_final_gradient(
 
 
 @pytest.mark.parametrize("explode_anywhere", [True, False])
-@pytest.mark.parametrize("firework_colors", [(Color("ff00ff"),), (Color("0ffff0"), Color("0000ff"))])
+@pytest.mark.parametrize("firework_colors", [(Color("#ff00ff"),), (Color("#0ffff0"), Color("#0000ff"))])
 @pytest.mark.parametrize("firework_symbol", ["+", "x"])
 @pytest.mark.parametrize("firework_volume", [0.001, 0.2, 1])
 @pytest.mark.parametrize("launch_delay", [0, 10])

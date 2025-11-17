@@ -2,6 +2,84 @@
 
 ---
 
+## 0.13.0
+
+---
+
+### New Features (0.13.0)
+
+---
+
+#### New Effects (0.13.0)
+
+* Thunderstorm - Rain falls across the canvas. Lightning strikes randomly around the canvas. Lightning flashes after reaching the bottom of the canvas, lighting up the text characters. Sparks explode from lightning impact. Text characters glow when lightning travels through them.
+* Smoke - Smoke floods the canvas, colorizing any text it passes over.
+---
+
+#### New Engine Features (0.13.0)
+
+* Added `geometry.find_coords_on_rect()`, which returns coordinates along the perimeter of a rectangle given a center `Coord`, width, and height. Results are cached for performance.
+* Added `--terminal-background-color` to the `TerminalConfig` parser. This will enable terminal themes with background other than black to better display effects with fade in/out components.
+* Spanning-tree and search algorithms have been added.
+  * PrimsSimple - Unweighted Prims
+  * PrimsWeighted
+  * RecursiveBacktracker
+* `EffectCharacter` has a new attribute `links` to support creating trees using spanning-tree algorithms.
+---
+
+#### New Application Features (0.13.0)
+
+* Support for random effect selection from the command-line. Use effect named `random_effect`. Global configuration options will apply.
+* Support for canvas re-use. Use tte option `--reuse-canvas` to restore the cursor to the position of the prior effect canvas.
+* Added `terminaltexteffects` entry point.
+* `--no-eol` command-line option. Suppress the trailing newline character after an effect.
+* `--no-restore-cursor` command-line option. Do not restore cursor visibility after an effect ends.
+---
+
+### Changes (0.13.0)
+
+---
+
+#### Effects Changes (0.13.0)
+
+* Blackhole - Initial consumption motion modified to create the apperance of an gravitational-wave propagating across the canvas.
+* Laseretch - New etch-pattern `algorithm` uses the link-order of a text-boundary-bound recursive backtracker algorithm.
+* Burn - Character ignite order is based on the link-order of a text-boundary-bound prims simple algorithm.
+* Pour - Changed `--movement-speed` to `--movement-speed-range` to add some variation in character falling speed.
+* All effects have been adjusted for visual parity at 60 fps.
+
+---
+
+#### Engine Changes (0.13.0)
+
+* `animation.set_appearance()` `symbol` argument signature changed from `str` to `str | None`, defaulting to the character's `input_symbol` if not provided.
+* `Coord` objects can be unpacked into `(column, row)` tuples for multiple assignment.
+* `motion.activate_path()` and `animation.activate_scene()` accept `path_id`/`scene_id` strings OR `Path`/`Scene` instances. The `Path`/`Scene` corresponding to the provided `path_id`/`scene_id` must exist or  a `SceneNotFoundError`/`PathNotFoundError` will be raised.
+* `motion.query_path()` accepts an argument directing the action to take if a path with the given `path_id` cannot be found. The default action is to raise a `PathNotFoundError`, but this behavior can be changed to return `None`.
+* `animation.query_scene()` accepts an argument directing the action to take if a scene with the given `scene_id` cannot be found. The default action is to raise a `SceneNotFoundError`, but this behavior can be changed to return `None`.
+* Events can be registered using `path_id`/`scene_id` in place of the `Path`/`Scene` for `target` and `caller` arguments.
+* Frame rate reduced from 100 fps to 60 fps.
+* Typed argument parsing and related configuration utilities and classes have been rewritten.
+* Terminal distance calculations take into account the cell height/width ratio.
+
+### Bug Fixes (0.13.0)
+
+---
+
+#### Engine Fixes (0.13.0)
+
+* Fixed duplicate event registrations by adding prevention logic to the EventHandler. The `register_event` method now raises a `DuplicateEventRegistrationError` when attempting to register the same event-caller-action-target combination.
+* Improved the `_handle_event` method docstring with comprehensive documentation.
+* `Scene.reset_scene()` now sets `easing_current_step` to `0`.
+
+---
+
+#### Effect Fixes (0.13.0)
+
+* Unstable - Effect properly uses config values for reassembly/explosion speed. These were not referenced previously.
+
+---
+
 ## 0.12.2
 
 ---

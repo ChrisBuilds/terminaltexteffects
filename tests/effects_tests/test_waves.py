@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_waves_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_waves.Waves(input_data)
@@ -26,7 +28,11 @@ def test_waves_effect_terminal_color_options(input_data, terminal_config_with_co
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_waves_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_waves.Waves(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -41,7 +47,8 @@ def test_waves_final_gradient(
 
 @pytest.mark.parametrize("wave_symbols", [("a", "b"), ("c")])
 @pytest.mark.parametrize(
-    "wave_gradient_stops", [(Color("000000"), Color("ff00ff"), Color("0ffff0")), (Color("ff0fff"),)]
+    "wave_gradient_stops",
+    [(Color("#000000"), Color("#ff00ff"), Color("#0ffff0")), (Color("#ff0fff"),)],
 )
 @pytest.mark.parametrize("wave_gradient_steps", [1, 4, (1, 3)])
 @pytest.mark.parametrize("wave_count", [1, 4])

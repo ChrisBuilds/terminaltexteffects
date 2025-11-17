@@ -150,7 +150,8 @@ options:
                         Ignore the terminal dimensions and utilize the full Canvas beyond the extents
                         of the terminal. Useful for sending frames to another output handler. (default:
                         False)
-  --no-eol              Suppress the trailing newline emitted when an effect animation completes.
+  --no-eol
+                        Suppress the trailing newline emitted when an effect animation completes.
                         (default: False)
 
   Effect:

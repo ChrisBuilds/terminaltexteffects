@@ -1,8 +1,8 @@
 # Argument Validation
 
-*Module*: `terminaltexteffects.utils.argvalidators`
+*Module*: `terminaltexteffects.utils.argutils`
 
-::: terminaltexteffects.utils.argvalidators
+::: terminaltexteffects.utils.argutils
 
 ## Example Usage
 
@@ -12,9 +12,9 @@ The following example demonstrates using the `PositiveFloat` class to provide a 
 class RandomSequenceConfig(ArgsDataClass):
     speed: float = ArgField(
         cmd_name=["--speed"],
-        type_parser=argvalidators.PositiveFloat.type_parser,
+        type_parser=argutils.PositiveFloat.type_parser,
         default=0.004,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the animation as a percentage of the total number of characters to reveal in each tick.",
     )  # type: ignore[assignment]
 

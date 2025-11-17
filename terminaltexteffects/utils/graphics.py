@@ -154,9 +154,9 @@ class ColorPair:
         )
         return (
             f"Foreground Color Code: {self.fg_color.rgb_color if self.fg_color else ''}"
-            f"{f' | Foreground XTerm Color: {self.fg_color.xterm_color}' if self.fg_color and self.fg_color.xterm_color else ''}\n"
+            f"{f' | Foreground XTerm Color: {self.fg_color.xterm_color}' if self.fg_color and self.fg_color.xterm_color else ''}\n"  # noqa: E501
             f"Background Color Code: {self.bg_color.rgb_color if self.bg_color else ''}"
-            f"{f' | Background XTerm Color: {self.bg_color.xterm_color}' if self.bg_color and self.bg_color.xterm_color else ''}"
+            f"{f' | Background XTerm Color: {self.bg_color.xterm_color}' if self.bg_color and self.bg_color.xterm_color else ''}"  # noqa: E501
             f"\nColor Appearance: {color_block}"
         )
 
@@ -328,7 +328,7 @@ class Gradient:
     ) -> dict[geometry.Coord, Color]:
         """Build a mapping of coordinates to colors based on the gradient and a direction.
 
-        For example, a vertical gradient will have the same color for each column in a row. When applied across all
+        For example, a vertical gradient will have the same color for each character in a row. When applied across all
         characters in the canvas, the gradient will be visible as a vertical gradient.
 
         Args:
@@ -419,7 +419,7 @@ def random_color() -> Color:
         Color: A random color in the range 000000 -> ffffff.
 
     """
-    return Color(hex(random.randint(0, 0xFFFFFF))[2:].zfill(6))
+    return Color(f"{random.randint(0, 0xFFFFFF):06x}")
 
 
 def shift_color_towards(color: Color, target_color: Color, factor: float) -> Color:

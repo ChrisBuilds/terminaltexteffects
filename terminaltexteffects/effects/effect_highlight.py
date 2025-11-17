@@ -12,28 +12,24 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Animation, Color, ColorPair, EffectCharacter, Gradient, easing
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Highlight, HighlightConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "highlight", Highlight, HighlightConfig
 
 
-@argclass(
-    name="highlight",
-    help="Run a specular highlight across the text.",
-    description="highlight | Run a specular highlight across the text.",
-    epilog=(
-        "Example: terminaltexteffects highlight --highlight-brightness 1.5 --highlight-direction "
-        "diagonal_bottom_left_to_top_right --highlight-width 8 --final-gradient-stops 8A008A 00D1FF FFFFFF "
-        "--final-gradient-steps 12 --final-gradient-direction vertical"
-    ),
-)
 @dataclass
-class HighlightConfig(ArgsDataClass):
+class HighlightConfig(BaseConfig):
     """Configuration for the Highlight effect.
 
     Attributes:
@@ -49,14 +45,25 @@ class HighlightConfig(ArgsDataClass):
 
     """  # noqa: E501 # long type hint for highlight_direction required for mkdocs to associate the name: description pair
 
-    highlight_brightness: float = ArgField(
-        cmd_name="--highlight-brightness",
-        type_parser=argvalidators.PositiveFloat.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="highlight",
+        help="Run a specular highlight across the text.",
+        description="highlight | Run a specular highlight across the text.",
+        epilog=(
+            "Example: terminaltexteffects highlight --highlight-brightness 1.5 --highlight-direction "
+            "diagonal_bottom_left_to_top_right --highlight-width 8 --final-gradient-stops 8A008A 00D1FF FFFFFF "
+            "--final-gradient-steps 12 --final-gradient-direction vertical"
+        ),
+    )
+
+    highlight_brightness: float = ArgSpec(
+        name="--highlight-brightness",
+        type=argutils.PositiveFloat.type_parser,
         default=1.75,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Brightness of the highlight color. Values less than 1 will darken the highlight color, while values "
         "greater than 1 will brighten the highlight color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "float : Brightness of the highlight color. Values less than 1 will darken the highlight color, while "
         "values greater than 1 will brighten the highlight color."
@@ -72,8 +79,8 @@ class HighlightConfig(ArgsDataClass):
         "diagonal_bottom_right_to_top_left",
         "outside_to_center",
         "center_to_outside",
-    ] = ArgField(
-        cmd_name="--highlight-direction",
+    ] = ArgSpec(
+        name="--highlight-direction",
         default="diagonal_bottom_left_to_top_right",
         choices=[
             "column_left_to_right",
@@ -88,7 +95,7 @@ class HighlightConfig(ArgsDataClass):
             "center_to_outside",
         ],
         help="Direction the highlight will travel.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top',"
         "'diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right',"
@@ -96,56 +103,51 @@ class HighlightConfig(ArgsDataClass):
         "highlight will travel."
     )
 
-    highlight_width: int = ArgField(
-        cmd_name="--highlight-width",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    highlight_width: int = ArgSpec(
+        name="--highlight-width",
+        type=argutils.PositiveInt.type_parser,
         default=8,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Width of the highlight. n >= 1",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Width of the highlight. n >= 1"
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Highlight]:
-        """Get the effect class associated with this configuration."""
-        return Highlight
 
 
 class HighlightIterator(BaseEffectIterator[HighlightConfig]):
@@ -215,8 +217,7 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
                 if self.pending_characters:
                     next_group = self.pending_characters.pop(0)
                     for character in next_group:
-                        scn = character.animation.query_scene("highlight")
-                        character.animation.activate_scene(scn)
+                        character.animation.activate_scene("highlight")
                         self.active_characters.add(character)
                     self.groups_activated += 1
 

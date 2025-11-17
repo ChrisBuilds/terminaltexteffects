@@ -13,10 +13,13 @@ Documentation = "https://chrisbuilds.github.io/terminaltexteffects/"
 
 [project.scripts]
 tte = "terminaltexteffects.__main__:main"
+terminaltexteffects = "terminaltexteffects.__main__:main"
 
 [tool.ruff]
 show-fixes = true
+unsafe-fixes = true
 line-length = 120
+target-version = "py38"
 
 [tool.ruff.lint]
 ignore = [
@@ -27,6 +30,7 @@ ignore = [
     "PLR0913", # too many function args
     "PLR2004", # magic numbers
     "RUF009",  # function-call-in-dataclass-default-argument
+    "S101",    # use of assert
     "S311",    # suspicious-non-cryptographic-random-usage
     "SLF001",  # private member access
     "TRY003",  # f-strings in exception message
@@ -35,6 +39,7 @@ ignore = [
 select = ["ALL"]
 fixable = ["ALL"]
 extend-fixable = ["EM102"]
+typing-extensions = false
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "D104"]
@@ -62,11 +67,19 @@ markers = [
 testpaths = ["tests"]
 
 [tool.hatch.build.targets.sdist]
-exclude = [
-  "docs/**",
-]
+exclude = ["docs/**"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[dependency-groups]
+dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.22",
+    "mkdocstrings-python>=1.11.1",
+    "pymdown-extensions>=10.15",
+    "pytest>=8.3.5",
+    "pytest-cov>=5.0.0",
+    "pytest-xdist>=3.6.1",
+]

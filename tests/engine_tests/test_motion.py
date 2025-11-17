@@ -70,7 +70,7 @@ def test_segment_length_bezier() -> None:
         waypoint_1,
         find_length_of_bezier_curve(waypoint_0.coord, waypoint_0.bezier_control, waypoint_1.coord),  # type: ignore[arg-type]
     )
-    bezier_length = 10.242640687119286
+    bezier_length = 12.70820393249937
     assert segment.distance == bezier_length
 
 

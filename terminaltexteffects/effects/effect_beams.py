@@ -9,40 +9,33 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Return the Beams effect class and its configuration class."""
-    return Beams, BeamsConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "beams", Beams, BeamsConfig
 
 
-@argclass(
-    name="beams",
-    help="Create beams which travel over the canvas illuminating the characters behind them.",
-    description="beams | Create beams which travel over the canvas illuminating the characters behind them.",
-    epilog=(
-        "Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay "
-        "10 --beam-row-speed-range 10-40 --beam-column-speed-range 6-10 --beam-gradient-stops ffffff 00D1FF "
-        "8A008A --beam-gradient-steps 2 8 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF "
-        "ffffff --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical "
-        "--final-wipe-speed 1"
-    ),
-)
 @dataclass
-class BeamsConfig(ArgsDataClass):
+class BeamsConfig(BaseConfig):
     """Configuration for the Beams effect.
 
     Attributes:
-        beam_row_symbols (tuple[str, ...] | str): Symbols to use for the beam effect when moving along a row. Strings
+        beam_row_symbols (tuple[str, ...]): Symbols to use for the beam effect when moving along a row. Strings
             will be used in sequence to create an animation.
-        beam_column_symbols (tuple[str, ...] | str): Symbols to use for the beam effect when moving along a column.
+        beam_column_symbols (tuple[str, ...]): Symbols to use for the beam effect when moving along a column.
             Strings will be used in sequence to create an animation.
         beam_delay (int): Number of frames to wait before adding the next group of beams. Beams are added in groups
             of size random(1, 5). Valid values are n > 0.
@@ -51,13 +44,13 @@ class BeamsConfig(ArgsDataClass):
             Valid values are n > 0.
         beam_gradient_stops (tuple[tte.Color, ...]): Tuple of colors for the beam, a gradient will be created between
             the colors.
-        beam_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+        beam_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will
             create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
             Valid values are n > 0.
         beam_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient
             animation. Valid values are n > 0.
         final_gradient_stops (tuple[tte.Color, ...]): Tuple of colors for the wipe gradient.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
+        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will
             create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
             Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the
@@ -68,180 +61,194 @@ class BeamsConfig(ArgsDataClass):
 
     """
 
-    beam_row_symbols: tuple[str, ...] | str = ArgField(
-        cmd_name="--beam-row-symbols",
-        type_parser=argvalidators.Symbol.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="beams",
+        help="Create beams which travel over the canvas illuminating the characters behind them.",
+        description="beams | Create beams which travel over the canvas illuminating the characters behind them.",
+        epilog=(
+            "Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay "
+            "3 --beam-row-speed-range 30-120 --beam-column-speed-range 18-30 --beam-gradient-stops ffffff 00D1FF "
+            "8A008A --beam-gradient-steps 2 6 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF "
+            "ffffff --final-gradient-steps 12 --final-gradient-frames 2 --final-gradient-direction vertical "
+            "--final-wipe-speed 3"
+        ),
+    )
+
+    beam_row_symbols: tuple[str, ...] = ArgSpec(
+        name="--beam-row-symbols",
+        type=argutils.Symbol.type_parser,
         nargs="+",
         default=("▂", "▁", "_"),
-        metavar=argvalidators.Symbol.METAVAR,
+        action=argutils.TupleAction,
+        metavar=argutils.Symbol.METAVAR,
         help=(
             "Symbols to use for the beam effect when moving along a row. "
             "Strings will be used in sequence to create an animation."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
-        "tuple[str, ...] | str : Symbols to use for the beam effect when moving along a row. "
+        "tuple[str, ...]: Symbols to use for the beam effect when moving along a row. "
         "Strings will be used in sequence to create an animation."
     )
 
-    beam_column_symbols: tuple[str, ...] | str = ArgField(
-        cmd_name="--beam-column-symbols",
-        type_parser=argvalidators.Symbol.type_parser,
+    beam_column_symbols: tuple[str, ...] = ArgSpec(
+        name="--beam-column-symbols",
+        type=argutils.Symbol.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=("▌", "▍", "▎", "▏"),
-        metavar=argvalidators.Symbol.METAVAR,
+        metavar=argutils.Symbol.METAVAR,
         help=(
             "Symbols to use for the beam effect when moving along a column. "
             "Strings will be used in sequence to create an animation."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
-        "tuple[str, ...] | str : Symbols to use for the beam effect when moving along a column. "
+        "tuple[str, ...]: Symbols to use for the beam effect when moving along a column. "
         "Strings will be used in sequence to create an animation."
     )
 
-    beam_delay: int = ArgField(
-        cmd_name="--beam-delay",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=10,
-        metavar=argvalidators.PositiveInt.METAVAR,
+    beam_delay: int = ArgSpec(
+        name="--beam-delay",
+        type=argutils.PositiveInt.type_parser,
+        default=6,
+        metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Number of frames to wait before adding the next group of beams. "
             "Beams are added in groups of size random(1, 5)."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "int : Number of frames to wait before adding the next group of beams. "
         "Beams are added in groups of size random(1, 5)."
     )
 
-    beam_row_speed_range: tuple[int, int] = ArgField(
-        cmd_name="--beam-row-speed-range",
-        type_parser=argvalidators.PositiveIntRange.type_parser,
-        default=(10, 40),
-        metavar=argvalidators.PositiveIntRange.METAVAR,
+    beam_row_speed_range: tuple[int, int] = ArgSpec(
+        name="--beam-row-speed-range",
+        type=argutils.PositiveIntRange.type_parser,
+        default=(15, 60),
+        metavar=argutils.PositiveIntRange.METAVAR,
         help="Speed range of the beam when moving along a row.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "tuple[int, int] : Speed range of the beam when moving along a row."
 
-    beam_column_speed_range: tuple[int, int] = ArgField(
-        cmd_name="--beam-column-speed-range",
-        type_parser=argvalidators.PositiveIntRange.type_parser,
-        default=(6, 10),
-        metavar=argvalidators.PositiveIntRange.METAVAR,
+    beam_column_speed_range: tuple[int, int] = ArgSpec(
+        name="--beam-column-speed-range",
+        type=argutils.PositiveIntRange.type_parser,
+        default=(9, 15),
+        metavar=argutils.PositiveIntRange.METAVAR,
         help="Speed range of the beam when moving along a column.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "tuple[int, int] : Speed range of the beam when moving along a column."
 
-    beam_gradient_stops: tuple[tte.Color, ...] = ArgField(
-        cmd_name="--beam-gradient-stops",
-        type_parser=argvalidators.ColorArg.type_parser,
+    beam_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+        name="--beam-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(tte.Color("ffffff"), tte.Color("00D1FF"), tte.Color("8A008A")),
+        action=argutils.TupleAction,
+        default=(tte.Color("#ffffff"), tte.Color("#00D1FF"), tte.Color("#8A008A")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
-    "tuple[tte.Color, ...] : Tuple of colors for the beam, a gradient will be created between the colors."
+    "tuple[tte.Color, ...]: Tuple of colors for the beam, a gradient will be created between the colors."
 
-    beam_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--beam-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    beam_gradient_steps: tuple[int, ...] = ArgSpec(
+        name="--beam-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
-        default=(2, 8),
-        metavar=argvalidators.PositiveInt.METAVAR,
+        action=argutils.TupleAction,
+        default=(2, 6),
+        metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Space separated, unquoted, numbers for the of gradient steps to use. "
             "More steps will create a smoother and longer gradient animation. "
             "Steps are paired with the colors in final-gradient-stops."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
-        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. "
+        "tuple[int, ...]: Int or Tuple of ints for the number of gradient steps to use. "
         "More steps will create a smoother and longer gradient animation. "
         "Steps are paired with the colors in final-gradient-stops."
     )
 
-    beam_gradient_frames: int = ArgField(
-        cmd_name="--beam-gradient-frames",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    beam_gradient_frames: int = ArgSpec(
+        name="--beam-gradient-frames",
+        type=argutils.PositiveInt.type_parser,
         default=2,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_stops: tuple[tte.Color, ...] = ArgField(
-        cmd_name="--final-gradient-stops",
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(tte.Color("8A008A"), tte.Color("00D1FF"), tte.Color("ffffff")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        action=argutils.TupleAction,
+        default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#ffffff")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
-    "tuple[tte.Color, ...] : Tuple of colors for the wipe gradient."
+    "tuple[tte.Color, ...]: Tuple of colors for the wipe gradient."
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Space separated, unquoted, numbers for the of gradient steps to use. "
             "More steps will create a smoother and longer gradient animation. "
             "Steps are paired with the colors in final-gradient-stops."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
-        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. "
+        "tuple[int, ...]: Int or Tuple of ints for the number of gradient steps to use. "
         "More steps will create a smoother and longer gradient animation. "
         "Steps are paired with the colors in final-gradient-stops."
     )
 
-    final_gradient_frames: int = ArgField(
-        cmd_name="--final-gradient-frames",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=5,
-        metavar=argvalidators.PositiveInt.METAVAR,
+    final_gradient_frames: int = ArgSpec(
+        name="--final-gradient-frames",
+        type=argutils.PositiveInt.type_parser,
+        default=4,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_direction: tte.Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: tte.Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=tte.Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "tte.Gradient.Direction : Direction of the final gradient."
 
-    final_wipe_speed: int = ArgField(
-        cmd_name="--final-wipe-speed",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=1,
-        metavar=argvalidators.PositiveInt.METAVAR,
+    final_wipe_speed: int = ArgSpec(
+        name="--final-wipe-speed",
+        type=argutils.PositiveInt.type_parser,
+        default=3,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Speed of the final wipe as measured in diagonal groups activated per frame.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "int : Speed of the final wipe as measured in diagonal groups activated per frame."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Beams]:
-        """Return the effect class associated with this configuration."""
-        return Beams
 
 
 class BeamsIterator(BaseEffectIterator[BeamsConfig]):
@@ -298,7 +305,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
             else:
                 self.terminal.set_character_visibility(next_character, is_visible=True)
                 return_value = next_character
-            next_character.animation.activate_scene(next_character.animation.query_scene("beam_" + self.direction))
+            next_character.animation.activate_scene("beam_" + self.direction)
             return return_value
 
         def complete(self) -> bool:
@@ -340,10 +347,10 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
             if character.is_fill_character:
-                self.character_final_color_map[character] = tte.ColorPair(fg="000000")
+                self.character_final_color_map[character] = tte.ColorPair(fg="#000000")
                 continue
             if self.terminal.config.existing_color_handling == "dynamic" and self.preexisting_colors_present:
-                fg_color = tte.Color("ffffff")
+                fg_color = tte.Color("#ffffff")
                 bg_color = None
                 if character.animation.input_fg_color:
                     fg_color = character.animation.input_fg_color
@@ -398,13 +405,13 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
 
                 beam_row_scn.apply_gradient_to_symbols(
                     character.input_symbol,
-                    5,
+                    2,
                     fg_gradient=fg_fade_gradient,
                     bg_gradient=bg_fade_gradient,
                 )
                 beam_column_scn.apply_gradient_to_symbols(
                     character.input_symbol,
-                    5,
+                    2,
                     fg_gradient=fg_fade_gradient,
                     bg_gradient=bg_fade_gradient,
                 )
@@ -448,7 +455,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                             break
                         next_group = self.final_wipe_groups.pop(0)
                         for character in next_group:
-                            character.animation.activate_scene(character.animation.query_scene("brighten"))
+                            character.animation.activate_scene("brighten")
                             self.terminal.set_character_visibility(character, is_visible=True)
                             self.active_characters.add(character)
                 else:

@@ -38,8 +38,8 @@ def test_laseretch_final_gradient(
     effect.effect_config.final_gradient_stops = gradient_stops
     effect.effect_config.final_gradient_steps = gradient_steps
     effect.effect_config.final_gradient_direction = gradient_direction
+    effect.effect_config.final_gradient_frames = gradient_frames
     effect.terminal_config = terminal_config_default_no_framerate
-    effect.effect_config
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
@@ -71,7 +71,7 @@ def test_laseretch_args(
 ) -> None:
     effect = effect_laseretch.LaserEtch(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
-    effect.effect_config.etch_direction = etch_direction
+    effect.effect_config.etch_pattern = etch_direction
     effect.effect_config.etch_speed = etch_speed
     effect.effect_config.etch_delay = etch_delay
     with effect.terminal_output() as terminal:

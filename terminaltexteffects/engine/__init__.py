@@ -1,0 +1,1 @@
+"""TerminalTextEffects engine module."""

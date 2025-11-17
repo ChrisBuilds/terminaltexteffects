@@ -8,33 +8,30 @@ Classes:
 
 from __future__ import annotations
 
+import random
 import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, Terminal, easing
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Pour, PourConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "pour", Pour, PourConfig
 
 
-@argclass(
-    name="pour",
-    help="Pours the characters into position from the given direction.",
-    description="pour | Pours the characters into position from the given direction.",
-    epilog=(
-        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects pour --pour-direction down "
-        "--movement-speed 0.2 --gap 1 --starting-color FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF "
-        "--easing IN_QUAD"
-    ),
-)
 @dataclass
-class PourConfig(ArgsDataClass):
+class PourConfig(BaseConfig):
     """Configuration for the Pour effect.
 
     Attributes:
@@ -56,101 +53,106 @@ class PourConfig(ArgsDataClass):
 
     """
 
-    pour_direction: typing.Literal["up", "down", "left", "right"] = ArgField(
-        cmd_name=["--pour-direction"],
+    parser_spec: ParserSpec = ParserSpec(
+        name="pour",
+        help="Pours the characters into position from the given direction.",
+        description="pour | Pours the characters into position from the given direction.",
+        epilog=(
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects pour --pour-direction down "
+            "--movement-speed 0.2 --gap 1 --starting-color FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF "
+            "--easing IN_QUAD"
+        ),
+    )
+    pour_direction: typing.Literal["up", "down", "left", "right"] = ArgSpec(
+        name="--pour-direction",
         default="down",
         choices=["up", "down", "left", "right"],
         help="Direction the text will pour.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "typing.Literal['up', 'down', 'left', 'right'] : Direction the text will pour."
 
-    pour_speed: int = ArgField(
-        cmd_name="--pour-speed",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=1,
-        metavar=argvalidators.PositiveInt.METAVAR,
+    pour_speed: int = ArgSpec(
+        name="--pour-speed",
+        type=argutils.PositiveInt.type_parser,
+        default=2,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of characters poured in per tick. Increase to speed up the effect.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of characters poured in per tick. Increase to speed up the effect."
 
-    movement_speed: float = ArgField(
-        cmd_name="--movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.2,
-        metavar=argvalidators.PositiveFloat.METAVAR,
-        help="Movement speed of the characters. ",
-    )  # type: ignore[assignment]
-    "float : Movement speed of the characters."
+    movement_speed_range: tuple[float, float] = ArgSpec(
+        name="--movement-speed-range",
+        type=argutils.PositiveFloatRange.type_parser,
+        default=(0.4, 0.6),
+        metavar=argutils.PositiveFloat.METAVAR,
+        help="Movement speed range of the characters. ",
+    )  # pyright: ignore[reportAssignmentType]
+    "tuple[float, float] : Movement speed range of the characters."
 
-    gap: int = ArgField(
-        cmd_name="--gap",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
+    gap: int = ArgSpec(
+        name="--gap",
+        type=argutils.NonNegativeInt.type_parser,
         default=1,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
+        metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames to wait between each character in the pour effect. Increase to slow down effect "
         "and create a more defined back and forth motion.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to wait between each character in the pour effect."
 
-    starting_color: Color = ArgField(
-        cmd_name=["--starting-color"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        default=Color("ffffff"),
-        metavar=argvalidators.ColorArg.METAVAR,
+    starting_color: Color = ArgSpec(
+        name="--starting-color",
+        type=argutils.ColorArg.type_parser,
+        default=Color("#ffffff"),
+        metavar=argutils.ColorArg.METAVAR,
         help="Color of the characters before the gradient starts.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Color : Color of the characters before the gradient starts."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient. If only one color is provided, "
         "the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the character gradient."
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name=["--final-gradient-steps"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use."
 
-    final_gradient_frames: int = ArgField(
-        cmd_name=["--final-gradient-frames"],
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=10,
-        metavar=argvalidators.PositiveInt.METAVAR,
+    final_gradient_frames: int = ArgSpec(
+        name="--final-gradient-frames",
+        type=argutils.PositiveInt.type_parser,
+        default=6,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
 
-    movement_easing: easing.EasingFunction = ArgField(
-        cmd_name="--movement-easing",
+    movement_easing: easing.EasingFunction = ArgSpec(
+        name="--movement-easing",
         default=easing.in_quad,
-        type_parser=argvalidators.Ease.type_parser,
+        type=argutils.Ease.type_parser,
         help="Easing function to use for character movement.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Pour]:
-        """Get the effect class associated with this configuration."""
-        return Pour
 
 
 class PourIterator(BaseEffectIterator[PourConfig]):
@@ -213,7 +215,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
                 elif self._pour_direction == PourIterator.PourDirection.RIGHT:
                     character.motion.set_coordinate(Coord(self.terminal.canvas.left, character.input_coord.row))
                 input_coord_path = character.motion.new_path(
-                    speed=self.config.movement_speed,
+                    speed=random.uniform(*self.config.movement_speed_range),
                     ease=self.config.movement_easing,
                 )
                 input_coord_path.new_waypoint(character.input_coord)

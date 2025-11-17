@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import typing
+from dataclasses import dataclass
 
 from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.graphics import Color, Gradient
@@ -63,6 +64,62 @@ EASING_EPILOG = """\
 
     Visit: https://easings.net/ for visualizations of the easing functions.
 """
+
+_MISSING = object()
+
+
+@dataclass(frozen=True)
+class ParserSpec:
+    """Specification for a parser in the argument parser."""
+
+    name: str
+    help: str
+    description: str
+    epilog: str
+
+
+@dataclass(frozen=True)
+class ArgSpec:
+    """Specification for a command-line argument and default value.
+
+    The default value is used for both the argparse argument and to support direct
+    instantiation of a config.
+    """
+
+    name: str
+    default: typing.Any
+    metavar: str = _MISSING  # type: ignore[arg-type]
+    type: typing.Any = _MISSING  # type: ignore[arg-type]
+    required: bool = _MISSING  # type: ignore[arg-type]
+    help: str = _MISSING  # type: ignore[arg-type]
+    action: str | type[argparse.Action] = _MISSING  # type: ignore[arg-type]
+    choices: list[typing.Any] = _MISSING  # type: ignore[arg-type]
+    nargs: str | int = _MISSING  # type: ignore[arg-type]
+
+
+class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
+    """Combine ArgumentDefaultsHelpFormatter and RawDescriptionHelpFormatter for argparse."""
+
+
+class TupleAction(argparse.Action):
+    """Custom action to convert a list of values into a tuple.
+
+    Used for arguments which utilize the `nargs` argument to
+    specify multiple values.
+    """
+
+    def __call__(
+        self,
+        _: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: typing.Sequence[typing.Any] | None,
+        __: str | None = None,
+    ) -> None:
+        """Convert a list of values into a tuple."""
+        if values is None:
+            setattr(namespace, self.dest, ())
+            return
+        setattr(namespace, self.dest, tuple(values))
 
 
 class PositiveInt:
@@ -376,10 +433,6 @@ class PositiveRatio:
             return float(arg)
         msg = f"invalid value: '{arg}' must be 0 < n <=1. Example: 0.5"
         raise argparse.ArgumentTypeError(msg)
-
-
-class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
-    """Combine ArgumentDefaultsHelpFormatter and RawDescriptionHelpFormatter for argparse."""
 
 
 class GradientDirection:

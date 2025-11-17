@@ -8,33 +8,28 @@ Classes:
 
 from __future__ import annotations
 
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, geometry
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return ColorShift, ColorShiftConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "colorshift", ColorShift, ColorShiftConfig
 
 
-@argclass(
-    name="colorshift",
-    help="Display a gradient that shifts colors across the terminal.",
-    description="Display a gradient that shifts colors across the terminal.",
-    epilog=(
-        "Example: terminaltexteffects colorshift --gradient-stops 0000ff ffffff 0000ff "
-        "--gradient-steps 12 --gradient-frames 10 --cycles 3 --travel --travel-direction radial --final-gradient-stops "
-        "00c3ff ffff1c --final-gradient-steps 12"
-    ),
-)
 @dataclass
-class ColorShiftConfig(ArgsDataClass):
+class ColorShiftConfig(BaseConfig):
     """Configuration for the ColorShift effect.
 
     Attributes:
@@ -59,148 +54,158 @@ class ColorShiftConfig(ArgsDataClass):
 
     """
 
-    gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="colorshift",
+        help="Display a gradient that shifts colors across the terminal.",
+        description="Display a gradient that shifts colors across the terminal.",
+        epilog=(
+            "Example: terminaltexteffects colorshift --gradient-stops 0000ff ffffff 0000ff "
+            "--gradient-steps 12 --gradient-frames 10 --cycles 3 --travel --travel-direction radial "
+            "--final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12"
+        ),
+    )
+
+    gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(
-            Color("e81416"),
-            Color("ffa500"),
-            Color("faeb36"),
-            Color("79c314"),
-            Color("487de7"),
-            Color("4b369d"),
-            Color("70369d"),
+            Color("#e81416"),
+            Color("#ffa500"),
+            Color("#faeb36"),
+            Color("#79c314"),
+            Color("#487de7"),
+            Color("#4b369d"),
+            Color("#70369d"),
         ),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the gradient. If only one color is provided, the characters will "
         "be displayed in that color."
     )
 
-    gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    gradient_frames: int = ArgField(
-        cmd_name="--gradient-frames",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=5,
-        metavar=argvalidators.PositiveInt.METAVAR,
+    gradient_frames: int = ArgSpec(
+        name="--gradient-frames",
+        type=argutils.PositiveInt.type_parser,
+        default=2,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    travel: bool = ArgField(
-        cmd_name="--travel",
+    travel: bool = ArgSpec(
+        name="--travel",
+        default=False,
         action="store_true",
         help="Display the gradient as a traveling wave",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "bool : Display the gradient as a traveling wave."
 
-    travel_direction: Gradient.Direction = ArgField(
-        cmd_name="--travel-direction",
+    travel_direction: Gradient.Direction = ArgSpec(
+        name="--travel-direction",
         default=Gradient.Direction.HORIZONTAL,
-        type_parser=argvalidators.GradientDirection.type_parser,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        type=argutils.GradientDirection.type_parser,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction the gradient travels across the canvas.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction the gradient travels across the canvas."
 
-    reverse_travel_direction: bool = ArgField(
-        cmd_name="--reverse-travel-direction",
+    reverse_travel_direction: bool = ArgSpec(
+        name="--reverse-travel-direction",
+        default=False,
         action="store_true",
         help="Reverse the gradient travel direction.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "bool : Reverse the gradient travel direction."
 
-    no_loop: bool = ArgField(
-        cmd_name="--no-loop",
+    no_loop: bool = ArgSpec(
+        name="--no-loop",
+        default=False,
         action="store_true",
         help="Do not loop the gradient. If not set, the gradient generation will loop the final gradient "
         "color back to the first gradient color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "bool : Do not loop the gradient. If not set, the gradient generation will loop the final gradient color "
         "back to the first gradient color."
     )
 
-    cycles: int = ArgField(
-        cmd_name="--cycles",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    cycles: int = ArgSpec(
+        name="--cycles",
+        type=argutils.PositiveInt.type_parser,
         default=3,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of times to cycle the gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of times to cycle the gradient. Use 0 for infinite."
 
-    skip_final_gradient: bool = ArgField(
-        cmd_name="--skip-final-gradient",
+    skip_final_gradient: bool = ArgSpec(
+        name="--skip-final-gradient",
+        default=False,
         action="store_true",
         help="Skip the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "bool : Skip the final gradient."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
         default=(
-            Color("e81416"),
-            Color("ffa500"),
-            Color("faeb36"),
-            Color("79c314"),
-            Color("487de7"),
-            Color("4b369d"),
-            Color("70369d"),
+            Color("#e81416"),
+            Color("#ffa500"),
+            Color("#faeb36"),
+            Color("#79c314"),
+            Color("#487de7"),
+            Color("#4b369d"),
+            Color("#70369d"),
         ),
-        metavar=argvalidators.ColorArg.METAVAR,
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name=["--final-gradient-steps"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[ColorShift]:
-        """Get the effect class associated with this configuration."""
-        return ColorShift
 
 
 class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
@@ -223,9 +228,9 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
         """Track the number of times a character has looped through the gradient."""
         self.loop_tracker_map[character] = self.loop_tracker_map.get(character, 0) + 1
         if self.config.cycles == 0 or (self.loop_tracker_map[character] < self.config.cycles):
-            character.animation.activate_scene(character.animation.query_scene("gradient"))
+            character.animation.activate_scene("gradient")
         elif not self.config.skip_final_gradient:
-            character.animation.activate_scene(character.animation.query_scene("final_gradient"))
+            character.animation.activate_scene("final_gradient")
 
     def build(self) -> None:
         """Build the initial state of the effect."""

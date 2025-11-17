@@ -12,28 +12,24 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Slice, SliceConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "slice", Slice, SliceConfig
 
 
-@argclass(
-    name="slice",
-    help="Slices the input in half and slides it into place from opposite directions.",
-    description="slice | Slices the input in half and slides it into place from opposite directions.",
-    epilog=(
-        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects slice --final-gradient-stops 8A008A 00D1FF "
-        "FFFFFF --final-gradient-steps 12 --slice-direction vertical--movement-speed 0.15 "
-        "--movement-easing IN_OUT_EXPO"
-    ),
-)
 @dataclass
-class SliceConfig(ArgsDataClass):
+class SliceConfig(BaseConfig):
     """Configuration for the Slice effect.
 
     Attributes:
@@ -48,72 +44,78 @@ class SliceConfig(ArgsDataClass):
 
     """
 
-    slice_direction: typing.Literal["vertical", "horizontal", "diagonal"] = ArgField(
-        cmd_name="--slice-direction",
+    parser_spec: ParserSpec = ParserSpec(
+        name="slice",
+        help="Slices the input in half and slides it into place from opposite directions.",
+        description="slice | Slices the input in half and slides it into place from opposite directions.",
+        epilog=(
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects slice --final-gradient-stops 8A008A 00D1FF "
+            "FFFFFF --final-gradient-steps 12 --slice-direction vertical--movement-speed 0.15 "
+            "--movement-easing IN_OUT_EXPO"
+        ),
+    )
+
+    slice_direction: typing.Literal["vertical", "horizontal", "diagonal"] = ArgSpec(
+        name="--slice-direction",
         default="vertical",
         choices=["vertical", "horizontal", "diagonal"],
         help="Direction of the slice.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "typing.Literal['vertical', 'horizontal', 'diagonal'] : Direction of the slice."
 
-    movement_speed: float = ArgField(
-        cmd_name="--movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.15,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+    movement_speed: float = ArgSpec(
+        name="--movement-speed",
+        type=argutils.PositiveFloat.type_parser,
+        default=0.25,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Movement speed of the characters. ",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Movement speed of the characters. Doubled for horizontal slices."
 
-    movement_easing: easing.EasingFunction = ArgField(
-        cmd_name="--movement-easing",
-        type_parser=argvalidators.Ease.type_parser,
+    movement_easing: easing.EasingFunction = ArgSpec(
+        name="--movement-easing",
+        type=argutils.Ease.type_parser,
         default=easing.in_out_expo,
         help="Easing function to use for character movement.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Slice]:
-        """Get the effect class associated with this configuration."""
-        return Slice
 
 
 class SliceIterator(BaseEffectIterator[SliceConfig]):

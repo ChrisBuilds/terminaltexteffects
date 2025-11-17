@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_bubbles_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_bubbles.Bubbles(input_data)
@@ -26,7 +28,11 @@ def test_bubbles_effect_terminal_color_options(input_data, terminal_config_with_
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_bubbles_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_bubbles.Bubbles(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -40,8 +46,8 @@ def test_bubbles_final_gradient(
 
 
 @pytest.mark.parametrize("rainbow", [True, False])
-@pytest.mark.parametrize("bubble_colors", [(Color("ff00ff"),), (Color("0ffff0"), Color("0000ff"))])
-@pytest.mark.parametrize("pop_color", [Color("ff00ff"), Color("0ffff0")])
+@pytest.mark.parametrize("bubble_colors", [(Color("#ff00ff"),), (Color("#0ffff0"), Color("#0000ff"))])
+@pytest.mark.parametrize("pop_color", [Color("#ff00ff"), Color("#0ffff0")])
 @pytest.mark.parametrize("bubble_speed", [0.1, 4.0])
 @pytest.mark.parametrize("bubble_delay", [0, 10])
 @pytest.mark.parametrize("pop_condition", ["row", "bottom", "anywhere"])

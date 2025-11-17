@@ -20,8 +20,8 @@ from enum import Enum, auto
 from typing import Literal
 
 from terminaltexteffects.engine.base_character import EffectCharacter
-from terminaltexteffects.utils import ansitools, argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass
+from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig
+from terminaltexteffects.utils import ansitools, argutils
 from terminaltexteffects.utils.exceptions import (
     InvalidCharacterGroupError,
     InvalidCharacterSortError,
@@ -32,7 +32,7 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @dataclass
-class TerminalConfig(ArgsDataClass):
+class TerminalConfig(BaseConfig):
     """Configuration for the terminal.
 
     Attributes:
@@ -60,40 +60,54 @@ class TerminalConfig(ArgsDataClass):
             sequences in the input data. 'always' will always use the input colors, ignoring any effect specific colors.
             'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors
             in the input data. Default is 'ignore'.
+        reuse_canvas (bool): Do not create new rows at the start of the effect. The cursor will be restored to the
+            position of the previous canvas.
         no_eol (bool): Suppress the trailing newline emitted when an effect animation completes.
 
     """
 
-    tab_width: int = ArgField(
-        cmd_name=["--tab-width"],
-        type_parser=argvalidators.PositiveInt.type_parser,
-        metavar=argvalidators.PositiveInt.METAVAR,
+    tab_width: int = ArgSpec(
+        name="--tab-width",
+        type=argutils.PositiveInt.type_parser,
+        metavar=argutils.PositiveInt.METAVAR,
         default=4,
         help="Number of spaces to use for a tab character.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "int : Number of spaces to use for a tab character."
 
-    xterm_colors: bool = ArgField(
-        cmd_name=["--xterm-colors"],
+    xterm_colors: bool = ArgSpec(
+        name="--xterm-colors",
         default=False,
         action="store_true",
         help="Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "bool : Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color."
 
-    no_color: bool = ArgField(
-        cmd_name=["--no-color"],
+    no_color: bool = ArgSpec(
+        name="--no-color",
         default=False,
         action="store_true",
         help="Disable all colors in the effect.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     "bool : Disable all colors in the effect."
 
-    existing_color_handling: Literal["always", "dynamic", "ignore"] = ArgField(
-        cmd_name=["--existing-color-handling"],
+    terminal_background_color: Color = ArgSpec(
+        name="--terminal-background-color",
+        type=argutils.ColorArg.type_parser,
+        default=Color("#000000"),
+        metavar=argutils.ColorArg.METAVAR,
+        help=(
+            "The background color of you terminal. "
+            "Used to determine the appropriate color for fade-in/out within effects."
+        ),
+    )  # type: ignore[assignment]
+    "Color: User-define background color of the terminal."
+
+    existing_color_handling: Literal["always", "dynamic", "ignore"] = ArgSpec(
+        name="--existing-color-handling",
         default="ignore",
         choices=["always", "dynamic", "ignore"],
         help=(
@@ -102,7 +116,7 @@ class TerminalConfig(ArgsDataClass):
             "colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will "
             "ignore the colors in the input data. Default is 'ignore'."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "Literal['always','dynamic','ignore'] : Specify handling of existing ANSI color sequences in the input data. "
@@ -111,112 +125,136 @@ class TerminalConfig(ArgsDataClass):
         "Default is 'ignore'."
     )
 
-    wrap_text: int = ArgField(
-        cmd_name="--wrap-text",
+    wrap_text: int = ArgSpec(
+        name="--wrap-text",
         default=False,
         action="store_true",
         help="Wrap text wider than the canvas width.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "bool : Wrap text wider than the canvas width."
 
-    frame_rate: int = ArgField(
-        cmd_name="--frame-rate",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
-        default=100,
-        help="""Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting.""",
+    frame_rate: int = ArgSpec(
+        name="--frame-rate",
+        type=argutils.NonNegativeInt.type_parser,
+        default=60,
+        help=(
+            "Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting. "
+            "Defaults to 60."
+        ),
     )  # type: ignore[assignment]
 
     "int : Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting."
 
-    canvas_width: int = ArgField(
-        cmd_name=["--canvas-width"],
-        metavar=argvalidators.CanvasDimension.METAVAR,
-        type_parser=argvalidators.CanvasDimension.type_parser,
+    canvas_width: int = ArgSpec(
+        name="--canvas-width",
+        metavar=argutils.CanvasDimension.METAVAR,
+        type=argutils.CanvasDimension.type_parser,
         default=-1,
         help=(
             "Canvas width, set to an integer > 0 to use a specific dimension, use 0 to match the terminal width, "
-            "or use -1 to match the input text width."
+            "or use -1 to match the input text width. Defaults to -1."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "int : Canvas width, set to an integer > 0 to use a specific dimension, if set to 0 the canvas width is "
         "detected automatically based on the terminal device, if set to -1 the canvas width is based on "
-        "the input data width."
+        "the input data width. Defaults to -1."
     )
 
-    canvas_height: int = ArgField(
-        cmd_name=["--canvas-height"],
-        metavar=argvalidators.CanvasDimension.METAVAR,
-        type_parser=argvalidators.CanvasDimension.type_parser,
+    canvas_height: int = ArgSpec(
+        name="--canvas-height",
+        metavar=argutils.CanvasDimension.METAVAR,
+        type=argutils.CanvasDimension.type_parser,
         default=-1,
         help=(
             "Canvas height, set to an integer > 0 to use a specific dimension, use 0 to match the terminal "
-            "height, or use -1 to match the input text height."
+            "height, or use -1 to match the input text height. Defaults to -1."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "int : Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas height "
         "is is detected automatically based on the terminal device, if set to -1 the canvas width is "
-        "based on the input data height."
+        "based on the input data height. Defaults to -1."
     )
 
-    anchor_canvas: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"] = ArgField(
-        cmd_name=["--anchor-canvas"],
+    anchor_canvas: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"] = ArgSpec(
+        name="--anchor-canvas",
         choices=["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"],
         default="sw",
         help=(
             "Anchor point for the canvas. The canvas will be anchored in the terminal to the location "
-            "corresponding to the cardinal/diagonal direction."
+            "corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "Literal['sw','s','se','e','ne','n','nw','w','c'] : Anchor point for the canvas. The canvas will be "
-        "anchored in the terminal to the location corresponding to the cardinal/diagonal direction."
+        "anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
     )
 
-    anchor_text: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgField(
-        cmd_name=["--anchor-text"],
+    anchor_text: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgSpec(
+        name="--anchor-text",
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
         default="sw",
         help=(
             "Anchor point for the text within the Canvas. Input text will anchored in the Canvas to "
-            "the location corresponding to the cardinal/diagonal direction."
+            "the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
 
     (
         "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the text within the Canvas. "
-        "Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction."
+        "Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. "
+        "Defaults to 'sw'."
     )
 
-    ignore_terminal_dimensions: bool = ArgField(
-        cmd_name=["--ignore-terminal-dimensions"],
+    ignore_terminal_dimensions: bool = ArgSpec(
+        name="--ignore-terminal-dimensions",
         default=False,
         action="store_true",
         help=(
             "Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. "
             "Useful for sending frames to another output handler."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "bool : Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. "
         "Useful for sending frames to another output handler."
     )
 
-    no_eol: bool = ArgField(
-        cmd_name=["--no-eol"],
+    reuse_canvas: bool = ArgSpec(
+        name="--reuse-canvas",
         default=False,
         action="store_true",
         help=(
-            "Suppress the trailing newline emitted when an effect animation completes. "
+            "Do not create new rows at the start of the effect. The cursor will be restored to the position "
+            "of the canvas during the previous run. If there is no previous run, the position of the cursor "
+            "may be unpredictable. If the previous canvas is above the current view, the top of the terminal "
+            "will likely be the start of the current canvas."
         ),
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
-        "bool : Suppress the trailing newline emitted when an effect animation completes. "
+        "bool : Do not create new rows at the start of the effect. The cursor will be restored to the position "
+        "of the previous canvas."
     )
+
+    no_eol: bool = ArgSpec(
+        name="--no-eol",
+        default=False,
+        action="store_true",
+        help=("Suppress the trailing newline emitted when an effect animation completes."),
+    )  # pyright: ignore[reportAssignmentType]
+    ("bool : Suppress the trailing newline emitted when an effect animation completes. ")
+
+    no_restore_cursor: bool = ArgSpec(
+        name="--no-restore-cursor",
+        default=False,
+        action="store_true",
+        help=("Do not restore cursor visibility after the effect."),
+    )  # pyright: ignore[reportAssignmentType]
+    ("bool : Do not restore cursor visibility after the effect.")
 
 
 @dataclass
@@ -260,6 +298,8 @@ class Canvas:
     Methods:
         coord_is_in_canvas:
             Checks whether a coordinate is within the canvas.
+        coord_is_in_text:
+            Checks whether a coordinate is within the text boundary of the canvas.
         random_column:
             Get a random column position within the canvas.
         random_row:
@@ -380,29 +420,57 @@ class Canvas:
         """
         return self.left <= coord.column <= self.right and self.bottom <= coord.row <= self.top
 
-    def random_column(self) -> int:
-        """Get a random column position. Position is within the canvas.
+    def coord_is_in_text(self, coord: Coord) -> bool:
+        """Check whether a coordinate is within the text boundary.
+
+        Args:
+            coord (Coord): coordinate to check
 
         Returns:
-            int: a random column position (1 <= x <= canvas.right)
+            bool: whether the coordinate is within the text boundary
 
         """
+        return self.text_left <= coord.column <= self.text_right and self.text_bottom <= coord.row <= self.text_top
+
+    def random_column(self, *, within_text_boundary: bool = False) -> int:
+        """Get a random column position within the canvas.
+
+        Args:
+            within_text_boundary (bool, optional): If True, the column will be limited to the text boundary. Otherwise,
+                it can be anywhere within the canvas. Defaults to False.
+
+        Returns:
+            int: a random column position within the canvas
+
+        """
+        if within_text_boundary:
+            return random.randint(self.text_left, self.text_right)
         return random.randint(self.left, self.right)
 
-    def random_row(self) -> int:
-        """Get a random row position. Position is within the canvas.
+    def random_row(self, *, within_text_boundary: bool = False) -> int:
+        """Get a random row position within the canvas.
+
+        Args:
+            within_text_boundary (bool, optional): If True, the row will be limited to the text boundary. Otherwise,
+                it can be anywhere within the canvas. Defaults to False.
 
         Returns:
-            int: a random row position (1 <= x <= terminal.canvas.top)
+            int: a random row position within the canvas
 
         """
+        if within_text_boundary:
+            return random.randint(self.text_bottom, self.text_top)
         return random.randint(self.bottom, self.top)
 
-    def random_coord(self, *, outside_scope: bool = False) -> Coord:
+    def random_coord(self, *, outside_scope: bool = False, within_text_boundary: bool = False) -> Coord:
         """Get a random coordinate. Coordinate is within the canvas unless outside_scope is True.
+
+        `outside_scope` takes precedence over `within_text_boundary`, they are functionally mutually exclusive.
 
         Args:
             outside_scope (bool, optional): whether the coordinate should fall outside the canvas. Defaults to False.
+            within_text_boundary (bool, optional): If True, the coordinate will be limited to the text boundary.
+                Otherwise, it can be anywhere within the canvas. Defaults to False.
 
         Returns:
             Coord: a random coordinate . Coordinate is within the canvas unless outside_scope is True.
@@ -414,7 +482,10 @@ class Canvas:
             random_coord_left = Coord(self.left - 1, self.random_row())
             random_coord_right = Coord(self.right + 1, self.random_row())
             return random.choice([random_coord_above, random_coord_below, random_coord_left, random_coord_right])
-        return Coord(self.random_column(), self.random_row())
+        return Coord(
+            self.random_column(within_text_boundary=within_text_boundary),
+            self.random_row(within_text_boundary=within_text_boundary),
+        )
 
 
 class Terminal:
@@ -522,7 +593,7 @@ class Terminal:
 
         """
         if config is None:
-            self.config = TerminalConfig()
+            self.config = TerminalConfig._build_config()
         else:
             self.config = config
         if not input_data:
@@ -553,9 +624,10 @@ class Terminal:
             (character.input_coord): character for character in self._input_characters
         }
         self._inner_fill_characters, self._outer_fill_characters = self._make_fill_characters()
+        self._setup_character_neighbors()
         self._visible_characters: set[EffectCharacter] = set()
         self._frame_rate = self.config.frame_rate
-        self._last_time_printed = time.time()
+        self._last_time_printed = time.monotonic()
         self._update_terminal_state()
 
     def _preprocess_input_data(self, input_data: str) -> list[list[EffectCharacter]]:  # noqa: PLR0915
@@ -822,6 +894,14 @@ class Terminal:
                     else:
                         outer_fill_characters.append(fill_char)
         return inner_fill_characters, outer_fill_characters
+
+    def _setup_character_neighbors(self) -> None:
+        """Create the neighbor map for all characters."""
+        delta_map = {"north": (0, 1), "east": (1, 0), "south": (0, -1), "west": (-1, 0)}
+        for coord, char in self.character_by_input_coord.items():
+            for direction, delta in delta_map.items():
+                neighbor_coord = Coord(column=coord.column + delta[0], row=coord.row + delta[1])
+                char.neighbors[direction] = self.character_by_input_coord.get(neighbor_coord)
 
     def add_character(self, symbol: str, coord: Coord) -> EffectCharacter:
         """Add a character to the terminal for printing.
@@ -1102,13 +1182,29 @@ class Terminal:
         self.terminal_state = terminal_state
 
     def prep_canvas(self) -> None:
-        """Prepare the terminal for the effect by adding empty lines and hiding the cursor."""
+        """Prepare the terminal for the effect by adding empty lines and hiding the cursor.
+
+        If `config.overwrite_rows` is `True`, the cursor will be restored to the last position
+        saved using the `DEC Save Cursor` terminal sequence. If a TTE effect was recently run,
+        the last saved cursor state should be the state at the start of the prior effect execution.
+
+        The intention of `config.overwrite_rows` is for the current effect output to align with
+        the prior effect output.
+
+        Note: Use of `config.overwrite_rows` will be less predictable if other canvas dimension options
+        differ between the last run and the current run.
+        """
         sys.stdout.write(ansitools.hide_cursor())
-        sys.stdout.write("\n" * (self.visible_top))
+        if self.config.reuse_canvas:
+            self.move_cursor_to_top()
+        for _ in range(self.visible_top):
+            sys.stdout.write((" " * self.visible_right) + "\n")
         sys.stdout.write(ansitools.dec_save_cursor_position())
 
     def restore_cursor(self, end_symbol: str = "\n") -> None:
-        """Restores the cursor visibility and prints the end_symbol. Respects --no-eol switch
+        """Restores the cursor visibility and prints the end_symbol.
+
+        If the `--no-eol` command line option is passed, no end symbol will be printed.
 
         Args:
             end_symbol (str, optional): The symbol to print after the effect has completed. Defaults to newline.
@@ -1116,7 +1212,8 @@ class Terminal:
         """
         if self.config.no_eol:
             end_symbol = ""
-        sys.stdout.write(ansitools.show_cursor())
+        if not self.config.no_restore_cursor:
+            sys.stdout.write(ansitools.show_cursor())
         sys.stdout.write(end_symbol)
 
     def print(self, output_string: str) -> None:
@@ -1136,10 +1233,9 @@ class Terminal:
         Frame rate is enforced by sleeping if the time since the last frame is shorter than the expected frame delay.
         """
         frame_delay = 1 / self._frame_rate
-        time_since_last_print = time.time() - self._last_time_printed
-        if time_since_last_print < frame_delay:
+        if (time_since_last_print := time.monotonic() - self._last_time_printed) < frame_delay:
             time.sleep(frame_delay - time_since_last_print)
-        self._last_time_printed = time.time()
+        self._last_time_printed = time.monotonic()
 
     def move_cursor_to_top(self) -> None:
         """Restores the cursor position to the top of the canvas."""

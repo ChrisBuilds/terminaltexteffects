@@ -9,7 +9,6 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import (
@@ -23,29 +22,24 @@ from terminaltexteffects import (
     easing,
     geometry,
 )
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Swarm, SwarmConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "swarm", Swarm, SwarmConfig
 
 
-@argclass(
-    name="swarm",
-    help="Characters are grouped into swarms and move around the terminal before settling into position.",
-    description="swarm | Characters are grouped into swarms and move around the terminal before settling "
-    "into position.",
-    epilog=(
-        "Example: terminaltexteffects swarm --base-color 31a0d4 --flash-color f2ea79 --final-gradient-stops "
-        "31b900 f0ff65 --final-gradient-steps 12 --swarm-size 0.1 --swarm-coordination 0.80 "
-        "--swarm-area-count 2-4"
-    ),
-)
 @dataclass
-class SwarmConfig(ArgsDataClass):
+class SwarmConfig(BaseConfig):
     """Configuration for the Swarm effect.
 
     Attributes:
@@ -63,93 +57,100 @@ class SwarmConfig(ArgsDataClass):
 
     """
 
-    base_color: tuple[Color, ...] = ArgField(
-        cmd_name=["--base-color"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="swarm",
+        help="Characters are grouped into swarms and move around the terminal before settling into position.",
+        description="swarm | Characters are grouped into swarms and move around the terminal before settling "
+        "into position.",
+        epilog=(
+            "Example: terminaltexteffects swarm --base-color 31a0d4 --flash-color f2ea79 --final-gradient-stops "
+            "31b900 f0ff65 --final-gradient-steps 12 --swarm-size 0.1 --swarm-coordination 0.80 "
+            "--swarm-area-count 2-4"
+        ),
+    )
+
+    base_color: tuple[Color, ...] = ArgSpec(
+        name="--base-color",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("31a0d4"),),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#31a0d4"),),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the swarms",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     """tuple[Color, ...] : Tuple of colors for the swarms"""
 
-    flash_color: Color = ArgField(
-        cmd_name=["--flash-color"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        default=Color("f2ea79"),
-        metavar=argvalidators.ColorArg.METAVAR,
+    flash_color: Color = ArgSpec(
+        name="--flash-color",
+        type=argutils.ColorArg.type_parser,
+        default=Color("#f2ea79"),
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the character flash. Characters flash when moving.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     """Color : Color for the character flash. Characters flash when moving."""
 
-    swarm_size: float = ArgField(
-        cmd_name="--swarm-size",
-        type_parser=argvalidators.NonNegativeRatio.type_parser,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+    swarm_size: float = ArgSpec(
+        name="--swarm-size",
+        type=argutils.NonNegativeRatio.type_parser,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         default=0.1,
         help="Percent of total characters in each swarm.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Percent of total characters in each swarm."
 
-    swarm_coordination: float = ArgField(
-        cmd_name="--swarm-coordination",
-        type_parser=argvalidators.NonNegativeRatio.type_parser,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+    swarm_coordination: float = ArgSpec(
+        name="--swarm-coordination",
+        type=argutils.NonNegativeRatio.type_parser,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         default=0.80,
         help="Percent of characters in a swarm that move as a group.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Percent of characters in a swarm that move as a group."
 
-    swarm_area_count_range: tuple[int, int] = ArgField(
-        cmd_name="--swarm-area-count-range",
-        type_parser=argvalidators.PositiveIntRange.type_parser,
-        metavar=argvalidators.PositiveIntRange.METAVAR,
+    swarm_area_count_range: tuple[int, int] = ArgSpec(
+        name="--swarm-area-count-range",
+        type=argutils.PositiveIntRange.type_parser,
+        metavar=argutils.PositiveIntRange.METAVAR,
         default=(2, 4),
         help="Range of the number of areas where characters will swarm.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[int, int] : Range of the number of areas where characters will swarm."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("31b900"), Color("f0ff65")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#31b900"), Color("#f0ff65")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name=["--final-gradient-steps"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.HORIZONTAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Swarm]:
-        """Get the effect class associated with this configuration."""
-        return Swarm
 
 
 class SwarmIterator(BaseEffectIterator[SwarmConfig]):
@@ -250,7 +251,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 for swarm_area_coords in swarm_area_coordinate_map.values():
                     swarm_area_name = f"{swarm_area_count}_swarm_area"
                     swarm_area_count += 1
-                    origin_path = character.motion.new_path(path_id=swarm_area_name, speed=0.25, ease=easing.out_sine)
+                    origin_path = character.motion.new_path(path_id=swarm_area_name, speed=0.4, ease=easing.out_sine)
                     origin_path.new_waypoint(random.choice(swarm_area_coords), waypoint_id=swarm_area_name)
                     character.event_handler.register_event(
                         EventHandler.Event.PATH_ACTIVATED,
@@ -277,12 +278,12 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                         inner_paths += 1
                         inner_path = character.motion.new_path(
                             path_id=str(len(character.motion.paths)),
-                            speed=0.1,
+                            speed=0.18,
                             ease=easing.in_out_sine,
                         )
                         inner_path.new_waypoint(next_coord, waypoint_id=str(len(character.motion.paths)))
                 # create landing waypoint and scene
-                input_path = character.motion.new_path(speed=0.3, ease=easing.in_out_quad)
+                input_path = character.motion.new_path(speed=0.45, ease=easing.in_out_quad)
                 input_path.new_waypoint(character.input_coord)
                 input_scn = character.animation.new_scene()
                 for step in Gradient(self.config.flash_color, self.character_final_color_map[character], steps=10):
@@ -317,7 +318,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 self.current_swarm = self.swarms.pop()
                 self.active_swarm_area = "0_swarm_area"
                 for character in self.current_swarm:
-                    character.motion.activate_path(character.motion.query_path("0_swarm_area"))
+                    character.motion.activate_path("0_swarm_area")
                     self.terminal.set_character_visibility(character, is_visible=True)
                     self.active_characters.add(character)
             if len(self.active_characters) < len(self.current_swarm):  # some of the characters have landed

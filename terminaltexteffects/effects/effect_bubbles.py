@@ -13,28 +13,25 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Terminal, easing, geometry
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Bubbles, BubblesConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "bubbles", Bubbles, BubblesConfig
 
 
-@argclass(
-    name="bubbles",
-    help="Characters are formed into bubbles that float down and pop.",
-    description="bubbles | Characters are formed into bubbles that float down and pop.",
-    epilog=f"{argvalidators.EASING_EPILOG}"
-    "Example: terminaltexteffects bubbles --bubble-colors d33aff 7395c4 43c2a7 02ff7f --pop-color ffffff "
-    "--final-gradient-stops d33aff 02ff7f --final-gradient-steps 12 --final-gradient-direction diagonal "
-    "--bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE",
-)
 @dataclass
-class BubblesConfig(ArgsDataClass):
+class BubblesConfig(BaseConfig):
     """Configuration for the Bubbles effect.
 
     Attributes:
@@ -57,116 +54,121 @@ class BubblesConfig(ArgsDataClass):
 
     """
 
-    rainbow: bool = ArgField(
-        cmd_name="--rainbow",
+    parser_spec: ParserSpec = ParserSpec(
+        name="bubbles",
+        help="Characters are formed into bubbles that float down and pop.",
+        description="bubbles | Characters are formed into bubbles that float down and pop.",
+        epilog=f"{argutils.EASING_EPILOG}"
+        "Example: terminaltexteffects bubbles --bubble-colors d33aff 7395c4 43c2a7 02ff7f --pop-color ffffff "
+        "--final-gradient-stops d33aff 02ff7f --final-gradient-steps 12 --final-gradient-direction diagonal "
+        "--bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE",
+    )
+
+    rainbow: bool = ArgSpec(
+        name="--rainbow",
         action="store_true",
         default=False,
         help="If set, the bubbles will be colored with a rotating rainbow gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "bool : If set, the bubbles will be colored with a rotating rainbow gradient."
 
-    bubble_colors: tuple[Color, ...] = ArgField(
-        cmd_name="--bubble-colors",
-        type_parser=argvalidators.ColorArg.type_parser,
+    bubble_colors: tuple[Color, ...] = ArgSpec(
+        name="--bubble-colors",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("d33aff"), Color("7395c4"), Color("43c2a7"), Color("02ff7f")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#d33aff"), Color("#7395c4"), Color("#43c2a7"), Color("#02ff7f")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as "
         "default False.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the bubbles. Ignored if --no-rainbow is left as default False."
 
-    pop_color: Color = ArgField(
-        cmd_name="--pop-color",
-        type_parser=argvalidators.ColorArg.type_parser,
-        default=Color("ffffff"),
-        metavar=argvalidators.ColorArg.METAVAR,
+    pop_color: Color = ArgSpec(
+        name="--pop-color",
+        type=argutils.ColorArg.type_parser,
+        default=Color("#ffffff"),
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the spray emitted when a bubble pops.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Color : Color for the spray emitted when a bubble pops."
 
-    bubble_speed: float = ArgField(
-        cmd_name="--bubble-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.1,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+    bubble_speed: float = ArgSpec(
+        name="--bubble-speed",
+        type=argutils.PositiveFloat.type_parser,
+        default=0.5,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the floating bubbles. ",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the floating bubbles. "
 
-    bubble_delay: int = ArgField(
-        cmd_name="--bubble-delay",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=50,
-        metavar=argvalidators.PositiveInt.METAVAR,
+    bubble_delay: int = ArgSpec(
+        name="--bubble-delay",
+        type=argutils.PositiveInt.type_parser,
+        default=20,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames between bubbles.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames between bubbles."
 
-    pop_condition: typing.Literal["row", "bottom", "anywhere"] = ArgField(
-        cmd_name="--pop-condition",
+    pop_condition: typing.Literal["row", "bottom", "anywhere"] = ArgSpec(
+        name="--pop-condition",
         default="row",
         choices=["row", "bottom", "anywhere"],
         help="Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which "
         "a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. "
         "'anywhere' will pop the bubble randomly, or at the bottom of the terminal.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "typing.Literal['row', 'bottom', 'anywhere'] : Condition for a bubble to pop. 'row' will pop the bubble when "
         "it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at "
         "the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal."
     )
 
-    movement_easing: easing.EasingFunction = ArgField(
-        cmd_name=["--movement-easing"],
+    movement_easing: easing.EasingFunction = ArgSpec(
+        name="--movement-easing",
         default=easing.in_out_sine,
-        type_parser=argvalidators.Ease.type_parser,
-        metavar=argvalidators.Ease.METAVAR,
+        type=argutils.Ease.type_parser,
+        metavar=argutils.Ease.METAVAR,
         help="Easing function to use for character movement after a bubble pops.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement after a bubble pops."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("d33aff"), Color("02ff7f")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#d33aff"), Color("#02ff7f")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Bubbles]:
-        """Get the effect class associated with this configuration."""
-        return Bubbles
 
 
 class BubblesIterator(BaseEffectIterator[BubblesConfig]):
@@ -229,7 +231,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 for character in self.characters:
                     sheen_scene = character.animation.new_scene()
                     for step in rainbow_gradient:
-                        sheen_scene.add_frame(character.input_symbol, 5, colors=ColorPair(fg=step))
+                        sheen_scene.add_frame(character.input_symbol, 4, colors=ColorPair(fg=step))
                     gradient_offset += 2
                     gradient_offset %= len(rainbow_gradient)
                     rainbow_gradient = rainbow_gradient[gradient_offset:] + rainbow_gradient[:gradient_offset]
@@ -256,7 +258,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                     len(self.characters),
                 ),
             ):
-                pop_out_path = char.motion.new_path(path_id="pop_out", speed=0.2, ease=easing.out_expo)
+                pop_out_path = char.motion.new_path(path_id="pop_out", speed=0.3, ease=easing.out_expo)
                 pop_out_path.new_waypoint(point)
                 char.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
@@ -265,8 +267,8 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                     char.motion.paths["final"],
                 )
             for character in self.characters:
-                character.animation.activate_scene(character.animation.query_scene("pop_1"))
-                character.motion.activate_path(character.motion.query_path("pop_out"))
+                character.animation.activate_scene("pop_1")
+                character.motion.activate_path("pop_out")
 
         def activate(self) -> None:
             """Activate the bubble."""
@@ -311,11 +313,11 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             character.layer = 1
             pop_1_scene = character.animation.new_scene(scene_id="pop_1")
             pop_2_scene = character.animation.new_scene()
-            pop_1_scene.add_frame("*", 20, colors=ColorPair(fg=self.config.pop_color))
-            pop_2_scene.add_frame("'", 20, colors=ColorPair(fg=self.config.pop_color))
+            pop_1_scene.add_frame("*", 9, colors=ColorPair(fg=self.config.pop_color))
+            pop_2_scene.add_frame("'", 9, colors=ColorPair(fg=self.config.pop_color))
             final_scene = character.animation.new_scene()
-            char_final_gradient = Gradient(self.config.pop_color, self.character_final_color_map[character], steps=10)
-            final_scene.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=char_final_gradient)
+            char_final_gradient = Gradient(self.config.pop_color, self.character_final_color_map[character], steps=8)
+            final_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=char_final_gradient)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
                 pop_1_scene,
@@ -355,7 +357,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                     bubble_group.append(unbubbled_chars.pop(0))  # noqa: PERF401
             bubble_origin = Coord(
                 random.randint(self.terminal.canvas.left, self.terminal.canvas.right),
-                self.terminal.canvas.top,
+                self.terminal.canvas.top + 10,
             )
             new_bubble = BubblesIterator.Bubble(self, bubble_origin, bubble_group, self.terminal)
             self.bubbles.append(new_bubble)

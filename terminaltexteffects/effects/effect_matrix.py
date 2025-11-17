@@ -10,13 +10,13 @@ from __future__ import annotations
 
 import random
 import time
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Animation, Color, ColorPair, Coord, EffectCharacter, Gradient, Terminal
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 MATRIX_SYMBOLS_COMMON = (
     "2",
@@ -74,24 +74,18 @@ MATRIX_SYMBOLS_KATA = (
 )
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Matrix, MatrixConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "matrix", Matrix, MatrixConfig
 
 
-@argclass(
-    name="matrix",
-    help="Matrix digital rain effect.",
-    description="matrix | Matrix digital rain effect.",
-    epilog=(
-        "Example: tte matrix --rain-color-gradient 92be92 185318 --rain-symbols 2 5 9 8 Z : . = + - ¦ _ "
-        "--rain-fall-delay-range 8-25 --rain-column-delay-range 5-15 --rain-time 15 --symbol-swap-chance 0.005 "
-        "--color-swap-chance 0.001 --resolve-delay 5 --final-gradient-stops 389c38 --final-gradient-steps 12 "
-        "--final-gradient-frames 5 --final-gradient-direction vertical --highlight-color dbffdb"
-    ),
-)
 @dataclass
-class MatrixConfig(ArgsDataClass):
+class MatrixConfig(BaseConfig):
     """Configuration for the Matrix effect.
 
     Attributes:
@@ -117,151 +111,157 @@ class MatrixConfig(ArgsDataClass):
 
     """
 
-    highlight_color: Color = ArgField(
-        cmd_name=["--highlight-color"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        default=Color("dbffdb"),
-        metavar=argvalidators.ColorArg.METAVAR,
+    parser_spec: ParserSpec = ParserSpec(
+        name="matrix",
+        help="Matrix digital rain effect.",
+        description="matrix | Matrix digital rain effect.",
+        epilog=(
+            "Example: tte matrix --rain-color-gradient 92be92 185318 --rain-symbols 2 5 9 8 Z : . = + - ¦ _ "
+            "--rain-fall-delay-range 8-25 --rain-column-delay-range 5-15 --rain-time 15 --symbol-swap-chance 0.005 "
+            "--color-swap-chance 0.001 --resolve-delay 5 --final-gradient-stops 389c38 --final-gradient-steps 12 "
+            "--final-gradient-frames 5 --final-gradient-direction vertical --highlight-color dbffdb"
+        ),
+    )
+    highlight_color: Color = ArgSpec(
+        name="--highlight-color",
+        type=argutils.ColorArg.type_parser,
+        default=Color("#dbffdb"),
+        metavar=argutils.ColorArg.METAVAR,
         help="Color for the bottom of the rain column.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Color : Color for the bottom of the rain column."
 
-    rain_color_gradient: tuple[Color, ...] = ArgField(
-        cmd_name=["--rain-color-gradient"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    rain_color_gradient: tuple[Color, ...] = ArgSpec(
+        name="--rain-color-gradient",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("92be92"), Color("185318")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#92be92"), Color("#185318")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the rain gradient. Colors are selected from the "
         "gradient randomly. If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the rain gradient. If only one color is provided, the characters "
         "will be displayed in that color."
     )
 
-    rain_symbols: tuple[str, ...] = ArgField(
-        cmd_name=["--rain-symbols"],
+    rain_symbols: tuple[str, ...] = ArgSpec(
+        name="--rain-symbols",
         nargs="+",
-        type_parser=argvalidators.Symbol.type_parser,
+        type=argutils.Symbol.type_parser,
         default=MATRIX_SYMBOLS_COMMON + MATRIX_SYMBOLS_KATA,
-        metavar=argvalidators.Symbol.METAVAR,
+        metavar=argutils.Symbol.METAVAR,
         help="Space separated, unquoted, list of symbols to use for the rain.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] : Tuple of symbols to use for the rain."
 
-    rain_fall_delay_range: tuple[int, int] = ArgField(
-        cmd_name=["--rain-fall-delay-range"],
-        type_parser=argvalidators.PositiveIntRange.type_parser,
-        default=(3, 25),
-        metavar=argvalidators.PositiveIntRange.METAVAR,
+    rain_fall_delay_range: tuple[int, int] = ArgSpec(
+        name="--rain-fall-delay-range",
+        type=argutils.PositiveIntRange.type_parser,
+        default=(2, 15),
+        metavar=argutils.PositiveIntRange.METAVAR,
         help="Range for the speed of the falling rain as determined by the delay between rows. Actual delay is "
         "randomly selected from the range.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, int] : Speed of the falling rain as determined by the delay between rows. Actual delay is "
         "randomly selected from the range."
     )
 
-    rain_column_delay_range: tuple[int, int] = ArgField(
-        cmd_name=["--rain-column-delay-range"],
-        type_parser=argvalidators.PositiveIntRange.type_parser,
-        default=(5, 15),
-        metavar=argvalidators.PositiveIntRange.METAVAR,
+    rain_column_delay_range: tuple[int, int] = ArgSpec(
+        name="--rain-column-delay-range",
+        type=argutils.PositiveIntRange.type_parser,
+        default=(3, 9),
+        metavar=argutils.PositiveIntRange.METAVAR,
         help="Range of frames to wait between adding new rain columns.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[int, int] : Range of frames to wait between adding new rain columns."
 
-    rain_time: int = ArgField(
-        cmd_name="--rain-time",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    rain_time: int = ArgSpec(
+        name="--rain-time",
+        type=argutils.PositiveInt.type_parser,
         default=15,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Time, in seconds, to display the rain effect before transitioning to the input text.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Time, in seconds, to display the rain effect before transitioning to the input text."
 
-    symbol_swap_chance: float = ArgField(
-        cmd_name="--symbol-swap-chance",
-        type_parser=argvalidators.PositiveFloat.type_parser,
+    symbol_swap_chance: float = ArgSpec(
+        name="--symbol-swap-chance",
+        type=argutils.PositiveFloat.type_parser,
         default=0.005,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Chance of swapping a character's symbol on each tick.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Chance of swapping a character's symbol on each tick."
 
-    color_swap_chance: float = ArgField(
-        cmd_name="--color-swap-chance",
-        type_parser=argvalidators.PositiveFloat.type_parser,
+    color_swap_chance: float = ArgSpec(
+        name="--color-swap-chance",
+        type=argutils.PositiveFloat.type_parser,
         default=0.001,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Chance of swapping a character's color on each tick.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Chance of swapping a character's color on each tick."
 
-    resolve_delay: int = ArgField(
-        cmd_name="--resolve-delay",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=5,
-        metavar=argvalidators.PositiveInt.METAVAR,
+    resolve_delay: int = ArgSpec(
+        name="--resolve-delay",
+        type=argutils.PositiveInt.type_parser,
+        default=3,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to wait between resolving the next group of characters. "
         "This is used to adjust the speed of the final resolve phase.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "int : Number of frames to wait between resolving the next group of characters. This is used to "
         "adjust the speed of the final resolve phase."
     )
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("92be92"), Color("336b33")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#92be92"), Color("#336b33")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_frames: int = ArgField(
-        cmd_name="--final-gradient-frames",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=5,
-        metavar=argvalidators.PositiveInt.METAVAR,
+    final_gradient_frames: int = ArgSpec(
+        name="--final-gradient-frames",
+        type=argutils.PositiveInt.type_parser,
+        default=3,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.RADIAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Matrix]:
-        """Get the effect class associated with this configuration."""
-        return Matrix
 
 
 class MatrixIterator(BaseEffectIterator[MatrixConfig]):
@@ -531,7 +531,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                             if column.visible_characters:
                                 next_char = column.resolve_char()
                                 if next_char.input_symbol != " ":
-                                    next_char.animation.activate_scene(next_char.animation.query_scene("resolve"))
+                                    next_char.animation.activate_scene("resolve")
                                     self.active_characters.add(next_char)
                                 else:
                                     self.terminal.set_character_visibility(next_char, is_visible=False)

@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_pour_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_pour.Pour(input_data)
@@ -26,7 +28,11 @@ def test_pour_effect_terminal_color_options(input_data, terminal_config_with_col
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_pour_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_pour.Pour(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -41,16 +47,16 @@ def test_pour_final_gradient(
 
 @pytest.mark.parametrize("pour_direction", ["up", "down", "left", "right"])
 @pytest.mark.parametrize("pour_speed", [1, 5])
-@pytest.mark.parametrize("movement_speed", [0.1, 2])
+@pytest.mark.parametrize("movement_speed_range", [(0.1, 0.2), (2, 4)])
 @pytest.mark.parametrize("gap", [0, 10])
-@pytest.mark.parametrize("starting_color", [Color("ffffff"), Color("000000")])
+@pytest.mark.parametrize("starting_color", [Color("#ffffff"), Color("#000000")])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_pour_args(
     terminal_config_default_no_framerate,
     input_data,
     pour_direction,
     pour_speed,
-    movement_speed,
+    movement_speed_range,
     gap,
     starting_color,
 ) -> None:
@@ -58,7 +64,7 @@ def test_pour_args(
     effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.pour_direction = pour_direction
     effect.effect_config.pour_speed = pour_speed
-    effect.effect_config.movement_speed = movement_speed
+    effect.effect_config.movement_speed_range = movement_speed_range
     effect.effect_config.gap = gap
     effect.effect_config.starting_color = starting_color
     with effect.terminal_output() as terminal:

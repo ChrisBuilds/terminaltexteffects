@@ -1,4 +1,9 @@
-"""EffectCharacter class and EventHandler class used to manage the state of a single character from the input data."""
+"""Classes used to manage the state of a single character from the input data.
+
+Classes:
+    EffectCharacter: A class representing a single character from the input data.
+    EventHandler: A class used to register and handle events related to a character.
+"""
 
 from __future__ import annotations
 
@@ -8,8 +13,11 @@ from enum import Enum, auto
 
 from terminaltexteffects.engine import animation, motion
 from terminaltexteffects.utils.exceptions import (
+    DuplicateEventRegistrationError,
     EventRegistrationCallerError,
     EventRegistrationTargetError,
+    PathNotFoundError,
+    SceneNotFoundError,
 )
 from terminaltexteffects.utils.geometry import Coord
 
@@ -48,7 +56,7 @@ class EventHandler:
             list[
                 tuple[
                     EventHandler.Action,
-                    animation.Scene | motion.Waypoint | motion.Path | int | Coord | EventHandler.Callback | None,
+                    animation.Scene | motion.Waypoint | motion.Path | int | Coord | EventHandler.Callback | str | None,
                 ]
             ],
         ] = {}
@@ -141,72 +149,74 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.ACTIVATE_SCENE, Action.DEACTIVATE_SCENE],
-        target: animation.Scene,
+        target: animation.Scene | str,
     ) -> None: ...
-
     @typing.overload
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.ACTIVATE_PATH, Action.DEACTIVATE_PATH],
-        target: motion.Path,
+        target: motion.Path | str,
     ) -> None: ...
-
     @typing.overload
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.SET_COORDINATE],
         target: Coord,
     ) -> None: ...
-
     @typing.overload
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.SET_LAYER],
         target: int,
     ) -> None: ...
-
     @typing.overload
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.CALLBACK],
         target: Callback,
     ) -> None: ...
-
     @typing.overload
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.RESET_APPEARANCE],
+        target: None = None,
     ) -> None: ...
-
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: Action,
-        target: animation.Scene | motion.Path | int | Coord | Callback | None = None,
+        target: animation.Scene | motion.Path | int | Coord | Callback | str | None = None,
     ) -> None:
         """Register an event to be handled by the EventHandler.
 
+        Note: Action.RESET_APPEARANCE does not accept a target.
+
         Args:
             event (Event): The event to register.
-            caller (animation.Scene | motion.Waypoint | motion.Path): The object that triggers the event.
+            caller (animation.Scene | motion.Waypoint | motion.Path | str): The object that triggers the event.
             action (Action): The action to take when the event is triggered.
-            target (animation.Scene | motion.Path | int | Coord | Callback): The target of the action.
+            target (animation.Scene | motion.Path | int | Coord | Callback | str | None): The target of the action.
 
         Raises:
-            ValueError: If the caller or target object is not the correct type for the event or action.
+            EventRegistrationCallerError: If the caller object is not the required type for the
+                specified event.
+            EventRegistrationTargetError: If the target is not the correct type for the action or if
+                ``Action.RESET_APPEARANCE`` is provided with a target.
+            DuplicateEventRegistrationError: If the exact same event-caller-action-target combination
+                has already been registered.
 
         Example:
             Register an event to activate a scene when a Path is complete:
@@ -234,27 +244,88 @@ class EventHandler:
             EventHandler.Action.SET_COORDINATE: Coord,
             EventHandler.Action.CALLBACK: EventHandler.Callback,
         }
+        # find caller Path when provided path_id
+        if event in (EventHandler.Event.PATH_ACTIVATED, EventHandler.Event.PATH_COMPLETE) and isinstance(caller, str):
+            if (path_query_result := self.character.motion.query_path(caller)) is None:
+                raise PathNotFoundError(path_id=caller)
+            caller = path_query_result
+
+        # find caller Scene when provided scene_id
+        elif event in (EventHandler.Event.SCENE_ACTIVATED, EventHandler.Event.SCENE_COMPLETE) and isinstance(
+            caller,
+            str,
+        ):
+            if (scene_query_result := self.character.animation.query_scene(caller)) is None:
+                raise SceneNotFoundError(scene_id=caller)
+            caller = scene_query_result
 
         if event_caller_map[event] != caller.__class__:
             raise EventRegistrationCallerError(event, caller, event_caller_map[event])
 
-        if (action is EventHandler.Action.RESET_APPEARANCE and target is not None) or (
+        # find target Path when provided path_id
+        if action is EventHandler.Action.ACTIVATE_PATH and isinstance(target, str):
+            if (path_query_result := self.character.motion.query_path(target)) is None:
+                raise PathNotFoundError(path_id=target)
+            target = path_query_result
+
+        # find target Scene when provided scene_id
+        elif action is EventHandler.Action.ACTIVATE_SCENE and isinstance(target, str):
+            if (scene_query_result := self.character.animation.query_scene(target)) is None:
+                raise SceneNotFoundError(scene_id=target)
+            target = scene_query_result
+
+        elif (action is EventHandler.Action.RESET_APPEARANCE and target is not None) or (
             action_target_map[action] != target.__class__
         ):
             raise EventRegistrationTargetError(action, target, action_target_map[action])
 
+        assert isinstance(caller, (motion.Path, animation.Scene, motion.Waypoint))
         new_event = (event, caller)
         new_action = (action, target)
+
         if new_event not in self.registered_events:
             self.registered_events[new_event] = []
+
+        # Check for duplicate event-action-target combination
+        if new_action in self.registered_events[new_event]:
+            raise DuplicateEventRegistrationError(event, caller, action, target)
+
         self.registered_events[new_event].append(new_action)
 
     def _handle_event(self, event: Event, caller: animation.Scene | motion.Waypoint | motion.Path) -> None:
-        """Handle an event by taking the specified action.
+        """Handle a registered event by executing all associated actions.
+
+        This method processes an event triggered by a caller object (Scene, Waypoint, or Path) and
+        executes all actions that were registered for this specific event-caller combination. If no
+        actions are registered for the given event and caller, the method returns without doing anything.
+
+        The method supports the following action types:
+        - ACTIVATE_PATH: Activates a motion path for the character
+        - ACTIVATE_SCENE: Activates an animation scene for the character
+        - DEACTIVATE_PATH: Deactivates a motion path for the character
+        - DEACTIVATE_SCENE: Deactivates an animation scene for the character
+        - RESET_APPEARANCE: Resets the character's appearance to its input symbol
+        - SET_LAYER: Sets the character's rendering layer
+        - SET_COORDINATE: Sets the character's current coordinate
+        - CALLBACK: Executes a custom callback function with the character and additional arguments
 
         Args:
-            event (Event): An event to handle. If the event is not registered, nothing happens.
-            caller (animation.Scene | motion.Waypoint | motion.Path): The object triggering the call.
+            event (Event): The event to handle. Must be one of the Event enum values.
+            caller (animation.Scene | motion.Waypoint | motion.Path): The object that triggered the event.
+                The caller type must match the expected type for the given event (e.g., PATH_COMPLETE
+                events must be triggered by motion.Path objects).
+
+        Note:
+            This method is typically called internally by the animation and motion systems when
+            specific state changes occur. Events and their associated actions are registered using
+            the register_event method.
+
+        Example:
+            When a path completes, this method might be called with:
+            - event: Event.PATH_COMPLETE
+            - caller: some_path_object
+
+            If actions were registered for this combination, they would all be executed in order.
 
         """
         action_map = {
@@ -320,6 +391,8 @@ class EffectCharacter:
         self.event_handler: EventHandler = EventHandler(self)
         self.layer: int = 0
         self.is_fill_character = False
+        self.links: set[EffectCharacter] = set()
+        self.neighbors: dict[str, EffectCharacter | None] = {}
 
     @property
     def input_symbol(self) -> str:
@@ -357,6 +430,20 @@ class EffectCharacter:
         """Progress the character's animation and motion by one step."""
         self.motion.move()
         self.animation.step_animation()
+
+    def _link(self, char: EffectCharacter, *, bidirectional: bool = True) -> None:
+        """Link this character with another character.
+
+        Used for spanning tree algorithms.
+
+        Args:
+            char (EffectCharacter): Character being linked to this character.
+            bidirectional (bool, optional): Apply the link on both characters. Defaults to True.
+
+        """
+        if bidirectional:
+            char._link(self, bidirectional=False)
+        self.links.add(char)
 
     def __hash__(self) -> int:
         """Return the hash value of the character."""

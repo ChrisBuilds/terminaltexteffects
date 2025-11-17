@@ -1,0 +1,1 @@
+"""TerminalTextEffects utilities module."""

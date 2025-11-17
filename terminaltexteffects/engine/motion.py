@@ -187,8 +187,7 @@ class Path:
             )
         else:
             distance_from_previous = geometry.find_length_of_line(
-                self.waypoints[-2].coord,
-                waypoint.coord,
+                self.waypoints[-2].coord, waypoint.coord, double_row_diff=True
             )
         self.total_distance += distance_from_previous
         self.segments.append(Segment(self.waypoints[-2], waypoint, distance_from_previous))
@@ -392,20 +391,33 @@ class Motion:
         self.paths[path_id] = new_path
         return new_path
 
-    def query_path(self, path_id: str) -> Path:
-        """Return the path with the given path_id.
+    @typing.overload
+    def query_path(self, path_id: str) -> Path: ...
+    @typing.overload
+    def query_path(self, path_id: str, not_found_action: typing.Literal["raise"]) -> Path: ...
+    @typing.overload
+    def query_path(self, path_id: str, not_found_action: None) -> Path | None: ...
+    def query_path(self, path_id: str, not_found_action: typing.Literal["raise"] | None = "raise") -> Path | None:
+        """Return the path with the given path_id, or None if no path with the given ID exists.
 
         Args:
             path_id (str): path_id
+            not_found_action (Literal["raise"] | None, optional): Action to take if a path with the given
+                path_id is not found. If "raise", a PathNotFoundError will be raised. If `None`, method will
+                return `None`.
 
         Returns:
-            Path: The path with the given path_id.
+            Path | None: The path with the given path_id, or None.
+
+        Raises:
+            PathNotFoundError: If `not_found_action` is "raise" and a Path with the given
+                `path_id` is not found.
 
         """
-        path = self.paths.get(path_id, None)
-        if not path:
+        found_path = self.paths.get(path_id, None)
+        if not_found_action and found_path is None:
             raise PathNotFoundError(path_id)
-        return path
+        return found_path
 
     def movement_is_complete(self) -> bool:
         """Return whether the character has an active path.
@@ -447,8 +459,10 @@ class Motion:
                 paths[0],
             )
 
-    def activate_path(self, path: Path) -> None:
+    def activate_path(self, path: Path | str) -> None:
         """Activates the first waypoint in the given path and updates the path's properties accordingly.
+
+        If the provided `path` arg is not a `Path` object, it must be a `path_id` string.
 
         This method sets the active path to the given path, calculates the distance to the first waypoint,
         and updates the total distance of the path. If the path has an origin segment, it removes it from
@@ -461,12 +475,18 @@ class Motion:
         for the character.
 
         Args:
-            path (Path): The path to activate.
+            path (Path | str): The path to activate. Must be the Path itself, or the Path's ID.
 
         """
-        if not path.waypoints:
-            raise ActivateEmptyPathError(path.path_id)
-        self.active_path = path
+        if isinstance(path, str):
+            found_path = self.query_path(path)
+            if found_path is None:
+                raise PathNotFoundError(path)
+        else:
+            found_path = path
+        if not found_path.waypoints:
+            raise ActivateEmptyPathError(found_path.path_id)
+        self.active_path = found_path
         first_waypoint = self.active_path.waypoints[0]
         if first_waypoint.bezier_control:
             distance_to_first_waypoint = geometry.find_length_of_bezier_curve(
@@ -476,8 +496,7 @@ class Motion:
             )
         else:
             distance_to_first_waypoint = geometry.find_length_of_line(
-                self.current_coord,
-                first_waypoint.coord,
+                self.current_coord, first_waypoint.coord, double_row_diff=True
             )
         self.active_path.total_distance += distance_to_first_waypoint
         if self.active_path.origin_segment:

@@ -19,15 +19,15 @@ from contextlib import contextmanager
 from copy import deepcopy
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.utils.argsdataclass import ArgsDataClass
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from terminaltexteffects.engine.base_character import EffectCharacter
 
-T = TypeVar("T", bound=ArgsDataClass)
+T = TypeVar("T", bound=BaseConfig)
 
 
 class BaseEffectIterator(ABC, Generic[T]):
@@ -112,7 +112,6 @@ class BaseEffectIterator(ABC, Generic[T]):
             str: Next frame of the effect.
 
         """
-        raise NotImplementedError
 
 
 class BaseEffect(ABC, Generic[T]):
@@ -131,24 +130,33 @@ class BaseEffect(ABC, Generic[T]):
     @abstractmethod
     def _config_cls(self) -> type[T]:
         """Effect configuration class as a subclass of ArgsDataClass."""
-        raise NotImplementedError
 
     @property
     @abstractmethod
     def _iterator_cls(self) -> type[BaseEffectIterator]:
         """Effect iterator class as a subclass of BaseEffectIterator."""
-        raise NotImplementedError
 
-    def __init__(self, input_data: str) -> None:
+    def __init__(
+        self,
+        input_data: str,
+        effect_config: T | None = None,
+        terminal_config: TerminalConfig | None = None,
+    ) -> None:
         """Initialize the effect with the input data.
 
         Args:
             input_data (str): Text to which the effect will be applied.
+            effect_config (BaseConfig | None, optional): Effect configuration. If not
+                provided, a new configuration will be built with default values.
+                Defaults to None.
+            terminal_config (TerminalConfig | None, optional): Terminal configuration. If not
+                provided, a new configuration will be built with default values.
+                Defaults to None.
 
         """
         self.input_data = input_data
-        self.effect_config = self._config_cls()
-        self.terminal_config = TerminalConfig()
+        self.effect_config: T = effect_config or self._config_cls._build_config()
+        self.terminal_config: TerminalConfig = terminal_config or TerminalConfig._build_config()
 
     def __iter__(self) -> BaseEffectIterator:
         """Return the iterator object.

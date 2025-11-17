@@ -9,7 +9,6 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import (
@@ -23,28 +22,24 @@ from terminaltexteffects import (
     easing,
     geometry,
 )
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Fireworks, FireworksConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "fireworks", Fireworks, FireworksConfig
 
 
-@argclass(
-    name="fireworks",
-    help="Characters launch and explode like fireworks and fall into place.",
-    description="fireworks | Characters explode like fireworks and fall into place.",
-    epilog=(
-        "Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E "
-        "--firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF "
-        "--final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere"
-    ),
-)
 @dataclass
-class FireworksConfig(ArgsDataClass):
+class FireworksConfig(BaseConfig):
     """Configuration for the Fireworks effect.
 
     Attributes:
@@ -65,113 +60,119 @@ class FireworksConfig(ArgsDataClass):
 
     """
 
-    explode_anywhere: bool = ArgField(
-        cmd_name="--explode-anywhere",
+    parser_spec: ParserSpec = ParserSpec(
+        name="fireworks",
+        help="Characters launch and explode like fireworks and fall into place.",
+        description="fireworks | Characters explode like fireworks and fall into place.",
+        epilog=(
+            "Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E "
+            "--firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF "
+            "--final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere"
+        ),
+    )
+
+    explode_anywhere: bool = ArgSpec(
+        name="--explode-anywhere",
         action="store_true",
         default=False,
         help="If set, fireworks explode anywhere in the canvas. Otherwise, fireworks explode above highest settled "
         "row of text.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "bool : If set, fireworks explode anywhere in the canvas. Otherwise, fireworks explode above highest "
         "settled row of text."
     )
 
-    firework_colors: tuple[Color, ...] = ArgField(
-        cmd_name="--firework-colors",
-        type_parser=argvalidators.ColorArg.type_parser,
+    firework_colors: tuple[Color, ...] = ArgSpec(
+        name="--firework-colors",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("88F7E2"), Color("44D492"), Color("F5EB67"), Color("FFA15C"), Color("FA233E")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#88F7E2"), Color("#44D492"), Color("#F5EB67"), Color("#FFA15C"), Color("#FA233E")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated list of colors from which firework colors will be randomly selected.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors from which firework colors will be randomly selected."
 
-    firework_symbol: str = ArgField(
-        cmd_name="--firework-symbol",
-        type_parser=argvalidators.Symbol.type_parser,
+    firework_symbol: str = ArgSpec(
+        name="--firework-symbol",
+        type=argutils.Symbol.type_parser,
         default="o",
-        metavar=argvalidators.Symbol.METAVAR,
+        metavar=argutils.Symbol.METAVAR,
         help="Symbol to use for the firework shell.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "str : Symbol to use for the firework shell."
 
-    firework_volume: float = ArgField(
-        cmd_name="--firework-volume",
-        type_parser=argvalidators.NonNegativeRatio.type_parser,
-        default=0.02,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+    firework_volume: float = ArgSpec(
+        name="--firework-volume",
+        type=argutils.NonNegativeRatio.type_parser,
+        default=0.01,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         help="Percent of total characters in each firework shell.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Percent of total characters in each firework shell."
 
-    launch_delay: int = ArgField(
-        cmd_name="--launch-delay",
-        type_parser=argvalidators.NonNegativeInt.type_parser,
-        default=60,
-        metavar=argvalidators.NonNegativeInt.METAVAR,
+    launch_delay: int = ArgSpec(
+        name="--launch-delay",
+        type=argutils.NonNegativeInt.type_parser,
+        default=45,
+        metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is "
         "applied to this value.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "int : Number of frames to wait between launching each firework shell. +/- 0-50 percent randomness is "
         "applied to this value."
     )
 
-    explode_distance: float = ArgField(
-        cmd_name="--explode-distance",
-        default=0.1,
-        type_parser=argvalidators.NonNegativeRatio.type_parser,
-        metavar=argvalidators.NonNegativeRatio.METAVAR,
+    explode_distance: float = ArgSpec(
+        name="--explode-distance",
+        default=0.2,
+        type=argutils.NonNegativeRatio.type_parser,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the "
         "total canvas width.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "float : Maximum distance from the firework shell origin to the explode waypoint as a percentage of "
         "the total canvas width."
     )
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name="--final-gradient-stops",
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.HORIZONTAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Fireworks]:
-        """Get the effect class associated with this configuration."""
-        return Fireworks
 
 
 class FireworksIterator(BaseEffectIterator[FireworksConfig]):
@@ -188,7 +189,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.shells: list[list[EffectCharacter]] = []
         self.firework_volume = max(1, round(self.config.firework_volume * len(self.terminal._input_characters)))
-        self.explode_distance = max(1, round(self.terminal.canvas.right * self.config.explode_distance))
+        self.explode_distance = min(15, max(1, round(self.terminal.canvas.right * self.config.explode_distance)))
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.launch_delay: int = 0
         self.build()
@@ -206,9 +207,9 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 origin_coord = Coord(origin_x, origin_y)
                 explode_waypoint_coords = geometry.find_coords_in_circle(origin_coord, self.explode_distance)
             character.motion.set_coordinate(Coord(origin_x, self.terminal.canvas.bottom))  # type: ignore[attr-defined]
-            apex_path = character.motion.new_path(path_id="apex_pth", speed=0.2, ease=easing.out_expo, layer=2)
+            apex_path = character.motion.new_path(path_id="apex_pth", speed=0.35, ease=easing.out_expo, layer=2)
             apex_wpt = apex_path.new_waypoint(origin_coord)  # type: ignore[attr-defined]
-            explode_path = character.motion.new_path(speed=random.uniform(0.09, 0.2), ease=easing.out_circ, layer=2)
+            explode_path = character.motion.new_path(speed=random.uniform(0.2, 0.4), ease=easing.out_circ, layer=2)
             explode_wpt = explode_path.new_waypoint(random.choice(explode_waypoint_coords))  # type: ignore[attr-defined]
 
             bloom_control_point = geometry.find_coord_at_distance(
@@ -220,7 +221,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 Coord(bloom_control_point.column, max(1, bloom_control_point.row - 7)),
                 bezier_control=bloom_control_point,
             )
-            input_path = character.motion.new_path(path_id="input_pth", speed=0.3, ease=easing.in_out_quart, layer=2)
+            input_path = character.motion.new_path(path_id="input_pth", speed=0.6, ease=easing.in_out_quart, layer=2)
             input_control_point = Coord(bloom_wpt.coord.column, 1)
             input_path.new_waypoint(character.input_coord, bezier_control=input_control_point)
             character.event_handler.register_event(
@@ -262,31 +263,31 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for firework_shell in self.shells:
             shell_color = random.choice(self.config.firework_colors)
-            shell_gradient = Gradient(shell_color, Color("FFFFFF"), shell_color, steps=5)
+            shell_gradient = Gradient(shell_color, Color("#FFFFFF"), shell_color, steps=5)
             for character in firework_shell:
                 # launch scene
                 launch_scn = character.animation.new_scene()
                 launch_scn.add_frame(self.config.firework_symbol, 2, colors=ColorPair(fg=shell_color))
-                launch_scn.add_frame(self.config.firework_symbol, 1, colors=ColorPair(fg="FFFFFF"))
+                launch_scn.add_frame(self.config.firework_symbol, 1, colors=ColorPair("#FFFFFF"))
                 launch_scn.is_looping = True
                 # bloom scene
                 bloom_scn = character.animation.new_scene(sync=Scene.SyncMetric.STEP)
                 for color in shell_gradient:
-                    bloom_scn.add_frame(character.input_symbol, 3, colors=ColorPair(fg=color))
+                    bloom_scn.add_frame(character.input_symbol, 2, colors=ColorPair(fg=color))
                 # fall scene
                 fall_scn = character.animation.new_scene()
                 fall_gradient = Gradient(shell_color, self.character_final_color_map[character], steps=15)
-                fall_scn.apply_gradient_to_symbols(character.input_symbol, 15, fg_gradient=fall_gradient)
+                fall_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=fall_gradient)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
-                    character.motion.query_path("apex_pth"),
+                    "apex_pth",
                     EventHandler.Action.ACTIVATE_SCENE,
                     bloom_scn,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
-                    character.motion.query_path("input_pth"),
+                    "input_pth",
                     EventHandler.Action.ACTIVATE_SCENE,
                     fall_scn,
                 )

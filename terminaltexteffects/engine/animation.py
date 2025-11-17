@@ -17,9 +17,7 @@ from enum import Enum, auto
 from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, hexterm
 from terminaltexteffects.utils.exceptions import (
     ActivateEmptySceneError,
-    ApplyGradientToSymbolsEmptyGradientsError,
-    ApplyGradientToSymbolsInvalidSymbolError,
-    ApplyGradientToSymbolsNoGradientsError,
+    AnimationSceneError,
     FrameDurationError,
     SceneNotFoundError,
 )
@@ -350,8 +348,7 @@ class Scene:
             None
 
         Raises:
-            ApplyGradientToSymbolsNoGradientsError: if both fg_gradient and bg_gradient are None
-            ApplyGradientToSymbolsEmptyGradientsError: if both fg_gradient and bg_gradient are empty
+            AnimationSceneError: if gradients are invalid or symbols are invalid
 
         """
         T = typing.TypeVar("T")
@@ -398,12 +395,19 @@ class Scene:
                 yield larger_seq_element, smaller_seq[smaller_index]
 
         if fg_gradient is None and bg_gradient is None:
-            raise ApplyGradientToSymbolsNoGradientsError
+            message = "Foreground and background gradient are None. At least one gradient must be provided."
+            raise AnimationSceneError(
+                message,
+            )
         if not ((fg_gradient and fg_gradient.spectrum) or (bg_gradient and bg_gradient.spectrum)):
-            raise ApplyGradientToSymbolsEmptyGradientsError
+            message = (
+                "Foreground and background gradient are empty. At least one gradient must have at least one color."
+            )
+            raise AnimationSceneError(message)
         for symbol in symbols:
             if len(symbol) > 1:
-                raise ApplyGradientToSymbolsInvalidSymbolError(symbol)
+                message = f"Symbol must be a string with a length of 1. Received: `{symbol}`."
+                raise AnimationSceneError(message)
         color_pairs: list[graphics.ColorPair] = []
         if fg_gradient and fg_gradient.spectrum and bg_gradient and bg_gradient.spectrum:
             if len(fg_gradient.spectrum) >= len(bg_gradient.spectrum):
@@ -436,6 +440,7 @@ class Scene:
         self.frames.clear()
         self.frames.extend(self.played_frames)
         self.played_frames.clear()
+        self.easing_current_step = 0
 
     def __eq__(self, other: object) -> bool:
         """Check if two Scene objects are equal based on their scene_id."""
@@ -571,23 +576,29 @@ class Animation:
         self.scenes[scene_id] = new_scene
         return new_scene
 
-    def query_scene(self, scene_id: str) -> Scene:
+    @typing.overload
+    def query_scene(self, scene_id: str) -> Scene: ...
+    @typing.overload
+    def query_scene(self, scene_id: str, not_found_action: typing.Literal["raise"]) -> Scene: ...
+    @typing.overload
+    def query_scene(self, scene_id: str, not_found_action: None) -> Scene | None: ...
+    def query_scene(self, scene_id: str, not_found_action: typing.Literal["raise"] | None = "raise") -> Scene | None:
         """Return a Scene from the Animation. If the scene doesn't exist, raises a ValueError.
 
         Args:
             scene_id (str): the ID of the Scene
-
-        Raises:
-            ValueError: if the Scene does not exist
+            not_found_action (Literal["raise"] | None, optional): Action to take if a path with the given
+                path_id is not found. If "raise", a PathNotFoundError will be raised. If `None`, method will
+                return `None`.
 
         Returns:
-            Scene: the Scene
+            Scene | None: the Scene
 
         """
-        scene = self.scenes.get(scene_id, None)
-        if not scene:
+        found_scene = self.scenes.get(scene_id, None)
+        if not_found_action and found_scene is None:
             raise SceneNotFoundError(scene_id)
-        return scene
+        return found_scene
 
     def active_scene_is_complete(self) -> bool:
         """Return whether the active scene is complete.
@@ -600,17 +611,21 @@ class Animation:
         """
         return bool(not self.active_scene or not self.active_scene.frames or self.active_scene.is_looping)
 
-    def set_appearance(self, symbol: str, colors: graphics.ColorPair | None = None) -> None:
+    def set_appearance(self, symbol: str | None = None, colors: graphics.ColorPair | None = None) -> None:
         """Update the current character visual with the symbol and colors provided.
+
+        If no symbol is provided, the character's input symbol is used.
 
         If the character has an active scene, any appearance set with this method
         will be overwritten when the scene is stepped to the next frame.
 
         Args:
-            symbol (str): The symbol to apply.
+            symbol (str | None): The symbol to apply.
             colors (graphics.ColorPair | None): The colors to apply.
 
         """
+        if symbol is None:
+            symbol = self.character.input_symbol
         if colors is None:
             colors = graphics.ColorPair(fg=None, bg=None)
         # override fg and bg colors if they are set in the Scene due to existing color handling = always
@@ -807,19 +822,33 @@ class Animation:
                     completed_scene,
                 )
 
-    def activate_scene(self, scene: Scene) -> None:
+    def activate_scene(self, scene: Scene | str) -> None:
         """Set the active scene and updates the current character visual.
+
+        If `scene` is a string, a scene query will be performed for a scene with
+        a `scene_id` matching the provided string.
 
         A SCENE_ACTIVATED event is triggered.
 
         Args:
-            scene (Scene): the Scene to set as active
+            scene (Scene | str): Scene instance of Scene ID for the scene that should
+                be activated.
+
+        Raises:
+            SceneNotFoundError: Raised if the scene_id provided does not correspond to
+                a known scene.
 
         """
-        self.active_scene = scene
+        if isinstance(scene, str):
+            found_scene = self.query_scene(scene)
+            if found_scene is None:
+                raise SceneNotFoundError(scene)
+        else:
+            found_scene = scene
+        self.active_scene = found_scene
         self.active_scene_current_step = 0
         self.current_character_visual = self.active_scene.activate()
-        self.character.event_handler._handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, scene)
+        self.character.event_handler._handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, found_scene)
 
     def deactivate_scene(self, scene: Scene) -> None:
         """Deactivates a scene.

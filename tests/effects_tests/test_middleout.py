@@ -5,7 +5,9 @@ from terminaltexteffects.utils.graphics import Color
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_middleout_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_middleout.MiddleOut(input_data)
@@ -26,7 +28,11 @@ def test_middleout_effect_terminal_color_options(input_data, terminal_config_wit
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_middleout_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_middleout.MiddleOut(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
@@ -39,7 +45,7 @@ def test_middleout_final_gradient(
             terminal.print(frame)
 
 
-@pytest.mark.parametrize("starting_color", [Color("000000"), Color("ff00ff")])
+@pytest.mark.parametrize("starting_color", [Color("#000000"), Color("#ff00ff")])
 @pytest.mark.parametrize("expand_direction", ["horizontal", "vertical"])
 @pytest.mark.parametrize("center_movement_speed", [0.001, 2.0])
 @pytest.mark.parametrize("full_movement_speed", [0.001, 2.0])

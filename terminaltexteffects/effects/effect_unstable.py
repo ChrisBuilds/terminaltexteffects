@@ -9,34 +9,27 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return Unstable, UnstableConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "unstable", Unstable, UnstableConfig
 
 
-@argclass(
-    name="unstable",
-    help="Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the "
-    "correct layout.",
-    description="unstable | Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them "
-    "in the correct layout.",
-    epilog=(
-        f"{argvalidators.EASING_EPILOG} Example: terminaltexteffects unstable --unstable-color ff9200 "
-        "--final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO "
-        "--explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75"
-    ),
-)
 @dataclass
-class UnstableConfig(ArgsDataClass):
+class UnstableConfig(BaseConfig):
     """Configuration for the Unstable effect.
 
     Attributes:
@@ -53,90 +46,98 @@ class UnstableConfig(ArgsDataClass):
 
     """
 
-    unstable_color: Color = ArgField(
-        cmd_name=["--unstable-color"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        default=Color("ff9200"),
-        metavar=argvalidators.ColorArg.METAVAR,
+    parser_spec: ParserSpec = ParserSpec(
+        name="unstable",
+        help="Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the "
+        "correct layout.",
+        description="unstable | Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them "
+        "in the correct layout.",
+        epilog=(
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects unstable --unstable-color ff9200 "
+            "--final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO "
+            "--explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75"
+        ),
+    )
+
+    unstable_color: Color = ArgSpec(
+        name="--unstable-color",
+        type=argutils.ColorArg.type_parser,
+        default=Color("#ff9200"),
+        metavar=argutils.ColorArg.METAVAR,
         help="Color transitioned to as the characters become unstable.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Color : Color transitioned to as the characters become unstable."
 
-    explosion_ease: easing.EasingFunction = ArgField(
-        cmd_name=["--explosion-ease"],
-        type_parser=argvalidators.Ease.type_parser,
+    explosion_ease: easing.EasingFunction = ArgSpec(
+        name="--explosion-ease",
+        type=argutils.Ease.type_parser,
         default=easing.out_expo,
         help="Easing function to use for character movement during the explosion.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement during the explosion."
 
-    explosion_speed: float = ArgField(
-        cmd_name=["--explosion-speed"],
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.75,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+    explosion_speed: float = ArgSpec(
+        name="--explosion-speed",
+        type=argutils.PositiveFloat.type_parser,
+        default=1,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of characters during explosion. ",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Speed of characters during explosion. "
 
-    reassembly_ease: easing.EasingFunction = ArgField(
-        cmd_name=["--reassembly-ease"],
-        type_parser=argvalidators.Ease.type_parser,
+    reassembly_ease: easing.EasingFunction = ArgSpec(
+        name="--reassembly-ease",
+        type=argutils.Ease.type_parser,
         default=easing.out_expo,
         help="Easing function to use for character reassembly.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character reassembly."
 
-    reassembly_speed: float = ArgField(
-        cmd_name=["--reassembly-speed"],
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.75,
-        metavar=argvalidators.PositiveFloat.METAVAR,
+    reassembly_speed: float = ArgSpec(
+        name="--reassembly-speed",
+        type=argutils.PositiveFloat.type_parser,
+        default=1,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of characters during reassembly. ",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Speed of characters during reassembly."
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
-        metavar=argvalidators.ColorArg.METAVAR,
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
+        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
         "only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name=["--final-gradient-steps"],
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
-        metavar=argvalidators.PositiveInt.METAVAR,
+        metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
-
-    @classmethod
-    def get_effect_class(cls) -> type[Unstable]:
-        """Get the effect class associated with this configuration."""
-        return Unstable
 
 
 class UnstableIterator(BaseEffectIterator[UnstableConfig]):
@@ -180,31 +181,35 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
             jumbled_coord = character_coords.pop(random.randint(0, len(character_coords) - 1))
             self.jumbled_coords[character] = jumbled_coord
             character.motion.set_coordinate(jumbled_coord)
-            explosion_path = character.motion.new_path(path_id="explosion", speed=1.25, ease=self.config.explosion_ease)
+            explosion_path = character.motion.new_path(
+                path_id="explosion",
+                speed=self.config.explosion_speed,
+                ease=self.config.explosion_ease,
+            )
             explosion_path.new_waypoint(Coord(col, row))
             reassembly_path = character.motion.new_path(
                 path_id="reassembly",
-                speed=0.75,
+                speed=self.config.reassembly_speed,
                 ease=self.config.reassembly_ease,
             )
             reassembly_path.new_waypoint(character.input_coord)
             unstable_gradient = Gradient(
                 self.character_final_color_map[character],
                 self.config.unstable_color,
-                steps=25,
+                steps=12,
             )
             rumble_scn = character.animation.new_scene(scene_id="rumble")
             rumble_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=unstable_gradient)
             final_color = Gradient(self.config.unstable_color, self.character_final_color_map[character], steps=12)
             final_scn = character.animation.new_scene(scene_id="final")
-            final_scn.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=final_color)
+            final_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=final_color)
             character.animation.activate_scene(rumble_scn)
             self.terminal.set_character_visibility(character, is_visible=True)
-        self._explosion_hold_time = 50
+        self._explosion_hold_time = 30
         self.phase = "rumble"
-        self._max_rumble_steps = 250
+        self._max_rumble_steps = 150
         self._current_rumble_steps = 0
-        self._rumble_mod_delay = 20
+        self._rumble_mod_delay = 18
 
     def __next__(self) -> str:
         """Return the next from in the effect."""

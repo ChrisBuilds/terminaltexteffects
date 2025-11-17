@@ -9,34 +9,28 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Scene
+from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Path, Scene
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argvalidators
-from terminaltexteffects.utils.argsdataclass import ArgField, ArgsDataClass, argclass
+from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
-def get_effect_and_args() -> tuple[type[typing.Any], type[ArgsDataClass]]:
-    """Get the effect class and its configuration class."""
-    return ErrorCorrect, ErrorCorrectConfig
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Get the command, effect class, and configuration class for the effect.
+
+    Returns:
+        tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
+
+    """
+    return "errorcorrect", ErrorCorrect, ErrorCorrectConfig
 
 
-@argclass(
-    name="errorcorrect",
-    help="Some characters start in the wrong position and are corrected in sequence.",
-    description="errorcorrect | Some characters start in the wrong position and are corrected in sequence.",
-    epilog=(
-        f"{argvalidators.EASING_EPILOG}"
-        "Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c "
-        "--correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 "
-        "--movement-speed 0.5"
-    ),
-)
 @dataclass
-class ErrorCorrectConfig(ArgsDataClass):
+class ErrorCorrectConfig(BaseConfig):
     """Configuration for the ErrorCorrect effect.
 
     Attributes:
@@ -55,90 +49,101 @@ class ErrorCorrectConfig(ArgsDataClass):
 
     """
 
-    error_pairs: float = ArgField(
-        cmd_name="--error-pairs",
-        type_parser=argvalidators.PositiveFloat.type_parser,
+    parser_spec: ParserSpec = ParserSpec(
+        name="errorcorrect",
+        help="Some characters start in the wrong position and are corrected in sequence.",
+        description="errorcorrect | Some characters start in the wrong position and are corrected in sequence.",
+        epilog=(
+            f"{argutils.EASING_EPILOG}"
+            "Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c "
+            "--correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 "
+            "--movement-speed 0.5"
+        ),
+    )
+    error_pairs: float = ArgSpec(
+        name="--error-pairs",
+        type=argutils.PositiveFloat.type_parser,
         default=0.1,
         metavar="(int > 0)",
         help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means "
         "20 percent of the characters will be in the wrong position.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "float : Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 "
         "means 20 percent of the characters will be in the wrong position."
     )
 
-    swap_delay: int = ArgField(
-        cmd_name="--swap-delay",
-        type_parser=argvalidators.PositiveInt.type_parser,
-        default=10,
+    swap_delay: int = ArgSpec(
+        name="--swap-delay",
+        type=argutils.PositiveInt.type_parser,
+        default=6,
         metavar="(int > 0)",
         help="Number of frames between swaps.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames between swaps."
 
-    error_color: Color = ArgField(
-        cmd_name=["--error-color"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        default=Color("e74c3c"),
+    error_color: Color = ArgSpec(
+        name="--error-color",
+        type=argutils.ColorArg.type_parser,
+        default=Color("#e74c3c"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters that are in the wrong position.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Color : Color for the characters that are in the wrong position."
 
-    correct_color: Color = ArgField(
-        cmd_name=["--correct-color"],
-        type_parser=argvalidators.ColorArg.type_parser,
-        default=Color("45bf55"),
+    correct_color: Color = ArgSpec(
+        name="--correct-color",
+        type=argutils.ColorArg.type_parser,
+        default=Color("#45bf55"),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Color for the characters once corrected, this is a gradient from error-color and fades to final-color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Color : Color for the characters once corrected, this is a gradient from error-color and fades to final-color."
 
-    movement_speed: float = ArgField(
-        cmd_name="--movement-speed",
-        type_parser=argvalidators.PositiveFloat.type_parser,
-        default=0.5,
+    movement_speed: float = ArgSpec(
+        name="--movement-speed",
+        type=argutils.PositiveFloat.type_parser,
+        default=0.9,
         metavar="(float > 0)",
         help="Speed of the characters while moving to the correct position. ",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the characters while moving to the correct position. "
 
-    final_gradient_stops: tuple[Color, ...] = ArgField(
-        cmd_name=["--final-gradient-stops"],
-        type_parser=argvalidators.ColorArg.type_parser,
+    final_gradient_stops: tuple[Color, ...] = ArgSpec(
+        name="--final-gradient-stops",
+        type=argutils.ColorArg.type_parser,
         nargs="+",
-        default=(Color("8A008A"), Color("00D1FF"), Color("FFFFFF")),
+        default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
         "If only one color is provided, the characters will be displayed in that color.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgField(
-        cmd_name="--final-gradient-steps",
-        type_parser=argvalidators.PositiveInt.type_parser,
+    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
+        name="--final-gradient-steps",
+        type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
         metavar="(int > 0)",
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "
         "smoother and longer gradient animation.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: Gradient.Direction = ArgField(
-        cmd_name="--final-gradient-direction",
-        type_parser=argvalidators.GradientDirection.type_parser,
+    final_gradient_direction: Gradient.Direction = ArgSpec(
+        name="--final-gradient-direction",
+        type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
-        metavar=argvalidators.GradientDirection.METAVAR,
+        metavar=argutils.GradientDirection.METAVAR,
         help="Direction of the final gradient.",
-    )  # type: ignore[assignment]
+    )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
 
     @classmethod
@@ -215,7 +220,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 error_scene = character.animation.new_scene(scene_id="error")
                 for _ in range(10):
                     error_scene.add_frame(block_symbol, 3, colors=ColorPair(fg=self.config.error_color))
-                    error_scene.add_frame(character.input_symbol, 3, colors=ColorPair(fg="ffffff"))
+                    error_scene.add_frame(character.input_symbol, 3, colors=ColorPair("#ffffff"))
                 correcting_scene = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
                 correcting_scene.apply_gradient_to_symbols("█", 3, fg_gradient=correcting_gradient)
                 final_scene = character.animation.new_scene()
@@ -226,6 +231,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                 )
                 final_scene.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=char_final_gradient)
                 input_coord_path = character.motion.query_path("input_coord")
+                assert isinstance(input_coord_path, Path)
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,
                     error_scene,
@@ -242,24 +248,23 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
                     EventHandler.Event.SCENE_COMPLETE,
                     first_block_wipe,
                     EventHandler.Action.ACTIVATE_PATH,
-                    input_coord_path,
+                    "input_coord",
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
-                    input_coord_path,
+                    "input_coord",
                     EventHandler.Action.SET_LAYER,
                     1,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
-                    input_coord_path,
+                    "input_coord",
                     EventHandler.Action.SET_LAYER,
                     0,
                 )
-
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
-                    input_coord_path,
+                    "input_coord",
                     EventHandler.Action.ACTIVATE_SCENE,
                     last_block_wipe,
                 )
@@ -275,7 +280,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
         if self.swapped and not self.swap_delay:
             next_pair = self.swapped.pop(0)
             for char in next_pair:
-                char.animation.activate_scene(char.animation.query_scene("error"))
+                char.animation.activate_scene("error")
                 self.active_characters.add(char)
             self.swap_delay = self.config.swap_delay
         elif self.swap_delay:
