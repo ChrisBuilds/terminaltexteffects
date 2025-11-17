@@ -19,6 +19,7 @@ from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.spanningtree.algo.recursivebacktracker import RecursiveBacktracker
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -84,8 +85,9 @@ class LaserEtchConfig(BaseConfig):
         "center_to_outside",
     ] = ArgSpec(
         name="--etch-direction",
-        default="row_top_to_bottom",
+        default="algorithm",
         choices=[
+            "algorithm",
             "column_left_to_right",
             "column_right_to_left",
             "row_top_to_bottom",
@@ -99,7 +101,7 @@ class LaserEtchConfig(BaseConfig):
         ],
         help="Pattern used to etch the text.",
     )  # pyright: ignore[reportAssignmentType]
-    "typing.Literal['column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]: Pattern used to etch the text."  # noqa: E501
+    "typing.Literal['algorithm','column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]: Pattern used to etch the text."  # noqa: E501
 
     etch_speed: int = ArgSpec(
         name="--etch-speed",
@@ -166,7 +168,7 @@ class LaserEtchConfig(BaseConfig):
     spark_cooling_frames: int = ArgSpec(
         name="--spark-cooling-frames",
         type=argutils.PositiveInt.type_parser,
-        default=4,
+        default=7,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each spark cooling gradient step. Increase to slow down the rate of cooling.",
     )  # pyright: ignore[reportAssignmentType]
@@ -402,14 +404,19 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
             for color in cool_gradient:
                 spawn_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair(fg=color))
             character.animation.activate_scene(spawn_scn)
-
-        for n, char_list in enumerate(
-            self.terminal.get_characters_grouped(sort_map[self.config.etch_direction]),
-        ):
-            if n % 2:
-                self.pending_chars.extend(char_list[::-1])
-            else:
-                self.pending_chars.extend(char_list)
+        if self.config.etch_direction in sort_map:
+            for n, char_list in enumerate(
+                self.terminal.get_characters_grouped(sort_map[self.config.etch_direction]),
+            ):
+                if n % 2:
+                    self.pending_chars.extend(char_list[::-1])
+                else:
+                    self.pending_chars.extend(char_list)
+        else:
+            algo = RecursiveBacktracker(self.terminal, limit_to_text_boundary=True)
+            while not algo.complete:
+                algo.step()
+            self.pending_chars = algo.char_link_order
 
     def __next__(self) -> str:
         """Return the next frame in the effect."""
@@ -419,6 +426,12 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                     if not self.pending_chars:
                         break
                     next_char = self.pending_chars.pop(0)
+                    while next_char.input_symbol == " ":
+                        if self.pending_chars:
+                            next_char = self.pending_chars.pop(0)
+                        else:
+                            break
+
                     self.terminal.set_character_visibility(next_char, is_visible=True)
                     self.active_characters.add(next_char)
                     self.laser.reposition(next_char.input_coord)
