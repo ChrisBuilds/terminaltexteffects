@@ -8,6 +8,7 @@ Classes:
 
 from __future__ import annotations
 
+import random
 import typing
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -79,14 +80,14 @@ class PourConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of characters poured in per tick. Increase to speed up the effect."
 
-    movement_speed: float = ArgSpec(
-        name="--movement-speed",
-        type=argutils.PositiveFloat.type_parser,
-        default=0.5,
+    movement_speed_range: tuple[float, float] = ArgSpec(
+        name="--movement-speed-range",
+        type=argutils.PositiveFloatRange.type_parser,
+        default=(0.4, 0.6),
         metavar=argutils.PositiveFloat.METAVAR,
-        help="Movement speed of the characters. ",
+        help="Movement speed range of the characters. ",
     )  # pyright: ignore[reportAssignmentType]
-    "float : Movement speed of the characters."
+    "tuple[float, float] : Movement speed range of the characters."
 
     gap: int = ArgSpec(
         name="--gap",
@@ -214,7 +215,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
                 elif self._pour_direction == PourIterator.PourDirection.RIGHT:
                     character.motion.set_coordinate(Coord(self.terminal.canvas.left, character.input_coord.row))
                 input_coord_path = character.motion.new_path(
-                    speed=self.config.movement_speed,
+                    speed=random.uniform(*self.config.movement_speed_range),
                     ease=self.config.movement_easing,
                 )
                 input_coord_path.new_waypoint(character.input_coord)
