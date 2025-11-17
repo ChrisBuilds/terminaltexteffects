@@ -131,3 +131,8 @@ class PrimsWeighted(SpanningTreeGenerator):
             self.char_last_linked = next_link.char_b
             self.char_link_order.append(next_link.char_b)
             self.add_weighted_links(next_link.char_b)
+        else:
+            self.complete = True
+            self.char_last_linked = None
+            self.neighbors_last_added.clear()
+            return
