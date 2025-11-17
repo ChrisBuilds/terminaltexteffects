@@ -602,7 +602,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 self.phase = "waiting"
             elif self.phase == "storm":
                 self.rain()
-                if not self.strike_in_progress and random.random() < 0.004:
+                if not self.strike_in_progress and random.random() < 0.008:
                     self.strike_in_progress = True
                     self.lightning_strike()
                 if self.strike_in_progress:
