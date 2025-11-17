@@ -40,6 +40,7 @@ class BurnConfig(BaseConfig):
     Attributes:
         starting_color (Color): Color of the characters before they start to burn.
         burn_colors (tuple[Color, ...]): Colors transitioned through as the characters burn.
+        smoke_chance (float): Chance a given character will produce smoke while burning. Use 0 for no smoke.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color
             is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
@@ -54,7 +55,7 @@ class BurnConfig(BaseConfig):
         description="burn | Burn the canvas.",
         epilog=(
             "Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c "
-            "510100 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12"
+            "510100 --smoke-chance 0.2 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12"
         ),
     )
 
