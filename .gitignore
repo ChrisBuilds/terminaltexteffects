@@ -164,7 +164,6 @@ terminaltexteffects/test_tte.py
 */*.stats
 *.prof
 github_resources/*
-*.png
 *.gv
 effect_test.py
 effect_dev.py
