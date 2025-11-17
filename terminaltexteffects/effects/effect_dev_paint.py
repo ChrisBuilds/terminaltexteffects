@@ -13,7 +13,8 @@ from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
-from terminaltexteffects.utils.spanningtree.algo.recursivebacktracker import RecursiveBacktracker
+from terminaltexteffects.utils.spanningtree.algo.breadthfirst import BreadthFirst
+from terminaltexteffects.utils.spanningtree.algo.primsweighted import PrimsWeighted
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -128,7 +129,13 @@ class EffectIterator(BaseEffectIterator[EffectConfig]):
         super().__init__(effect)
         self.pending_chars: list[tte.EffectCharacter] = []
         self.character_final_color_map: dict[tte.EffectCharacter, tte.Color] = {}
-        self.alg = RecursiveBacktracker(self.terminal)
+        self.gen_alg = PrimsWeighted(self.terminal, limit_to_text_boundary=True)
+        self.fill_alg = BreadthFirst(
+            self.terminal,
+            starting_char=self.terminal.get_character_by_input_coord(
+                self.terminal.canvas.random_coord(within_text_boundary=True),
+            ),
+        )
         self.build()
 
     def build(self) -> None:
@@ -141,41 +148,53 @@ class EffectIterator(BaseEffectIterator[EffectConfig]):
             self.terminal.canvas.text_right,
             self.config.final_gradient_direction,
         )
+        smoke_gradient = tte.Gradient(
+            tte.Color("#242424"),
+            tte.Color("#FFFFFF"),
+            *self.config.final_gradient_stops[::-1],
+            steps=(3, 4),
+        )
+        smoke_symbols = ("░", "▒", "▓", "▒", "░")
         for character in self.terminal.get_characters(inner_fill_chars=True, outer_fill_chars=True):
+            self.terminal.set_character_visibility(character=character, is_visible=True)
+            character.animation.set_appearance(character.input_symbol, colors=tte.ColorPair("#7A7A7A"))
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            white_gradient_fg = tte.Gradient(tte.Color("#FFFFFF"), tte.Color("#616161"), steps=6)
-            white_gradient_bg = tte.Gradient(tte.Color("#FFFFFF"), tte.Color("#313131"), steps=6)
-            white_scn = character.animation.new_scene(scene_id="white")
-            white_scn.apply_gradient_to_symbols(
-                ("█", "▓", "▒", "░", character.input_symbol),
-                5,
-                fg_gradient=white_gradient_fg,
-                bg_gradient=white_gradient_bg,
-            )
-            color_gradient_fg = tte.Gradient(
+            paint_gradient = tte.Gradient(
                 *self.config.final_gradient_stops,
-                self.character_final_color_map[character],
-                steps=3,
+                final_gradient_mapping[character.input_coord],
+                steps=5,
             )
-            color_scn = character.animation.new_scene(scene_id="color")
-            color_scn.apply_gradient_to_symbols(
-                ("█", "▓", "▒", "░", character.input_symbol),
-                5,
-                fg_gradient=color_gradient_fg,
+            paint_chars = (character.input_symbol,)
+            paint_scn = character.animation.new_scene(scene_id="paint")
+            paint_scn.apply_gradient_to_symbols(paint_chars, duration=5, fg_gradient=paint_gradient)
+
+            smoke_scn = character.animation.new_scene(scene_id="smoke")
+            smoke_scn.apply_gradient_to_symbols(smoke_symbols, 3, fg_gradient=smoke_gradient)
+            character.event_handler.register_event(
+                event=tte.Event.SCENE_COMPLETE,
+                caller=smoke_scn,
+                action=tte.Action.ACTIVATE_SCENE,
+                target=paint_scn,
             )
+
+        while not self.gen_alg.complete:
+            self.gen_alg.step()
+        if self.fill_alg.starting_char:
+            self.fill_alg.starting_char.animation.activate_scene("smoke")
+            self.active_characters.add(self.fill_alg.starting_char)
+            self.terminal.set_character_visibility(self.fill_alg.starting_char, is_visible=True)
 
     def __next__(self) -> str:
         """Return the next frame of the effect."""
-        if not self.alg.complete or self.active_characters:
-            if not self.alg.complete:
-                self.alg.step()
-                if (last_linked := self.alg.char_last_linked) is not None:
-                    last_linked.animation.activate_scene("white")
-                    self.terminal.set_character_visibility(last_linked, is_visible=True)
-                    self.active_characters.add(last_linked)
-                if (last_popped := self.alg.stack_last_popped) is not None:
-                    last_popped.animation.activate_scene("color")
-                    self.active_characters.add(last_popped)
+        if not self.fill_alg.complete or self.active_characters:
+            for _ in range(1):
+                if not self.fill_alg.complete:
+                    self.fill_alg.step()
+                    if self.fill_alg.explored_last_step:
+                        for char in self.fill_alg.explored_last_step:
+                            self.terminal.set_character_visibility(char, is_visible=True)
+                            char.animation.activate_scene("smoke")
+                            self.active_characters.add(char)
 
             self.update()
             return self.frame
