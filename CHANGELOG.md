@@ -45,6 +45,7 @@
 * Blackhole - Initial consumption motion modified to create the apperance of an gravitational-wave propagating across the canvas.
 * Laseretch - New etch-pattern `algorithm` uses the link-order of a text-boundary-bound recursive backtracker algorithm.
 * Burn - Character ignite order is based on the link-order of a text-boundary-bound prims simple algorithm.
+* Pour - Changed `--movement-speed` to `--movement-speed-range` to add some variation in character falling speed.
 * All effects have been adjusted for visual parity at 60 fps.
 
 ---
