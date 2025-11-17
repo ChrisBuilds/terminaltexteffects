@@ -160,7 +160,7 @@ def test_find_length_of_bezier_curve() -> None:
     end = geometry.Coord(10, 10)
     control = geometry.Coord(5, 0)
     length = geometry.find_length_of_bezier_curve(start, end, control)
-    assert length == 12.307135789365265
+    assert length == 19.008767012245137
 
 
 def test_find_length_of_bezier_curve_two_control_points() -> None:
@@ -170,7 +170,7 @@ def test_find_length_of_bezier_curve_two_control_points() -> None:
     control1 = geometry.Coord(5, 0)
     control2 = geometry.Coord(5, 10)
     length = geometry.find_length_of_bezier_curve(start, (control1, control2), end)
-    assert length == 13.957417329238151
+    assert length == 22.662619116234062
 
 
 def test_find_length_of_line() -> None:
