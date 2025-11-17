@@ -50,6 +50,7 @@ class EffectConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#FFFFFF")),
         metavar=argutils.ColorArg.METAVAR,
         help=(
@@ -67,6 +68,7 @@ class EffectConfig(BaseConfig):
         type=argutils.PositiveInt.type_parser,
         nargs="+",
         default=12,
+        action=argutils.TupleAction,
         metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Space separated, unquoted, list of the number of gradient steps to use. More steps will "
