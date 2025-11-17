@@ -40,8 +40,7 @@ class SmokeConfig(BaseConfig):
         description="Smoke floods the canvas colorizing any characters it crosses.",
         epilog="Example: terminaltexteffects smoke --starting-color 7A7A7A --smoke-symbols ░ ▒ ▓ ▒ ░ "
         "--smoke-gradient-stops 242424 FFFFFF --use-whole-canvas --final-gradient-stops 8A008A 00D1FF "
-        "ffffff --final-gradient-steps 12 --final-gradient-frames 2 --final-gradient-direction vertical "
-        "--final-wipe-speed 3",
+        "ffffff --final-gradient-steps 12 --final-gradient-direction vertical ",
     )
 
     starting_color: tte.Color = ArgSpec(
@@ -109,7 +108,7 @@ class SmokeConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
-        default=12,
+        default=(12,),
         metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Space separated, unquoted, list of the number of gradient steps to use. More steps will "
