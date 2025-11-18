@@ -106,7 +106,7 @@ class FireworksConfig(BaseConfig):
     firework_volume: float = ArgSpec(
         name="--firework-volume",
         type=argutils.NonNegativeRatio.type_parser,
-        default=0.01,
+        default=0.05,
         metavar=argutils.NonNegativeRatio.METAVAR,
         help="Percent of total characters in each firework shell.",
     )  # pyright: ignore[reportAssignmentType]
