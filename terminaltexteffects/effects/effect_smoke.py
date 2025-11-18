@@ -207,7 +207,6 @@ class SmokeIterator(BaseEffectIterator[SmokeConfig]):
         if self.fill_alg.starting_char:
             self.fill_alg.starting_char.animation.activate_scene("smoke")
             self.active_characters.add(self.fill_alg.starting_char)
-            self.terminal.set_character_visibility(self.fill_alg.starting_char, is_visible=True)
 
     def __next__(self) -> str:
         """Return the next frame of the effect."""
@@ -216,7 +215,6 @@ class SmokeIterator(BaseEffectIterator[SmokeConfig]):
                 self.fill_alg.step()
                 if self.fill_alg.explored_last_step:
                     for char in self.fill_alg.explored_last_step:
-                        self.terminal.set_character_visibility(char, is_visible=True)
                         char.animation.activate_scene("smoke")
                         self.active_characters.add(char)
 
