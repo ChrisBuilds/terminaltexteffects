@@ -80,7 +80,6 @@ class BeamsConfig(BaseConfig):
         nargs="+",
         action=argutils.TupleAction,
         default=("▂", "▁", "_"),
-        action=argutils.TupleAction,
         metavar=argutils.Symbol.METAVAR,
         help=(
             "Symbols to use for the beam effect when moving along a row. "
