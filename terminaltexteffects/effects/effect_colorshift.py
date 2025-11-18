@@ -69,6 +69,7 @@ class ColorShiftConfig(BaseConfig):
         name="--gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(
             Color("#e81416"),
             Color("#ffa500"),
@@ -90,6 +91,7 @@ class ColorShiftConfig(BaseConfig):
         name="--gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=12,
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of gradient steps to use. More steps will create a smoother gradient animation.",
@@ -166,6 +168,7 @@ class ColorShiftConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(
             Color("#e81416"),
             Color("#ffa500"),
@@ -188,6 +191,7 @@ class ColorShiftConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=12,
         metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "

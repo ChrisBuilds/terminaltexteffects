@@ -87,6 +87,7 @@ class FireworksConfig(BaseConfig):
         name="--firework-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(Color("#88F7E2"), Color("#44D492"), Color("#F5EB67"), Color("#FFA15C"), Color("#FA233E")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated list of colors from which firework colors will be randomly selected.",
@@ -141,6 +142,7 @@ class FireworksConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
@@ -155,6 +157,7 @@ class FireworksConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=12,
         metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "

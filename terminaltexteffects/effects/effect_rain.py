@@ -62,6 +62,7 @@ class RainConfig(BaseConfig):
         type=argutils.ColorArg.type_parser,
         metavar=argutils.ColorArg.METAVAR,
         nargs="+",
+        action=argutils.TupleAction,
         default=(
             Color("#00315C"),
             Color("#004C8F"),
@@ -89,6 +90,7 @@ class RainConfig(BaseConfig):
         name="--rain-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=("o", ".", ",", "*", "|"),
         metavar=argutils.Symbol.METAVAR,
         help="Space separated list of symbols to use for the rain drops. Symbols are randomly chosen from the list.",
@@ -99,6 +101,7 @@ class RainConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(Color("#488bff"), Color("#b2e7de"), Color("#57eaf7")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
@@ -113,6 +116,7 @@ class RainConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=12,
         metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "

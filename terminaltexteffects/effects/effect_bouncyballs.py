@@ -64,6 +64,7 @@ class BouncyBallsConfig(BaseConfig):
         type=argutils.ColorArg.type_parser,
         metavar=argutils.ColorArg.METAVAR,
         nargs="+",
+        action=argutils.TupleAction,
         default=(Color("#d1f4a5"), Color("#96e2a4"), Color("#5acda9")),
         help="Space separated list of colors from which ball colors will be randomly selected. If no colors are "
         "provided, the colors are random.",
@@ -75,6 +76,7 @@ class BouncyBallsConfig(BaseConfig):
         name="--ball-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=("*", "o", "O", "0", "."),
         metavar=argutils.Symbol.METAVAR,
         help="Space separated list of symbols to use for the balls.",
@@ -111,6 +113,7 @@ class BouncyBallsConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(Color("#f8ffae"), Color("#43c6ac")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
@@ -123,6 +126,7 @@ class BouncyBallsConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=12,
         metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "

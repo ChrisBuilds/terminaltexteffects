@@ -78,6 +78,7 @@ class BeamsConfig(BaseConfig):
         name="--beam-row-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=("▂", "▁", "_"),
         action=argutils.TupleAction,
         metavar=argutils.Symbol.METAVAR,

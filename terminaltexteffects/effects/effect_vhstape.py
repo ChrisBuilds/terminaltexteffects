@@ -66,6 +66,7 @@ class VHSTapeConfig(BaseConfig):
         name="--glitch-line-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(Color("#ffffff"), Color("#ff0000"), Color("#00ff00"), Color("#0000ff"), Color("#ffffff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters when a single line is glitching. Colors "
@@ -80,6 +81,7 @@ class VHSTapeConfig(BaseConfig):
         name="--glitch-wave-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(Color("#ffffff"), Color("#ff0000"), Color("#00ff00"), Color("#0000ff"), Color("#ffffff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the characters in lines that are part of the glitch wave. "
@@ -94,6 +96,7 @@ class VHSTapeConfig(BaseConfig):
         name="--noise-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(
             Color("#1e1e1f"),
             Color("#3c3b3d"),
@@ -138,6 +141,7 @@ class VHSTapeConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(Color("#ab48ff"), Color("#e7b2b2"), Color("#fffebd")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
@@ -152,6 +156,7 @@ class VHSTapeConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=12,
         metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create "

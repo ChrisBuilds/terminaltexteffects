@@ -73,6 +73,7 @@ class BurnConfig(BaseConfig):
         type=argutils.ColorArg.type_parser,
         default=(Color("#ffffff"), Color("#fff75d"), Color("#fe650d"), Color("#8A003C"), Color("#510100")),
         nargs="+",
+        action=argutils.TupleAction,
         metavar=argutils.ColorArg.METAVAR,
         help="Colors transitioned through as the characters burn.",
     )  # pyright: ignore[reportAssignmentType]
@@ -91,6 +92,7 @@ class BurnConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(Color("#00c3ff"), Color("#ffff1c")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
@@ -105,6 +107,7 @@ class BurnConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=12,
         metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "

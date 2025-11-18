@@ -135,6 +135,7 @@ class MatrixConfig(BaseConfig):
         name="--rain-color-gradient",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(Color("#92be92"), Color("#185318")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the rain gradient. Colors are selected from the "
@@ -148,6 +149,7 @@ class MatrixConfig(BaseConfig):
     rain_symbols: tuple[str, ...] = ArgSpec(
         name="--rain-symbols",
         nargs="+",
+        action=argutils.TupleAction,
         type=argutils.Symbol.type_parser,
         default=MATRIX_SYMBOLS_COMMON + MATRIX_SYMBOLS_KATA,
         metavar=argutils.Symbol.METAVAR,
@@ -221,6 +223,7 @@ class MatrixConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(Color("#92be92"), Color("#336b33")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
@@ -235,6 +238,7 @@ class MatrixConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=12,
         metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "

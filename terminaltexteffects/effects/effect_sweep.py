@@ -50,6 +50,7 @@ class SweepConfig(BaseConfig):
         name="--sweep-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=("█", "▓", "▒", "░"),
         metavar=argutils.Symbol.METAVAR,
         help="Space separated list of symbols to use for the sweep shimmer.",
@@ -118,6 +119,7 @@ class SweepConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#ffffff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). "
@@ -130,6 +132,7 @@ class SweepConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=8,
         metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "

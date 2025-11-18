@@ -133,6 +133,7 @@ class LaserEtchConfig(BaseConfig):
         name="--cool-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(tte.Color("#ffe680"), tte.Color("#ff7b00")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the gradient used to cool the characters after etching. "
@@ -145,6 +146,7 @@ class LaserEtchConfig(BaseConfig):
         name="--laser-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(tte.Color("#ffffff"), tte.Color("#376cff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the laser gradient. "
@@ -157,6 +159,7 @@ class LaserEtchConfig(BaseConfig):
         name="--spark-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(tte.Color("#ffffff"), tte.Color("#ffe680"), tte.Color("#ff7b00"), tte.Color("#1a0900")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the spark cooling gradient. "
@@ -178,6 +181,7 @@ class LaserEtchConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#ffffff")),
         metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
@@ -190,6 +194,7 @@ class LaserEtchConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=8,
         metavar=argutils.PositiveInt.METAVAR,
         help="Space separated, unquoted, list of the number of gradient steps to use. More steps will create a "

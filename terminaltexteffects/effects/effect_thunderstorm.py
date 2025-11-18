@@ -151,6 +151,7 @@ class ThunderstormConfig(BaseConfig):
         name="--final-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(12,),
         action=argutils.TupleAction,
         metavar=argutils.PositiveInt.METAVAR,

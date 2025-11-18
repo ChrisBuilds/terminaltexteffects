@@ -2,10 +2,11 @@
 
 Classes:
 
-"""  # noqa: INP001
+"""
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
@@ -13,6 +14,7 @@ from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.spanningtree.algo.aldousbroder import AldousBroder
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -22,7 +24,7 @@ def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
         tuple[str, type[BaseEffect], type[BaseConfig]]: The command name, effect class, and configuration class.
 
     """
-    return "effect", Effect, EffectConfig
+    return "dev_worm", Effect, EffectConfig
 
 
 @dataclass
@@ -30,7 +32,7 @@ class EffectConfig(BaseConfig):
     """Effect configuration dataclass."""
 
     parser_spec: ParserSpec = ParserSpec(
-        name="effect",
+        name="dev_worm",
         help="effect_description",
         description="effect_description",
         epilog=f"""{argutils.EASING_EPILOG}
@@ -69,7 +71,6 @@ class EffectConfig(BaseConfig):
         nargs="+",
         action=argutils.TupleAction,
         default=12,
-        action=argutils.TupleAction,
         metavar=argutils.PositiveInt.METAVAR,
         help=(
             "Space separated, unquoted, list of the number of gradient steps to use. More steps will "
@@ -130,7 +131,32 @@ class EffectIterator(BaseEffectIterator[EffectConfig]):
         super().__init__(effect)
         self.pending_chars: list[tte.EffectCharacter] = []
         self.character_final_color_map: dict[tte.EffectCharacter, tte.Color] = {}
+        self.alg = AldousBroder(self.terminal)
+        self.worm_body: list[tte.EffectCharacter] = []
+        self.worm_body_dir_map = {"north": "|", "south": "|", "east": "-", "west": "-"}
+        self.skipped_frames = 0
+        self.speed_up = 4
         self.build()
+
+    def update_worm(self) -> None:
+        current_pos = self.alg.char_last_linked or self.alg.linked_char_last_visited
+        if current_pos is None:
+            return
+        current_pos.animation.set_appearance("o")
+        self.worm_body.insert(0, current_pos)
+
+        if len(self.worm_body) > 1:
+            for direction, symbol in self.worm_body_dir_map.items():
+                if current_pos is self.worm_body[1].neighbors.get(direction):
+                    self.worm_body[1].animation.set_appearance(symbol)
+                    break
+            if len(self.worm_body) > 9:
+                removed_char = self.worm_body.pop()
+                if removed_char not in self.worm_body:
+                    removed_char.animation.set_appearance(
+                        removed_char.input_symbol,
+                        colors=tte.ColorPair(self.character_final_color_map.get(removed_char)),
+                    )
 
     def build(self) -> None:
         """Build the effect."""
@@ -145,12 +171,33 @@ class EffectIterator(BaseEffectIterator[EffectConfig]):
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
-            # do something with the data if needed (sort, adjust positions, etc)
+        for char in self.terminal.get_characters(inner_fill_chars=True, outer_fill_chars=True):
+            char.animation.set_appearance(
+                "█",
+                colors=tte.ColorPair(random.choice(("#5E3501", "#422601", "#A86002", "#584730", "#8A7861"))),
+            )
+            self.terminal.set_character_visibility(char, is_visible=True)
 
     def __next__(self) -> str:
         """Return the next frame of the effect."""
-        if self.pending_chars or self.active_characters:
-            # perform effect logic
+        if not self.alg.complete or self.active_characters:
+            if not self.alg.complete:
+                self.alg.step()
+                self.update_worm()
+                while not self.alg.char_last_linked and self.skipped_frames < self.speed_up:
+                    self.alg.step()
+                    self.update_worm()
+                    self.skipped_frames += 1
+                if self.skipped_frames > self.speed_up:
+                    self.speed_up += 1
+                self.skipped_frames = 0
+                if linked_char := self.alg.char_last_linked:
+                    self.speed_up = 4
+                    linked_char.animation.set_appearance(
+                        symbol=linked_char.input_symbol,
+                        colors=tte.ColorPair(self.character_final_color_map.get(linked_char)),
+                    )
+
             self.update()
             return self.frame
         raise StopIteration

@@ -56,8 +56,8 @@ class SmokeConfig(BaseConfig):
         name="--smoke-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
-        default=("░", "▒", "▓", "▒", "░"),
         action=argutils.TupleAction,
+        default=("░", "▒", "▓", "▒", "░"),
         metavar=argutils.Symbol.METAVAR,
         help=("Symbols to use for the smoke. Strings will be used in sequence to create an animation."),
     )  # pyright: ignore[reportAssignmentType]
@@ -68,6 +68,7 @@ class SmokeConfig(BaseConfig):
         name="--smoke-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(tte.Color("#242424"), tte.Color("#FFFFFF")),
         metavar=argutils.ColorArg.METAVAR,
         help=(
@@ -92,6 +93,7 @@ class SmokeConfig(BaseConfig):
         name="--final-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
+        action=argutils.TupleAction,
         default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#FFFFFF")),
         metavar=argutils.ColorArg.METAVAR,
         help=(
