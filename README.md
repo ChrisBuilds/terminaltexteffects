@@ -29,7 +29,8 @@
 
 ## TTE
 
-![synthgrid_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/6d1bab16-0520-44fa-a508-8f92d7d3be9e)
+![thunderstorm_demo](![thunderstorm_demo](https://github.com/user-attachments/assets/7678e1d2-df49-497e-bccd-87b933ece981)
+)
 
 TerminalTextEffects (TTE) is a terminal visual effects engine. TTE can be installed as a system application to produce effects in your terminal, or as a Python library to enable effects within your Python scripts/applications. TTE includes a growing library of built-in effects which showcase the engine's features. These features include:
 
@@ -48,8 +49,6 @@ TerminalTextEffects (TTE) is a terminal visual effects engine. TTE can be instal
 ## Requirements
 
 TerminalTextEffects is written in Python and does not require any 3rd party modules. Terminal interactions use standard ANSI terminal sequences and should work in most modern terminals.
-
-Note: Windows Terminal performance is slow for some effects.
 
 ## Installation
 
@@ -213,9 +212,9 @@ For more information, view the [Application Usage Guide](https://chrisbuilds.git
 All effects are iterators which return a string representing the current frame. Basic usage is as simple as importing the effect, instantiating it with the input text, and iterating over the effect.
 
 ```python
-from terminaltexteffects.effects import effect_rain
+from terminaltexteffects.effects import Rain
 
-effect = effect_rain.Rain("your text here")
+effect = Rain("your text here")
 
 for frame in effect:
     # do something with the string
@@ -225,9 +224,9 @@ for frame in effect:
 In the event you want to allow TTE to handle the terminal setup/teardown, cursor positioning, and animation frame rate, a terminal_output() context manager is available.
 
 ```python
-from terminaltexteffects.effects import effect_rain
+from terminaltexteffects.effects import Rain
 
-effect = effect_rain.Rain("your text here")
+effect = Rain("your text here")
 with effect.terminal_output() as terminal:
     for frame in effect:
         terminal.print(frame)
