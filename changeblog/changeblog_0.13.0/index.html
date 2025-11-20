@@ -1,0 +1,3148 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="TerminalTextEffects Documentation">
+      
+      
+        <meta name="author" content="ChrisBuilds">
+      
+      
+      
+        <link rel="prev" href="../changeblog/">
+      
+      
+        <link rel="next" href="../changeblog_0.12.0/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>0.13.0 (Still Alive) - TerminalTextEffects Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#0130-still-alive" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="TerminalTextEffects Docs" class="md-header__button md-logo" aria-label="TerminalTextEffects Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            TerminalTextEffects Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              0.13.0 (Still Alive)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ChrisBuilds/terminaltexteffects" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="TerminalTextEffects Docs" class="md-nav__button md-logo" aria-label="TerminalTextEffects Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    TerminalTextEffects Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ChrisBuilds/terminaltexteffects" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Intro to TTE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Change[B]log
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Change[B]log
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changeblog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ChangeBlog Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    0.13.0 (Still Alive)
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    0.13.0 (Still Alive)
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#release-0130" class="md-nav__link">
+    <span class="md-ellipsis">
+      Release 0.13.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release 0.13.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#release-summary-thunderstorm-smoke-spanning-trees-and-screensaver-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Release Summary (Thunderstorm, Smoke, Spanning Trees, and Screensaver Support)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#this-took-too-long" class="md-nav__link">
+    <span class="md-ellipsis">
+      This Took Too Long
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yer-a-screensaver-harry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Yer a ScreenSaver, Harry
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-effects-thunderstorm-and-smoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      New Effects (Thunderstorm and Smoke)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="New Effects (Thunderstorm and Smoke)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#thunderstorm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Thunderstorm
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      Smoke
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#refreshed-effects" class="md-nav__link">
+    <span class="md-ellipsis">
+      Refreshed Effects
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Refreshed Effects">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#burn" class="md-nav__link">
+    <span class="md-ellipsis">
+      Burn
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#laseretch" class="md-nav__link">
+    <span class="md-ellipsis">
+      LaserEtch
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#minimum-spanning-trees-and-searchexplore" class="md-nav__link">
+    <span class="md-ellipsis">
+      Minimum Spanning Trees and Search/Explore
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Minimum Spanning Trees and Search/Explore">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graph-algorithms-in-tte" class="md-nav__link">
+    <span class="md-ellipsis">
+      Graph Algorithms in TTE
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#misc" class="md-nav__link">
+    <span class="md-ellipsis">
+      Misc
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Misc">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#random-effect" class="md-nav__link">
+    <span class="md-ellipsis">
+      Random Effect
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#faster-tte-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Faster TTE Startup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#framerate-reduced" class="md-nav__link">
+    <span class="md-ellipsis">
+      Framerate Reduced
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#moving-forward" class="md-nav__link">
+    <span class="md-ellipsis">
+      Moving Forward
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plain-old-changelog" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plain Old Changelog
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changeblog_0.12.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    0.12.0 (Color Parsing)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changeblog_0.11.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    0.11.0 (Enter the Matrix)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changeblog_0.10.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    0.10.0 (ColorShift)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    How to install & use TTE
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            How to install & use TTE
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Install
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../appguide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Application Usage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libguide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Library Usage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../showroom/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Effects Showroom
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Library Cookbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Engine
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            Engine
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/baseeffect/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BaseEffect
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/basecharacter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    EffectCharacter
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/baseconfig/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BaseConfig
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/eventhandler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    EventHandler
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_5" id="__nav_6_1_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Animation
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1_5">
+            <span class="md-nav__icon md-icon"></span>
+            Animation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/animation/animation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Animation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/animation/charactervisual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CharacterVisual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/animation/frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Frame
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/animation/scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scene
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_6" id="__nav_6_1_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Motion
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1_6">
+            <span class="md-nav__icon md-icon"></span>
+            Motion
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/motion/motion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Motion
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/motion/waypoint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Waypoint
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/motion/segment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Segment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/motion/path/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Path
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_7" id="__nav_6_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Terminal
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            Terminal
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/terminal/terminal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Terminal
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/terminal/terminalconfig/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TerminalConfig
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/terminal/canvas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Canvas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_8" id="__nav_6_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Utils
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            Utils
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/ansitools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ANSItools
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/argutils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ArgUtils
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/color/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Color
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/colorpair/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ColorPair
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/colorterm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ColorTerm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/easing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Easing Functions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/exceptions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Exceptions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/geometry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Geometry
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/gradient/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Gradient
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/hexterm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HexTerm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_8_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_8_11" id="__nav_6_1_8_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    SpanningTree
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_6_1_8_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1_8_11">
+            <span class="md-nav__icon md-icon"></span>
+            SpanningTree
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/spanningtree/base_generator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    base_generator
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_8_11_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_8_11_2" id="__nav_6_1_8_11_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Algorithms
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_6_1_8_11_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1_8_11_2">
+            <span class="md-nav__icon md-icon"></span>
+            Algorithms
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/spanningtree/algos/recursive_backtracker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Recursive Backtracker
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/spanningtree/algos/prims_simple/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Prims Simple
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/spanningtree/algos/prims_weighted/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Prims Weighted
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/utils/spanningtree/algos/breadthfirst/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Breadth First
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Effects
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Effects
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/beams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Beams
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/binarypath/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Binarypath
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/blackhole/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Blackhole
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/bouncyballs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BouncyBalls
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/bubbles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bubbles
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/burn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Burn
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/colorshift/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ColorShift
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/crumble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Crumble
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/decrypt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Decrypt
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/errorcorrect/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ErrorCorrect
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/expand/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expand
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/fireworks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fireworks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/highlight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Highlight
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/laseretch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LaserEtch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Matrix
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/middleout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MiddleOut
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/orbittingvolley/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OrbittingVolley
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/overflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overflow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/pour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pour
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/print/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Print
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/rain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rain
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/randomsequence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RandomSequence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/rings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rings
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/scattered/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scattered
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/slice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Slice
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/slide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Slide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/smoke/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Smoke
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/spotlights/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Spotlights
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/spray/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Spray
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/swarm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Swarm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/sweep/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sweep
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/synthgrid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SynthGrid
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/thunderstorm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Thunderstorm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/unstable/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Unstable
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/vhstape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    VHSTape
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/waves/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Waves
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../effects/wipe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Wipe
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#release-0130" class="md-nav__link">
+    <span class="md-ellipsis">
+      Release 0.13.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release 0.13.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#release-summary-thunderstorm-smoke-spanning-trees-and-screensaver-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Release Summary (Thunderstorm, Smoke, Spanning Trees, and Screensaver Support)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#this-took-too-long" class="md-nav__link">
+    <span class="md-ellipsis">
+      This Took Too Long
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yer-a-screensaver-harry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Yer a ScreenSaver, Harry
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-effects-thunderstorm-and-smoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      New Effects (Thunderstorm and Smoke)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="New Effects (Thunderstorm and Smoke)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#thunderstorm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Thunderstorm
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      Smoke
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#refreshed-effects" class="md-nav__link">
+    <span class="md-ellipsis">
+      Refreshed Effects
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Refreshed Effects">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#burn" class="md-nav__link">
+    <span class="md-ellipsis">
+      Burn
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#laseretch" class="md-nav__link">
+    <span class="md-ellipsis">
+      LaserEtch
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#minimum-spanning-trees-and-searchexplore" class="md-nav__link">
+    <span class="md-ellipsis">
+      Minimum Spanning Trees and Search/Explore
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Minimum Spanning Trees and Search/Explore">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graph-algorithms-in-tte" class="md-nav__link">
+    <span class="md-ellipsis">
+      Graph Algorithms in TTE
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#misc" class="md-nav__link">
+    <span class="md-ellipsis">
+      Misc
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Misc">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#random-effect" class="md-nav__link">
+    <span class="md-ellipsis">
+      Random Effect
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#faster-tte-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Faster TTE Startup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#framerate-reduced" class="md-nav__link">
+    <span class="md-ellipsis">
+      Framerate Reduced
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#moving-forward" class="md-nav__link">
+    <span class="md-ellipsis">
+      Moving Forward
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plain-old-changelog" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plain Old Changelog
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="0130-still-alive">0.13.0 (Still Alive)</h1>
+<h2 id="release-0130">Release 0.13.0</h2>
+<h3 id="release-summary-thunderstorm-smoke-spanning-trees-and-screensaver-support">Release Summary (Thunderstorm, Smoke, Spanning Trees, and Screensaver Support)</h3>
+<p>This release features two brand new effects, <a href="../../showroom/#smoke">Smoke</a> and <a href="../../showroom/#thunderstorm">Thunderstorm</a>, as well as refreshed effects <a href="../../showroom/#burn">Burn</a> and <a href="../../showroom/#laseretch">Laseretch</a>. Behind the scenes, the engine and application received some big changes, especially around argument parsing and configuration.</p>
+<h3 id="this-took-too-long">This Took Too Long</h3>
+<hr />
+<p>Despite my intention, life stuff caused this update to take far longer than necessary. To address the unpredictability of the universe, I am going to make updates much smaller and more frequent. </p>
+<h3 id="yer-a-screensaver-harry">Yer a ScreenSaver, Harry</h3>
+<hr />
+<p>In other news, TerminalTextEffects is currently a screensaver in <a href="https://omarchy.org/">Omarchy</a>.</p>
+<p><img alt="Omarchy Laseretch" src="../../img/changeblog_media/0.13.0/omarchy_laseretch.gif" /></p>
+<p>I found out when they opened an issue/PR to support this TTE use-case. To that end, there are three new command-line options:</p>
+<ul>
+<li>
+<p><code>--reuse-canvas</code> : Rather than create lines beneath the current prompt as the canvas. This option causes the terminal handler to move the cursor up by the number of visible-lines in the input text. This will eliminate scrolling between effects. Note that this option has unpredictable results when used from a terminal prompt as the prompt itself and any intermediate output will offset the canvas from the prior run.</p>
+</li>
+<li>
+<p><code>--no-eol</code> : When an effect ends, TTE normally prints a newline to place the prompt on a new line below the canvas. When this option is used, the newline is suppressed.</p>
+</li>
+<li>
+<p><code>--no-restore-cursor</code> : TTE uses an ANSI sequence to hide the cursor during an effect and restores the cursor after the effect ends. When this option is used, the cursor will remain hidden.</p>
+</li>
+</ul>
+<p>Using these three options together, you can run TTE repeatedly in the same location in a terminal as one may do in a screensaver scenario.</p>
+<p>These options can be used when using TTE as a library, too. So you can run effects repeated in your application.</p>
+<details class="info">
+<summary>Reusing the terminal in your Python application.</summary>
+<p>Here we allow the first effect to run without the <code>reuse_canvas</code> option, to get the original canvas setup. Then we set <code>effect.terminal_config.reuse_canvas</code> to true for the remaining effects. All effects will run at the same position in the terminal, unless something else produces output.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">terminaltexteffects.effects</span><span class="w"> </span><span class="kn">import</span> <span class="n">Highlight</span><span class="p">,</span> <span class="n">Slide</span><span class="p">,</span> <span class="n">Wipe</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">text</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;EXAMPLE&quot;</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">for</span> <span class="n">pos</span><span class="p">,</span> <span class="n">effect_class</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">((</span><span class="n">Wipe</span><span class="p">,</span> <span class="n">Highlight</span><span class="p">,</span> <span class="n">Slide</span><span class="p">)):</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">effect</span> <span class="o">=</span> <span class="n">effect_class</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">effect</span><span class="o">.</span><span class="n">terminal_config</span><span class="o">.</span><span class="n">reuse_canvas</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">effect</span><span class="o">.</span><span class="n">terminal_config</span><span class="o">.</span><span class="n">no_eol</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="k">with</span> <span class="n">effect</span><span class="o">.</span><span class="n">terminal_output</span><span class="p">()</span> <span class="k">as</span> <span class="n">terminal</span><span class="p">:</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">effect</span><span class="p">:</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>            <span class="n">terminal</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+</span></code></pre></div>
+</details>
+<p>On that note, it's very cool to find TTE in the wild. If you are currently using TTE or have an idea for a use-case, feel free to open an Issue/Discussion for questions/support.</p>
+<h3 id="new-effects-thunderstorm-and-smoke">New Effects (Thunderstorm and Smoke)</h3>
+<hr />
+<p>There are two new effects in this update, which feels a bit underwhelming given how long it took to release. Really, writing effects often takes a few hours +/- some time to polish. Moving into a more frequent and smaller release cycle will significantly aid in new effect production.</p>
+<h4 id="thunderstorm">Thunderstorm</h4>
+<p>The text darkens as though storm clouds are rolling in. It begins to rain. Lightning strikes randomly around the canvas. When lightning reaches the bottom of the canvas, it flashes and all characters flash in sync with the strike. Sparks fly up from the lightning point of contact. Any characters in the path of the strike have a burning glow that lingers for a bit after the strike dissipates. Eventually, the rain stops and the characters lighten.</p>
+<p><img alt="Thunderstorm" src="../../img/effects_demos/thunderstorm_demo.gif" /></p>
+<p>The storm time is configurable, as is the lightning strike chance. As usual, colors and gradients are also configurable.</p>
+<h4 id="smoke">Smoke</h4>
+<p>Text appears uncolored. Smoke begins to flow out of a random point and spread around the canvas. When a character encounters the smoke, the smoke and character flow through the final gradient colors until landing on the correct color. Smoke will expand through the entire canvas and colorize all characters.</p>
+<p><img alt="Smoke" src="../../img/effects_demos/smoke_demo.gif" /></p>
+<p>The smoke will limit itself to the text boundary unless the <code>--use-whole-canvas</code> effect option is passed. Smoke symbols, gradient, and all other colors are configurable.</p>
+<h3 id="refreshed-effects">Refreshed Effects</h3>
+<hr />
+<h4 id="burn">Burn</h4>
+<p>Burn has been upgraded with a more realistic burn pattern and new smoke particles. A random spot on the canvas is chosen for the initial ignition, the flame spreads out in all direction from this point. Smoke is emitted from some of the burned characters.</p>
+<p><img alt="Burn" src="../../img/effects_demos/burn_demo.gif" /></p>
+<h4 id="laseretch">LaserEtch</h4>
+<p>Laseretch has a new, and default, etch pattern, in addition to the existing patterns. The laser travels around the input text rather than only moving in rows/columns/diagonals. </p>
+<p><img alt="LaserEtch" src="../../img/effects_demos/laseretch_demo.gif" /></p>
+<h3 id="minimum-spanning-trees-and-searchexplore">Minimum Spanning Trees and Search/Explore</h3>
+<hr />
+<p>As a bit of background, I have an older project called <a href="https://github.com/ChrisBuilds/terminalmaze">TerminalMaze</a> which is the primordial soup from which many of the TTE concepts emerged. TerminalMaze has a very different animation mechanism and features a DSL for describing animations via TOML config. None of this is properly documented at this time. I hope to create a nice README for it in the near future.</p>
+<p>TerminalMaze uses various Minimum Spanning-Tree algorithms to build mazes in the terminal. The nodes in the graph are animated based on the current activity of the algorithm. For example, below you will see a visualization of the recursive backtracker algorithm. When the algorithm links a node into the graph, the node glows bright greenish-white with a gradient toward green. When the algorithm pops the node off it's stack, the color is returned to white. </p>
+<p>There are examples of many algorithms below, with unique animations corresponding to the algorithm's decision logic.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:8"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><input id="__tabbed_1_5" name="__tabbed_1" type="radio" /><input id="__tabbed_1_6" name="__tabbed_1" type="radio" /><input id="__tabbed_1_7" name="__tabbed_1" type="radio" /><input id="__tabbed_1_8" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Recursive Backtracker</label><label for="__tabbed_1_2">Prims Simple</label><label for="__tabbed_1_3">Prims Weighted</label><label for="__tabbed_1_4">Aldous Broder</label><label for="__tabbed_1_5">Wilsons</label><label for="__tabbed_1_6">Recursive Division</label><label for="__tabbed_1_7">Kruskals Randomized</label><label for="__tabbed_1_8">Ellers</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><img alt="RecursiveBacktracker" src="../../img/changeblog_media/0.13.0/terminalmaze_recursive_backtracker.gif" /></p>
+</div>
+<div class="tabbed-block">
+<p><img alt="PrimsSimple" src="../../img/changeblog_media/0.13.0/terminalmaze_prims_simple.gif" /></p>
+</div>
+<div class="tabbed-block">
+<p><img alt="PrimsWeighted" src="../../img/changeblog_media/0.13.0/terminalmaze_prims_weighted.gif" /></p>
+</div>
+<div class="tabbed-block">
+<p><img alt="AldousBroder" src="../../img/changeblog_media/0.13.0/terminalmaze_aldous_broder.gif" /></p>
+</div>
+<div class="tabbed-block">
+<p><img alt="Wilsons" src="../../img/changeblog_media/0.13.0/terminalmaze_wilsons.gif" /></p>
+</div>
+<div class="tabbed-block">
+<p><img alt="RecursiveDivision" src="../../img/changeblog_media/0.13.0/terminalmaze_recursive_division.gif" /></p>
+</div>
+<div class="tabbed-block">
+<p><img alt="KruskalsRandomized" src="../../img/changeblog_media/0.13.0/terminalmaze_kruskals_randomized.gif" /></p>
+</div>
+<div class="tabbed-block">
+<p><img alt="Ellers" src="../../img/changeblog_media/0.13.0/terminalmaze_ellers.gif" /></p>
+</div>
+</div>
+</div>
+<p>A more interesting demonstration of the TerminalMaze animation can be seen by building a maze and then running a Breadth First search across it to find the bottom-right-most cell. The Breadth First algorithm has a more elaborate animation.</p>
+<p><img alt="RecursiveBacktrackerBreadthFirst" src="../../img/changeblog_media/0.13.0/terminalmaze_recursive_backtracker_breadth_first.gif" /></p>
+<h4 id="graph-algorithms-in-tte">Graph Algorithms in TTE</h4>
+<p>I've wanted to incorporate many of the algorithms from TerminalMaze into TTE. I finally got around to designing the algorithm interface and relevant methods/attributes on the Terminal/Canvas/EffectCharacter classes and can now easily provide graphing algorithms to the effects.</p>
+<p>The Canvas can be treated like a graph with all EffectCharacters as nodes. Nodes can be linked and their neighbors queried. That's pretty much all it takes.</p>
+<p>This new feature has already been put to use in the new and refreshed effects.</p>
+<ul>
+<li>
+<p>Smoke : Smoke is a Prims Weighted tree being explored by a breadth first search. All new EffectCharacters explored are turned into smoke followed by the character animation.</p>
+</li>
+<li>
+<p>LaserEtch : The new laser path is a Recursive Backtracker tree with the backtracking removed.</p>
+</li>
+<li>
+<p>Burn : The new burn pattern is a Prims Simple tree where the node-link order is used as the ignition order for the characters.</p>
+</li>
+</ul>
+<p>I have many ideas for new effects which are enabled by these sorts of algorithms.</p>
+<h3 id="misc">Misc</h3>
+<hr />
+<h4 id="random-effect">Random Effect</h4>
+<p>TTE now has a random effect option that is used like this:</p>
+<p><code>ll | tte random_effect</code></p>
+<p>You can still pass global terminal options, but you cannot pass effect-specific options.</p>
+<div class="admonition success">
+<p class="admonition-title">Valid Invocation with Terminal Config</p>
+<p><code>ll | tte --canvas-height 0 --canvas-width 0 --anchor-text c random_effect</code></p>
+<p>Passing terminal options such as <code>--canvas-height</code> works.</p>
+</div>
+<div class="admonition failure">
+<p class="admonition-title">Invalid Invocation with Effect Config</p>
+<p><code>ll | tte random_effect --final-gradient-stops 00ff00 ff0000 0000ff</code></p>
+<p>Passing effect options such as <code>--final-gradient-stops</code> does not work.</p>
+</div>
+<h4 id="faster-tte-startup">Faster TTE Startup</h4>
+<p>TTE will now launch faster as a result of the changes in Config/Terminal/Argument parsing classes. How much faster? Not sure but definitely something.</p>
+<h4 id="framerate-reduced">Framerate Reduced</h4>
+<p>TTE has always set the target framerate to 100FPS. This framerate was chosen arbitrarily during initial development and I mostly forgot about it. This framerate is unnecessarily high and leaves little time for the effects to do more complicated work between frames. It has been adjusted to 60FPS and all effects have had animation frames and movement speeds adjusted for visual parity with 100FPS. This should result in smoother animation on slower machines for effects which do a lot of dynamic work during the run. </p>
+<h3 id="moving-forward">Moving Forward</h3>
+<hr />
+<p>Look forward to more frequent updates. Likely many of which are only a single effect or two without bundling them with months of engine changes nobody cares about. Who knows, maybe one day I'll get to actually writing a guide to producing your own effects. I won't consider TTE <em>Done</em> until that happens.</p>
+<hr />
+<h3 id="plain-old-changelog">Plain Old Changelog</h3>
+<p><a href="https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CHANGELOG.md">0.13.0</a></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
