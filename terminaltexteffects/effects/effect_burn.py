@@ -82,7 +82,7 @@ class BurnConfig(BaseConfig):
     smoke_chance: float = ArgSpec(
         name="--smoke-chance",
         type=argutils.NonNegativeRatio.type_parser,
-        default=0.2,
+        default=0.5,
         metavar=argutils.NonNegativeRatio.METAVAR,
         help="Chance a given character will produce smoke while burning. Use 0 for no smoke.",
     )  # pyright: ignore[reportAssignmentType]
