@@ -57,7 +57,7 @@ TerminalTextEffects is written in Python and does not require any 3rd party modu
 
 Tool Run
 
-```uv tool run --from terminaltexteffects tte -h```
+```uv tool run terminaltexteffects -h```
 
 Application Install
 
