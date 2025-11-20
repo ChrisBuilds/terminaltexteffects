@@ -51,13 +51,41 @@ TerminalTextEffects is written in Python and does not require any 3rd party modu
 
 ## Installation
 
-```pip install terminaltexteffects```
-OR
-```pipx install terminaltexteffects```
-OR
+<details>
+
+<summary>UV Install</summary>
+
+Tool Run
+
+```uv tool run --from terminaltexteffects tte -h```
+
+Application Install
+
 ```uv tool install terminaltexteffects```
 
-### Nix (flakes)
+Library Install
+
+```uv install terminaltexteffects```
+
+</details>
+
+<details>
+
+<summary>Pip Install</summary>
+
+Application Install
+
+```pipx install terminaltexteffects```
+
+Library Install
+
+```pip install terminaltexteffects```
+
+</details>
+
+<details>
+
+<summary>Nix (flakes)</summary>
 
 Add it as an input to a flake:
 
@@ -79,7 +107,11 @@ Or run it directly:
 echo 'terminaltexteffects is awesome' | nix run github:ChrisBuilds/terminaltexteffects/<optional-ref> -- beams
 ```
 
-### Nix (classic)
+</details>
+
+<details>
+
+<summary>Nix (classic)</summary>
 
 Fetch the source and add it to, e.g. your shell:
 
@@ -98,6 +130,7 @@ in
     packages = [tte];
   }
 ```
+</details>
 
 ## Usage
 
@@ -239,6 +272,10 @@ Note: Below you'll find a subset of the built-in effects.
 
 View all of the effects and related information in the [Effects Showroom](https://chrisbuilds.github.io/terminaltexteffects/showroom/).
 
+<details>
+
+<summary>Effects Demos</summary>
+
 #### Beams
 
 ![beams_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/6bb98dac-688e-43c9-96aa-1a45f451d4cb)
@@ -268,10 +305,7 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 ![vhstape_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/720abbf4-f97d-4ce9-96ee-15ef973488d2)
 
-
-## In-Development Preview
-
-Any effects shown below are in development and will be available in the next release.
+</details>
 
 ## Latest Release Notes
 
