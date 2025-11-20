@@ -42,6 +42,7 @@ nav:
   - Intro to TTE: index.md
   - Change[B]log: 
     - changeblog/changeblog.md
+    - changeblog/changeblog_0.13.0.md
     - changeblog/changeblog_0.12.0.md
     - changeblog/changeblog_0.11.0.md
     - changeblog/changeblog_0.10.0.md
