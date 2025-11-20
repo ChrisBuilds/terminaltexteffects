@@ -230,7 +230,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         for text_char in all_chars:
             faded_color = tte.Animation.adjust_color_brightness(
                 final_gradient_mapping[text_char.input_coord],
-                brightness=0.65,
+                brightness=0.5,
             )
             # post-strike glow and cool scene
             glow_gradient = tte.Gradient(self.config.glowing_text_color, faded_color, steps=7)
