@@ -24,6 +24,7 @@
   * PrimsSimple - Unweighted Prims
   * PrimsWeighted
   * RecursiveBacktracker
+  * Breadthfirst
 * `EffectCharacter` has a new attribute `links` to support creating trees using spanning-tree algorithms.
 ---
 
@@ -47,6 +48,7 @@
 * Burn - Character ignite order is based on the link-order of a text-boundary-bound prims simple algorithm.
 * Pour - Changed `--movement-speed` to `--movement-speed-range` to add some variation in character falling speed.
 * All effects have been adjusted for visual parity at 60 fps.
+* All effects are up-imported into `terminaltexteffects.effects` to simplify importing to `from terminaltexteffects.effects import Burn`.
 
 ---
 
@@ -61,6 +63,7 @@
 * Frame rate reduced from 100 fps to 60 fps.
 * Typed argument parsing and related configuration utilities and classes have been rewritten.
 * Terminal distance calculations take into account the cell height/width ratio.
+* Completely rewrote modules and classes related to argument parsing and effect/terminal configuration handling. This eliminates the design which forced building multiple configuration objects depending on how the effect was run, and also enabled the random effect option.
 
 ### Bug Fixes (0.13.0)
 
