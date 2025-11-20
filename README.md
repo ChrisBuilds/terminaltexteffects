@@ -29,8 +29,7 @@
 
 ## TTE
 
-![thunderstorm_demo](![thunderstorm_demo](https://github.com/user-attachments/assets/7678e1d2-df49-497e-bccd-87b933ece981)
-)
+![thunderstorm_demo](https://github.com/user-attachments/assets/7678e1d2-df49-497e-bccd-87b933ece981)
 
 TerminalTextEffects (TTE) is a terminal visual effects engine. TTE can be installed as a system application to produce effects in your terminal, or as a Python library to enable effects within your Python scripts/applications. TTE includes a growing library of built-in effects which showcase the engine's features. These features include:
 
