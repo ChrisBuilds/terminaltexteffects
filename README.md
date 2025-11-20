@@ -246,11 +246,15 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 #### Burn
 
-![burn_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/9770711a-ea68-48cc-947f-fb13c6613a2e)
+![burn_demo](https://github.com/user-attachments/assets/b2e6ad48-15f7-4363-b281-d165b91403c4)
 
 #### Decrypt
 
 ![decrypt_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/36c23e70-065d-4316-a09e-c2761882cbb3)
+
+#### LaserEtch
+
+![laseretch_demo](https://github.com/user-attachments/assets/b65b57b6-3a02-411e-b9f2-23ec4572c328)
 
 #### Matrix
 
