@@ -56,6 +56,8 @@ Note: Windows Terminal performance is slow for some effects.
 ```pip install terminaltexteffects```
 OR
 ```pipx install terminaltexteffects```
+OR
+```uv tool install terminaltexteffects```
 
 ### Nix (flakes)
 
@@ -90,7 +92,7 @@ let
   tte = pkgs.callPackage (pkgs.fetchFromGitHub {
     owner = "ChrisBuilds";
     repo = "terminaltexteffects";
-    rev = "<revision, e.g. main/v0.10.0/etc.>";
+    rev = "<revision, e.g. main/v0.13.0/etc.>";
     hash = ""; # Build first, put proper hash in place
   }) {};
 in
@@ -112,57 +114,48 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
 <summary>TTE Command Line Options</summary>
 
 ```markdown
-options:
+  options:
   -h, --help            show this help message and exit
-  --input-file INPUT_FILE, -i INPUT_FILE
-                        File to read input from (default: None)
+  --input-file, -i INPUT_FILE
+                        File to read input from
   --version, -v         show program's version number and exit
   --tab-width (int > 0)
-                        Number of spaces to use for a tab character. (default: 4)
-  --xterm-colors        Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256
-                        color. (default: False)
-  --no-color            Disable all colors in the effect. (default: False)
+                        Number of spaces to use for a tab character.
+  --xterm-colors        Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color.
+  --no-color            Disable all colors in the effect.
+  --terminal-background-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                        The background color of you terminal. Used to determine the appropriate color for fade-in/out within effects.
   --existing-color-handling {always,dynamic,ignore}
-                        Specify handling of existing 8-bit and 24-bit ANSI color sequences in the input
-                        data. 3-bit and 4-bit sequences are not supported. 'always' will always use the
-                        input colors, ignoring any effect specific colors. 'dynamic' will leave it to
-                        the effect implementation to apply input colors. 'ignore' will ignore the
-                        colors in the input data. Default is 'ignore'. (default: ignore)
-  --wrap-text           Wrap text wider than the canvas width. (default: False)
+                        Specify handling of existing 8-bit and 24-bit ANSI color sequences in the input data. 3-bit and 4-bit sequences are not supported. 'always' will always use the
+                        input colors, ignoring any effect specific colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors in
+                        the input data. Default is 'ignore'.
+  --wrap-text           Wrap text wider than the canvas width.
   --frame-rate FRAME_RATE
-                        Target frame rate for the animation in frames per second. Set to 0 to disable
-                        frame rate limiting. (default: 100)
+                        Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting. Defaults to 60.
   --canvas-width int >= -1
-                        Canvas width, set to an integer > 0 to use a specific dimension, use 0 to match
-                        the terminal width, or use -1 to match the input text width. (default: -1)
+                        Canvas width, set to an integer > 0 to use a specific dimension, use 0 to match the terminal width, or use -1 to match the input text width. Defaults to -1.
   --canvas-height int >= -1
-                        Canvas height, set to an integer > 0 to use a specific dimension, use 0 to
-                        match the terminal height, or use -1 to match the input text height. (default:
-                        -1)
+                        Canvas height, set to an integer > 0 to use a specific dimension, use 0 to match the terminal height, or use -1 to match the input text height. Defaults to -1.
   --anchor-canvas {sw,s,se,e,ne,n,nw,w,c}
-                        Anchor point for the canvas. The canvas will be anchored in the terminal to the
-                        location corresponding to the cardinal/diagonal direction. (default: sw)
+                        Anchor point for the canvas. The canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
   --anchor-text {n,ne,e,se,s,sw,w,nw,c}
-                        Anchor point for the text within the Canvas. Input text will anchored in the
-                        Canvas to the location corresponding to the cardinal/diagonal direction.
-                        (default: sw)
+                        Anchor point for the text within the Canvas. Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. Defaults to
+                        'sw'.
   --ignore-terminal-dimensions
-                        Ignore the terminal dimensions and utilize the full Canvas beyond the extents
-                        of the terminal. Useful for sending frames to another output handler. (default:
-                        False)
-  --no-eol
-                        Suppress the trailing newline emitted when an effect animation completes.
-                        (default: False)
+                        Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. Useful for sending frames to another output handler.
+  --reuse-canvas        Do not create new rows at the start of the effect. The cursor will be moved up the number of rows present in the input text in an attempt to re-use the canvas.
+                        This option works best when used in a shell script. If used interactively with prompts between runs, the result is unpredictable.
+  --no-eol              Suppress the trailing newline emitted when an effect animation completes.
+  --no-restore-cursor   Do not restore cursor visibility after the effect.
 
   Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
-  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,canvas_test,colorshift,crumble,decrypt,dev,errorcorrect,expand,fireworks,highlight,laseretch,matrix,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slice,slide,spotlights,spray,swarm,sweep,synthgrid,test,unstable,vhstape,waves,wipe}
+  {random_effect,beams,binarypath,blackhole,bouncyballs,bubbles,burn,colorshift,crumble,decrypt,dev,dev_worm,errorcorrect,expand,fireworks,highlight,laseretch,matrix,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slice,slide,smoke,spotlights,spray,swarm,sweep,synthgrid,test,thunderstorm,unstable,vhstape,waves,wipe}
                         Available Effects
-    beams               Create beams which travel over the canvas illuminating the characters behind
-                        them.
-    binarypath          Binary representations of each character move towards the home coordinate of
-                        the character.
+    random_effect       Randomly select an effect to apply to the input text. All effect and effect-specific options are ignored.
+    beams               Create beams which travel over the canvas illuminating the characters behind them.
+    binarypath          Binary representations of each character move towards the home coordinate of the character.
     blackhole           Characters are consumed by a black hole and explode outwards.
     bouncyballs         Characters are bouncy balls falling from the top of the canvas.
     bubbles             Characters are formed into bubbles that float down and pop.
@@ -177,29 +170,24 @@ options:
     laseretch           A laser etches characters onto the terminal.
     matrix              Matrix digital rain effect.
     middleout           Text expands in a single row or column in the middle of the canvas then out.
-    orbittingvolley     Four launchers orbit the canvas firing volleys of characters inward to build
-                        the input text from the center out.
-    overflow            Input text overflows and scrolls the terminal in a random order until
-                        eventually appearing ordered.
+    orbittingvolley     Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.
+    overflow            Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.
     pour                Pours the characters into position from the given direction.
-    print               Lines are printed one at a time following a print head. Print head performs
-                        line feed, carriage return.
+    print               Lines are printed one at a time following a print head. Print head performs line feed, carriage return.
     rain                Rain characters from the top of the canvas.
     randomsequence      Prints the input data in a random sequence.
     rings               Characters are dispersed and form into spinning rings.
     scattered           Text is scattered across the canvas and moves into position.
     slice               Slices the input in half and slides it into place from opposite directions.
     slide               Slide characters into view from outside the terminal.
-    spotlights          Spotlights search the text area, illuminating characters, before converging in
-                        the center and expanding.
+    smoke               Smoke floods the canvas colorizing any characters it crosses.
+    spotlights          Spotlights search the text area, illuminating characters, before converging in the center and expanding.
     spray               Draws the characters spawning at varying rates from a single point.
-    swarm               Characters are grouped into swarms and move around the terminal before settling
-                        into position.
-    sweep               Sweep across the canvas to reveal uncolored text, reverse sweep to color the
-                        text.
+    swarm               Characters are grouped into swarms and move around the terminal before settling into position.
+    sweep               Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.
     synthgrid           Create a grid which fills with characters dissolving into the final text.
-    unstable            Spawn characters jumbled, explode them to the edge of the canvas, then
-                        reassemble them in the correct layout.
+    thunderstorm        Create a thunderstorm in the terminal.
+    unstable            Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the correct layout.
     vhstape             Lines of characters glitch left and right and lose detail like an old VHS tape.
     waves               Waves travel across the terminal leaving behind the characters.
     wipe                Wipes the text across the terminal to reveal characters.
@@ -257,17 +245,6 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 ![beams_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/6bb98dac-688e-43c9-96aa-1a45f451d4cb)
 
-#### Binarypath
-
-![binarypath_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/99ad3946-c475-4743-93e2-cdfb2a7f558f)
-
-#### Blackhole
-
-![blackhole_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/877579d3-d353-4bed-9a95-d3ea7a53200a)
-
-#### Bubbles
-
-![bubbles_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/5a616538-7936-4f55-b2ff-28e6c4179fce)
 
 #### Burn
 
@@ -277,37 +254,9 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 ![decrypt_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/36c23e70-065d-4316-a09e-c2761882cbb3)
 
-#### Fireworks
-
-![fireworks_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/da6a97b1-c4fd-4370-9852-9ddb8a494b55)
-
 #### Matrix
 
 ![matrix_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/0f6ddfd9-5e78-4de2-a187-7950b1e5b9d0)
-
-#### Orbittingvolley
-
-![orbittingvolley_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/084038e5-9d49-4c7d-bf15-e989f541b15c)
-
-#### Pour
-
-![pour_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/145c2a4e-6b30-48c6-80a3-afb03edf7c22)
-
-#### Print
-
-![print_demo](/docs/img/effects_demos/print_demo.gif)
-
-#### Rain
-
-![rain_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/7b8cf447-67b6-41e9-b354-07b3e5161d10)
-
-#### Rings
-
-![rings_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/cb7f6388-0f46-42f1-a2b3-6a267e9451f0)
-
-#### Slide
-
-![slide_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/218e7218-e9ef-44de-b43b-5e824623a957)
 
 #### Spotlights
 
@@ -317,9 +266,6 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 ![vhstape_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/720abbf4-f97d-4ce9-96ee-15ef973488d2)
 
-#### Waves
-
-![waves_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/ea9b04ca-e526-4c7e-b98d-a98a42f7137f)
 
 ## In-Development Preview
 
@@ -329,94 +275,84 @@ Any effects shown below are in development and will be available in the next rel
 
 Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/changeblog/) for release write-ups.
 
-## 0.12.1
+## 0.13.0
 
 ---
 
-### Bug Fixes (0.12.1)
+### New Features (0.13.0)
 
 ---
 
-* Fixed bug in ArgField caused by Field init signature change in Python 3.14. This class and parent module will be removed in 0.13.0.
+#### New Effects (0.13.0)
 
-### New Features (0.12.0)
+* Thunderstorm - Rain falls across the canvas. Lightning strikes randomly around the canvas. Lightning flashes after reaching the bottom of the canvas, lighting up the text characters. Sparks explode from lightning impact. Text characters glow when lightning travels through them.
+* Smoke - Smoke floods the canvas, colorizing any text it passes over.
+---
+
+#### New Engine Features (0.13.0)
+
+* Added `geometry.find_coords_on_rect()`, which returns coordinates along the perimeter of a rectangle given a center `Coord`, width, and height. Results are cached for performance.
+* Added `--terminal-background-color` to the `TerminalConfig` parser. This will enable terminal themes with background other than black to better display effects with fade in/out components.
+* Spanning-tree and search algorithms have been added.
+  * PrimsSimple - Unweighted Prims
+  * PrimsWeighted
+  * RecursiveBacktracker
+  * Breadthfirst
+* `EffectCharacter` has a new attribute `links` to support creating trees using spanning-tree algorithms.
+---
+
+#### New Application Features (0.13.0)
+
+* Support for random effect selection from the command-line. Use effect named `random_effect`. Global configuration options will apply.
+* Support for canvas re-use. Use tte option `--reuse-canvas` to restore the cursor to the position of the prior effect canvas.
+* Added `terminaltexteffects` entry point.
+* `--no-eol` command-line option. Suppress the trailing newline character after an effect.
+* `--no-restore-cursor` command-line option. Do not restore cursor visibility after an effect ends.
+---
+
+### Changes (0.13.0)
 
 ---
 
-#### New Effects (0.12.0)
+#### Effects Changes (0.13.0)
 
-* Highlight - Run a specular highlight across the text. Highlight direction, brightness, and width can be specified.
-* Laseretch - A laser travels across the terminal, etching characters and emitting sparks.
-* Sweep - Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.
-
-#### New Engine Features (0.12.0)
-
-* Background color specification is supported throughout the engine. Methods which accept Color arguments expect a
-`ColorPair` object to specify both the foreground and background color.
-* New `EventHandler.Action`: `Action.RESET_APPEARANCE` will reset the character appearance to the input character with
-no modifications. This eliminates the need to make a `Scene` for this purpose.
-* Existing 8/24 bit color sequences in the input data are parsed and handled by the engine. A new `TerminalConfig`
-option `--existing-color-handling` is used to control how these sequences are handled.
-* `easing.eased_step_function()` allows easing functions to be used generically by returning a closure that produces an
-eased value based on the easing function and step size provided when called.
-* A new easing function has been added which returns a custom easing fuction based on cubic bezier controls.
-* Added custom exceptions.
-
-### Changes (0.12.0)
+* Blackhole - Initial consumption motion modified to create the apperance of an gravitational-wave propagating across the canvas.
+* Laseretch - New etch-pattern `algorithm` uses the link-order of a text-boundary-bound recursive backtracker algorithm.
+* Burn - Character ignite order is based on the link-order of a text-boundary-bound prims simple algorithm.
+* Pour - Changed `--movement-speed` to `--movement-speed-range` to add some variation in character falling speed.
+* All effects have been adjusted for visual parity at 60 fps.
+* All effects are up-imported into `terminaltexteffects.effects` to simplify importing to `from terminaltexteffects.effects import Burn`.
 
 ---
 
-#### Effects Changes (0.12.0)
+#### Engine Changes (0.13.0)
 
-* Spotlights - The maximum size of the beam is limited to the smaller of the two canvas dimensions and the minimum size
-is limited to 1.
-* Spray - Argument spray_volume is limited to 0 < n <= 1.
-* Colorshift - `--loop` has been renamed `--no-loop`. Looping the gradient is now default.
-* All effects which apply a gradient across the text build the gradient mapping based on the text dimensions regardless
-of the canvas size. This fixes truncated gradients where parts of the gradient map were assigned to empty coordinates.
-* Some effects support dynamic handling of color sequences in the input data.
-* Blackhole - Star characters changed to ASCII only to improve supported fonts.
+* `animation.set_appearance()` `symbol` argument signature changed from `str` to `str | None`, defaulting to the character's `input_symbol` if not provided.
+* `Coord` objects can be unpacked into `(column, row)` tuples for multiple assignment.
+* `motion.activate_path()` and `animation.activate_scene()` accept `path_id`/`scene_id` strings OR `Path`/`Scene` instances. The `Path`/`Scene` corresponding to the provided `path_id`/`scene_id` must exist or  a `SceneNotFoundError`/`PathNotFoundError` will be raised.
+* `motion.query_path()` accepts an argument directing the action to take if a path with the given `path_id` cannot be found. The default action is to raise a `PathNotFoundError`, but this behavior can be changed to return `None`.
+* `animation.query_scene()` accepts an argument directing the action to take if a scene with the given `scene_id` cannot be found. The default action is to raise a `SceneNotFoundError`, but this behavior can be changed to return `None`.
+* Events can be registered using `path_id`/`scene_id` in place of the `Path`/`Scene` for `target` and `caller` arguments.
+* Frame rate reduced from 100 fps to 60 fps.
+* Typed argument parsing and related configuration utilities and classes have been rewritten.
+* Terminal distance calculations take into account the cell height/width ratio.
+* Completely rewrote modules and classes related to argument parsing and effect/terminal configuration handling. This eliminates the design which forced building multiple configuration objects depending on how the effect was run, and also enabled the random effect option.
 
-#### Engine Changes (0.12.0)
-
-* Frame rate timing is enforced within the `BaseEffectIterator` when accessing the `frame` property, rather than within the
-`Terminal` on calls to `print()`. This enables frame timing when iterating without requiring the use of the `terminal_output()` context manager.
-* The frame rate can be set to `0` to run without a limit.
-* Removed unused method Segment.get_coord_on_segment().
-* Activating a Path with no segments will raise a ValueError.
-* `base_effect.active_characters` was refactored from a list to a set.
-* Bezier curves are no longer limited to two control points. Any number of control points can be specified in calls to
-`Path.new_waypoint()`, however, performance may suffer with large numbers of control points along unique paths.
-* Caching has been implemented for all geometry functions significantly improving performance in cases where many
-characters are traveling along the same Path.
-* Reorganized the most common API class imports up to the package level.
-* Moved the SyncMetric Enum from the Animation module top level into the Scene class.
-* `Scene.apply_gradient_symbols()` accepts two gradients, one for the foreground and one for the background.
-
-### Bug Fixes (0.12.0)
+### Bug Fixes (0.13.0)
 
 ---
 
-#### Effects Fixes (0.12.0)
+#### Engine Fixes (0.13.0)
 
-* VHSTape - Fixed glitch wave lines not appearing for some canvas/input_text size ratios.
-* Fireworks - Fixed launch_delay set to 0 causing an infinite loop.
-* Spotlights - Fixed infinite loop caused by very small beam_width_ratio values.
-* Overflow - Fixed effect ignoring `--final-gradient-direction` argument.
+* Fixed duplicate event registrations by adding prevention logic to the EventHandler. The `register_event` method now raises a `DuplicateEventRegistrationError` when attempting to register the same event-caller-action-target combination.
+* Improved the `_handle_event` method docstring with comprehensive documentation.
+* `Scene.reset_scene()` now sets `easing_current_step` to `0`.
 
-#### Engine Fixes (0.12.0)
+---
 
-* Fixed Color() objects not treating rgb colors initialized with/without the hash as equal. Ex: Color('#ffffff') and Color('ffffff')
-* Gradients initialized with a tuple of steps including the value 0 will raise a ValueError as expected. Ex: Gradient(Color('ff0000'), Color('00ff00'), Color('0000ff'), steps=(4,0))
-* Fixed infinite loop when a new scene is created without an id and a scene has been deleted resuling in the length of the scenes dict corresponding to an existing scene id.
-* Fixed `Canvas` center calculations being off by one for odd widths/heights due to floor division.
-* Fixed `Gradient.get_color_at_fraction` rounding resulting in over-representing colors in the middle of the spectrum.
-* `Gradient.build_coordinate_color_mapping` signature changed to required full bounding box specification. This allows the effect to selectively build based on the text/canvas/terminal dimensions and reduces build time by by reducing the map size when possible.
-* Adds a call to `ansitools.dec_save_cursor_position` after each call to `ansitools.dec_restore_cursor_position` to address some terminals clearing the saved data after the restore.
+#### Effect Fixes (0.13.0)
 
-#### Other (0.12.0)
-
-* Fixed Canvas width/height docstrings and help output to correctly indicate 0/-1 matching terminal device/input text.
+* Unstable - Effect properly uses config values for reassembly/explosion speed. These were not referenced previously.
 
 ---
 
