@@ -229,15 +229,15 @@ class TerminalConfig(BaseConfig):
         default=False,
         action="store_true",
         help=(
-            "Do not create new rows at the start of the effect. The cursor will be restored to the position "
-            "of the canvas during the previous run. If there is no previous run, the position of the cursor "
-            "may be unpredictable. If the previous canvas is above the current view, the top of the terminal "
-            "will likely be the start of the current canvas."
+            "Do not create new rows at the start of the effect. The cursor will be moved up the number of rows "
+            "present in the input text in an attempt to re-use the canvas. This option works best when used in "
+            "a shell script. If used interactively with prompts between runs, the result is unpredictable."
         ),
     )  # pyright: ignore[reportAssignmentType]
     (
-        "bool : Do not create new rows at the start of the effect. The cursor will be restored to the position "
-        "of the previous canvas."
+        "bool: Do not create new rows at the start of the effect. The cursor will be moved up the number of rows "
+        "present in the input text in an attempt to re-use the canvas. This option works best when used in "
+        "a shell script. If used interactively with prompts between runs, the result is unpredictable."
     )
 
     no_eol: bool = ArgSpec(
