@@ -229,6 +229,7 @@ def test_animation_get_color_code_no_color(character: EffectCharacter) -> None:
 
 
 def test_animation_get_color_code_use_xterm_colors(character: EffectCharacter) -> None:
+    """Ensure xterm color mapping is used when the flag is enabled."""
     character.animation.use_xterm_colors = True
     assert character.animation._get_color_code(Color("#ffffff")) == 15
     assert character.animation._get_color_code(Color(0)) == 0
@@ -236,14 +237,17 @@ def test_animation_get_color_code_use_xterm_colors(character: EffectCharacter) -
 
 
 def test_animation_get_color_code_rgb_color(character: EffectCharacter) -> None:
+    """Ensure standard RGB color codes are returned when xterm colors are disabled."""
     assert character.animation._get_color_code(Color("#ffffff")) == "ffffff"
 
 
 def test_animation_get_color_code_color_is_none(character: EffectCharacter) -> None:
+    """Verify None is safely handled when requesting a color code."""
     assert character.animation._get_color_code(None) is None
 
 
 def test_animation_set_appearance_existing_colors(character: EffectCharacter) -> None:
+    """Ensure existing colors take precedence when the handling mode is 'always'."""
     character.animation.existing_color_handling = "always"
     character.animation.input_fg_color = Color("#ffffff")
     character.animation.input_bg_color = Color("#000000")
@@ -255,46 +259,54 @@ def test_animation_set_appearance_existing_colors(character: EffectCharacter) ->
 
 
 def test_animation_adjust_color_brightness_half(character: EffectCharacter) -> None:
+    """Confirm halving brightness scales the color toward black."""
     red = Color("#ff0000")
     new_color = character.animation.adjust_color_brightness(red, 0.5)
     assert new_color == Color("#7f0000")
 
 
 def test_animation_adjust_color_brightness_double(character: EffectCharacter) -> None:
+    """Verify doubling brightness clamps the value to white."""
     red = Color("#ff0000")
     new_color = character.animation.adjust_color_brightness(red, 2)
     assert new_color == Color("#ffffff")
 
 
 def test_animation_adjust_color_brightness_quarter(character: EffectCharacter) -> None:
+    """Ensure quarter brightness darkens the color proportionally."""
     red = Color("#ff0000")
     new_color = character.animation.adjust_color_brightness(red, 0.25)
     assert new_color == Color("#3f0000")
 
 
 def test_animation_adjust_color_brightness_zero(character: EffectCharacter) -> None:
+    """Validate zero brightness results in pure black."""
     red = Color("#ff0000")
     new_color = character.animation.adjust_color_brightness(red, 0)
     assert new_color == Color("#000000")
 
 
 def test_animation_adjust_color_brightness_negative(character: EffectCharacter) -> None:
+    """Ensure negative brightness factors are clamped to black."""
     red = Color("#ff0000")
     new_color = character.animation.adjust_color_brightness(red, -0.5)
     assert new_color == Color("#000000")
 
 
 def test_animation_adjust_color_brightness_black(character: EffectCharacter) -> None:
+    """Confirm adjusting brightness of black always returns black."""
     black = Color("#000000")
     new_color = character.animation.adjust_color_brightness(black, 0.5)
     assert new_color == Color("#000000")
 
 
 def test_animation_ease_animation_no_active_scene(character: EffectCharacter) -> None:
+    """Ensure the easing helper defaults to zero with no active scene."""
     assert character.animation._ease_animation(easing.in_sine) == 0
 
 
 def test_animation_ease_animation_active_scene(character: EffectCharacter) -> None:
+    """Verify easing value is calculated based on the active scene's progress."""
     scene = character.animation.new_scene(scene_id="test_scene", ease=easing.in_sine)
     scene.add_frame(symbol="a", duration=10)
     scene.add_frame(symbol="b", duration=10)
@@ -306,6 +318,7 @@ def test_animation_ease_animation_active_scene(character: EffectCharacter) -> No
 
 
 def test_animation_step_animation_sync_step(character: EffectCharacter) -> None:
+    """Ensure animations synchronized to steps advance correctly."""
     p = character.motion.new_path()
     p.new_waypoint(Coord(10, 10))
     character.motion.activate_path(p)
@@ -318,6 +331,7 @@ def test_animation_step_animation_sync_step(character: EffectCharacter) -> None:
 
 
 def test_animation_step_animation_sync_distance(character: EffectCharacter) -> None:
+    """Ensure animations synchronized to distance progress when traveling."""
     p = character.motion.new_path()
     p.new_waypoint(Coord(10, 10))
     character.motion.activate_path(p)
@@ -330,6 +344,7 @@ def test_animation_step_animation_sync_distance(character: EffectCharacter) -> N
 
 
 def test_animation_step_animation_sync_waypoint_deactivated(character: EffectCharacter) -> None:
+    """Confirm animation stepping behaves when the associated path deactivates."""
     p = character.motion.new_path()
     p.new_waypoint(Coord(10, 10))
     character.motion.activate_path(p)
@@ -344,6 +359,7 @@ def test_animation_step_animation_sync_waypoint_deactivated(character: EffectCha
 
 
 def test_animation_step_animation_eased_scene(character: EffectCharacter) -> None:
+    """Ensure eased scenes progress until completion."""
     scene = character.animation.new_scene(scene_id="test_scene", ease=easing.in_sine)
     scene.add_frame(symbol="a", duration=10)
     scene.add_frame(symbol="b", duration=10)
@@ -353,6 +369,7 @@ def test_animation_step_animation_eased_scene(character: EffectCharacter) -> Non
 
 
 def test_animation_step_animation_eased_scene_looping(character: EffectCharacter) -> None:
+    """Ensure eased looping scenes continue cycling without errors."""
     scene = character.animation.new_scene(scene_id="test_scene", ease=easing.in_sine, is_looping=True)
     scene.add_frame(symbol="a", duration=10)
     scene.add_frame(symbol="b", duration=10)
@@ -362,6 +379,7 @@ def test_animation_step_animation_eased_scene_looping(character: EffectCharacter
 
 
 def test_animation_deactivate_scene(character: EffectCharacter) -> None:
+    """Verify that deactivating a scene clears the active scene reference."""
     scene = character.animation.new_scene(scene_id="test_scene")
     scene.add_frame(symbol="a", duration=10)
     character.animation.activate_scene(scene)
@@ -370,12 +388,14 @@ def test_animation_deactivate_scene(character: EffectCharacter) -> None:
 
 
 def test_scene_get_color_code_no_color(character: EffectCharacter) -> None:
+    """Ensure Scene mirrors Animation color handling when color is disabled."""
     character.animation.no_color = True
     new_scene = character.animation.new_scene()
     assert new_scene._get_color_code(Color("#ffffff")) is None
 
 
 def test_scene_get_color_code_use_xterm_colors(character: EffectCharacter) -> None:
+    """Validate Scene resolves xterm codes when that option is enabled."""
     character.animation.use_xterm_colors = True
     new_scene = character.animation.new_scene()
     assert new_scene._get_color_code(Color("#ffffff")) == 15
@@ -384,6 +404,7 @@ def test_scene_get_color_code_use_xterm_colors(character: EffectCharacter) -> No
 
 
 def test_scene_input_color_from_existing(character: EffectCharacter) -> None:
+    """Ensure Scenes capture preexisting input colors from the animation."""
     character.animation.existing_color_handling = "always"
     character.animation.input_fg_color = Color("#ffffff")
     character.animation.input_bg_color = Color("#000000")
@@ -392,6 +413,7 @@ def test_scene_input_color_from_existing(character: EffectCharacter) -> None:
 
 
 def test_scene_add_frame_existing_colors(character: EffectCharacter) -> None:
+    """Confirm scene-level preexisting colors override per-frame colors."""
     character.animation.existing_color_handling = "always"
     character.animation.input_fg_color = Color("#ffffff")
     character.animation.input_bg_color = Color("#000000")
@@ -402,12 +424,14 @@ def test_scene_add_frame_existing_colors(character: EffectCharacter) -> None:
 
 
 def test_activate_scene_with_no_frames(character: EffectCharacter) -> None:
+    """Ensure activating an empty scene raises an error."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     with pytest.raises(ActivateEmptySceneError):
         character.animation.activate_scene(new_scene)
 
 
 def test_scene_get_next_visual_looping(character: EffectCharacter) -> None:
+    """Verify looping scenes wrap around when fetching visuals."""
     new_scene = character.animation.new_scene(scene_id="test_scene", is_looping=True)
     new_scene.add_frame(symbol="a", duration=1)
     new_scene.add_frame(symbol="b", duration=1)
@@ -421,6 +445,7 @@ def test_scene_get_next_visual_looping(character: EffectCharacter) -> None:
 
 
 def test_scene_apply_gradient_to_symbols_empty_gradient(character: EffectCharacter) -> None:
+    """Ensure empty gradient spectra trigger an error."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=2)
     gradient.spectrum.clear()
@@ -430,6 +455,7 @@ def test_scene_apply_gradient_to_symbols_empty_gradient(character: EffectCharact
 
 
 def test_scene_apply_gradient_to_symbols_both_gradients_empty(character: EffectCharacter) -> None:
+    """Ensure both empty gradients raise the same error path."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=2)
     gradient.spectrum.clear()
@@ -448,6 +474,7 @@ def test_scene_apply_gradient_to_symbols_invalid_symbols(character: EffectCharac
 
 
 def test_scene_apply_gradient_to_symbols_single_single_step(character: EffectCharacter) -> None:
+    """Verify a single-step gradient produces start and end frames."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=1)
     symbols = ["a"]
@@ -459,6 +486,7 @@ def test_scene_apply_gradient_to_symbols_single_single_step(character: EffectCha
 
 
 def test_scene_apply_gradient_to_symbols_fg_bg_spectrums_not_equal(character: EffectCharacter) -> None:
+    """Ensure frames expand to cover both spectrum lengths when unequal."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     fg_gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=8)
     bg_gradient = Gradient(Color("#ffffff"), Color("#000000"), steps=6)
@@ -470,6 +498,7 @@ def test_scene_apply_gradient_to_symbols_fg_bg_spectrums_not_equal(character: Ef
 
 
 def test_scene_apply_gradient_to_symbols_empty_spectrums(character: EffectCharacter) -> None:
+    """Ensure clearing both spectrums raises an AnimationSceneError."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     fg_gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=1)
     bg_gradient = Gradient(Color("#ffffff"), Color("#000000"), steps=1)
@@ -481,6 +510,7 @@ def test_scene_apply_gradient_to_symbols_empty_spectrums(character: EffectCharac
 
 
 def test_scene_apply_gradient_to_symbols_no_gradients(character: EffectCharacter) -> None:
+    """Verify omitting both gradients is considered invalid."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     symbols = ["a", "b", "c"]
     with pytest.raises(AnimationSceneError):
@@ -488,6 +518,7 @@ def test_scene_apply_gradient_to_symbols_no_gradients(character: EffectCharacter
 
 
 def test_scene_apply_gradient_to_symbols_larger_bg_spectrum(character: EffectCharacter) -> None:
+    """Ensure larger background spectrums determine the frame count when longer."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     fg_gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=3)
     bg_gradient = Gradient(Color("#ffffff"), Color("#000000"), steps=6)
@@ -499,6 +530,7 @@ def test_scene_apply_gradient_to_symbols_larger_bg_spectrum(character: EffectCha
 
 
 def test_scene_apply_gradient_to_symbols_larger_fg_spectrum(character: EffectCharacter) -> None:
+    """Ensure larger foreground spectrums determine the total frame count."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     fg_gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=6)
     bg_gradient = Gradient(Color("#ffffff"), Color("#000000"), steps=3)
@@ -510,6 +542,7 @@ def test_scene_apply_gradient_to_symbols_larger_fg_spectrum(character: EffectCha
 
 
 def test_scene_apply_gradient_to_symbols_fg_gradient_only(character: EffectCharacter) -> None:
+    """Ensure supplying only a foreground gradient still creates frames."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     fg_gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=3)
     symbols = ["a", "b", "c"]
@@ -520,6 +553,7 @@ def test_scene_apply_gradient_to_symbols_fg_gradient_only(character: EffectChara
 
 
 def test_scene_apply_gradient_to_symbols_bg_gradient_only(character: EffectCharacter) -> None:
+    """Ensure supplying only a background gradient still creates frames."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     bg_gradient = Gradient(Color("#ffffff"), Color("#000000"), steps=3)
     symbols = ["a", "b", "c"]
@@ -530,6 +564,7 @@ def test_scene_apply_gradient_to_symbols_bg_gradient_only(character: EffectChara
 
 
 def test_scene_reset_scene(character: EffectCharacter) -> None:
+    """Verify resetting a scene clears playback state and frame ticks."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     new_scene.add_frame(symbol="a", duration=3)
     new_scene.add_frame(symbol="b", duration=3)
@@ -542,11 +577,13 @@ def test_scene_reset_scene(character: EffectCharacter) -> None:
 
 
 def test_scene_id_equality(character: EffectCharacter) -> None:
+    """Ensure scenes with matching IDs compare as equal."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     new_scene2 = character.animation.new_scene(scene_id="test_scene")
     assert new_scene == new_scene2
 
 
 def test_scene_equality_incorrect_type(character: EffectCharacter) -> None:
+    """Ensure Scene equality checks guard against other object types."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     assert new_scene != "test_scene"
