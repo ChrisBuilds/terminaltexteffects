@@ -1,12 +1,27 @@
+"""Tests for the wipe terminal text effect."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
 
 from terminaltexteffects.effects import effect_wipe
+from terminaltexteffects.utils.argutils import CharacterGroup
+
+if TYPE_CHECKING:
+    from terminaltexteffects.engine.terminal import TerminalConfig
+    from terminaltexteffects.utils.easing import EasingFunction
+    from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
-def test_wipe_effect(input_data, terminal_config_default_no_framerate) -> None:
+def test_wipe_effect(input_data: str, terminal_config_default_no_framerate: TerminalConfig) -> None:
+    """Ensure the wipe effect renders without errors for various inputs."""
     effect = effect_wipe.Wipe(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
     with effect.terminal_output() as terminal:
@@ -15,7 +30,11 @@ def test_wipe_effect(input_data, terminal_config_default_no_framerate) -> None:
 
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
-def test_wipe_effect_terminal_color_options(input_data, terminal_config_with_color_options) -> None:
+def test_wipe_effect_terminal_color_options(
+    input_data: str,
+    terminal_config_with_color_options: TerminalConfig,
+) -> None:
+    """Ensure the effect works when terminal color options are configured."""
     effect = effect_wipe.Wipe(input_data)
     effect.terminal_config = terminal_config_with_color_options
     with effect.terminal_output() as terminal:
@@ -25,20 +44,20 @@ def test_wipe_effect_terminal_color_options(input_data, terminal_config_with_col
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_wipe_final_gradient(
-    terminal_config_default_no_framerate,
-    input_data,
-    gradient_direction,
-    gradient_steps,
-    gradient_stops,
-    gradient_frames,
+    terminal_config_default_no_framerate: TerminalConfig,
+    input_data: str,
+    gradient_direction: Gradient.Direction,
+    gradient_steps: tuple[int, ...],
+    gradient_stops: tuple[Color, ...],
+    gradient_frames: int,
 ) -> None:
+    """Validate that final gradient customization options render as expected."""
     effect = effect_wipe.Wipe(input_data)
     effect.effect_config.final_gradient_stops = gradient_stops
     effect.effect_config.final_gradient_steps = gradient_steps
     effect.effect_config.final_gradient_direction = gradient_direction
     effect.effect_config.final_gradient_frames = gradient_frames
     effect.terminal_config = terminal_config_default_no_framerate
-    effect.effect_config
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
@@ -46,21 +65,17 @@ def test_wipe_final_gradient(
 
 @pytest.mark.parametrize(
     "wipe_direction",
-    [
-        "column_left_to_right",
-        "row_top_to_bottom",
-        "row_bottom_to_top",
-        "diagonal_top_left_to_bottom_right",
-        "diagonal_bottom_left_to_top_right",
-        "diagonal_top_right_to_bottom_left",
-        "diagonal_bottom_right_to_top_left",
-        "outside_to_center",
-        "center_to_outside",
-    ],
+    CharacterGroup,
 )
 @pytest.mark.parametrize("wipe_delay", [0, 5])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
-def test_wipe_args(terminal_config_default_no_framerate, input_data, wipe_direction, wipe_delay) -> None:
+def test_wipe_args(
+    terminal_config_default_no_framerate: TerminalConfig,
+    input_data: str,
+    wipe_direction: CharacterGroup,
+    wipe_delay: int,
+) -> None:
+    """Check that all wipe direction/delay combinations complete successfully."""
     effect = effect_wipe.Wipe(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.wipe_direction = wipe_direction
@@ -70,12 +85,15 @@ def test_wipe_args(terminal_config_default_no_framerate, input_data, wipe_direct
             terminal.print(frame)
 
 
-@pytest.mark.parametrize("wipe_ease_stepsize", [0.01, 0.1, 1])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
-def test_wipe_ease(terminal_config_default_no_framerate, input_data, wipe_ease_stepsize, easing_function_1) -> None:
+def test_wipe_ease(
+    terminal_config_default_no_framerate: TerminalConfig,
+    input_data: str,
+    easing_function_1: EasingFunction,
+) -> None:
+    """Verify easing function changes run without issues."""
     effect = effect_wipe.Wipe(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
-    effect.effect_config.wipe_ease_stepsize = wipe_ease_stepsize
     effect.effect_config.wipe_ease = easing_function_1
     with effect.terminal_output() as terminal:
         for frame in effect:
