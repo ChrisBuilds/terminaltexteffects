@@ -383,7 +383,7 @@ def test_animation_deactivate_scene(character: EffectCharacter) -> None:
     scene = character.animation.new_scene(scene_id="test_scene")
     scene.add_frame(symbol="a", duration=10)
     character.animation.activate_scene(scene)
-    character.animation.deactivate_scene(scene)
+    character.animation.deactivate_scene()
     assert character.animation.active_scene is None
 
 
