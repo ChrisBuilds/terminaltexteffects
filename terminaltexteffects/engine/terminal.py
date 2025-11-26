@@ -1091,26 +1091,18 @@ class Terminal:
             CharacterGroup.OUTSIDE_TO_CENTER,
         ):
             distance_map: dict[int, list[EffectCharacter]] = {}
-            center_out = []
             for character in all_characters:
-                distance = abs(character.input_coord.column - self.canvas.center.column) + abs(
-                    character.input_coord.row - self.canvas.center.row,
+                distance = abs(character.input_coord.column - self.canvas.text_center.column) + abs(
+                    character.input_coord.row - self.canvas.text_center.row,
                 )
                 if distance not in distance_map:
                     distance_map[distance] = []
                 distance_map[distance].append(character)
-            for distance in sorted(
+            ordered_distances = sorted(
                 distance_map.keys(),
-                reverse=grouping is CharacterGroup.CENTER_TO_OUTSIDE,
-            ):
-                center_out = [
-                    distance_map[distance]
-                    for distance in sorted(
-                        distance_map.keys(),
-                        reverse=grouping is CharacterGroup.OUTSIDE_TO_CENTER,
-                    )
-                ]
-            return center_out
+                reverse=grouping is CharacterGroup.OUTSIDE_TO_CENTER,
+            )
+            return [distance_map[distance] for distance in ordered_distances]
 
         raise InvalidCharacterGroupError(grouping)
 
