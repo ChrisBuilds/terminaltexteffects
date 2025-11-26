@@ -16,12 +16,12 @@ import sys
 import time
 import typing
 from dataclasses import dataclass
-from enum import Enum, auto
 from typing import Literal
 
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig
 from terminaltexteffects.utils import ansitools, argutils
+from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
 from terminaltexteffects.utils.exceptions import (
     InvalidCharacterGroupError,
     InvalidCharacterSortError,
@@ -294,6 +294,7 @@ class Canvas:
         text_height (int): height of the text within the canvas
         text_center_row (int): row of the center of the text within the canvas
         text_center_column (int): column of the center of the text within the canvas
+        text_center (Coord): coordinate of the center of the text within the canvas
 
     Methods:
         coord_is_in_canvas:
@@ -350,6 +351,8 @@ class Canvas:
         """int: row of the center of the text within the canvas"""
         self.text_center_column = 0
         """int: column of the center of the text within the canvas"""
+        self.text_center = Coord(self.text_center_column, self.text_center_row)
+        """Coord: coordinate of the center of the text within the canvas"""
 
     def _anchor_text(
         self,
@@ -390,7 +393,10 @@ class Canvas:
 
         for character in characters:
             current_coord = character.input_coord
-            anchored_coord = Coord(current_coord.column + column_delta, current_coord.row + row_delta)
+            anchored_coord = Coord(
+                current_coord.column + column_delta,
+                current_coord.row + row_delta,
+            )
             character._input_coord = anchored_coord
             character.motion.set_coordinate(anchored_coord)
 
@@ -405,7 +411,7 @@ class Canvas:
         self.text_height = max(self.text_top - self.text_bottom + 1, 1)
         self.text_center_row = self.text_bottom + ((self.text_top - self.text_bottom) // 2)
         self.text_center_column = self.text_left + ((self.text_right - self.text_left) // 2)
-
+        self.text_center = Coord(self.text_center_column, self.text_center_row)
         return characters
 
     def coord_is_in_canvas(self, coord: Coord) -> bool:
@@ -462,7 +468,12 @@ class Canvas:
             return random.randint(self.text_bottom, self.text_top)
         return random.randint(self.bottom, self.top)
 
-    def random_coord(self, *, outside_scope: bool = False, within_text_boundary: bool = False) -> Coord:
+    def random_coord(
+        self,
+        *,
+        outside_scope: bool = False,
+        within_text_boundary: bool = False,
+    ) -> Coord:
         """Get a random coordinate. Coordinate is within the canvas unless outside_scope is True.
 
         `outside_scope` takes precedence over `within_text_boundary`, they are functionally mutually exclusive.
@@ -481,7 +492,9 @@ class Canvas:
             random_coord_below = Coord(self.random_column(), self.bottom - 1)
             random_coord_left = Coord(self.left - 1, self.random_row())
             random_coord_right = Coord(self.right + 1, self.random_row())
-            return random.choice([random_coord_above, random_coord_below, random_coord_left, random_coord_right])
+            return random.choice(
+                [random_coord_above, random_coord_below, random_coord_left, random_coord_right],
+            )
         return Coord(
             self.random_column(within_text_boundary=within_text_boundary),
             self.random_row(within_text_boundary=within_text_boundary),
@@ -520,70 +533,6 @@ class Terminal:
 
     ansi_sequence_color_map: typing.ClassVar[dict[str, Color]] = {}
 
-    class CharacterGroup(Enum):
-        """An enum specifying character groupings.
-
-        Attributes:
-            COLUMN_LEFT_TO_RIGHT: Group characters by column from left to right.
-            COLUMN_RIGHT_TO_LEFT: Group characters by column from right to left.
-            ROW_TOP_TO_BOTTOM: Group characters by row from top to bottom.
-            ROW_BOTTOM_TO_TOP: Group characters by row from bottom to top.
-            DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT: Group characters by diagonal from top left to bottom right.
-            DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT: Group characters by diagonal from bottom left to top right.
-            DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT: Group characters by diagonal from top right to bottom left.
-            DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT: Group characters by diagonal from bottom right to top left.
-            CENTER_TO_OUTSIDE_DIAMONDS: Group characters by distance from the center to the outside in diamond shapes.
-            OUTSIDE_TO_CENTER_DIAMONDS: Group characters by distance from the outside to the center in diamond shapes.
-
-        """
-
-        COLUMN_LEFT_TO_RIGHT = auto()
-        COLUMN_RIGHT_TO_LEFT = auto()
-        ROW_TOP_TO_BOTTOM = auto()
-        ROW_BOTTOM_TO_TOP = auto()
-        DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT = auto()
-        DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT = auto()
-        DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT = auto()
-        DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT = auto()
-        CENTER_TO_OUTSIDE_DIAMONDS = auto()
-        OUTSIDE_TO_CENTER_DIAMONDS = auto()
-
-    class CharacterSort(Enum):
-        """An enum for specifying character sorts.
-
-        Attributes:
-            RANDOM: Random order.
-            TOP_TO_BOTTOM_LEFT_TO_RIGHT: Top to bottom, left to right.
-            TOP_TO_BOTTOM_RIGHT_TO_LEFT: Top to bottom, right to left.
-            BOTTOM_TO_TOP_LEFT_TO_RIGHT: Bottom to top, left to right.
-            BOTTOM_TO_TOP_RIGHT_TO_LEFT: Bottom to top, right to left.
-            OUTSIDE_ROW_TO_MIDDLE: Outside row to middle.
-            MIDDLE_ROW_TO_OUTSIDE: Middle row to outside.
-
-        """
-
-        RANDOM = auto()
-        TOP_TO_BOTTOM_LEFT_TO_RIGHT = auto()
-        TOP_TO_BOTTOM_RIGHT_TO_LEFT = auto()
-        BOTTOM_TO_TOP_LEFT_TO_RIGHT = auto()
-        BOTTOM_TO_TOP_RIGHT_TO_LEFT = auto()
-        OUTSIDE_ROW_TO_MIDDLE = auto()
-        MIDDLE_ROW_TO_OUTSIDE = auto()
-
-    class ColorSort(Enum):
-        """An enum for specifying color sorts for the colors derived from the input text ansi sequences.
-
-        Attributes:
-            LEAST_TO_MOST: Sort colors from least to most frequent.
-            MOST_TO_LEAST: Sort colors from most to least frequent.
-            RANDOM: Random order.
-
-        """
-
-        LEAST_TO_MOST = auto()
-        MOST_TO_LEAST = auto()
-        RANDOM = auto()
-
     def __init__(self, input_data: str, config: TerminalConfig | None = None) -> None:
         """Initialize the Terminal.
 
@@ -612,7 +561,10 @@ class Terminal:
         # the visible_* attributes are used to determine which characters are visible on the terminal
         self.visible_top = min(self.canvas.top + self.canvas_row_offset, self._terminal_height)
         self.visible_bottom = max(self.canvas.bottom + self.canvas_row_offset, 1)
-        self.visible_right = min(self.canvas.right + self.canvas_column_offset, self._terminal_width)
+        self.visible_right = min(
+            self.canvas.right + self.canvas_column_offset,
+            self._terminal_width,
+        )
         self.visible_left = max(self.canvas.left + self.canvas_column_offset, 1)
         self._input_characters = [
             character
@@ -644,7 +596,9 @@ class Terminal:
 
         """
 
-        def find_ansi_sequences_with_positions(text: str) -> list[tuple[int, int]]:  # [(start,end), ...]
+        def find_ansi_sequences_with_positions(
+            text: str,
+        ) -> list[tuple[int, int]]:  # [(start,end), ...]
             """Find SGR foreground and background ANSI escape sequences in the input text and return their positions.
 
             Args:
@@ -815,7 +769,11 @@ class Terminal:
             return ""
         return sys.stdin.read()
 
-    def _wrap_lines(self, lines: list[list[EffectCharacter]], width: int) -> list[list[EffectCharacter]]:
+    def _wrap_lines(
+        self,
+        lines: list[list[EffectCharacter]],
+        width: int,
+    ) -> list[list[EffectCharacter]]:
         """Wrap the given lines of text to fit within the width of the canvas.
 
         Args:
@@ -938,18 +896,21 @@ class Terminal:
             list[Color]: list of Colors
 
         """
-        if sort == self.ColorSort.MOST_TO_LEAST:
+        if sort == ColorSort.MOST_TO_LEAST:
             return sorted(
                 self._input_colors_frequency.keys(),
                 key=lambda color: self._input_colors_frequency[color],
                 reverse=True,
             )
-        if sort == self.ColorSort.RANDOM:
+        if sort == ColorSort.RANDOM:
             colors = list(self._input_colors_frequency.keys())
             random.shuffle(colors)
             return colors
-        if sort == self.ColorSort.LEAST_TO_MOST:
-            return sorted(self._input_colors_frequency.keys(), key=lambda color: self._input_colors_frequency[color])
+        if sort == ColorSort.LEAST_TO_MOST:
+            return sorted(
+                self._input_colors_frequency.keys(),
+                key=lambda color: self._input_colors_frequency[color],
+            )
         raise InvalidColorSortError(sort)
 
     def get_characters(
@@ -986,25 +947,38 @@ class Terminal:
             all_characters.extend(self._added_characters)
 
         # default sort TOP_TO_BOTTOM_LEFT_TO_RIGHT
-        all_characters.sort(key=lambda character: (-character.input_coord.row, character.input_coord.column))
+        all_characters.sort(
+            key=lambda character: (-character.input_coord.row, character.input_coord.column),
+        )
 
-        if sort is self.CharacterSort.RANDOM:
+        if sort is CharacterSort.RANDOM:
             random.shuffle(all_characters)
 
-        elif sort in (self.CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT, self.CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT):
-            if sort is self.CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT:
+        elif sort in (
+            CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT,
+            CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT,
+        ):
+            if sort is CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT:
                 all_characters.reverse()
 
-        elif sort in (self.CharacterSort.BOTTOM_TO_TOP_LEFT_TO_RIGHT, self.CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT):
-            all_characters.sort(key=lambda character: (character.input_coord.row, character.input_coord.column))
-            if sort is self.CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT:
+        elif sort in (
+            CharacterSort.BOTTOM_TO_TOP_LEFT_TO_RIGHT,
+            CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT,
+        ):
+            all_characters.sort(
+                key=lambda character: (character.input_coord.row, character.input_coord.column),
+            )
+            if sort is CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT:
                 all_characters.reverse()
 
-        elif sort in (self.CharacterSort.OUTSIDE_ROW_TO_MIDDLE, self.CharacterSort.MIDDLE_ROW_TO_OUTSIDE):
+        elif sort in (
+            CharacterSort.OUTSIDE_ROW_TO_MIDDLE,
+            CharacterSort.MIDDLE_ROW_TO_OUTSIDE,
+        ):
             all_characters = [
                 all_characters.pop(0) if i % 2 == 0 else all_characters.pop(-1) for i in range(len(all_characters))
             ]
-            if sort is self.CharacterSort.MIDDLE_ROW_TO_OUTSIDE:
+            if sort is CharacterSort.MIDDLE_ROW_TO_OUTSIDE:
                 all_characters.reverse()
         else:
             raise InvalidCharacterSortError(sort)
@@ -1044,9 +1018,14 @@ class Terminal:
         if added_chars:
             all_characters.extend(self._added_characters)
 
-        all_characters.sort(key=lambda character: (character.input_coord.row, character.input_coord.column))
+        all_characters.sort(
+            key=lambda character: (character.input_coord.row, character.input_coord.column),
+        )
 
-        if grouping in (self.CharacterGroup.COLUMN_LEFT_TO_RIGHT, self.CharacterGroup.COLUMN_RIGHT_TO_LEFT):
+        if grouping in (
+            CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+        ):
             columns = []
             for column_index in range(self.canvas.right + 1):
                 characters_in_column = [
@@ -1054,11 +1033,14 @@ class Terminal:
                 ]
                 if characters_in_column:
                     columns.append(characters_in_column)
-            if grouping == self.CharacterGroup.COLUMN_RIGHT_TO_LEFT:
+            if grouping == CharacterGroup.COLUMN_RIGHT_TO_LEFT:
                 columns.reverse()
             return columns
 
-        if grouping in (self.CharacterGroup.ROW_BOTTOM_TO_TOP, self.CharacterGroup.ROW_TOP_TO_BOTTOM):
+        if grouping in (
+            CharacterGroup.ROW_BOTTOM_TO_TOP,
+            CharacterGroup.ROW_TOP_TO_BOTTOM,
+        ):
             rows = []
             for row_index in range(self.canvas.top + 1):
                 characters_in_row = [
@@ -1066,12 +1048,12 @@ class Terminal:
                 ]
                 if characters_in_row:
                     rows.append(characters_in_row)
-            if grouping == self.CharacterGroup.ROW_TOP_TO_BOTTOM:
+            if grouping == CharacterGroup.ROW_TOP_TO_BOTTOM:
                 rows.reverse()
             return rows
         if grouping in (
-            self.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
-            self.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+            CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+            CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
         ):
             diagonals = []
             for diagonal_index in range(self.canvas.top + self.canvas.right + 1):
@@ -1082,15 +1064,18 @@ class Terminal:
                 ]
                 if characters_in_diagonal:
                     diagonals.append(characters_in_diagonal)
-            if grouping == self.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT:
+            if grouping == CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT:
                 diagonals.reverse()
             return diagonals
         if grouping in (
-            self.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
-            self.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+            CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         ):
             diagonals = []
-            for diagonal_index in range(self.canvas.left - self.canvas.top, self.canvas.right - self.canvas.bottom + 1):
+            for diagonal_index in range(
+                self.canvas.left - self.canvas.top,
+                self.canvas.right - self.canvas.bottom + 1,
+            ):
                 characters_in_diagonal = [
                     character
                     for character in all_characters
@@ -1098,12 +1083,12 @@ class Terminal:
                 ]
                 if characters_in_diagonal:
                     diagonals.append(characters_in_diagonal)
-            if grouping == self.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT:
+            if grouping == CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT:
                 diagonals.reverse()
             return diagonals
         if grouping in (
-            self.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS,
-            self.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
+            CharacterGroup.CENTER_TO_OUTSIDE,
+            CharacterGroup.OUTSIDE_TO_CENTER,
         ):
             distance_map: dict[int, list[EffectCharacter]] = {}
             center_out = []
@@ -1116,13 +1101,13 @@ class Terminal:
                 distance_map[distance].append(character)
             for distance in sorted(
                 distance_map.keys(),
-                reverse=grouping is self.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
+                reverse=grouping is CharacterGroup.CENTER_TO_OUTSIDE,
             ):
                 center_out = [
                     distance_map[distance]
                     for distance in sorted(
                         distance_map.keys(),
-                        reverse=grouping is self.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
+                        reverse=grouping is CharacterGroup.OUTSIDE_TO_CENTER,
                     )
                 ]
             return center_out

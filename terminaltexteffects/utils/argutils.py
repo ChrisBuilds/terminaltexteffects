@@ -34,6 +34,7 @@ from __future__ import annotations
 import argparse
 import typing
 from dataclasses import dataclass
+from enum import Enum, auto
 
 from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.graphics import Color, Gradient
@@ -99,6 +100,41 @@ class ArgSpec:
 
 class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
     """Combine ArgumentDefaultsHelpFormatter and RawDescriptionHelpFormatter for argparse."""
+
+
+class CharacterGroup(Enum):
+    """An enum specifying character groupings."""
+
+    COLUMN_LEFT_TO_RIGHT = auto()
+    COLUMN_RIGHT_TO_LEFT = auto()
+    ROW_TOP_TO_BOTTOM = auto()
+    ROW_BOTTOM_TO_TOP = auto()
+    DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT = auto()
+    DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT = auto()
+    DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT = auto()
+    DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT = auto()
+    CENTER_TO_OUTSIDE_DIAMONDS = auto()
+    OUTSIDE_TO_CENTER_DIAMONDS = auto()
+
+
+class CharacterSort(Enum):
+    """An enum for specifying character sorts."""
+
+    RANDOM = auto()
+    TOP_TO_BOTTOM_LEFT_TO_RIGHT = auto()
+    TOP_TO_BOTTOM_RIGHT_TO_LEFT = auto()
+    BOTTOM_TO_TOP_LEFT_TO_RIGHT = auto()
+    BOTTOM_TO_TOP_RIGHT_TO_LEFT = auto()
+    OUTSIDE_ROW_TO_MIDDLE = auto()
+    MIDDLE_ROW_TO_OUTSIDE = auto()
+
+
+class ColorSort(Enum):
+    """An enum for specifying color sorts for the colors derived from the input text ansi sequences."""
+
+    LEAST_TO_MOST = auto()
+    MOST_TO_LEAST = auto()
+    RANDOM = auto()
 
 
 class TupleAction(argparse.Action):
