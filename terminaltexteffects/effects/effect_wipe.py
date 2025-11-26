@@ -58,7 +58,7 @@ class WipeConfig(BaseConfig):
 
     wipe_direction: CharacterGroup = ArgSpec(
         name="--wipe-direction",
-        default="diagonal_bottom_left_to_top_right",
+        default=CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
         type=argutils.CharacterGroupArg.type_parser,
         help="Direction the text will wipe.",
     )  # pyright: ignore[reportAssignmentType]
@@ -184,6 +184,8 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
                         character.animation.query_scene("wipe").reset_scene()
                         self.terminal.set_character_visibility(character, is_visible=False)
                 self._wipe_delay = self.config.wipe_delay
+            else:
+                self._wipe_delay -= 1
             self.update()
             return self.frame
 
