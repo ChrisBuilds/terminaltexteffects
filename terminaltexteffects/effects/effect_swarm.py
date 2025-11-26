@@ -272,7 +272,6 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                         EventHandler.Event.PATH_COMPLETE,
                         origin_path,
                         EventHandler.Action.DEACTIVATE_SCENE,
-                        flash_scn,
                     )
                     inner_paths = 0
                     total_inner_paths = 2
