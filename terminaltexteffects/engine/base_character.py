@@ -150,8 +150,16 @@ class EventHandler:
         self,
         event: Event,
         caller: animation.Scene | motion.Waypoint | motion.Path | str,
-        action: typing.Literal[Action.ACTIVATE_SCENE, Action.DEACTIVATE_SCENE],
+        action: typing.Literal[Action.ACTIVATE_SCENE],
         target: animation.Scene | str,
+    ) -> None: ...
+    @typing.overload
+    def register_event(
+        self,
+        event: Event,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
+        action: typing.Literal[Action.DEACTIVATE_SCENE],
+        target: None = ...,
     ) -> None: ...
     @typing.overload
     def register_event(
