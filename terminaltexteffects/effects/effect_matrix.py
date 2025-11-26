@@ -16,7 +16,7 @@ from terminaltexteffects import Animation, Color, ColorPair, Coord, EffectCharac
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 MATRIX_SYMBOLS_COMMON = (
     "2",
@@ -464,7 +464,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 )
 
         for column_chars in self.terminal.get_characters_grouped(
-            self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):

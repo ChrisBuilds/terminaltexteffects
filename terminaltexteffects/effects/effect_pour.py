@@ -13,11 +13,11 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, Terminal, easing
+from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -198,10 +198,10 @@ class PourIterator(BaseEffectIterator[PourConfig]):
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         sort_map = {
-            PourIterator.PourDirection.DOWN: Terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
-            PourIterator.PourDirection.UP: Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
-            PourIterator.PourDirection.LEFT: Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-            PourIterator.PourDirection.RIGHT: Terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            PourIterator.PourDirection.DOWN: CharacterGroup.ROW_BOTTOM_TO_TOP,
+            PourIterator.PourDirection.UP: CharacterGroup.ROW_TOP_TO_BOTTOM,
+            PourIterator.PourDirection.LEFT: CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            PourIterator.PourDirection.RIGHT: CharacterGroup.COLUMN_RIGHT_TO_LEFT,
         }
         groups = self.terminal.get_characters_grouped(grouping=sort_map[self._pour_direction])
         for i, group in enumerate(groups):

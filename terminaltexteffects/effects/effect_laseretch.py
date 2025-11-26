@@ -10,7 +10,6 @@ Classes:
 from __future__ import annotations
 
 import random
-import typing
 from collections import deque
 from dataclasses import dataclass
 
@@ -18,7 +17,7 @@ import terminaltexteffects as tte
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 from terminaltexteffects.utils.spanningtree.algo.recursivebacktracker import RecursiveBacktracker
 
 
@@ -30,6 +29,12 @@ def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
 
     """
     return "laseretch", LaserEtch, LaserEtchConfig
+
+
+def _etch_pattern_type_parser(value: str) -> CharacterGroup | str:
+    if value == "algorithm":
+        return "algorithm"
+    return argutils.CharacterGroupArg.type_parser(value)
 
 
 @dataclass
@@ -73,35 +78,14 @@ class LaserEtchConfig(BaseConfig):
         ),
     )
 
-    etch_pattern: typing.Literal[
-        "column_left_to_right",
-        "row_top_to_bottom",
-        "row_bottom_to_top",
-        "diagonal_top_left_to_bottom_right",
-        "diagonal_bottom_left_to_top_right",
-        "diagonal_top_right_to_bottom_left",
-        "diagonal_bottom_right_to_top_left",
-        "outside_to_center",
-        "center_to_outside",
-    ] = ArgSpec(
+    etch_pattern: CharacterGroup = ArgSpec(
         name="--etch-pattern",
         default="algorithm",
-        choices=[
-            "algorithm",
-            "column_left_to_right",
-            "column_right_to_left",
-            "row_top_to_bottom",
-            "row_bottom_to_top",
-            "diagonal_top_left_to_bottom_right",
-            "diagonal_bottom_left_to_top_right",
-            "diagonal_top_right_to_bottom_left",
-            "diagonal_bottom_right_to_top_left",
-            "outside_to_center",
-            "center_to_outside",
-        ],
+        type=_etch_pattern_type_parser,
+        metavar="algorithm " + " ".join(argutils.CharacterGroupArg.METAVAR),
         help="Pattern used to etch the text.",
     )  # pyright: ignore[reportAssignmentType]
-    "typing.Literal['algorithm','column_left_to_right','row_top_to_bottom','row_bottom_to_top','diagonal_top_left_to_bottom_right','diagonal_bottom_left_to_top_right','diagonal_top_right_to_bottom_left','diagonal_bottom_right_to_top_left',]: Pattern used to etch the text."  # noqa: E501
+    "CharacterGroup: Pattern used to etch the text."
 
     etch_speed: int = ArgSpec(
         name="--etch-speed",
@@ -375,18 +359,6 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
 
     def build(self) -> None:
         """Build the effect."""
-        sort_map = {
-            "column_left_to_right": self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-            "column_right_to_left": self.terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
-            "row_top_to_bottom": self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
-            "row_bottom_to_top": self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
-            "diagonal_top_left_to_bottom_right": self.terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
-            "diagonal_bottom_left_to_top_right": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
-            "diagonal_top_right_to_bottom_left": self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
-            "diagonal_bottom_right_to_top_left": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
-            "center_to_outside": self.terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS,
-            "outside_to_center": self.terminal.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
-        }
         final_fg_gradient = tte.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_fg_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -409,15 +381,15 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
             for color in cool_gradient:
                 spawn_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair(fg=color))
             character.animation.activate_scene(spawn_scn)
-        if self.config.etch_pattern in sort_map:
+        if self.config.etch_pattern in CharacterGroup:
             for n, char_list in enumerate(
-                self.terminal.get_characters_grouped(sort_map[self.config.etch_pattern]),
+                self.terminal.get_characters_grouped(self.config.etch_pattern),
             ):
                 if n % 2:
                     self.pending_chars.extend(char_list[::-1])
                 else:
                     self.pending_chars.extend(char_list)
-        else:
+        elif self.config.etch_pattern == "algorithm":
             algo = RecursiveBacktracker(self.terminal, limit_to_text_boundary=True)
             while not algo.complete:
                 algo.step()

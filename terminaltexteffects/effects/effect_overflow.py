@@ -11,11 +11,11 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, Terminal
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -187,7 +187,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                 Color("#000000"),
             )
         lower_range, upper_range = self.config.overflow_cycles_range
-        rows = self.terminal.get_characters_grouped(Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
+        rows = self.terminal.get_characters_grouped(CharacterGroup.ROW_TOP_TO_BOTTOM)
         if upper_range > 0:
             for _ in range(random.randint(lower_range, upper_range)):
                 random.shuffle(rows)
@@ -206,7 +206,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                     self.pending_rows.append(OverflowIterator.Row(copied_characters))
         # add rows in correct order to the end of self.pending_rows
         for row in self.terminal.get_characters_grouped(
-            Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            CharacterGroup.ROW_TOP_TO_BOTTOM,
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):

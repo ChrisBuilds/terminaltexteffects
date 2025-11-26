@@ -15,7 +15,7 @@ from terminaltexteffects import Color, ColorPair, EffectCharacter, EventHandler,
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -247,12 +247,12 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             )
             character.animation.activate_scene(wave_scn)
         grouping_map = {
-            "column_left_to_right": self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-            "column_right_to_left": self.terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
-            "row_top_to_bottom": self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
-            "row_bottom_to_top": self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
-            "center_to_outside": self.terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS,
-            "outside_to_center": self.terminal.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
+            "column_left_to_right": CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            "column_right_to_left": CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            "row_top_to_bottom": CharacterGroup.ROW_TOP_TO_BOTTOM,
+            "row_bottom_to_top": CharacterGroup.ROW_BOTTOM_TO_TOP,
+            "center_to_outside": CharacterGroup.CENTER_TO_OUTSIDE,
+            "outside_to_center": CharacterGroup.OUTSIDE_TO_CENTER,
         }
 
         for column in self.terminal.get_characters_grouped(grouping=grouping_map[self.config.wave_direction]):

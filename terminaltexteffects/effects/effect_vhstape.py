@@ -15,7 +15,7 @@ from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventH
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -397,7 +397,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for row_index, characters in enumerate(
-            self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP),
+            self.terminal.get_characters_grouped(grouping=CharacterGroup.ROW_BOTTOM_TO_TOP),
         ):
             self.lines[row_index] = VHSTapeIterator.Line(characters, self.config, self.character_final_color_map)
         for character in self.terminal.get_characters():

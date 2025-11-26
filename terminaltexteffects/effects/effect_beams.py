@@ -15,7 +15,7 @@ import terminaltexteffects as tte
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -331,7 +331,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         self.delay = 0
         self.phase = "beams"
         self.final_wipe_groups = self.terminal.get_characters_grouped(
-            tte.Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
         )
         self.build()
 
@@ -365,13 +365,13 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         beam_gradient = tte.Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
         groups: list[BeamsIterator.Group] = []
         for row in self.terminal.get_characters_grouped(
-            tte.Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            CharacterGroup.ROW_TOP_TO_BOTTOM,
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):
             groups.append(BeamsIterator.Group(row, "row", self.terminal, self.config))  # noqa: PERF401
         for column in self.terminal.get_characters_grouped(
-            tte.Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):

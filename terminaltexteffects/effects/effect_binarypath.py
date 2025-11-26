@@ -17,7 +17,7 @@ import terminaltexteffects as tte
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -185,7 +185,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
         self.complete = False
         self.phase = "travel"
         self.final_wipe_chars = self.terminal.get_characters_grouped(
-            grouping=self.terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+            grouping=CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
         )
         self.max_active_binary_groups: int = 0
         self.build()

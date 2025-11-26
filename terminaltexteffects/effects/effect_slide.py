@@ -15,7 +15,7 @@ from terminaltexteffects import Color, EffectCharacter, Gradient, easing, geomet
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -194,12 +194,12 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
 
         groups: list[list[EffectCharacter]] = []
         if self.config.grouping == "row":
-            groups = self.terminal.get_characters_grouped(self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM)
+            groups = self.terminal.get_characters_grouped(CharacterGroup.ROW_TOP_TO_BOTTOM)
         elif self.config.grouping == "column":
-            groups = self.terminal.get_characters_grouped(self.terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
+            groups = self.terminal.get_characters_grouped(CharacterGroup.COLUMN_LEFT_TO_RIGHT)
         elif self.config.grouping == "diagonal":
             groups = self.terminal.get_characters_grouped(
-                self.terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+                CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
             )
         for group in groups:
             for character in group:

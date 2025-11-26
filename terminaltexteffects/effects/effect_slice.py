@@ -15,7 +15,7 @@ from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradie
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -133,9 +133,9 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
     def build(self) -> None:  # noqa: PLR0915
         """Build the effect."""
         slice_direction_map = {
-            "vertical": self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
-            "horizontal": self.terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
-            "diagonal": self.terminal.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+            "vertical": CharacterGroup.ROW_BOTTOM_TO_TOP,
+            "horizontal": CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            "diagonal": CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
         }
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(

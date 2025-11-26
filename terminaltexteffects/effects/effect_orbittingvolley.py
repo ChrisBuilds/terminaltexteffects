@@ -16,7 +16,7 @@ from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventH
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -320,7 +320,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
         self._main_launcher.build_paths()
         self._main_launcher.character.motion.activate_path("perimeter")
         self._sorted_chars = []
-        for char_list in self.terminal.get_characters_grouped(Terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS):
+        for char_list in self.terminal.get_characters_grouped(CharacterGroup.CENTER_TO_OUTSIDE):
             self._sorted_chars.extend(char_list)
         for launcher, character in zip(cycle(self._launchers), self._sorted_chars):
             launcher.magazine.append(character)

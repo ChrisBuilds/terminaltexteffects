@@ -25,7 +25,7 @@ from terminaltexteffects import (
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterSort, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -183,7 +183,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
 
         """
         unswarmed_characters = self.terminal.get_characters(
-            sort=self.terminal.CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT,
+            sort=CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT,
         )
 
         while unswarmed_characters:

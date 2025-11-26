@@ -16,7 +16,7 @@ from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gra
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -347,7 +347,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             )
 
         unbubbled_chars = []
-        for char_list in self.terminal.get_characters_grouped(grouping=self.terminal.CharacterGroup.ROW_BOTTOM_TO_TOP):
+        for char_list in self.terminal.get_characters_grouped(grouping=CharacterGroup.ROW_BOTTOM_TO_TOP):
             unbubbled_chars.extend(char_list)
         self.bubbles = []
         while unbubbled_chars:

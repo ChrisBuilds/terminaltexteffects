@@ -15,7 +15,7 @@ from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gra
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
+from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 from terminaltexteffects.utils.exceptions import DuplicateEventRegistrationError
 
 
@@ -208,7 +208,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 Color("#ffffff"),
             )
         input_rows = self.terminal.get_characters_grouped(
-            grouping=self.terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            grouping=CharacterGroup.ROW_TOP_TO_BOTTOM,
             outer_fill_chars=True,
             inner_fill_chars=True,
         )
