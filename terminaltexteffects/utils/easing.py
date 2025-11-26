@@ -1,4 +1,8 @@
-"""Functions for easing calculations.
+"""Functions and Classes for easing calculations.
+
+Classes:
+    EasingTracker: Tracks the progression of an easing function over a set number of steps.
+    SequenceEaser: Eases over a sequence, tracking added, removed, and total elements
 
 Functions:
     linear: Linear easing function.
@@ -32,8 +36,7 @@ Functions:
     in_bounce: Ease in using a bounce function.
     out_bounce: Ease out using a bounce function.
     in_out_bounce: Ease in/out using a bounce function.
-    eased_step_function: Create a closure that returns the eased value of each step from 0 to 1 increasing
-        by the step_size.
+    make_easing: Create a cubic Bezier easing function using the provided control points.
 """
 
 from __future__ import annotations
@@ -41,6 +44,7 @@ from __future__ import annotations
 import functools
 import math
 import typing
+from dataclasses import InitVar, dataclass, field
 
 # EasingFunction is a type alias for a function that takes a float between 0 and 1 and returns a float between 0 and 1.
 EasingFunction = typing.Callable[[float], float]
@@ -573,38 +577,169 @@ def make_easing(x1: float, y1: float, x2: float, y2: float) -> EasingFunction:
 make_easing = functools.wraps(make_easing)(functools.lru_cache(maxsize=8192)(make_easing))
 
 
-def eased_step_function(
-    easing_func: EasingFunction,
-    step_size: float,
-    *,
-    clamp: bool = False,
-) -> typing.Callable[[], tuple[float, float]]:
-    """Create a closure that returns the eased value of each step from 0 to 1 increasing by the step_size.
+@dataclass
+class EasingTracker:
+    """Describe the progression of items as an easing function is applied over a sequence.
 
-    Args:
-        easing_func (EasingFunction): The easing function to use.
-        step_size (float): The step size.
-        clamp (bool): If True, the easing function will be limited to 0 <= n <= 1. Defaults to False.
+    Attributes:
+        easing_function (EasingFunction): The easing function being tracked.
+        total_steps (int): The total number of steps for the easing function.
+        current_step (int): The current step in the easing progression.
+        progress_ratio (float): The ratio of the current step to the total steps.
+        step_delta (float): The change in eased value from the last step to the current step.
+        eased_value (float): The current eased value based on the easing function and progress ratio.
 
-    Returns:
-        callable[[],tuple[float,float]]: A closure that returns a tuple of the current input step and eased value of
-        the current input step.
+    Methods:
+        step() -> float: Advance the easing tracker by one step and return the new eased value.
+        is_complete() -> bool: Check if the easing tracker has completed all steps.
 
     """
-    if not 0 < step_size <= 1:
-        msg = "Step size must be 0 < n <= 1."
-        raise ValueError(msg)
 
-    current_step = 0.0
+    easing_function: EasingFunction
+    total_steps: int = 100
+    clamp: InitVar[bool] = field(default=False)
 
-    def ease() -> tuple[float, float]:
-        nonlocal current_step
-        eased_value = easing_func(current_step)
-        used_step = current_step
-        if current_step < 1:
-            current_step = min((current_step + step_size, 1.0))
-        if clamp:
-            eased_value = max(0, min(eased_value, 1))
-        return used_step, eased_value
+    def __post_init__(self, clamp: bool) -> None:
+        """Initialize the EasingTracker.
 
-    return ease
+        Args:
+            clamp (bool, optional): If True, clamp the eased value between 0 and 1. Defaults to False.
+
+        """
+        self._clamp = clamp
+        self.current_step: int = 0
+        self.progress_ratio: float = 0.0
+        self.step_delta: float = 0.0
+        self.eased_value: float = 0.0
+        self._last_eased_value: float = 0.0
+
+    def step(self) -> float:
+        """Advance the easing tracker by one step.
+
+        If the current step is less than the total steps, increment the current step,
+        update the progress ratio, compute the new eased value using the easing function,
+        and calculate the step delta.
+
+        If clamp is enabled, the eased value is constrained between 0 and 1.
+
+        Returns:
+            float: The new eased value after advancing one step.
+
+        """
+        if self.current_step < self.total_steps:
+            self.current_step += 1
+            self.progress_ratio = self.current_step / self.total_steps
+            self.eased_value = self.easing_function(self.progress_ratio)
+            if self._clamp:
+                self.eased_value = max(0.0, min(self.eased_value, 1.0))
+            self.step_delta = self.eased_value - self._last_eased_value
+            self._last_eased_value = self.eased_value
+        return self.eased_value
+
+    def reset(self) -> None:
+        """Reset the easing tracker to the initial state."""
+        self.current_step = 0
+        self.progress_ratio = 0.0
+        self.step_delta = 0.0
+        self.eased_value = 0.0
+        self._last_eased_value = 0.0
+
+    def is_complete(self) -> bool:
+        """Check if the easing tracker has completed all steps.
+
+        Returns:
+            bool: True if all steps have been completed, False otherwise.
+
+        """
+        return self.current_step >= self.total_steps
+
+    def __iter__(self) -> typing.Iterator[float]:
+        """Iterate over eased values until completion.
+
+        Yields:
+            float: The eased value at each step.
+
+        """
+        while not self.is_complete():
+            yield self.step()
+
+
+_T = typing.TypeVar("_T")
+
+
+@dataclass
+class SequenceEaser(typing.Generic[_T]):
+    """Eases over a sequence, tracking added, removed, and total elements.
+
+    Attributes:
+        sequence (Sequence[_T]): The sequence to ease over.
+        easing_function (EasingFunction): The easing function to use.
+        total_steps (int): The total number of steps for the easing function.
+        added (Sequence[_T]): Elements added in the current step.
+        removed (Sequence[_T]): Elements removed in the current step.
+        total (Sequence[_T]): Current active elements based on eased length.
+
+    """
+
+    sequence: typing.Sequence[_T]
+    easing_function: EasingFunction
+    total_steps: int = 100
+    added: typing.Sequence[_T] = field(init=False, default_factory=list)
+    removed: typing.Sequence[_T] = field(init=False, default_factory=list)
+    total: typing.Sequence[_T] = field(init=False, default_factory=list)
+
+    def __post_init__(self) -> None:
+        """Initialize the SequenceEaser."""
+        self.easing_tracker = EasingTracker(
+            easing_function=self.easing_function,
+            total_steps=self.total_steps,
+            clamp=True,
+        )
+
+    def step(self) -> typing.Sequence[_T]:
+        """Advance the easing tracker by one step and update added, removed, and total elements.
+
+        Returns:
+            typing.Sequence[_T]: The elements added in the current step.
+
+        """
+        previous_eased = self.easing_tracker.eased_value
+        eased_value = self.easing_tracker.step()
+        seq_len = len(self.sequence)
+        if seq_len == 0:
+            self.added = self.sequence[:0]
+            self.removed = self.sequence[:0]
+            self.total = self.sequence[:0]
+            return self.added
+
+        length = int(eased_value * seq_len)
+        previous_length = int(previous_eased * seq_len)
+
+        if length > previous_length:
+            self.added = self.sequence[previous_length:length]
+            self.removed = self.sequence[:0]
+        elif length < previous_length:
+            self.added = self.sequence[:0]
+            self.removed = self.sequence[length:previous_length]
+        else:
+            self.added = self.sequence[:0]
+            self.removed = self.sequence[:0]
+
+        self.total = self.sequence[:length]
+        return self.added
+
+    def is_complete(self) -> bool:
+        """Check if the easing over the sequence is complete.
+
+        Returns:
+            bool: True if all steps have been completed, False otherwise.
+
+        """
+        return self.easing_tracker.is_complete()
+
+    def reset(self) -> None:
+        """Reset the SequenceEaser to the initial state."""
+        self.easing_tracker.reset()
+        self.added = self.sequence[:0]
+        self.removed = self.sequence[:0]
+        self.total = self.sequence[:0]
