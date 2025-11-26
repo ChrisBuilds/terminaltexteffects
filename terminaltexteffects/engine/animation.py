@@ -850,12 +850,6 @@ class Animation:
         self.current_character_visual = self.active_scene.activate()
         self.character.event_handler._handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, found_scene)
 
-    def deactivate_scene(self, scene: Scene) -> None:
-        """Deactivates a scene.
-
-        Args:
-            scene (Scene): the Scene to deactivate
-
-        """
-        if self.active_scene is scene:
-            self.active_scene = None
+    def deactivate_scene(self) -> None:
+        """Deactivates the active scene."""
+        self.active_scene = None
