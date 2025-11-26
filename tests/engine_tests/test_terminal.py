@@ -5,6 +5,7 @@ import pytest
 
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.terminal import Canvas, Terminal, TerminalConfig
+from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
 from terminaltexteffects.utils.exceptions import (
     InvalidCharacterGroupError,
     InvalidCharacterSortError,
@@ -311,16 +312,16 @@ def test_terminal_add_character() -> None:
 
 @pytest.mark.parametrize(
     "sort",
-    [Terminal.ColorSort.LEAST_TO_MOST, Terminal.ColorSort.MOST_TO_LEAST, Terminal.ColorSort.RANDOM],
+    [ColorSort.LEAST_TO_MOST, ColorSort.MOST_TO_LEAST, ColorSort.RANDOM],
 )
 def test_terminal_get_input_colors(sort) -> None:
     config = TerminalConfig._build_config()
     input_data = "\x1b[38;2;255;0;0maaaaaaa\x1b[38;2;0;255;0mb\x1b[48;2;0;0;255mcccc"
     terminal = Terminal(input_data=input_data, config=config)
     colors = terminal.get_input_colors(sort=sort)
-    if sort == Terminal.ColorSort.MOST_TO_LEAST:
+    if sort == ColorSort.MOST_TO_LEAST:
         assert colors[0] == Color("#FF0000")
-    elif sort == Terminal.ColorSort.LEAST_TO_MOST:
+    elif sort == ColorSort.LEAST_TO_MOST:
         assert colors[0] == Color("#0000FF")
     else:
         assert len(colors) == 3
@@ -373,35 +374,35 @@ def test_terminal_get_characters(input_chars, inner_fill_chars, outer_fill_chars
 @pytest.mark.parametrize(
     "sort",
     [
-        Terminal.CharacterSort.BOTTOM_TO_TOP_LEFT_TO_RIGHT,
-        Terminal.CharacterSort.OUTSIDE_ROW_TO_MIDDLE,
-        Terminal.CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT,
-        Terminal.CharacterSort.MIDDLE_ROW_TO_OUTSIDE,
-        Terminal.CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT,
-        Terminal.CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT,
-        Terminal.CharacterSort.RANDOM,
+        CharacterSort.BOTTOM_TO_TOP_LEFT_TO_RIGHT,
+        CharacterSort.OUTSIDE_ROW_TO_MIDDLE,
+        CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT,
+        CharacterSort.MIDDLE_ROW_TO_OUTSIDE,
+        CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT,
+        CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT,
+        CharacterSort.RANDOM,
     ],
 )
 def test_terminal_get_characters_with_character_sort(sort) -> None:
     config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)
     chars = terminal.get_characters(sort=sort)
-    if sort == Terminal.CharacterSort.BOTTOM_TO_TOP_LEFT_TO_RIGHT:
+    if sort == CharacterSort.BOTTOM_TO_TOP_LEFT_TO_RIGHT:
         assert chars[0].input_symbol == "k"
         assert chars[-1].input_symbol == "e"
-    elif sort == Terminal.CharacterSort.OUTSIDE_ROW_TO_MIDDLE:
+    elif sort == CharacterSort.OUTSIDE_ROW_TO_MIDDLE:
         assert chars[0].input_symbol == "a"
         assert chars[-1].input_symbol == "h"
-    elif sort == Terminal.CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT:
+    elif sort == CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT:
         assert chars[0].input_symbol == "o"
         assert chars[-1].input_symbol == "a"
-    elif sort == Terminal.CharacterSort.MIDDLE_ROW_TO_OUTSIDE:
+    elif sort == CharacterSort.MIDDLE_ROW_TO_OUTSIDE:
         assert chars[0].input_symbol == "h"
         assert chars[-1].input_symbol == "a"
-    elif sort == Terminal.CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT:
+    elif sort == CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT:
         assert chars[0].input_symbol == "a"
         assert chars[-1].input_symbol == "o"
-    elif sort == Terminal.CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT:
+    elif sort == CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT:
         assert chars[0].input_symbol == "e"
         assert chars[-1].input_symbol == "k"
     else:
@@ -448,16 +449,16 @@ def test_terminal_get_characters_grouped(input_chars, inner_fill_chars, outer_fi
 @pytest.mark.parametrize(
     "grouping",
     [
-        Terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS,
-        Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-        Terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
-        Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM,
-        Terminal.CharacterGroup.ROW_BOTTOM_TO_TOP,
-        Terminal.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS,
-        Terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
-        Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
-        Terminal.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
-        Terminal.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+        CharacterGroup.CENTER_TO_OUTSIDE,
+        CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+        CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+        CharacterGroup.ROW_TOP_TO_BOTTOM,
+        CharacterGroup.ROW_BOTTOM_TO_TOP,
+        CharacterGroup.OUTSIDE_TO_CENTER,
+        CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+        CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+        CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+        CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
     ],
 )
 def test_terminal_get_characters_grouped_with_grouping(grouping) -> None:
@@ -469,34 +470,34 @@ def test_terminal_get_characters_grouped_with_grouping(grouping) -> None:
     terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)
     terminal.add_character("a", Coord(0, 0))
     chars = terminal.get_characters_grouped(grouping=grouping)
-    if grouping == Terminal.CharacterGroup.CENTER_TO_OUTSIDE_DIAMONDS:
+    if grouping == CharacterGroup.CENTER_TO_OUTSIDE:
         assert chars[0][0].input_symbol == "h"
         assert chars[-1][-1].input_symbol == "e"
-    elif grouping == Terminal.CharacterGroup.COLUMN_LEFT_TO_RIGHT:
+    elif grouping == CharacterGroup.COLUMN_LEFT_TO_RIGHT:
         assert chars[0][0].input_symbol == "k"
         assert chars[-1][-1].input_symbol == "e"
-    elif grouping == Terminal.CharacterGroup.COLUMN_RIGHT_TO_LEFT:
+    elif grouping == CharacterGroup.COLUMN_RIGHT_TO_LEFT:
         assert chars[0][0].input_symbol == "o"
         assert chars[-1][-1].input_symbol == "a"
-    elif grouping == Terminal.CharacterGroup.ROW_TOP_TO_BOTTOM:
+    elif grouping == CharacterGroup.ROW_TOP_TO_BOTTOM:
         assert chars[0][0].input_symbol == "a"
         assert chars[-1][-1].input_symbol == "o"
-    elif grouping == Terminal.CharacterGroup.ROW_BOTTOM_TO_TOP:
+    elif grouping == CharacterGroup.ROW_BOTTOM_TO_TOP:
         assert chars[0][0].input_symbol == "k"
         assert chars[-1][-1].input_symbol == "e"
-    elif grouping == Terminal.CharacterGroup.OUTSIDE_TO_CENTER_DIAMONDS:
+    elif grouping == CharacterGroup.OUTSIDE_TO_CENTER:
         assert chars[0][0].input_symbol == "k"
         assert chars[-1][-1].input_symbol == "h"
-    elif grouping == Terminal.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT:
+    elif grouping == CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT:
         assert chars[0][0].input_symbol == "e"
         assert chars[-1][-1].input_symbol == "k"
-    elif grouping == Terminal.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT:
+    elif grouping == CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT:
         assert chars[0][0].input_symbol == "a"
         assert chars[-1][-1].input_symbol == "o"
-    elif grouping == Terminal.CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT:
+    elif grouping == CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT:
         assert chars[0][0].input_symbol == "o"
         assert chars[-1][-1].input_symbol == "a"
-    elif grouping == Terminal.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT:
+    elif grouping == CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT:
         assert chars[0][0].input_symbol == "k"
         assert chars[-1][-1].input_symbol == "e"
 
