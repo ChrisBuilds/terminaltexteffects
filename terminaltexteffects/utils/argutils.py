@@ -6,6 +6,15 @@ This module includes a custom formatter for argparse, which combines the feature
 Classes:
     CustomFormatter: A custom formatter for argparse that combines the features of
         `argparse.ArgumentDefaultsHelpFormatter` and `argparse.RawDescriptionHelpFormatter`.
+    CharacterGroup: An enum specifying character groupings.
+    CharacterGroupArg: Argument type for character groupings.
+    CharacterSort: An enum specifying character sorts.
+    CharacterSortArg: Argument type for character sorts.
+    ColorSort: An enum specifying color sorts.
+    ColorSortArg: Argument type for color sorts.
+    TupleAction: Custom argparse action to convert a list of values into a tuple.
+    ParserSpec: Specification for a parser in the argument parser.
+    ArgSpec: Specification for a command-line argument and default value.
     GradientDirection: Argument type for gradient directions.
     ColorArg: Argument type for color values.
     Symbol: Argument type for single ASCII/UTF-8 characters.
@@ -113,8 +122,39 @@ class CharacterGroup(Enum):
     DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT = auto()
     DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT = auto()
     DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT = auto()
-    CENTER_TO_OUTSIDE_DIAMONDS = auto()
-    OUTSIDE_TO_CENTER_DIAMONDS = auto()
+    CENTER_TO_OUTSIDE = auto()
+    OUTSIDE_TO_CENTER = auto()
+
+
+class CharacterGroupArg:
+    """Validate argument is a valid CharacterGroup.
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not a valid CharacterGroup.
+
+    """
+
+    METAVAR = tuple(n.lower() for n in CharacterGroup._member_names_)
+
+    @staticmethod
+    def type_parser(arg: str) -> CharacterGroup:
+        """Validate argument is a valid CharacterGroup.
+
+        Args:
+            arg (str): argument to validate
+
+        Raises:
+            argparse.ArgumentTypeError: Value is not a valid CharacterGroup.
+
+        Returns:
+            CharacterGroup: validated CharacterGroup
+
+        """
+        try:
+            return CharacterGroup[arg.upper()]
+        except KeyError:
+            msg = f"invalid CharacterGroup: '{arg}' is not a valid CharacterGroup."
+            raise argparse.ArgumentTypeError(msg) from None
 
 
 class CharacterSort(Enum):
@@ -129,12 +169,74 @@ class CharacterSort(Enum):
     MIDDLE_ROW_TO_OUTSIDE = auto()
 
 
+class CharacterSortArg:
+    """Validate argument is a valid CharacterSort.
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not a valid CharacterSort.
+
+    """
+
+    METAVAR = tuple(n.lower() for n in CharacterSort._member_names_)
+
+    @staticmethod
+    def type_parser(arg: str) -> CharacterSort:
+        """Validate argument is a valid CharacterSort.
+
+        Args:
+            arg (str): argument to validate
+
+        Raises:
+            argparse.ArgumentTypeError: Value is not a valid CharacterSort.
+
+        Returns:
+            CharacterSort: validated CharacterSort
+
+        """
+        try:
+            return CharacterSort[arg.upper()]
+        except KeyError:
+            msg = f"invalid CharacterSort: '{arg}' is not a valid CharacterSort."
+            raise argparse.ArgumentTypeError(msg) from None
+
+
 class ColorSort(Enum):
     """An enum for specifying color sorts for the colors derived from the input text ansi sequences."""
 
     LEAST_TO_MOST = auto()
     MOST_TO_LEAST = auto()
     RANDOM = auto()
+
+
+class ColorSortArg:
+    """Validate argument is a valid ColorSort.
+
+    Raises:
+        argparse.ArgumentTypeError: Value is not a valid ColorSort.
+
+    """
+
+    METAVAR = tuple(n.lower() for n in ColorSort._member_names_)
+
+    @staticmethod
+    def type_parser(arg: str) -> ColorSort:
+        """Validate argument is a valid ColorSort.
+
+        Args:
+            arg (str): argument to validate
+
+        Raises:
+            argparse.ArgumentTypeError: Value is not a valid ColorSort.
+
+        Returns:
+            ColorSort: validated ColorSort
+
+        """
+        try:
+            return ColorSort[arg.upper()]
+        except KeyError:
+            msg = f"invalid ColorSort: '{arg}' is not a valid ColorSort."
+            raise argparse.ArgumentTypeError(msg) from None
 
 
 class TupleAction(argparse.Action):
