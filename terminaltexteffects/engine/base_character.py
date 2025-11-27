@@ -246,7 +246,7 @@ class EventHandler:
             EventHandler.Action.ACTIVATE_PATH: motion.Path,
             EventHandler.Action.ACTIVATE_SCENE: animation.Scene,
             EventHandler.Action.DEACTIVATE_PATH: motion.Path,
-            EventHandler.Action.DEACTIVATE_SCENE: animation.Scene,
+            EventHandler.Action.DEACTIVATE_SCENE: type(None),
             EventHandler.Action.RESET_APPEARANCE: type(None),
             EventHandler.Action.SET_LAYER: int,
             EventHandler.Action.SET_COORDINATE: Coord,
@@ -340,7 +340,7 @@ class EventHandler:
             EventHandler.Action.ACTIVATE_PATH: self.character.motion.activate_path,
             EventHandler.Action.ACTIVATE_SCENE: self.character.animation.activate_scene,
             EventHandler.Action.DEACTIVATE_PATH: self.character.motion.deactivate_path,
-            EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
+            EventHandler.Action.DEACTIVATE_SCENE: lambda _: self.character.animation.deactivate_scene,
             EventHandler.Action.RESET_APPEARANCE: lambda _: self.character.animation.set_appearance(
                 self.character.input_symbol,
             ),
