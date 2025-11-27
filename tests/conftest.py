@@ -47,6 +47,7 @@ from terminaltexteffects.effects import (
 )
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils import geometry
+from terminaltexteffects.utils.argutils import CharacterGroup
 from terminaltexteffects.utils.easing import (
     EasingFunction,
     in_back,
@@ -361,4 +362,10 @@ def gradient_direction(request: pytest.FixtureRequest) -> Gradient.Direction:
 @pytest.fixture(params=[True, False])
 def bool_arg(request: pytest.FixtureRequest) -> bool:
     """Fixture to provide boolean arguments for tests."""
+    return request.param
+
+
+@pytest.fixture(params=list(CharacterGroup))
+def character_group(request: pytest.FixtureRequest) -> CharacterGroup:
+    """Fixture to provide CharacterGroup arguments for tests."""
     return request.param
