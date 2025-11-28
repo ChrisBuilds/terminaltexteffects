@@ -381,7 +381,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
             for color in cool_gradient:
                 spawn_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair(fg=color))
             character.animation.activate_scene(spawn_scn)
-        if self.config.etch_pattern in CharacterGroup:
+        if self.config.etch_pattern in CharacterGroup._member_names_:
             for n, char_list in enumerate(
                 self.terminal.get_characters_grouped(self.config.etch_pattern),
             ):
