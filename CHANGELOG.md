@@ -47,6 +47,7 @@
 #### Effect Fixes (0.14.0)
 
 * Sweep - Fixed bug when second sweep direction is a grouping of a different length from the first direction. 
+* Removed mistakenly added effect dev_worm.
 
 #### Application Fixes (0.14.0)
 
