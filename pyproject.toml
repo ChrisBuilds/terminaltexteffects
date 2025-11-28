@@ -1,6 +1,6 @@
 [project]
 name = "terminaltexteffects"
-version = "0.14.0"
+version = "0.14.1"
 description = "TerminalTextEffects (TTE) is a terminal visual effects engine."
 authors = [{ name = "Chris", email = "741258@pm.me" }]
 requires-python = ">=3.8"
