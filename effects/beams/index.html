@@ -275,6 +275,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../changeblog/changeblog_0.14.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    0.14.0 (Easier Easing)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../changeblog/changeblog_0.13.0/" class="md-nav__link">
         
   
@@ -4659,7 +4682,7 @@ Valid values are n &gt; 0.</p>
 </span><span id="__span-0-331"><a id="__codelineno-0-331" name="__codelineno-0-331"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="mi">0</span>
 </span><span id="__span-0-332"><a id="__codelineno-0-332" name="__codelineno-0-332"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="s2">&quot;beams&quot;</span>
 </span><span id="__span-0-333"><a id="__codelineno-0-333" name="__codelineno-0-333"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">final_wipe_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span>
-</span><span id="__span-0-334"><a id="__codelineno-0-334" name="__codelineno-0-334"></a>            <span class="n">tte</span><span class="o">.</span><span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT</span><span class="p">,</span>
+</span><span id="__span-0-334"><a id="__codelineno-0-334" name="__codelineno-0-334"></a>            <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT</span><span class="p">,</span>
 </span><span id="__span-0-335"><a id="__codelineno-0-335" name="__codelineno-0-335"></a>        <span class="p">)</span>
 </span><span id="__span-0-336"><a id="__codelineno-0-336" name="__codelineno-0-336"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
 </span><span id="__span-0-337"><a id="__codelineno-0-337" name="__codelineno-0-337"></a>
@@ -4693,13 +4716,13 @@ Valid values are n &gt; 0.</p>
 </span><span id="__span-0-365"><a id="__codelineno-0-365" name="__codelineno-0-365"></a>        <span class="n">beam_gradient</span> <span class="o">=</span> <span class="n">tte</span><span class="o">.</span><span class="n">Gradient</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">beam_gradient_stops</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">beam_gradient_steps</span><span class="p">)</span>
 </span><span id="__span-0-366"><a id="__codelineno-0-366" name="__codelineno-0-366"></a>        <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BeamsIterator</span><span class="o">.</span><span class="n">Group</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 </span><span id="__span-0-367"><a id="__codelineno-0-367" name="__codelineno-0-367"></a>        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span>
-</span><span id="__span-0-368"><a id="__codelineno-0-368" name="__codelineno-0-368"></a>            <span class="n">tte</span><span class="o">.</span><span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_TOP_TO_BOTTOM</span><span class="p">,</span>
+</span><span id="__span-0-368"><a id="__codelineno-0-368" name="__codelineno-0-368"></a>            <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_TOP_TO_BOTTOM</span><span class="p">,</span>
 </span><span id="__span-0-369"><a id="__codelineno-0-369" name="__codelineno-0-369"></a>            <span class="n">outer_fill_chars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-0-370"><a id="__codelineno-0-370" name="__codelineno-0-370"></a>            <span class="n">inner_fill_chars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-0-371"><a id="__codelineno-0-371" name="__codelineno-0-371"></a>        <span class="p">):</span>
 </span><span id="__span-0-372"><a id="__codelineno-0-372" name="__codelineno-0-372"></a>            <span class="n">groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BeamsIterator</span><span class="o">.</span><span class="n">Group</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="s2">&quot;row&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">))</span>  <span class="c1"># noqa: PERF401</span>
 </span><span id="__span-0-373"><a id="__codelineno-0-373" name="__codelineno-0-373"></a>        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span>
-</span><span id="__span-0-374"><a id="__codelineno-0-374" name="__codelineno-0-374"></a>            <span class="n">tte</span><span class="o">.</span><span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_LEFT_TO_RIGHT</span><span class="p">,</span>
+</span><span id="__span-0-374"><a id="__codelineno-0-374" name="__codelineno-0-374"></a>            <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_LEFT_TO_RIGHT</span><span class="p">,</span>
 </span><span id="__span-0-375"><a id="__codelineno-0-375" name="__codelineno-0-375"></a>            <span class="n">outer_fill_chars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-0-376"><a id="__codelineno-0-376" name="__codelineno-0-376"></a>            <span class="n">inner_fill_chars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-0-377"><a id="__codelineno-0-377" name="__codelineno-0-377"></a>        <span class="p">):</span>
@@ -5302,7 +5325,7 @@ already active.</p>
 </span><span id="__span-0-331"><a id="__codelineno-0-331" name="__codelineno-0-331"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="mi">0</span>
 </span><span id="__span-0-332"><a id="__codelineno-0-332" name="__codelineno-0-332"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="s2">&quot;beams&quot;</span>
 </span><span id="__span-0-333"><a id="__codelineno-0-333" name="__codelineno-0-333"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">final_wipe_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span>
-</span><span id="__span-0-334"><a id="__codelineno-0-334" name="__codelineno-0-334"></a>        <span class="n">tte</span><span class="o">.</span><span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT</span><span class="p">,</span>
+</span><span id="__span-0-334"><a id="__codelineno-0-334" name="__codelineno-0-334"></a>        <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT</span><span class="p">,</span>
 </span><span id="__span-0-335"><a id="__codelineno-0-335" name="__codelineno-0-335"></a>    <span class="p">)</span>
 </span><span id="__span-0-336"><a id="__codelineno-0-336" name="__codelineno-0-336"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
 </span></code></pre></div></td></tr></table></div>
@@ -5542,13 +5565,13 @@ already active.</p>
 </span><span id="__span-0-365"><a id="__codelineno-0-365" name="__codelineno-0-365"></a>    <span class="n">beam_gradient</span> <span class="o">=</span> <span class="n">tte</span><span class="o">.</span><span class="n">Gradient</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">beam_gradient_stops</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">beam_gradient_steps</span><span class="p">)</span>
 </span><span id="__span-0-366"><a id="__codelineno-0-366" name="__codelineno-0-366"></a>    <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BeamsIterator</span><span class="o">.</span><span class="n">Group</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 </span><span id="__span-0-367"><a id="__codelineno-0-367" name="__codelineno-0-367"></a>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span>
-</span><span id="__span-0-368"><a id="__codelineno-0-368" name="__codelineno-0-368"></a>        <span class="n">tte</span><span class="o">.</span><span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_TOP_TO_BOTTOM</span><span class="p">,</span>
+</span><span id="__span-0-368"><a id="__codelineno-0-368" name="__codelineno-0-368"></a>        <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_TOP_TO_BOTTOM</span><span class="p">,</span>
 </span><span id="__span-0-369"><a id="__codelineno-0-369" name="__codelineno-0-369"></a>        <span class="n">outer_fill_chars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-0-370"><a id="__codelineno-0-370" name="__codelineno-0-370"></a>        <span class="n">inner_fill_chars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-0-371"><a id="__codelineno-0-371" name="__codelineno-0-371"></a>    <span class="p">):</span>
 </span><span id="__span-0-372"><a id="__codelineno-0-372" name="__codelineno-0-372"></a>        <span class="n">groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BeamsIterator</span><span class="o">.</span><span class="n">Group</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="s2">&quot;row&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">))</span>  <span class="c1"># noqa: PERF401</span>
 </span><span id="__span-0-373"><a id="__codelineno-0-373" name="__codelineno-0-373"></a>    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span>
-</span><span id="__span-0-374"><a id="__codelineno-0-374" name="__codelineno-0-374"></a>        <span class="n">tte</span><span class="o">.</span><span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_LEFT_TO_RIGHT</span><span class="p">,</span>
+</span><span id="__span-0-374"><a id="__codelineno-0-374" name="__codelineno-0-374"></a>        <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_LEFT_TO_RIGHT</span><span class="p">,</span>
 </span><span id="__span-0-375"><a id="__codelineno-0-375" name="__codelineno-0-375"></a>        <span class="n">outer_fill_chars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-0-376"><a id="__codelineno-0-376" name="__codelineno-0-376"></a>        <span class="n">inner_fill_chars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-0-377"><a id="__codelineno-0-377" name="__codelineno-0-377"></a>    <span class="p">):</span>

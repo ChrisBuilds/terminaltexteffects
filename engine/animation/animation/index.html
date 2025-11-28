@@ -275,6 +275,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../changeblog/changeblog_0.14.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    0.14.0 (Easier Easing)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../changeblog/changeblog_0.13.0/" class="md-nav__link">
         
   
@@ -3392,13 +3415,7 @@ progress the Scene and apply the next visual to the character.</p>
 <span class="normal"><a href="#__codelineno-0-852">852</a></span>
 <span class="normal"><a href="#__codelineno-0-853">853</a></span>
 <span class="normal"><a href="#__codelineno-0-854">854</a></span>
-<span class="normal"><a href="#__codelineno-0-855">855</a></span>
-<span class="normal"><a href="#__codelineno-0-856">856</a></span>
-<span class="normal"><a href="#__codelineno-0-857">857</a></span>
-<span class="normal"><a href="#__codelineno-0-858">858</a></span>
-<span class="normal"><a href="#__codelineno-0-859">859</a></span>
-<span class="normal"><a href="#__codelineno-0-860">860</a></span>
-<span class="normal"><a href="#__codelineno-0-861">861</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-456"><a id="__codelineno-0-456" name="__codelineno-0-456"></a><span class="k">class</span><span class="w"> </span><span class="nc">Animation</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-855">855</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-456"><a id="__codelineno-0-456" name="__codelineno-0-456"></a><span class="k">class</span><span class="w"> </span><span class="nc">Animation</span><span class="p">:</span>
 </span><span id="__span-0-457"><a id="__codelineno-0-457" name="__codelineno-0-457"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Animation handler for an EffectCharacter.</span>
 </span><span id="__span-0-458"><a id="__codelineno-0-458" name="__codelineno-0-458"></a>
 </span><span id="__span-0-459"><a id="__codelineno-0-459" name="__codelineno-0-459"></a><span class="sd">    It contains a scene_name -&gt; Scene mapping and the active Scene. Calls to step_animation()</span>
@@ -3795,15 +3812,9 @@ progress the Scene and apply the next visual to the character.</p>
 </span><span id="__span-0-850"><a id="__codelineno-0-850" name="__codelineno-0-850"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">current_character_visual</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_scene</span><span class="o">.</span><span class="n">activate</span><span class="p">()</span>
 </span><span id="__span-0-851"><a id="__codelineno-0-851" name="__codelineno-0-851"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">character</span><span class="o">.</span><span class="n">event_handler</span><span class="o">.</span><span class="n">_handle_event</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">character</span><span class="o">.</span><span class="n">event_handler</span><span class="o">.</span><span class="n">Event</span><span class="o">.</span><span class="n">SCENE_ACTIVATED</span><span class="p">,</span> <span class="n">found_scene</span><span class="p">)</span>
 </span><span id="__span-0-852"><a id="__codelineno-0-852" name="__codelineno-0-852"></a>
-</span><span id="__span-0-853"><a id="__codelineno-0-853" name="__codelineno-0-853"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">deactivate_scene</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scene</span><span class="p">:</span> <span class="n">Scene</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="__span-0-854"><a id="__codelineno-0-854" name="__codelineno-0-854"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Deactivates a scene.</span>
-</span><span id="__span-0-855"><a id="__codelineno-0-855" name="__codelineno-0-855"></a>
-</span><span id="__span-0-856"><a id="__codelineno-0-856" name="__codelineno-0-856"></a><span class="sd">        Args:</span>
-</span><span id="__span-0-857"><a id="__codelineno-0-857" name="__codelineno-0-857"></a><span class="sd">            scene (Scene): the Scene to deactivate</span>
-</span><span id="__span-0-858"><a id="__codelineno-0-858" name="__codelineno-0-858"></a>
-</span><span id="__span-0-859"><a id="__codelineno-0-859" name="__codelineno-0-859"></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="__span-0-860"><a id="__codelineno-0-860" name="__codelineno-0-860"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_scene</span> <span class="ow">is</span> <span class="n">scene</span><span class="p">:</span>
-</span><span id="__span-0-861"><a id="__codelineno-0-861" name="__codelineno-0-861"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">active_scene</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="__span-0-853"><a id="__codelineno-0-853" name="__codelineno-0-853"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">deactivate_scene</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-854"><a id="__codelineno-0-854" name="__codelineno-0-854"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Deactivates the active scene.&quot;&quot;&quot;</span>
+</span><span id="__span-0-855"><a id="__codelineno-0-855" name="__codelineno-0-855"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">active_scene</span> <span class="o">=</span> <span class="kc">None</span>
 </span></code></pre></div></td></tr></table></div>
               </details>
 
@@ -4386,66 +4397,23 @@ a known scene.</p>
 
 
 <h2 id="terminaltexteffects.engine.animation.Animation.deactivate_scene" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">deactivate_scene</span><span class="p">(</span><span class="n">scene</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">deactivate_scene</span><span class="p">()</span></code>
 
 </h2>
 
 
     <div class="doc doc-contents ">
 
-        <p>Deactivates a scene.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>scene</code>
-            </td>
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="terminaltexteffects.engine.animation.Scene" href="../scene/#terminaltexteffects.engine.animation.Scene">Scene</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>the Scene to deactivate</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+        <p>Deactivates the active scene.</p>
 
 
             <details class="quote">
               <summary>Source code in <code>terminaltexteffects/engine/animation.py</code></summary>
               <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-853">853</a></span>
 <span class="normal"><a href="#__codelineno-0-854">854</a></span>
-<span class="normal"><a href="#__codelineno-0-855">855</a></span>
-<span class="normal"><a href="#__codelineno-0-856">856</a></span>
-<span class="normal"><a href="#__codelineno-0-857">857</a></span>
-<span class="normal"><a href="#__codelineno-0-858">858</a></span>
-<span class="normal"><a href="#__codelineno-0-859">859</a></span>
-<span class="normal"><a href="#__codelineno-0-860">860</a></span>
-<span class="normal"><a href="#__codelineno-0-861">861</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-853"><a id="__codelineno-0-853" name="__codelineno-0-853"></a><span class="k">def</span><span class="w"> </span><span class="nf">deactivate_scene</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scene</span><span class="p">:</span> <span class="n">Scene</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="__span-0-854"><a id="__codelineno-0-854" name="__codelineno-0-854"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Deactivates a scene.</span>
-</span><span id="__span-0-855"><a id="__codelineno-0-855" name="__codelineno-0-855"></a>
-</span><span id="__span-0-856"><a id="__codelineno-0-856" name="__codelineno-0-856"></a><span class="sd">    Args:</span>
-</span><span id="__span-0-857"><a id="__codelineno-0-857" name="__codelineno-0-857"></a><span class="sd">        scene (Scene): the Scene to deactivate</span>
-</span><span id="__span-0-858"><a id="__codelineno-0-858" name="__codelineno-0-858"></a>
-</span><span id="__span-0-859"><a id="__codelineno-0-859" name="__codelineno-0-859"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-860"><a id="__codelineno-0-860" name="__codelineno-0-860"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_scene</span> <span class="ow">is</span> <span class="n">scene</span><span class="p">:</span>
-</span><span id="__span-0-861"><a id="__codelineno-0-861" name="__codelineno-0-861"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">active_scene</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="normal"><a href="#__codelineno-0-855">855</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-853"><a id="__codelineno-0-853" name="__codelineno-0-853"></a><span class="k">def</span><span class="w"> </span><span class="nf">deactivate_scene</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-854"><a id="__codelineno-0-854" name="__codelineno-0-854"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Deactivates the active scene.&quot;&quot;&quot;</span>
+</span><span id="__span-0-855"><a id="__codelineno-0-855" name="__codelineno-0-855"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">active_scene</span> <span class="o">=</span> <span class="kc">None</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>

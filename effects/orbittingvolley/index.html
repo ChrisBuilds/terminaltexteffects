@@ -275,6 +275,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../changeblog/changeblog_0.14.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    0.14.0 (Easier Easing)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../changeblog/changeblog_0.13.0/" class="md-nav__link">
         
   
@@ -4484,7 +4507,7 @@ the center out.</p>
 </span><span id="__span-0-320"><a id="__codelineno-0-320" name="__codelineno-0-320"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_main_launcher</span><span class="o">.</span><span class="n">build_paths</span><span class="p">()</span>
 </span><span id="__span-0-321"><a id="__codelineno-0-321" name="__codelineno-0-321"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_main_launcher</span><span class="o">.</span><span class="n">character</span><span class="o">.</span><span class="n">motion</span><span class="o">.</span><span class="n">activate_path</span><span class="p">(</span><span class="s2">&quot;perimeter&quot;</span><span class="p">)</span>
 </span><span id="__span-0-322"><a id="__codelineno-0-322" name="__codelineno-0-322"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_sorted_chars</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="__span-0-323"><a id="__codelineno-0-323" name="__codelineno-0-323"></a>        <span class="k">for</span> <span class="n">char_list</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span><span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">CENTER_TO_OUTSIDE_DIAMONDS</span><span class="p">):</span>
+</span><span id="__span-0-323"><a id="__codelineno-0-323" name="__codelineno-0-323"></a>        <span class="k">for</span> <span class="n">char_list</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">CENTER_TO_OUTSIDE</span><span class="p">):</span>
 </span><span id="__span-0-324"><a id="__codelineno-0-324" name="__codelineno-0-324"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_sorted_chars</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">char_list</span><span class="p">)</span>
 </span><span id="__span-0-325"><a id="__codelineno-0-325" name="__codelineno-0-325"></a>        <span class="k">for</span> <span class="n">launcher</span><span class="p">,</span> <span class="n">character</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cycle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_launchers</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sorted_chars</span><span class="p">):</span>
 </span><span id="__span-0-326"><a id="__codelineno-0-326" name="__codelineno-0-326"></a>            <span class="n">launcher</span><span class="o">.</span><span class="n">magazine</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">character</span><span class="p">)</span>
@@ -5238,7 +5261,7 @@ the center out.</p>
 </span><span id="__span-0-320"><a id="__codelineno-0-320" name="__codelineno-0-320"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_main_launcher</span><span class="o">.</span><span class="n">build_paths</span><span class="p">()</span>
 </span><span id="__span-0-321"><a id="__codelineno-0-321" name="__codelineno-0-321"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_main_launcher</span><span class="o">.</span><span class="n">character</span><span class="o">.</span><span class="n">motion</span><span class="o">.</span><span class="n">activate_path</span><span class="p">(</span><span class="s2">&quot;perimeter&quot;</span><span class="p">)</span>
 </span><span id="__span-0-322"><a id="__codelineno-0-322" name="__codelineno-0-322"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_sorted_chars</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="__span-0-323"><a id="__codelineno-0-323" name="__codelineno-0-323"></a>    <span class="k">for</span> <span class="n">char_list</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span><span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">CENTER_TO_OUTSIDE_DIAMONDS</span><span class="p">):</span>
+</span><span id="__span-0-323"><a id="__codelineno-0-323" name="__codelineno-0-323"></a>    <span class="k">for</span> <span class="n">char_list</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">CENTER_TO_OUTSIDE</span><span class="p">):</span>
 </span><span id="__span-0-324"><a id="__codelineno-0-324" name="__codelineno-0-324"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_sorted_chars</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">char_list</span><span class="p">)</span>
 </span><span id="__span-0-325"><a id="__codelineno-0-325" name="__codelineno-0-325"></a>    <span class="k">for</span> <span class="n">launcher</span><span class="p">,</span> <span class="n">character</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cycle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_launchers</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sorted_chars</span><span class="p">):</span>
 </span><span id="__span-0-326"><a id="__codelineno-0-326" name="__codelineno-0-326"></a>        <span class="n">launcher</span><span class="o">.</span><span class="n">magazine</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">character</span><span class="p">)</span>

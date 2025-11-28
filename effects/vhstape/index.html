@@ -275,6 +275,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../changeblog/changeblog_0.14.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    0.14.0 (Easier Easing)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../changeblog/changeblog_0.13.0/" class="md-nav__link">
         
   
@@ -4636,7 +4659,7 @@ create a smoother and longer gradient animation. Valid values are n &gt; 0.</p>
 </span><span id="__span-0-397"><a id="__codelineno-0-397" name="__codelineno-0-397"></a>        <span class="k">for</span> <span class="n">character</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters</span><span class="p">():</span>
 </span><span id="__span-0-398"><a id="__codelineno-0-398" name="__codelineno-0-398"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">character_final_color_map</span><span class="p">[</span><span class="n">character</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_gradient_mapping</span><span class="p">[</span><span class="n">character</span><span class="o">.</span><span class="n">input_coord</span><span class="p">]</span>
 </span><span id="__span-0-399"><a id="__codelineno-0-399" name="__codelineno-0-399"></a>        <span class="k">for</span> <span class="n">row_index</span><span class="p">,</span> <span class="n">characters</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
-</span><span id="__span-0-400"><a id="__codelineno-0-400" name="__codelineno-0-400"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span><span class="n">grouping</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">),</span>
+</span><span id="__span-0-400"><a id="__codelineno-0-400" name="__codelineno-0-400"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span><span class="n">grouping</span><span class="o">=</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">),</span>
 </span><span id="__span-0-401"><a id="__codelineno-0-401" name="__codelineno-0-401"></a>        <span class="p">):</span>
 </span><span id="__span-0-402"><a id="__codelineno-0-402" name="__codelineno-0-402"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">row_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">VHSTapeIterator</span><span class="o">.</span><span class="n">Line</span><span class="p">(</span><span class="n">characters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">character_final_color_map</span><span class="p">)</span>
 </span><span id="__span-0-403"><a id="__codelineno-0-403" name="__codelineno-0-403"></a>        <span class="k">for</span> <span class="n">character</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters</span><span class="p">():</span>
@@ -6145,7 +6168,7 @@ create a smoother and longer gradient animation. Valid values are n &gt; 0.</p>
 </span><span id="__span-0-397"><a id="__codelineno-0-397" name="__codelineno-0-397"></a>    <span class="k">for</span> <span class="n">character</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters</span><span class="p">():</span>
 </span><span id="__span-0-398"><a id="__codelineno-0-398" name="__codelineno-0-398"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">character_final_color_map</span><span class="p">[</span><span class="n">character</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_gradient_mapping</span><span class="p">[</span><span class="n">character</span><span class="o">.</span><span class="n">input_coord</span><span class="p">]</span>
 </span><span id="__span-0-399"><a id="__codelineno-0-399" name="__codelineno-0-399"></a>    <span class="k">for</span> <span class="n">row_index</span><span class="p">,</span> <span class="n">characters</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
-</span><span id="__span-0-400"><a id="__codelineno-0-400" name="__codelineno-0-400"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span><span class="n">grouping</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">),</span>
+</span><span id="__span-0-400"><a id="__codelineno-0-400" name="__codelineno-0-400"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span><span class="n">grouping</span><span class="o">=</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">),</span>
 </span><span id="__span-0-401"><a id="__codelineno-0-401" name="__codelineno-0-401"></a>    <span class="p">):</span>
 </span><span id="__span-0-402"><a id="__codelineno-0-402" name="__codelineno-0-402"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">row_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">VHSTapeIterator</span><span class="o">.</span><span class="n">Line</span><span class="p">(</span><span class="n">characters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">character_final_color_map</span><span class="p">)</span>
 </span><span id="__span-0-403"><a id="__codelineno-0-403" name="__codelineno-0-403"></a>    <span class="k">for</span> <span class="n">character</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters</span><span class="p">():</span>

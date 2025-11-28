@@ -275,6 +275,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../changeblog/changeblog_0.14.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    0.14.0 (Easier Easing)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../changeblog/changeblog_0.13.0/" class="md-nav__link">
         
   
@@ -3765,9 +3788,9 @@ create a smoother and longer gradient animation. Valid values are n &gt; 0.</p>
 </span><span id="__span-0-133"><a id="__codelineno-0-133" name="__codelineno-0-133"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: PLR0915</span>
 </span><span id="__span-0-134"><a id="__codelineno-0-134" name="__codelineno-0-134"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the effect.&quot;&quot;&quot;</span>
 </span><span id="__span-0-135"><a id="__codelineno-0-135" name="__codelineno-0-135"></a>        <span class="n">slice_direction_map</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="__span-0-136"><a id="__codelineno-0-136" name="__codelineno-0-136"></a>            <span class="s2">&quot;vertical&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">,</span>
-</span><span id="__span-0-137"><a id="__codelineno-0-137" name="__codelineno-0-137"></a>            <span class="s2">&quot;horizontal&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_RIGHT_TO_LEFT</span><span class="p">,</span>
-</span><span id="__span-0-138"><a id="__codelineno-0-138" name="__codelineno-0-138"></a>            <span class="s2">&quot;diagonal&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT</span><span class="p">,</span>
+</span><span id="__span-0-136"><a id="__codelineno-0-136" name="__codelineno-0-136"></a>            <span class="s2">&quot;vertical&quot;</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">,</span>
+</span><span id="__span-0-137"><a id="__codelineno-0-137" name="__codelineno-0-137"></a>            <span class="s2">&quot;horizontal&quot;</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_RIGHT_TO_LEFT</span><span class="p">,</span>
+</span><span id="__span-0-138"><a id="__codelineno-0-138" name="__codelineno-0-138"></a>            <span class="s2">&quot;diagonal&quot;</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT</span><span class="p">,</span>
 </span><span id="__span-0-139"><a id="__codelineno-0-139" name="__codelineno-0-139"></a>        <span class="p">}</span>
 </span><span id="__span-0-140"><a id="__codelineno-0-140" name="__codelineno-0-140"></a>        <span class="n">final_gradient</span> <span class="o">=</span> <span class="n">Gradient</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">final_gradient_stops</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">final_gradient_steps</span><span class="p">)</span>
 </span><span id="__span-0-141"><a id="__codelineno-0-141" name="__codelineno-0-141"></a>        <span class="n">final_gradient_mapping</span> <span class="o">=</span> <span class="n">final_gradient</span><span class="o">.</span><span class="n">build_coordinate_color_mapping</span><span class="p">(</span>
@@ -4141,9 +4164,9 @@ create a smoother and longer gradient animation. Valid values are n &gt; 0.</p>
 <span class="normal"><a href="#__codelineno-0-268">268</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-133"><a id="__codelineno-0-133" name="__codelineno-0-133"></a><span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: PLR0915</span>
 </span><span id="__span-0-134"><a id="__codelineno-0-134" name="__codelineno-0-134"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the effect.&quot;&quot;&quot;</span>
 </span><span id="__span-0-135"><a id="__codelineno-0-135" name="__codelineno-0-135"></a>    <span class="n">slice_direction_map</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="__span-0-136"><a id="__codelineno-0-136" name="__codelineno-0-136"></a>        <span class="s2">&quot;vertical&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">,</span>
-</span><span id="__span-0-137"><a id="__codelineno-0-137" name="__codelineno-0-137"></a>        <span class="s2">&quot;horizontal&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_RIGHT_TO_LEFT</span><span class="p">,</span>
-</span><span id="__span-0-138"><a id="__codelineno-0-138" name="__codelineno-0-138"></a>        <span class="s2">&quot;diagonal&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT</span><span class="p">,</span>
+</span><span id="__span-0-136"><a id="__codelineno-0-136" name="__codelineno-0-136"></a>        <span class="s2">&quot;vertical&quot;</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">,</span>
+</span><span id="__span-0-137"><a id="__codelineno-0-137" name="__codelineno-0-137"></a>        <span class="s2">&quot;horizontal&quot;</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_RIGHT_TO_LEFT</span><span class="p">,</span>
+</span><span id="__span-0-138"><a id="__codelineno-0-138" name="__codelineno-0-138"></a>        <span class="s2">&quot;diagonal&quot;</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT</span><span class="p">,</span>
 </span><span id="__span-0-139"><a id="__codelineno-0-139" name="__codelineno-0-139"></a>    <span class="p">}</span>
 </span><span id="__span-0-140"><a id="__codelineno-0-140" name="__codelineno-0-140"></a>    <span class="n">final_gradient</span> <span class="o">=</span> <span class="n">Gradient</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">final_gradient_stops</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">final_gradient_steps</span><span class="p">)</span>
 </span><span id="__span-0-141"><a id="__codelineno-0-141" name="__codelineno-0-141"></a>    <span class="n">final_gradient_mapping</span> <span class="o">=</span> <span class="n">final_gradient</span><span class="o">.</span><span class="n">build_coordinate_color_mapping</span><span class="p">(</span>

@@ -275,6 +275,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../changeblog/changeblog_0.14.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    0.14.0 (Easier Easing)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../changeblog/changeblog_0.13.0/" class="md-nav__link">
         
   
@@ -4050,10 +4073,10 @@
 </span><span id="__span-0-198"><a id="__codelineno-0-198" name="__codelineno-0-198"></a>        <span class="k">for</span> <span class="n">character</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters</span><span class="p">():</span>
 </span><span id="__span-0-199"><a id="__codelineno-0-199" name="__codelineno-0-199"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">character_final_color_map</span><span class="p">[</span><span class="n">character</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_gradient_mapping</span><span class="p">[</span><span class="n">character</span><span class="o">.</span><span class="n">input_coord</span><span class="p">]</span>
 </span><span id="__span-0-200"><a id="__codelineno-0-200" name="__codelineno-0-200"></a>        <span class="n">sort_map</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="__span-0-201"><a id="__codelineno-0-201" name="__codelineno-0-201"></a>            <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">DOWN</span><span class="p">:</span> <span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">,</span>
-</span><span id="__span-0-202"><a id="__codelineno-0-202" name="__codelineno-0-202"></a>            <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">UP</span><span class="p">:</span> <span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_TOP_TO_BOTTOM</span><span class="p">,</span>
-</span><span id="__span-0-203"><a id="__codelineno-0-203" name="__codelineno-0-203"></a>            <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">LEFT</span><span class="p">:</span> <span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_LEFT_TO_RIGHT</span><span class="p">,</span>
-</span><span id="__span-0-204"><a id="__codelineno-0-204" name="__codelineno-0-204"></a>            <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">:</span> <span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_RIGHT_TO_LEFT</span><span class="p">,</span>
+</span><span id="__span-0-201"><a id="__codelineno-0-201" name="__codelineno-0-201"></a>            <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">DOWN</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">,</span>
+</span><span id="__span-0-202"><a id="__codelineno-0-202" name="__codelineno-0-202"></a>            <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">UP</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_TOP_TO_BOTTOM</span><span class="p">,</span>
+</span><span id="__span-0-203"><a id="__codelineno-0-203" name="__codelineno-0-203"></a>            <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">LEFT</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_LEFT_TO_RIGHT</span><span class="p">,</span>
+</span><span id="__span-0-204"><a id="__codelineno-0-204" name="__codelineno-0-204"></a>            <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_RIGHT_TO_LEFT</span><span class="p">,</span>
 </span><span id="__span-0-205"><a id="__codelineno-0-205" name="__codelineno-0-205"></a>        <span class="p">}</span>
 </span><span id="__span-0-206"><a id="__codelineno-0-206" name="__codelineno-0-206"></a>        <span class="n">groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span><span class="n">grouping</span><span class="o">=</span><span class="n">sort_map</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_pour_direction</span><span class="p">])</span>
 </span><span id="__span-0-207"><a id="__codelineno-0-207" name="__codelineno-0-207"></a>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">groups</span><span class="p">):</span>
@@ -4417,10 +4440,10 @@
 </span><span id="__span-0-198"><a id="__codelineno-0-198" name="__codelineno-0-198"></a>    <span class="k">for</span> <span class="n">character</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters</span><span class="p">():</span>
 </span><span id="__span-0-199"><a id="__codelineno-0-199" name="__codelineno-0-199"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">character_final_color_map</span><span class="p">[</span><span class="n">character</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_gradient_mapping</span><span class="p">[</span><span class="n">character</span><span class="o">.</span><span class="n">input_coord</span><span class="p">]</span>
 </span><span id="__span-0-200"><a id="__codelineno-0-200" name="__codelineno-0-200"></a>    <span class="n">sort_map</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="__span-0-201"><a id="__codelineno-0-201" name="__codelineno-0-201"></a>        <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">DOWN</span><span class="p">:</span> <span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">,</span>
-</span><span id="__span-0-202"><a id="__codelineno-0-202" name="__codelineno-0-202"></a>        <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">UP</span><span class="p">:</span> <span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_TOP_TO_BOTTOM</span><span class="p">,</span>
-</span><span id="__span-0-203"><a id="__codelineno-0-203" name="__codelineno-0-203"></a>        <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">LEFT</span><span class="p">:</span> <span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_LEFT_TO_RIGHT</span><span class="p">,</span>
-</span><span id="__span-0-204"><a id="__codelineno-0-204" name="__codelineno-0-204"></a>        <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">:</span> <span class="n">Terminal</span><span class="o">.</span><span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_RIGHT_TO_LEFT</span><span class="p">,</span>
+</span><span id="__span-0-201"><a id="__codelineno-0-201" name="__codelineno-0-201"></a>        <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">DOWN</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_BOTTOM_TO_TOP</span><span class="p">,</span>
+</span><span id="__span-0-202"><a id="__codelineno-0-202" name="__codelineno-0-202"></a>        <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">UP</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">ROW_TOP_TO_BOTTOM</span><span class="p">,</span>
+</span><span id="__span-0-203"><a id="__codelineno-0-203" name="__codelineno-0-203"></a>        <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">LEFT</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_LEFT_TO_RIGHT</span><span class="p">,</span>
+</span><span id="__span-0-204"><a id="__codelineno-0-204" name="__codelineno-0-204"></a>        <span class="n">PourIterator</span><span class="o">.</span><span class="n">PourDirection</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">:</span> <span class="n">CharacterGroup</span><span class="o">.</span><span class="n">COLUMN_RIGHT_TO_LEFT</span><span class="p">,</span>
 </span><span id="__span-0-205"><a id="__codelineno-0-205" name="__codelineno-0-205"></a>    <span class="p">}</span>
 </span><span id="__span-0-206"><a id="__codelineno-0-206" name="__codelineno-0-206"></a>    <span class="n">groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">get_characters_grouped</span><span class="p">(</span><span class="n">grouping</span><span class="o">=</span><span class="n">sort_map</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_pour_direction</span><span class="p">])</span>
 </span><span id="__span-0-207"><a id="__codelineno-0-207" name="__codelineno-0-207"></a>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">groups</span><span class="p">):</span>
