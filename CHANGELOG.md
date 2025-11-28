@@ -12,7 +12,7 @@
 
 #### New Application Features (0.14.0)
 
-* `random_effect` is now specified as `--random-effect` and supports `--include` or `--exclude` for limiting which effects are available.
+* `random_effect` is now specified as `--random-effect` and supports `--include-effects` or `--exclude-effects` for limiting which effects are available.
 
 ---
 
