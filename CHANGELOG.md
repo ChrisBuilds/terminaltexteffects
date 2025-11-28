@@ -14,6 +14,10 @@
 
 * `random_effect` is now specified as `--random-effect` and supports `--include-effects` or `--exclude-effects` for limiting which effects are available.
 
+#### Application Changes (0.14.0)
+
+* `--version` switch now pull the package version from the package metadata instead of the package `__init__.py`
+
 ---
 
 ### Changes (0.14.0)
