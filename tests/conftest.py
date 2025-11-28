@@ -232,7 +232,7 @@ def clear_lru_cache() -> Generator[None, Any, None]:
     geometry.find_coords_on_circle.cache_clear()  # type: ignore[attr-defined]
     geometry.find_coords_in_circle.cache_clear()  # type: ignore[attr-defined]
     geometry.find_coords_in_rect.cache_clear()  # type: ignore[attr-defined]
-    geometry.find_coord_at_distance.cache_clear()  # type: ignore[attr-defined]
+    geometry.extrapolate_along_ray.cache_clear()  # type: ignore[attr-defined]
     geometry.find_coord_on_bezier_curve.cache_clear()  # type: ignore[attr-defined]
     geometry.find_coord_on_line.cache_clear()  # type: ignore[attr-defined]
     geometry.find_length_of_bezier_curve.cache_clear()  # type: ignore[attr-defined]

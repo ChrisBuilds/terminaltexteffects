@@ -215,7 +215,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             explode_path = character.motion.new_path(speed=random.uniform(0.2, 0.4), ease=easing.out_circ, layer=2)
             explode_wpt = explode_path.new_waypoint(random.choice(explode_waypoint_coords))  # type: ignore[attr-defined]
 
-            bloom_control_point = geometry.find_coord_at_distance(
+            bloom_control_point = geometry.extrapolate_along_ray(
                 apex_wpt.coord,
                 explode_wpt.coord,
                 self.explode_distance // 2,

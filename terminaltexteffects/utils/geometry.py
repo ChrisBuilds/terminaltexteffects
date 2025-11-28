@@ -186,8 +186,8 @@ def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> lis
 find_coords_on_rect = functools.wraps(find_coords_on_rect)(functools.lru_cache(maxsize=8192)(find_coords_on_rect))
 
 
-def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coord:
-    """Find the coordinate at the given distance along the line defined by the origin and target coordinates.
+def extrapolate_along_ray(origin: Coord, target: Coord, offset_from_target: float) -> Coord:
+    """“Return the point distance units past the target along the origin -> target ray.”.
 
     The coordinate returned is approximately [distance] units away from the target coordinate,
     away from the origin coordinate.
@@ -195,13 +195,13 @@ def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coo
     Args:
         origin (Coord): origin coordinate (a)
         target (Coord): target coordinate (b)
-        distance (float): distance from the target coordinate (b), away from the origin coordinate (a)
+        offset_from_target (float): distance from the target coordinate (b), away from the origin coordinate (a)
 
     Returns:
         Coord: Coordinate at the given distance (c).
 
     """
-    total_distance = find_length_of_line(origin, target) + distance
+    total_distance = find_length_of_line(origin, target) + offset_from_target
     if total_distance == 0 or origin == target:
         return target
     t = total_distance / find_length_of_line(origin, target)
@@ -212,8 +212,8 @@ def find_coord_at_distance(origin: Coord, target: Coord, distance: float) -> Coo
     return Coord(round(next_column), round(next_row))
 
 
-find_coord_at_distance = functools.wraps(find_coord_at_distance)(
-    functools.lru_cache(maxsize=8192)(find_coord_at_distance),
+extrapolate_along_ray = functools.wraps(extrapolate_along_ray)(
+    functools.lru_cache(maxsize=8192)(extrapolate_along_ray),
 )
 
 

@@ -114,14 +114,14 @@ def test_find_coords_on_rect_small_exact_points() -> None:
 def test_find_coord_at_distance(coord: geometry.Coord) -> None:
     """Test that the function returns the correct coordinate."""
     new_coord = geometry.Coord(coord.column + 5, coord.row + 5)
-    coord_at_distance = geometry.find_coord_at_distance(coord, new_coord, 3)
+    coord_at_distance = geometry.extrapolate_along_ray(coord, new_coord, 3)
     # verify the coord returned is further away from the target coord
     assert coord_at_distance == geometry.Coord(8, 9)
 
 
 def test_find_coord_at_distance_zero_distance(coord: geometry.Coord) -> None:
     """Test that the function returns the same coordinate when the distance is zero."""
-    coord_at_distance = geometry.find_coord_at_distance(coord, coord, 0)
+    coord_at_distance = geometry.extrapolate_along_ray(coord, coord, 0)
     assert coord_at_distance.column == coord.column
     assert coord_at_distance.row == coord.row
 
