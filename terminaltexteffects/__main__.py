@@ -7,6 +7,7 @@ import importlib
 import pkgutil
 import random
 import sys
+from importlib.metadata import version
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -38,7 +39,7 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
         "--version",
         "-v",
         action="version",
-        version="TerminalTextEffects " + terminaltexteffects.__version__,
+        version="TerminalTextEffects " + version("terminaltexteffects"),
     )
     parser.add_argument("--random-effect", "-R", action="store_true", help="Randomly select an effect to apply")
     random_include_exclude_group = parser.add_mutually_exclusive_group()
