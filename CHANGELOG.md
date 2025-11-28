@@ -2,6 +2,15 @@
 
 ---
 
+## 0.14.1
+
+---
+
+### Bug Fixes (0.14.1)
+
+* Removed duplicate keyword arg `action` in `effect_template` `ArgSpec`.
+
+
 ## 0.14.0
 
 ---
