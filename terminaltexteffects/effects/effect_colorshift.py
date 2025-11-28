@@ -41,7 +41,7 @@ class ColorShiftConfig(BaseConfig):
             gradient animation.
         no_loop (bool): Do not loop the gradient. If not set, the gradient generation will loop the final gradient
             color back to the first gradient color.
-        travel (bool): Display the gradient as a traveling wave.
+        no_travel (bool): Do not display the gradient as a wave.
         travel_direction (Gradient.Direction): Direction the gradient travels across the canvas.
         reverse_travel_direction (bool): Reverse the gradient travel direction.
         cycles (int): Number of times to cycle the gradient. Use 0 for infinite. Valid values are n >= 0.
@@ -60,7 +60,7 @@ class ColorShiftConfig(BaseConfig):
         description="Display a gradient that shifts colors across the terminal.",
         epilog=(
             "Example: terminaltexteffects colorshift --gradient-stops 0000ff ffffff 0000ff "
-            "--gradient-steps 12 --gradient-frames 10 --cycles 3 --travel --travel-direction radial "
+            "--gradient-steps 12 --gradient-frames 10 --cycles 3 "
             "--final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12"
         ),
     )
@@ -110,17 +110,17 @@ class ColorShiftConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    travel: bool = ArgSpec(
-        name="--travel",
+    no_travel: bool = ArgSpec(
+        name="--no-travel",
         default=False,
         action="store_true",
-        help="Display the gradient as a traveling wave",
+        help="Do not display the gradient as a wave.",
     )  # pyright: ignore[reportAssignmentType]
-    "bool : Display the gradient as a traveling wave."
+    "bool : Do not display the gradient as a wave."
 
     travel_direction: Gradient.Direction = ArgSpec(
         name="--travel-direction",
-        default=Gradient.Direction.HORIZONTAL,
+        default=Gradient.Direction.RADIAL,
         type=argutils.GradientDirection.type_parser,
         metavar=argutils.GradientDirection.METAVAR,
         help="Direction the gradient travels across the canvas.",
@@ -252,7 +252,9 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
         for character in self.terminal.get_characters():
             self.terminal.set_character_visibility(character, is_visible=True)
             gradient_scn = character.animation.new_scene(scene_id="gradient")
-            if self.config.travel:
+            if self.config.no_travel:
+                colors = gradient.spectrum
+            else:
                 if self.config.travel_direction == Gradient.Direction.HORIZONTAL:
                     direction_index = character.input_coord.column / self.terminal.canvas.right
                 elif self.config.travel_direction == Gradient.Direction.VERTICAL:
@@ -273,8 +275,6 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
                 if self.config.reverse_travel_direction:
                     shift_distance = shift_distance * -1
                 colors = gradient.spectrum[shift_distance:] + gradient.spectrum[:shift_distance]
-            else:
-                colors = gradient.spectrum
             for color in colors:
                 gradient_scn.add_frame(
                     character.input_symbol,

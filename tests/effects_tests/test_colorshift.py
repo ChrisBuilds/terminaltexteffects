@@ -4,7 +4,9 @@ from terminaltexteffects.effects import effect_colorshift
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data",
+    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    indirect=True,
 )
 def test_colorshift_effect_all_inputs(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_colorshift.ColorShift(input_data)
@@ -25,7 +27,11 @@ def test_colorshift_effect_terminal_color_options(input_data, terminal_config_wi
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_colorshift_final_gradient(
-    terminal_config_default_no_framerate, input_data, gradient_direction, gradient_steps, gradient_stops
+    terminal_config_default_no_framerate,
+    input_data,
+    gradient_direction,
+    gradient_steps,
+    gradient_stops,
 ) -> None:
     effect = effect_colorshift.ColorShift(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
@@ -38,7 +44,7 @@ def test_colorshift_final_gradient(
 
 
 @pytest.mark.parametrize("no_loop", [True, False])
-@pytest.mark.parametrize("travel", [True, False])
+@pytest.mark.parametrize("no_travel", [True, False])
 @pytest.mark.parametrize("reverse_travel_direction", [True, False])
 @pytest.mark.parametrize("cycles", [1, 3])
 @pytest.mark.parametrize("skip_final_gradient", [True, False])
@@ -46,7 +52,7 @@ def test_colorshift_final_gradient(
 def test_colorshift_args(
     input_data,
     no_loop,
-    travel,
+    no_travel,
     reverse_travel_direction,
     cycles,
     terminal_config_default_no_framerate,
@@ -62,7 +68,7 @@ def test_colorshift_args(
     effect.effect_config.gradient_steps = gradient_steps
     effect.effect_config.gradient_frames = gradient_frames
     effect.effect_config.no_loop = no_loop
-    effect.effect_config.travel = travel
+    effect.effect_config.no_travel = no_travel
     effect.effect_config.travel_direction = gradient_direction
     effect.effect_config.reverse_travel_direction = reverse_travel_direction
     effect.effect_config.cycles = cycles

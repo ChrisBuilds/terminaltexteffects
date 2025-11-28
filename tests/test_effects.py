@@ -58,7 +58,6 @@ def test_effect_visual(effect, input_data) -> None:
     elif isinstance(effect, effect_thunderstorm.Thunderstorm):
         effect.effect_config.storm_time = 1
     elif isinstance(effect, effect_colorshift.ColorShift):
-        effect.effect_config.travel = True
         effect.effect_config.cycles = 2
     with effect.terminal_output() as terminal:
         for frame in effect:
