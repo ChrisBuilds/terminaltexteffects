@@ -23,7 +23,7 @@
 #### Engine Changes (0.14.0)
 
 * Added `EasingTracker`, a reusable helper that tracks eased progress, deltas, and completion state for any easing function.
-* Replaced the legacy `eased_step_function` closure with the new `SequenceEaser`, enabling eased iteration over arbitrary sequences while reporting added, removed, and total elements for each step.
+* Replaced `eased_step_function` closure with the new `SequenceEaser`, enabling eased iteration over arbitrary sequences while reporting added, removed, and total elements for each step.
 * Renamed `CharacterGroup` center related groupings to `CENTER_TO_OUTSIDE` / `OUTSIDE_TO_CENTER` for clarity.
 * `terminaltexteffects.utils.argutils` introduces dedicated argument-type helpers for `CharacterGroup`, `CharacterSort`, and `ColorSort`, providing shared metavar listings and validation for the CLI configuration builders.
 * `CharacterGroup`, `CharacterSort`, and `ColorSort` themselves were relocated from the `Terminal` module into `terminaltexteffects.utils.argutils`, and the terminal now imports them from there so both the CLI and the engine share a single definition of the enums.
