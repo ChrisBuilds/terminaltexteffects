@@ -6,6 +6,16 @@
 
 ---
 
+### New Features (0.14.0)
+
+---
+
+#### New Application Features (0.14.0)
+
+* `random_effect` is now specified as `--random-effect` and supports `--include` or `--exclude` for limiting which effects are available.
+
+---
+
 ### Changes (0.14.0)
 
 ---
@@ -37,6 +47,11 @@
 #### Effect Fixes (0.14.0)
 
 * Sweep - Fixed bug when second sweep direction is a grouping of a different length from the first direction. 
+
+#### Application Fixes (0.14.0)
+
+* CLI now exits with a non-zero status when input files are missing, no input is provided, or no effect is specified.
+* CLI detects duplicate effect command registrations.
 
 
 ## 0.13.0
