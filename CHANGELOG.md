@@ -24,11 +24,11 @@
 
 * Added `EasingTracker`, a reusable helper that tracks eased progress, deltas, and completion state for any easing function.
 * Replaced `eased_step_function` closure with the new `SequenceEaser`, enabling eased iteration over arbitrary sequences while reporting added, removed, and total elements for each step.
-* Renamed `CharacterGroup` center related groupings to `CENTER_TO_OUTSIDE` / `OUTSIDE_TO_CENTER` for clarity.
-* `terminaltexteffects.utils.argutils` introduces dedicated argument-type helpers for `CharacterGroup`, `CharacterSort`, and `ColorSort`, providing shared metavar listings and validation for the CLI configuration builders.
+* Renamed `CharacterGroup` center related groupings to `CENTER_TO_OUTSIDE` / `OUTSIDE_TO_CENTER`.
 * `CharacterGroup`, `CharacterSort`, and `ColorSort` themselves were relocated from the `Terminal` module into `terminaltexteffects.utils.argutils`, and the terminal now imports them from there so both the CLI and the engine share a single definition of the enums.
-* Center-to-outside/Outside-to-center `CharacterGroup` calculations within `Terminal` now measure distance from the text center instead of the canvas center, so middle-out and outside-in sorts stay aligned with the rendered text even when it is offset on the canvas.
+* `terminaltexteffects.utils.argutils` introduces dedicated argument-type helpers for `CharacterGroup`, `CharacterSort`, and `ColorSort`.
 * `Canvas` now exposes a `text_center` `Coord` computed from `text_center_row`/`text_center_column`, eliminating redundant per-call calculations when effects or sort helpers need the true center of the anchored text.
+* Center-to-outside/Outside-to-center `CharacterGroup` calculations within `Terminal` now measure distance from the text center instead of the canvas center, so middle-out and outside-in sorts stay aligned with the rendered text even when it is offset on the canvas.
 
 #### Effects Changes (0.14.0)
 
