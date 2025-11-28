@@ -37,6 +37,8 @@
 * Wipe - Simplified effect logic by offloading to `SequenceEaser`. 
 * Wipe - Changed default `--wipe-ease` to `IN_OUT_CIRC`.
 * Wipe - Removed `--wipe-ease-stepsize` CLI arg.
+* Colorshift - `--travel` renamed `--no-travel`. The default behavior is to travel radially.
+* Colorshift - Default `--travel-direction` changed from horizontal to radial.
 
 ---
 
