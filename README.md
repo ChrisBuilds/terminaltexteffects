@@ -150,6 +150,11 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
   --input-file, -i INPUT_FILE
                         File to read input from
   --version, -v         show program's version number and exit
+  --random-effect, -R   Randomly select an effect to apply
+  --include-effects INCLUDE_EFFECTS [INCLUDE_EFFECTS ...]
+                        Space-separated list of Effects to include when randomly selecting an effect
+  --exclude-effects EXCLUDE_EFFECTS [EXCLUDE_EFFECTS ...]
+                        Space-separated list of Effects to exclude when randomly selecting an effect
   --tab-width (int > 0)
                         Number of spaces to use for a tab character.
   --xterm-colors        Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color.
@@ -182,9 +187,8 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
   Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
-  {random_effect,beams,binarypath,blackhole,bouncyballs,bubbles,burn,colorshift,crumble,decrypt,dev,dev_worm,errorcorrect,expand,fireworks,highlight,laseretch,matrix,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slice,slide,smoke,spotlights,spray,swarm,sweep,synthgrid,test,thunderstorm,unstable,vhstape,waves,wipe}
+  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,colorshift,crumble,decrypt,errorcorrect,expand,fireworks,highlight,laseretch,matrix,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slice,slide,smoke,spotlights,spray,swarm,sweep,synthgrid,thunderstorm,unstable,vhstape,waves,wipe}
                         Available Effects
-    random_effect       Randomly select an effect to apply to the input text. All effect and effect-specific options are ignored.
     beams               Create beams which travel over the canvas illuminating the characters behind them.
     binarypath          Binary representations of each character move towards the home coordinate of the character.
     blackhole           Characters are consumed by a black hole and explode outwards.
@@ -311,84 +315,59 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/changeblog/) for release write-ups.
 
-## 0.13.0
+## 0.14.0
 
 ---
 
-### New Features (0.13.0)
+### New Features (0.14.0)
 
 ---
 
-#### New Effects (0.13.0)
+#### New Application Features (0.14.0)
 
-* Thunderstorm - Rain falls across the canvas. Lightning strikes randomly around the canvas. Lightning flashes after reaching the bottom of the canvas, lighting up the text characters. Sparks explode from lightning impact. Text characters glow when lightning travels through them.
-* Smoke - Smoke floods the canvas, colorizing any text it passes over.
----
-
-#### New Engine Features (0.13.0)
-
-* Added `geometry.find_coords_on_rect()`, which returns coordinates along the perimeter of a rectangle given a center `Coord`, width, and height. Results are cached for performance.
-* Added `--terminal-background-color` to the `TerminalConfig` parser. This will enable terminal themes with background other than black to better display effects with fade in/out components.
-* Spanning-tree and search algorithms have been added.
-  * PrimsSimple - Unweighted Prims
-  * PrimsWeighted
-  * RecursiveBacktracker
-  * Breadthfirst
-* `EffectCharacter` has a new attribute `links` to support creating trees using spanning-tree algorithms.
----
-
-#### New Application Features (0.13.0)
-
-* Support for random effect selection from the command-line. Use effect named `random_effect`. Global configuration options will apply.
-* Support for canvas re-use. Use tte option `--reuse-canvas` to restore the cursor to the position of the prior effect canvas.
-* Added `terminaltexteffects` entry point.
-* `--no-eol` command-line option. Suppress the trailing newline character after an effect.
-* `--no-restore-cursor` command-line option. Do not restore cursor visibility after an effect ends.
----
-
-### Changes (0.13.0)
+* `random_effect` is now specified as `--random-effect` and supports `--include-effects` or `--exclude-effects` for limiting which effects are available.
 
 ---
 
-#### Effects Changes (0.13.0)
-
-* Blackhole - Initial consumption motion modified to create the apperance of an gravitational-wave propagating across the canvas.
-* Laseretch - New etch-pattern `algorithm` uses the link-order of a text-boundary-bound recursive backtracker algorithm.
-* Burn - Character ignite order is based on the link-order of a text-boundary-bound prims simple algorithm.
-* Pour - Changed `--movement-speed` to `--movement-speed-range` to add some variation in character falling speed.
-* All effects have been adjusted for visual parity at 60 fps.
-* All effects are up-imported into `terminaltexteffects.effects` to simplify importing to `from terminaltexteffects.effects import Burn`.
+### Changes (0.14.0)
 
 ---
 
-#### Engine Changes (0.13.0)
+#### Engine Changes (0.14.0)
 
-* `animation.set_appearance()` `symbol` argument signature changed from `str` to `str | None`, defaulting to the character's `input_symbol` if not provided.
-* `Coord` objects can be unpacked into `(column, row)` tuples for multiple assignment.
-* `motion.activate_path()` and `animation.activate_scene()` accept `path_id`/`scene_id` strings OR `Path`/`Scene` instances. The `Path`/`Scene` corresponding to the provided `path_id`/`scene_id` must exist or  a `SceneNotFoundError`/`PathNotFoundError` will be raised.
-* `motion.query_path()` accepts an argument directing the action to take if a path with the given `path_id` cannot be found. The default action is to raise a `PathNotFoundError`, but this behavior can be changed to return `None`.
-* `animation.query_scene()` accepts an argument directing the action to take if a scene with the given `scene_id` cannot be found. The default action is to raise a `SceneNotFoundError`, but this behavior can be changed to return `None`.
-* Events can be registered using `path_id`/`scene_id` in place of the `Path`/`Scene` for `target` and `caller` arguments.
-* Frame rate reduced from 100 fps to 60 fps.
-* Typed argument parsing and related configuration utilities and classes have been rewritten.
-* Terminal distance calculations take into account the cell height/width ratio.
-* Completely rewrote modules and classes related to argument parsing and effect/terminal configuration handling. This eliminates the design which forced building multiple configuration objects depending on how the effect was run, and also enabled the random effect option.
+* Added `EasingTracker`, a reusable helper that tracks eased progress, deltas, and completion state for any easing function.
+* Replaced `eased_step_function` closure with the new `SequenceEaser`, enabling eased iteration over arbitrary sequences while reporting added, removed, and total elements for each step.
+* Renamed `CharacterGroup` center related groupings to `CENTER_TO_OUTSIDE` / `OUTSIDE_TO_CENTER`.
+* `CharacterGroup`, `CharacterSort`, and `ColorSort` themselves were relocated from the `Terminal` module into `terminaltexteffects.utils.argutils`, and the terminal now imports them from there so both the CLI and the engine share a single definition of the enums.
+* `terminaltexteffects.utils.argutils` introduces dedicated argument-type helpers for `CharacterGroup`, `CharacterSort`, and `ColorSort`.
+* `Canvas` now exposes a `text_center` `Coord` computed from `text_center_row`/`text_center_column`, eliminating redundant per-call calculations when effects or sort helpers need the true center of the anchored text.
+* Center-to-outside/Outside-to-center `CharacterGroup` calculations within `Terminal` now measure distance from the text center instead of the canvas center, so middle-out and outside-in sorts stay aligned with the rendered text even when it is offset on the canvas.
 
-### Bug Fixes (0.13.0)
+#### Effects Changes (0.14.0)
 
----
-
-#### Engine Fixes (0.13.0)
-
-* Fixed duplicate event registrations by adding prevention logic to the EventHandler. The `register_event` method now raises a `DuplicateEventRegistrationError` when attempting to register the same event-caller-action-target combination.
-* Improved the `_handle_event` method docstring with comprehensive documentation.
-* `Scene.reset_scene()` now sets `easing_current_step` to `0`.
+* Highlight - Simplified effect logic by offloading to `SequenceEaser`.
+* Sweep - Simplified effect logic by offloading to `SequenceEaser`.
+* Wipe - Simplified effect logic by offloading to `SequenceEaser`. 
+* Wipe - Changed default `--wipe-ease` to `IN_OUT_CIRC`.
+* Wipe - Removed `--wipe-ease-stepsize` CLI arg.
+* Colorshift - `--travel` renamed `--no-travel`. The default behavior is to travel radially.
+* Colorshift - Default `--travel-direction` changed from horizontal to radial.
 
 ---
 
-#### Effect Fixes (0.13.0)
+### Bug Fixes (0.14.0)
 
-* Unstable - Effect properly uses config values for reassembly/explosion speed. These were not referenced previously.
+---
+
+#### Effect Fixes (0.14.0)
+
+* Sweep - Fixed bug when second sweep direction is a grouping of a different length from the first direction. 
+* Removed mistakenly added effect dev_worm.
+
+#### Application Fixes (0.14.0)
+
+* CLI now exits with a non-zero status when input files are missing, no input is provided, or no effect is specified.
+* CLI detects duplicate effect command registrations.
 
 ---
 
