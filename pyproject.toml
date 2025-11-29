@@ -67,7 +67,7 @@ markers = [
 testpaths = ["tests"]
 
 [tool.hatch.build.targets.sdist]
-exclude = ["docs/**"]
+exclude = ["docs/**", "tests/**"]
 
 [build-system]
 requires = ["hatchling"]
