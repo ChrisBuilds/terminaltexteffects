@@ -2,6 +2,14 @@
 
 ---
 
+## 0.14.2
+
+---
+
+### Bug Fixes (0.14.2)
+
+* Removed mistakenly added in-development effect.
+
 ## 0.14.1
 
 ---
