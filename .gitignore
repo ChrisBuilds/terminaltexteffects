@@ -166,7 +166,6 @@ terminaltexteffects/test_tte.py
 github_resources/*
 *.gv
 effect_test.py
-effect_dev*.py
 effect_canvas_test.
 
 .vscode/*
