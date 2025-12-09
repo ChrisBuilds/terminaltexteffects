@@ -12,7 +12,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
-from terminaltexteffects.engine.base_config import BaseConfig
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
@@ -89,46 +94,24 @@ class SmokeConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "bool : If True, the entire canvas will be flooded. Otherwise the effect is limited to the text boundary."
 
-    final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
-        name="--final-gradient-stops",
-        type=argutils.ColorArg.type_parser,
-        nargs="+",
-        action=argutils.TupleAction,
+    final_gradient_stops: tuple[tte.Color, ...] = FinalGradientStopsArg(
         default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#FFFFFF")),
-        metavar=argutils.ColorArg.METAVAR,
-        help=(
-            "Space separated, unquoted, list of colors for the character gradient (applied across the canvas). "
-            "If only one color is provided, the characters will be displayed in that color."
-        ),
     )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[Color, ...]: Space separated, unquoted, list of colors for the character gradient "
         "(applied across the canvas). If only one color is provided, the characters will be displayed in that color."
     )
 
-    final_gradient_steps: tuple[int, ...] | int = ArgSpec(
-        name="--final-gradient-steps",
-        type=argutils.PositiveInt.type_parser,
-        nargs="+",
-        action=argutils.TupleAction,
+    final_gradient_steps: tuple[int, ...] | int = FinalGradientStepsArg(
         default=(12,),
-        metavar=argutils.PositiveInt.METAVAR,
-        help=(
-            "Space separated, unquoted, list of the number of gradient steps to use. More steps will "
-            "create a smoother and longer gradient animation."
-        ),
     )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...] | int: Space separated, unquoted, list of the number of gradient steps to use. More "
         "steps will create a smoother and longer gradient animation."
     )
 
-    final_gradient_direction: tte.Gradient.Direction = ArgSpec(
-        name="--final-gradient-direction",
-        type=argutils.GradientDirection.type_parser,
+    final_gradient_direction: tte.Gradient.Direction = FinalGradientDirectionArg(
         default=tte.Gradient.Direction.VERTICAL,
-        metavar=argutils.GradientDirection.METAVAR,
-        help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
 

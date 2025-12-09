@@ -12,7 +12,13 @@ import random
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
-from terminaltexteffects.engine.base_config import BaseConfig
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientFramesArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
@@ -86,7 +92,6 @@ class BeamsConfig(BaseConfig):
             "Strings will be used in sequence to create an animation."
         ),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "tuple[str, ...]: Symbols to use for the beam effect when moving along a row. "
         "Strings will be used in sequence to create an animation."
@@ -104,7 +109,6 @@ class BeamsConfig(BaseConfig):
             "Strings will be used in sequence to create an animation."
         ),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "tuple[str, ...]: Symbols to use for the beam effect when moving along a column. "
         "Strings will be used in sequence to create an animation."
@@ -120,7 +124,6 @@ class BeamsConfig(BaseConfig):
             "Beams are added in groups of size random(1, 5)."
         ),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "int : Number of frames to wait before adding the next group of beams. "
         "Beams are added in groups of size random(1, 5)."
@@ -133,7 +136,6 @@ class BeamsConfig(BaseConfig):
         metavar=argutils.PositiveIntRange.METAVAR,
         help="Speed range of the beam when moving along a row.",
     )  # pyright: ignore[reportAssignmentType]
-
     "tuple[int, int] : Speed range of the beam when moving along a row."
 
     beam_column_speed_range: tuple[int, int] = ArgSpec(
@@ -143,7 +145,6 @@ class BeamsConfig(BaseConfig):
         metavar=argutils.PositiveIntRange.METAVAR,
         help="Speed range of the beam when moving along a column.",
     )  # pyright: ignore[reportAssignmentType]
-
     "tuple[int, int] : Speed range of the beam when moving along a column."
 
     beam_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
@@ -155,7 +156,6 @@ class BeamsConfig(BaseConfig):
         metavar="(XTerm [0-255] OR RGB Hex [000000-ffffff])",
         help="Space separated, unquoted, list of colors for the beam, a gradient will be created between the colors.",
     )  # pyright: ignore[reportAssignmentType]
-
     "tuple[tte.Color, ...]: Tuple of colors for the beam, a gradient will be created between the colors."
 
     beam_gradient_steps: tuple[int, ...] = ArgSpec(
@@ -171,7 +171,6 @@ class BeamsConfig(BaseConfig):
             "Steps are paired with the colors in final-gradient-stops."
         ),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "tuple[int, ...]: Int or Tuple of ints for the number of gradient steps to use. "
         "More steps will create a smoother and longer gradient animation. "
@@ -185,59 +184,31 @@ class BeamsConfig(BaseConfig):
         metavar=argutils.PositiveInt.METAVAR,
         help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
-
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
-        name="--final-gradient-stops",
-        type=argutils.ColorArg.type_parser,
-        nargs="+",
-        action=argutils.TupleAction,
+    final_gradient_stops: tuple[tte.Color, ...] = FinalGradientStopsArg(
         default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#ffffff")),
-        metavar=argutils.ColorArg.METAVAR,
         help="Space separated, unquoted, list of colors for the wipe gradient.",
     )  # pyright: ignore[reportAssignmentType]
-
     "tuple[tte.Color, ...]: Tuple of colors for the wipe gradient."
 
-    final_gradient_steps: tuple[int, ...] = ArgSpec(
-        name="--final-gradient-steps",
-        type=argutils.PositiveInt.type_parser,
-        nargs="+",
-        action=argutils.TupleAction,
+    final_gradient_steps: tuple[int, ...] = FinalGradientStepsArg(
         default=12,
-        metavar=argutils.PositiveInt.METAVAR,
-        help=(
-            "Space separated, unquoted, numbers for the of gradient steps to use. "
-            "More steps will create a smoother and longer gradient animation. "
-            "Steps are paired with the colors in final-gradient-stops."
-        ),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "tuple[int, ...]: Int or Tuple of ints for the number of gradient steps to use. "
         "More steps will create a smoother and longer gradient animation. "
         "Steps are paired with the colors in final-gradient-stops."
     )
 
-    final_gradient_frames: int = ArgSpec(
-        name="--final-gradient-frames",
-        type=argutils.PositiveInt.type_parser,
+    final_gradient_frames: int = FinalGradientFramesArg(
         default=4,
-        metavar=argutils.PositiveInt.METAVAR,
-        help="Number of frames to display each gradient step. Increase to slow down the gradient animation.",
     )  # pyright: ignore[reportAssignmentType]
-
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    final_gradient_direction: tte.Gradient.Direction = ArgSpec(
-        name="--final-gradient-direction",
-        type=argutils.GradientDirection.type_parser,
+    final_gradient_direction: tte.Gradient.Direction = FinalGradientDirectionArg(
         default=tte.Gradient.Direction.VERTICAL,
-        metavar=argutils.GradientDirection.METAVAR,
-        help="Direction of the final gradient.",
     )  # pyright: ignore[reportAssignmentType]
-
     "tte.Gradient.Direction : Direction of the final gradient."
 
     final_wipe_speed: int = ArgSpec(
@@ -247,7 +218,6 @@ class BeamsConfig(BaseConfig):
         metavar=argutils.PositiveInt.METAVAR,
         help="Speed of the final wipe as measured in diagonal groups activated per frame.",
     )  # pyright: ignore[reportAssignmentType]
-
     "int : Speed of the final wipe as measured in diagonal groups activated per frame."
 
 
