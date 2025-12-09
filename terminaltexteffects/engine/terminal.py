@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from terminaltexteffects.engine.base_character import EffectCharacter
-from terminaltexteffects.engine.base_config import ArgSpec, BaseConfig
+from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.utils import ansitools, argutils
 from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
 from terminaltexteffects.utils.exceptions import (
@@ -66,7 +66,7 @@ class TerminalConfig(BaseConfig):
 
     """
 
-    tab_width: int = ArgSpec(
+    tab_width: int = argutils.ArgSpec(
         name="--tab-width",
         type=argutils.PositiveInt.type_parser,
         metavar=argutils.PositiveInt.METAVAR,
@@ -76,7 +76,7 @@ class TerminalConfig(BaseConfig):
 
     "int : Number of spaces to use for a tab character."
 
-    xterm_colors: bool = ArgSpec(
+    xterm_colors: bool = argutils.ArgSpec(
         name="--xterm-colors",
         default=False,
         action="store_true",
@@ -85,7 +85,7 @@ class TerminalConfig(BaseConfig):
 
     "bool : Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color."
 
-    no_color: bool = ArgSpec(
+    no_color: bool = argutils.ArgSpec(
         name="--no-color",
         default=False,
         action="store_true",
@@ -94,7 +94,7 @@ class TerminalConfig(BaseConfig):
 
     "bool : Disable all colors in the effect."
 
-    terminal_background_color: Color = ArgSpec(
+    terminal_background_color: Color = argutils.ArgSpec(
         name="--terminal-background-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#000000"),
@@ -106,7 +106,7 @@ class TerminalConfig(BaseConfig):
     )  # type: ignore[assignment]
     "Color: User-define background color of the terminal."
 
-    existing_color_handling: Literal["always", "dynamic", "ignore"] = ArgSpec(
+    existing_color_handling: Literal["always", "dynamic", "ignore"] = argutils.ArgSpec(
         name="--existing-color-handling",
         default="ignore",
         choices=["always", "dynamic", "ignore"],
@@ -125,7 +125,7 @@ class TerminalConfig(BaseConfig):
         "Default is 'ignore'."
     )
 
-    wrap_text: int = ArgSpec(
+    wrap_text: int = argutils.ArgSpec(
         name="--wrap-text",
         default=False,
         action="store_true",
@@ -133,7 +133,7 @@ class TerminalConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "bool : Wrap text wider than the canvas width."
 
-    frame_rate: int = ArgSpec(
+    frame_rate: int = argutils.ArgSpec(
         name="--frame-rate",
         type=argutils.NonNegativeInt.type_parser,
         default=60,
@@ -145,7 +145,7 @@ class TerminalConfig(BaseConfig):
 
     "int : Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting."
 
-    canvas_width: int = ArgSpec(
+    canvas_width: int = argutils.ArgSpec(
         name="--canvas-width",
         metavar=argutils.CanvasDimension.METAVAR,
         type=argutils.CanvasDimension.type_parser,
@@ -162,7 +162,7 @@ class TerminalConfig(BaseConfig):
         "the input data width. Defaults to -1."
     )
 
-    canvas_height: int = ArgSpec(
+    canvas_height: int = argutils.ArgSpec(
         name="--canvas-height",
         metavar=argutils.CanvasDimension.METAVAR,
         type=argutils.CanvasDimension.type_parser,
@@ -179,7 +179,7 @@ class TerminalConfig(BaseConfig):
         "based on the input data height. Defaults to -1."
     )
 
-    anchor_canvas: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"] = ArgSpec(
+    anchor_canvas: Literal["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"] = argutils.ArgSpec(
         name="--anchor-canvas",
         choices=["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"],
         default="sw",
@@ -194,7 +194,7 @@ class TerminalConfig(BaseConfig):
         "anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
     )
 
-    anchor_text: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = ArgSpec(
+    anchor_text: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"] = argutils.ArgSpec(
         name="--anchor-text",
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
         default="sw",
@@ -210,7 +210,7 @@ class TerminalConfig(BaseConfig):
         "Defaults to 'sw'."
     )
 
-    ignore_terminal_dimensions: bool = ArgSpec(
+    ignore_terminal_dimensions: bool = argutils.ArgSpec(
         name="--ignore-terminal-dimensions",
         default=False,
         action="store_true",
@@ -224,7 +224,7 @@ class TerminalConfig(BaseConfig):
         "Useful for sending frames to another output handler."
     )
 
-    reuse_canvas: bool = ArgSpec(
+    reuse_canvas: bool = argutils.ArgSpec(
         name="--reuse-canvas",
         default=False,
         action="store_true",
@@ -240,7 +240,7 @@ class TerminalConfig(BaseConfig):
         "a shell script. If used interactively with prompts between runs, the result is unpredictable."
     )
 
-    no_eol: bool = ArgSpec(
+    no_eol: bool = argutils.ArgSpec(
         name="--no-eol",
         default=False,
         action="store_true",
@@ -248,7 +248,7 @@ class TerminalConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     ("bool : Suppress the trailing newline emitted when an effect animation completes. ")
 
-    no_restore_cursor: bool = ArgSpec(
+    no_restore_cursor: bool = argutils.ArgSpec(
         name="--no-restore-cursor",
         default=False,
         action="store_true",
