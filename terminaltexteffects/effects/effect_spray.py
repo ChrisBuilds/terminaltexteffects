@@ -55,8 +55,8 @@ class SprayConfig(BaseConfig):
         description="spray | Draws the characters spawning at varying rates from a single point.",
         epilog=(
             f"{argutils.EASING_EPILOG} Example: terminaltexteffects spray --final-gradient-stops 8A008A 00D1FF "
-            "FFFFFF --final-gradient-steps 12 --spray-position e --spray-volume 0.005 --movement-speed 0.4-1.0 "
-            "--movement-easing OUT_EXPO"
+            "ffffff --final-gradient-steps 12 --final-gradient-direction vertical --spray-position e "
+            "--spray-volume 0.005 --movement-speed-range 0.6-1.4 --movement-easing OUT_EXPO"
         ),
     )
 

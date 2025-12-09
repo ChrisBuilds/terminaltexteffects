@@ -55,10 +55,10 @@ class MiddleOutConfig(BaseConfig):
         help="Text expands in a single row or column in the middle of the canvas then out.",
         description="middleout | Text expands in a single row or column in the middle of the canvas then out.",
         epilog=(
-            f"{argutils.EASING_EPILOG} Example: terminaltexteffects middleout --starting-color 8A008A "
-            "--final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --expand-direction vertical "
-            "--center-movement-speed 0.35 --full-movement-speed 0.35 --center-easing IN_OUT_SINE "
-            "--full-easing IN_OUT_SINE"
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects middleout --starting-color ffffff "
+            "--expand-direction vertical --center-movement-speed 0.6 --full-movement-speed 0.6 "
+            "--center-easing IN_OUT_SINE --full-easing IN_OUT_SINE --final-gradient-stops 8A008A 00D1FF ffffff "
+            "--final-gradient-steps 12 --final-gradient-direction vertical"
         ),
     )
 

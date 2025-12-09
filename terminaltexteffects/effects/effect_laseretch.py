@@ -76,10 +76,10 @@ class LaserEtchConfig(BaseConfig):
         help="A laser etches characters onto the terminal.",
         description="A laser etches characters onto the terminal.",
         epilog=(
-            "Example: terminaltexteffects laseretch --etch-speed 2 --etch-delay 5 --etch-direction "
-            "row_top_to_bottom --cool-gradient-stops ffe680 ff7b00 --laser-gradient-stops ffffff 376cff "
-            "--spark-gradient-stops ffffff ffe680 ff7b00 1a0900 --spark-cooling-frames 10 --final-gradient-stops "
-            "8A008A 00D1FF ffffff --final-gradient-steps 8  --final-gradient-frames 5 "
+            "Example: terminaltexteffects laseretch --etch-pattern algorithm --etch-speed 1 --etch-delay 1 "
+            "--cool-gradient-stops ffe680 ff7b00 --laser-gradient-stops ffffff 376cff "
+            "--spark-gradient-stops ffffff ffe680 ff7b00 1a0900 --spark-cooling-frames 7 --final-gradient-stops "
+            "8A008A 00D1FF ffffff --final-gradient-steps 8 --final-gradient-frames 4 "
             "--final-gradient-direction vertical"
         ),
     )

@@ -44,8 +44,8 @@ class SmokeConfig(BaseConfig):
         help="Smoke floods the canvas colorizing any characters it crosses.",
         description="Smoke floods the canvas colorizing any characters it crosses.",
         epilog="Example: terminaltexteffects smoke --starting-color 7A7A7A --smoke-symbols ░ ▒ ▓ ▒ ░ "
-        "--smoke-gradient-stops 242424 FFFFFF --use-whole-canvas --final-gradient-stops 8A008A 00D1FF "
-        "ffffff --final-gradient-steps 12 --final-gradient-direction vertical ",
+        "--smoke-gradient-stops 242424 ffffff [--use-whole-canvas] --final-gradient-stops 8A008A 00D1FF ffffff "
+        "--final-gradient-steps 12 --final-gradient-direction vertical ",
     )
 
     starting_color: tte.Color = ArgSpec(

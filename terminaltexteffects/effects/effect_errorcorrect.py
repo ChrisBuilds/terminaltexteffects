@@ -60,9 +60,9 @@ class ErrorCorrectConfig(BaseConfig):
         description="errorcorrect | Some characters start in the wrong position and are corrected in sequence.",
         epilog=(
             f"{argutils.EASING_EPILOG}"
-            "Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c "
-            "--correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 "
-            "--movement-speed 0.5"
+            "Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 6 --error-color e74c3c "
+            "--correct-color 45bf55 --movement-speed 0.9 --final-gradient-stops 8A008A 00D1FF ffffff "
+            "--final-gradient-steps 12 --final-gradient-direction vertical"
         ),
     )
     error_pairs: float = ArgSpec(

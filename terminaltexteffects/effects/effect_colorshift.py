@@ -59,9 +59,11 @@ class ColorShiftConfig(BaseConfig):
         help="Display a gradient that shifts colors across the terminal.",
         description="Display a gradient that shifts colors across the terminal.",
         epilog=(
-            "Example: terminaltexteffects colorshift --gradient-stops 0000ff ffffff 0000ff "
-            "--gradient-steps 12 --gradient-frames 10 --cycles 3 "
-            "--final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12"
+            "Example: terminaltexteffects colorshift --gradient-stops e81416 ffa500 faeb36 79c314 487de7 4b369d "
+            "70369d --gradient-steps 12 --gradient-frames 2 [--no-loop] [--no-travel] --travel-direction radial "
+            "[--reverse-travel-direction] --cycles 3 [--skip-final-gradient] "
+            "--final-gradient-stops e81416 ffa500 faeb36 79c314 487de7 4b369d 70369d "
+            "--final-gradient-steps 12 --final-gradient-direction vertical"
         ),
     )
 

@@ -49,7 +49,7 @@ class HighlightConfig(BaseConfig):
         help="Run a specular highlight across the text.",
         description="highlight | Run a specular highlight across the text.",
         epilog=(
-            f"{argutils.EASING_EPILOG}Example: terminaltexteffects highlight --highlight-brightness 1.5 "
+            f"{argutils.EASING_EPILOG}Example: terminaltexteffects highlight --highlight-brightness 1.75 "
             "--highlight-direction "
             "diagonal_bottom_left_to_top_right --highlight-width 8 --final-gradient-stops 8A008A 00D1FF FFFFFF "
             "--final-gradient-steps 12 --final-gradient-direction vertical"

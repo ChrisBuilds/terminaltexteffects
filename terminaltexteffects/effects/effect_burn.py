@@ -55,7 +55,8 @@ class BurnConfig(BaseConfig):
         description="burn | Burn the canvas.",
         epilog=(
             "Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c "
-            "510100 --smoke-chance 0.2 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12"
+            "510100 --smoke-chance 0.5 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12 "
+            "--final-gradient-direction vertical"
         ),
     )
 

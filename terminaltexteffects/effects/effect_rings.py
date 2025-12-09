@@ -61,8 +61,8 @@ class RingsConfig(BaseConfig):
         description="rings | Characters are dispersed and form into spinning rings.",
         epilog=(
             "Example: terminaltexteffects rings --ring-colors ab48ff e7b2b2 fffebd --final-gradient-stops ab48ff "
-            "e7b2b2 fffebd --final-gradient-steps 12 --ring-gap 0.1 --spin-duration 200 --spin-speed 0.25-1.0 "
-            "--disperse-duration 200 --spin-disperse-cycles 3"
+            "e7b2b2 fffebd --final-gradient-steps 12 --final-gradient-direction vertical --ring-gap 0.1 "
+            "--spin-duration 200 --spin-speed 0.25-1.0 --disperse-duration 200 --spin-disperse-cycles 3"
         ),
     )
     ring_colors: tuple[Color, ...] = ArgSpec(

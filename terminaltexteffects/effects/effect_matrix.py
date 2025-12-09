@@ -122,10 +122,12 @@ class MatrixConfig(BaseConfig):
         help="Matrix digital rain effect.",
         description="matrix | Matrix digital rain effect.",
         epilog=(
-            "Example: tte matrix --rain-color-gradient 92be92 185318 --rain-symbols 2 5 9 8 Z : . = + - ¦ _ "
-            "--rain-fall-delay-range 8-25 --rain-column-delay-range 5-15 --rain-time 15 --symbol-swap-chance 0.005 "
-            "--color-swap-chance 0.001 --resolve-delay 5 --final-gradient-stops 389c38 --final-gradient-steps 12 "
-            "--final-gradient-frames 5 --final-gradient-direction vertical --highlight-color dbffdb"
+            "Example: terminaltexteffects matrix --highlight-color dbffdb --rain-color-gradient 92be92 185318 "
+            "--rain-symbols 2 5 9 8 Z * ) : . \" = + - ¦ | _ ｦ ｱ ｳ ｴ ｵ ｶ ｷ ｹ ｺ ｻ ｼ ｽ ｾ ｿ ﾀ ﾁ ﾂ ﾃ ﾄ ﾅ ﾆ ﾇ ﾈ "
+            "ﾉ ﾊ ﾋ ﾌ ﾍ ﾎ ﾏ ﾐ ﾑ ﾒ ﾓ ﾔ ﾕ ﾖ ﾗ ﾘ ﾙ ﾚ ﾛ ﾜ ﾝ ﾞ ﾟ --rain-fall-delay-range 2-15 "
+            "--rain-column-delay-range 3-9 --rain-time 15 --symbol-swap-chance 0.005 --color-swap-chance 0.001 "
+            "--resolve-delay 3 --final-gradient-stops 92be92 336b33 --final-gradient-steps 12 "
+            "--final-gradient-frames 3 --final-gradient-direction radial"
         ),
     )
     highlight_color: Color = ArgSpec(

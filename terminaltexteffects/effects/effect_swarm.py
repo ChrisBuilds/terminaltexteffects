@@ -64,8 +64,8 @@ class SwarmConfig(BaseConfig):
         "into position.",
         epilog=(
             "Example: terminaltexteffects swarm --base-color 31a0d4 --flash-color f2ea79 --final-gradient-stops "
-            "31b900 f0ff65 --final-gradient-steps 12 --swarm-size 0.1 --swarm-coordination 0.80 "
-            "--swarm-area-count 2-4"
+            "31b900 f0ff65 --final-gradient-steps 12 --final-gradient-direction horizontal --swarm-size 0.1 "
+            "--swarm-coordination 0.8 --swarm-area-count-range 2-4"
         ),
     )
 

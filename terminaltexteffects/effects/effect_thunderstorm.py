@@ -50,13 +50,11 @@ class ThunderstormConfig(BaseConfig):
         description="thunderstorm | Create a thunderstorm in the terminal.",
         epilog=(
             "terminaltexteffects thunderstorm --lightning-color 68A3E8 "
-            "--glowing-text-color EF5411 --text-glow-time 10 "
-            "--raindrop-symbols '\\' '.' ',' --spark-symbols '*' '.' '`' "
-            "--spark-glow-color ff4d00 --spark-glow-time 30 "
-            "--storm-time 10 "
-            "--final-gradient-stops 8A008A 00D1FF FFFFFF "
-            "--final-gradient-steps 12 --final-gradient-frames 5 "
-            "--final-gradient-direction vertical"
+            "--glowing-text-color EF5411 --text-glow-time 6 "
+            "--raindrop-symbols '\\\\' '.' ',' --spark-symbols '*' '.' \"'\" "
+            "--spark-glow-color ff4d00 --spark-glow-time 18 "
+            "--storm-time 12 --final-gradient-stops 8A008A 00D1FF ffffff "
+            "--final-gradient-steps 12 --final-gradient-frames 3 --final-gradient-direction vertical"
         ),
     )
 

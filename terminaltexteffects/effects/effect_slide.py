@@ -64,9 +64,10 @@ class SlideConfig(BaseConfig):
             "slide | Slide characters into view from outside the terminal, grouped by row, column, or diagonal."
         ),
         epilog=(
-            f"{argutils.EASING_EPILOG} Example: terminaltexteffects slide --movement-speed 0.5 --grouping row "
-            "--final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 10 "
-            "--final-gradient-direction vertical --gap 3 --reverse-direction --merge --movement-easing OUT_QUAD"
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects slide --movement-speed 0.8 --grouping row "
+            "--gap 2 [--reverse-direction] [--merge] --movement-easing IN_OUT_QUAD "
+            "--final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 --final-gradient-frames 6 "
+            "--final-gradient-direction vertical"
         ),
     )
 

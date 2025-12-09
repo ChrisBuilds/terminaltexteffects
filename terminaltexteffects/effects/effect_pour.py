@@ -64,9 +64,10 @@ class PourConfig(BaseConfig):
         help="Pours the characters into position from the given direction.",
         description="pour | Pours the characters into position from the given direction.",
         epilog=(
-            f"{argutils.EASING_EPILOG} Example: terminaltexteffects pour --pour-direction down "
-            "--movement-speed 0.2 --gap 1 --starting-color FFFFFF --final-gradient-stops 8A008A 00D1FF FFFFFF "
-            "--easing IN_QUAD"
+            f"{argutils.EASING_EPILOG} Example: terminaltexteffects pour --pour-direction down --pour-speed 2 "
+            "--movement-speed-range 0.4-0.6 --gap 1 --starting-color ffffff --movement-easing IN_QUAD "
+            "--final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 6 "
+            "--final-gradient-direction vertical"
         ),
     )
     pour_direction: typing.Literal["up", "down", "left", "right"] = ArgSpec(

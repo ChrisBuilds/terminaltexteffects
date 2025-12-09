@@ -57,7 +57,8 @@ class ExpandConfig(BaseConfig):
         epilog=(
             f"{argutils.EASING_EPILOG}"
             "Example: terminaltexteffects expand --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 "
-            "--final-gradient-frames 5 --movement-speed 0.35 --expand-easing IN_OUT_QUART"
+            "--final-gradient-frames 5 --final-gradient-direction vertical --movement-speed 0.35 "
+            "--expand-easing IN_OUT_QUART"
         ),
     )
     expand_easing: easing.EasingFunction = ArgSpec(

@@ -59,9 +59,9 @@ class BubblesConfig(BaseConfig):
         help="Characters are formed into bubbles that float down and pop.",
         description="bubbles | Characters are formed into bubbles that float down and pop.",
         epilog=f"{argutils.EASING_EPILOG}"
-        "Example: terminaltexteffects bubbles --bubble-colors d33aff 7395c4 43c2a7 02ff7f --pop-color ffffff "
-        "--final-gradient-stops d33aff 02ff7f --final-gradient-steps 12 --final-gradient-direction diagonal "
-        "--bubble-speed 0.1 --bubble-delay 50 --pop-condition row --easing IN_OUT_SINE",
+        "Example: terminaltexteffects bubbles [--rainbow] --bubble-colors d33aff 7395c4 43c2a7 02ff7f "
+        "--pop-color ffffff --bubble-speed 0.5 --bubble-delay 20 --pop-condition row --movement-easing IN_OUT_SINE "
+        "--final-gradient-stops d33aff 02ff7f --final-gradient-steps 12 --final-gradient-direction diagonal",
     )
 
     rainbow: bool = ArgSpec(

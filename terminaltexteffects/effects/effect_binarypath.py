@@ -59,9 +59,11 @@ class BinaryPathConfig(BaseConfig):
         help="Binary representations of each character move towards the home coordinate of the character.",
         description="binarypath | Binary representations of each character move through the terminal towards the "
         "home coordinate of the character.",
-        epilog="Example: terminaltexteffects binarypath --final-gradient-stops 00d500 007500 --final-gradient-steps 12 "
-        "--final-gradient-direction vertical --binary-colors 044E29 157e38 45bf55 95ed87 --movement-speed 1.0 "
-        "--active-binary-groups 0.05",
+        epilog=(
+            "Example: terminaltexteffects binarypath --final-gradient-stops 00d500 007500 --final-gradient-steps 12 "
+            "--final-gradient-direction radial --binary-colors 044E29 157e38 45bf55 95ed87 --movement-speed 1 "
+            "--active-binary-groups 0.08"
+        ),
     )
 
     final_gradient_stops: tuple[tte.Color, ...] = FinalGradientStopsArg(

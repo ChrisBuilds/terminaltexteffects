@@ -56,9 +56,10 @@ class VHSTapeConfig(BaseConfig):
         description="vhstape | Lines of characters glitch left and right and lose detail like an old VHS tape.",
         epilog=(
             "Example: terminaltexteffects vhstape --final-gradient-stops ab48ff e7b2b2 fffebd "
-            "--final-gradient-steps 12 --glitch-line-colors ffffff ff0000 00ff00 0000ff ffffff --glitch-wave-colors "
-            "ffffff ff0000 00ff00 0000ff ffffff --noise-colors 1e1e1f 3c3b3d 6d6c70 a2a1a6 cbc9cf ffffff "
-            "--glitch-line-chance 0.05 --noise-chance 0.004 --total-glitch-time 1000"
+            "--final-gradient-steps 12 --final-gradient-direction vertical --glitch-line-colors "
+            "ffffff ff0000 00ff00 0000ff ffffff --glitch-wave-colors ffffff ff0000 00ff00 0000ff ffffff "
+            "--noise-colors 1e1e1f 3c3b3d 6d6c70 a2a1a6 cbc9cf ffffff --glitch-line-chance 0.05 "
+            "--noise-chance 0.004 --total-glitch-time 600"
         ),
     )
 

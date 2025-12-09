@@ -59,8 +59,9 @@ class RandomSequenceConfig(BaseConfig):
         help="Prints the input data in a random sequence.",
         description="randomsequence | Prints the input data in a random sequence.",
         epilog=(
-            "Example: terminaltexteffects randomsequence --starting-color 000000 --final-gradient-stops 8A008A 00D1FF "
-            "FFFFFF --final-gradient-steps 12 --final-gradient-frames 12 --speed 0.004"
+            "Example: terminaltexteffects randomsequence --starting-color 000000 --speed 0.007 "
+            "--final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 8 "
+            "--final-gradient-direction vertical"
         ),
     )
 

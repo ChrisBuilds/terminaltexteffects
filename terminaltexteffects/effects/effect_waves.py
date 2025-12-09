@@ -59,8 +59,9 @@ class WavesConfig(BaseConfig):
         epilog=(
             f"{argutils.EASING_EPILOG} Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ "
             "▇ ▆ ▅ ▄ ▃ ▂ ▁ --wave-gradient-stops f0ff65 ffb102 31a0d4 ffb102 f0ff65 --wave-gradient-steps 6 "
-            "--final-gradient-stops ffb102 31a0d4 f0ff65 --final-gradient-steps 12 --wave-count 7 --wave-length 2 "
-            "--wave-easing IN_OUT_SINE"
+            "--wave-count 7 --wave-length 2 --wave-direction column_left_to_right --wave-easing IN_OUT_SINE "
+            "--final-gradient-stops ffb102 31a0d4 f0ff65 --final-gradient-steps 12 "
+            "--final-gradient-direction diagonal"
         ),
     )
 

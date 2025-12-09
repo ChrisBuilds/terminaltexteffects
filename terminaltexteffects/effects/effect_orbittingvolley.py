@@ -65,8 +65,9 @@ class OrbittingVolleyConfig(BaseConfig):
         epilog=(
             f"{argutils.EASING_EPILOG} Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ "
             "--right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ "
-            "--final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 --launcher-movement-speed 0.5 "
-            "--character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE"
+            "--launcher-movement-speed 0.8 --character-movement-speed 1.5 --volley-size 0.03 --launch-delay 30 "
+            "--character-easing OUT_SINE --final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 "
+            "--final-gradient-direction radial"
         ),
     )
     top_launcher_symbol: str = ArgSpec(

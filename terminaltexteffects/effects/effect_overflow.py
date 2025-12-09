@@ -52,8 +52,8 @@ class OverflowConfig(BaseConfig):
         "appearing ordered.",
         epilog=(
             "Example: terminaltexteffects overflow --final-gradient-stops 8A008A 00D1FF FFFFFF "
-            "--final-gradient-steps 12 --overflow-gradient-stops f2ebc0 8dbfb3 f2ebc0 --overflow-cycles-range 2-4 "
-            "--overflow-speed 3"
+            "--final-gradient-steps 12 --final-gradient-direction vertical --overflow-gradient-stops f2ebc0 8dbfb3 "
+            "f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3"
         ),
     )
     overflow_gradient_stops: tuple[Color, ...] = ArgSpec(

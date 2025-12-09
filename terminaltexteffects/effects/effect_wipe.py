@@ -56,9 +56,9 @@ class WipeConfig(BaseConfig):
         description="wipe | Wipes the text across the terminal to reveal characters.",
         epilog=(
             f"{argutils.EASING_EPILOG} Example: terminaltexteffects wipe --wipe-direction "
-            "diagonal_bottom_left_to_top_right "
+            "diagonal_top_left_to_bottom_right --wipe-delay 0 --wipe-ease IN_OUT_CIRC "
             "--final-gradient-stops 833ab4 fd1d1d fcb045 --final-gradient-steps 12 "
-            "--final-gradient-frames 5 --wipe-delay 0"
+            "--final-gradient-frames 3 --final-gradient-direction vertical"
         ),
     )
 

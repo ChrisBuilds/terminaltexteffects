@@ -55,8 +55,9 @@ class SynthGridConfig(BaseConfig):
         description="synthgrid | Create a grid which fills with characters dissolving into the final text.",
         epilog=(
             "Example: terminaltexteffects synthgrid --grid-gradient-stops CC00CC ffffff --grid-gradient-steps 12 "
-            "--text-gradient-stops 8A008A 00D1FF FFFFFF --text-gradient-steps 12 --grid-row-symbol ─ "
-            "--grid-column-symbol '|' --text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1"
+            "--grid-gradient-direction diagonal --text-gradient-stops 8A008A 00D1FF ffffff --text-gradient-steps 12 "
+            "--text-gradient-direction vertical --grid-row-symbol ─ --grid-column-symbol │ "
+            "--text-generation-symbols ░ ▒ ▓ --max-active-blocks 0.1"
         ),
     )
 

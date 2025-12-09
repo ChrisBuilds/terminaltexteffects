@@ -42,7 +42,7 @@ class SweepConfig(BaseConfig):
             f"{argutils.EASING_EPILOG}Example: terminaltexteffects sweep --sweep-symbols '█' '▓' '▒' '░' "
             "--first-sweep-direction "
             "column_right_to_left --second-sweep-direction column_left_to_right --final-gradient-stops 8A008A "
-            "00D1FF ffffff --final-gradient-steps 8 8 8 --final-gradient-direction vertical"
+            "00D1FF ffffff --final-gradient-steps 8 --final-gradient-direction vertical"
         ),
     )
 

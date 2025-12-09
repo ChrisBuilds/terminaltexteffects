@@ -58,8 +58,8 @@ class SpotlightsConfig(BaseConfig):
         "center and expanding.",
         epilog=(
             f"{argutils.EASING_EPILOG} Example: terminaltexteffects spotlights --final-gradient-stops ab48ff "
-            "e7b2b2 fffebd --final-gradient-steps 12 --beam-width-ratio 2.0 --beam-falloff 0.3 --search-duration "
-            "750 --search-speed-range 0.25-0.5 --spotlight-count 3"
+            "e7b2b2 fffebd --final-gradient-steps 12 --final-gradient-direction vertical --beam-width-ratio 2.0 "
+            "--beam-falloff 0.3 --search-duration 550 --search-speed-range 0.35-0.75 --spotlight-count 3"
         ),
     )
 

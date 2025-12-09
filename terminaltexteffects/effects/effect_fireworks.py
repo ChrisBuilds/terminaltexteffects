@@ -65,9 +65,10 @@ class FireworksConfig(BaseConfig):
         help="Characters launch and explode like fireworks and fall into place.",
         description="fireworks | Characters explode like fireworks and fall into place.",
         epilog=(
-            "Example: terminaltexteffects fireworks --firework-colors 88F7E2 44D492 F5EB67 FFA15C FA233E "
-            "--firework-symbol o --firework-volume 0.02 --final-gradient-stops 8A008A 00D1FF FFFFFF "
-            "--final-gradient-steps 12 --launch-delay 60 --explode-distance 0.1 --explode-anywhere"
+            "Example: terminaltexteffects fireworks [--explode-anywhere] --firework-colors 88F7E2 44D492 F5EB67 "
+            "FFA15C FA233E --firework-symbol o --firework-volume 0.05 --launch-delay 45 --explode-distance 0.2 "
+            "--final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 "
+            "--final-gradient-direction horizontal"
         ),
     )
 

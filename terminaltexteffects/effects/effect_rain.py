@@ -53,8 +53,9 @@ class RainConfig(BaseConfig):
         description="rain | Rain characters from the top of the canvas.",
         epilog=(
             f"{argutils.EASING_EPILOG} Example: terminaltexteffects rain --rain-symbols o . , '*' '|' "
-            "--rain-colors 00315C 004C8F 0075DB 3F91D9 78B9F2 9AC8F5 B8D8F8 E3EFFC --final-gradient-stops "
-            "488bff b2e7de 57eaf7 --final-gradient-steps 12 --movement-speed 0.1-0.2 --easing IN_QUART"
+            "--rain-colors 00315C 004C8F 0075DB 3F91D9 78B9F2 9AC8F5 B8D8F8 E3EFFC --movement-speed 0.33-0.57 "
+            "--movement-easing IN_QUART --final-gradient-stops 488bff b2e7de 57eaf7 --final-gradient-steps 12 "
+            "--final-gradient-direction diagonal"
         ),
     )
     rain_colors: tuple[Color, ...] = ArgSpec(

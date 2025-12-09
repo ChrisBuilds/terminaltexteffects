@@ -56,7 +56,8 @@ class ScatteredConfig(BaseConfig):
         description="scattered | Text is scattered across the canvas and moves into position.",
         epilog=(
             f"{argutils.EASING_EPILOG} Example: terminaltexteffects scattered --final-gradient-stops ff9048 "
-            "ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 12 --movement-speed 0.5 "
+            "ab9dff bdffea --final-gradient-steps 12 --final-gradient-frames 9 --final-gradient-direction vertical "
+            "--movement-speed 0.5 "
             "--movement-easing IN_OUT_BACK"
         ),
     )

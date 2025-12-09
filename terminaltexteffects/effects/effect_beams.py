@@ -73,9 +73,9 @@ class BeamsConfig(BaseConfig):
         description="beams | Create beams which travel over the canvas illuminating the characters behind them.",
         epilog=(
             "Example: terminaltexteffects beams --beam-row-symbols ▂ ▁ _ --beam-column-symbols ▌ ▍ ▎ ▏ --beam-delay "
-            "3 --beam-row-speed-range 30-120 --beam-column-speed-range 18-30 --beam-gradient-stops ffffff 00D1FF "
+            "6 --beam-row-speed-range 15-60 --beam-column-speed-range 9-15 --beam-gradient-stops ffffff 00D1FF "
             "8A008A --beam-gradient-steps 2 6 --beam-gradient-frames 2 --final-gradient-stops 8A008A 00D1FF "
-            "ffffff --final-gradient-steps 12 --final-gradient-frames 2 --final-gradient-direction vertical "
+            "ffffff --final-gradient-steps 12 --final-gradient-frames 4 --final-gradient-direction vertical "
             "--final-wipe-speed 3"
         ),
     )

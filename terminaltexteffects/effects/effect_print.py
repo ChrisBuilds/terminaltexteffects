@@ -52,8 +52,8 @@ class PrintConfig(BaseConfig):
         "carriage return.",
         epilog=(
             f"{argutils.EASING_EPILOG} Example: terminaltexteffects print --final-gradient-stops 02b8bd "
-            "c1f0e3 00ffa0 --final-gradient-steps 12 --print-head-return-speed 1.25 --print-speed 1 "
-            "--print-head-easing IN_OUT_QUAD"
+            "c1f0e3 00ffa0 --final-gradient-steps 12 --final-gradient-direction diagonal "
+            "--print-head-return-speed 1.5 --print-speed 2 --print-head-easing IN_OUT_QUAD"
         ),
     )
     print_head_return_speed: float = ArgSpec(
