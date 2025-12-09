@@ -68,7 +68,6 @@ class BlackholeConfig(BaseConfig):
         metavar=argutils.ColorArg.METAVAR,
         help="Color for the stars that comprise the blackhole border.",
     )  # pyright: ignore[reportAssignmentType]
-
     "Color : Color for the stars that comprise the blackhole border."
 
     star_colors: tuple[Color, ...] = ArgSpec(
@@ -88,7 +87,6 @@ class BlackholeConfig(BaseConfig):
         help="List of colors from which character colors will be chosen and applied after the explosion, but before "
         "the cooldown to final color.",
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "tuple[Color, ...] : Tuple of colors from which character colors will be chosen and applied after the "
         "explosion, but before the cooldown to final color."
@@ -97,7 +95,6 @@ class BlackholeConfig(BaseConfig):
     final_gradient_stops: tuple[Color, ...] = FinalGradientStopsArg(
         default=(Color("#8A008A"), Color("#00D1FF"), Color("#ffffff")),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
         "characters will be displayed in that color."
@@ -106,7 +103,6 @@ class BlackholeConfig(BaseConfig):
     final_gradient_steps: tuple[int, ...] | int = FinalGradientStepsArg(
         default=9,
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create "
         "a smoother and longer gradient animation."
@@ -115,7 +111,6 @@ class BlackholeConfig(BaseConfig):
     final_gradient_direction: Gradient.Direction = FinalGradientDirectionArg(
         default=Gradient.Direction.DIAGONAL,
     )  # pyright: ignore[reportAssignmentType]
-
     "Gradient.Direction : Direction of the final gradient."
 
 

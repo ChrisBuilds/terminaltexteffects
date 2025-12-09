@@ -69,7 +69,6 @@ class BinaryPathConfig(BaseConfig):
     final_gradient_stops: tuple[tte.Color, ...] = FinalGradientStopsArg(
         default=(tte.Color("#00d500"), tte.Color("#007500")),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "tuple[tte.Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, "
         "the characters will be displayed in that color."
@@ -78,7 +77,6 @@ class BinaryPathConfig(BaseConfig):
     final_gradient_steps: tuple[int, ...] | int = FinalGradientStepsArg(
         default=12,
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "tuple[int, ...] | int : Int or Tuple of ints for the number (n > 0) of gradient steps to use. More steps will "
         "create a smoother and longer gradient animation."
@@ -87,7 +85,6 @@ class BinaryPathConfig(BaseConfig):
     final_gradient_direction: tte.Gradient.Direction = FinalGradientDirectionArg(
         default=tte.Gradient.Direction.RADIAL,
     )  # pyright: ignore[reportAssignmentType]
-
     "tte.Gradient.Direction : Direction of the final gradient."
 
     binary_colors: tuple[tte.Color, ...] = ArgSpec(
@@ -100,7 +97,6 @@ class BinaryPathConfig(BaseConfig):
         help="Space separated, unquoted, list of colors for the binary characters. Character color is randomly "
         "assigned from this list.",
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "tuple[tte.Color, ...] : Tuple of colors for the binary characters. Character color is randomly assigned from "
         "this list."
@@ -113,7 +109,6 @@ class BinaryPathConfig(BaseConfig):
         metavar=argutils.PositiveFloat.METAVAR,
         help="Speed of the binary groups as they travel around the terminal.",
     )  # pyright: ignore[reportAssignmentType]
-
     "float : Speed of the binary groups as they travel around the terminal."
 
     active_binary_groups: float = ArgSpec(
@@ -124,7 +119,6 @@ class BinaryPathConfig(BaseConfig):
         help="Maximum number of binary groups that are active at any given time as a percentage of the total number "
         "of binary groups. Lower this to improve performance.",
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "float : Maximum number of binary groups that are active at any given time as a percentage of the total number "
         "of binary groups. Lower this to improve performance."

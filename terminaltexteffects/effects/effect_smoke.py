@@ -66,7 +66,6 @@ class SmokeConfig(BaseConfig):
         metavar=argutils.Symbol.METAVAR,
         help=("Symbols to use for the smoke. Strings will be used in sequence to create an animation."),
     )  # pyright: ignore[reportAssignmentType]
-
     ("tuple[str, ...]: Symbols to use for the smoke. Strings will be used in sequence to create an animation.")
 
     smoke_gradient_stops: tuple[tte.Color, ...] = ArgSpec(

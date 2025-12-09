@@ -73,7 +73,6 @@ class TerminalConfig(BaseConfig):
         default=4,
         help="Number of spaces to use for a tab character.",
     )  # pyright: ignore[reportAssignmentType]
-
     "int : Number of spaces to use for a tab character."
 
     xterm_colors: bool = argutils.ArgSpec(
@@ -82,7 +81,6 @@ class TerminalConfig(BaseConfig):
         action="store_true",
         help="Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color.",
     )  # pyright: ignore[reportAssignmentType]
-
     "bool : Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color."
 
     no_color: bool = argutils.ArgSpec(
@@ -91,7 +89,6 @@ class TerminalConfig(BaseConfig):
         action="store_true",
         help="Disable all colors in the effect.",
     )  # pyright: ignore[reportAssignmentType]
-
     "bool : Disable all colors in the effect."
 
     terminal_background_color: Color = argutils.ArgSpec(
@@ -117,7 +114,6 @@ class TerminalConfig(BaseConfig):
             "ignore the colors in the input data. Default is 'ignore'."
         ),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "Literal['always','dynamic','ignore'] : Specify handling of existing ANSI color sequences in the input data. "
         "'always' will always use the input colors, ignoring any effect specific colors. 'dynamic' will leave it to "
@@ -155,7 +151,6 @@ class TerminalConfig(BaseConfig):
             "or use -1 to match the input text width. Defaults to -1."
         ),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "int : Canvas width, set to an integer > 0 to use a specific dimension, if set to 0 the canvas width is "
         "detected automatically based on the terminal device, if set to -1 the canvas width is based on "
@@ -172,7 +167,6 @@ class TerminalConfig(BaseConfig):
             "height, or use -1 to match the input text height. Defaults to -1."
         ),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "int : Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas height "
         "is is detected automatically based on the terminal device, if set to -1 the canvas width is "
@@ -188,7 +182,6 @@ class TerminalConfig(BaseConfig):
             "corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
         ),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "Literal['sw','s','se','e','ne','n','nw','w','c'] : Anchor point for the canvas. The canvas will be "
         "anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
@@ -203,7 +196,6 @@ class TerminalConfig(BaseConfig):
             "the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
         ),
     )  # pyright: ignore[reportAssignmentType]
-
     (
         "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the text within the Canvas. "
         "Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. "
