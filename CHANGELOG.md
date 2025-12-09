@@ -2,6 +2,20 @@
 
 ---
 
+## 0.15.0
+
+---
+
+### New Features (0.15.0)
+
+---
+
+#### Engine Changes (0.15.0)
+
+* Added shared gradient argument helpers (`FinalGradientStopsArg`, `FinalGradientStepsArg`, `FinalGradientFramesArg`, `FinalGradientDirectionArg`) for effect configs to standardize CLI defaults and parsing.
+* Updated all effects to use gradient argument helpers.
+* Updated all effects parser epilog example help text to reflect up to date defaults.
+
 ## 0.14.2
 
 ---
