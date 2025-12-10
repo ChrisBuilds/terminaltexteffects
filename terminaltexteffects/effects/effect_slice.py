@@ -12,10 +12,14 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -44,7 +48,7 @@ class SliceConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="slice",
         help="Slices the input in half and slides it into place from opposite directions.",
         description="slice | Slices the input in half and slides it into place from opposite directions.",
@@ -55,7 +59,7 @@ class SliceConfig(BaseConfig):
         ),
     )
 
-    slice_direction: typing.Literal["vertical", "horizontal", "diagonal"] = ArgSpec(
+    slice_direction: typing.Literal["vertical", "horizontal", "diagonal"] = argutils.ArgSpec(
         name="--slice-direction",
         default="vertical",
         choices=["vertical", "horizontal", "diagonal"],
@@ -63,7 +67,7 @@ class SliceConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "typing.Literal['vertical', 'horizontal', 'diagonal'] : Direction of the slice."
 
-    movement_speed: float = ArgSpec(
+    movement_speed: float = argutils.ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
         default=0.25,
@@ -72,7 +76,7 @@ class SliceConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Movement speed of the characters. Doubled for horizontal slices."
 
-    movement_easing: easing.EasingFunction = ArgSpec(
+    movement_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--movement-easing",
         type=argutils.Ease.type_parser,
         default=easing.in_out_expo,
@@ -115,9 +119,9 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
     def build(self) -> None:  # noqa: PLR0915
         """Build the effect."""
         slice_direction_map = {
-            "vertical": CharacterGroup.ROW_BOTTOM_TO_TOP,
-            "horizontal": CharacterGroup.COLUMN_RIGHT_TO_LEFT,
-            "diagonal": CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+            "vertical": argutils.CharacterGroup.ROW_BOTTOM_TO_TOP,
+            "horizontal": argutils.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            "diagonal": argutils.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
         }
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(

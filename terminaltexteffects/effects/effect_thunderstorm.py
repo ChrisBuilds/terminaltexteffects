@@ -24,7 +24,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine.base_character import EffectCharacter
@@ -44,7 +43,7 @@ def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
 class ThunderstormConfig(BaseConfig):
     """Effect configuration dataclass."""
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="thunderstorm",
         help="Create a thunderstorm in the terminal.",
         description="thunderstorm | Create a thunderstorm in the terminal.",
@@ -58,7 +57,7 @@ class ThunderstormConfig(BaseConfig):
         ),
     )
 
-    lightning_color: tte.Color = ArgSpec(
+    lightning_color: tte.Color = argutils.ArgSpec(
         name="--lightning-color",
         type=argutils.ColorArg.type_parser,
         default=tte.Color("#68A3E8"),
@@ -67,7 +66,7 @@ class ThunderstormConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Color: Color for the lightning strike."
 
-    glowing_text_color: tte.Color = ArgSpec(
+    glowing_text_color: tte.Color = argutils.ArgSpec(
         name="--glowing-text-color",
         type=argutils.ColorArg.type_parser,
         default=tte.Color("#EF5411"),
@@ -76,7 +75,7 @@ class ThunderstormConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Color: Color for the text when glowing after a lightning strike."
 
-    text_glow_time: int = ArgSpec(
+    text_glow_time: int = argutils.ArgSpec(
         name="--text-glow-time",
         type=argutils.PositiveInt.type_parser,
         default=6,
@@ -85,7 +84,7 @@ class ThunderstormConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int: Duration, in number of frames, for the glowing/cooling animation for post-lightning text glow."
 
-    raindrop_symbols: tuple[str, ...] = ArgSpec(
+    raindrop_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--raindrop-symbols",
         type=argutils.Symbol.type_parser,
         default=("\\", ".", ","),
@@ -96,7 +95,7 @@ class ThunderstormConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...]: Symbols to use for the raindrops."
 
-    spark_symbols: tuple[str, ...] = ArgSpec(
+    spark_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--spark-symbols",
         type=argutils.Symbol.type_parser,
         default=("*", ".", "'"),
@@ -107,7 +106,7 @@ class ThunderstormConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...]: Symbols to use for the lightning impact sparks."
 
-    spark_glow_color: tte.Color = ArgSpec(
+    spark_glow_color: tte.Color = argutils.ArgSpec(
         name="--spark-glow-color",
         type=argutils.ColorArg.type_parser,
         default=tte.Color("#ff4d00"),
@@ -116,7 +115,7 @@ class ThunderstormConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Color: Color for the spark glow after a lightning strike."
 
-    spark_glow_time: int = ArgSpec(
+    spark_glow_time: int = argutils.ArgSpec(
         name="--spark-glow-time",
         type=argutils.PositiveInt.type_parser,
         default=18,
@@ -125,7 +124,7 @@ class ThunderstormConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int: Duration, in number of frames, for the cooling animation for post-lightning sparks."
 
-    storm_time: int = ArgSpec(
+    storm_time: int = argutils.ArgSpec(
         name="--storm-time",
         type=argutils.PositiveInt.type_parser,
         default=12,

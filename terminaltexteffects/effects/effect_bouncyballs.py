@@ -13,10 +13,14 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -50,7 +54,7 @@ class BouncyBallsConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="bouncyballs",
         help="Characters are bouncy balls falling from the top of the canvas.",
         description="bouncyballs | Characters are bouncy balls falling from the top of the canvas.",
@@ -59,7 +63,7 @@ class BouncyBallsConfig(BaseConfig):
         "--ball-delay 4 --movement-speed 0.45 --movement-easing OUT_BOUNCE "
         "--final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal",
     )
-    ball_colors: tuple[Color, ...] = ArgSpec(
+    ball_colors: tuple[Color, ...] = argutils.ArgSpec(
         name="--ball-colors",
         type=argutils.ColorArg.type_parser,
         metavar=argutils.ColorArg.METAVAR,
@@ -72,7 +76,7 @@ class BouncyBallsConfig(BaseConfig):
     "tuple[Color, ...] : Tuple of colors from which ball colors will be randomly selected. If no colors are "
     "provided, the colors are random."
 
-    ball_symbols: tuple[str, ...] = ArgSpec(
+    ball_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--ball-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
@@ -83,7 +87,7 @@ class BouncyBallsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] | str : Tuple of symbols to use for the balls."
 
-    ball_delay: int = ArgSpec(
+    ball_delay: int = argutils.ArgSpec(
         name="--ball-delay",
         type=argutils.NonNegativeInt.type_parser,
         default=4,
@@ -92,7 +96,7 @@ class BouncyBallsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames between ball drops, increase to reduce ball drop rate."
 
-    movement_speed: float = ArgSpec(
+    movement_speed: float = argutils.ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
         default=0.45,
@@ -101,7 +105,7 @@ class BouncyBallsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Movement speed of the characters. "
 
-    movement_easing: easing.EasingFunction = ArgSpec(
+    movement_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--movement-easing",
         type=argutils.Ease.type_parser,
         default=easing.out_bounce,

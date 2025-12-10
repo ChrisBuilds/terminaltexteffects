@@ -13,10 +13,14 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -50,7 +54,7 @@ class MiddleOutConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="middleout",
         help="Text expands in a single row or column in the middle of the canvas then out.",
         description="middleout | Text expands in a single row or column in the middle of the canvas then out.",
@@ -62,7 +66,7 @@ class MiddleOutConfig(BaseConfig):
         ),
     )
 
-    starting_color: Color = ArgSpec(
+    starting_color: Color = argutils.ArgSpec(
         name="--starting-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#ffffff"),
@@ -71,7 +75,7 @@ class MiddleOutConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     """Color : Color for the initial text in the center of the canvas."""
 
-    expand_direction: typing.Literal["vertical", "horizontal"] = ArgSpec(
+    expand_direction: typing.Literal["vertical", "horizontal"] = argutils.ArgSpec(
         name="--expand-direction",
         default="vertical",
         choices=["vertical", "horizontal"],
@@ -79,7 +83,7 @@ class MiddleOutConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     """str : Direction the text will expand."""
 
-    center_movement_speed: float = ArgSpec(
+    center_movement_speed: float = argutils.ArgSpec(
         name="--center-movement-speed",
         type=argutils.PositiveFloat.type_parser,
         default=0.6,
@@ -88,7 +92,7 @@ class MiddleOutConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     """float : Speed of the characters during the initial expansion of the center vertical/horiztonal line. """
 
-    full_movement_speed: float = ArgSpec(
+    full_movement_speed: float = argutils.ArgSpec(
         name="--full-movement-speed",
         type=argutils.PositiveFloat.type_parser,
         default=0.6,
@@ -97,7 +101,7 @@ class MiddleOutConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     """float : Speed of the characters during the final full expansion. """
 
-    center_easing: easing.EasingFunction = ArgSpec(
+    center_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--center-easing",
         default=easing.in_out_sine,
         type=argutils.Ease.type_parser,
@@ -105,7 +109,7 @@ class MiddleOutConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     """easing.EasingFunction : Easing function to use for initial expansion."""
 
-    full_easing: easing.EasingFunction = ArgSpec(
+    full_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--full-easing",
         default=easing.in_out_sine,
         type=argutils.Ease.type_parser,

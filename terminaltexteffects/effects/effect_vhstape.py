@@ -12,10 +12,14 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, Scene
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -50,7 +54,7 @@ class VHSTapeConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="vhstape",
         help="Lines of characters glitch left and right and lose detail like an old VHS tape.",
         description="vhstape | Lines of characters glitch left and right and lose detail like an old VHS tape.",
@@ -63,7 +67,7 @@ class VHSTapeConfig(BaseConfig):
         ),
     )
 
-    glitch_line_colors: tuple[Color, ...] = ArgSpec(
+    glitch_line_colors: tuple[Color, ...] = argutils.ArgSpec(
         name="--glitch-line-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -78,7 +82,7 @@ class VHSTapeConfig(BaseConfig):
         "applied in order as an animation."
     )
 
-    glitch_wave_colors: tuple[Color, ...] = ArgSpec(
+    glitch_wave_colors: tuple[Color, ...] = argutils.ArgSpec(
         name="--glitch-wave-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -93,7 +97,7 @@ class VHSTapeConfig(BaseConfig):
         "are applied in order as an animation."
     )
 
-    noise_colors: tuple[Color, ...] = ArgSpec(
+    noise_colors: tuple[Color, ...] = argutils.ArgSpec(
         name="--noise-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -111,7 +115,7 @@ class VHSTapeConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the characters during the noise phase."
 
-    glitch_line_chance: float = ArgSpec(
+    glitch_line_chance: float = argutils.ArgSpec(
         name="--glitch-line-chance",
         type=argutils.NonNegativeRatio.type_parser,
         default=0.05,
@@ -120,7 +124,7 @@ class VHSTapeConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Chance that a line will glitch on any given frame."
 
-    noise_chance: float = ArgSpec(
+    noise_chance: float = argutils.ArgSpec(
         name="--noise-chance",
         type=argutils.NonNegativeRatio.type_parser,
         default=0.004,
@@ -129,7 +133,7 @@ class VHSTapeConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Chance that all characters will experience noise on any given frame."
 
-    total_glitch_time: int = ArgSpec(
+    total_glitch_time: int = argutils.ArgSpec(
         name="--total-glitch-time",
         type=argutils.PositiveInt.type_parser,
         default=600,
@@ -380,7 +384,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         for row_index, characters in enumerate(
-            self.terminal.get_characters_grouped(grouping=CharacterGroup.ROW_BOTTOM_TO_TOP),
+            self.terminal.get_characters_grouped(grouping=argutils.CharacterGroup.ROW_BOTTOM_TO_TOP),
         ):
             self.lines[row_index] = VHSTapeIterator.Line(characters, self.config, self.character_final_color_map)
         for character in self.terminal.get_characters():

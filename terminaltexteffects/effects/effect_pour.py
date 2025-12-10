@@ -23,7 +23,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -59,7 +58,7 @@ class PourConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="pour",
         help="Pours the characters into position from the given direction.",
         description="pour | Pours the characters into position from the given direction.",
@@ -70,7 +69,7 @@ class PourConfig(BaseConfig):
             "--final-gradient-direction vertical"
         ),
     )
-    pour_direction: typing.Literal["up", "down", "left", "right"] = ArgSpec(
+    pour_direction: typing.Literal["up", "down", "left", "right"] = argutils.ArgSpec(
         name="--pour-direction",
         default="down",
         choices=["up", "down", "left", "right"],
@@ -78,7 +77,7 @@ class PourConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "typing.Literal['up', 'down', 'left', 'right'] : Direction the text will pour."
 
-    pour_speed: int = ArgSpec(
+    pour_speed: int = argutils.ArgSpec(
         name="--pour-speed",
         type=argutils.PositiveInt.type_parser,
         default=2,
@@ -87,7 +86,7 @@ class PourConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of characters poured in per tick. Increase to speed up the effect."
 
-    movement_speed_range: tuple[float, float] = ArgSpec(
+    movement_speed_range: tuple[float, float] = argutils.ArgSpec(
         name="--movement-speed-range",
         type=argutils.PositiveFloatRange.type_parser,
         default=(0.4, 0.6),
@@ -96,7 +95,7 @@ class PourConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[float, float] : Movement speed range of the characters."
 
-    gap: int = ArgSpec(
+    gap: int = argutils.ArgSpec(
         name="--gap",
         type=argutils.NonNegativeInt.type_parser,
         default=1,
@@ -106,7 +105,7 @@ class PourConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to wait between each character in the pour effect."
 
-    starting_color: Color = ArgSpec(
+    starting_color: Color = argutils.ArgSpec(
         name="--starting-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#ffffff"),
@@ -135,7 +134,7 @@ class PourConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
 
-    movement_easing: easing.EasingFunction = ArgSpec(
+    movement_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--movement-easing",
         default=easing.in_quad,
         type=argutils.Ease.type_parser,
@@ -186,10 +185,10 @@ class PourIterator(BaseEffectIterator[PourConfig]):
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         sort_map = {
-            PourIterator.PourDirection.DOWN: CharacterGroup.ROW_BOTTOM_TO_TOP,
-            PourIterator.PourDirection.UP: CharacterGroup.ROW_TOP_TO_BOTTOM,
-            PourIterator.PourDirection.LEFT: CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-            PourIterator.PourDirection.RIGHT: CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            PourIterator.PourDirection.DOWN: argutils.CharacterGroup.ROW_BOTTOM_TO_TOP,
+            PourIterator.PourDirection.UP: argutils.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            PourIterator.PourDirection.LEFT: argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            PourIterator.PourDirection.RIGHT: argutils.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
         }
         groups = self.terminal.get_characters_grouped(grouping=sort_map[self._pour_direction])
         for i, group in enumerate(groups):

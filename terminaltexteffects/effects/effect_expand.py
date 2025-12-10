@@ -20,7 +20,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -50,7 +49,7 @@ class ExpandConfig(BaseConfig):
 
     """
 
-    parser_spec = ParserSpec(
+    parser_spec = argutils.ParserSpec(
         name="expand",
         help="Expands the text from a single point.",
         description="expand | Expands the text from a single point.",
@@ -61,7 +60,7 @@ class ExpandConfig(BaseConfig):
             "--expand-easing IN_OUT_QUART"
         ),
     )
-    expand_easing: easing.EasingFunction = ArgSpec(
+    expand_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--expand-easing",
         default=easing.in_out_quart,
         type=argutils.Ease.type_parser,
@@ -69,7 +68,7 @@ class ExpandConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement."
 
-    movement_speed: float = ArgSpec(
+    movement_speed: float = argutils.ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
         default=0.35,

@@ -12,10 +12,14 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -45,7 +49,7 @@ class OverflowConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="overflow",
         help="Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.",
         description="overflow | Input text overflows and scrolls the terminal in a random order until eventually "
@@ -56,7 +60,7 @@ class OverflowConfig(BaseConfig):
             "f2ebc0 --overflow-cycles-range 2-4 --overflow-speed 3"
         ),
     )
-    overflow_gradient_stops: tuple[Color, ...] = ArgSpec(
+    overflow_gradient_stops: tuple[Color, ...] = argutils.ArgSpec(
         name="--overflow-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -67,7 +71,7 @@ class OverflowConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the overflow gradient."
 
-    overflow_cycles_range: tuple[int, int] = ArgSpec(
+    overflow_cycles_range: tuple[int, int] = argutils.ArgSpec(
         name="--overflow-cycles-range",
         type=argutils.PositiveIntRange.type_parser,
         default=(2, 4),
@@ -76,7 +80,7 @@ class OverflowConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[int, int] : Lower and upper range of the number of cycles to overflow the text."
 
-    overflow_speed: int = ArgSpec(
+    overflow_speed: int = argutils.ArgSpec(
         name="--overflow-speed",
         type=argutils.PositiveInt.type_parser,
         default=3,
@@ -169,7 +173,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                 Color("#000000"),
             )
         lower_range, upper_range = self.config.overflow_cycles_range
-        rows = self.terminal.get_characters_grouped(CharacterGroup.ROW_TOP_TO_BOTTOM)
+        rows = self.terminal.get_characters_grouped(argutils.CharacterGroup.ROW_TOP_TO_BOTTOM)
         if upper_range > 0:
             for _ in range(random.randint(lower_range, upper_range)):
                 random.shuffle(rows)
@@ -188,7 +192,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                     self.pending_rows.append(OverflowIterator.Row(copied_characters))
         # add rows in correct order to the end of self.pending_rows
         for row in self.terminal.get_characters_grouped(
-            CharacterGroup.ROW_TOP_TO_BOTTOM,
+            argutils.CharacterGroup.ROW_TOP_TO_BOTTOM,
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):

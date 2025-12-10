@@ -14,10 +14,14 @@ from collections import deque
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import ColorPair
 from terminaltexteffects.utils.spanningtree.algo.primssimple import PrimsSimple
@@ -49,7 +53,7 @@ class BurnConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="burn",
         help="Burns vertically in the canvas.",
         description="burn | Burn the canvas.",
@@ -60,7 +64,7 @@ class BurnConfig(BaseConfig):
         ),
     )
 
-    starting_color: Color = ArgSpec(
+    starting_color: Color = argutils.ArgSpec(
         name="--starting-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#837373"),
@@ -69,7 +73,7 @@ class BurnConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Color : Color of the characters before they start to burn."
 
-    burn_colors: tuple[Color, ...] = ArgSpec(
+    burn_colors: tuple[Color, ...] = argutils.ArgSpec(
         name="--burn-colors",
         type=argutils.ColorArg.type_parser,
         default=(Color("#ffffff"), Color("#fff75d"), Color("#fe650d"), Color("#8A003C"), Color("#510100")),
@@ -80,7 +84,7 @@ class BurnConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Colors transitioned through as the characters burn."
 
-    smoke_chance: float = ArgSpec(
+    smoke_chance: float = argutils.ArgSpec(
         name="--smoke-chance",
         type=argutils.NonNegativeRatio.type_parser,
         default=0.5,

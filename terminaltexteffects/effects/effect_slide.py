@@ -21,7 +21,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -57,7 +56,7 @@ class SlideConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="slide",
         help="Slide characters into view from outside the terminal.",
         description=(
@@ -71,7 +70,7 @@ class SlideConfig(BaseConfig):
         ),
     )
 
-    movement_speed: float = ArgSpec(
+    movement_speed: float = argutils.ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
         default=0.8,
@@ -80,7 +79,7 @@ class SlideConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the characters."
 
-    grouping: typing.Literal["row", "column", "diagonal"] = ArgSpec(
+    grouping: typing.Literal["row", "column", "diagonal"] = argutils.ArgSpec(
         name="--grouping",
         default="row",
         choices=["row", "column", "diagonal"],
@@ -91,7 +90,7 @@ class SlideConfig(BaseConfig):
         "Literal['row', 'column', 'diagonal']."
     )
 
-    gap: int = ArgSpec(
+    gap: int = argutils.ArgSpec(
         name="--gap",
         type=argutils.NonNegativeInt.type_parser,
         default=2,
@@ -104,7 +103,7 @@ class SlideConfig(BaseConfig):
         "more staggered effect."
     )
 
-    reverse_direction: bool = ArgSpec(
+    reverse_direction: bool = argutils.ArgSpec(
         name="--reverse-direction",
         default=False,
         action="store_true",
@@ -112,7 +111,7 @@ class SlideConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "bool : Reverse the direction of the characters."
 
-    merge: bool = ArgSpec(
+    merge: bool = argutils.ArgSpec(
         name="--merge",
         default=False,
         action="store_true",
@@ -121,7 +120,7 @@ class SlideConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "bool : Merge the character groups originating from either side of the terminal."
 
-    movement_easing: easing.EasingFunction = ArgSpec(
+    movement_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--movement-easing",
         default=easing.in_out_quad,
         type=argutils.Ease.type_parser,
@@ -183,12 +182,12 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
 
         groups: list[list[EffectCharacter]] = []
         if self.config.grouping == "row":
-            groups = self.terminal.get_characters_grouped(CharacterGroup.ROW_TOP_TO_BOTTOM)
+            groups = self.terminal.get_characters_grouped(argutils.CharacterGroup.ROW_TOP_TO_BOTTOM)
         elif self.config.grouping == "column":
-            groups = self.terminal.get_characters_grouped(CharacterGroup.COLUMN_LEFT_TO_RIGHT)
+            groups = self.terminal.get_characters_grouped(argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT)
         elif self.config.grouping == "diagonal":
             groups = self.terminal.get_characters_grouped(
-                CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+                argutils.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
             )
         for group in groups:
             for character in group:

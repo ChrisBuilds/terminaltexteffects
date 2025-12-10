@@ -15,7 +15,6 @@ from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventH
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -49,7 +48,7 @@ class SynthGridConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="synthgrid",
         help="Create a grid which fills with characters dissolving into the final text.",
         description="synthgrid | Create a grid which fills with characters dissolving into the final text.",
@@ -61,7 +60,7 @@ class SynthGridConfig(BaseConfig):
         ),
     )
 
-    grid_gradient_stops: tuple[Color, ...] = ArgSpec(
+    grid_gradient_stops: tuple[Color, ...] = argutils.ArgSpec(
         name="--grid-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -72,7 +71,7 @@ class SynthGridConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the grid gradient."
 
-    grid_gradient_steps: tuple[int, ...] = ArgSpec(
+    grid_gradient_steps: tuple[int, ...] = argutils.ArgSpec(
         name="--grid-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
@@ -87,7 +86,7 @@ class SynthGridConfig(BaseConfig):
         "create a smoother and longer gradient animation."
     )
 
-    grid_gradient_direction: Gradient.Direction = ArgSpec(
+    grid_gradient_direction: Gradient.Direction = argutils.ArgSpec(
         name="--grid-gradient-direction",
         type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.DIAGONAL,
@@ -96,7 +95,7 @@ class SynthGridConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the gradient for the grid color."
 
-    text_gradient_stops: tuple[Color, ...] = ArgSpec(
+    text_gradient_stops: tuple[Color, ...] = argutils.ArgSpec(
         name="--text-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -107,7 +106,7 @@ class SynthGridConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the text gradient."
 
-    text_gradient_steps: tuple[int, ...] = ArgSpec(
+    text_gradient_steps: tuple[int, ...] = argutils.ArgSpec(
         name="--text-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
@@ -122,7 +121,7 @@ class SynthGridConfig(BaseConfig):
         "create a smoother and longer gradient animation."
     )
 
-    text_gradient_direction: Gradient.Direction = ArgSpec(
+    text_gradient_direction: Gradient.Direction = argutils.ArgSpec(
         name="--text-gradient-direction",
         type=argutils.GradientDirection.type_parser,
         default=Gradient.Direction.VERTICAL,
@@ -131,7 +130,7 @@ class SynthGridConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the gradient for the text color."
 
-    grid_row_symbol: str = ArgSpec(
+    grid_row_symbol: str = argutils.ArgSpec(
         name="--grid-row-symbol",
         type=argutils.Symbol.type_parser,
         default="─",
@@ -140,7 +139,7 @@ class SynthGridConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "str : Symbol to use for grid row lines."
 
-    grid_column_symbol: str = ArgSpec(
+    grid_column_symbol: str = argutils.ArgSpec(
         name="--grid-column-symbol",
         type=argutils.Symbol.type_parser,
         default="│",
@@ -149,7 +148,7 @@ class SynthGridConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "str : Symbol to use for grid column lines."
 
-    text_generation_symbols: tuple[str, ...] = ArgSpec(
+    text_generation_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--text-generation-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
@@ -160,7 +159,7 @@ class SynthGridConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] : Tuple of characters for the text generation animation."
 
-    max_active_blocks: float = ArgSpec(
+    max_active_blocks: float = argutils.ArgSpec(
         name="--max-active-blocks",
         type=argutils.PositiveRatio.type_parser,
         default=0.1,

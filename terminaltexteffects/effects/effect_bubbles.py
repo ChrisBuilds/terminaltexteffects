@@ -16,7 +16,6 @@ from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gra
 from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -54,7 +53,7 @@ class BubblesConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="bubbles",
         help="Characters are formed into bubbles that float down and pop.",
         description="bubbles | Characters are formed into bubbles that float down and pop.",
@@ -64,7 +63,7 @@ class BubblesConfig(BaseConfig):
         "--final-gradient-stops d33aff 02ff7f --final-gradient-steps 12 --final-gradient-direction diagonal",
     )
 
-    rainbow: bool = ArgSpec(
+    rainbow: bool = argutils.ArgSpec(
         name="--rainbow",
         action="store_true",
         default=False,
@@ -72,7 +71,7 @@ class BubblesConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "bool : If set, the bubbles will be colored with a rotating rainbow gradient."
 
-    bubble_colors: tuple[Color, ...] = ArgSpec(
+    bubble_colors: tuple[Color, ...] = argutils.ArgSpec(
         name="--bubble-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -84,7 +83,7 @@ class BubblesConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the bubbles. Ignored if --no-rainbow is left as default False."
 
-    pop_color: Color = ArgSpec(
+    pop_color: Color = argutils.ArgSpec(
         name="--pop-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#ffffff"),
@@ -93,7 +92,7 @@ class BubblesConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Color : Color for the spray emitted when a bubble pops."
 
-    bubble_speed: float = ArgSpec(
+    bubble_speed: float = argutils.ArgSpec(
         name="--bubble-speed",
         type=argutils.PositiveFloat.type_parser,
         default=0.5,
@@ -102,7 +101,7 @@ class BubblesConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the floating bubbles. "
 
-    bubble_delay: int = ArgSpec(
+    bubble_delay: int = argutils.ArgSpec(
         name="--bubble-delay",
         type=argutils.PositiveInt.type_parser,
         default=20,
@@ -111,7 +110,7 @@ class BubblesConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames between bubbles."
 
-    pop_condition: typing.Literal["row", "bottom", "anywhere"] = ArgSpec(
+    pop_condition: typing.Literal["row", "bottom", "anywhere"] = argutils.ArgSpec(
         name="--pop-condition",
         default="row",
         choices=["row", "bottom", "anywhere"],
@@ -125,7 +124,7 @@ class BubblesConfig(BaseConfig):
         "the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal."
     )
 
-    movement_easing: easing.EasingFunction = ArgSpec(
+    movement_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--movement-easing",
         default=easing.in_out_sine,
         type=argutils.Ease.type_parser,
@@ -329,7 +328,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             )
 
         unbubbled_chars = []
-        for char_list in self.terminal.get_characters_grouped(grouping=CharacterGroup.ROW_BOTTOM_TO_TOP):
+        for char_list in self.terminal.get_characters_grouped(grouping=argutils.CharacterGroup.ROW_BOTTOM_TO_TOP):
             unbubbled_chars.extend(char_list)
         self.bubbles = []
         while unbubbled_chars:

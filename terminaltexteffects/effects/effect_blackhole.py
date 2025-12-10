@@ -21,7 +21,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -51,7 +50,7 @@ class BlackholeConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="blackhole",
         help="Characters are consumed by a black hole and explode outwards.",
         description="blackhole | Characters are consumed by a black hole and explode outwards.",
@@ -61,7 +60,7 @@ class BlackholeConfig(BaseConfig):
             "--final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 9 --final-gradient-direction diagonal"
         ),
     )
-    blackhole_color: Color = ArgSpec(
+    blackhole_color: Color = argutils.ArgSpec(
         name="--blackhole-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#ffffff"),
@@ -70,7 +69,7 @@ class BlackholeConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Color : Color for the stars that comprise the blackhole border."
 
-    star_colors: tuple[Color, ...] = ArgSpec(
+    star_colors: tuple[Color, ...] = argutils.ArgSpec(
         name="--star-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",

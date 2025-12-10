@@ -14,10 +14,14 @@ import random
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -34,7 +38,7 @@ def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
 class SweepConfig(BaseConfig):
     """Sweep effect configuration dataclass."""
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="sweep",
         help="Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.",
         description="sweep | Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.",
@@ -46,7 +50,7 @@ class SweepConfig(BaseConfig):
         ),
     )
 
-    sweep_symbols: tuple[str, ...] = ArgSpec(
+    sweep_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--sweep-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
@@ -57,17 +61,17 @@ class SweepConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] | str : Tuple of symbols to use for the sweep shimmer."
 
-    first_sweep_direction: CharacterGroup = ArgSpec(
+    first_sweep_direction: argutils.CharacterGroup = argutils.ArgSpec(
         name="--first-sweep-direction",
-        default=CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+        default=argutils.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
         type=argutils.CharacterGroupArg.type_parser,
         help="Direction of the first sweep, revealing uncolored characters.",
     )  # pyright: ignore[reportAssignmentType]
     "CharacterGroup : Direction of the first sweep, revealing uncolored characters."
 
-    second_sweep_direction: CharacterGroup = ArgSpec(
+    second_sweep_direction: argutils.CharacterGroup = argutils.ArgSpec(
         name="--second-sweep-direction",
-        default=CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+        default=argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
         type=argutils.CharacterGroupArg.type_parser,
         help="Direction of the second sweep, coloring the characters.",
     )  # pyright: ignore[reportAssignmentType]

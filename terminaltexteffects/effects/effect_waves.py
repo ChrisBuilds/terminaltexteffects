@@ -12,10 +12,14 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, EffectCharacter, EventHandler, Gradient, easing
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -52,7 +56,7 @@ class WavesConfig(BaseConfig):
 
     """  # noqa: E501
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="waves",
         help="Waves travel across the terminal leaving behind the characters.",
         description="waves | Waves travel across the terminal leaving behind the characters.",
@@ -65,7 +69,7 @@ class WavesConfig(BaseConfig):
         ),
     )
 
-    wave_symbols: tuple[str, ...] = ArgSpec(
+    wave_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--wave-symbols",
         type=argutils.Symbol.type_parser,
         default=("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█", "▇", "▆", "▅", "▄", "▃", "▂", "▁"),
@@ -80,7 +84,7 @@ class WavesConfig(BaseConfig):
         "create an animation."
     )
 
-    wave_gradient_stops: tuple[Color, ...] = ArgSpec(
+    wave_gradient_stops: tuple[Color, ...] = argutils.ArgSpec(
         name="--wave-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -95,7 +99,7 @@ class WavesConfig(BaseConfig):
         "characters will be displayed in that color."
     )
 
-    wave_gradient_steps: tuple[int, ...] = ArgSpec(
+    wave_gradient_steps: tuple[int, ...] = argutils.ArgSpec(
         name="--wave-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
@@ -110,7 +114,7 @@ class WavesConfig(BaseConfig):
         "longer gradient animation."
     )
 
-    wave_count: int = ArgSpec(
+    wave_count: int = argutils.ArgSpec(
         name="--wave-count",
         type=argutils.PositiveInt.type_parser,
         default=7,
@@ -118,7 +122,7 @@ class WavesConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of waves to generate. n > 0."
 
-    wave_length: int = ArgSpec(
+    wave_length: int = argutils.ArgSpec(
         name="--wave-length",
         type=argutils.PositiveInt.type_parser,
         default=2,
@@ -134,7 +138,7 @@ class WavesConfig(BaseConfig):
         "row_bottom_to_top",
         "center_to_outside",
         "outside_to_center",
-    ] = ArgSpec(
+    ] = argutils.ArgSpec(
         name="--wave-direction",
         default="column_left_to_right",
         help="Direction of the wave.",
@@ -149,7 +153,7 @@ class WavesConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','center_to_outside','outside_to_center']"
 
-    wave_easing: easing.EasingFunction = ArgSpec(
+    wave_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--wave-easing",
         type=argutils.Ease.type_parser,
         default=easing.in_out_sine,
@@ -230,12 +234,12 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             )
             character.animation.activate_scene(wave_scn)
         grouping_map = {
-            "column_left_to_right": CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-            "column_right_to_left": CharacterGroup.COLUMN_RIGHT_TO_LEFT,
-            "row_top_to_bottom": CharacterGroup.ROW_TOP_TO_BOTTOM,
-            "row_bottom_to_top": CharacterGroup.ROW_BOTTOM_TO_TOP,
-            "center_to_outside": CharacterGroup.CENTER_TO_OUTSIDE,
-            "outside_to_center": CharacterGroup.OUTSIDE_TO_CENTER,
+            "column_left_to_right": argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            "column_right_to_left": argutils.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            "row_top_to_bottom": argutils.CharacterGroup.ROW_TOP_TO_BOTTOM,
+            "row_bottom_to_top": argutils.CharacterGroup.ROW_BOTTOM_TO_TOP,
+            "center_to_outside": argutils.CharacterGroup.CENTER_TO_OUTSIDE,
+            "outside_to_center": argutils.CharacterGroup.OUTSIDE_TO_CENTER,
         }
 
         for column in self.terminal.get_characters_grouped(grouping=grouping_map[self.config.wave_direction]):

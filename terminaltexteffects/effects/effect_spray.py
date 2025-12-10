@@ -14,10 +14,14 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, easing
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -49,7 +53,7 @@ class SprayConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="spray",
         help="Draws the characters spawning at varying rates from a single point.",
         description="spray | Draws the characters spawning at varying rates from a single point.",
@@ -60,7 +64,7 @@ class SprayConfig(BaseConfig):
         ),
     )
 
-    spray_position: typing.Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"] = ArgSpec(
+    spray_position: typing.Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"] = argutils.ArgSpec(
         name="--spray-position",
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"],
         default="e",
@@ -68,7 +72,7 @@ class SprayConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "typing.Literal['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw', 'center'] : Position for the spray origin."
 
-    spray_volume: float = ArgSpec(
+    spray_volume: float = argutils.ArgSpec(
         name="--spray-volume",
         type=argutils.PositiveRatio.type_parser,
         default=0.005,
@@ -77,7 +81,7 @@ class SprayConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Number of characters to spray per tick as a percent of the total number of characters."
 
-    movement_speed_range: tuple[float, float] = ArgSpec(
+    movement_speed_range: tuple[float, float] = argutils.ArgSpec(
         name="--movement-speed-range",
         type=argutils.PositiveFloatRange.type_parser,
         default=(0.6, 1.4),
@@ -86,7 +90,7 @@ class SprayConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[float, float] : Movement speed range of the characters."
 
-    movement_easing: easing.EasingFunction = ArgSpec(
+    movement_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--movement-easing",
         type=argutils.Ease.type_parser,
         default=easing.out_expo,

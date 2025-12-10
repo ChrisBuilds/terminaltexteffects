@@ -22,7 +22,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -54,7 +53,7 @@ class BinaryPathConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="binarypath",
         help="Binary representations of each character move towards the home coordinate of the character.",
         description="binarypath | Binary representations of each character move through the terminal towards the "
@@ -87,7 +86,7 @@ class BinaryPathConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tte.Gradient.Direction : Direction of the final gradient."
 
-    binary_colors: tuple[tte.Color, ...] = ArgSpec(
+    binary_colors: tuple[tte.Color, ...] = argutils.ArgSpec(
         name="--binary-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -102,7 +101,7 @@ class BinaryPathConfig(BaseConfig):
         "this list."
     )
 
-    movement_speed: float = ArgSpec(
+    movement_speed: float = argutils.ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
         default=1,
@@ -111,7 +110,7 @@ class BinaryPathConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the binary groups as they travel around the terminal."
 
-    active_binary_groups: float = ArgSpec(
+    active_binary_groups: float = argutils.ArgSpec(
         name="--active-binary-groups",
         type=argutils.NonNegativeRatio.type_parser,
         default=0.08,
@@ -168,7 +167,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
         self.complete = False
         self.phase = "travel"
         self.final_wipe_chars = self.terminal.get_characters_grouped(
-            grouping=CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+            grouping=argutils.CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
         )
         self.max_active_binary_groups: int = 0
         self.build()

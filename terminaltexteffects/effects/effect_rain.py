@@ -13,10 +13,14 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -47,7 +51,7 @@ class RainConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="rain",
         help="Rain characters from the top of the canvas.",
         description="rain | Rain characters from the top of the canvas.",
@@ -58,7 +62,7 @@ class RainConfig(BaseConfig):
             "--final-gradient-direction diagonal"
         ),
     )
-    rain_colors: tuple[Color, ...] = ArgSpec(
+    rain_colors: tuple[Color, ...] = argutils.ArgSpec(
         name="--rain-colors",
         type=argutils.ColorArg.type_parser,
         metavar=argutils.ColorArg.METAVAR,
@@ -78,7 +82,7 @@ class RainConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors for the rain drops. Colors are randomly chosen from the tuple."
 
-    movement_speed: tuple[float, float] = ArgSpec(
+    movement_speed: tuple[float, float] = argutils.ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloatRange.type_parser,
         default=(0.33, 0.57),
@@ -87,7 +91,7 @@ class RainConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[float, float] : Falling speed range of the rain drops."
 
-    rain_symbols: tuple[str, ...] = ArgSpec(
+    rain_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--rain-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
@@ -119,7 +123,7 @@ class RainConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction of the final gradient."
 
-    movement_easing: easing.EasingFunction = ArgSpec(
+    movement_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--movement-easing",
         default=easing.in_quart,
         type=argutils.Ease.type_parser,

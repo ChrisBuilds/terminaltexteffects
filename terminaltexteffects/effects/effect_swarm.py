@@ -22,10 +22,14 @@ from terminaltexteffects import (
     easing,
     geometry,
 )
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterSort, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -57,7 +61,7 @@ class SwarmConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="swarm",
         help="Characters are grouped into swarms and move around the terminal before settling into position.",
         description="swarm | Characters are grouped into swarms and move around the terminal before settling "
@@ -69,7 +73,7 @@ class SwarmConfig(BaseConfig):
         ),
     )
 
-    base_color: tuple[Color, ...] = ArgSpec(
+    base_color: tuple[Color, ...] = argutils.ArgSpec(
         name="--base-color",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -80,7 +84,7 @@ class SwarmConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     """tuple[Color, ...] : Tuple of colors for the swarms"""
 
-    flash_color: Color = ArgSpec(
+    flash_color: Color = argutils.ArgSpec(
         name="--flash-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#f2ea79"),
@@ -89,7 +93,7 @@ class SwarmConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     """Color : Color for the character flash. Characters flash when moving."""
 
-    swarm_size: float = ArgSpec(
+    swarm_size: float = argutils.ArgSpec(
         name="--swarm-size",
         type=argutils.NonNegativeRatio.type_parser,
         metavar=argutils.NonNegativeRatio.METAVAR,
@@ -98,7 +102,7 @@ class SwarmConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Percent of total characters in each swarm."
 
-    swarm_coordination: float = ArgSpec(
+    swarm_coordination: float = argutils.ArgSpec(
         name="--swarm-coordination",
         type=argutils.NonNegativeRatio.type_parser,
         metavar=argutils.NonNegativeRatio.METAVAR,
@@ -107,7 +111,7 @@ class SwarmConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Percent of characters in a swarm that move as a group."
 
-    swarm_area_count_range: tuple[int, int] = ArgSpec(
+    swarm_area_count_range: tuple[int, int] = argutils.ArgSpec(
         name="--swarm-area-count-range",
         type=argutils.PositiveIntRange.type_parser,
         metavar=argutils.PositiveIntRange.METAVAR,
@@ -165,7 +169,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
 
         """
         unswarmed_characters = self.terminal.get_characters(
-            sort=CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT,
+            sort=argutils.CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT,
         )
 
         while unswarmed_characters:

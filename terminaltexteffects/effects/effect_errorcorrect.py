@@ -20,7 +20,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -54,7 +53,7 @@ class ErrorCorrectConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="errorcorrect",
         help="Some characters start in the wrong position and are corrected in sequence.",
         description="errorcorrect | Some characters start in the wrong position and are corrected in sequence.",
@@ -65,7 +64,7 @@ class ErrorCorrectConfig(BaseConfig):
             "--final-gradient-steps 12 --final-gradient-direction vertical"
         ),
     )
-    error_pairs: float = ArgSpec(
+    error_pairs: float = argutils.ArgSpec(
         name="--error-pairs",
         type=argutils.PositiveFloat.type_parser,
         default=0.1,
@@ -78,7 +77,7 @@ class ErrorCorrectConfig(BaseConfig):
         "means 20 percent of the characters will be in the wrong position."
     )
 
-    swap_delay: int = ArgSpec(
+    swap_delay: int = argutils.ArgSpec(
         name="--swap-delay",
         type=argutils.PositiveInt.type_parser,
         default=6,
@@ -87,7 +86,7 @@ class ErrorCorrectConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames between swaps."
 
-    error_color: Color = ArgSpec(
+    error_color: Color = argutils.ArgSpec(
         name="--error-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#e74c3c"),
@@ -96,7 +95,7 @@ class ErrorCorrectConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Color : Color for the characters that are in the wrong position."
 
-    correct_color: Color = ArgSpec(
+    correct_color: Color = argutils.ArgSpec(
         name="--correct-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#45bf55"),
@@ -105,7 +104,7 @@ class ErrorCorrectConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Color : Color for the characters once corrected, this is a gradient from error-color and fades to final-color."
 
-    movement_speed: float = ArgSpec(
+    movement_speed: float = argutils.ArgSpec(
         name="--movement-speed",
         type=argutils.PositiveFloat.type_parser,
         default=0.9,

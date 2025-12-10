@@ -22,7 +22,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 MATRIX_SYMBOLS_COMMON = (
     "2",
@@ -117,20 +116,20 @@ class MatrixConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="matrix",
         help="Matrix digital rain effect.",
         description="matrix | Matrix digital rain effect.",
         epilog=(
             "Example: terminaltexteffects matrix --highlight-color dbffdb --rain-color-gradient 92be92 185318 "
-            "--rain-symbols 2 5 9 8 Z * ) : . \" = + - ¦ | _ ｦ ｱ ｳ ｴ ｵ ｶ ｷ ｹ ｺ ｻ ｼ ｽ ｾ ｿ ﾀ ﾁ ﾂ ﾃ ﾄ ﾅ ﾆ ﾇ ﾈ "
+            '--rain-symbols 2 5 9 8 Z * ) : . " = + - ¦ | _ ｦ ｱ ｳ ｴ ｵ ｶ ｷ ｹ ｺ ｻ ｼ ｽ ｾ ｿ ﾀ ﾁ ﾂ ﾃ ﾄ ﾅ ﾆ ﾇ ﾈ '
             "ﾉ ﾊ ﾋ ﾌ ﾍ ﾎ ﾏ ﾐ ﾑ ﾒ ﾓ ﾔ ﾕ ﾖ ﾗ ﾘ ﾙ ﾚ ﾛ ﾜ ﾝ ﾞ ﾟ --rain-fall-delay-range 2-15 "
             "--rain-column-delay-range 3-9 --rain-time 15 --symbol-swap-chance 0.005 --color-swap-chance 0.001 "
             "--resolve-delay 3 --final-gradient-stops 92be92 336b33 --final-gradient-steps 12 "
             "--final-gradient-frames 3 --final-gradient-direction radial"
         ),
     )
-    highlight_color: Color = ArgSpec(
+    highlight_color: Color = argutils.ArgSpec(
         name="--highlight-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#dbffdb"),
@@ -139,7 +138,7 @@ class MatrixConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Color : Color for the bottom of the rain column."
 
-    rain_color_gradient: tuple[Color, ...] = ArgSpec(
+    rain_color_gradient: tuple[Color, ...] = argutils.ArgSpec(
         name="--rain-color-gradient",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -154,7 +153,7 @@ class MatrixConfig(BaseConfig):
         "will be displayed in that color."
     )
 
-    rain_symbols: tuple[str, ...] = ArgSpec(
+    rain_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--rain-symbols",
         nargs="+",
         action=argutils.TupleAction,
@@ -165,7 +164,7 @@ class MatrixConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] : Tuple of symbols to use for the rain."
 
-    rain_fall_delay_range: tuple[int, int] = ArgSpec(
+    rain_fall_delay_range: tuple[int, int] = argutils.ArgSpec(
         name="--rain-fall-delay-range",
         type=argutils.PositiveIntRange.type_parser,
         default=(2, 15),
@@ -178,7 +177,7 @@ class MatrixConfig(BaseConfig):
         "randomly selected from the range."
     )
 
-    rain_column_delay_range: tuple[int, int] = ArgSpec(
+    rain_column_delay_range: tuple[int, int] = argutils.ArgSpec(
         name="--rain-column-delay-range",
         type=argutils.PositiveIntRange.type_parser,
         default=(3, 9),
@@ -187,7 +186,7 @@ class MatrixConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[int, int] : Range of frames to wait between adding new rain columns."
 
-    rain_time: int = ArgSpec(
+    rain_time: int = argutils.ArgSpec(
         name="--rain-time",
         type=argutils.PositiveInt.type_parser,
         default=15,
@@ -196,7 +195,7 @@ class MatrixConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Time, in seconds, to display the rain effect before transitioning to the input text."
 
-    symbol_swap_chance: float = ArgSpec(
+    symbol_swap_chance: float = argutils.ArgSpec(
         name="--symbol-swap-chance",
         type=argutils.PositiveFloat.type_parser,
         default=0.005,
@@ -205,7 +204,7 @@ class MatrixConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Chance of swapping a character's symbol on each tick."
 
-    color_swap_chance: float = ArgSpec(
+    color_swap_chance: float = argutils.ArgSpec(
         name="--color-swap-chance",
         type=argutils.PositiveFloat.type_parser,
         default=0.001,
@@ -214,7 +213,7 @@ class MatrixConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Chance of swapping a character's color on each tick."
 
-    resolve_delay: int = ArgSpec(
+    resolve_delay: int = argutils.ArgSpec(
         name="--resolve-delay",
         type=argutils.PositiveInt.type_parser,
         default=3,
@@ -450,7 +449,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 )
 
         for column_chars in self.terminal.get_characters_grouped(
-            CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):

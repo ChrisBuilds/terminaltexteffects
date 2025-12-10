@@ -13,10 +13,14 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, easing, geometry
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import motion
@@ -55,7 +59,7 @@ class RingsConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="rings",
         help="Characters are dispersed and form into spinning rings.",
         description="rings | Characters are dispersed and form into spinning rings.",
@@ -65,7 +69,7 @@ class RingsConfig(BaseConfig):
             "--spin-duration 200 --spin-speed 0.25-1.0 --disperse-duration 200 --spin-disperse-cycles 3"
         ),
     )
-    ring_colors: tuple[Color, ...] = ArgSpec(
+    ring_colors: tuple[Color, ...] = argutils.ArgSpec(
         name="--ring-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -76,14 +80,14 @@ class RingsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color] : Tuple of colors for the rings."
 
-    ring_gap: float = ArgSpec(
+    ring_gap: float = argutils.ArgSpec(
         name="--ring-gap",
         type=argutils.PositiveFloat.type_parser,
         default=0.1,
         help="Distance between rings as a percent of the smallest canvas dimension.",
     )  # pyright: ignore[reportAssignmentType]
     "float : Distance between rings as a percent of the smallest canvas dimension."
-    spin_duration: int = ArgSpec(
+    spin_duration: int = argutils.ArgSpec(
         name="--spin-duration",
         type=argutils.PositiveInt.type_parser,
         default=200,
@@ -91,7 +95,7 @@ class RingsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames for each cycle of the spin phase."
 
-    spin_speed: tuple[float, float] = ArgSpec(
+    spin_speed: tuple[float, float] = argutils.ArgSpec(
         name="--spin-speed",
         type=argutils.PositiveFloatRange.type_parser,
         default=(0.25, 1.0),
@@ -104,7 +108,7 @@ class RingsConfig(BaseConfig):
         "from this range for each ring."
     )
 
-    disperse_duration: int = ArgSpec(
+    disperse_duration: int = argutils.ArgSpec(
         name="--disperse-duration",
         type=argutils.PositiveInt.type_parser,
         default=200,
@@ -112,7 +116,7 @@ class RingsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames spent in the dispersed state between spinning cycles."
 
-    spin_disperse_cycles: int = ArgSpec(
+    spin_disperse_cycles: int = argutils.ArgSpec(
         name="--spin-disperse-cycles",
         type=argutils.PositiveInt.type_parser,
         default=3,

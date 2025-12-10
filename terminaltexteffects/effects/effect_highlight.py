@@ -11,10 +11,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from terminaltexteffects import Animation, Color, ColorPair, EffectCharacter, Gradient, easing
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -44,7 +48,7 @@ class HighlightConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="highlight",
         help="Run a specular highlight across the text.",
         description="highlight | Run a specular highlight across the text.",
@@ -56,7 +60,7 @@ class HighlightConfig(BaseConfig):
         ),
     )
 
-    highlight_brightness: float = ArgSpec(
+    highlight_brightness: float = argutils.ArgSpec(
         name="--highlight-brightness",
         type=argutils.PositiveFloat.type_parser,
         default=1.75,
@@ -69,16 +73,16 @@ class HighlightConfig(BaseConfig):
         "values greater than 1 will brighten the highlight color."
     )
 
-    highlight_direction: CharacterGroup = ArgSpec(
+    highlight_direction: argutils.CharacterGroup = argutils.ArgSpec(
         name="--highlight-direction",
-        default=CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+        default=argutils.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
         metavar=" ".join(argutils.CharacterGroupArg.METAVAR),
         help="Direction the highlight will travel.",
         type=argutils.CharacterGroupArg.type_parser,
     )  # pyright: ignore[reportAssignmentType]
     ("CharacterGroup : Direction the highlight will travel.")
 
-    highlight_width: int = ArgSpec(
+    highlight_width: int = argutils.ArgSpec(
         name="--highlight-width",
         type=argutils.PositiveInt.type_parser,
         default=8,

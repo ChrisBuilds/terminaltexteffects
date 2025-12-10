@@ -12,10 +12,14 @@ import contextlib
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, easing
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 from terminaltexteffects.utils.exceptions import DuplicateEventRegistrationError
 
 
@@ -45,7 +49,7 @@ class PrintConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="print",
         help="Lines are printed one at a time following a print head. Print head performs line feed, carriage return.",
         description="print | Lines are printed one at a time following a print head. Print head performs line feed, "
@@ -56,7 +60,7 @@ class PrintConfig(BaseConfig):
             "--print-head-return-speed 1.5 --print-speed 2 --print-head-easing IN_OUT_QUAD"
         ),
     )
-    print_head_return_speed: float = ArgSpec(
+    print_head_return_speed: float = argutils.ArgSpec(
         name="--print-head-return-speed",
         type=argutils.PositiveFloat.type_parser,
         default=1.5,
@@ -65,7 +69,7 @@ class PrintConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the print head when performing a carriage return."
 
-    print_speed: int = ArgSpec(
+    print_speed: int = argutils.ArgSpec(
         name="--print-speed",
         type=argutils.PositiveInt.type_parser,
         default=2,
@@ -74,7 +78,7 @@ class PrintConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Speed of the print head when printing characters."
 
-    print_head_easing: easing.EasingFunction = ArgSpec(
+    print_head_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--print-head-easing",
         default=easing.in_out_quad,
         type=argutils.Ease.type_parser,
@@ -190,7 +194,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 Color("#ffffff"),
             )
         input_rows = self.terminal.get_characters_grouped(
-            grouping=CharacterGroup.ROW_TOP_TO_BOTTOM,
+            grouping=argutils.CharacterGroup.ROW_TOP_TO_BOTTOM,
             outer_fill_chars=True,
             inner_fill_chars=True,
         )

@@ -12,10 +12,14 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -46,7 +50,7 @@ class UnstableConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="unstable",
         help="Spawn characters jumbled, explode them to the edge of the canvas, then reassemble them in the "
         "correct layout.",
@@ -60,7 +64,7 @@ class UnstableConfig(BaseConfig):
         ),
     )
 
-    unstable_color: Color = ArgSpec(
+    unstable_color: Color = argutils.ArgSpec(
         name="--unstable-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#ff9200"),
@@ -69,7 +73,7 @@ class UnstableConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Color : Color transitioned to as the characters become unstable."
 
-    explosion_ease: easing.EasingFunction = ArgSpec(
+    explosion_ease: easing.EasingFunction = argutils.ArgSpec(
         name="--explosion-ease",
         type=argutils.Ease.type_parser,
         default=easing.out_expo,
@@ -77,7 +81,7 @@ class UnstableConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character movement during the explosion."
 
-    explosion_speed: float = ArgSpec(
+    explosion_speed: float = argutils.ArgSpec(
         name="--explosion-speed",
         type=argutils.PositiveFloat.type_parser,
         default=1,
@@ -86,7 +90,7 @@ class UnstableConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Speed of characters during explosion. "
 
-    reassembly_ease: easing.EasingFunction = ArgSpec(
+    reassembly_ease: easing.EasingFunction = argutils.ArgSpec(
         name="--reassembly-ease",
         type=argutils.Ease.type_parser,
         default=easing.out_expo,
@@ -94,7 +98,7 @@ class UnstableConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "easing.EasingFunction : Easing function to use for character reassembly."
 
-    reassembly_speed: float = ArgSpec(
+    reassembly_speed: float = argutils.ArgSpec(
         name="--reassembly-speed",
         type=argutils.PositiveFloat.type_parser,
         default=1,

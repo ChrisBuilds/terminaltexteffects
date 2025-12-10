@@ -20,7 +20,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.spanningtree.algo.breadthfirst import BreadthFirst
 from terminaltexteffects.utils.spanningtree.algo.primsweighted import PrimsWeighted
 
@@ -39,7 +38,7 @@ def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
 class SmokeConfig(BaseConfig):
     """Effect configuration dataclass."""
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="smoke",
         help="Smoke floods the canvas colorizing any characters it crosses.",
         description="Smoke floods the canvas colorizing any characters it crosses.",
@@ -48,7 +47,7 @@ class SmokeConfig(BaseConfig):
         "--final-gradient-steps 12 --final-gradient-direction vertical ",
     )
 
-    starting_color: tte.Color = ArgSpec(
+    starting_color: tte.Color = argutils.ArgSpec(
         name="--starting-color",
         type=argutils.ColorArg.type_parser,
         default=tte.Color("#7A7A7A"),
@@ -57,7 +56,7 @@ class SmokeConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tte.Color : Color of the text before being colorized by the smoke."
 
-    smoke_symbols: tuple[str, ...] = ArgSpec(
+    smoke_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--smoke-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
@@ -68,7 +67,7 @@ class SmokeConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     ("tuple[str, ...]: Symbols to use for the smoke. Strings will be used in sequence to create an animation.")
 
-    smoke_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+    smoke_gradient_stops: tuple[tte.Color, ...] = argutils.ArgSpec(
         name="--smoke-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -85,7 +84,7 @@ class SmokeConfig(BaseConfig):
         "Smoke will transition through this gradient before moving through the final gradient stops. "
     )
 
-    use_whole_canvas: bool = ArgSpec(
+    use_whole_canvas: bool = argutils.ArgSpec(
         name="--use-whole-canvas",
         action="store_true",
         default=False,

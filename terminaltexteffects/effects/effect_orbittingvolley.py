@@ -13,10 +13,14 @@ from dataclasses import dataclass
 from itertools import cycle
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, Terminal, easing
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -52,7 +56,7 @@ class OrbittingVolleyConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="orbittingvolley",
         help=(
             "Four launchers orbit the canvas firing volleys of characters inward to build the input text "
@@ -70,7 +74,7 @@ class OrbittingVolleyConfig(BaseConfig):
             "--final-gradient-direction radial"
         ),
     )
-    top_launcher_symbol: str = ArgSpec(
+    top_launcher_symbol: str = argutils.ArgSpec(
         name="--top-launcher-symbol",
         type=argutils.Symbol.type_parser,
         default="█",
@@ -79,7 +83,7 @@ class OrbittingVolleyConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "str : Symbol for the top launcher."
 
-    right_launcher_symbol: str = ArgSpec(
+    right_launcher_symbol: str = argutils.ArgSpec(
         name="--right-launcher-symbol",
         type=argutils.Symbol.type_parser,
         default="█",
@@ -88,7 +92,7 @@ class OrbittingVolleyConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "str : Symbol for the right launcher."
 
-    bottom_launcher_symbol: str = ArgSpec(
+    bottom_launcher_symbol: str = argutils.ArgSpec(
         name="--bottom-launcher-symbol",
         type=argutils.Symbol.type_parser,
         default="█",
@@ -97,7 +101,7 @@ class OrbittingVolleyConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "str : Symbol for the bottom launcher."
 
-    left_launcher_symbol: str = ArgSpec(
+    left_launcher_symbol: str = argutils.ArgSpec(
         name="--left-launcher-symbol",
         type=argutils.Symbol.type_parser,
         default="█",
@@ -106,7 +110,7 @@ class OrbittingVolleyConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "str : Symbol for the left launcher."
 
-    launcher_movement_speed: float = ArgSpec(
+    launcher_movement_speed: float = argutils.ArgSpec(
         name="--launcher-movement-speed",
         type=argutils.PositiveFloat.type_parser,
         default=0.8,
@@ -115,7 +119,7 @@ class OrbittingVolleyConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Orbitting speed of the launchers."
 
-    character_movement_speed: float = ArgSpec(
+    character_movement_speed: float = argutils.ArgSpec(
         name="--character-movement-speed",
         type=argutils.PositiveFloat.type_parser,
         default=1.5,
@@ -124,7 +128,7 @@ class OrbittingVolleyConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Speed of the launched characters."
 
-    volley_size: float = ArgSpec(
+    volley_size: float = argutils.ArgSpec(
         name="--volley-size",
         type=argutils.NonNegativeRatio.type_parser,
         default=0.03,
@@ -133,7 +137,7 @@ class OrbittingVolleyConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Percent of total input characters each launcher will fire per volley. Lower limit of one character."
 
-    launch_delay: int = ArgSpec(
+    launch_delay: int = argutils.ArgSpec(
         name="--launch-delay",
         type=argutils.NonNegativeInt.type_parser,
         default=30,
@@ -142,7 +146,7 @@ class OrbittingVolleyConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of animation ticks to wait between volleys of characters."
 
-    character_easing: easing.EasingFunction = ArgSpec(
+    character_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--character-easing",
         default=easing.out_sine,
         type=argutils.Ease.type_parser,
@@ -303,7 +307,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
         self._main_launcher.build_paths()
         self._main_launcher.character.motion.activate_path("perimeter")
         self._sorted_chars = []
-        for char_list in self.terminal.get_characters_grouped(CharacterGroup.CENTER_TO_OUTSIDE):
+        for char_list in self.terminal.get_characters_grouped(argutils.CharacterGroup.CENTER_TO_OUTSIDE):
             self._sorted_chars.extend(char_list)
         for launcher, character in zip(cycle(self._launchers), self._sorted_chars):
             launcher.magazine.append(character)

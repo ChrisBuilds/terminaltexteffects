@@ -22,10 +22,14 @@ from terminaltexteffects import (
     easing,
     geometry,
 )
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -60,7 +64,7 @@ class FireworksConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="fireworks",
         help="Characters launch and explode like fireworks and fall into place.",
         description="fireworks | Characters explode like fireworks and fall into place.",
@@ -72,7 +76,7 @@ class FireworksConfig(BaseConfig):
         ),
     )
 
-    explode_anywhere: bool = ArgSpec(
+    explode_anywhere: bool = argutils.ArgSpec(
         name="--explode-anywhere",
         action="store_true",
         default=False,
@@ -84,7 +88,7 @@ class FireworksConfig(BaseConfig):
         "settled row of text."
     )
 
-    firework_colors: tuple[Color, ...] = ArgSpec(
+    firework_colors: tuple[Color, ...] = argutils.ArgSpec(
         name="--firework-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -95,7 +99,7 @@ class FireworksConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[Color, ...] : Tuple of colors from which firework colors will be randomly selected."
 
-    firework_symbol: str = ArgSpec(
+    firework_symbol: str = argutils.ArgSpec(
         name="--firework-symbol",
         type=argutils.Symbol.type_parser,
         default="o",
@@ -104,7 +108,7 @@ class FireworksConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "str : Symbol to use for the firework shell."
 
-    firework_volume: float = ArgSpec(
+    firework_volume: float = argutils.ArgSpec(
         name="--firework-volume",
         type=argutils.NonNegativeRatio.type_parser,
         default=0.05,
@@ -113,7 +117,7 @@ class FireworksConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "float : Percent of total characters in each firework shell."
 
-    launch_delay: int = ArgSpec(
+    launch_delay: int = argutils.ArgSpec(
         name="--launch-delay",
         type=argutils.NonNegativeInt.type_parser,
         default=45,
@@ -126,7 +130,7 @@ class FireworksConfig(BaseConfig):
         "applied to this value."
     )
 
-    explode_distance: float = ArgSpec(
+    explode_distance: float = argutils.ArgSpec(
         name="--explode-distance",
         default=0.2,
         type=argutils.NonNegativeRatio.type_parser,

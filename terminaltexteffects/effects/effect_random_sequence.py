@@ -21,7 +21,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 # TODO: rename effect to dissolve and add a dissolve-out option
 
@@ -54,7 +53,7 @@ class RandomSequenceConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="randomsequence",
         help="Prints the input data in a random sequence.",
         description="randomsequence | Prints the input data in a random sequence.",
@@ -65,7 +64,7 @@ class RandomSequenceConfig(BaseConfig):
         ),
     )
 
-    starting_color: Color = ArgSpec(
+    starting_color: Color = argutils.ArgSpec(
         name="--starting-color",
         type=argutils.ColorArg.type_parser,
         default=Color("#000000"),
@@ -74,7 +73,7 @@ class RandomSequenceConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Color : Color of the characters at spawn."
 
-    speed: float = ArgSpec(
+    speed: float = argutils.ArgSpec(
         name="--speed",
         type=argutils.PositiveFloat.type_parser,
         default=0.007,

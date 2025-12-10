@@ -13,10 +13,14 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, EffectCharacter, EventHandler, Gradient, Scene
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -45,7 +49,7 @@ class DecryptConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="decrypt",
         help="Display a movie style decryption effect.",
         description="decrypt | Movie style decryption effect.",
@@ -54,7 +58,7 @@ class DecryptConfig(BaseConfig):
             "--final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical"
         ),
     )
-    typing_speed: int = ArgSpec(
+    typing_speed: int = argutils.ArgSpec(
         name="--typing-speed",
         type=argutils.PositiveInt.type_parser,
         default=2,
@@ -63,7 +67,7 @@ class DecryptConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of characters typed per keystroke."
 
-    ciphertext_colors: tuple[Color, ...] = ArgSpec(
+    ciphertext_colors: tuple[Color, ...] = argutils.ArgSpec(
         name="--ciphertext-colors",
         type=argutils.ColorArg.type_parser,
         nargs="+",

@@ -13,10 +13,14 @@ import random
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -43,7 +47,7 @@ class CrumbleConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="crumble",
         help="Characters lose color and crumble into dust, vacuumed up, and reformed.",
         description="crumble | Characters lose color and crumble into dust, vacuumed up, and reformed.",

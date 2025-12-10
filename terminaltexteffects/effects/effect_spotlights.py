@@ -13,10 +13,14 @@ from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing, geometry
 from terminaltexteffects.engine import animation, motion
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -51,7 +55,7 @@ class SpotlightsConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="spotlights",
         help="Spotlights search the text area, illuminating characters, before converging in the center and expanding.",
         description="spotlights | Spotlights search the text area, illuminating characters, before converging in the "
@@ -63,7 +67,7 @@ class SpotlightsConfig(BaseConfig):
         ),
     )
 
-    beam_width_ratio: float = ArgSpec(
+    beam_width_ratio: float = argutils.ArgSpec(
         name="--beam-width-ratio",
         type=argutils.PositiveFloat.type_parser,
         default=2.0,
@@ -76,7 +80,7 @@ class SpotlightsConfig(BaseConfig):
         "are raised to 1."
     )
 
-    beam_falloff: float = ArgSpec(
+    beam_falloff: float = argutils.ArgSpec(
         name="--beam-falloff",
         type=argutils.NonNegativeFloat.type_parser,
         default=0.3,
@@ -89,7 +93,7 @@ class SpotlightsConfig(BaseConfig):
         "of total beam width."
     )
 
-    search_duration: int = ArgSpec(
+    search_duration: int = argutils.ArgSpec(
         name="--search-duration",
         type=argutils.PositiveInt.type_parser,
         default=550,
@@ -98,7 +102,7 @@ class SpotlightsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Duration of the search phase, in frames, before the spotlights converge in the center."
 
-    search_speed_range: tuple[float, float] = ArgSpec(
+    search_speed_range: tuple[float, float] = argutils.ArgSpec(
         name="--search-speed-range",
         type=argutils.PositiveFloatRange.type_parser,
         default=(0.35, 0.75),
@@ -111,7 +115,7 @@ class SpotlightsConfig(BaseConfig):
         "value between the two provided values."
     )
 
-    spotlight_count: int = ArgSpec(
+    spotlight_count: int = argutils.ArgSpec(
         name="--spotlight-count",
         type=argutils.PositiveInt.type_parser,
         default=3,

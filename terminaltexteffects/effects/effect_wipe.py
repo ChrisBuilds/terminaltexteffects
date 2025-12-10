@@ -20,7 +20,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -50,7 +49,7 @@ class WipeConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="wipe",
         help="Wipes the text across the terminal to reveal characters.",
         description="wipe | Wipes the text across the terminal to reveal characters.",
@@ -62,15 +61,15 @@ class WipeConfig(BaseConfig):
         ),
     )
 
-    wipe_direction: CharacterGroup = ArgSpec(
+    wipe_direction: argutils.CharacterGroup = argutils.ArgSpec(
         name="--wipe-direction",
-        default=CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+        default=argutils.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
         type=argutils.CharacterGroupArg.type_parser,
         help="Direction the text will wipe.",
     )  # pyright: ignore[reportAssignmentType]
     "CharacterGroup : Direction the text will wipe."
 
-    wipe_delay: int = ArgSpec(
+    wipe_delay: int = argutils.ArgSpec(
         name="--wipe-delay",
         type=argutils.NonNegativeInt.type_parser,
         default=0,
@@ -79,7 +78,7 @@ class WipeConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to wait before adding the next character group. Increase, to slow down the effect."
 
-    wipe_ease: easing.EasingFunction = ArgSpec(
+    wipe_ease: easing.EasingFunction = argutils.ArgSpec(
         name="--wipe-ease",
         type=argutils.Ease.type_parser,
         default=easing.in_out_circ,

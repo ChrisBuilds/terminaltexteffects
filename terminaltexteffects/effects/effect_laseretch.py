@@ -23,7 +23,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 from terminaltexteffects.utils.spanningtree.algo.recursivebacktracker import RecursiveBacktracker
 
 
@@ -37,7 +36,7 @@ def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
     return "laseretch", LaserEtch, LaserEtchConfig
 
 
-def _etch_pattern_type_parser(value: str) -> CharacterGroup | str:
+def _etch_pattern_type_parser(value: str) -> argutils.CharacterGroup | str:
     if value == "algorithm":
         return "algorithm"
     return argutils.CharacterGroupArg.type_parser(value)
@@ -71,7 +70,7 @@ class LaserEtchConfig(BaseConfig):
 
     """  # noqa: E501
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="laseretch",
         help="A laser etches characters onto the terminal.",
         description="A laser etches characters onto the terminal.",
@@ -84,7 +83,7 @@ class LaserEtchConfig(BaseConfig):
         ),
     )
 
-    etch_pattern: CharacterGroup = ArgSpec(
+    etch_pattern: argutils.CharacterGroup = argutils.ArgSpec(
         name="--etch-pattern",
         default="algorithm",
         type=_etch_pattern_type_parser,
@@ -93,7 +92,7 @@ class LaserEtchConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "CharacterGroup: Pattern used to etch the text."
 
-    etch_speed: int = ArgSpec(
+    etch_speed: int = argutils.ArgSpec(
         name="--etch-speed",
         type=argutils.PositiveInt.type_parser,
         default=1,
@@ -106,7 +105,7 @@ class LaserEtchConfig(BaseConfig):
         "This value specifies the number of characters to etch simultaneously."
     )
 
-    etch_delay: int = ArgSpec(
+    etch_delay: int = argutils.ArgSpec(
         name="--etch-delay",
         type=argutils.NonNegativeInt.type_parser,
         default=1,
@@ -119,7 +118,7 @@ class LaserEtchConfig(BaseConfig):
         "This values specifies the number of frames to wait before etching the next set of characters."
     )
 
-    cool_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+    cool_gradient_stops: tuple[tte.Color, ...] = argutils.ArgSpec(
         name="--cool-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -132,7 +131,7 @@ class LaserEtchConfig(BaseConfig):
     "tuple[Color, ...]: Space separated, unquoted, list of colors for the cooling gradient "
     "If only one color is provided, the characters will be displayed in that color."
 
-    laser_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+    laser_gradient_stops: tuple[tte.Color, ...] = argutils.ArgSpec(
         name="--laser-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -145,7 +144,7 @@ class LaserEtchConfig(BaseConfig):
     "tuple[Color, ...]: Space separated, unquoted, list of colors for the laser gradient. "
     "If only one color is provided, the characters will be displayed in that color."
 
-    spark_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+    spark_gradient_stops: tuple[tte.Color, ...] = argutils.ArgSpec(
         name="--spark-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -158,7 +157,7 @@ class LaserEtchConfig(BaseConfig):
     "tuple[Color, ...]: Space separated, unquoted, list of colors for the spark cooling gradient. "
     "If only one color is provided, the characters will be displayed in that color."
 
-    spark_cooling_frames: int = ArgSpec(
+    spark_cooling_frames: int = argutils.ArgSpec(
         name="--spark-cooling-frames",
         type=argutils.PositiveInt.type_parser,
         default=7,
@@ -365,7 +364,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
             for color in cool_gradient:
                 spawn_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair(fg=color))
             character.animation.activate_scene(spawn_scn)
-        if self.config.etch_pattern in CharacterGroup._member_names_:
+        if self.config.etch_pattern in argutils.CharacterGroup._member_names_:
             for n, char_list in enumerate(
                 self.terminal.get_characters_grouped(self.config.etch_pattern),
             ):

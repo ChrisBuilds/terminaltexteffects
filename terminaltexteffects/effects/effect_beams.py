@@ -21,7 +21,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, CharacterGroup, ParserSpec
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -67,7 +66,7 @@ class BeamsConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="beams",
         help="Create beams which travel over the canvas illuminating the characters behind them.",
         description="beams | Create beams which travel over the canvas illuminating the characters behind them.",
@@ -80,7 +79,7 @@ class BeamsConfig(BaseConfig):
         ),
     )
 
-    beam_row_symbols: tuple[str, ...] = ArgSpec(
+    beam_row_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--beam-row-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
@@ -97,7 +96,7 @@ class BeamsConfig(BaseConfig):
         "Strings will be used in sequence to create an animation."
     )
 
-    beam_column_symbols: tuple[str, ...] = ArgSpec(
+    beam_column_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--beam-column-symbols",
         type=argutils.Symbol.type_parser,
         nargs="+",
@@ -114,7 +113,7 @@ class BeamsConfig(BaseConfig):
         "Strings will be used in sequence to create an animation."
     )
 
-    beam_delay: int = ArgSpec(
+    beam_delay: int = argutils.ArgSpec(
         name="--beam-delay",
         type=argutils.PositiveInt.type_parser,
         default=6,
@@ -129,7 +128,7 @@ class BeamsConfig(BaseConfig):
         "Beams are added in groups of size random(1, 5)."
     )
 
-    beam_row_speed_range: tuple[int, int] = ArgSpec(
+    beam_row_speed_range: tuple[int, int] = argutils.ArgSpec(
         name="--beam-row-speed-range",
         type=argutils.PositiveIntRange.type_parser,
         default=(15, 60),
@@ -138,7 +137,7 @@ class BeamsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[int, int] : Speed range of the beam when moving along a row."
 
-    beam_column_speed_range: tuple[int, int] = ArgSpec(
+    beam_column_speed_range: tuple[int, int] = argutils.ArgSpec(
         name="--beam-column-speed-range",
         type=argutils.PositiveIntRange.type_parser,
         default=(9, 15),
@@ -147,7 +146,7 @@ class BeamsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[int, int] : Speed range of the beam when moving along a column."
 
-    beam_gradient_stops: tuple[tte.Color, ...] = ArgSpec(
+    beam_gradient_stops: tuple[tte.Color, ...] = argutils.ArgSpec(
         name="--beam-gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -158,7 +157,7 @@ class BeamsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[tte.Color, ...]: Tuple of colors for the beam, a gradient will be created between the colors."
 
-    beam_gradient_steps: tuple[int, ...] = ArgSpec(
+    beam_gradient_steps: tuple[int, ...] = argutils.ArgSpec(
         name="--beam-gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
@@ -177,7 +176,7 @@ class BeamsConfig(BaseConfig):
         "Steps are paired with the colors in final-gradient-stops."
     )
 
-    beam_gradient_frames: int = ArgSpec(
+    beam_gradient_frames: int = argutils.ArgSpec(
         name="--beam-gradient-frames",
         type=argutils.PositiveInt.type_parser,
         default=2,
@@ -211,7 +210,7 @@ class BeamsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tte.Gradient.Direction : Direction of the final gradient."
 
-    final_wipe_speed: int = ArgSpec(
+    final_wipe_speed: int = argutils.ArgSpec(
         name="--final-wipe-speed",
         type=argutils.PositiveInt.type_parser,
         default=3,
@@ -301,7 +300,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         self.delay = 0
         self.phase = "beams"
         self.final_wipe_groups = self.terminal.get_characters_grouped(
-            CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            argutils.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
         )
         self.build()
 
@@ -335,13 +334,13 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         beam_gradient = tte.Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
         groups: list[BeamsIterator.Group] = []
         for row in self.terminal.get_characters_grouped(
-            CharacterGroup.ROW_TOP_TO_BOTTOM,
+            argutils.CharacterGroup.ROW_TOP_TO_BOTTOM,
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):
             groups.append(BeamsIterator.Group(row, "row", self.terminal, self.config))  # noqa: PERF401
         for column in self.terminal.get_characters_grouped(
-            CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             outer_fill_chars=True,
             inner_fill_chars=True,
         ):

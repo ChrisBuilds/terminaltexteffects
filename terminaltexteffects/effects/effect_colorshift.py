@@ -11,10 +11,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, geometry
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.argutils import ArgSpec, ParserSpec
 from terminaltexteffects.utils.graphics import ColorPair
 
 
@@ -54,7 +58,7 @@ class ColorShiftConfig(BaseConfig):
 
     """
 
-    parser_spec: ParserSpec = ParserSpec(
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="colorshift",
         help="Display a gradient that shifts colors across the terminal.",
         description="Display a gradient that shifts colors across the terminal.",
@@ -67,7 +71,7 @@ class ColorShiftConfig(BaseConfig):
         ),
     )
 
-    gradient_stops: tuple[Color, ...] = ArgSpec(
+    gradient_stops: tuple[Color, ...] = argutils.ArgSpec(
         name="--gradient-stops",
         type=argutils.ColorArg.type_parser,
         nargs="+",
@@ -89,7 +93,7 @@ class ColorShiftConfig(BaseConfig):
         "be displayed in that color."
     )
 
-    gradient_steps: tuple[int, ...] | int = ArgSpec(
+    gradient_steps: tuple[int, ...] | int = argutils.ArgSpec(
         name="--gradient-steps",
         type=argutils.PositiveInt.type_parser,
         nargs="+",
@@ -103,7 +107,7 @@ class ColorShiftConfig(BaseConfig):
         "create a smoother and longer gradient animation."
     )
 
-    gradient_frames: int = ArgSpec(
+    gradient_frames: int = argutils.ArgSpec(
         name="--gradient-frames",
         type=argutils.PositiveInt.type_parser,
         default=2,
@@ -112,7 +116,7 @@ class ColorShiftConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames to display each gradient step. Increase to slow down the gradient animation."
 
-    no_travel: bool = ArgSpec(
+    no_travel: bool = argutils.ArgSpec(
         name="--no-travel",
         default=False,
         action="store_true",
@@ -120,7 +124,7 @@ class ColorShiftConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "bool : Do not display the gradient as a wave."
 
-    travel_direction: Gradient.Direction = ArgSpec(
+    travel_direction: Gradient.Direction = argutils.ArgSpec(
         name="--travel-direction",
         default=Gradient.Direction.RADIAL,
         type=argutils.GradientDirection.type_parser,
@@ -129,7 +133,7 @@ class ColorShiftConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "Gradient.Direction : Direction the gradient travels across the canvas."
 
-    reverse_travel_direction: bool = ArgSpec(
+    reverse_travel_direction: bool = argutils.ArgSpec(
         name="--reverse-travel-direction",
         default=False,
         action="store_true",
@@ -137,7 +141,7 @@ class ColorShiftConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "bool : Reverse the gradient travel direction."
 
-    no_loop: bool = ArgSpec(
+    no_loop: bool = argutils.ArgSpec(
         name="--no-loop",
         default=False,
         action="store_true",
@@ -149,7 +153,7 @@ class ColorShiftConfig(BaseConfig):
         "back to the first gradient color."
     )
 
-    cycles: int = ArgSpec(
+    cycles: int = argutils.ArgSpec(
         name="--cycles",
         type=argutils.PositiveInt.type_parser,
         default=3,
@@ -158,7 +162,7 @@ class ColorShiftConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of times to cycle the gradient. Use 0 for infinite."
 
-    skip_final_gradient: bool = ArgSpec(
+    skip_final_gradient: bool = argutils.ArgSpec(
         name="--skip-final-gradient",
         default=False,
         action="store_true",
