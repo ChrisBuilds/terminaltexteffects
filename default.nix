@@ -2,13 +2,13 @@
   lib,
   python312Packages,
 }: let
-  poetryDef = with builtins; (fromTOML (readFile ./pyproject.toml)).tool.poetry;
+  hatchlingDef = with builtins; (fromTOML (readFile ./pyproject.toml)).project;
 
-  name = poetryDef.name;
+  name = hatchlingDef.name;
 in
   python312Packages.buildPythonApplication {
     pname = name;
-    inherit (poetryDef) version;
+    inherit (hatchlingDef) version;
 
     src = builtins.path {
       path = ./.;
@@ -18,12 +18,12 @@ in
     pyproject = true;
 
     nativeBuildInputs = [
-      python312Packages.poetry-core
+      python312Packages.hatchling
     ];
 
     meta = {
-      inherit (poetryDef) description;
-      maintainers = poetryDef.authors;
+      inherit (hatchlingDef) description;
+      maintainers = hatchlingDef.authors;
       homepage = "https://github.com/ChrisBuilds/${name}";
       license = lib.licenses.mit;
       mainProgram = "tte";
