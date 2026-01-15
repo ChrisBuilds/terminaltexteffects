@@ -42,6 +42,12 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
         version="TerminalTextEffects " + version("terminaltexteffects"),
     )
     parser.add_argument("--random-effect", "-R", action="store_true", help="Randomly select an effect to apply")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed to use for random effect selection",
+    )
     random_include_exclude_group = parser.add_mutually_exclusive_group()
     random_include_exclude_group.add_argument(
         "--include-effects",
@@ -106,6 +112,8 @@ def main() -> None:
         sys.exit(1)
 
     if args.random_effect:
+        if args.seed is not None:
+            random.seed(args.seed)
         if args.include_effects:
             available_effects = [effect for effect in effect_resource_map if effect in args.include_effects]
         elif args.exclude_effects:
