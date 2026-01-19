@@ -96,6 +96,8 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
 def main() -> None:
     """Run the terminaltexteffects command line interface."""
     args, effect_resource_map = build_parsers_and_parse_args()
+    if args.seed is not None:
+        random.seed(args.seed)
     if args.input_file:
         try:
             input_data = Path(args.input_file).read_text(encoding="UTF-8")
@@ -112,8 +114,6 @@ def main() -> None:
         sys.exit(1)
 
     if args.random_effect:
-        if args.seed is not None:
-            random.seed(args.seed)
         if args.include_effects:
             available_effects = [effect for effect in effect_resource_map if effect in args.include_effects]
         elif args.exclude_effects:
