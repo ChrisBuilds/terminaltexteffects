@@ -17,6 +17,8 @@ import terminaltexteffects.effects
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 
 if TYPE_CHECKING:
+    from types import ModuleType
+
     from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
 
@@ -70,7 +72,13 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
 
     effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]] = {}
 
-    def register_effect_from_module(module) -> None:
+    def _register_effect_from_module(module: ModuleType) -> None:
+        """Register an effect module's resources and populate its CLI options.
+
+        Args:
+            module: The module to inspect for effect resources.
+
+        """
         if hasattr(module, "get_effect_resources"):
             effect_cmd: str
             effect_class: type[BaseEffect]
@@ -87,7 +95,7 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
         terminaltexteffects.effects.__name__ + ".",
     ):
         module = importlib.import_module(module_info.name)
-        register_effect_from_module(module)
+        _register_effect_from_module(module)
 
     plugins_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "terminaltexteffects" / "effects"
     if plugins_dir.exists():
@@ -100,7 +108,7 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
                 module = importlib.util.module_from_spec(spec)
                 sys.modules[module_name] = module
                 spec.loader.exec_module(module)
-                register_effect_from_module(module)
+                _register_effect_from_module(module)
 
     return parser.parse_args(), effect_resource_map
 
