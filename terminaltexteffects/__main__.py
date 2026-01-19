@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import importlib.util
+import os
 import pkgutil
 import random
 import sys
@@ -67,12 +69,8 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
     )
 
     effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]] = {}
-    for module_info in pkgutil.iter_modules(
-        terminaltexteffects.effects.__path__,
-        terminaltexteffects.effects.__name__ + ".",
-    ):
-        module = importlib.import_module(module_info.name)
 
+    def register_effect_from_module(module) -> None:
         if hasattr(module, "get_effect_resources"):
             effect_cmd: str
             effect_class: type[BaseEffect]
@@ -83,6 +81,26 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
                 raise ValueError(msg)
             effect_resource_map[effect_cmd] = (effect_class, config_class)
             config_class._populate_parser(subparsers)
+
+    for module_info in pkgutil.iter_modules(
+        terminaltexteffects.effects.__path__,
+        terminaltexteffects.effects.__name__ + ".",
+    ):
+        module = importlib.import_module(module_info.name)
+        register_effect_from_module(module)
+
+    plugins_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "terminaltexteffects" / "effects"
+    if plugins_dir.exists():
+        for plugin_file in plugins_dir.glob("*.py"):
+            if plugin_file.name == "__init__.py":
+                continue
+            module_name = plugin_file.stem
+            spec = importlib.util.spec_from_file_location(module_name, plugin_file)
+            if spec and spec.loader:
+                module = importlib.util.module_from_spec(spec)
+                sys.modules[module_name] = module
+                spec.loader.exec_module(module)
+                register_effect_from_module(module)
 
     return parser.parse_args(), effect_resource_map
 
