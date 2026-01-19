@@ -10,7 +10,14 @@
 
 ---
 
+* Added effect discovery support for user provided effects. Effects should be Python files located at
+  XDG_CONFIG_HOME/terminaltexteffects/effects. (e.g. /home/me/.config/terminaltexteffects/effects/effect_custom.py)
+
+
+
 #### Engine Changes (0.15.0)
+
+---
 
 * Added shared gradient argument helpers (`FinalGradientStopsArg`, `FinalGradientStepsArg`, `FinalGradientFramesArg`, `FinalGradientDirectionArg`) for effect configs to standardize CLI defaults and parsing.
 * Updated all effects to use gradient argument helpers.
