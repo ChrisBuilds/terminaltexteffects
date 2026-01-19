@@ -44,6 +44,12 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
         version="TerminalTextEffects " + version("terminaltexteffects"),
     )
     parser.add_argument("--random-effect", "-R", action="store_true", help="Randomly select an effect to apply")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed to use for random effect selection",
+    )
     random_include_exclude_group = parser.add_mutually_exclusive_group()
     random_include_exclude_group.add_argument(
         "--include-effects",
@@ -108,6 +114,8 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
 def main() -> None:
     """Run the terminaltexteffects command line interface."""
     args, effect_resource_map = build_parsers_and_parse_args()
+    if args.seed is not None:
+        random.seed(args.seed)
     if args.input_file:
         try:
             input_data = Path(args.input_file).read_text(encoding="UTF-8")
