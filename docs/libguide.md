@@ -95,7 +95,7 @@ effect.terminal_config.canvas_height = 24
 If either `canvas_width` or `canvas_height` are set to `0`, that dimension will be automatically detected based on the
 terminal device dimensions. If either dimensions is set to `-1`, that dimensions will be set to match the input text dimensions.
 
-By default, if your Canavs dimensions exceed the visible area of the Terminal, the text outside of that area will not be
+By default, if your Canvas dimensions exceed the visible area of the Terminal, the text outside of that area will not be
 output in the frame. If you want to output all characters regardless of they position relative to the visible terminal
 area, set `terminal_config.ignore_terminal_dimensions` to `True`. This should **only** be used if you are handing the
 frame yourself and outputting somewhere other than the terminal. The terminal emulator will wrap the text and produce

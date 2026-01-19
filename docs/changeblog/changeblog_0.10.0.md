@@ -2,7 +2,7 @@
 
 ## Release 0.10.0
 
-### ColorShift, Canvas, Better Compatibililty, and more Customization
+### ColorShift, Canvas, Better Compatibility, and more Customization
 
 This release comes with a shiny new effect [ColorShift](../showroom.md#colorshift), increased customization for
 [Waves](../showroom.md#waves) and [Wipe](../showroom.md#wipe) as well as renaming the
@@ -50,9 +50,9 @@ print(g)
 Notice how the looped [Gradient](../engine/utils/gradient.md) transitions from blue, the final color stop, back to red, the first color stop. That
 allows the smooth looped gradient animations seen in the [ColorShift](../showroom.md#colorshift) effect.
 
-#### Travelling
+#### Traveling
 
-[ColorShift](../showroom.md#colorshift) supports standing Gradients and travelling Gradients in the following directions:
+[ColorShift](../showroom.md#colorshift) supports standing Gradients and traveling Gradients in the following directions:
 
 * vertical
 * horizontal
