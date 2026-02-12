@@ -37,32 +37,34 @@ class TerminalConfig(BaseConfig):
 
     Attributes:
         tab_width (int): Number of spaces to use for a tab character.
-        xterm_colors (bool): Convert any colors specified in RBG hex to the closest XTerm-256 color.
+        xterm_colors (bool): Convert any colors specified in RGB hex to the closest XTerm-256 color.
         no_color (bool): Disable all colors in the effect.
+        terminal_background_color (Color): Background color of the terminal used by effects that depend on it.
+        existing_color_handling (Literal['always','dynamic','ignore']): Specify handling of existing ANSI color
+            sequences in the input data. 'always' will always use the input colors, ignoring any effect specific
+            colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore
+            the colors in the input data. Default is 'ignore'.
         wrap_text (bool): Wrap text wider than the canvas width.
-        frame_rate (float): Target frame rate for the animation in frames per second. Set to 0 to disable frame
+        frame_rate (int): Target frame rate for the animation in frames per second. Set to 0 to disable frame
             rate limiting.
         canvas_width (int): Canvas width, set to an integer > 0 to use a specific dimension, if set to 0 the canvas
             width is detected automatically based on the terminal device, if set to -1 the canvas width is based on
             the input data width.
         canvas_height (int): Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas
-            height is is detected automatically based on the terminal device, if set to -1 the canvas width is
+            height is detected automatically based on the terminal device, if set to -1 the canvas height is
             based on the input data height.
         anchor_canvas (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the Canvas. The Canvas will
             be anchored in the terminal to the location corresponding to the cardinal/diagonal direction.
             Defaults to 'sw'.
-        anchor_effect (Literal['sw','s','se','e','ne','n','nw','w','c']): Anchor point for the effect within the Canvas.
-            Effect text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction.
-            Defaults to 'sw'.
+        anchor_text (Literal['n','ne','e','se','s','sw','w','nw','c']): Anchor point for the text within the Canvas.
+            Input text will be anchored in the Canvas to the location corresponding to the cardinal/diagonal
+            direction. Defaults to 'sw'.
         ignore_terminal_dimensions (bool): Ignore the terminal dimensions and utilize the full Canvas beyond the extents
             of the terminal. Useful for sending frames to another output handler.
-        existing_color_handling (Literal['always','dynamic','ignore']): Specify handling of existing ANSI color
-            sequences in the input data. 'always' will always use the input colors, ignoring any effect specific colors.
-            'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors
-            in the input data. Default is 'ignore'.
         reuse_canvas (bool): Do not create new rows at the start of the effect. The cursor will be restored to the
             position of the previous canvas.
         no_eol (bool): Suppress the trailing newline emitted when an effect animation completes.
+        no_restore_cursor (bool): Do not restore cursor visibility when an effect animation completes.
 
     """
 
@@ -79,9 +81,9 @@ class TerminalConfig(BaseConfig):
         name="--xterm-colors",
         default=False,
         action="store_true",
-        help="Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color.",
+        help="Convert any colors specified in 24-bit RGB hex to the closest 8-bit XTerm-256 color.",
     )  # pyright: ignore[reportAssignmentType]
-    "bool : Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color."
+    "bool : Convert any colors specified in 24-bit RGB hex to the closest 8-bit XTerm-256 color."
 
     no_color: bool = argutils.ArgSpec(
         name="--no-color",
@@ -97,11 +99,11 @@ class TerminalConfig(BaseConfig):
         default=Color("#000000"),
         metavar=argutils.ColorArg.METAVAR,
         help=(
-            "The background color of you terminal. "
+            "The background color of your terminal. "
             "Used to determine the appropriate color for fade-in/out within effects."
         ),
     )  # type: ignore[assignment]
-    "Color: User-define background color of the terminal."
+    "Color: User-defined background color of the terminal."
 
     existing_color_handling: Literal["always", "dynamic", "ignore"] = argutils.ArgSpec(
         name="--existing-color-handling",
@@ -169,7 +171,7 @@ class TerminalConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     (
         "int : Canvas height, set to an integer > 0 to use a specific dimension, if set to 0 the canvas height "
-        "is is detected automatically based on the terminal device, if set to -1 the canvas width is "
+        "is detected automatically based on the terminal device, if set to -1 the canvas height is "
         "based on the input data height. Defaults to -1."
     )
 
@@ -192,13 +194,13 @@ class TerminalConfig(BaseConfig):
         choices=["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
         default="sw",
         help=(
-            "Anchor point for the text within the Canvas. Input text will anchored in the Canvas to "
+            "Anchor point for the text within the Canvas. Input text will be anchored in the Canvas to "
             "the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'."
         ),
     )  # pyright: ignore[reportAssignmentType]
     (
         "Literal['n','ne','e','se','s','sw','w','nw','c'] : Anchor point for the text within the Canvas. "
-        "Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. "
+        "Input text will be anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. "
         "Defaults to 'sw'."
     )
 
@@ -312,7 +314,7 @@ class Canvas:
     """int: left column of the canvas"""
 
     def __post_init__(self) -> None:
-        """After initialization, calculate the center, width, height, and text dimensions of the canvas."""
+        """Initialize derived canvas geometry and default text-boundary values."""
         self.center_row = max(self.top // 2, self.bottom)
         """int: row of the center of the canvas"""
         if self.top % 2 and self.top > 1:
@@ -354,13 +356,13 @@ class Canvas:
         """Anchors the text within the canvas based on the specified anchor point.
 
         Args:
-            characters (list[EffectCharacter]): _description_
+            characters (list[EffectCharacter]): Non-empty list of characters to reposition within the canvas.
             anchor (Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]): Anchor point for the text
                 within the Canvas.
 
         Returns:
             list[EffectCharacter]: List of characters anchored within the canvas. Only returns characters with
-            coordinates within the canvas after anchoring.
+                coordinates within the canvas after anchoring.
 
         """
         # translate coordinate based on anchor within the canvas
@@ -476,7 +478,7 @@ class Canvas:
                 Otherwise, it can be anywhere within the canvas. Defaults to False.
 
         Returns:
-            Coord: a random coordinate . Coordinate is within the canvas unless outside_scope is True.
+            Coord: A random coordinate. The coordinate is within the canvas unless `outside_scope` is `True`.
 
         """
         if outside_scope is True:
@@ -499,7 +501,8 @@ class Terminal:
     Attributes:
         config (TerminalConfig): Configuration for the terminal.
         canvas (Canvas): The canvas in the terminal.
-        character_by_input_coord (dict[Coord, EffectCharacter]): A dictionary of characters by their input coordinates.
+        character_by_input_coord (dict[Coord, EffectCharacter]): Mapping of input and fill characters keyed by
+            input coordinates.
 
     Methods:
         get_piped_input:
@@ -584,7 +587,7 @@ class Terminal:
             input_data (str): The input data to be displayed in the terminal.
 
         Returns:
-            list[EffectCharacter]: A list of characters decomposed from the input data.
+            list[list[EffectCharacter]]: Input characters decomposed into rows.
 
         """
 
@@ -773,7 +776,7 @@ class Terminal:
             width (int): The maximum length of a line.
 
         Returns:
-            list: The wrapped lines of text.
+            list[list[EffectCharacter]]: The wrapped lines of text.
 
         """
         wrapped_lines = []
@@ -794,7 +797,7 @@ class Terminal:
         corner of the row above the cursor.
 
         Returns:
-            list[Character]: list of EffectCharacter objects
+            list[EffectCharacter]: list of EffectCharacter objects
 
         """
         formatted_lines = []
@@ -817,7 +820,7 @@ class Terminal:
     def _make_fill_characters(self) -> tuple[list[EffectCharacter], list[EffectCharacter]]:
         """Create lists of characters to fill the empty spaces in the canvas.
 
-        The characters input_symbol is a space. The characters are added to the character_by_input_coord dictionary.
+        Fill characters use a space as `input_symbol` and are added to `character_by_input_coord`.
 
         Returns:
             tuple[list[EffectCharacter], list[EffectCharacter]]: lists of inner and outer fill characters
@@ -846,7 +849,7 @@ class Terminal:
         return inner_fill_characters, outer_fill_characters
 
     def _setup_character_neighbors(self) -> None:
-        """Create the neighbor map for all characters."""
+        """Create the neighbor map for characters tracked in `character_by_input_coord`."""
         delta_map = {"north": (0, 1), "east": (1, 0), "south": (0, -1), "west": (-1, 0)}
         for coord, char in self.character_by_input_coord.items():
             for direction, delta in delta_map.items():
@@ -857,10 +860,11 @@ class Terminal:
         """Add a character to the terminal for printing.
 
         Used to create characters that are not in the input data.
+        Added characters are stored in `_added_characters` and are not inserted into `character_by_input_coord`.
 
         Args:
             symbol (str): symbol to add
-            coord: (Coord): set character's input coordinates
+            coord (Coord): set character's input coordinates
 
         Returns:
             EffectCharacter: the character that was added
@@ -882,7 +886,7 @@ class Terminal:
             sort (ColorSort, optional): Sort the colors. Defaults to ColorSort.MOST_TO_LEAST.
 
         Raises:
-            ValueError: If an invalid sort option is provided.
+            InvalidColorSortError: If an invalid sort option is provided.
 
         Returns:
             list[Color]: list of Colors
@@ -926,6 +930,9 @@ class Terminal:
 
         Returns:
             list[EffectCharacter]: list of EffectCharacters in the terminal
+
+        Raises:
+            InvalidCharacterSortError: If an invalid sort option is provided.
 
         """
         all_characters: list[EffectCharacter] = []
@@ -998,6 +1005,9 @@ class Terminal:
         Returns:
             list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond
                 to groups as specified in the grouping.
+
+        Raises:
+            InvalidCharacterGroupError: If an invalid grouping option is provided.
 
         """
         all_characters: list[EffectCharacter] = []
@@ -1153,14 +1163,14 @@ class Terminal:
     def prep_canvas(self) -> None:
         """Prepare the terminal for the effect by adding empty lines and hiding the cursor.
 
-        If `config.overwrite_rows` is `True`, the cursor will be restored to the last position
+        If `config.reuse_canvas` is `True`, the cursor will be restored to the last position
         saved using the `DEC Save Cursor` terminal sequence. If a TTE effect was recently run,
         the last saved cursor state should be the state at the start of the prior effect execution.
 
-        The intention of `config.overwrite_rows` is for the current effect output to align with
+        The intention of `config.reuse_canvas` is for the current effect output to align with
         the prior effect output.
 
-        Note: Use of `config.overwrite_rows` will be less predictable if other canvas dimension options
+        Note: Use of `config.reuse_canvas` will be less predictable if other canvas dimension options
         differ between the last run and the current run.
         """
         sys.stdout.write(ansitools.hide_cursor())
@@ -1174,6 +1184,7 @@ class Terminal:
         """Restores the cursor visibility and prints the end_symbol.
 
         If the `--no-eol` command line option is passed, no end symbol will be printed.
+        If the `--no-restore-cursor` command line option is passed, cursor visibility is not restored.
 
         Args:
             end_symbol (str, optional): The symbol to print after the effect has completed. Defaults to newline.
@@ -1207,7 +1218,7 @@ class Terminal:
         self._last_time_printed = time.monotonic()
 
     def move_cursor_to_top(self) -> None:
-        """Restores the cursor position to the top of the canvas."""
+        """Restore to the saved cursor position and move to the top row of the current canvas."""
         sys.stdout.write(ansitools.dec_restore_cursor_position())
         sys.stdout.write(ansitools.dec_save_cursor_position())
         sys.stdout.write(ansitools.move_cursor_up(self.visible_top))
