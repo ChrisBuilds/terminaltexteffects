@@ -1,10 +1,11 @@
 """Base effect configuration classes.
 
-The BaseConfig and ArgSpec classes facilitate specifying an effect configuration and using
-that specification to populate an argparse ArgumentParser. The resulting parsed argparse
-Namespace can be used to construct the effect configuration. If the concrete effect
-class is instantiated without passing an argparse Namespace, the class fields are
-parsed to determine the default values used in the dataclass constructor.
+`BaseConfig` works with `argutils.ArgSpec` field defaults to define effect
+configuration options and populate an `argparse.ArgumentParser`.
+
+`BaseConfig._build_config` constructs config instances either from a parsed
+`argparse.Namespace` or from the default values stored on each field's
+`ArgSpec`.
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ class FinalGradientDirectionArg(argutils.ArgSpec):
 
 @dataclass(frozen=True)
 class FinalGradientStopsArg(argutils.ArgSpec):
-    """Argument specification for selecting the final test gradient stops."""
+    """Argument specification for selecting the final text gradient stops."""
 
     name: str = "--final-gradient-stops"
     type: typing.Callable[[str], Color] = argutils.ColorArg.type_parser
@@ -76,18 +77,19 @@ class BaseConfig:
     """Base configuration class for effects.
 
     This class serves as a base for all effect configurations, providing a common
-    interface for argument parsing and configuration building. All sub-classes
-    must implement the `_get_config` method to return their specific configuration
-    class. Any config class intended to be used to populate a subparser must
-    define a `parser_spec` attribute with type `argutils.ParserSpec`.
+    interface for argument parser population and configuration building. Effect config classes
+    are created via `_build_config`, which can read values from a parsed
+    `argparse.Namespace` or from each field's `argutils.ArgSpec` defaults. Any
+    config class intended to be used to populate a subparser must define a
+    `parser_spec` attribute with type `argutils.ParserSpec`.
     """
 
     @classmethod
     def _populate_parser(cls, parser: argparse.ArgumentParser | argparse._SubParsersAction) -> None:
         """Populate the argument parser with the effect's configuration options.
 
-        If a subparser is being populated, the subparser_data will be used to
-        configure the subparser defaults.
+        If a subparser is being populated, `cls.parser_spec` is used to create
+        the subparser before adding the class field argument specs.
         """
         if isinstance(parser, argparse._SubParsersAction):
             parser = parser.add_parser(**vars(cls.parser_spec))  # pyright: ignore[reportAttributeAccessIssue]
@@ -104,13 +106,20 @@ class BaseConfig:
 
     @classmethod
     def _build_config(cls: type[CONFIG], parsed_args: argparse.Namespace | None = None) -> CONFIG:
-        """Build the effect configuration from the parsed arguments or argument specifications."""
+        """Build a config instance from a parsed namespace or `ArgSpec` defaults."""
         if parsed_args is not None:
-            return cls(
-                **{
-                    field.name: getattr(parsed_args, field.name) for field in fields(cls) if field.name != "parser_spec"
-                },
-            )
+            config_args: dict[str, typing.Any] = {}
+            for field in fields(cls):
+                if field.name == "parser_spec":
+                    continue
+                if hasattr(parsed_args, field.name):
+                    config_args[field.name] = getattr(parsed_args, field.name)
+                elif isinstance(field.default, argutils.ArgSpec):
+                    config_args[field.name] = field.default.default
+                else:
+                    msg = f"Missing required config field '{field.name}' for {cls.__name__} in parsed arguments."
+                    raise AttributeError(msg)
+            return cls(**config_args)
         return cls(
             **{
                 field.name: field.default.default
