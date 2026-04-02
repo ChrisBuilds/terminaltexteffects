@@ -22,6 +22,8 @@
 * Added shared gradient argument helpers (`FinalGradientStopsArg`, `FinalGradientStepsArg`, `FinalGradientFramesArg`, `FinalGradientDirectionArg`) for effect configs to standardize CLI defaults and parsing.
 * Updated all effects to use gradient argument helpers.
 * Updated all effects parser epilog example help text to reflect up to date defaults.
+* `SpanningTreeGenerator.get_neighbors()` now honors `unlinked_only=False` by returning linked and unlinked neighbors, matching the documented API.
+* Added focused unit test coverage for spanning-tree generators, including `SpanningTreeGenerator`, `RecursiveBacktracker`, `PrimsSimple`, `PrimsWeighted`, `BreadthFirst`, and `AldousBroder`.
 
 ## 0.14.2
 
