@@ -195,7 +195,7 @@ def test_prims_simple_step_marks_complete_when_no_edge_characters_remain() -> No
 def test_prims_simple_limit_to_text_boundary_blocks_outer_fill_neighbors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Verify text-boundary filtering prevents selecting outer-fill neighbors."""
+    """Verify text-boundary filtering prevents selecting and requeueing via outer-fill neighbors."""
     terminal = make_terminal()
     starting_char = get_char(terminal, 2, 2)
     in_text_neighbor = get_char(terminal, 1, 2)
@@ -203,7 +203,7 @@ def test_prims_simple_limit_to_text_boundary_blocks_outer_fill_neighbors(
     generator = PrimsSimple(terminal, starting_char=starting_char, limit_to_text_boundary=True)
 
     set_neighbors(starting_char, west=in_text_neighbor, east=outer_fill_neighbor)
-    set_neighbors(in_text_neighbor, east=starting_char)
+    set_neighbors(in_text_neighbor, east=starting_char, north=outer_fill_neighbor)
 
     def fake_randrange(stop: int) -> int:
         """Select the only available edge and filtered neighbor candidate."""
@@ -220,3 +220,4 @@ def test_prims_simple_limit_to_text_boundary_blocks_outer_fill_neighbors(
     assert in_text_neighbor in starting_char.links
     assert outer_fill_neighbor not in starting_char.links
     assert generator.char_last_linked is in_text_neighbor
+    assert generator.edge_chars == []

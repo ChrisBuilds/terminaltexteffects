@@ -25,6 +25,7 @@
 * `SpanningTreeGenerator.get_neighbors()` now honors `unlinked_only=False` by returning linked and unlinked neighbors, matching the documented API.
 * Added focused unit test coverage for spanning-tree generators, including `SpanningTreeGenerator`, `RecursiveBacktracker`, `PrimsSimple`, `PrimsWeighted`, `BreadthFirst`, and `AldousBroder`.
 * Clarified `RecursiveBacktracker` documentation to describe the depth-first spanning-tree behavior, initialized state, and delayed completion semantics accurately.
+* `PrimsSimple` now applies `limit_to_text_boundary` consistently when deciding whether a newly linked character remains in the edge set, and its documentation now reflects the generator's actual state transitions.
 
 ## 0.14.2
 
