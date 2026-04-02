@@ -1,9 +1,9 @@
-"""Recursive Backtracker minimum spanning tree algorithm.
+"""Recursive backtracker spanning tree generator.
 
-This module provides the `RecursiveBacktracker` spanning tree generator
-implementation. The algorithm builds a spanning tree over a graph of
-`EffectCharacter` nodes using the depth-first recursive backtracker
-approach (implemented iteratively with an explicit stack).
+This module provides the `RecursiveBacktracker` spanning tree
+generator. The algorithm builds a spanning tree over a graph of
+`EffectCharacter` nodes using a depth-first recursive backtracker
+approach implemented iteratively with an explicit stack.
 
 The algorithm starts from a chosen starting character (or a random one
 from the terminal) and grows the tree by repeatedly linking to a
@@ -27,13 +27,16 @@ if TYPE_CHECKING:
 
 
 class RecursiveBacktracker(SpanningTreeGenerator):
-    """Recursive Backtracker tree generator algorithm.
+    """Recursive backtracker spanning tree generator.
 
     Attributes:
-        char_last_linked (EffectCharacter | None): Character linked into the tree on the
-            last step. None, if no character was linked during the last step.
-        char_link_order (list[EffectCharacter]): Characters in linked order.
-        stack (list[EffectCharacter]): Characters on the stack.
+        char_last_linked (EffectCharacter | None): Character most recently linked into the tree.
+            During initialization this is the starting character. On later steps it is `None`
+            when the generator backtracks instead of linking a new character.
+        char_link_order (list[EffectCharacter]): Characters in the order they were linked into
+            the tree, beginning with the starting character.
+        stack (list[EffectCharacter]): Depth-first traversal stack. During initialization it
+            contains the starting character.
         stack_last_popped (EffectCharacter | None): Character popped off the stack on the
             last step. None if no character was popped during the last step.
         complete (bool): Whether the algorithm is complete.
@@ -51,7 +54,9 @@ class RecursiveBacktracker(SpanningTreeGenerator):
 
         Args:
             terminal (Terminal): TTE Terminal.
-            starting_char (EffectCharacter | None, optional): Starting EffectCharacter. Defaults to None.
+            starting_char (EffectCharacter | None, optional): Starting character for the tree
+                generation. When `None`, a character is selected by resolving a random canvas
+                coordinate to a terminal character.
             limit_to_text_boundary (bool, optional): If True, the graph will not link to neighbors outside the text
                 boundary.
 
@@ -75,7 +80,19 @@ class RecursiveBacktracker(SpanningTreeGenerator):
         self.complete = False
 
     def step(self) -> None:
-        """Progress the algorithm by one step."""
+        """Advance the traversal by one step.
+
+        Each step either links one unvisited neighbor and descends deeper
+        into the tree, or pops the traversal stack to backtrack when the
+        current character has no unvisited neighbors.
+
+        Note:
+            `complete` becomes `True` only on a subsequent call after
+            the stack is already empty. If the last stack item is popped
+            during this call, the generator ends the step with an empty
+            stack and `complete` still set to `False`.
+
+        """
         self.char_last_linked = None
         self.stack_last_popped = None
         if self.stack:
