@@ -1,11 +1,10 @@
-"""Aldous Broder minimum spanning tree algorithm.
+"""Aldous-Broder spanning tree generator.
 
-This module provides the `AldousBroder` spanning tree generator
-implementation.
+This module provides the :class:`AldousBroder` spanning tree generator.
 
-The algorithm performs a random walk over the graph, linking unvisited
-nodes as they are encountered. The process continues until all nodes
-have been linked into the spanning tree.
+The algorithm performs a random walk over the terminal character graph,
+linking each newly encountered character to the current tree. The walk
+continues until every reachable terminal character has been linked.
 """
 
 from __future__ import annotations
@@ -21,16 +20,23 @@ if TYPE_CHECKING:
 
 
 class AldousBroder(SpanningTreeGenerator):
-    """Aldous Broder minimum spanning tree algorithm.
+    """Aldous-Broder spanning tree generator.
+
+    The generator starts from a provided character or from a random
+    character resolved from a random canvas coordinate. It then performs a
+    random walk across neighboring characters, linking only characters that
+    have not yet been linked into the tree.
 
     Attributes:
-        char_last_linked (EffectCharacter | None): Character linked into the tree on the
-            last step. None, if no character was linked during the last step.
-        char_link_order (list[EffectCharacter]): Characters in linked order.
-        linked_char_last_visited (EffectCharacter | None): Last linked character visited. This
-            is a linked character that was visited during the random walk but not linked,
-            because it was already part of the spanning tree. None, if no linked character was
-            visited during the last step.
+        char_last_linked (EffectCharacter | None): Character most recently linked into the tree.
+            During initialization this is the starting character. On later steps it is ``None``
+            when the random walk moves to an already-linked character.
+        char_link_order (list[EffectCharacter]): Characters in the order they were linked into
+            the tree, beginning with the starting character.
+        linked_char_last_visited (EffectCharacter | None): Character most recently visited
+            without creating a new link. During initialization this is the starting character.
+            On later steps it is set only when the random walk moves to a character that already
+            has at least one link.
         complete (bool): Whether the algorithm is complete.
 
     """
@@ -40,7 +46,12 @@ class AldousBroder(SpanningTreeGenerator):
 
         Args:
             terminal (Terminal): TTE Terminal.
-            starting_char (EffectCharacter | None, optional): Starting EffectCharacter. Defaults to None.
+            starting_char (EffectCharacter | None, optional): Starting character for the random
+                walk. When ``None``, a character is selected by resolving a random canvas
+                coordinate to a terminal character.
+
+        Raises:
+            ValueError: No starting character could be resolved.
 
         """
         super().__init__(terminal)
@@ -57,7 +68,13 @@ class AldousBroder(SpanningTreeGenerator):
         self.complete = False
 
     def step(self) -> None:
-        """Perform a single step of the algorithm."""
+        """Advance the random walk by one neighboring character.
+
+        If the chosen neighbor is not yet linked, it is linked to the current
+        character and recorded in ``char_link_order``. Otherwise,
+        ``linked_char_last_visited`` records the already-linked character that
+        was visited.
+        """
         self.linked_char_last_visited = self.char_last_linked = None
         if not self._unlinked_chars:
             self.complete = True
