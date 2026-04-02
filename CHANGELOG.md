@@ -26,6 +26,7 @@
 * Added focused unit test coverage for spanning-tree generators, including `SpanningTreeGenerator`, `RecursiveBacktracker`, `PrimsSimple`, `PrimsWeighted`, `BreadthFirst`, and `AldousBroder`.
 * Clarified `RecursiveBacktracker` documentation to describe the depth-first spanning-tree behavior, initialized state, and delayed completion semantics accurately.
 * `PrimsSimple` now applies `limit_to_text_boundary` consistently when deciding whether a newly linked character remains in the edge set, and its documentation now reflects the generator's actual state transitions.
+* `PrimsWeighted` now limits random starting-character selection to the text boundary when requested, and its documentation now explains the per-character weighting model and completion behavior more accurately.
 
 ## 0.14.2
 

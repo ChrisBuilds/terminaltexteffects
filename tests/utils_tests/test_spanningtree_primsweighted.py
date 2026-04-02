@@ -93,12 +93,13 @@ def test_prims_weighted_init_uses_explicit_starting_character() -> None:
 def test_prims_weighted_init_selects_random_starting_character_when_not_provided(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Verify initialization resolves a random starting character when none is provided."""
+    """Verify initialization resolves a random starting character and honors text-boundary selection."""
     terminal = make_terminal()
     random_start = get_char(terminal, 2, 1)
 
-    def fake_random_coord() -> Coord:
+    def fake_random_coord(*, within_text_boundary: bool = False) -> Coord:
         """Return a deterministic coordinate for random start lookup."""
+        assert within_text_boundary is True
         return Coord(2, 1)
 
     def fake_randint(start: int, stop: int) -> int:
@@ -112,7 +113,7 @@ def test_prims_weighted_init_selects_random_starting_character_when_not_provided
         fake_randint,
     )
 
-    generator = PrimsWeighted(terminal)
+    generator = PrimsWeighted(terminal, limit_to_text_boundary=True)
 
     assert generator._current_char is random_start
     assert generator.char_link_order == [random_start]
@@ -124,8 +125,9 @@ def test_prims_weighted_init_raises_value_error_when_no_starting_character_is_fo
     """Verify initialization fails when a starting character cannot be resolved."""
     terminal = make_terminal()
 
-    def fake_random_coord() -> Coord:
+    def fake_random_coord(*, within_text_boundary: bool = False) -> Coord:
         """Return a coordinate that does not resolve to a terminal character."""
+        assert within_text_boundary is False
         return Coord(9, 9)
 
     def fake_get_character_by_input_coord(coord: Coord) -> None:
