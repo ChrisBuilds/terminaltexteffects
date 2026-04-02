@@ -11,13 +11,14 @@ if TYPE_CHECKING:
 
 
 class SpanningTreeGenerator(ABC):
-    """Base spanning tree generator."""
+    """Abstract base class for spanning-tree and graph-traversal generators."""
 
     def __init__(self, terminal: Terminal) -> None:
         """Initialize the tree generator.
 
         Args:
-            terminal (Terminal): TTE Terminal
+            terminal (Terminal): TTE terminal used as the source of characters,
+                neighbor relationships, and text-boundary checks.
 
         """
         self.terminal = terminal
@@ -33,7 +34,9 @@ class SpanningTreeGenerator(ABC):
 
         Args:
             character (EffectCharacter): Subject character.
-            unlinked_only (bool, optional): If True, filter out any neighbors with links. Defaults to True.
+            unlinked_only (bool, optional): If True, filter out any neighbors with
+                links. If False, include both linked and unlinked neighbors.
+                Defaults to True.
             limit_to_text_boundary (bool, optional): If True, filter out neighbors outside the text boundary.
                 Defaults to False.
 
@@ -41,7 +44,7 @@ class SpanningTreeGenerator(ABC):
             list[EffectCharacter]: List of EffectCharacter neighbors.
 
         """
-        neighbors = [neighbor for neighbor in character.neighbors.values() if neighbor and not neighbor.links]
+        neighbors = [neighbor for neighbor in character.neighbors.values() if neighbor]
         if limit_to_text_boundary:
             neighbors = [
                 neighbor for neighbor in neighbors if self.terminal.canvas.coord_is_in_text(neighbor.input_coord)
