@@ -207,10 +207,10 @@ def test_aldous_broder_step_grows_link_order_across_multiple_walk_steps(
     assert generator.linked_char_last_visited is None
 
 
-def test_aldous_broder_step_sets_complete_but_still_walks_when_all_characters_are_linked(
+def test_aldous_broder_step_returns_immediately_when_all_characters_are_linked(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Verify the current implementation still performs a walk step after setting ``complete``."""
+    """Verify a completed generator returns without advancing the walk or recording a visited neighbor."""
     terminal = make_terminal()
     starting_char = get_char(terminal, 2, 2)
     linked_neighbor = get_char(terminal, 1, 2)
@@ -221,9 +221,9 @@ def test_aldous_broder_step_sets_complete_but_still_walks_when_all_characters_ar
     set_neighbors(starting_char, west=linked_neighbor)
 
     def fake_choice(neighbors: list[EffectCharacter]) -> EffectCharacter:
-        """Return the only available neighbor after completion has been marked."""
-        assert neighbors == [linked_neighbor]
-        return neighbors[0]
+        """Fail if random neighbor selection is attempted after completion."""
+        msg = f"random.choice should not be called after completion, received {neighbors!r}"
+        raise AssertionError(msg)
 
     monkeypatch.setattr(
         "terminaltexteffects.utils.spanningtree.algo.aldousbroder.random.choice",
@@ -233,6 +233,6 @@ def test_aldous_broder_step_sets_complete_but_still_walks_when_all_characters_ar
     generator.step()
 
     assert generator.complete is True
-    assert generator._current_char is linked_neighbor
+    assert generator._current_char is starting_char
     assert generator.char_last_linked is None
-    assert generator.linked_char_last_visited is linked_neighbor
+    assert generator.linked_char_last_visited is None
