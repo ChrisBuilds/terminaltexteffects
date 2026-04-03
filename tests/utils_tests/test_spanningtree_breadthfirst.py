@@ -48,11 +48,12 @@ def test_breadth_first_init_uses_explicit_starting_character() -> None:
     assert generator.complete is False
 
 
-def test_breadth_first_init_without_starting_character_raises_even_when_random_start_resolves(
+def test_breadth_first_init_selects_random_starting_character_when_not_provided(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Verify the current constructor behavior still raises when no explicit starting character is passed."""
+    """Verify initialization resolves a random starting character when none is provided."""
     terminal = make_terminal()
+    random_start = get_char(terminal, 2, 1)
 
     def fake_random_coord(*, within_text_boundary: bool = False) -> Coord:
         """Return a deterministic in-text coordinate for random start lookup."""
@@ -61,8 +62,11 @@ def test_breadth_first_init_without_starting_character_raises_even_when_random_s
 
     monkeypatch.setattr(terminal.canvas, "random_coord", fake_random_coord)
 
-    with pytest.raises(ValueError, match=r"Unable to find a starting character\."):
-        BreadthFirst(terminal, limit_to_text_boundary=True)
+    generator = BreadthFirst(terminal, limit_to_text_boundary=True)
+
+    assert generator.starting_char is random_start
+    assert generator._frontier == [random_start]
+    assert generator._explored == {random_start: random_start}
 
 
 def test_breadth_first_step_explores_linked_neighbors_and_updates_frontier() -> None:
@@ -86,8 +90,8 @@ def test_breadth_first_step_explores_linked_neighbors_and_updates_frontier() -> 
     assert generator.complete is False
 
 
-def test_breadth_first_step_reprocesses_accumulated_new_edges_for_each_frontier_item() -> None:
-    """Verify the current step implementation re-adds accumulated new edges for later frontier items."""
+def test_breadth_first_step_records_each_discovery_once_with_the_first_discovering_parent() -> None:
+    """Verify each discovered character is recorded once and keeps the first frontier parent that found it."""
     terminal = make_terminal()
     starting_char = get_char(terminal, 2, 2)
     first_frontier_char = get_char(terminal, 1, 2)
@@ -105,10 +109,10 @@ def test_breadth_first_step_reprocesses_accumulated_new_edges_for_each_frontier_
 
     generator.step()
 
-    assert generator.explored_last_step == [discovered_char, discovered_char]
-    assert generator.char_explore_order == [discovered_char, discovered_char]
+    assert generator.explored_last_step == [discovered_char]
+    assert generator.char_explore_order == [discovered_char]
     assert generator._frontier == [discovered_char]
-    assert generator._explored[discovered_char] is second_frontier_char
+    assert generator._explored[discovered_char] is first_frontier_char
 
 
 def test_breadth_first_step_marks_complete_when_frontier_is_empty() -> None:

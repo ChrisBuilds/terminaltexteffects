@@ -1,7 +1,8 @@
-"""Breadth-First algorithm implementation.
+"""Breadth-first traversal over an already linked character graph.
 
-Classes:
-BreadthFirst: Breadth-First spanning algorithm.
+This module provides the `BreadthFirst` traversal helper. It performs a
+breadth-first walk over existing `EffectCharacter.links` relationships
+instead of generating a new spanning tree.
 """
 
 from __future__ import annotations
@@ -16,13 +17,17 @@ if TYPE_CHECKING:
 
 
 class BreadthFirst(SpanningTreeGenerator):
-    """Breadth-First algorithm.
+    """Breadth-first traversal helper.
 
-    Uses the breadth-first algorithm to explore a graph.
+    Uses breadth-first traversal to explore an already linked graph of
+    `EffectCharacter` nodes.
 
     Attributes:
-        explored_last_step (list[EffectCharacter]): Characters explored in the last step.
-        char_explore_order (list[EffectCharacter]): Characters in the order they were explored.
+        starting_char (EffectCharacter): Character where the traversal begins.
+        explored_last_step (list[EffectCharacter]): Characters newly discovered during the
+            most recent step.
+        char_explore_order (list[EffectCharacter]): Characters in the order they were first
+            discovered by the traversal.
         complete (bool): Whether the algorithm is complete.
 
     """
@@ -38,9 +43,11 @@ class BreadthFirst(SpanningTreeGenerator):
 
         Args:
             terminal (Terminal): TTE Terminal.
-            starting_char (EffectCharacter | None, optional): Starting EffectCharacter. Defaults to None.
+            starting_char (EffectCharacter | None, optional): Starting character for the
+                traversal. When `None`, a character is selected by resolving a random canvas
+                coordinate to a terminal character.
             limit_to_text_boundary (bool, optional): If True, the starting character, if not provided, will
-                be chosen within the text boundary. This should be True of the spanning tree was generated
+                be chosen within the text boundary. This should be True if the spanning tree was generated
                 with limit_to_text_boundary=True.
 
         Raises:
@@ -52,17 +59,27 @@ class BreadthFirst(SpanningTreeGenerator):
         self.starting_char = starting_char or terminal.get_character_by_input_coord(
             terminal.canvas.random_coord(within_text_boundary=limit_to_text_boundary),
         )
-        if starting_char is None:
+        if self.starting_char is None:
             msg = "Unable to find a starting character."
             raise ValueError(msg)
-        self._frontier = [starting_char]
-        self._explored: dict[EffectCharacter, EffectCharacter] = {starting_char: starting_char}
+        self._frontier = [self.starting_char]
+        self._explored: dict[EffectCharacter, EffectCharacter] = {self.starting_char: self.starting_char}
         self.explored_last_step: list[EffectCharacter] = []
         self.char_explore_order: list[EffectCharacter] = []
         self.complete = False
 
     def step(self) -> None:
-        """Perform a single step of the algorithm."""
+        """Advance the traversal by one breadth-first layer.
+
+        Each step consumes the current frontier, records any newly discovered
+        linked neighbors, and stores those newly discovered characters as the
+        next frontier.
+
+        Note:
+            `complete` becomes `True` only when `_frontier` is already empty at
+            the start of a call.
+
+        """
         self.explored_last_step.clear()
         if not self._frontier:
             self.complete = True
@@ -70,14 +87,13 @@ class BreadthFirst(SpanningTreeGenerator):
         new_edges = []
         while self._frontier:
             position = self._frontier.pop(0)
-            new_edges.extend(
-                [
-                    neighbor
-                    for neighbor in position.links
-                    if neighbor not in self._explored and neighbor not in self._frontier
-                ],
-            )
-            for character in new_edges:
+            position_new_edges = [
+                neighbor
+                for neighbor in position.links
+                if neighbor not in self._explored and neighbor not in self._frontier and neighbor not in new_edges
+            ]
+            new_edges.extend(position_new_edges)
+            for character in position_new_edges:
                 self._explored[character] = position
                 self.explored_last_step.append(character)
                 self.char_explore_order.append(character)
