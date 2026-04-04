@@ -104,6 +104,60 @@ def test_eventhandler_register_event(eventhandler: EventHandler) -> None:
     assert eventhandler.registered_events[(EventHandler.Event.PATH_COMPLETE, p1)][0][1] is p2
 
 
+def test_eventhandler_register_event_path_caller_with_id(eventhandler: EventHandler) -> None:
+    """Test registering an event using a path ID caller."""
+    caller = eventhandler.character.motion.new_path(path_id="caller")
+    target = eventhandler.character.motion.new_path(path_id="target")
+    eventhandler.register_event(
+        EventHandler.Event.PATH_COMPLETE,
+        "caller",
+        EventHandler.Action.ACTIVATE_PATH,
+        target,
+    )
+    assert eventhandler.registered_events[(EventHandler.Event.PATH_COMPLETE, caller)][0][1] is target
+
+
+def test_eventhandler_register_event_scene_caller_with_id(eventhandler: EventHandler) -> None:
+    """Test registering an event using a scene ID caller."""
+    caller = eventhandler.character.animation.new_scene(scene_id="caller")
+    target = eventhandler.character.animation.new_scene(scene_id="target")
+    target.add_frame("a", duration=1)
+    eventhandler.register_event(
+        EventHandler.Event.SCENE_COMPLETE,
+        "caller",
+        EventHandler.Action.ACTIVATE_SCENE,
+        target,
+    )
+    assert eventhandler.registered_events[(EventHandler.Event.SCENE_COMPLETE, caller)][0][1] is target
+
+
+def test_eventhandler_register_event_activate_path_with_id(eventhandler: EventHandler) -> None:
+    """Test registering ACTIVATE_PATH using a path ID target."""
+    caller = eventhandler.character.motion.new_path(path_id="caller")
+    target = eventhandler.character.motion.new_path(path_id="target")
+    eventhandler.register_event(
+        EventHandler.Event.PATH_COMPLETE,
+        caller,
+        EventHandler.Action.ACTIVATE_PATH,
+        "target",
+    )
+    assert eventhandler.registered_events[(EventHandler.Event.PATH_COMPLETE, caller)][0][1] is target
+
+
+def test_eventhandler_register_event_activate_scene_with_id(eventhandler: EventHandler) -> None:
+    """Test registering ACTIVATE_SCENE using a scene ID target."""
+    caller = eventhandler.character.animation.new_scene(scene_id="caller")
+    target = eventhandler.character.animation.new_scene(scene_id="target")
+    target.add_frame("a", duration=1)
+    eventhandler.register_event(
+        EventHandler.Event.SCENE_COMPLETE,
+        caller,
+        EventHandler.Action.ACTIVATE_SCENE,
+        "target",
+    )
+    assert eventhandler.registered_events[(EventHandler.Event.SCENE_COMPLETE, caller)][0][1] is target
+
+
 def test_eventhandler_register_event_deactivate_path_with_id(eventhandler: EventHandler) -> None:
     """Test registering DEACTIVATE_PATH using a path ID target."""
     caller = eventhandler.character.motion.new_path(path_id="caller")
@@ -113,6 +167,19 @@ def test_eventhandler_register_event_deactivate_path_with_id(eventhandler: Event
         caller,
         EventHandler.Action.DEACTIVATE_PATH,
         "target",
+    )
+    assert eventhandler.registered_events[(EventHandler.Event.PATH_COMPLETE, caller)][0][1] is target
+
+
+def test_eventhandler_register_event_deactivate_path_with_object(eventhandler: EventHandler) -> None:
+    """Test registering DEACTIVATE_PATH using a path object target."""
+    caller = eventhandler.character.motion.new_path(path_id="caller")
+    target = eventhandler.character.motion.new_path(path_id="target")
+    eventhandler.register_event(
+        EventHandler.Event.PATH_COMPLETE,
+        caller,
+        EventHandler.Action.DEACTIVATE_PATH,
+        target,
     )
     assert eventhandler.registered_events[(EventHandler.Event.PATH_COMPLETE, caller)][0][1] is target
 
@@ -137,6 +204,19 @@ def test_eventhandler_register_event_deactivate_scene_with_id(eventhandler: Even
         caller,
         EventHandler.Action.DEACTIVATE_SCENE,
         "target",
+    )
+    assert eventhandler.registered_events[(EventHandler.Event.SCENE_COMPLETE, caller)][0][1] is target
+
+
+def test_eventhandler_register_event_deactivate_scene_with_object(eventhandler: EventHandler) -> None:
+    """Test registering DEACTIVATE_SCENE using a scene object target."""
+    caller = eventhandler.character.animation.new_scene(scene_id="caller")
+    target = eventhandler.character.animation.new_scene(scene_id="target")
+    eventhandler.register_event(
+        EventHandler.Event.SCENE_COMPLETE,
+        caller,
+        EventHandler.Action.DEACTIVATE_SCENE,
+        target,
     )
     assert eventhandler.registered_events[(EventHandler.Event.SCENE_COMPLETE, caller)][0][1] is target
 
@@ -190,6 +270,22 @@ def test_eventhandler_handle_event_deactivate_path_with_none_target(eventhandler
     assert eventhandler.character.motion.active_path is None
 
 
+def test_eventhandler_handle_event_deactivate_path_with_id_target(eventhandler: EventHandler) -> None:
+    """Test handling DEACTIVATE_PATH with a path ID target deactivates that path."""
+    caller = eventhandler.character.motion.new_path(path_id="caller")
+    active = eventhandler.character.motion.new_path(path_id="active")
+    active.new_waypoint(Coord(0, 0))
+    eventhandler.character.motion.activate_path(active)
+    eventhandler.register_event(
+        EventHandler.Event.PATH_COMPLETE,
+        caller,
+        EventHandler.Action.DEACTIVATE_PATH,
+        "active",
+    )
+    eventhandler._handle_event(EventHandler.Event.PATH_COMPLETE, caller)
+    assert eventhandler.character.motion.active_path is None
+
+
 def test_eventhandler_handle_event_deactivate_scene_with_none_target(eventhandler: EventHandler) -> None:
     """Test handling DEACTIVATE_SCENE with no target deactivates the active scene."""
     caller = eventhandler.character.animation.new_scene(scene_id="caller")
@@ -200,6 +296,22 @@ def test_eventhandler_handle_event_deactivate_scene_with_none_target(eventhandle
         EventHandler.Event.SCENE_COMPLETE,
         caller,
         EventHandler.Action.DEACTIVATE_SCENE,
+    )
+    eventhandler._handle_event(EventHandler.Event.SCENE_COMPLETE, caller)
+    assert eventhandler.character.animation.active_scene is None
+
+
+def test_eventhandler_handle_event_deactivate_scene_with_id_target(eventhandler: EventHandler) -> None:
+    """Test handling DEACTIVATE_SCENE with a scene ID target deactivates that scene."""
+    caller = eventhandler.character.animation.new_scene(scene_id="caller")
+    active = eventhandler.character.animation.new_scene(scene_id="active")
+    active.add_frame("a", duration=1)
+    eventhandler.character.animation.activate_scene(active)
+    eventhandler.register_event(
+        EventHandler.Event.SCENE_COMPLETE,
+        caller,
+        EventHandler.Action.DEACTIVATE_SCENE,
+        "active",
     )
     eventhandler._handle_event(EventHandler.Event.SCENE_COMPLETE, caller)
     assert eventhandler.character.animation.active_scene is None

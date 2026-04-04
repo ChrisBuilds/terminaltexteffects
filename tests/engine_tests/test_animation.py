@@ -387,6 +387,15 @@ def test_animation_deactivate_scene(character: EffectCharacter) -> None:
     assert character.animation.active_scene is None
 
 
+def test_animation_deactivate_scene_by_object(character: EffectCharacter) -> None:
+    """Verify that deactivating a scene by object clears the active scene reference."""
+    scene = character.animation.new_scene(scene_id="test_scene")
+    scene.add_frame(symbol="a", duration=10)
+    character.animation.activate_scene(scene)
+    character.animation.deactivate_scene(scene)
+    assert character.animation.active_scene is None
+
+
 def test_animation_deactivate_scene_by_id(character: EffectCharacter) -> None:
     """Verify that deactivating a scene by ID clears the active scene reference."""
     scene = character.animation.new_scene(scene_id="test_scene")
@@ -437,6 +446,14 @@ def test_activate_scene_with_no_frames(character: EffectCharacter) -> None:
     new_scene = character.animation.new_scene(scene_id="test_scene")
     with pytest.raises(ActivateEmptySceneError):
         character.animation.activate_scene(new_scene)
+
+
+def test_animation_activate_scene_by_id(character: EffectCharacter) -> None:
+    """Verify that activating a scene by ID sets it as the active scene."""
+    scene = character.animation.new_scene(scene_id="test_scene")
+    scene.add_frame(symbol="a", duration=1)
+    character.animation.activate_scene("test_scene")
+    assert character.animation.active_scene is scene
 
 
 def test_scene_get_next_visual_looping(character: EffectCharacter) -> None:

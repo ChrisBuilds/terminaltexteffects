@@ -420,6 +420,15 @@ def test_motion_activate_path_first_waypoint_bezier(character: EffectCharacter) 
     assert character.motion.active_path == p
 
 
+def test_motion_activate_path_by_id(character: EffectCharacter) -> None:
+    """Test activating a path by path ID."""
+    p = character.motion.new_path(path_id="path_0")
+    p.new_waypoint(Coord(0, 0))
+    p.new_waypoint(Coord(10, 0))
+    character.motion.activate_path("path_0")
+    assert character.motion.active_path == p
+
+
 def test_motion_activate_path_no_waypoints(character: EffectCharacter) -> None:
     """Test activating a path with no waypoints raises an error."""
     p = character.motion.new_path(path_id="0")
@@ -459,6 +468,15 @@ def test_motion_deactivate_path_without_arg(character: EffectCharacter) -> None:
     p.new_waypoint(Coord(0, 0))
     character.motion.activate_path(p)
     character.motion.deactivate_path()
+    assert character.motion.active_path is None
+
+
+def test_motion_deactivate_path_by_object(character: EffectCharacter) -> None:
+    """Test deactivating the active path by path object."""
+    p = character.motion.new_path(path_id="path_0")
+    p.new_waypoint(Coord(0, 0))
+    character.motion.activate_path(p)
+    character.motion.deactivate_path(p)
     assert character.motion.active_path is None
 
 
