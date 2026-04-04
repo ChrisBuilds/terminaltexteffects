@@ -30,6 +30,7 @@
 * `BreadthFirst` now initializes correctly when `starting_char` is omitted, records each discovered character only once with the correct parent frontier node, and has updated traversal documentation.
 * `AldousBroder` now returns immediately once all characters are linked, and its documentation now matches the generator's state transitions and project docstring style.
 * Updated `engine.motion` documentation to accurately describe waypoint fields, bezier control handling, path runtime state, activation-side path mutation, looping behavior, and documented exceptions.
+* Updated `engine.animation` documentation to accurately describe scene lookup behavior, scene sync and completion semantics, frame/color override rules, activation/reset expectations, and current TODO-backed gaps around dim formatting, duplicate scene IDs, and unused scene-step tracking.
 
 ## 0.14.2
 

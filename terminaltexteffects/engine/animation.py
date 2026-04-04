@@ -48,7 +48,7 @@ class CharacterVisual:
         formatted_symbol (str): The current symbol with all ANSI sequences applied.
 
     Methods:
-        format_symbol: Formats the symbol for printing by applying ANSI sequences for any active modes and color.
+        format_symbol: Formats the symbol for printing by applying ANSI sequences for supported active modes and color.
 
     """
 
@@ -72,10 +72,14 @@ class CharacterVisual:
         self.formatted_symbol = self.format_symbol()
 
     def format_symbol(self) -> str:
-        """Format the symbol for printing by applying ANSI sequences for any active modes and color."""
+        """Format the symbol for printing by applying ANSI sequences for supported active modes and color.
+
+        The `dim` attribute is stored on the visual but is not currently emitted as an ANSI sequence.
+        """
         formatting_string = ""
         if self.bold:
             formatting_string += ansitools.apply_bold()
+        # TODO: Review the dim ANSI sequence and decide whether CharacterVisual should emit it.
         if self.italic:
             formatting_string += ansitools.apply_italic()
         if self.underline:
@@ -148,11 +152,11 @@ class Scene:
     xterm_color_map: typing.ClassVar[dict[str, int]] = {}
 
     class SyncMetric(Enum):
-        """Enum for specifying the type of sync to use for a Scene.
+        """Enum for specifying how a Scene synchronizes to motion progress.
 
         Attributes:
-            DISTANCE (int): Sync to a Waypoint based on distance from the Waypoint
-            STEP (int): Sync to a Waypoint based on the number of steps taken towards the Waypoint
+            DISTANCE (int): Sync scene progress to the active path's traveled distance.
+            STEP (int): Sync scene progress to the active path's current step count.
 
         """
 
@@ -237,6 +241,9 @@ class Scene:
     ) -> None:
         """Add a Frame to the Scene with the given symbol, duration, color, and graphical modes.
 
+        If `preexisting_colors` is set on the Scene, those colors override the `colors`
+        argument for every frame added to the Scene.
+
         Args:
             symbol (str): the symbol to show
             duration (int): the number of frames to use the Frame
@@ -289,7 +296,7 @@ class Scene:
             self.easing_total_steps += 1
 
     def activate(self) -> CharacterVisual:
-        """Activate the Scene by returning the first frame `CharacterVisual`.
+        """Activate the Scene by returning the first frame's `CharacterVisual`.
 
         Called by the `Animation` object when the Scene is activated.
 
@@ -297,7 +304,7 @@ class Scene:
             ActivateEmptySceneError: if the Scene has no frames
 
         Returns:
-            CharacterVisual: the next CharacterVisual in the Scene
+            CharacterVisual: the first frame's visual.
 
         """
         if self.frames:
@@ -307,11 +314,11 @@ class Scene:
     def get_next_visual(self) -> CharacterVisual:
         """Get the next CharacterVisual in the Scene.
 
-        Retrieve the current frame from `frames`, then increment the `ticks_elapsed` attribute of the Frame.
-        If the `ticks_elapsed` equals the duration of the current frame, reset `ticks_elapsed` to `0` and move the
-        current frame from `frames` to `played_frames`. If the `Scene` is set to `loop` and
-        all frames have been played, refill `frames` with the frames from `played_frames` and clear
-        `played_frames`. Return the `CharacterVisual` of the current frame.
+        Retrieve the current frame from `frames`, then increment the frame's `ticks_elapsed`.
+        If `ticks_elapsed` reaches the frame duration, reset that frame's `ticks_elapsed` to `0`
+        and move it from `frames` to `played_frames`. If the Scene is looping and all frames
+        have been played, restore `frames` from `played_frames` so the next loop begins from
+        the start of each frame again. Return the current frame's `CharacterVisual`.
 
         Returns:
             CharacterVisual: The visual of the current frame in the Scene.
@@ -433,7 +440,12 @@ class Scene:
                 self.add_frame(symbol, duration, colors=colors)
 
     def reset_scene(self) -> None:
-        """Reset the Scene."""
+        """Reset the Scene to its initial playback state.
+
+        All remaining frames are moved back into the full frame sequence, each frame's
+        `ticks_elapsed` is reset to `0`, `played_frames` is cleared, and
+        `easing_current_step` is reset to `0`.
+        """
         for sequence in self.frames:
             sequence.ticks_elapsed = 0
             self.played_frames.append(sequence)
@@ -470,7 +482,8 @@ class Animation:
         input_fg_color (graphics.Color | None): the input foreground Color
         input_bg_color (graphics.Color | None): the input background Color
         xterm_color_map (dict[str, int]): a mapping of RGB color codes to XTerm-256 color codes
-        active_scene_current_step (int): the current step in the active Scene
+        active_scene_current_step (int): Reserved for scene-step tracking; currently reset on activation but
+            otherwise unused.
         current_character_visual (CharacterVisual): the current visual of the character
 
     Methods:
@@ -501,6 +514,7 @@ class Animation:
         self.input_fg_color: graphics.Color | None = None
         self.input_bg_color: graphics.Color | None = None
         self.xterm_color_map: dict[str, int] = {}
+        # TODO: Review whether `active_scene_current_step` should be removed or implemented for real scene tracking.
         self.active_scene_current_step: int = 0
         self.current_character_visual: CharacterVisual = CharacterVisual(character.input_symbol)
 
@@ -539,16 +553,20 @@ class Animation:
         ease: easing.EasingFunction | None = None,
         scene_id: str = "",
     ) -> Scene:
-        """Create a new Scene and adds it to the Animation. If no ID is provided, a unique ID is generated.
+        """Create a new Scene and add it to the Animation.
+
+        If no ID is provided, a unique ID is generated. If `existing_color_handling` is `"always"`,
+        the Scene inherits the animation's input colors as `preexisting_colors`. If a Scene with the
+        same ID already exists, it is replaced in the animation's scene mapping.
 
         Args:
-            scene_id (str): Unique name for the scene. Used to query for the scene.
+            scene_id (str): Name for the scene. Used to query for the scene.
             is_looping (bool): Whether the scene should loop.
-            sync (Scene.SyncMetric): The type of sync to use for the scene.
-            ease (easing.EasingFunction): The easing function to use for the scene.
+            sync (Scene.SyncMetric | None): The type of sync to use for the scene.
+            ease (easing.EasingFunction | None): The easing function to use for the scene.
 
         Returns:
-            Scene: the new Scene
+            Scene: The new Scene.
 
         """
         if not scene_id:
@@ -560,6 +578,8 @@ class Animation:
                     found_unique = True
                 else:
                     current_id += 1
+        # TODO: Review whether scene IDs should be enforced as unique and raise on duplicates.
+        # Confirm no effects intentionally overwrite scenes today, then update this behavior and docs together.
         if self.existing_color_handling == "always":
             preexisting_colors = graphics.ColorPair(fg=self.input_fg_color, bg=self.input_bg_color)
         else:
@@ -583,16 +603,20 @@ class Animation:
     @typing.overload
     def query_scene(self, scene_id: str, not_found_action: None) -> Scene | None: ...
     def query_scene(self, scene_id: str, not_found_action: typing.Literal["raise"] | None = "raise") -> Scene | None:
-        """Return a Scene from the Animation. If the scene doesn't exist, raises a ValueError.
+        """Return the Scene with the given scene_id, or None if no Scene with the given ID exists.
 
         Args:
-            scene_id (str): the ID of the Scene
-            not_found_action (Literal["raise"] | None, optional): Action to take if a path with the given
-                path_id is not found. If "raise", a PathNotFoundError will be raised. If `None`, method will
+            scene_id (str): The ID of the Scene.
+            not_found_action (Literal["raise"] | None, optional): Action to take if a Scene with the given
+                `scene_id` is not found. If "raise", a SceneNotFoundError will be raised. If `None`, method will
                 return `None`.
 
         Returns:
-            Scene | None: the Scene
+            Scene | None: The Scene with the given `scene_id`, or None.
+
+        Raises:
+            SceneNotFoundError: If `not_found_action` is "raise" and a Scene with the given
+                `scene_id` is not found.
 
         """
         found_scene = self.scenes.get(scene_id, None)
@@ -601,12 +625,13 @@ class Animation:
         return found_scene
 
     def active_scene_is_complete(self) -> bool:
-        """Return whether the active scene is complete.
+        """Return whether the active scene should be treated as complete.
 
-        A scene is complete if all sequences have been played. Looping scenes are always complete.
+        A scene is treated as complete when there is no active scene, when the active
+        scene has no remaining frames to play, or when the active scene is looping.
 
         Returns:
-            bool: True if complete, False otherwise
+            bool: True if the active scene is complete, False otherwise.
 
         """
         return bool(not self.active_scene or not self.active_scene.frames or self.active_scene.is_looping)
@@ -615,6 +640,9 @@ class Animation:
         """Update the current character visual with the symbol and colors provided.
 
         If no symbol is provided, the character's input symbol is used.
+
+        If `existing_color_handling` is `"always"`, any provided foreground or background
+        colors are overridden by the character's input colors where available.
 
         If the character has an active scene, any appearance set with this method
         will be overwritten when the scene is stepped to the next frame.
@@ -754,7 +782,14 @@ class Animation:
     def step_animation(self) -> None:
         """Progress the Scene and apply the next visual to the character.
 
-        If the active scene is complete, a SCENE_COMPLETE event is triggered.
+        Behavior:
+            * Synced scenes select a frame based on the active motion path's progress.
+            * Eased scenes select a frame from `frame_index_map` using easing progress.
+            * All other scenes advance by consuming frame duration through `Scene.get_next_visual()`.
+            * If a synced scene no longer has an active motion path, the final frame is applied and
+              the scene is marked complete.
+            * When a non-looping scene completes, it is reset, deactivated, and a `SCENE_COMPLETE`
+              event is triggered.
         """
         if self.active_scene and self.active_scene.frames:
             # if the active scene is synced to movement, calculate the sequence index based on the
@@ -827,6 +862,9 @@ class Animation:
 
         If `scene` is a string, a scene query will be performed for a scene with
         a `scene_id` matching the provided string.
+
+        This method does not reset scene playback state before activation. To restart
+        a scene from its initial frame sequence, reset the scene before activating it.
 
         A SCENE_ACTIVATED event is triggered.
 
