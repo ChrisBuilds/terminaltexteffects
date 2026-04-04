@@ -2,8 +2,8 @@
 
 Classes:
     TerminalConfig: Configuration for the terminal.
-    Canvas: Represents the canvas in the terminal. The canvas is the area defined by the dimensions of the input data,
-        unless specified otherwise in the TerminalConfig.
+    Canvas: Represents the canvas in the terminal. Canvas bounds are derived from the input text dimensions,
+        terminal dimensions, and relevant TerminalConfig options.
     Terminal: A class for managing the terminal state and output.
 """
 
@@ -123,7 +123,7 @@ class TerminalConfig(BaseConfig):
         "Default is 'ignore'."
     )
 
-    wrap_text: int = argutils.ArgSpec(
+    wrap_text: bool = argutils.ArgSpec(
         name="--wrap-text",
         default=False,
         action="store_true",
@@ -255,8 +255,9 @@ class TerminalConfig(BaseConfig):
 class Canvas:
     """Represent the canvas in the terminal.
 
-    The canvas is the area defined by the dimensions of the input data, unless specified otherwise
-    in the TerminalConfig.
+    The canvas bounds are derived from the input text dimensions, terminal dimensions,
+    and `TerminalConfig` options such as explicit canvas sizing, text wrapping, and
+    ignoring terminal dimensions.
 
     This class provides methods for working with the canvas, such as checking if a coordinate is within the canvas,
     getting random coordinates within the canvas, and getting a random coordinate outside the canvas.
@@ -354,6 +355,9 @@ class Canvas:
         anchor: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
     ) -> list[EffectCharacter]:
         """Anchors the text within the canvas based on the specified anchor point.
+
+        The `characters` argument must be non-empty; this method expects at least one
+        character when calculating anchored text bounds.
 
         Args:
             characters (list[EffectCharacter]): Non-empty list of characters to reposition within the canvas.
@@ -468,9 +472,14 @@ class Canvas:
         outside_scope: bool = False,
         within_text_boundary: bool = False,
     ) -> Coord:
-        """Get a random coordinate. Coordinate is within the canvas unless outside_scope is True.
+        """Get a random coordinate.
 
-        `outside_scope` takes precedence over `within_text_boundary`, they are functionally mutually exclusive.
+        The coordinate is within the canvas unless `outside_scope` is True. When
+        `outside_scope` is True, the returned coordinate is positioned exactly one cell
+        beyond one of the four canvas edges.
+
+        `outside_scope` takes precedence over `within_text_boundary`; the two options are
+        functionally mutually exclusive.
 
         Args:
             outside_scope (bool, optional): whether the coordinate should fall outside the canvas. Defaults to False.
@@ -498,11 +507,19 @@ class Canvas:
 class Terminal:
     """A class for managing the terminal state and output.
 
+    The terminal tracks input characters, fill characters, added characters, and the
+    currently visible rendered state for the active canvas.
+
     Attributes:
         config (TerminalConfig): Configuration for the terminal.
         canvas (Canvas): The canvas in the terminal.
         character_by_input_coord (dict[Coord, EffectCharacter]): Mapping of input and fill characters keyed by
-            input coordinates.
+            canvas coordinates. Characters created with `add_character()` are tracked separately.
+        terminal_state (list[str]): Internal row-by-row representation of the currently visible terminal output.
+        visible_top (int): Top visible row within the terminal after canvas anchoring is applied.
+        visible_bottom (int): Bottom visible row within the terminal after canvas anchoring is applied.
+        visible_right (int): Rightmost visible column within the terminal after canvas anchoring is applied.
+        visible_left (int): Leftmost visible column within the terminal after canvas anchoring is applied.
 
     Methods:
         get_piped_input:
@@ -580,8 +597,10 @@ class Terminal:
     def _preprocess_input_data(self, input_data: str) -> list[list[EffectCharacter]]:  # noqa: PLR0915
         """Preprocess the input data.
 
-        Preprocess the input data by replacing tabs with spaces and decomposing the input data into a list of
-        characters while applying any active SGR foreground/background ANSI escape sequences discovered in the data.
+        Tabs are expanded to spaces, trailing whitespace is stripped from each line, and
+        the input is decomposed into `EffectCharacter` rows while tracking supported
+        8-bit and 24-bit SGR foreground/background color sequences found in the data.
+        Other SGR sequences are ignored, and reset sequences clear the tracked colors.
 
         Args:
             input_data (str): The input data to be displayed in the terminal.
@@ -675,10 +694,14 @@ class Terminal:
         return characters
 
     def _calc_canvas_offsets(self) -> tuple[int, int]:
-        """Calculate the canvas offsets based on the anchor point.
+        """Calculate terminal-space offsets for the anchored canvas.
+
+        The returned column and row offsets position the canvas within the available
+        terminal area according to `config.anchor_canvas`. These offsets are later
+        applied when determining visible bounds and when rendering character positions.
 
         Returns:
-            tuple[int, int]: Canvas column offset, row offset
+            tuple[int, int]: Canvas column offset and row offset.
 
         """
         canvas_column_offset = canvas_row_offset = 0
@@ -693,10 +716,16 @@ class Terminal:
         return canvas_column_offset, canvas_row_offset
 
     def _get_canvas_dimensions(self) -> tuple[int, int]:
-        """Determine the canvas dimensions using the input data dimensions, terminal dimensions, and text wrapping.
+        """Determine the canvas dimensions from terminal config and input geometry.
+
+        Explicit positive canvas dimensions take precedence. A configured value of `0`
+        uses the terminal dimension, while `-1` derives the dimension from the input
+        text, subject to terminal limits unless `ignore_terminal_dimensions` is enabled.
+        When `wrap_text` is enabled, canvas height is based on the wrapped input lines
+        for the selected width.
 
         Returns:
-            tuple[int, int]: Canvas height, width.
+            tuple[int, int]: Canvas height and width.
 
         """
         if self.config.canvas_width > 0:
@@ -730,11 +759,11 @@ class Terminal:
     def _get_terminal_dimensions(self) -> tuple[int, int]:
         """Get the terminal dimensions.
 
-        Use shutil.get_terminal_size() to get the terminal dimensions. If the terminal size cannot be determined,
-        default values of 80 columns and 24 rows are returned.
+        Use `shutil.get_terminal_size()` to get terminal width and height. If that call
+        raises `OSError`, return the fallback size `(80, 24)`.
 
         Returns:
-            tuple[int, int]: terminal width and height
+            tuple[int, int]: Terminal width and height.
 
         """
         try:
@@ -746,18 +775,13 @@ class Terminal:
 
     @staticmethod
     def get_piped_input() -> str:
-        """Get the piped input from stdin.
+        """Return piped input from `stdin`.
 
-        This method checks if there is any piped input from the standard input (stdin).
-        If there is no piped input, it returns an empty string.
-        If there is piped input, it reads the input data from stdin and returns it as a string.
-
-        The `sys.stdin.isatty()` check is used to determine if the program is being run interactively
-        or if there is piped input. When the program is run interactively, `sys.stdin.isatty()` returns True,
-        indicating that there is no piped input. In this case, the method returns an empty string.
+        If `stdin` is attached to a TTY, return an empty string. Otherwise, read and
+        return the full contents of `stdin`.
 
         Returns:
-            str: The piped input from stdin as a string, or an empty string if there is no piped input.
+            str: The piped input, or an empty string when running interactively.
 
         """
         if sys.stdin.isatty():
@@ -792,6 +816,8 @@ class Terminal:
         """Set up the input characters discovered during preprocessing.
 
         Characters are positioned based on row/column coordinates relative to the anchor point in the Canvas.
+        Space characters from the input are excluded from the returned input-character
+        list and are instead represented by fill characters when the canvas is populated.
 
         Coordinates are relative to the cursor row position at the time of execution. 1,1 is the bottom left
         corner of the row above the cursor.
@@ -818,12 +844,16 @@ class Terminal:
         return [char for char in anchored_characters if self.canvas.coord_is_in_canvas(char._input_coord)]
 
     def _make_fill_characters(self) -> tuple[list[EffectCharacter], list[EffectCharacter]]:
-        """Create lists of characters to fill the empty spaces in the canvas.
+        """Create fill characters for unoccupied canvas coordinates.
 
-        Fill characters use a space as `input_symbol` and are added to `character_by_input_coord`.
+        Fill characters use a space as `input_symbol` and are inserted into
+        `character_by_input_coord` for any canvas coordinate not already occupied by an
+        input character. They are split into inner and outer fill characters based on
+        whether the coordinate falls within the anchored text bounds.
 
         Returns:
-            tuple[list[EffectCharacter], list[EffectCharacter]]: lists of inner and outer fill characters
+            tuple[list[EffectCharacter], list[EffectCharacter]]: Lists of inner and outer
+                fill characters.
 
         """
         inner_fill_characters = []
@@ -860,7 +890,10 @@ class Terminal:
         """Add a character to the terminal for printing.
 
         Used to create characters that are not in the input data.
-        Added characters are stored in `_added_characters` and are not inserted into `character_by_input_coord`.
+        Added characters are stored in `_added_characters` and are not inserted into
+        `character_by_input_coord`. As a result, they are not returned by
+        `get_character_by_input_coord()` and are not included in the neighbor map built
+        from `character_by_input_coord`.
 
         Args:
             symbol (str): symbol to add
@@ -880,16 +913,17 @@ class Terminal:
         return character
 
     def get_input_colors(self, sort: ColorSort = ColorSort.MOST_TO_LEAST) -> list[Color]:
-        """Get a list of colors derived from the input text ansi sequences with an optional sort.
+        """Get colors derived from supported input color sequences with an optional sort.
 
         Args:
-            sort (ColorSort, optional): Sort the colors. Defaults to ColorSort.MOST_TO_LEAST.
+            sort (ColorSort, optional): Sort order for the colors.
+                Defaults to `ColorSort.MOST_TO_LEAST`.
 
         Raises:
             InvalidColorSortError: If an invalid sort option is provided.
 
         Returns:
-            list[Color]: list of Colors
+            list[Color]: Input colors tracked during preprocessing.
 
         """
         if sort == ColorSort.MOST_TO_LEAST:
@@ -919,6 +953,10 @@ class Terminal:
         sort: CharacterSort = CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT,
     ) -> list[EffectCharacter]:
         """Get a list of all EffectCharacters in the terminal with an optional sort.
+
+        Sorting is based on character input coordinates. The row-based "outside/middle"
+        sort options interleave characters from the beginning and end of the default
+        top-to-bottom, left-to-right ordering.
 
         Args:
             input_chars (bool, optional): whether to include input characters. Defaults to True.
@@ -1111,6 +1149,10 @@ class Terminal:
     def get_character_by_input_coord(self, coord: Coord) -> EffectCharacter | None:
         """Get an EffectCharacter by its input coordinates.
 
+        Lookup is limited to characters stored in `character_by_input_coord`, which
+        includes input and fill characters but not characters added through
+        `add_character()`.
+
         Args:
             coord (Coord): input coordinates of the character
 
@@ -1121,11 +1163,14 @@ class Terminal:
         return self.character_by_input_coord.get(coord, None)
 
     def set_character_visibility(self, character: EffectCharacter, is_visible: bool) -> None:  # noqa: FBT001
-        """Set the visibility of a character.
+        """Set whether a character participates in terminal rendering.
+
+        This updates both the character's internal visibility flag and the terminal's
+        tracked set of currently visible characters.
 
         Args:
-            character (EffectCharacter): the character to set visibility for
-            is_visible (bool): whether the character should be visible
+            character (EffectCharacter): Character whose visibility should be updated.
+            is_visible (bool): Whether the character should be visible.
 
         """
         character._is_visible = is_visible
@@ -1137,7 +1182,8 @@ class Terminal:
     def get_formatted_output_string(self) -> str:
         """Get the formatted output string based on the current terminal state.
 
-        This method updates the internal terminal representation state before returning the formatted output string.
+        This method refreshes the internal terminal representation and returns it as a
+        newline-delimited string ordered for terminal printing from top row to bottom row.
 
         Returns:
             str: The formatted output string.
@@ -1147,9 +1193,12 @@ class Terminal:
         return "\n".join(self.terminal_state[::-1])
 
     def _update_terminal_state(self) -> None:
-        """Update the internal representation of the terminal state.
+        """Rebuild the internal representation of the visible terminal state.
 
-        The terminal state is updated with the current position of all visible characters.
+        A blank buffer covering the visible terminal area is created, then visible
+        characters are rendered into it in ascending layer order using their current
+        motion coordinates adjusted by the canvas offsets. Characters outside the visible
+        bounds are skipped.
         """
         rows = [[" " for _ in range(self.visible_right)] for _ in range(self.visible_top)]
         for character in sorted(self._visible_characters, key=lambda c: c.layer):
@@ -1161,17 +1210,16 @@ class Terminal:
         self.terminal_state = terminal_state
 
     def prep_canvas(self) -> None:
-        """Prepare the terminal for the effect by adding empty lines and hiding the cursor.
+        """Prepare the terminal for the effect by hiding the cursor, positioning the
+        canvas, and writing blank canvas rows.
 
-        If `config.reuse_canvas` is `True`, the cursor will be restored to the last position
-        saved using the `DEC Save Cursor` terminal sequence. If a TTE effect was recently run,
-        the last saved cursor state should be the state at the start of the prior effect execution.
+        If `config.reuse_canvas` is `True`, the cursor is first moved to the previously
+        saved canvas position before the blank rows are written. This is intended to let
+        the current effect reuse the prior canvas area rather than advancing output
+        further down the terminal.
 
-        The intention of `config.reuse_canvas` is for the current effect output to align with
-        the prior effect output.
-
-        Note: Use of `config.reuse_canvas` will be less predictable if other canvas dimension options
-        differ between the last run and the current run.
+        Note: Use of `config.reuse_canvas` is less predictable if other canvas dimension
+        options differ between the last run and the current run.
         """
         sys.stdout.write(ansitools.hide_cursor())
         if self.config.reuse_canvas:
@@ -1181,13 +1229,14 @@ class Terminal:
         sys.stdout.write(ansitools.dec_save_cursor_position())
 
     def restore_cursor(self, end_symbol: str = "\n") -> None:
-        """Restores the cursor visibility and prints the end_symbol.
+        """Restore cursor visibility when enabled and write the configured end symbol.
 
-        If the `--no-eol` command line option is passed, no end symbol will be printed.
-        If the `--no-restore-cursor` command line option is passed, cursor visibility is not restored.
+        If the `--no-eol` option is enabled, no end symbol is printed. If the
+        `--no-restore-cursor` option is enabled, cursor visibility is not restored.
 
         Args:
-            end_symbol (str, optional): The symbol to print after the effect has completed. Defaults to newline.
+            end_symbol (str, optional): Symbol to print after the effect completes.
+                Defaults to a newline.
 
         """
         if self.config.no_eol:
@@ -1197,10 +1246,13 @@ class Terminal:
         sys.stdout.write(end_symbol)
 
     def print(self, output_string: str) -> None:
-        """Print the current terminal state to stdout while preserving the cursor position.
+        """Print the provided output string at the top of the current canvas.
+
+        The cursor is restored to the saved canvas position, moved to the top of the
+        canvas, and the output string is written to stdout.
 
         Args:
-            output_string (str): The string to be printed.
+            output_string (str): The string to print.
 
         """
         self.move_cursor_to_top()
@@ -1211,14 +1263,21 @@ class Terminal:
         """Enforce the frame rate set in the terminal config.
 
         Frame rate is enforced by sleeping if the time since the last frame is shorter than the expected frame delay.
+        If the configured frame rate is `0`, frame rate limiting is disabled and this method returns immediately.
         """
+        if self._frame_rate == 0:
+            return
         frame_delay = 1 / self._frame_rate
         if (time_since_last_print := time.monotonic() - self._last_time_printed) < frame_delay:
             time.sleep(frame_delay - time_since_last_print)
         self._last_time_printed = time.monotonic()
 
     def move_cursor_to_top(self) -> None:
-        """Restore to the saved cursor position and move to the top row of the current canvas."""
+        """Restore the saved canvas cursor position and move to the top of the canvas.
+
+        The saved cursor position is restored, immediately saved again as the current
+        canvas origin, and then the cursor is moved up by the visible canvas height.
+        """
         sys.stdout.write(ansitools.dec_restore_cursor_position())
         sys.stdout.write(ansitools.dec_save_cursor_position())
         sys.stdout.write(ansitools.move_cursor_up(self.visible_top))

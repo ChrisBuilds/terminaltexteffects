@@ -31,6 +31,7 @@
 * `AldousBroder` now returns immediately once all characters are linked, and its documentation now matches the generator's state transitions and project docstring style.
 * Updated `engine.motion` documentation to accurately describe waypoint fields, bezier control handling, path runtime state, activation-side path mutation, looping behavior, and documented exceptions.
 * Updated `engine.animation` documentation to accurately describe scene lookup behavior, scene sync and completion semantics, frame/color override rules, activation/reset expectations, and current TODO-backed gaps around dim formatting, duplicate scene IDs, and unused scene-step tracking.
+* Updated `engine.terminal` documentation to better describe canvas sizing and anchoring, input preprocessing, character/fill tracking, rendering state, cursor management, and sort/lookup behavior, and hardened `enforce_framerate()` so a configured frame rate of `0` safely disables frame limiting even when the method is called directly.
 
 ## 0.14.2
 
