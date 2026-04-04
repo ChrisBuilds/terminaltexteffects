@@ -7,7 +7,7 @@ Functions:
     find_coords_on_circle: Finds points on a circle given the origin, radius, and number of points.
     find_coords_in_circle: Finds coordinates within an ellipse given the center and major axis length.
     find_coords_in_rect: Finds coordinates within a rectangle given the origin and distance.
-    find_coord_at_distance: Finds the coordinate at a given distance along a line defined by two coordinates.
+    extrapolate_along_ray: Finds the coordinate past a target along the ray from an origin.
     find_coord_on_bezier_curve: Finds points on a bezier curve.
     find_coord_on_line: Finds points on a line.
     find_length_of_bezier_curve: Finds the length of a quadratic or cubic bezier curve.
@@ -127,7 +127,8 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
     """Find coords that fall within a rectangle.
 
     Distance specifies the number of units in each direction from the origin.
-    Final width = 2 * distance + 1, final height = 2 * distance + 1.
+    For positive distances, the resulting rectangle has width and height
+    `2 * distance + 1`. A distance of `0` returns an empty list.
 
     Args:
         origin (Coord): center of the rectangle
@@ -155,10 +156,11 @@ find_coords_in_rect = functools.wraps(find_coords_in_rect)(functools.lru_cache(m
 
 
 def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> list[Coord]:
-    """Find coords that fall within a rectangle.
+    """Find coords on the perimeter of a rectangle.
 
     Half width and half height specify the distance in each direction from the origin.
     Returns coordinates that fall on the perimeter (edges) of the rectangle only.
+    If either `half_width` or `half_height` is `0`, an empty list is returned.
 
     Args:
         origin (Coord): center of the rectangle
@@ -187,10 +189,11 @@ find_coords_on_rect = functools.wraps(find_coords_on_rect)(functools.lru_cache(m
 
 
 def extrapolate_along_ray(origin: Coord, target: Coord, offset_from_target: float) -> Coord:
-    """“Return the point distance units past the target along the origin -> target ray.”.
+    """Return the point `offset_from_target` units past `target` along the
+    `origin -> target` ray.
 
-    The coordinate returned is approximately [distance] units away from the target coordinate,
-    away from the origin coordinate.
+    The coordinate returned is approximately `offset_from_target` units away from the
+    target coordinate, away from the origin coordinate.
 
     Args:
         origin (Coord): origin coordinate (a)
@@ -272,7 +275,11 @@ find_coord_on_line = functools.wraps(find_coord_on_line)(functools.lru_cache(max
 
 
 def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord) -> float:
-    """Find the length of a bezier curve.
+    """Approximate the length of a bezier curve.
+
+    The curve is sampled at evenly spaced parameter values and the total length is
+    estimated by summing line lengths between successive sampled points using
+    terminal-adjusted row distances.
 
     Args:
         start (Coord): The starting coordinate of the curve.
