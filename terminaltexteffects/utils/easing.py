@@ -2,7 +2,8 @@
 
 Classes:
     EasingTracker: Tracks the progression of an easing function over a set number of steps.
-    SequenceEaser: Eases over a sequence, tracking added, removed, and total elements
+    SequenceEaser: Eases over the leading portion of a sequence, tracking added,
+        removed, and total elements.
 
 Functions:
     linear: Linear easing function.
@@ -177,8 +178,7 @@ def in_out_cubic(progress_ratio: float) -> float:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the
-        character
+        float: 0 <= n <= 1 eased value
 
     """
     if progress_ratio < 0.5:
@@ -193,8 +193,7 @@ def in_quart(progress_ratio: float) -> float:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage
-        of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 eased value
 
     """
     return progress_ratio**4
@@ -431,7 +430,7 @@ def out_elastic(progress_ratio: float) -> float:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 eased value
 
     """
     c4 = (2 * math.pi) / 3
@@ -449,7 +448,7 @@ def in_out_elastic(progress_ratio: float) -> float:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 eased value
 
     """
     c5 = (2 * math.pi) / 4.5
@@ -469,7 +468,7 @@ def in_bounce(progress_ratio: float) -> float:
         progress_ratio (float): the ratio of the current step to the maximum steps
 
     Returns:
-        float: 0 <= n <= 1 representing the percentage of the current waypoint speed to apply to the character
+        float: 0 <= n <= 1 eased value
 
     """
     return 1 - out_bounce(1 - progress_ratio)
@@ -584,6 +583,8 @@ class EasingTracker:
     Attributes:
         easing_function (EasingFunction): The easing function being tracked.
         total_steps (int): The total number of steps for the easing function.
+        clamp (bool): Whether eased values should be clamped to the range `[0, 1]`
+            after each step.
         current_step (int): The current step in the easing progression.
         progress_ratio (float): The ratio of the current step to the total steps.
         step_delta (float): The change in eased value from the last step to the current step.
@@ -669,15 +670,19 @@ _T = typing.TypeVar("_T")
 
 @dataclass
 class SequenceEaser(typing.Generic[_T]):
-    """Eases over a sequence, tracking added, removed, and total elements.
+    """Eases over the leading portion of a sequence, tracking added, removed, and total elements.
+
+    At each step, `total` is the contiguous slice `sequence[:length]` determined by
+    the current eased progress. `added` and `removed` describe the change from the
+    previous step.
 
     Attributes:
         sequence (Sequence[_T]): The sequence to ease over.
         easing_function (EasingFunction): The easing function to use.
         total_steps (int): The total number of steps for the easing function.
-        added (Sequence[_T]): Elements added in the current step.
-        removed (Sequence[_T]): Elements removed in the current step.
-        total (Sequence[_T]): Current active elements based on eased length.
+        added (Sequence[_T]): Contiguous slice of newly included elements from the current step.
+        removed (Sequence[_T]): Contiguous slice of elements removed from the previous step.
+        total (Sequence[_T]): Current leading slice of `sequence` selected by eased progress.
 
     """
 
@@ -697,7 +702,12 @@ class SequenceEaser(typing.Generic[_T]):
         )
 
     def step(self) -> typing.Sequence[_T]:
-        """Advance the easing tracker by one step and update added, removed, and total elements.
+        """Advance the easing tracker by one step and update sequence state.
+
+        `total` is updated to the current eased leading slice of `sequence`. If that
+        slice grows, `added` contains the newly included elements. If it shrinks,
+        `removed` contains the elements that were dropped. If its length is unchanged,
+        both are empty.
 
         Returns:
             typing.Sequence[_T]: The elements added in the current step.

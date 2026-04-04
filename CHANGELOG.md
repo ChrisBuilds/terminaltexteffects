@@ -42,6 +42,7 @@
 * Updated `utils.argutils` documentation to remove stale module references and better describe parser specs, argument specs, tuple normalization, range validators, symbol validation, canvas dimensions, and easing parser return values.
 * Updated `utils.ansitools` documentation to clarify ANSI color parsing normalization and cursor movement indexing and relative movement behavior.
 * Updated `utils.colorterm` documentation to clarify RGB tuple conversion, ANSI selector meanings, and accepted XTerm and hex color inputs.
+* Updated `utils.easing` documentation to remove stale motion-specific wording and better describe sequence-prefix easing, clamp behavior, and stepwise added/removed slice tracking.
 * Updated the `terminaltexteffects.__main__` entry-point documentation to describe effect discovery, plugin loading, duplicate-command validation, and the CLI's input and exit behavior more accurately.
 
 ## 0.14.2
