@@ -1,21 +1,21 @@
-"""Convert xterm color codes and hex colors into ANSI escape sequences.
+"""Convert XTerm 256 color codes and RGB hex colors into ANSI escape sequences.
 
 Functions:
-    fg(color_code: str | int) -> str: Set the foreground color of the terminal text.
-    bg(color_code: str | int) -> str: Set the background color of the terminal text.
+    fg(color_code: str | int) -> str: Set the foreground color using an XTerm code or RGB hex string.
+    bg(color_code: str | int) -> str: Set the background color using an XTerm code or RGB hex string.
 """
 
 from __future__ import annotations
 
 
 def _hex_to_int(hex_color: str) -> tuple[int, int, int]:
-    """Convert a hex color string into a list of integers.
+    """Convert a hex color string into an RGB integer tuple.
 
     Args:
         hex_color (str): Hex color string in the range 000000 -> FFFFFF. '#' is optional.
 
     Returns:
-        tuple[int, int, int]: A tuple of integers [RED, GREEN, BLUE] representing the color in RGB format.
+        tuple[int, int, int]: A tuple of integers (red, green, blue) representing the color.
 
     """
     hex_color = hex_color.strip("#")
@@ -30,7 +30,8 @@ def _color(color_code: str | int, location: int) -> str:
 
     Args:
         color_code (str | int): The color code to be converted.
-        location (int): The location to apply the color.
+        location (int): ANSI SGR color selector, where `38` applies foreground color
+            and `48` applies background color.
 
     Returns:
         str: The ANSI escape sequence for the color.
@@ -62,7 +63,8 @@ def fg(color_code: str | int) -> str:
     """Set the foreground color of the terminal text.
 
     Args:
-        color_code (str | int): The value to set the foreground color, as a hex string or X-Term 256 color code.
+        color_code (str | int): The foreground color as an XTerm 256 color code
+            or an RGB hex string, with or without a leading `#`.
 
     Returns:
         str: The ANSI escape sequence to set the foreground color.
@@ -75,7 +77,8 @@ def bg(color_code: str | int) -> str:
     """Set the background color of the terminal text.
 
     Args:
-        color_code (str | int): The value to set the background color, as a hex string or X-Term 256 color code.
+        color_code (str | int): The background color as an XTerm 256 color code
+            or an RGB hex string, with or without a leading `#`.
 
     Returns:
         str: The ANSI escape sequence to set the background color.
