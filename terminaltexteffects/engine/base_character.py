@@ -228,8 +228,9 @@ class EventHandler:
         """Register an event to be handled by the EventHandler.
 
         Note: Action.RESET_APPEARANCE does not accept a target.
-        For path- and scene-based events, `caller` may be the triggering object itself or
-        its registered ID string. Segment events still require a `Waypoint` object.
+        For `PATH_ACTIVATED`, `PATH_COMPLETE`, `SCENE_ACTIVATED`, and `SCENE_COMPLETE`,
+        `caller` may be the triggering object itself or its registered ID string.
+        `PATH_HOLDING` and segment events require their corresponding object instances.
         For `ACTIVATE_PATH`, `DEACTIVATE_PATH`, `ACTIVATE_SCENE`, and `DEACTIVATE_SCENE`,
         string targets are resolved from registered path or scene IDs. `DEACTIVATE_PATH`,
         `DEACTIVATE_SCENE`, and `RESET_APPEARANCE` may use `None` where supported by the action.
@@ -337,8 +338,10 @@ class EventHandler:
         - ACTIVATE_SCENE: Activates an animation scene for the character
         - DEACTIVATE_PATH: Deactivates a specific motion path or, when the target is `None`,
           the currently active path
-        - DEACTIVATE_SCENE: Deactivates an animation scene for the character
-        - RESET_APPEARANCE: Resets the character's appearance to its input symbol
+        - DEACTIVATE_SCENE: Deactivates a specific animation scene or, when the target is `None`,
+          the currently active scene
+        - RESET_APPEARANCE: Resets the character's appearance to its input symbol and,
+          where applicable, its configured input colors
         - SET_LAYER: Sets the character's rendering layer
         - SET_COORDINATE: Sets the character's current coordinate
         - CALLBACK: Executes a custom callback function with the character and additional arguments
@@ -355,11 +358,8 @@ class EventHandler:
             the register_event method.
 
         Example:
-            When a path completes, this method might be called with:
-            - event: Event.PATH_COMPLETE
-            - caller: some_path_object
-
-            If actions were registered for this combination, they would all be executed in order.
+            When `Event.PATH_COMPLETE` is triggered for a registered path caller, all
+            actions registered for that event/caller pair are executed in order.
 
         """
         action_map = {
@@ -397,7 +397,7 @@ class EffectCharacter:
         input_symbol (str): The symbol for the character in the input data.
         input_coord (Coord): The coordinate of the character in the input data.
         is_visible (bool): Whether the character is currently visible and should be printed to the terminal.
-        animation (graphics.Animation): The animation object that controls the character's appearance.
+        animation (animation.Animation): The animation object that controls the character's appearance.
         motion (motion.Motion): The motion object that controls the character's movement.
         event_handler (EventHandler): The event handler object that handles events related to the character.
         layer (int): The layer of the character. The layer determines the order in which characters are printed.
@@ -477,7 +477,9 @@ class EffectCharacter:
     def _link(self, char: EffectCharacter, *, bidirectional: bool = True) -> None:
         """Link this character with another character.
 
-        Used for spanning tree algorithms.
+        Used for spanning-tree algorithms. When `bidirectional` is True, the reverse link
+        is added to `char` as well. Links are stored in a set, so repeated links are
+        idempotent.
 
         Args:
             char (EffectCharacter): Character being linked to this character.

@@ -37,6 +37,7 @@
 * `EventHandler.Action.DEACTIVATE_PATH` event registrations now support a `Path`, a path ID string, or `None`, and focused engine tests cover the expanded deactivation behavior.
 * `animation.deactivate_scene()` now accepts a `Scene`, a scene ID string, or no argument, with the no-argument form deactivating the current active scene when present.
 * `EventHandler.Action.DEACTIVATE_SCENE` event registrations now support a `Scene`, a scene ID string, or `None`, and focused engine tests cover the expanded deactivation behavior.
+* Updated `engine.base_character` documentation to reflect object-based event registration, expanded path and scene deactivation behavior, `EffectCharacter` runtime state, and the current ordering and reset semantics used during character updates and event handling.
 
 ## 0.14.2
 
