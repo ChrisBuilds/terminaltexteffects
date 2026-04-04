@@ -77,19 +77,24 @@ class BaseConfig:
     """Base configuration class for effects.
 
     This class serves as a base for all effect configurations, providing a common
-    interface for argument parser population and configuration building. Effect config classes
-    are created via `_build_config`, which can read values from a parsed
-    `argparse.Namespace` or from each field's `argutils.ArgSpec` defaults. Any
-    config class intended to be used to populate a subparser must define a
-    `parser_spec` attribute with type `argutils.ParserSpec`.
+    interface for argument parser population and configuration building. Effect config
+    classes are created via `_build_config`, which reads values from a parsed
+    `argparse.Namespace` and falls back to `argutils.ArgSpec` defaults for fields
+    defined with `ArgSpec` instances. Any config class intended to be used to populate
+    a subparser must define a `parser_spec` attribute with type `argutils.ParserSpec`.
     """
 
     @classmethod
     def _populate_parser(cls, parser: argparse.ArgumentParser | argparse._SubParsersAction) -> None:
-        """Populate the argument parser with the effect's configuration options.
+        """Populate the argument parser with the config class's argument specs.
 
-        If a subparser is being populated, `cls.parser_spec` is used to create
-        the subparser before adding the class field argument specs.
+        If `parser` is a subparser collection, `cls.parser_spec` is used to create
+        the subparser before adding field argument specs. Config classes used in that mode
+        must define `parser_spec`.
+
+        Raises:
+            AttributeError: If `parser` is a subparser collection and `cls.parser_spec`
+                is not defined.
         """
         if isinstance(parser, argparse._SubParsersAction):
             parser = parser.add_parser(**vars(cls.parser_spec))  # pyright: ignore[reportAttributeAccessIssue]
@@ -106,7 +111,24 @@ class BaseConfig:
 
     @classmethod
     def _build_config(cls: type[CONFIG], parsed_args: argparse.Namespace | None = None) -> CONFIG:
-        """Build a config instance from a parsed namespace or `ArgSpec` defaults."""
+        """Build a config instance from parsed arguments or `ArgSpec` defaults.
+
+        When `parsed_args` is provided, matching namespace attributes are used first and
+        missing fields fall back to each field's `ArgSpec.default` when available. When
+        `parsed_args` is `None`, the config is built entirely from `ArgSpec.default`
+        values.
+
+        Args:
+            parsed_args (argparse.Namespace | None): Parsed CLI arguments, or None to use
+                `ArgSpec` defaults only.
+
+        Raises:
+            AttributeError: If a required config field is missing from `parsed_args` and
+                does not define an `ArgSpec` default.
+
+        Returns:
+            CONFIG: A populated config instance.
+        """
         if parsed_args is not None:
             config_args: dict[str, typing.Any] = {}
             for field in fields(cls):

@@ -38,6 +38,7 @@
 * `animation.deactivate_scene()` now accepts a `Scene`, a scene ID string, or no argument, with the no-argument form deactivating the current active scene when present.
 * `EventHandler.Action.DEACTIVATE_SCENE` event registrations now support a `Scene`, a scene ID string, or `None`, and focused engine tests cover the expanded deactivation behavior.
 * Updated `engine.base_character` documentation to reflect object-based event registration, expanded path and scene deactivation behavior, `EffectCharacter` runtime state, and the current ordering and reset semantics used during character updates and event handling.
+* Updated `engine.base_config` documentation to clarify `parser_spec` requirements, `ArgSpec`-based config construction, and `_build_config()` fallback and error behavior.
 * Updated the `terminaltexteffects.__main__` entry-point documentation to describe effect discovery, plugin loading, duplicate-command validation, and the CLI's input and exit behavior more accurately.
 
 ## 0.14.2
