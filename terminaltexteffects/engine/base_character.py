@@ -103,7 +103,8 @@ class EventHandler:
             ACTIVATE_SCENE (Action): Activates an animation scene. The action target is the scene itself or its ID.
             DEACTIVATE_PATH (Action): Deactivates a path. The action target is the path itself, its ID,
                 or None to deactivate the currently active path.
-            DEACTIVATE_SCENE (Action): Deactivates the active animation scene. This action does not accept a target.
+            DEACTIVATE_SCENE (Action): Deactivates an animation scene. The action target is the scene itself,
+                its ID, or None to deactivate the currently active scene.
             RESET_APPEARANCE (Action): Resets the appearance of the character to the input symbol and color.
             SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
             SET_COORDINATE (Action): Sets the coordinate of the character. The action target is the coordinate.
@@ -167,7 +168,7 @@ class EventHandler:
         event: Event,
         caller: animation.Scene | motion.Waypoint | motion.Path | str,
         action: typing.Literal[Action.DEACTIVATE_SCENE],
-        target: None = ...,
+        target: animation.Scene | str | None = ...,
     ) -> None: ...
     @typing.overload
     def register_event(
@@ -229,6 +230,9 @@ class EventHandler:
         Note: Action.RESET_APPEARANCE does not accept a target.
         For path- and scene-based events, `caller` may be the triggering object itself or
         its registered ID string. Segment events still require a `Waypoint` object.
+        For `ACTIVATE_PATH`, `DEACTIVATE_PATH`, `ACTIVATE_SCENE`, and `DEACTIVATE_SCENE`,
+        string targets are resolved from registered path or scene IDs. `DEACTIVATE_PATH`,
+        `DEACTIVATE_SCENE`, and `RESET_APPEARANCE` may use `None` where supported by the action.
 
         Args:
             event (Event): The event to register.
@@ -264,7 +268,7 @@ class EventHandler:
             EventHandler.Action.ACTIVATE_PATH: motion.Path,
             EventHandler.Action.ACTIVATE_SCENE: animation.Scene,
             EventHandler.Action.DEACTIVATE_PATH: motion.Path,
-            EventHandler.Action.DEACTIVATE_SCENE: type(None),
+            EventHandler.Action.DEACTIVATE_SCENE: animation.Scene,
             EventHandler.Action.RESET_APPEARANCE: type(None),
             EventHandler.Action.SET_LAYER: int,
             EventHandler.Action.SET_COORDINATE: Coord,
@@ -295,12 +299,12 @@ class EventHandler:
             target = path_query_result
 
         # find target Scene when provided scene_id
-        elif action is EventHandler.Action.ACTIVATE_SCENE and isinstance(target, str):
+        elif action in (EventHandler.Action.ACTIVATE_SCENE, EventHandler.Action.DEACTIVATE_SCENE) and isinstance(target, str):
             if (scene_query_result := self.character.animation.query_scene(target)) is None:
                 raise SceneNotFoundError(scene_id=target)
             target = scene_query_result
 
-        elif action is EventHandler.Action.DEACTIVATE_PATH and target is None:
+        elif action in (EventHandler.Action.DEACTIVATE_PATH, EventHandler.Action.DEACTIVATE_SCENE) and target is None:
             pass
 
         elif (action is EventHandler.Action.RESET_APPEARANCE and target is not None) or (
@@ -331,7 +335,8 @@ class EventHandler:
         The method supports the following action types:
         - ACTIVATE_PATH: Activates a motion path for the character
         - ACTIVATE_SCENE: Activates an animation scene for the character
-        - DEACTIVATE_PATH: Deactivates a motion path for the character
+        - DEACTIVATE_PATH: Deactivates a specific motion path or, when the target is `None`,
+          the currently active path
         - DEACTIVATE_SCENE: Deactivates an animation scene for the character
         - RESET_APPEARANCE: Resets the character's appearance to its input symbol
         - SET_LAYER: Sets the character's rendering layer
@@ -361,7 +366,7 @@ class EventHandler:
             EventHandler.Action.ACTIVATE_PATH: self.character.motion.activate_path,
             EventHandler.Action.ACTIVATE_SCENE: self.character.animation.activate_scene,
             EventHandler.Action.DEACTIVATE_PATH: self.character.motion.deactivate_path,
-            EventHandler.Action.DEACTIVATE_SCENE: lambda _: self.character.animation.deactivate_scene,
+            EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
             EventHandler.Action.RESET_APPEARANCE: lambda _: self.character.animation.set_appearance(
                 self.character.input_symbol,
             ),
@@ -380,8 +385,9 @@ class EventHandler:
 class EffectCharacter:
     """A class representing a single character from the input data.
 
-    EffectCharacters are managed by the Terminal and are used to apply animations and effects to individual characters.
-    Add an EffectCharacter to the Terminal using the add_character method of the Terminal class.
+    EffectCharacters are created and managed by the Terminal and are used to apply
+    animations and effects to individual characters. Additional non-input characters
+    can be created with `Terminal.add_character()`.
 
     Methods:
         tick: Progress the character's animation and motion by one step.
@@ -397,6 +403,9 @@ class EffectCharacter:
         layer (int): The layer of the character. The layer determines the order in which characters are printed.
         is_fill_character (bool): Whether the character is a fill character. Fill characters are used to fill
             the empty cells of the Canvas.
+        links (set[EffectCharacter]): Linked neighboring characters used by spanning-tree algorithms.
+        neighbors (dict[str, EffectCharacter | None]): Adjacent characters keyed by direction
+            (`"north"`, `"east"`, `"south"`, `"west"`).
 
     """
 
@@ -447,7 +456,8 @@ class EffectCharacter:
     def is_active(self) -> bool:
         """Returns whether the character is currently active.
 
-        A character is active if its animation or motion is not complete.
+        A character is active when its animation has an incomplete active scene or its
+        motion has an incomplete active path.
 
         Returns:
             bool: True if the character is active, False if not.
@@ -456,7 +466,11 @@ class EffectCharacter:
         return bool(not self.animation.active_scene_is_complete() or not self.motion.movement_is_complete())
 
     def tick(self) -> None:
-        """Progress the character's animation and motion by one step."""
+        """Progress the character by one tick.
+
+        Motion is advanced first, then animation is stepped so animation logic can react
+        to the character's updated motion state for the same tick.
+        """
         self.motion.move()
         self.animation.step_animation()
 

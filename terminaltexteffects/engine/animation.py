@@ -888,6 +888,34 @@ class Animation:
         self.current_character_visual = self.active_scene.activate()
         self.character.event_handler._handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, found_scene)
 
-    def deactivate_scene(self) -> None:
-        """Deactivates the active scene."""
-        self.active_scene = None
+    @typing.overload
+    def deactivate_scene(self) -> None: ...
+    @typing.overload
+    def deactivate_scene(self, scene: Scene) -> None: ...
+    @typing.overload
+    def deactivate_scene(self, scene: str) -> None: ...
+    def deactivate_scene(self, scene: Scene | str | None = None) -> None:
+        """Deactivate a scene if it is currently active.
+
+        If `scene` is omitted, the current active scene is deactivated if one exists.
+        If `scene` is a string, it is resolved as a scene ID before deactivation.
+
+        Args:
+            scene (Scene | str | None): Scene to deactivate, its ID, or None to deactivate the
+                current active scene.
+
+        Raises:
+            SceneNotFoundError: If `scene` is a string and no scene with that ID exists.
+
+        """
+        if scene is None:
+            self.active_scene = None
+            return
+        if isinstance(scene, str):
+            found_scene = self.query_scene(scene)
+            if found_scene is None:
+                raise SceneNotFoundError(scene)
+        else:
+            found_scene = scene
+        if self.active_scene and self.active_scene is found_scene:
+            self.active_scene = None

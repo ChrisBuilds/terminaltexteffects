@@ -35,6 +35,8 @@
 * Updated `engine.base_effect` documentation to clarify iterator creation semantics, frame retrieval and active-character lifecycle behavior, preexisting input-color detection, and terminal-output restoration behavior, plus fixed a small module docstring typo.
 * `motion.deactivate_path()` now accepts a `Path`, a path ID string, or no argument, with the no-argument form deactivating the current active path when present.
 * `EventHandler.Action.DEACTIVATE_PATH` event registrations now support a `Path`, a path ID string, or `None`, and focused engine tests cover the expanded deactivation behavior.
+* `animation.deactivate_scene()` now accepts a `Scene`, a scene ID string, or no argument, with the no-argument form deactivating the current active scene when present.
+* `EventHandler.Action.DEACTIVATE_SCENE` event registrations now support a `Scene`, a scene ID string, or `None`, and focused engine tests cover the expanded deactivation behavior.
 
 ## 0.14.2
 

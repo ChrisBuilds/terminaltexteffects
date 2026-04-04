@@ -387,6 +387,15 @@ def test_animation_deactivate_scene(character: EffectCharacter) -> None:
     assert character.animation.active_scene is None
 
 
+def test_animation_deactivate_scene_by_id(character: EffectCharacter) -> None:
+    """Verify that deactivating a scene by ID clears the active scene reference."""
+    scene = character.animation.new_scene(scene_id="test_scene")
+    scene.add_frame(symbol="a", duration=10)
+    character.animation.activate_scene(scene)
+    character.animation.deactivate_scene("test_scene")
+    assert character.animation.active_scene is None
+
+
 def test_scene_get_color_code_no_color(character: EffectCharacter) -> None:
     """Ensure Scene mirrors Animation color handling when color is disabled."""
     character.animation.no_color = True

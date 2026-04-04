@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.engine.animation import Scene
 from terminaltexteffects.engine.motion import Path
 from terminaltexteffects.utils.exceptions.base_character_exceptions import (
     DuplicateEventRegistrationError,
@@ -127,6 +128,30 @@ def test_eventhandler_register_event_deactivate_path_with_none_target(eventhandl
     assert eventhandler.registered_events[(EventHandler.Event.PATH_COMPLETE, caller)][0][1] is None
 
 
+def test_eventhandler_register_event_deactivate_scene_with_id(eventhandler: EventHandler) -> None:
+    """Test registering DEACTIVATE_SCENE using a scene ID target."""
+    caller = eventhandler.character.animation.new_scene(scene_id="caller")
+    target = eventhandler.character.animation.new_scene(scene_id="target")
+    eventhandler.register_event(
+        EventHandler.Event.SCENE_COMPLETE,
+        caller,
+        EventHandler.Action.DEACTIVATE_SCENE,
+        "target",
+    )
+    assert eventhandler.registered_events[(EventHandler.Event.SCENE_COMPLETE, caller)][0][1] is target
+
+
+def test_eventhandler_register_event_deactivate_scene_with_none_target(eventhandler: EventHandler) -> None:
+    """Test registering DEACTIVATE_SCENE without a target."""
+    caller = eventhandler.character.animation.new_scene(scene_id="caller")
+    eventhandler.register_event(
+        EventHandler.Event.SCENE_COMPLETE,
+        caller,
+        EventHandler.Action.DEACTIVATE_SCENE,
+    )
+    assert eventhandler.registered_events[(EventHandler.Event.SCENE_COMPLETE, caller)][0][1] is None
+
+
 def test_eventhandler_register_event_duplicate_raises_error(eventhandler: EventHandler) -> None:
     """Test that registering the same event-caller-action-target combination raises DuplicateEventRegistrationError."""
     p1 = Path("a")
@@ -163,6 +188,21 @@ def test_eventhandler_handle_event_deactivate_path_with_none_target(eventhandler
     )
     eventhandler._handle_event(EventHandler.Event.PATH_COMPLETE, caller)
     assert eventhandler.character.motion.active_path is None
+
+
+def test_eventhandler_handle_event_deactivate_scene_with_none_target(eventhandler: EventHandler) -> None:
+    """Test handling DEACTIVATE_SCENE with no target deactivates the active scene."""
+    caller = eventhandler.character.animation.new_scene(scene_id="caller")
+    active = eventhandler.character.animation.new_scene(scene_id="active")
+    active.add_frame("a", duration=1)
+    eventhandler.character.animation.activate_scene(active)
+    eventhandler.register_event(
+        EventHandler.Event.SCENE_COMPLETE,
+        caller,
+        EventHandler.Action.DEACTIVATE_SCENE,
+    )
+    eventhandler._handle_event(EventHandler.Event.SCENE_COMPLETE, caller)
+    assert eventhandler.character.animation.active_scene is None
 
 
 def test_effectcharacter_init(effectcharacter: EffectCharacter) -> None:
