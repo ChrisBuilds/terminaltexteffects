@@ -31,9 +31,6 @@ Classes:
     PositiveRatio: Argument type for positive float values greater than zero and less than or equal to one.
     EasingStep: Argument type for easing step size values.
 
-Functions:
-    is_ascii_or_utf8: Tests if the given string is either ASCII or UTF-8.
-
 Constants:
     EASING_EPILOG (str): A detailed description of the easing functions supported.
 """
@@ -80,7 +77,11 @@ _MISSING = object()
 
 @dataclass(frozen=True)
 class ParserSpec:
-    """Specification for a parser in the argument parser."""
+    """Specification for creating an argparse subparser for an effect config.
+
+    Each field maps directly to keyword arguments passed to
+    `argparse._SubParsersAction.add_parser()`.
+    """
 
     name: str
     help: str
@@ -90,10 +91,11 @@ class ParserSpec:
 
 @dataclass(frozen=True)
 class ArgSpec:
-    """Specification for a command-line argument and default value.
+    """Specification for a command-line argument and config default value.
 
-    The default value is used for both the argparse argument and to support direct
-    instantiation of a config.
+    Non-missing fields map directly to keyword arguments for
+    `argparse.ArgumentParser.add_argument()`. The `default` value is also used by
+    `BaseConfig._build_config()` when constructing configs without parsed CLI input.
     """
 
     name: str
@@ -240,10 +242,10 @@ class ColorSortArg:
 
 
 class TupleAction(argparse.Action):
-    """Custom action to convert a list of values into a tuple.
+    """Convert parsed multi-value arguments into tuples.
 
-    Used for arguments which utilize the `nargs` argument to
-    specify multiple values.
+    Used for arguments that accept multiple values via `nargs`. If argparse provides
+    `None`, the destination is set to an empty tuple.
     """
 
     def __call__(
@@ -334,15 +336,16 @@ class NonNegativeInt:
 
 
 class PositiveIntRange:
-    """Validate argument is a valid range of integers n > 0.
+    """Validate argument is a nondecreasing range that starts with a positive integer.
 
-    Positive integer ranges are a pair of integers separated by a hyphen. Ex: 1-10
+    Positive integer ranges are expressed as two integers separated by a hyphen,
+    for example `1-10`.
 
     Example:
         '1-10' is a valid input.
 
     Raises:
-        argparse.ArgumentTypeError: Value is not a valid range of positive integers.
+        argparse.ArgumentTypeError: Value is not a valid positive integer range.
 
     """
 
@@ -454,12 +457,13 @@ class NonNegativeFloat:
 
 
 class PositiveFloatRange:
-    """Validate argument is a valid range of positive floats.
+    """Validate argument is a nondecreasing, nonzero float range.
 
-    Float ranges are a pair of positive floats separated by a hyphen. Ex: 0.1-1.0
+    Float ranges are expressed as two floats separated by a hyphen, for example
+    `0.1-1.0`.
 
     Raises:
-        argparse.ArgumentTypeError: Value is not a valid range of floats.
+        argparse.ArgumentTypeError: Value is not a valid float range.
 
     """
 
@@ -661,7 +665,7 @@ class ColorArg:
 
 
 class Symbol:
-    """Validate argument is a single ASCII/UTF-8 character.
+    """Validate argument is a single printable character.
 
     Raises:
         argparse.ArgumentTypeError: Value is not a valid symbol.
@@ -672,7 +676,7 @@ class Symbol:
 
     @staticmethod
     def type_parser(arg: str) -> str:
-        """Validate argument is a valid symbol.
+        """Validate argument is a single printable character.
 
         Args:
             arg (str): argument to validate
@@ -688,7 +692,7 @@ class Symbol:
 
 
 class CanvasDimension:
-    """Validate argument is a valid canvas dimension.
+    """Validate argument is a nonnegative integer or `-1`.
 
     Raises:
         argparse.ArgumentTypeError: Value is not a valid canvas dimension.
@@ -699,7 +703,7 @@ class CanvasDimension:
 
     @staticmethod
     def type_parser(arg: str) -> int:
-        """Validate argument is a valid canvas dimension.
+        """Validate argument is a nonnegative integer or `-1`.
 
         Args:
             arg (str): argument to validate
@@ -777,7 +781,7 @@ class Ease:
             argparse.ArgumentTypeError: Ease value is not a valid easing function.
 
         Returns:
-            Ease: validated ease value
+            typing.Callable: The validated easing function.
 
         """
         easing_func_map = {
