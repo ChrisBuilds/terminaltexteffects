@@ -259,3 +259,14 @@ def test_color_repr():
 
 def test_color_str():
     assert "Color Code: ffffff" in str(Color("#ffffff"))
+
+
+def test_color_str_includes_xterm_zero() -> None:
+    assert "XTerm Color: 0" in str(Color(0))
+
+
+def test_color_pair_str_includes_xterm_zero() -> None:
+    color_pair = ColorPair(0, 0)
+    color_pair_str = str(color_pair)
+    assert "Foreground XTerm Color: 0" in color_pair_str
+    assert "Background XTerm Color: 0" in color_pair_str

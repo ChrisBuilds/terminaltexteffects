@@ -44,6 +44,7 @@
 * Updated `utils.colorterm` documentation to clarify RGB tuple conversion, ANSI selector meanings, and accepted XTerm and hex color inputs.
 * Updated `utils.easing` documentation to remove stale motion-specific wording and better describe sequence-prefix easing, clamp behavior, and stepwise added/removed slice tracking.
 * Updated `utils.geometry` documentation to clarify zero-size rectangle behavior, ray extrapolation wording, sampled bezier-length approximation, and the module's public helper list.
+* `Color.__str__()` and `ColorPair.__str__()` now correctly include valid XTerm color `0` in their output, and focused utility tests cover the regression.
 * Updated the `terminaltexteffects.__main__` entry-point documentation to describe effect discovery, plugin loading, duplicate-command validation, and the CLI's input and exit behavior more accurately.
 
 ## 0.14.2

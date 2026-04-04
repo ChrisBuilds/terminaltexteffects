@@ -90,7 +90,7 @@ class Color:
         """Return a string representation of the Color object."""
         color_block = f"{colorterm.fg(self.rgb_color)}█████{ansitools.reset_all()}"
         return (
-            f"Color Code: {self.rgb_color}{f' | XTerm Color: {self.xterm_color}' if self.xterm_color else ''}"
+            f"Color Code: {self.rgb_color}{f' | XTerm Color: {self.xterm_color}' if self.xterm_color is not None else ''}"
             f"\nColor Appearance: {color_block}"
         )
 
@@ -154,9 +154,9 @@ class ColorPair:
         )
         return (
             f"Foreground Color Code: {self.fg_color.rgb_color if self.fg_color else ''}"
-            f"{f' | Foreground XTerm Color: {self.fg_color.xterm_color}' if self.fg_color and self.fg_color.xterm_color else ''}\n"  # noqa: E501
+            f"{f' | Foreground XTerm Color: {self.fg_color.xterm_color}' if self.fg_color and self.fg_color.xterm_color is not None else ''}\n"  # noqa: E501
             f"Background Color Code: {self.bg_color.rgb_color if self.bg_color else ''}"
-            f"{f' | Background XTerm Color: {self.bg_color.xterm_color}' if self.bg_color and self.bg_color.xterm_color else ''}"  # noqa: E501
+            f"{f' | Background XTerm Color: {self.bg_color.xterm_color}' if self.bg_color and self.bg_color.xterm_color is not None else ''}"  # noqa: E501
             f"\nColor Appearance: {color_block}"
         )
 
