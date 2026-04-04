@@ -3,7 +3,8 @@
 These escape codes can be used to modify the appearance of text in a terminal.
 
 Functions:
-    parse_ansi_color_sequence(sequence: str) -> int | str: Parse an 8-bit or 24-bit ANSI color sequence.
+    parse_ansi_color_sequence(sequence: str) -> int | str: Parse an 8-bit or 24-bit ANSI color
+        sequence, normalizing empty 24-bit channels to 0.
     dec_save_cursor_position() -> str: Save the cursor position using DEC sequence.
     dec_restore_cursor_position() -> str: Restore the cursor position using DEC sequence.
     hide_cursor() -> str: Hide the cursor.
@@ -30,6 +31,8 @@ def parse_ansi_color_sequence(sequence: str) -> int | str:
     """Parse an 8-bit or 24-bit ANSI color sequence.
 
     Returns the color code as an integer, in the case of 8-bit, or a hex string in the case of 24-bit.
+    For 24-bit color sequences, empty channel fields are normalized to `0` before
+    the RGB value is returned.
 
     Args:
         sequence (str): ANSI color sequence
@@ -99,10 +102,10 @@ def show_cursor() -> str:
 
 
 def move_cursor_up(y: int) -> str:
-    """Move the cursor up y lines.
+    """Move the cursor up by a relative number of rows.
 
     Args:
-        y (int): number of lines to move up
+        y (int): Number of rows to move upward from the current cursor position.
 
     Returns:
         str: ANSI escape code
@@ -112,10 +115,10 @@ def move_cursor_up(y: int) -> str:
 
 
 def move_cursor_to_column(x: int) -> str:
-    """Move the cursor to the specified column.
+    """Move the cursor to the specified 1-based column.
 
     Args:
-        x (int): column number
+        x (int): Destination column number, using ANSI's 1-based column indexing.
 
     Returns:
         str: ANSI escape code

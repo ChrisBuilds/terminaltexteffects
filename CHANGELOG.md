@@ -40,6 +40,7 @@
 * Updated `engine.base_character` documentation to reflect object-based event registration, expanded path and scene deactivation behavior, `EffectCharacter` runtime state, and the current ordering and reset semantics used during character updates and event handling.
 * Updated `engine.base_config` documentation to clarify `parser_spec` requirements, `ArgSpec`-based config construction, and `_build_config()` fallback and error behavior.
 * Updated `utils.argutils` documentation to remove stale module references and better describe parser specs, argument specs, tuple normalization, range validators, symbol validation, canvas dimensions, and easing parser return values.
+* Updated `utils.ansitools` documentation to clarify ANSI color parsing normalization and cursor movement indexing and relative movement behavior.
 * Updated the `terminaltexteffects.__main__` entry-point documentation to describe effect discovery, plugin loading, duplicate-command validation, and the CLI's input and exit behavior more accurately.
 
 ## 0.14.2
