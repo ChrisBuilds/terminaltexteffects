@@ -29,6 +29,7 @@
 * `PrimsWeighted` now limits random starting-character selection to the text boundary when requested, and its documentation now explains the per-character weighting model and completion behavior more accurately.
 * `BreadthFirst` now initializes correctly when `starting_char` is omitted, records each discovered character only once with the correct parent frontier node, and has updated traversal documentation.
 * `AldousBroder` now returns immediately once all characters are linked, and its documentation now matches the generator's state transitions and project docstring style.
+* Updated `engine.motion` documentation to accurately describe waypoint fields, bezier control handling, path runtime state, activation-side path mutation, looping behavior, and documented exceptions.
 
 ## 0.14.2
 

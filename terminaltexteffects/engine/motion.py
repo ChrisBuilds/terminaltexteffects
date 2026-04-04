@@ -1,7 +1,7 @@
 """Classes and methods for managing and manipulating character motion.
 
 Classes:
-    Waypoint: A Waypoint comprises a coordinate, speed, and, optionally, bezier control point(s).
+    Waypoint: A Waypoint comprises an identifier, a coordinate, and, optionally, bezier control point(s).
     Segment: A segment of a path consisting of two waypoints and the distance between them.
     Path: Represents a path consisting of multiple waypoints for motion.
     Motion: Motion class for managing the movement of a character.
@@ -29,12 +29,12 @@ if typing.TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class Waypoint:
-    """A Waypoint comprises a coordinate, speed, and, optionally, bezier control point(s).
+    """A Waypoint comprises an identifier, a coordinate, and, optionally, bezier control point(s).
 
     Attributes:
-        waypoint_id (str): unique identifier for the waypoint
-        coord (Coord): coordinate
-        bezier_control (tuple[Coord, ...] | None): coordinate of the control point for a bezier curve. Defaults to None.
+        waypoint_id (str): Unique identifier for the waypoint.
+        coord (Coord): Coordinate of the waypoint.
+        bezier_control (tuple[Coord, ...] | None): Optional bezier control point(s). Defaults to None.
 
     """
 
@@ -89,11 +89,21 @@ class Path:
 
     Attributes:
         path_id (str): The unique identifier for the path.
-        speed (float): speed > 0
-        ease (easing.EasingFunction | None): easing function for character movement. Defaults to None.
-        layer (int | None): layer to move the character to, if None, layer is unchanged. Defaults to None.
-        hold_time (int): number of frames to hold the character at the end of the path. Defaults to 0.
-        loop (bool): Whether the path should loop back to the beginning. Default is False.
+        speed (float): Path speed; must be greater than 0.
+        ease (easing.EasingFunction | None): Easing function applied across path traversal.
+        layer (int | None): Character layer to apply when the path is activated. If None, the layer is unchanged.
+        hold_time (int): Number of frames to remain at the end of the path before completion.
+        loop (bool): Whether the path should restart after completion.
+        segments (list[Segment]): Ordered segments traversed by the path.
+        waypoints (list[Waypoint]): Ordered waypoints in the path.
+        waypoint_lookup (dict[str, Waypoint]): Waypoints indexed by `waypoint_id`.
+        total_distance (float): Total travel distance across all segments, including the origin segment when active.
+        current_step (int): Current traversal step count.
+        max_steps (int): Total number of traversal steps, derived from `total_distance / speed`.
+        hold_time_remaining (int): Remaining hold frames once the path reaches its end.
+        last_distance_reached (float): Most recent eased or linear distance traveled along the active path.
+        origin_segment (Segment | None): Temporary segment from the current coordinate to the first waypoint,
+            set on activation.
 
     Methods:
         new_waypoint:
@@ -138,8 +148,9 @@ class Path:
         Args:
             waypoint_id (str): Unique identifier for the waypoint. Used to query for the waypoint.
             coord (Coord): coordinate
-            bezier_control (tuple[Coord, ...] | Coord | None): coordinate of the control point for a bezier
-                curve. Defaults to None.
+            bezier_control (tuple[Coord, ...] | Coord | None): Optional bezier control point(s) for the
+                segment ending at this waypoint. A single Coord is normalized to a one-item tuple.
+                Defaults to None.
 
         Returns:
             Waypoint: The new waypoint.
@@ -187,7 +198,9 @@ class Path:
             )
         else:
             distance_from_previous = geometry.find_length_of_line(
-                self.waypoints[-2].coord, waypoint.coord, double_row_diff=True
+                self.waypoints[-2].coord,
+                waypoint.coord,
+                double_row_diff=True,
             )
         self.total_distance += distance_from_previous
         self.segments.append(Segment(self.waypoints[-2], waypoint, distance_from_previous))
@@ -370,7 +383,8 @@ class Motion:
             path_id (str, optional): Unique identifier for the path. Used to query for the path. Defaults to "".
 
         Raises:
-            ValueError: If a path with the provided id already exists.
+            DuplicatePathIDError: If a path with the provided id already exists.
+            PathInvalidSpeedError: If `speed` is less than or equal to 0.
 
         Returns:
             Path: The new path.
@@ -464,10 +478,11 @@ class Motion:
 
         If the provided `path` arg is not a `Path` object, it must be a `path_id` string.
 
-        This method sets the active path to the given path, calculates the distance to the first waypoint,
-        and updates the total distance of the path. If the path has an origin segment, it removes it from
-        the segments list and subtracts its distance from the total distance. Then, it creates a new origin
-        segment from the current coordinate to the first waypoint and inserts it at the beginning of the segments list.
+        This method sets the active path to the given path and mutates the Path to reflect the character's
+        current starting position. It calculates the distance to the first waypoint and updates the total
+        distance of the path. If the path has an origin segment, it removes it from the segments list and
+        subtracts its distance from the total distance. Then, it creates a new origin segment from the
+        current coordinate to the first waypoint and inserts it at the beginning of the segments list.
 
         The method also resets the current step, hold time remaining, and max steps of the path based on the total
         distance and speed. It ensures that the enter and exit events for each segment are not triggered. If
@@ -496,7 +511,9 @@ class Motion:
             )
         else:
             distance_to_first_waypoint = geometry.find_length_of_line(
-                self.current_coord, first_waypoint.coord, double_row_diff=True
+                self.current_coord,
+                first_waypoint.coord,
+                double_row_diff=True,
             )
         self.active_path.total_distance += distance_to_first_waypoint
         if self.active_path.origin_segment:
@@ -532,9 +549,9 @@ class Motion:
         """Move the character along the active path.
 
         The character's current coordinate is updated to the next step in the active path. If the active path
-        is completed, an event is triggered based on whether the path is set to loop or not. If the path is
-        set to loop, the path is deactivated and then reactivated to start from the beginning. If not, the
-        path is simply deactivated and a PATH_COMPLETE event is triggered.
+        is completed, an event is triggered based on whether the path is set to loop or not. Looping paths are
+        reactivated from the current coordinate when they contain more than one segment. Otherwise, the path
+        is deactivated and a PATH_COMPLETE event is triggered.
 
         If the path has a hold time, the character will pause at the end of the path for the specified duration. During
         this hold time, a PATH_HOLDING event is triggered on the first frame, and the hold time is decremented on each
