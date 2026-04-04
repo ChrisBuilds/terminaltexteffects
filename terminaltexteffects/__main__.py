@@ -1,4 +1,4 @@
-"""Provides the command line interface for the TerminalTextEffects application."""
+"""Package entry point for the TerminalTextEffects command line interface."""
 
 from __future__ import annotations
 
@@ -24,11 +24,19 @@ if TYPE_CHECKING:
 
 
 def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
-    """Build the argument parsers for the terminaltexteffects CLI and parse the arguments.
+    """Build the CLI parser, discover available effects, and parse arguments.
+
+    This includes registering built-in effect modules and user-provided effect
+    modules from the XDG config effects directory, then returning the parsed CLI
+    arguments together with a mapping of effect command names to their effect and
+    config classes.
 
     Returns:
-        tuple[argparse.Namespace, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The parsed arguments and a
-            mapping of effect names to their classes and configurations.
+        tuple[argparse.Namespace, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The parsed
+            arguments and a mapping of effect names to their classes and configurations.
+
+    Raises:
+        ValueError: If two discovered effect modules register the same effect command.
 
     """
     parser = argparse.ArgumentParser(
@@ -81,8 +89,16 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
     def _register_effect_from_module(module: ModuleType) -> None:
         """Register an effect module's resources and populate its CLI options.
 
+        If the module defines `get_effect_resources()`, that callable is expected to
+        return the effect command name, effect class, and config class. The config class
+        is then used to populate the subparser for that effect command.
+
         Args:
             module: The module to inspect for effect resources.
+
+        Raises:
+            ValueError: If the module registers an effect command that has already been
+                registered.
 
         """
         if hasattr(module, "get_effect_resources"):
@@ -120,7 +136,13 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
 
 
 def main() -> None:
-    """Run the terminaltexteffects command line interface."""
+    """Run the terminaltexteffects command line interface.
+
+    Parse CLI arguments, load input text, choose and configure the requested effect,
+    and stream rendered frames to the terminal. The process exits with status `1`
+    for missing input, invalid effect selection, input file read failures, or
+    keyboard interruption.
+    """
     args, effect_resource_map = build_parsers_and_parse_args()
     if args.seed is not None:
         random.seed(args.seed)
