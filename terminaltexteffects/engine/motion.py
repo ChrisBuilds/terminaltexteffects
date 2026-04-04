@@ -535,14 +535,36 @@ class Motion:
             self.character.layer = self.active_path.layer
         self.character.event_handler._handle_event(self.character.event_handler.Event.PATH_ACTIVATED, self.active_path)
 
-    def deactivate_path(self, path: Path) -> None:
-        """Set the active path to None if the active path is the given path.
+    @typing.overload
+    def deactivate_path(self) -> None: ...
+    @typing.overload
+    def deactivate_path(self, path: Path) -> None: ...
+    @typing.overload
+    def deactivate_path(self, path: str) -> None: ...
+    def deactivate_path(self, path: Path | str | None = None) -> None:
+        """Deactivate a path if it is currently active.
+
+        If `path` is omitted, the current active path is deactivated if one exists.
+        If `path` is a string, it is resolved as a path ID before deactivation.
 
         Args:
-            path (Path): the Path to deactivate
+            path (Path | str | None): Path to deactivate, its ID, or None to deactivate the
+                current active path.
+
+        Raises:
+            PathNotFoundError: If `path` is a string and no path with that ID exists.
 
         """
-        if self.active_path and self.active_path is path:
+        if path is None:
+            self.active_path = None
+            return
+        if isinstance(path, str):
+            found_path = self.query_path(path)
+            if found_path is None:
+                raise PathNotFoundError(path)
+        else:
+            found_path = path
+        if self.active_path and self.active_path is found_path:
             self.active_path = None
 
     def move(self) -> None:

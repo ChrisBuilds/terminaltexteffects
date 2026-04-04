@@ -103,6 +103,30 @@ def test_eventhandler_register_event(eventhandler: EventHandler) -> None:
     assert eventhandler.registered_events[(EventHandler.Event.PATH_COMPLETE, p1)][0][1] is p2
 
 
+def test_eventhandler_register_event_deactivate_path_with_id(eventhandler: EventHandler) -> None:
+    """Test registering DEACTIVATE_PATH using a path ID target."""
+    caller = eventhandler.character.motion.new_path(path_id="caller")
+    target = eventhandler.character.motion.new_path(path_id="target")
+    eventhandler.register_event(
+        EventHandler.Event.PATH_COMPLETE,
+        caller,
+        EventHandler.Action.DEACTIVATE_PATH,
+        "target",
+    )
+    assert eventhandler.registered_events[(EventHandler.Event.PATH_COMPLETE, caller)][0][1] is target
+
+
+def test_eventhandler_register_event_deactivate_path_with_none_target(eventhandler: EventHandler) -> None:
+    """Test registering DEACTIVATE_PATH without a target."""
+    caller = eventhandler.character.motion.new_path(path_id="caller")
+    eventhandler.register_event(
+        EventHandler.Event.PATH_COMPLETE,
+        caller,
+        EventHandler.Action.DEACTIVATE_PATH,
+    )
+    assert eventhandler.registered_events[(EventHandler.Event.PATH_COMPLETE, caller)][0][1] is None
+
+
 def test_eventhandler_register_event_duplicate_raises_error(eventhandler: EventHandler) -> None:
     """Test that registering the same event-caller-action-target combination raises DuplicateEventRegistrationError."""
     p1 = Path("a")
@@ -124,6 +148,21 @@ def test_eventhandler_handle_event(eventhandler: EventHandler) -> None:
     eventhandler.register_event(EventHandler.Event.PATH_COMPLETE, p1, EventHandler.Action.ACTIVATE_PATH, p2)
     eventhandler._handle_event(EventHandler.Event.PATH_COMPLETE, p1)
     assert eventhandler.character.motion.active_path == p2
+
+
+def test_eventhandler_handle_event_deactivate_path_with_none_target(eventhandler: EventHandler) -> None:
+    """Test handling DEACTIVATE_PATH with no target deactivates the active path."""
+    caller = eventhandler.character.motion.new_path(path_id="caller")
+    active = eventhandler.character.motion.new_path(path_id="active")
+    active.new_waypoint(Coord(0, 0))
+    eventhandler.character.motion.activate_path(active)
+    eventhandler.register_event(
+        EventHandler.Event.PATH_COMPLETE,
+        caller,
+        EventHandler.Action.DEACTIVATE_PATH,
+    )
+    eventhandler._handle_event(EventHandler.Event.PATH_COMPLETE, caller)
+    assert eventhandler.character.motion.active_path is None
 
 
 def test_effectcharacter_init(effectcharacter: EffectCharacter) -> None:

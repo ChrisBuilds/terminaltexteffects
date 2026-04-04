@@ -453,6 +453,24 @@ def test_motion_activate_path_previously_deactivated(character: EffectCharacter)
     assert second_origin_distance < first_origin_distance
 
 
+def test_motion_deactivate_path_without_arg(character: EffectCharacter) -> None:
+    """Test deactivating the current active path without providing a target."""
+    p = character.motion.new_path(path_id="0")
+    p.new_waypoint(Coord(0, 0))
+    character.motion.activate_path(p)
+    character.motion.deactivate_path()
+    assert character.motion.active_path is None
+
+
+def test_motion_deactivate_path_by_id(character: EffectCharacter) -> None:
+    """Test deactivating the active path by path ID."""
+    p = character.motion.new_path(path_id="path_0")
+    p.new_waypoint(Coord(0, 0))
+    character.motion.activate_path(p)
+    character.motion.deactivate_path("path_0")
+    assert character.motion.active_path is None
+
+
 def test_motion_move_no_active_path(character: EffectCharacter) -> None:
     """Test moving a character with no active path."""
     assert character.motion.active_path is None

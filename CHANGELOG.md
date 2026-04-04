@@ -33,6 +33,8 @@
 * Updated `engine.animation` documentation to accurately describe scene lookup behavior, scene sync and completion semantics, frame/color override rules, activation/reset expectations, and current TODO-backed gaps around dim formatting, duplicate scene IDs, and unused scene-step tracking.
 * Updated `engine.terminal` documentation to better describe canvas sizing and anchoring, input preprocessing, character/fill tracking, rendering state, cursor management, and sort/lookup behavior, and hardened `enforce_framerate()` so a configured frame rate of `0` safely disables frame limiting even when the method is called directly.
 * Updated `engine.base_effect` documentation to clarify iterator creation semantics, frame retrieval and active-character lifecycle behavior, preexisting input-color detection, and terminal-output restoration behavior, plus fixed a small module docstring typo.
+* `motion.deactivate_path()` now accepts a `Path`, a path ID string, or no argument, with the no-argument form deactivating the current active path when present.
+* `EventHandler.Action.DEACTIVATE_PATH` event registrations now support a `Path`, a path ID string, or `None`, and focused engine tests cover the expanded deactivation behavior.
 
 ## 0.14.2
 

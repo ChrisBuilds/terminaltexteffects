@@ -30,11 +30,18 @@ class EventHandler:
     The EventHandler is used by the EffectCharacter class to handle events related to the character.
 
     Attributes:
-        character (EffectCharacter): The character that the EventHandler is handling events for.
-        registered_events (dict[tuple[Event, str], list[tuple[Action, str]]]): A dictionary of registered events.
-            The key is a tuple of the event and the caller ID (waypoint id/scene id).
-            The value is a list of tuples of the action and the action target (path id/scene id).
-        layer (int): The layer of the character. The layer determines the order in which characters are printed.
+        character (EffectCharacter): The character whose events are handled by this EventHandler.
+        registered_events (
+            dict[
+                tuple[Event, animation.Scene | motion.Waypoint | motion.Path],
+                list[
+                    tuple[
+                        Action,
+                        animation.Scene | motion.Waypoint | motion.Path | int | Coord | Callback | str | None,
+                    ]
+                ],
+            ]
+        ): Registered event/action mappings keyed by the triggering event and caller object.
 
     Note:
         SEGMENT_ENTERED/EXITED events will trigger the first time the character enters or exits a segment.
@@ -92,10 +99,11 @@ class EventHandler:
         register_event method of the EventHandler class.
 
         Attributes:
-            ACTIVATE_PATH (Action): Activates a path. The action target is the path ID.
-            ACTIVATE_SCENE (Action): Activates an animation scene. The action target is the scene ID.
-            DEACTIVATE_PATH (Action): Deactivates a path. The action target is the path ID.
-            DEACTIVATE_SCENE (Action): Deactivates an animation scene. The action target is the scene ID.
+            ACTIVATE_PATH (Action): Activates a path. The action target is the path itself or its ID.
+            ACTIVATE_SCENE (Action): Activates an animation scene. The action target is the scene itself or its ID.
+            DEACTIVATE_PATH (Action): Deactivates a path. The action target is the path itself, its ID,
+                or None to deactivate the currently active path.
+            DEACTIVATE_SCENE (Action): Deactivates the active animation scene. This action does not accept a target.
             RESET_APPEARANCE (Action): Resets the appearance of the character to the input symbol and color.
             SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
             SET_COORDINATE (Action): Sets the coordinate of the character. The action target is the coordinate.
@@ -166,8 +174,16 @@ class EventHandler:
         self,
         event: Event,
         caller: animation.Scene | motion.Waypoint | motion.Path | str,
-        action: typing.Literal[Action.ACTIVATE_PATH, Action.DEACTIVATE_PATH],
+        action: typing.Literal[Action.ACTIVATE_PATH],
         target: motion.Path | str,
+    ) -> None: ...
+    @typing.overload
+    def register_event(
+        self,
+        event: Event,
+        caller: animation.Scene | motion.Waypoint | motion.Path | str,
+        action: typing.Literal[Action.DEACTIVATE_PATH],
+        target: motion.Path | str | None = ...,
     ) -> None: ...
     @typing.overload
     def register_event(
@@ -211,6 +227,8 @@ class EventHandler:
         """Register an event to be handled by the EventHandler.
 
         Note: Action.RESET_APPEARANCE does not accept a target.
+        For path- and scene-based events, `caller` may be the triggering object itself or
+        its registered ID string. Segment events still require a `Waypoint` object.
 
         Args:
             event (Event): The event to register.
@@ -271,7 +289,7 @@ class EventHandler:
             raise EventRegistrationCallerError(event, caller, event_caller_map[event])
 
         # find target Path when provided path_id
-        if action is EventHandler.Action.ACTIVATE_PATH and isinstance(target, str):
+        if action in (EventHandler.Action.ACTIVATE_PATH, EventHandler.Action.DEACTIVATE_PATH) and isinstance(target, str):
             if (path_query_result := self.character.motion.query_path(target)) is None:
                 raise PathNotFoundError(path_id=target)
             target = path_query_result
@@ -281,6 +299,9 @@ class EventHandler:
             if (scene_query_result := self.character.animation.query_scene(target)) is None:
                 raise SceneNotFoundError(scene_id=target)
             target = scene_query_result
+
+        elif action is EventHandler.Action.DEACTIVATE_PATH and target is None:
+            pass
 
         elif (action is EventHandler.Action.RESET_APPEARANCE and target is not None) or (
             action_target_map[action] != target.__class__
