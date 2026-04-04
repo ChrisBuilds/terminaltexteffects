@@ -5,7 +5,7 @@ establish the effect iterator interface as well as the effect configuration and 
 
 Classes:
     BaseEffectIterator(Generic[T]): An abstract base class that defines the basic structure for an iterator
-        that applies a certain effect to the input data. Provides initilization for the effect configuration and
+        that applies a certain effect to the input data. Provides initialization for the effect configuration and
         terminal as well as the `__iter__` method.
 
     BaseEffect(Generic[T]): An abstract base class that defines the basic structure for an effect. Provides
@@ -40,7 +40,8 @@ class BaseEffectIterator(ABC, Generic[T]):
         config (T): Configuration for the effect.
         terminal (Terminal): Terminal to use for output.
         active_characters (set[EffectCharacter]): Set of active characters in the effect.
-        preexisting_colors_present (bool): Whether any characters in the input data have preexisting colors.
+        preexisting_colors_present (bool): Whether any terminal input characters were
+            initialized with parsed foreground or background input colors.
     Properties:
         frame (str): Current frame of the effect.
 
@@ -68,9 +69,11 @@ class BaseEffectIterator(ABC, Generic[T]):
 
     @property
     def frame(self) -> str:
-        """Return the current frame by getting the formatted output string from the terminal.
+        """Return the current formatted frame from the terminal.
 
-        If the frame rate is set >0 in the terminal configuration, enforce the frame rate.
+        If the configured terminal frame rate is greater than `0`, enforce the frame rate
+        before reading the formatted output string. This property does not advance effect
+        state on its own.
 
         Returns:
             str: Current frame of the effect.
@@ -81,19 +84,20 @@ class BaseEffectIterator(ABC, Generic[T]):
         return self.terminal.get_formatted_output_string()
 
     def update(self) -> None:
-        """Run the tick method for all active characters.
+        """Run one tick for each active character and prune inactive characters.
 
-        Remove inactive characters from the active_characters set.
+        Each character in `active_characters` is ticked once. After all ticks complete,
+        characters whose `is_active` flag is false are removed from the set.
         """
         for character in self.active_characters:
             character.tick()
         self.active_characters -= {character for character in self.active_characters if not character.is_active}
 
     def __iter__(self) -> BaseEffectIterator:
-        """Return the iterator object.
+        """Return this iterator instance.
 
         Returns:
-            BaseEffectIterator: Iterator object.
+            BaseEffectIterator: This iterator.
 
         """
         return self
@@ -159,10 +163,10 @@ class BaseEffect(ABC, Generic[T]):
         self.terminal_config: TerminalConfig = terminal_config or TerminalConfig._build_config()
 
     def __iter__(self) -> BaseEffectIterator:
-        """Return the iterator object.
+        """Create and return a new iterator for the effect.
 
         Returns:
-            BaseEffectIterator: Iterator object.
+            BaseEffectIterator: A new iterator instance for this effect.
 
         """
         return self._iterator_cls(self)
@@ -178,8 +182,8 @@ class BaseEffect(ABC, Generic[T]):
             Terminal: Terminal object for handling output.
 
         Raises:
-            Exception: Any exception that occurs within the context manager will be raised before restoring the terminal
-                state.
+            Exception: Any exception that occurs within the context manager is re-raised
+                after the terminal state is restored.
 
         """
         terminal = Terminal(self.input_data, self.terminal_config)
