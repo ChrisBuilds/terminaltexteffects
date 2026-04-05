@@ -151,7 +151,7 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
         """
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.phase = "center"
         self.build()
 
@@ -166,7 +166,15 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
             character.motion.set_coordinate(self.terminal.canvas.center)
             # setup waypoints
             if self.config.expand_direction == "vertical":
@@ -189,8 +197,24 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
 
             # setup scenes
             full_scene = character.animation.new_scene(scene_id="full")
-            full_gradient = Gradient(self.config.starting_color, self.character_final_color_map[character], steps=10)
-            full_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=full_gradient)
+            final_fg_color = self.character_final_color_map[character].fg_color
+            final_bg_color = self.character_final_color_map[character].bg_color
+            if self.terminal.config.existing_color_handling == "dynamic":
+                fg_gradient = Gradient(self.config.starting_color, final_fg_color, steps=10) if final_fg_color else None
+                bg_gradient = Gradient(self.config.starting_color, final_bg_color, steps=10) if final_bg_color else None
+                if fg_gradient or bg_gradient:
+                    full_scene.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        6,
+                        fg_gradient=fg_gradient,
+                        bg_gradient=bg_gradient,
+                    )
+                else:
+                    full_scene.add_frame(character.input_symbol, 6, colors=ColorPair())
+            else:
+                assert final_fg_color is not None
+                full_gradient = Gradient(self.config.starting_color, final_fg_color, steps=10)
+                full_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=full_gradient)
 
             # initialize character state
             character.motion.activate_path(center_path)
