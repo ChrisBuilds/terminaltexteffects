@@ -124,7 +124,7 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
 
         """
         super().__init__(effect)
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, Color | None] = {}
         self.pending_characters: list[list[EffectCharacter]] = []
         self.easer = easing.SequenceEaser(
             sequence=self.terminal.get_characters_grouped(self.config.highlight_direction),
@@ -146,26 +146,40 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            base_color = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                base_color = character.animation.input_fg_color
+            else:
+                base_color = final_gradient_mapping[character.input_coord]
             self.character_final_color_map[character] = base_color
-            highlight_color = Animation.adjust_color_brightness(
-                base_color,
-                self.config.highlight_brightness,
-            )
-            highlight_gradient = Gradient(
-                base_color,
-                highlight_color,
-                highlight_color,
-                base_color,
-                steps=(3, self.config.highlight_width, 3),
-            )
-            character.animation.set_appearance(character.input_symbol, ColorPair(fg=base_color))
+            if base_color:
+                highlight_color = Animation.adjust_color_brightness(
+                    base_color,
+                    self.config.highlight_brightness,
+                )
+                highlight_gradient = Gradient(
+                    base_color,
+                    highlight_color,
+                    highlight_color,
+                    base_color,
+                    steps=(3, self.config.highlight_width, 3),
+                )
+                character.animation.set_appearance(character.input_symbol, ColorPair(fg=base_color))
+            else:
+                highlight_gradient = None
+                character.animation.set_appearance(character.input_symbol, ColorPair())
             specular_highlight_scn = character.animation.new_scene(scene_id="highlight")
-            for color in highlight_gradient:
+            if highlight_gradient:
+                for color in highlight_gradient:
+                    specular_highlight_scn.add_frame(
+                        character.input_symbol,
+                        2,
+                        colors=ColorPair(fg=color),
+                    )
+            else:
                 specular_highlight_scn.add_frame(
                     character.input_symbol,
                     2,
-                    colors=ColorPair(fg=color),
+                    colors=ColorPair(),
                 )
             self.terminal.set_character_visibility(character, is_visible=True)
 

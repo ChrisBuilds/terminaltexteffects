@@ -2,17 +2,27 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, cast
 
 import pytest
 
 from terminaltexteffects.effects import effect_highlight
+from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.utils.graphics import ColorPair
 
 if TYPE_CHECKING:
     from terminaltexteffects import Color
-    from terminaltexteffects.engine.terminal import TerminalConfig
     from terminaltexteffects.utils.argutils import CharacterGroup
     from terminaltexteffects.utils.graphics import Gradient
+
+
+def _make_terminal_config(
+    existing_color_handling: Literal["always", "dynamic", "ignore"],
+) -> TerminalConfig:
+    terminal_config = TerminalConfig._build_config()
+    terminal_config.frame_rate = 0
+    terminal_config.existing_color_handling = existing_color_handling
+    return terminal_config
 
 
 @pytest.mark.parametrize(
@@ -80,3 +90,79 @@ def test_highlight_args(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+def test_highlight_dynamic_with_preexisting_fg_uses_input_fg_for_base_and_returns_to_it() -> None:
+    """Verify dynamic mode derives the base color and highlight return color from input fg."""
+    effect = effect_highlight.Highlight("\x1b[38;5;196mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = cast("effect_highlight.HighlightIterator", iter(effect))
+    character = iterator.terminal.get_characters()[0]
+    highlight_scene = character.animation.scenes["highlight"]
+    final_frame = highlight_scene.frames[-1].character_visual
+    base_visual = character.animation.current_character_visual
+
+    assert base_visual.colors == ColorPair(fg=effect_highlight.Color(196))
+    assert base_visual._fg_color_code == effect_highlight.Color(196).rgb_color
+    assert base_visual._bg_color_code is None
+    assert final_frame.colors == ColorPair(fg=effect_highlight.Color(196))
+    assert final_frame._fg_color_code == effect_highlight.Color(196).rgb_color
+    assert final_frame._bg_color_code is None
+
+
+def test_highlight_dynamic_without_preexisting_fg_has_no_visible_highlight_effect() -> None:
+    """Verify dynamic mode leaves no-fg characters uncolored throughout the highlight scene."""
+    effect = effect_highlight.Highlight("A")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = cast("effect_highlight.HighlightIterator", iter(effect))
+    character = iterator.terminal.get_characters()[0]
+    highlight_scene = character.animation.scenes["highlight"]
+    base_visual = character.animation.current_character_visual
+    final_frame = highlight_scene.frames[-1].character_visual
+
+    assert base_visual.colors == ColorPair()
+    assert base_visual._fg_color_code is None
+    assert base_visual._bg_color_code is None
+    assert final_frame.colors == ColorPair()
+    assert final_frame._fg_color_code is None
+    assert final_frame._bg_color_code is None
+
+
+def test_highlight_ignore_with_preexisting_colors_uses_effect_gradient() -> None:
+    """Verify ignore mode keeps the effect-owned final-gradient base and highlight colors."""
+    effect = effect_highlight.Highlight("\x1b[38;5;196mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("ignore")
+
+    iterator = cast("effect_highlight.HighlightIterator", iter(effect))
+    character = iterator.terminal.get_characters()[0]
+    highlight_scene = character.animation.scenes["highlight"]
+    base_visual = character.animation.current_character_visual
+    final_frame = highlight_scene.frames[-1].character_visual
+    final_color = iterator.character_final_color_map[character]
+
+    assert final_color is not None
+    assert base_visual.colors == ColorPair(fg=final_color)
+    assert base_visual._fg_color_code == final_color.rgb_color
+    assert final_frame.colors == ColorPair(fg=final_color)
+    assert final_frame._fg_color_code == final_color.rgb_color
+    assert final_frame._bg_color_code is None
+
+
+def test_highlight_always_with_preexisting_colors_uses_input_colors() -> None:
+    """Verify always mode still resolves visible highlight frames to the parsed input colors."""
+    effect = effect_highlight.Highlight("\x1b[38;5;196mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("always")
+
+    iterator = cast("effect_highlight.HighlightIterator", iter(effect))
+    character = iterator.terminal.get_characters()[0]
+    highlight_scene = character.animation.scenes["highlight"]
+    base_visual = character.animation.current_character_visual
+    final_frame = highlight_scene.frames[-1].character_visual
+
+    assert base_visual.colors == ColorPair(fg=effect_highlight.Color(196))
+    assert base_visual._fg_color_code == effect_highlight.Color(196).rgb_color
+    assert final_frame.colors == ColorPair(fg=effect_highlight.Color(196))
+    assert final_frame._fg_color_code == effect_highlight.Color(196).rgb_color
+    assert final_frame._bg_color_code is None
