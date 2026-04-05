@@ -236,7 +236,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.final_gradient_coordinate_map: dict[Coord, Color] = self.final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
             self.terminal.canvas.text_top,
@@ -257,7 +257,15 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
     def build(self) -> None:
         """Build the initial state of the effect."""
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = self.final_gradient_coordinate_map[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=self.final_gradient_coordinate_map[character.input_coord],
+                )
             input_path = character.motion.new_path(
                 speed=self.config.character_movement_speed,
                 ease=self.config.character_easing,
@@ -273,7 +281,7 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
             )
             character.animation.set_appearance(
                 character.input_symbol,
-                ColorPair(fg=self.character_final_color_map[character]),
+                self.character_final_color_map[character],
             )
         self._launchers: list[OrbittingVolleyIterator.Launcher] = []
         for coord, symbol in (

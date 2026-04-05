@@ -75,6 +75,7 @@
 * LaserEtch - Added `existing_color_handling="dynamic"` support in the etched character cooling scene. Characters with parsed input ANSI fg/bg colors now cool directly from the effect's heat colors into those input colors, while characters without parsed input colors cool to white and then finish with no explicit color so they render using the terminal default color.
 * Matrix - Added `existing_color_handling="dynamic"` support in the `resolve` scene. Matrix rain, fill, highlight, and symbol-swapping phases remain effect-colored, and when characters resolve they now transition to any parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
 * MiddleOut - Added `existing_color_handling="dynamic"` support in the `full` scene after the center phase completes. Characters still begin from the effect's `starting_color`, then transition to any parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
+* OrbittingVolley - Added `existing_color_handling="dynamic"` support for launched input characters. The orbiting launcher visuals remain effect-colored, while launched characters now use any parsed input ANSI fg/bg colors immediately or no explicit color if none were parsed.
 
 ## 0.14.2
 
