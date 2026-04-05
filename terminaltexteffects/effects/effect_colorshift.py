@@ -270,12 +270,37 @@ class ColorShiftIterator(BaseEffectIterator[ColorShiftConfig]):
                     colors=ColorPair(fg=color),
                 )
             final_color_scn = character.animation.new_scene(scene_id="final_gradient")
-            for color in Gradient(colors[-1], self.character_final_color_map[character], steps=8):
-                final_color_scn.add_frame(
-                    character.input_symbol,
-                    self.config.gradient_frames,
-                    colors=ColorPair(fg=color),
+            if self.terminal.config.existing_color_handling == "dynamic":
+                fg_gradient = (
+                    Gradient(colors[-1], character.animation.input_fg_color, steps=8)
+                    if character.animation.input_fg_color
+                    else None
                 )
+                bg_gradient = (
+                    Gradient(colors[-1], character.animation.input_bg_color, steps=8)
+                    if character.animation.input_bg_color
+                    else None
+                )
+                if fg_gradient or bg_gradient:
+                    final_color_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        self.config.gradient_frames,
+                        fg_gradient=fg_gradient,
+                        bg_gradient=bg_gradient,
+                    )
+                else:
+                    final_color_scn.add_frame(
+                        character.input_symbol,
+                        self.config.gradient_frames,
+                        colors=ColorPair(),
+                    )
+            else:
+                for color in Gradient(colors[-1], self.character_final_color_map[character], steps=8):
+                    final_color_scn.add_frame(
+                        character.input_symbol,
+                        self.config.gradient_frames,
+                        colors=ColorPair(fg=color),
+                    )
             character.animation.activate_scene(gradient_scn)
             self.active_characters.add(character)
             character.event_handler.register_event(

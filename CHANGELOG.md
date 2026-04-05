@@ -54,6 +54,7 @@
 * BouncyBalls - Added `existing_color_handling="dynamic"` support. Balls still fall using the effect's ball colors, and on settle they now transition to the input symbol plus any parsed input ANSI fg/bg colors. Characters without parsed input colors settle with no explicit final color so they render using the terminal default color.
 * Bubbles - Added `existing_color_handling="dynamic"` support. Bubbles still float and pop using the effect's own colors, and after popping characters now transition to the input symbol plus any parsed input ANSI fg/bg colors. Characters without parsed input colors settle with no explicit final color so they render using the terminal default color.
 * Burn - Added `existing_color_handling="dynamic"` support. Characters still ignite and burn using the effect's own colors, and after the burn scene completes they now transition to the input symbol plus any parsed input ANSI fg/bg colors. Characters without parsed input colors settle with no explicit final color so they render using the terminal default color.
+* ColorShift - Added `existing_color_handling="dynamic"` support for the final settle transition. Characters still play the effect's shifting gradient animation, and when the final gradient runs they now transition to the input symbol plus any parsed input ANSI fg/bg colors. Characters without parsed input colors settle with no explicit final color so they render using the terminal default color.
 
 ## 0.14.2
 
