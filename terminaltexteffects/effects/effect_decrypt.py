@@ -11,6 +11,7 @@ from __future__ import annotations
 import random
 import typing
 from dataclasses import dataclass
+from typing import cast
 
 from terminaltexteffects import Color, ColorPair, EffectCharacter, EventHandler, Gradient, Scene
 from terminaltexteffects.engine.base_config import (
@@ -125,7 +126,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
         self.phase = "typing"
         self.encrypted_symbols: list[str] = []
         self.scenes: dict[str, Scene] = {}
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.make_encrypted_symbols()
         self.build()
 
@@ -157,8 +158,33 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
             duration = random.randrange(35, 60) if random.randint(0, 100) <= 30 else random.randrange(3, 6)
             slow_decrypt_scene.add_frame(symbol, duration, colors=ColorPair(fg=color))
         discovered_scene = character.animation.new_scene(scene_id="discovered")
-        discovered_gradient = Gradient(Color("#ffffff"), self.character_final_color_map[character], steps=10)
-        discovered_scene.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=discovered_gradient)
+        if self.terminal.config.existing_color_handling == "dynamic":
+            fg_gradient = (
+                Gradient(Color("#ffffff"), character.animation.input_fg_color, steps=10)
+                if character.animation.input_fg_color
+                else None
+            )
+            bg_gradient = (
+                Gradient(Color("#ffffff"), character.animation.input_bg_color, steps=10)
+                if character.animation.input_bg_color
+                else None
+            )
+            if fg_gradient or bg_gradient:
+                discovered_scene.apply_gradient_to_symbols(
+                    character.input_symbol,
+                    5,
+                    fg_gradient=fg_gradient,
+                    bg_gradient=bg_gradient,
+                )
+            else:
+                discovered_scene.add_frame(character.input_symbol, 5, colors=ColorPair())
+        else:
+            discovered_gradient = Gradient(
+                Color("#ffffff"),
+                cast("Color", self.character_final_color_map[character].fg_color),
+                steps=10,
+            )
+            discovered_scene.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=discovered_gradient)
 
     def prepare_data_for_type_effect(self) -> None:
         """Prepare the data for the typing effect."""
@@ -208,7 +234,15 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
         self.prepare_data_for_type_effect()
         self.prepare_data_for_decrypt_effect()
 
