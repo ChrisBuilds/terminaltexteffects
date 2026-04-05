@@ -49,6 +49,10 @@
 * `Color.__str__()` and `ColorPair.__str__()` now correctly include valid XTerm color `0` in their output, and focused utility tests cover the regression.
 * Updated the `terminaltexteffects.__main__` entry-point documentation to describe effect discovery, plugin loading, duplicate-command validation, and the CLI's input and exit behavior more accurately.
 
+#### Effects Changes (0.15.0)
+
+* BouncyBalls - Added `existing_color_handling="dynamic"` support. Balls still fall using the effect's ball colors, and on settle they now transition to the input symbol plus any parsed input ANSI fg/bg colors. Characters without parsed input colors settle with no explicit final color so they render using the terminal default color.
+
 ## 0.14.2
 
 ---
