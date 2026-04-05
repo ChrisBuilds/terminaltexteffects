@@ -12,8 +12,17 @@
 
 * Added effect discovery support for user provided effects. Effects should be Python files located at
   XDG_CONFIG_HOME/terminaltexteffects/effects. (e.g. /home/me/.config/terminaltexteffects/effects/effect_custom.py)
+* Added shell completion generation for `bash` and `zsh` via `tte --print-completion {bash,zsh}`.
 
 
+#### Application Changes (0.15.0)
+
+---
+
+* The CLI parser is now built through a shared parser-construction path so runtime argument parsing, help text, and generated shell completions all use the same discovered effect and option definitions.
+* Generated shell completions now include user-provided effects discovered from `XDG_CONFIG_HOME/terminaltexteffects/effects` at completion-generation time.
+* The `zsh` completion script now self-initializes `compinit` and `bashcompinit` when needed so `eval "$(tte --print-completion zsh)"` works with less shell setup friction.
+* The CLI version flag now falls back to the local `pyproject.toml` version when running from a source checkout without installed package metadata.
 
 #### Engine Changes (0.15.0)
 

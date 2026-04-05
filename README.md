@@ -240,6 +240,11 @@ OR
 
 * Use ```<effect> -h``` to view options for a specific effect, such as color or movement direction.
   * Ex: ```tte decrypt -h```
+* Generate shell completions with `tte --print-completion bash` or `tte --print-completion zsh`.
+  * Bash: `eval "$(tte --print-completion bash)"`
+  * Zsh: `eval "$(tte --print-completion zsh)"`
+  * To enable completions for future shells, add the relevant command above to your shell startup file such as `~/.bashrc` or `~/.zshrc`.
+  * If you add or remove custom effect plugins from `~/.config/terminaltexteffects/effects`, regenerate the completion script so the effect list stays current.
 
 For more information, view the [Application Usage Guide](https://chrisbuilds.github.io/terminaltexteffects/appguide/).
 

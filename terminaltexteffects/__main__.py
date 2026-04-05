@@ -9,12 +9,13 @@ import os
 import pkgutil
 import random
 import sys
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import terminaltexteffects.effects
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
+from terminaltexteffects.utils.shell_completion import SUPPORTED_SHELLS, get_completion_script
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -23,17 +24,17 @@ if TYPE_CHECKING:
     from terminaltexteffects.engine.base_effect import BaseEffect
 
 
-def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
-    """Build the CLI parser, discover available effects, and parse arguments.
+def build_parser() -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
+    """Build the CLI parser and discover available effects.
 
     This includes registering built-in effect modules and user-provided effect
     modules from the XDG config effects directory, then returning the parsed CLI
-    arguments together with a mapping of effect command names to their effect and
+    parser together with a mapping of effect command names to their effect and
     config classes.
 
     Returns:
-        tuple[argparse.Namespace, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The parsed
-            arguments and a mapping of effect names to their classes and configurations.
+        tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The CLI parser and a
+            mapping of effect names to their classes and configurations.
 
     Raises:
         ValueError: If two discovered effect modules register the same effect command.
@@ -51,7 +52,12 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
         "--version",
         "-v",
         action="version",
-        version="TerminalTextEffects " + version("terminaltexteffects"),
+        version="TerminalTextEffects " + _get_version(),
+    )
+    parser.add_argument(
+        "--print-completion",
+        choices=SUPPORTED_SHELLS,
+        help="Print a shell completion script for the requested shell and exit.",
     )
     parser.add_argument("--random-effect", "-R", action="store_true", help="Randomly select an effect to apply")
     parser.add_argument(
@@ -132,7 +138,25 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
                 spec.loader.exec_module(module)
                 _register_effect_from_module(module)
 
+    return parser, effect_resource_map
+
+
+def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
+    """Build the CLI parser, discover available effects, and parse arguments."""
+    parser, effect_resource_map = build_parser()
     return parser.parse_args(), effect_resource_map
+
+
+def _get_version() -> str:
+    """Return the installed package version or a local-development fallback."""
+    try:
+        return version("terminaltexteffects")
+    except PackageNotFoundError:
+        project_file = Path(__file__).resolve().parents[1] / "pyproject.toml"
+        for line in project_file.read_text(encoding="utf-8").splitlines():
+            if line.startswith('version = "'):
+                return line.removeprefix('version = "').removesuffix('"')
+        return "unknown"
 
 
 def main() -> None:
@@ -144,6 +168,10 @@ def main() -> None:
     keyboard interruption.
     """
     args, effect_resource_map = build_parsers_and_parse_args()
+    if args.print_completion:
+        parser, _ = build_parser()
+        print(get_completion_script(args.print_completion, parser), end="")
+        return
     if args.seed is not None:
         random.seed(args.seed)
     if args.input_file:

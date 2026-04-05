@@ -35,6 +35,20 @@ tte [global_options] <effect_name> [effect_options]
 
 Using the `-h` argument in place of the global_options or effect_options will produce either the global or effect help output, respectively.
 
+Shell completions are also available for bash and zsh:
+
+```bash title="Generate shell completions"
+eval "$(tte --print-completion bash)"
+```
+
+```bash title="Generate zsh completions"
+eval "$(tte --print-completion zsh)"
+```
+
+To enable completions for future shells, add the relevant command to your `~/.bashrc` or `~/.zshrc`.
+If you add or remove custom effect plugins from `~/.config/terminaltexteffects/effects`, regenerate the completion
+script so the available effect names stay in sync.
+
 The example below will pass the output of the `ls` command to TTE with the following options:
 
 * *Global* options:
