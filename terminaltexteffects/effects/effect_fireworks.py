@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
+from typing import cast
 
 from terminaltexteffects import (
     Color,
@@ -180,7 +181,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
         self.shells: list[list[EffectCharacter]] = []
         self.firework_volume = max(1, round(self.config.firework_volume * len(self.terminal._input_characters)))
         self.explode_distance = min(15, max(1, round(self.terminal.canvas.right * self.config.explode_distance)))
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.launch_delay: int = 0
         self.build()
 
@@ -250,7 +251,15 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
         for firework_shell in self.shells:
             shell_color = random.choice(self.config.firework_colors)
             shell_gradient = Gradient(shell_color, Color("#FFFFFF"), shell_color, steps=5)
@@ -265,9 +274,34 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 for color in shell_gradient:
                     bloom_scn.add_frame(character.input_symbol, 2, colors=ColorPair(fg=color))
                 # fall scene
-                fall_scn = character.animation.new_scene()
-                fall_gradient = Gradient(shell_color, self.character_final_color_map[character], steps=15)
-                fall_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=fall_gradient)
+                fall_scn = character.animation.new_scene(scene_id="fall_scn")
+                if self.terminal.config.existing_color_handling == "dynamic":
+                    fg_gradient = (
+                        Gradient(shell_color, character.animation.input_fg_color, steps=15)
+                        if character.animation.input_fg_color
+                        else None
+                    )
+                    bg_gradient = (
+                        Gradient(shell_color, character.animation.input_bg_color, steps=15)
+                        if character.animation.input_bg_color
+                        else None
+                    )
+                    if fg_gradient or bg_gradient:
+                        fall_scn.apply_gradient_to_symbols(
+                            character.input_symbol,
+                            10,
+                            fg_gradient=fg_gradient,
+                            bg_gradient=bg_gradient,
+                        )
+                    else:
+                        fall_scn.add_frame(character.input_symbol, 10, colors=ColorPair())
+                else:
+                    fall_gradient = Gradient(
+                        shell_color,
+                        cast("Color", self.character_final_color_map[character].fg_color),
+                        steps=15,
+                    )
+                    fall_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=fall_gradient)
                 character.animation.activate_scene(launch_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
