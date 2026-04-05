@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
+from typing import cast
 
 from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, Path, Scene
 from terminaltexteffects.engine.base_config import (
@@ -154,8 +155,115 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.swapped: list[tuple[EffectCharacter, EffectCharacter]] = []
         self.swap_delay = 0
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
+
+    def _get_dynamic_final_scene(self, character: EffectCharacter) -> Scene:
+        """Build the dynamic final scene for a swapped character."""
+        final_scene = character.animation.new_scene()
+        fg_gradient = (
+            Gradient(self.config.correct_color, character.animation.input_fg_color, steps=10)
+            if character.animation.input_fg_color
+            else None
+        )
+        bg_gradient = (
+            Gradient(self.config.correct_color, character.animation.input_bg_color, steps=10)
+            if character.animation.input_bg_color
+            else None
+        )
+        if fg_gradient or bg_gradient:
+            final_scene.apply_gradient_to_symbols(
+                character.input_symbol,
+                3,
+                fg_gradient=fg_gradient,
+                bg_gradient=bg_gradient,
+            )
+        else:
+            final_scene.add_frame(character.input_symbol, 3, colors=ColorPair())
+        return final_scene
+
+    def _configure_swapped_character(
+        self,
+        character: EffectCharacter,
+        correcting_gradient: Gradient,
+        block_wipe_start: tuple[str, ...],
+        block_wipe_end: tuple[str, ...],
+    ) -> None:
+        """Configure scenes, paths, and events for a swapped character."""
+        first_block_wipe = character.animation.new_scene()
+        last_block_wipe = character.animation.new_scene()
+        for block in block_wipe_start:
+            first_block_wipe.add_frame(block, 3, colors=ColorPair(fg=self.config.error_color))
+        if self.terminal.config.existing_color_handling == "dynamic":
+            for block in block_wipe_end[:-1]:
+                last_block_wipe.add_frame(block, 3, colors=ColorPair(fg=self.config.correct_color))
+            last_block_wipe.add_frame(block_wipe_end[-1], 3, colors=self.character_final_color_map[character])
+        else:
+            for block in block_wipe_end:
+                last_block_wipe.add_frame(block, 3, colors=ColorPair(fg=self.config.correct_color))
+        initial_scene = character.animation.new_scene()
+        initial_scene.add_frame(character.input_symbol, 1, colors=ColorPair(fg=self.config.error_color))
+        character.animation.activate_scene(initial_scene)
+        error_scene = character.animation.new_scene(scene_id="error")
+        for _ in range(10):
+            error_scene.add_frame("▓", 3, colors=ColorPair(fg=self.config.error_color))
+            error_scene.add_frame(character.input_symbol, 3, colors=ColorPair("#ffffff"))
+        correcting_scene = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
+        correcting_scene.apply_gradient_to_symbols("█", 3, fg_gradient=correcting_gradient)
+        if self.terminal.config.existing_color_handling == "dynamic":
+            final_scene = self._get_dynamic_final_scene(character)
+        else:
+            final_scene = character.animation.new_scene()
+            char_final_gradient = Gradient(
+                self.config.correct_color,
+                cast("Color", self.character_final_color_map[character].fg_color),
+                steps=10,
+            )
+            final_scene.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=char_final_gradient)
+        input_coord_path = character.motion.query_path("input_coord")
+        assert isinstance(input_coord_path, Path)
+        character.event_handler.register_event(
+            EventHandler.Event.SCENE_COMPLETE,
+            error_scene,
+            EventHandler.Action.ACTIVATE_SCENE,
+            first_block_wipe,
+        )
+        character.event_handler.register_event(
+            EventHandler.Event.SCENE_COMPLETE,
+            first_block_wipe,
+            EventHandler.Action.ACTIVATE_SCENE,
+            correcting_scene,
+        )
+        character.event_handler.register_event(
+            EventHandler.Event.SCENE_COMPLETE,
+            first_block_wipe,
+            EventHandler.Action.ACTIVATE_PATH,
+            "input_coord",
+        )
+        character.event_handler.register_event(
+            EventHandler.Event.PATH_ACTIVATED,
+            "input_coord",
+            EventHandler.Action.SET_LAYER,
+            1,
+        )
+        character.event_handler.register_event(
+            EventHandler.Event.PATH_COMPLETE,
+            "input_coord",
+            EventHandler.Action.SET_LAYER,
+            0,
+        )
+        character.event_handler.register_event(
+            EventHandler.Event.PATH_COMPLETE,
+            "input_coord",
+            EventHandler.Action.ACTIVATE_SCENE,
+            last_block_wipe,
+        )
+        character.event_handler.register_event(
+            EventHandler.Event.SCENE_COMPLETE,
+            last_block_wipe,
+            EventHandler.Action.ACTIVATE_SCENE,
+            final_scene,
+        )
 
     def build(self) -> None:
         """Build the initial state of the effect."""
@@ -168,19 +276,27 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
         for character in self.terminal.get_characters():
             spawn_scene = character.animation.new_scene()
+            spawn_colors = self.character_final_color_map[character]
             spawn_scene.add_frame(
                 character.input_symbol,
                 1,
-                colors=ColorPair(fg=self.character_final_color_map[character]),
+                colors=spawn_colors,
             )
             character.animation.activate_scene(spawn_scene)
             self.terminal.set_character_visibility(character, is_visible=True)
         all_characters: list[EffectCharacter] = list(self.terminal._input_characters)
         correcting_gradient = Gradient(self.config.error_color, self.config.correct_color, steps=10)
-        block_symbol = "▓"
         block_wipe_start = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
         block_wipe_end = ("▇", "▆", "▅", "▄", "▃", "▂", "▁")
         for _ in range(int(self.config.error_pairs * len(self.terminal.get_characters()))):
@@ -196,72 +312,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
             char2_input_coord_path.new_waypoint(char2.input_coord)
             self.swapped.append((char1, char2))
             for character in (char1, char2):
-                first_block_wipe = character.animation.new_scene()
-                last_block_wipe = character.animation.new_scene()
-                for block in block_wipe_start:
-                    first_block_wipe.add_frame(block, 3, colors=ColorPair(fg=self.config.error_color))
-                for block in block_wipe_end:
-                    last_block_wipe.add_frame(block, 3, colors=ColorPair(fg=self.config.correct_color))
-                initial_scene = character.animation.new_scene()
-                initial_scene.add_frame(character.input_symbol, 1, colors=ColorPair(fg=self.config.error_color))
-                character.animation.activate_scene(initial_scene)
-                error_scene = character.animation.new_scene(scene_id="error")
-                for _ in range(10):
-                    error_scene.add_frame(block_symbol, 3, colors=ColorPair(fg=self.config.error_color))
-                    error_scene.add_frame(character.input_symbol, 3, colors=ColorPair("#ffffff"))
-                correcting_scene = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
-                correcting_scene.apply_gradient_to_symbols("█", 3, fg_gradient=correcting_gradient)
-                final_scene = character.animation.new_scene()
-                char_final_gradient = Gradient(
-                    self.config.correct_color,
-                    self.character_final_color_map[character],
-                    steps=10,
-                )
-                final_scene.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=char_final_gradient)
-                input_coord_path = character.motion.query_path("input_coord")
-                assert isinstance(input_coord_path, Path)
-                character.event_handler.register_event(
-                    EventHandler.Event.SCENE_COMPLETE,
-                    error_scene,
-                    EventHandler.Action.ACTIVATE_SCENE,
-                    first_block_wipe,
-                )
-                character.event_handler.register_event(
-                    EventHandler.Event.SCENE_COMPLETE,
-                    first_block_wipe,
-                    EventHandler.Action.ACTIVATE_SCENE,
-                    correcting_scene,
-                )
-                character.event_handler.register_event(
-                    EventHandler.Event.SCENE_COMPLETE,
-                    first_block_wipe,
-                    EventHandler.Action.ACTIVATE_PATH,
-                    "input_coord",
-                )
-                character.event_handler.register_event(
-                    EventHandler.Event.PATH_ACTIVATED,
-                    "input_coord",
-                    EventHandler.Action.SET_LAYER,
-                    1,
-                )
-                character.event_handler.register_event(
-                    EventHandler.Event.PATH_COMPLETE,
-                    "input_coord",
-                    EventHandler.Action.SET_LAYER,
-                    0,
-                )
-                character.event_handler.register_event(
-                    EventHandler.Event.PATH_COMPLETE,
-                    "input_coord",
-                    EventHandler.Action.ACTIVATE_SCENE,
-                    last_block_wipe,
-                )
-                character.event_handler.register_event(
-                    EventHandler.Event.SCENE_COMPLETE,
-                    last_block_wipe,
-                    EventHandler.Action.ACTIVATE_SCENE,
-                    final_scene,
-                )
+                self._configure_swapped_character(character, correcting_gradient, block_wipe_start, block_wipe_end)
 
     def __next__(self) -> str:
         """Return the next frame in the animation."""
