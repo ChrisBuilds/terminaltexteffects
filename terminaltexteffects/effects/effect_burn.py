@@ -224,8 +224,29 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             burn_scn = char.animation.new_scene(scene_id="burn")
             burn_scn.apply_gradient_to_symbols(burn_char_order, 4, fg_gradient=fire_gradient)
             final_color_scn = char.animation.new_scene()
-            for color in Gradient(fire_gradient.spectrum[-1], self.character_final_color_map[char], steps=8):
-                final_color_scn.add_frame(char.input_symbol, 4, colors=ColorPair(fg=color))
+            if self.terminal.config.existing_color_handling == "dynamic":
+                fg_gradient = (
+                    Gradient(fire_gradient.spectrum[-1], char.animation.input_fg_color, steps=8)
+                    if char.animation.input_fg_color
+                    else None
+                )
+                bg_gradient = (
+                    Gradient(fire_gradient.spectrum[-1], char.animation.input_bg_color, steps=8)
+                    if char.animation.input_bg_color
+                    else None
+                )
+                if fg_gradient or bg_gradient:
+                    final_color_scn.apply_gradient_to_symbols(
+                        char.input_symbol,
+                        4,
+                        fg_gradient=fg_gradient,
+                        bg_gradient=bg_gradient,
+                    )
+                else:
+                    final_color_scn.add_frame(char.input_symbol, 4, colors=ColorPair())
+            else:
+                for color in Gradient(fire_gradient.spectrum[-1], self.character_final_color_map[char], steps=8):
+                    final_color_scn.add_frame(char.input_symbol, 4, colors=ColorPair(fg=color))
             char.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
                 burn_scn,
