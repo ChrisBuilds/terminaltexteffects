@@ -60,6 +60,7 @@
 * Crumble - Added `existing_color_handling="dynamic"` support for the faded intro and post-flash settle scenes. Characters with parsed input ANSI fg/bg colors now crumble using faded versions of those colors and settle back to their input colors, while characters without parsed input colors start from a neutral gray and settle with no explicit final color.
 * Decrypt - Added `existing_color_handling="dynamic"` support in the discovered scene. Characters keep the effect's ciphertext colors during typing and decryption, then transition to any parsed input ANSI fg/bg colors when discovered. Characters without parsed input colors finish with no explicit color so they render using the terminal default color.
 * ErrorCorrect - Added `existing_color_handling="dynamic"` support. Characters that are never swapped now use parsed input ANSI fg/bg colors from the start, while swapped characters keep the effect's error/correction colors until the final block wipe and settle scene, where they now resolve to their input colors or no explicit color if none were parsed.
+* Expand - Added `existing_color_handling="dynamic"` support in the synced final gradient scene, so characters now expand outward using the effect's starting settle color and resolve to any parsed input ANSI fg/bg colors or no explicit color if none were parsed. The effect's `--final-gradient-frames` option was removed because the synced scene now progresses by path distance rather than frame duration.
 
 ## 0.14.2
 
