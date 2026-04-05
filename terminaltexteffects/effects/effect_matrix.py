@@ -417,7 +417,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         """Initialize the Matrix effect iterator."""
         super().__init__(effect)
         self.pending_columns: list[MatrixIterator.RainColumn] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.active_columns: list[MatrixIterator.RainColumn] = []
         self.full_columns: list[MatrixIterator.RainColumn] = []
         self.rain_colors = Gradient(*self.config.rain_color_gradient, steps=6)
@@ -440,13 +440,54 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            resolve_scn = character.animation.new_scene(scene_id="resolve")
-            for color in Gradient(self.config.highlight_color, final_gradient_mapping[character.input_coord], steps=8):
-                resolve_scn.add_frame(
-                    character.input_symbol,
-                    self.config.final_gradient_frames,
-                    colors=ColorPair(fg=color),
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
                 )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
+            final_fg_color = self.character_final_color_map[character].fg_color
+            final_bg_color = self.character_final_color_map[character].bg_color
+            resolve_scn = character.animation.new_scene(scene_id="resolve")
+            if self.terminal.config.existing_color_handling == "dynamic":
+                fg_gradient = (
+                    Gradient(self.config.highlight_color, final_fg_color, steps=8)
+                    if final_fg_color
+                    else None
+                )
+                bg_gradient = (
+                    Gradient(self.config.highlight_color, final_bg_color, steps=8)
+                    if final_bg_color
+                    else None
+                )
+                if fg_gradient or bg_gradient:
+                    resolve_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        fg_gradient=fg_gradient,
+                        bg_gradient=bg_gradient,
+                    )
+                else:
+                    resolve_scn.add_frame(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        colors=ColorPair(),
+                    )
+            else:
+                assert final_fg_color is not None
+                for color in Gradient(
+                    self.config.highlight_color,
+                    final_fg_color,
+                    steps=8,
+                ):
+                    resolve_scn.add_frame(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        colors=ColorPair(fg=color),
+                    )
 
         for column_chars in self.terminal.get_characters_grouped(
             argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
