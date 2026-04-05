@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
+from typing import cast
 
 import terminaltexteffects as tte
 from terminaltexteffects.engine.base_config import (
@@ -183,7 +184,7 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            if self.terminal.config.existing_color_handling == "dynamic" and character.animation.input_fg_color:
+            if self.terminal.config.existing_color_handling == "dynamic":
                 self.character_final_color_map[character] = tte.ColorPair(
                     fg=character.animation.input_fg_color,
                     bg=character.animation.input_bg_color,
@@ -263,16 +264,46 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
 
         for character in self.terminal.get_characters():
             collapse_scn = character.animation.new_scene(ease=tte.easing.in_quad, scene_id="collapse_scn")
-            dim_color = character.animation.adjust_color_brightness(
-                self.character_final_color_map[character].fg_color,  # type: ignore[arg-type]
-                0.5,
+            final_fg_color = self.character_final_color_map[character].fg_color
+            final_bg_color = self.character_final_color_map[character].bg_color
+            dim_fg_color = (
+                character.animation.adjust_color_brightness(final_fg_color, 0.5)
+                if final_fg_color
+                else None
             )
-            dim_gradient = tte.Gradient(tte.Color("#ffffff"), dim_color, steps=7)
-            collapse_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=dim_gradient)
+            dim_bg_color = (
+                character.animation.adjust_color_brightness(final_bg_color, 0.5)
+                if final_bg_color
+                else None
+            )
+            collapse_fg_gradient = tte.Gradient(tte.Color("#ffffff"), dim_fg_color, steps=7) if dim_fg_color else None
+            collapse_bg_gradient = tte.Gradient(tte.Color("#ffffff"), dim_bg_color, steps=7) if dim_bg_color else None
+            if collapse_fg_gradient or collapse_bg_gradient:
+                collapse_scn.apply_gradient_to_symbols(
+                    character.input_symbol,
+                    3,
+                    fg_gradient=collapse_fg_gradient,
+                    bg_gradient=collapse_bg_gradient,
+                )
+            else:
+                collapse_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair())
 
             brighten_scn = character.animation.new_scene(scene_id="brighten_scn")
-            brighten_gradient = tte.Gradient(dim_color, self.character_final_color_map[character].fg_color, steps=10)  # type: ignore[arg-type]
-            brighten_scn.apply_gradient_to_symbols(character.input_symbol, 2, fg_gradient=brighten_gradient)
+            brighten_fg_gradient = (
+                tte.Gradient(dim_fg_color, cast("tte.Color", final_fg_color), steps=10) if dim_fg_color else None
+            )
+            brighten_bg_gradient = (
+                tte.Gradient(dim_bg_color, cast("tte.Color", final_bg_color), steps=10) if dim_bg_color else None
+            )
+            if brighten_fg_gradient or brighten_bg_gradient:
+                brighten_scn.apply_gradient_to_symbols(
+                    character.input_symbol,
+                    2,
+                    fg_gradient=brighten_fg_gradient,
+                    bg_gradient=brighten_bg_gradient,
+                )
+            else:
+                brighten_scn.add_frame(character.input_symbol, 2, colors=tte.ColorPair())
         self.max_active_binary_groups = max(
             1,
             int(self.config.active_binary_groups * len(self.pending_binary_representations)),

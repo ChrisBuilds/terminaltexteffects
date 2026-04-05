@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import pytest
 
 from terminaltexteffects.effects import effect_binarypath
+from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color
 
 if TYPE_CHECKING:
     from terminaltexteffects import Gradient
-    from terminaltexteffects.engine.terminal import TerminalConfig
+
+
+def _make_terminal_config(
+    existing_color_handling: Literal["always", "dynamic", "ignore"],
+) -> TerminalConfig:
+    terminal_config = TerminalConfig._build_config()
+    terminal_config.frame_rate = 0
+    terminal_config.existing_color_handling = existing_color_handling
+    return terminal_config
 
 
 @pytest.mark.parametrize(
@@ -80,3 +89,67 @@ def test_binarypath_args(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+def test_binarypath_dynamic_without_preexisting_colors_has_uncolored_final_frame() -> None:
+    """Verify dynamic mode leaves uncolored input uncolored at the final settle state."""
+    effect = effect_binarypath.BinaryPath("A")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    final_scene = character.animation.scenes["brighten_scn"]
+    final_frame = final_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == "A"
+    assert final_frame.colors == effect_binarypath.tte.ColorPair()
+    assert final_frame._fg_color_code is None
+    assert final_frame._bg_color_code is None
+
+
+def test_binarypath_dynamic_with_preexisting_fg_uses_input_fg_color() -> None:
+    """Verify dynamic mode restores a parsed foreground color in the final settle state."""
+    effect = effect_binarypath.BinaryPath("\x1b[38;5;196mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    final_scene = character.animation.scenes["brighten_scn"]
+    final_frame = final_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == "A"
+    assert final_frame.colors == effect_binarypath.tte.ColorPair(fg=Color(196))
+    assert final_frame._fg_color_code == Color(196).rgb_color
+    assert final_frame._bg_color_code is None
+
+
+def test_binarypath_dynamic_with_preexisting_fg_and_bg_uses_input_colors() -> None:
+    """Verify dynamic mode restores parsed foreground and background colors together."""
+    effect = effect_binarypath.BinaryPath("\x1b[38;5;196m\x1b[48;5;106mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    final_scene = character.animation.scenes["brighten_scn"]
+    final_frame = final_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == "A"
+    assert final_frame.colors == effect_binarypath.tte.ColorPair(fg=Color(196), bg=Color(106))
+    assert final_frame._fg_color_code == Color(196).rgb_color
+    assert final_frame._bg_color_code == Color(106).rgb_color
+
+
+def test_binarypath_dynamic_with_preexisting_bg_only_uses_input_bg_color() -> None:
+    """Verify dynamic mode restores a parsed background color without inventing a foreground."""
+    effect = effect_binarypath.BinaryPath("\x1b[48;5;106mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    final_scene = character.animation.scenes["brighten_scn"]
+    final_frame = final_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == "A"
+    assert final_frame.colors == effect_binarypath.tte.ColorPair(bg=Color(106))
+    assert final_frame._fg_color_code is None
+    assert final_frame._bg_color_code == Color(106).rgb_color
