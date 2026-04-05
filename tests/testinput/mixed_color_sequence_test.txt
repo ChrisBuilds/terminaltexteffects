@@ -1,0 +1,3 @@
+[38;5;196mRED[0m plain [38;5;39mBLUE[0m
+no-color [38;5;46mGREEN[0m more plain text
+[38;5;226mYELLOW[0m and [48;5;57mBGONLY[0m end

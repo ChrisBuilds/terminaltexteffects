@@ -81,6 +81,8 @@ class CrumbleConfig(BaseConfig):
 class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
     """Iterator for the Crumble effect."""
 
+    DYNAMIC_NEUTRAL_GRAY = Color("#808080")
+
     def __init__(self, effect: Crumble) -> None:
         """Initialize the iterator with the provided effect.
 
@@ -94,7 +96,7 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.build()
 
-    def build(self) -> None:
+    def build(self) -> None:  # noqa: PLR0915
         """Build the initial state of the effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
@@ -106,15 +108,89 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
         )
         for character in self.terminal.get_characters():
             self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-            strengthen_flash_gradient = Gradient(self.character_final_color_map[character], Color("#ffffff"), steps=6)
-            strengthen_gradient = Gradient(Color("#ffffff"), self.character_final_color_map[character], steps=9)
-            weak_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.65)
-            dust_color = character.animation.adjust_color_brightness(self.character_final_color_map[character], 0.55)
-            weaken_gradient = Gradient(weak_color, dust_color, steps=9)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                has_existing_colors = any((character.animation.input_fg_color, character.animation.input_bg_color))
+                weak_fg_color = (
+                    character.animation.adjust_color_brightness(character.animation.input_fg_color, 0.65)
+                    if character.animation.input_fg_color
+                    else (
+                        character.animation.adjust_color_brightness(self.DYNAMIC_NEUTRAL_GRAY, 0.65)
+                        if not character.animation.input_bg_color
+                        else None
+                    )
+                )
+                weak_bg_color = (
+                    character.animation.adjust_color_brightness(character.animation.input_bg_color, 0.65)
+                    if character.animation.input_bg_color
+                    else None
+                )
+                dust_fg_color = (
+                    character.animation.adjust_color_brightness(character.animation.input_fg_color, 0.55)
+                    if character.animation.input_fg_color
+                    else (
+                        character.animation.adjust_color_brightness(self.DYNAMIC_NEUTRAL_GRAY, 0.55)
+                        if not character.animation.input_bg_color
+                        else None
+                    )
+                )
+                dust_bg_color = (
+                    character.animation.adjust_color_brightness(character.animation.input_bg_color, 0.55)
+                    if character.animation.input_bg_color
+                    else None
+                )
+                strengthen_flash_fg_gradient = (
+                    Gradient(character.animation.input_fg_color, Color("#ffffff"), steps=6)
+                    if character.animation.input_fg_color
+                    else (
+                        Gradient(self.DYNAMIC_NEUTRAL_GRAY, Color("#ffffff"), steps=6)
+                        if not has_existing_colors
+                        else None
+                    )
+                )
+                strengthen_flash_bg_gradient = (
+                    Gradient(character.animation.input_bg_color, Color("#ffffff"), steps=6)
+                    if character.animation.input_bg_color
+                    else None
+                )
+                strengthen_fg_gradient = (
+                    Gradient(Color("#ffffff"), character.animation.input_fg_color, steps=9)
+                    if character.animation.input_fg_color
+                    else None
+                )
+                strengthen_bg_gradient = (
+                    Gradient(Color("#ffffff"), character.animation.input_bg_color, steps=9)
+                    if character.animation.input_bg_color
+                    else None
+                )
+            else:
+                weak_fg_color = character.animation.adjust_color_brightness(
+                    self.character_final_color_map[character],
+                    0.65,
+                )
+                weak_bg_color = None
+                dust_fg_color = character.animation.adjust_color_brightness(
+                    self.character_final_color_map[character],
+                    0.55,
+                )
+                dust_bg_color = None
+                strengthen_flash_fg_gradient = Gradient(
+                    self.character_final_color_map[character],
+                    Color("#ffffff"),
+                    steps=6,
+                )
+                strengthen_flash_bg_gradient = None
+                strengthen_fg_gradient = Gradient(Color("#ffffff"), self.character_final_color_map[character], steps=9)
+                strengthen_bg_gradient = None
+            weaken_fg_gradient = (
+                Gradient(weak_fg_color, dust_fg_color, steps=9) if weak_fg_color and dust_fg_color else None
+            )
+            weaken_bg_gradient = (
+                Gradient(weak_bg_color, dust_bg_color, steps=9) if weak_bg_color and dust_bg_color else None
+            )
             self.terminal.set_character_visibility(character, is_visible=True)
             # set up initial and falling stage
             initial_scn = character.animation.new_scene()
-            initial_scn.add_frame(character.input_symbol, 1, colors=ColorPair(fg=weak_color))
+            initial_scn.add_frame(character.input_symbol, 1, colors=ColorPair(fg=weak_fg_color, bg=weak_bg_color))
             character.animation.activate_scene(initial_scn)
             fall_path = character.motion.new_path(
                 speed=0.65,
@@ -122,7 +198,12 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             )
             fall_path.new_waypoint(Coord(character.input_coord.column, self.terminal.canvas.bottom))
             weaken_scn = character.animation.new_scene(scene_id="weaken")
-            weaken_scn.apply_gradient_to_symbols(character.input_symbol, 4, fg_gradient=weaken_gradient)
+            weaken_scn.apply_gradient_to_symbols(
+                character.input_symbol,
+                4,
+                fg_gradient=weaken_fg_gradient,
+                bg_gradient=weaken_bg_gradient,
+            )
 
             top_path = character.motion.new_path(path_id="top", speed=1, ease=easing.out_quint)
             top_path.new_waypoint(
@@ -136,13 +217,28 @@ class CrumbleIterator(BaseEffectIterator[CrumbleConfig]):
             strengthen_flash_scn.apply_gradient_to_symbols(
                 character.input_symbol,
                 4,
-                fg_gradient=strengthen_flash_gradient,
+                fg_gradient=strengthen_flash_fg_gradient,
+                bg_gradient=strengthen_flash_bg_gradient,
             )
             strengthen_scn = character.animation.new_scene()
-            strengthen_scn.apply_gradient_to_symbols(character.input_symbol, 4, fg_gradient=strengthen_gradient)
+            if self.terminal.config.existing_color_handling == "dynamic" and not any(
+                (character.animation.input_fg_color, character.animation.input_bg_color),
+            ):
+                strengthen_scn.add_frame(character.input_symbol, 4, colors=ColorPair())
+            else:
+                strengthen_scn.apply_gradient_to_symbols(
+                    character.input_symbol,
+                    4,
+                    fg_gradient=strengthen_fg_gradient,
+                    bg_gradient=strengthen_bg_gradient,
+                )
             dust_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
             for _ in range(5):
-                dust_scn.add_frame(random.choice(["*", ".", ","]), 1, colors=ColorPair(fg=dust_color))
+                dust_scn.add_frame(
+                    random.choice(["*", ".", ","]),
+                    1,
+                    colors=ColorPair(fg=dust_fg_color, bg=dust_bg_color),
+                )
 
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
