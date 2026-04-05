@@ -164,8 +164,29 @@ class BouncyBallsIterator(BaseEffectIterator[BouncyBallsConfig]):
             ball_scene = character.animation.new_scene()
             ball_scene.add_frame(symbol, 1, colors=ColorPair(fg=color))
             final_scene = character.animation.new_scene()
-            char_final_gradient = Gradient(color, self.character_final_color_map[character], steps=10)
-            final_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=char_final_gradient)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                fg_gradient = (
+                    Gradient(color, character.animation.input_fg_color, steps=10)
+                    if character.animation.input_fg_color
+                    else None
+                )
+                bg_gradient = (
+                    Gradient(color, character.animation.input_bg_color, steps=10)
+                    if character.animation.input_bg_color
+                    else None
+                )
+                if fg_gradient or bg_gradient:
+                    final_scene.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        6,
+                        fg_gradient=fg_gradient,
+                        bg_gradient=bg_gradient,
+                    )
+                else:
+                    final_scene.add_frame(character.input_symbol, 6, colors=ColorPair())
+            else:
+                char_final_gradient = Gradient(color, self.character_final_color_map[character], steps=10)
+                final_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=char_final_gradient)
             character.motion.set_coordinate(
                 Coord(character.input_coord.column, int(self.terminal.canvas.top * random.uniform(1.0, 1.5))),
             )

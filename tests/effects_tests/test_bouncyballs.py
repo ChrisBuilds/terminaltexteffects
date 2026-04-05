@@ -1,7 +1,15 @@
 import pytest
 
 from terminaltexteffects.effects import effect_bouncyballs
+from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color
+
+
+def _make_terminal_config(existing_color_handling: str) -> TerminalConfig:
+    terminal_config = TerminalConfig._build_config()
+    terminal_config.frame_rate = 0
+    terminal_config.existing_color_handling = existing_color_handling
+    return terminal_config
 
 
 @pytest.mark.parametrize(
@@ -69,3 +77,93 @@ def test_bouncyballs_args(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+def test_bouncyballs_dynamic_without_preexisting_colors_has_uncolored_final_frame() -> None:
+    effect = effect_bouncyballs.BouncyBalls("A")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    final_scene = character.animation.scenes["1"]
+    final_frame = final_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == "A"
+    assert final_frame.colors == effect_bouncyballs.ColorPair()
+    assert final_frame._fg_color_code is None
+    assert final_frame._bg_color_code is None
+
+
+def test_bouncyballs_dynamic_with_preexisting_fg_uses_input_fg_color() -> None:
+    effect = effect_bouncyballs.BouncyBalls("\x1b[38;5;196mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    final_scene = character.animation.scenes["1"]
+    final_frame = final_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == "A"
+    assert final_frame.colors == effect_bouncyballs.ColorPair(fg=Color(196))
+    assert final_frame._fg_color_code == Color(196).rgb_color
+    assert final_frame._bg_color_code is None
+
+
+def test_bouncyballs_dynamic_with_preexisting_fg_and_bg_uses_input_colors() -> None:
+    effect = effect_bouncyballs.BouncyBalls("\x1b[38;5;196m\x1b[48;5;106mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    final_scene = character.animation.scenes["1"]
+    final_frame = final_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == "A"
+    assert final_frame.colors == effect_bouncyballs.ColorPair(fg=Color(196), bg=Color(106))
+    assert final_frame._fg_color_code == Color(196).rgb_color
+    assert final_frame._bg_color_code == Color(106).rgb_color
+
+
+def test_bouncyballs_dynamic_with_preexisting_bg_only_uses_input_bg_color() -> None:
+    effect = effect_bouncyballs.BouncyBalls("\x1b[48;5;106mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    final_scene = character.animation.scenes["1"]
+    final_frame = final_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == "A"
+    assert final_frame.colors == effect_bouncyballs.ColorPair(bg=Color(106))
+    assert final_frame._fg_color_code is None
+    assert final_frame._bg_color_code == Color(106).rgb_color
+
+
+def test_bouncyballs_ignore_with_preexisting_colors_uses_effect_gradient() -> None:
+    effect = effect_bouncyballs.BouncyBalls("\x1b[38;5;196mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("ignore")
+
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    final_scene = character.animation.scenes["1"]
+    final_frame = final_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == "A"
+    assert final_frame.colors == effect_bouncyballs.ColorPair(fg=iterator.character_final_color_map[character])
+    assert final_frame._fg_color_code == iterator.character_final_color_map[character].rgb_color
+    assert final_frame._bg_color_code is None
+
+
+def test_bouncyballs_always_with_preexisting_colors_uses_input_colors() -> None:
+    effect = effect_bouncyballs.BouncyBalls("\x1b[38;5;196m\x1b[48;5;106mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("always")
+
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    final_scene = character.animation.scenes["1"]
+    final_frame = final_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == "A"
+    assert final_frame.colors == effect_bouncyballs.ColorPair(fg=Color(196), bg=Color(106))
+    assert final_frame._fg_color_code == Color(196).rgb_color
+    assert final_frame._bg_color_code == Color(106).rgb_color
