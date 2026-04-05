@@ -13,7 +13,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -163,7 +163,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
         """
         super().__init__(effect)
         self.pending_groups: list[list[EffectCharacter]] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def build(self) -> None:
@@ -183,8 +183,16 @@ class PourIterator(BaseEffectIterator[PourConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
-        sort_map = {
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
+        sort_map: dict[PourIterator.PourDirection, argutils.CharacterGroup] = {
             PourIterator.PourDirection.DOWN: argutils.CharacterGroup.ROW_BOTTOM_TO_TOP,
             PourIterator.PourDirection.UP: argutils.CharacterGroup.ROW_TOP_TO_BOTTOM,
             PourIterator.PourDirection.LEFT: argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
@@ -209,17 +217,46 @@ class PourIterator(BaseEffectIterator[PourConfig]):
                 input_coord_path.new_waypoint(character.input_coord)
                 character.motion.activate_path(input_coord_path)
 
-                pour_gradient = Gradient(
-                    self.config.starting_color,
-                    self.character_final_color_map[character],
-                    steps=self.config.final_gradient_steps,
-                )
                 pour_scn = character.animation.new_scene()
-                pour_scn.apply_gradient_to_symbols(
-                    character.input_symbol,
-                    self.config.final_gradient_frames,
-                    fg_gradient=pour_gradient,
-                )
+                if self.terminal.config.existing_color_handling == "dynamic":
+                    final_fg_color = self.character_final_color_map[character].fg_color
+                    final_bg_color = self.character_final_color_map[character].bg_color
+                    fg_gradient = (
+                        Gradient(self.config.starting_color, final_fg_color, steps=10)
+                        if final_fg_color
+                        else None
+                    )
+                    bg_gradient = (
+                        Gradient(self.config.starting_color, final_bg_color, steps=10)
+                        if final_bg_color
+                        else None
+                    )
+                    if fg_gradient or bg_gradient:
+                        pour_scn.apply_gradient_to_symbols(
+                            character.input_symbol,
+                            self.config.final_gradient_frames,
+                            fg_gradient=fg_gradient,
+                            bg_gradient=bg_gradient,
+                        )
+                    else:
+                        pour_scn.add_frame(
+                            character.input_symbol,
+                            self.config.final_gradient_frames,
+                            colors=ColorPair(),
+                        )
+                else:
+                    final_fg_color = self.character_final_color_map[character].fg_color
+                    assert final_fg_color is not None
+                    pour_gradient = Gradient(
+                        self.config.starting_color,
+                        final_fg_color,
+                        steps=self.config.final_gradient_steps,
+                    )
+                    pour_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        fg_gradient=pour_gradient,
+                    )
                 character.animation.activate_scene(pour_scn)
             if i % 2 == 0:
                 self.pending_groups.append(group)

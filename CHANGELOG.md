@@ -77,6 +77,7 @@
 * Matrix - Added `existing_color_handling="dynamic"` support in the `resolve` scene. Matrix rain, fill, highlight, and symbol-swapping phases remain effect-colored, and when characters resolve they now transition to any parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
 * MiddleOut - Added `existing_color_handling="dynamic"` support in the `full` scene after the center phase completes. Characters still begin from the effect's `starting_color`, then transition to any parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
 * OrbittingVolley - Added `existing_color_handling="dynamic"` support for launched input characters. The orbiting launcher visuals remain effect-colored, while launched characters now use any parsed input ANSI fg/bg colors immediately or no explicit color if none were parsed.
+* Pour - Added `existing_color_handling="dynamic"` support in the pour gradient scene. Characters still begin from the effect's `starting_color`, then transition to any parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
 * Overflow - Fixed `existing_color_handling="dynamic"` final-row handling so uncolored characters no longer pick up the final gradient color and instead remain uncolored. Final rows with parsed input ANSI fg/bg colors continue to preserve those input colors.
 
 ## 0.14.2
