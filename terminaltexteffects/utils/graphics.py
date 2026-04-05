@@ -95,13 +95,19 @@ class Color:
         )
 
     def __eq__(self, other: object) -> bool:
-        """Check if two Color objects are equal."""
+        """Return whether this color is equal to another `Color`.
+
+        Returns `NotImplemented` when `other` is not a `Color`.
+        """
         if not isinstance(other, Color):
             return NotImplemented
         return self.color_arg == other.color_arg
 
     def __ne__(self, other: object) -> bool:
-        """Check if two Color objects are not equal."""
+        """Return whether this color is not equal to another `Color`.
+
+        Returns `NotImplemented` when `other` is not a `Color`.
+        """
         if not isinstance(other, Color):
             return NotImplemented
         return self.color_arg != other.color_arg
@@ -111,7 +117,7 @@ class Color:
         return hash(self.color_arg)
 
     def __iter__(self) -> Iterator[Color]:
-        """Return an iterator over the Color object."""
+        """Return an iterator yielding this `Color` instance once."""
         return iter((self,))
 
 
@@ -135,7 +141,11 @@ class ColorPair:
     bg: InitVar[Color | str | int | None] = None
 
     def __post_init__(self, init_fg_color: Color | str | int | None, init_bg_color: Color | str | int | None) -> None:
-        """If either fg or bg is not a Color object, create a Color object with the value."""
+        """Normalize the initial foreground and background values.
+
+        `Color` instances are preserved, non-`Color` non-`None` values are converted to
+        `Color`, and `None` values remain unset.
+        """
         if init_fg_color is not None and not isinstance(init_fg_color, Color):
             self.fg_color = Color(init_fg_color)
         else:
@@ -162,7 +172,7 @@ class ColorPair:
 
 
 class Gradient:
-    """A Gradient is a list of RGB hex color strings transitioning from one color to another.
+    """A Gradient is a list of `Color` objects transitioning from one color stop to another.
 
     The gradient color list is calculated using linear interpolation based on the provided start and end colors
     and the number of steps. Gradients can be iterated over to get the next color in the gradient color list.
@@ -179,7 +189,7 @@ class Gradient:
     is the sum of the steps between each pair of stops plus 1.
 
     Attributes:
-        spectrum (list[str]): List (length=sum(steps) + 1) of RGB hex color strings
+        spectrum (list[Color]): List (length=sum(steps) + 1) of generated `Color` objects.
 
     """
 
@@ -262,8 +272,8 @@ class Gradient:
         sum(steps) + 1
 
         Returns:
-            list[str]: List (length=sum(steps) + 1) of RGB hex color strings. The first and last colors are
-                the start and end stops, respectively.
+            list[Color]: List (length=sum(steps) + 1) of generated `Color` objects. The first and last
+                colors are the start and end stops, respectively.
 
         """
         if isinstance(steps, int):
@@ -329,7 +339,8 @@ class Gradient:
         """Build a mapping of coordinates to colors based on the gradient and a direction.
 
         For example, a vertical gradient will have the same color for each character in a row. When applied across all
-        characters in the canvas, the gradient will be visible as a vertical gradient.
+        characters in the canvas, the gradient will be visible as a vertical gradient. The mapping respects the
+        provided row and column bounds for every direction.
 
         Args:
             min_row (int): The minimum row value. Must be greater than 0 and less than or equal to max_row.
@@ -339,7 +350,7 @@ class Gradient:
             direction (Gradient.Direction): The direction of the gradient.
 
         Returns:
-            dict[Coord, str]: A mapping of coordinates to colors.
+            dict[geometry.Coord, Color]: A mapping of coordinates to `Color` objects.
 
         """
         if any(value < 1 for value in (max_row, max_column, min_row, min_column)):
@@ -361,7 +372,7 @@ class Gradient:
             for column_value in range(min_column, max_column + 1):
                 fraction = (column_value - column_offset) / (max_column - column_offset)
                 color = self.get_color_at_fraction(fraction)
-                for row_value in range(1, max_row + 1):
+                for row_value in range(min_row, max_row + 1):
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
         elif direction == Gradient.Direction.RADIAL:
             for row_value in range(min_row, max_row + 1):

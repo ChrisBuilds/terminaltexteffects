@@ -186,6 +186,14 @@ def test_gradient_build_coordinate_color_mapping_single_row() -> None:
     assert coordinate_map[Coord(10, 1)] == Color("#000000")
 
 
+def test_gradient_build_coordinate_color_mapping_horizontal_respects_min_row() -> None:
+    g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
+    coordinate_map = g.build_coordinate_color_mapping(5, 10, 1, 10, Gradient.Direction.HORIZONTAL)
+    assert Coord(1, 4) not in coordinate_map
+    assert coordinate_map[Coord(1, 5)] == Color("#ffffff")
+    assert coordinate_map[Coord(10, 10)] == Color("#000000")
+
+
 def test_gradient_build_coordinate_color_mapping_single_column() -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
     coordinate_map = g.build_coordinate_color_mapping(1, 10, 1, 1, Gradient.Direction.VERTICAL)
