@@ -11,7 +11,7 @@ from __future__ import annotations
 import contextlib
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, easing
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, easing
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -117,15 +117,18 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         def __init__(
             self,
             characters: list[EffectCharacter],
-            character_final_color_map: dict[EffectCharacter, Color],
+            character_final_color_map: dict[EffectCharacter, ColorPair],
             typing_head_color: Color,
+            existing_color_handling: str,
         ) -> None:
             """Initialize the row of characters to print.
 
             Args:
                 characters (list[EffectCharacter]): List of characters to print.
-                character_final_color_map (dict[EffectCharacter, Color]): Mapping of characters to their final colors.
+                character_final_color_map (dict[EffectCharacter, ColorPair]): Mapping of
+                    characters to their final colors.
                 typing_head_color (Color): Color of the typing head.
+                existing_color_handling (str): Existing color handling mode for the terminal.
 
             """
             self.untyped_chars: list[EffectCharacter] = []
@@ -139,13 +142,35 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 characters = [char for char in characters if char.input_coord.column <= right_extent]
             for character in characters:
                 character.motion.set_coordinate(Coord(character.input_coord.column, 1))
-                color_gradient = Gradient(typing_head_color, character_final_color_map[character], steps=5)
                 typed_animation = character.animation.new_scene()
-                typed_animation.apply_gradient_to_symbols(
-                    ("█", "▓", "▒", "░", character.input_symbol),
-                    3,
-                    fg_gradient=color_gradient,
-                )
+                if existing_color_handling == "dynamic":
+                    final_fg_color = character_final_color_map[character].fg_color
+                    final_bg_color = character_final_color_map[character].bg_color
+                    fg_gradient = Gradient(typing_head_color, final_fg_color, steps=5) if final_fg_color else None
+                    bg_gradient = Gradient(typing_head_color, final_bg_color, steps=5) if final_bg_color else None
+                    if fg_gradient or bg_gradient:
+                        typed_animation.apply_gradient_to_symbols(
+                            ("█", "▓", "▒", "░", character.input_symbol),
+                            3,
+                            fg_gradient=fg_gradient,
+                            bg_gradient=bg_gradient,
+                        )
+                    else:
+                        typed_animation.apply_gradient_to_symbols(
+                            ("█", "▓", "▒", "░"),
+                            3,
+                            fg_gradient=Gradient(typing_head_color, typing_head_color, steps=4),
+                        )
+                        typed_animation.add_frame(character.input_symbol, 3, colors=ColorPair())
+                else:
+                    final_fg_color = character_final_color_map[character].fg_color
+                    assert final_fg_color is not None
+                    color_gradient = Gradient(typing_head_color, final_fg_color, steps=5)
+                    typed_animation.apply_gradient_to_symbols(
+                        ("█", "▓", "▒", "░", character.input_symbol),
+                        3,
+                        fg_gradient=color_gradient,
+                    )
                 character.animation.activate_scene(typed_animation)
                 self.untyped_chars.append(character)
 
@@ -175,7 +200,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
         self.pending_rows: list[PrintIterator.Row] = []
         self.processed_rows: list[PrintIterator.Row] = []
         self.typing_head = self.terminal.add_character("█", Coord(1, 1))
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def build(self) -> None:
@@ -189,10 +214,18 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
-            self.character_final_color_map[character] = final_gradient_mapping.get(
-                character.input_coord,
-                Color("#ffffff"),
-            )
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping.get(
+                        character.input_coord,
+                        Color("#ffffff"),
+                    ),
+                )
         input_rows = self.terminal.get_characters_grouped(
             grouping=argutils.CharacterGroup.ROW_TOP_TO_BOTTOM,
             outer_fill_chars=True,
@@ -204,6 +237,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                     input_row,
                     self.character_final_color_map,
                     Color("#ffffff"),
+                    self.terminal.config.existing_color_handling,
                 ),
             )
         self._current_row: PrintIterator.Row = self.pending_rows.pop(0)
