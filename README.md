@@ -23,7 +23,6 @@
 * [Usage (Application)](#application-quickstart)
 * [Usage (Library)](#library-quickstart)
 * [Effect Showcase](#effect-showcase)
-* [In-Development Preview](#in-development-preview)
 * [Latest Release Notes](#latest-release-notes)
 * [License](#license)
 
@@ -65,7 +64,7 @@ Application Install
 
 Library Install
 
-```uv install terminaltexteffects```
+```uv add terminaltexteffects```
 
 </details>
 
@@ -151,16 +150,17 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
                         File to read input from
   --version, -v         show program's version number and exit
   --random-effect, -R   Randomly select an effect to apply
+  --seed SEED           Seed to use for random effect selection
   --include-effects INCLUDE_EFFECTS [INCLUDE_EFFECTS ...]
                         Space-separated list of Effects to include when randomly selecting an effect
   --exclude-effects EXCLUDE_EFFECTS [EXCLUDE_EFFECTS ...]
                         Space-separated list of Effects to exclude when randomly selecting an effect
   --tab-width (int > 0)
                         Number of spaces to use for a tab character.
-  --xterm-colors        Convert any colors specified in 24-bit RBG hex to the closest 8-bit XTerm-256 color.
+  --xterm-colors        Convert any colors specified in 24-bit RGB hex to the closest 8-bit XTerm-256 color.
   --no-color            Disable all colors in the effect.
   --terminal-background-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                        The background color of you terminal. Used to determine the appropriate color for fade-in/out within effects.
+                        The background color of your terminal. Used to determine the appropriate color for fade-in/out within effects.
   --existing-color-handling {always,dynamic,ignore}
                         Specify handling of existing 8-bit and 24-bit ANSI color sequences in the input data. 3-bit and 4-bit sequences are not supported. 'always' will always use the
                         input colors, ignoring any effect specific colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors in
@@ -175,7 +175,7 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
   --anchor-canvas {sw,s,se,e,ne,n,nw,w,c}
                         Anchor point for the canvas. The canvas will be anchored in the terminal to the location corresponding to the cardinal/diagonal direction. Defaults to 'sw'.
   --anchor-text {n,ne,e,se,s,sw,w,nw,c}
-                        Anchor point for the text within the Canvas. Input text will anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. Defaults to
+                        Anchor point for the text within the Canvas. Input text will be anchored in the Canvas to the location corresponding to the cardinal/diagonal direction. Defaults to
                         'sw'.
   --ignore-terminal-dimensions
                         Ignore the terminal dimensions and utilize the full Canvas beyond the extents of the terminal. Useful for sending frames to another output handler.
@@ -313,63 +313,8 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 ## Latest Release Notes
 
-Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/changeblog/) for release write-ups.
-
-## 0.14.0
-
----
-
-### New Features (0.14.0)
-
----
-
-#### New Application Features (0.14.0)
-
-* `random_effect` is now specified as `--random-effect` and supports `--include-effects` or `--exclude-effects` for limiting which effects are available.
-
----
-
-### Changes (0.14.0)
-
----
-
-#### Engine Changes (0.14.0)
-
-* Added `EasingTracker`, a reusable helper that tracks eased progress, deltas, and completion state for any easing function.
-* Replaced `eased_step_function` closure with the new `SequenceEaser`, enabling eased iteration over arbitrary sequences while reporting added, removed, and total elements for each step.
-* Renamed `CharacterGroup` center related groupings to `CENTER_TO_OUTSIDE` / `OUTSIDE_TO_CENTER`.
-* `CharacterGroup`, `CharacterSort`, and `ColorSort` themselves were relocated from the `Terminal` module into `terminaltexteffects.utils.argutils`, and the terminal now imports them from there so both the CLI and the engine share a single definition of the enums.
-* `terminaltexteffects.utils.argutils` introduces dedicated argument-type helpers for `CharacterGroup`, `CharacterSort`, and `ColorSort`.
-* `Canvas` now exposes a `text_center` `Coord` computed from `text_center_row`/`text_center_column`, eliminating redundant per-call calculations when effects or sort helpers need the true center of the anchored text.
-* Center-to-outside/Outside-to-center `CharacterGroup` calculations within `Terminal` now measure distance from the text center instead of the canvas center, so middle-out and outside-in sorts stay aligned with the rendered text even when it is offset on the canvas.
-
-#### Effects Changes (0.14.0)
-
-* Highlight - Simplified effect logic by offloading to `SequenceEaser`.
-* Sweep - Simplified effect logic by offloading to `SequenceEaser`.
-* Wipe - Simplified effect logic by offloading to `SequenceEaser`. 
-* Wipe - Changed default `--wipe-ease` to `IN_OUT_CIRC`.
-* Wipe - Removed `--wipe-ease-stepsize` CLI arg.
-* Colorshift - `--travel` renamed `--no-travel`. The default behavior is to travel radially.
-* Colorshift - Default `--travel-direction` changed from horizontal to radial.
-
----
-
-### Bug Fixes (0.14.0)
-
----
-
-#### Effect Fixes (0.14.0)
-
-* Sweep - Fixed bug when second sweep direction is a grouping of a different length from the first direction. 
-* Removed mistakenly added effect dev_worm.
-
-#### Application Fixes (0.14.0)
-
-* CLI now exits with a non-zero status when input files are missing, no input is provided, or no effect is specified.
-* CLI detects duplicate effect command registrations.
-
----
+Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/changeblog/) for release write-ups and
+the [CHANGELOG](./CHANGELOG.md) for the current full release history.
 
 ## License
 
