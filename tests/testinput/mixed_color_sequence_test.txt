@@ -1,3 +1,9 @@
 [38;5;196mRED[0m plain [38;5;39mBLUE[0m
 no-color [38;5;46mGREEN[0m more plain text
 [38;5;226mYELLOW[0m and [48;5;57mBGONLY[0m end
+plain start [38;5;201mMAGENTA[0m plain middle [48;5;25mBGBLUE[0m plain end
+[38;5;214mORANGE[0m[38;5;51mCYAN[0m together then plain
+mix [38;5;231m[48;5;88mFGBG[0m and [48;5;130mBG2[0m then [38;5;118mFG2[0m
+leading plain then reset [0mstill plain [38;5;160mRED2[0m
+[48;5;99mBGSTART[0m plain [38;5;33mFGSTART[0m [38;5;226m[48;5;52mBOTH2[0m
+edge [38;5;244mGRAY[0m  middle  [48;5;240mBGGRAY[0m trailing plain
