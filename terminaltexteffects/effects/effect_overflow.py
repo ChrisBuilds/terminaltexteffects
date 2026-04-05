@@ -183,6 +183,7 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                     for character in row:
                         character_copy = self.terminal.add_character(character.input_symbol, character.input_coord)
                         character_copy.animation.existing_color_handling = self.terminal.config.existing_color_handling
+                        character_copy.uses_input_preexisting_colors = True
                         character_copy._input_ansi_sequences = character._input_ansi_sequences
                         character_copy.animation.no_color = character.animation.no_color
                         character_copy.animation.use_xterm_colors = character.animation.use_xterm_colors
@@ -198,16 +199,20 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
         ):
             next_row = OverflowIterator.Row(row)
             for character in next_row.characters:
-                if self.terminal.config.existing_color_handling == "dynamic" and any(
-                    (character.animation.input_fg_color, character.animation.input_bg_color),
-                ):
-                    character.animation.set_appearance(
-                        character.animation.current_character_visual.symbol,
-                        ColorPair(
-                            fg=character.animation.input_fg_color,
-                            bg=character.animation.input_bg_color,
-                        ),
-                    )
+                if self.terminal.config.existing_color_handling == "dynamic":
+                    if any((character.animation.input_fg_color, character.animation.input_bg_color)):
+                        character.animation.set_appearance(
+                            character.animation.current_character_visual.symbol,
+                            ColorPair(
+                                fg=character.animation.input_fg_color,
+                                bg=character.animation.input_bg_color,
+                            ),
+                        )
+                    else:
+                        character.animation.set_appearance(
+                            character.animation.current_character_visual.symbol,
+                            ColorPair(),
+                        )
                 else:
                     character.animation.set_appearance(
                         character.animation.current_character_visual.symbol,
