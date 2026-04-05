@@ -4,7 +4,7 @@ Classes:
     Color: Represents a color in the RGB color space. Can be initialized with an XTerm-256 color code or an RGB hex
         color string.
     ColorPair: Represents a pair of colors to specify a character's foreground and background colors.
-    Gradient: A list of RGB hex color strings transitioning from one color to another. Supports various gradient
+    Gradient: A list of `Color` objects transitioning from one color stop to another. Supports various gradient
         directions.
 """
 
@@ -125,7 +125,8 @@ class Color:
 class ColorPair:
     """Represents a pair of colors to specify a character's foreground and background colors.
 
-    On init, if fg or bg is not a Color object, create a Color object with the value.
+    On init, `Color` instances are preserved, non-`Color` non-`None` values are
+    converted to `Color`, and `None` values remain unset.
 
     Attributes:
         fg_color (Color | None): The foreground color. None if no foreground color is specified.
@@ -219,7 +220,7 @@ class Gradient:
             _steps (int | tuple[int, ...]): Number of steps or a tuple of step values for generating the spectrum.
             _loop (bool): Loop the gradient. This causes the final gradient color to transition back to the
                 first gradient color.
-            spectrum (list[str]): List of strings representing the generated spectrum.
+            spectrum (list[Color]): List of generated `Color` objects representing the spectrum.
             _index (int): Current index of the spectrum.
 
         Returns:
@@ -236,7 +237,10 @@ class Gradient:
         self._index: int = 0
 
     def get_color_at_fraction(self, fraction: float) -> Color:
-        """Return the color at a fraction of the gradient.
+        """Return the precomputed spectrum color corresponding to a normalized fraction.
+
+        The fraction is matched against the generated spectrum from start to end, so
+        `0` returns the first color and `1` returns the final color.
 
         Args:
             fraction (float): The fraction of the gradient to get the color for.
@@ -424,10 +428,10 @@ class Gradient:
 
 
 def random_color() -> Color:
-    """Return a random color in the range 000000 -> ffffff.
+    """Return a random `Color` created from a six-digit RGB hex value.
 
     Returns:
-        Color: A random color in the range 000000 -> ffffff.
+        Color: A random color.
 
     """
     return Color(f"{random.randint(0, 0xFFFFFF):06x}")
@@ -436,10 +440,14 @@ def random_color() -> Color:
 def shift_color_towards(color: Color, target_color: Color, factor: float) -> Color:
     """Shift one color towards another by a given factor.
 
+    A factor of `0` returns the original color and a factor of `1` returns the
+    target color. Values between `0` and `1` interpolate between the two colors,
+    while values outside that range extrapolate past the target or away from it.
+
     Args:
         color (Color): The original color.
         target_color (Color): The target color to shift towards.
-        factor (float): The factor by which to shift the color (0.0 to 1.0).
+        factor (float): Interpolation or extrapolation factor used to shift the color.
 
     Returns:
         Color: The resulting color after shifting.
