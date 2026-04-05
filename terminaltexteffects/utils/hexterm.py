@@ -1,9 +1,10 @@
-"""List of all XTerm-256 color codes and functions to convert between RGB Hex color strings and XTerm-256 color codes.
+"""Mappings for XTerm-256 color codes and helper functions for converting
+between RGB hex colors and XTerm-256 color codes.
 
 Functions:
     hex_to_xterm: Convert RGB Hex colors to their closest XTerm-256 color.
     xterm_to_hex: Convert XTerm-256 color codes to RGB Hex colors.
-    is_valid_color: Check if the input is a valid RGB Hex color code.
+    is_valid_color: Check if the input is a valid XTerm-256 or RGB hex color code.
 """
 
 from __future__ import annotations
@@ -273,6 +274,9 @@ xterm_to_rgb_map = {k: (int(v[1:3], 16), int(v[3:5], 16), int(v[5:7], 16)) for k
 def hex_to_xterm(hex_color: str) -> int:
     """Convert RGB Hex colors to their closest XTerm-256 color.
 
+    Closeness is determined by the mean absolute difference across the red, green,
+    and blue channels.
+
     Args:
         hex_color (str): RGB Hex color code, '#' is optional
 
@@ -303,7 +307,7 @@ def xterm_to_hex(xterm_color: int) -> str:
         xterm_color (int): (0-255) XTerm-256 color code
 
     Returns:
-        int: RGB Hex color code
+        str: RGB hex color code without a leading `#`.
 
     Raises:
         ValueError: The input is not a valid XTerm-256 color code (0-255).
@@ -316,7 +320,7 @@ def xterm_to_hex(xterm_color: int) -> str:
 
 
 def is_valid_color(color: int | str) -> bool:
-    """Check if the input is a valid RGB Hex color code.
+    """Check if the input is a valid XTerm-256 or RGB hex color code.
 
     Args:
         color (int | str): X-Term 256 color code or RGB Hex color code, '#' is optional
