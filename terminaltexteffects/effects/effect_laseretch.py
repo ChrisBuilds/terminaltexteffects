@@ -351,18 +351,56 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = tte.ColorPair(
-                fg=final_gradient_mapping[character.input_coord],
-            )
-            cool_gradient = tte.Gradient(
-                *self.config.cool_gradient_stops,
-                final_gradient_mapping[character.input_coord],
-                steps=8,
-            )
+            final_fg_color: tte.Color | None
+            final_bg_color: tte.Color | None
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = tte.ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+                final_fg_color = self.character_final_color_map[character].fg_color
+                final_bg_color = self.character_final_color_map[character].bg_color
+                cool_gradient = tte.Gradient(
+                    *self.config.cool_gradient_stops,
+                    steps=8,
+                )
+            else:
+                self.character_final_color_map[character] = tte.ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
+                final_fg_color = self.character_final_color_map[character].fg_color
+                final_bg_color = self.character_final_color_map[character].bg_color
+                cool_gradient = tte.Gradient(
+                    *self.config.cool_gradient_stops,
+                    final_gradient_mapping[character.input_coord],
+                    steps=8,
+                )
             spawn_scn = character.animation.new_scene(scene_id="spawn")
             spawn_scn.add_frame("^", duration=3, colors=tte.ColorPair("#ffe680"))
             for color in cool_gradient:
                 spawn_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair(fg=color))
+            if self.terminal.config.existing_color_handling == "dynamic":
+                if final_fg_color or final_bg_color:
+                    fg_gradient = (
+                        tte.Gradient(cool_gradient.spectrum[-1], final_fg_color, steps=8) if final_fg_color else None
+                    )
+                    bg_gradient = (
+                        tte.Gradient(cool_gradient.spectrum[-1], final_bg_color, steps=8) if final_bg_color else None
+                    )
+                    spawn_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        3,
+                        fg_gradient=fg_gradient,
+                        bg_gradient=bg_gradient,
+                    )
+                else:
+                    white_cooldown = tte.Gradient(cool_gradient.spectrum[-1], tte.Color("#ffffff"), steps=8)
+                    spawn_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        3,
+                        fg_gradient=white_cooldown,
+                    )
+                    spawn_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair())
             character.animation.activate_scene(spawn_scn)
         if self.config.etch_pattern in argutils.CharacterGroup._member_names_:
             for n, char_list in enumerate(
