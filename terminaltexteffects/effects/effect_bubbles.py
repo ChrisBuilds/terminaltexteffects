@@ -13,7 +13,12 @@ import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Terminal, easing, geometry
-from terminaltexteffects.engine.base_config import BaseConfig, FinalGradientDirectionArg, FinalGradientStepsArg, FinalGradientStopsArg
+from terminaltexteffects.engine.base_config import (
+    BaseConfig,
+    FinalGradientDirectionArg,
+    FinalGradientStepsArg,
+    FinalGradientStopsArg,
+)
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.graphics import ColorPair
@@ -300,8 +305,33 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             pop_1_scene.add_frame("*", 9, colors=ColorPair(fg=self.config.pop_color))
             pop_2_scene.add_frame("'", 9, colors=ColorPair(fg=self.config.pop_color))
             final_scene = character.animation.new_scene()
-            char_final_gradient = Gradient(self.config.pop_color, self.character_final_color_map[character], steps=8)
-            final_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=char_final_gradient)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                fg_gradient = (
+                    Gradient(self.config.pop_color, character.animation.input_fg_color, steps=8)
+                    if character.animation.input_fg_color
+                    else None
+                )
+                bg_gradient = (
+                    Gradient(self.config.pop_color, character.animation.input_bg_color, steps=8)
+                    if character.animation.input_bg_color
+                    else None
+                )
+                if fg_gradient or bg_gradient:
+                    final_scene.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        6,
+                        fg_gradient=fg_gradient,
+                        bg_gradient=bg_gradient,
+                    )
+                else:
+                    final_scene.add_frame(character.input_symbol, 6, colors=ColorPair())
+            else:
+                char_final_gradient = Gradient(
+                    self.config.pop_color,
+                    self.character_final_color_map[character],
+                    steps=8,
+                )
+                final_scene.apply_gradient_to_symbols(character.input_symbol, 6, fg_gradient=char_final_gradient)
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
                 pop_1_scene,
