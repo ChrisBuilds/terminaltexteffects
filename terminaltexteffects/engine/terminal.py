@@ -683,6 +683,7 @@ class Terminal:
                 character.animation.no_color = self.config.no_color
                 character.animation.use_xterm_colors = self.config.xterm_colors
                 character.animation.existing_color_handling = self.config.existing_color_handling
+                character.uses_input_preexisting_colors = True
                 # if existing_color_handling is set to 'always', set the appearance to the input symbol with
                 # any existing color sequences
                 if character.animation.existing_color_handling == "always":
@@ -867,6 +868,7 @@ class Terminal:
                     fill_char.animation.no_color = self.config.no_color
                     fill_char.animation.use_xterm_colors = self.config.xterm_colors
                     fill_char.animation.existing_color_handling = self.config.existing_color_handling
+                    fill_char.uses_input_preexisting_colors = False
                     self.character_by_input_coord[coord] = fill_char
                     self._next_character_id += 1
                     if (
@@ -907,6 +909,7 @@ class Terminal:
         character.animation.no_color = self.config.no_color
         character.animation.use_xterm_colors = self.config.xterm_colors
         character.animation.existing_color_handling = self.config.existing_color_handling
+        character.uses_input_preexisting_colors = False
 
         self._added_characters.append(character)
         self._next_character_id += 1

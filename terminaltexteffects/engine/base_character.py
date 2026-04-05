@@ -403,6 +403,9 @@ class EffectCharacter:
         layer (int): The layer of the character. The layer determines the order in which characters are printed.
         is_fill_character (bool): Whether the character is a fill character. Fill characters are used to fill
             the empty cells of the Canvas.
+        uses_input_preexisting_colors (bool): Whether engine-level `existing_color_handling="always"` should treat
+            this character as input-derived and therefore replace effect-owned colors with the parsed input fg/bg
+            pair, even when that pair is empty.
         links (set[EffectCharacter]): Linked neighboring characters used by spanning-tree algorithms.
         neighbors (dict[str, EffectCharacter | None]): Adjacent characters keyed by direction
             (`"north"`, `"east"`, `"south"`, `"west"`).
@@ -429,6 +432,7 @@ class EffectCharacter:
         self.event_handler: EventHandler = EventHandler(self)
         self.layer: int = 0
         self.is_fill_character = False
+        self.uses_input_preexisting_colors = False
         self.links: set[EffectCharacter] = set()
         self.neighbors: dict[str, EffectCharacter | None] = {}
 

@@ -580,7 +580,7 @@ class Animation:
                     current_id += 1
         # TODO: Review whether scene IDs should be enforced as unique and raise on duplicates.
         # Confirm no effects intentionally overwrite scenes today, then update this behavior and docs together.
-        if self.existing_color_handling == "always":
+        if self.existing_color_handling == "always" and self.character.uses_input_preexisting_colors:
             preexisting_colors = graphics.ColorPair(fg=self.input_fg_color, bg=self.input_bg_color)
         else:
             preexisting_colors = None
@@ -656,12 +656,10 @@ class Animation:
             symbol = self.character.input_symbol
         if colors is None:
             colors = graphics.ColorPair(fg=None, bg=None)
-        # override fg and bg colors if they are set in the Scene due to existing color handling = always
-        if self.existing_color_handling == "always":
-            if self.input_fg_color:
-                colors = graphics.ColorPair(fg=self.input_fg_color, bg=colors.bg_color)
-            if self.input_bg_color:
-                colors = graphics.ColorPair(fg=colors.fg_color, bg=self.input_bg_color)
+        # In always mode, input-derived characters use exactly the parsed input fg/bg pair,
+        # even when one or both channels are absent.
+        if self.existing_color_handling == "always" and self.character.uses_input_preexisting_colors:
+            colors = graphics.ColorPair(fg=self.input_fg_color, bg=self.input_bg_color)
 
         char_vis_fg_color: str | int | None = self._get_color_code(colors.fg_color)
         char_vis_bg_color: str | int | None = self._get_color_code(colors.bg_color)

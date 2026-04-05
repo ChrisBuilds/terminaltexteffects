@@ -310,6 +310,30 @@ def test_terminal_add_character() -> None:
     assert terminal._added_characters[0].input_symbol == "a"
 
 
+def test_terminal_input_character_uses_input_preexisting_colors() -> None:
+    config = TerminalConfig._build_config()
+    config.existing_color_handling = "always"
+    terminal = Terminal(input_data="test", config=config)
+    assert terminal.get_characters()[0].uses_input_preexisting_colors is True
+
+
+def test_terminal_fill_character_does_not_use_input_preexisting_colors() -> None:
+    config = TerminalConfig._build_config()
+    config.canvas_width = 6
+    config.canvas_height = 2
+    config.existing_color_handling = "always"
+    terminal = Terminal(input_data="abcd\nef gh", config=config)
+    assert terminal._inner_fill_characters[0].uses_input_preexisting_colors is False
+
+
+def test_terminal_added_character_does_not_use_input_preexisting_colors() -> None:
+    config = TerminalConfig._build_config()
+    config.existing_color_handling = "always"
+    terminal = Terminal(input_data="test", config=config)
+    helper = terminal.add_character("a", Coord(0, 0))
+    assert helper.uses_input_preexisting_colors is False
+
+
 @pytest.mark.parametrize(
     "sort",
     [ColorSort.LEAST_TO_MOST, ColorSort.MOST_TO_LEAST, ColorSort.RANDOM],

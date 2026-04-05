@@ -249,6 +249,7 @@ def test_animation_get_color_code_color_is_none(character: EffectCharacter) -> N
 def test_animation_set_appearance_existing_colors(character: EffectCharacter) -> None:
     """Ensure existing colors take precedence when the handling mode is 'always'."""
     character.animation.existing_color_handling = "always"
+    character.uses_input_preexisting_colors = True
     character.animation.input_fg_color = Color("#ffffff")
     character.animation.input_bg_color = Color("#000000")
     character.animation.set_appearance("a", colors=ColorPair("#f0f0f0", "#0f0f0f"))
@@ -256,6 +257,16 @@ def test_animation_set_appearance_existing_colors(character: EffectCharacter) ->
         "#ffffff",
         "#000000",
     )
+
+
+def test_animation_set_appearance_existing_colors_without_input_colors_clears_effect_colors(
+    character: EffectCharacter,
+) -> None:
+    """Ensure always mode clears effect-provided colors when the input character has no parsed colors."""
+    character.animation.existing_color_handling = "always"
+    character.uses_input_preexisting_colors = True
+    character.animation.set_appearance("a", colors=ColorPair("#f0f0f0", "#0f0f0f"))
+    assert character.animation.current_character_visual.colors == ColorPair()
 
 
 def test_animation_adjust_color_brightness_half(character: EffectCharacter) -> None:
@@ -424,6 +435,7 @@ def test_scene_get_color_code_use_xterm_colors(character: EffectCharacter) -> No
 def test_scene_input_color_from_existing(character: EffectCharacter) -> None:
     """Ensure Scenes capture preexisting input colors from the animation."""
     character.animation.existing_color_handling = "always"
+    character.uses_input_preexisting_colors = True
     character.animation.input_fg_color = Color("#ffffff")
     character.animation.input_bg_color = Color("#000000")
     new_scene = character.animation.new_scene()
@@ -433,12 +445,23 @@ def test_scene_input_color_from_existing(character: EffectCharacter) -> None:
 def test_scene_add_frame_existing_colors(character: EffectCharacter) -> None:
     """Confirm scene-level preexisting colors override per-frame colors."""
     character.animation.existing_color_handling = "always"
+    character.uses_input_preexisting_colors = True
     character.animation.input_fg_color = Color("#ffffff")
     character.animation.input_bg_color = Color("#000000")
     new_scene = character.animation.new_scene()
     new_scene.add_frame(symbol="a", duration=1, colors=ColorPair("#f0f0f0", "#0f0f0f"))
     # the frame colors should be overridden by the scene colors derived from the input
     assert new_scene.frames[0].character_visual.colors == ColorPair("#ffffff", "#000000")
+
+
+def test_scene_input_color_from_existing_skips_helper_characters(character: EffectCharacter) -> None:
+    """Ensure helper characters do not receive scene preexisting colors in always mode."""
+    character.animation.existing_color_handling = "always"
+    character.uses_input_preexisting_colors = False
+    character.animation.input_fg_color = Color("#ffffff")
+    character.animation.input_bg_color = Color("#000000")
+    new_scene = character.animation.new_scene()
+    assert new_scene.preexisting_colors is None
 
 
 def test_activate_scene_with_no_frames(character: EffectCharacter) -> None:

@@ -220,3 +220,15 @@ def test_orbittingvolley_always_with_preexisting_colors_uses_input_colors() -> N
     assert current_visual.colors == ColorPair(fg=Color(196), bg=Color(106))
     assert current_visual._fg_color_code == Color(196).rgb_color
     assert current_visual._bg_color_code == Color(106).rgb_color
+
+
+def test_orbittingvolley_always_keeps_helper_launcher_effect_colored() -> None:
+    """Verify helper launcher characters remain effect-colored under always mode."""
+    effect = effect_orbittingvolley.OrbittingVolley("A")
+    effect.terminal_config = _make_terminal_config("always")
+
+    iterator = cast("effect_orbittingvolley.OrbittingVolleyIterator", iter(effect))
+    launcher_visual = iterator._main_launcher.character.animation.current_character_visual
+
+    assert launcher_visual.colors == ColorPair(fg=iterator.final_gradient.spectrum[-1])
+    assert launcher_visual._fg_color_code == iterator.final_gradient.spectrum[-1].rgb_color
