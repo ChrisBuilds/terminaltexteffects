@@ -167,6 +167,8 @@ class VHSTapeConfig(BaseConfig):
 class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
     """Effect iterator for the VHSTape effect."""
 
+    DYNAMIC_NEUTRAL_GRAY = Color("#808080")
+
     class Line:
         """Line of characters for the VHSTape effect."""
 
@@ -174,18 +176,23 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
             self,
             characters: list[EffectCharacter],
             args: VHSTapeConfig,
-            character_final_color_map: dict[EffectCharacter, Color],
+            character_stable_color_map: dict[EffectCharacter, ColorPair],
+            character_final_color_map: dict[EffectCharacter, ColorPair],
         ) -> None:
             """Initialize the line of characters.
 
             Args:
                 characters (list[EffectCharacter]): The characters in the line.
                 args (VHSTapeConfig): Configuration for the effect.
-                character_final_color_map (dict[EffectCharacter, Color]): Mapping of characters to their final colors.
+                character_stable_color_map (dict[EffectCharacter, ColorPair]): Mapping of characters to their stable
+                    colors during the effect.
+                character_final_color_map (dict[EffectCharacter, ColorPair]): Mapping of characters to their resolved
+                    final colors.
 
             """
             self.characters = characters
             self.args = args
+            self.character_stable_color_map = character_stable_color_map
             self.character_final_color_map = character_final_color_map
             self.build_line_effects()
 
@@ -223,7 +230,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 base_scn.add_frame(
                     character.input_symbol,
                     duration=1,
-                    colors=ColorPair(fg=self.character_final_color_map[character]),
+                    colors=self.character_stable_color_map[character],
                 )
                 glitch_scn_forward = character.animation.new_scene(
                     scene_id="rgb_glitch_fwd",
@@ -247,7 +254,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 snow_scn.add_frame(
                     character.input_symbol,
                     duration=1,
-                    colors=ColorPair(fg=self.character_final_color_map[character]),
+                    colors=self.character_stable_color_map[character],
                 )
                 final_snow_scn = character.animation.new_scene(scene_id="final_snow")
                 final_redraw_scn = character.animation.new_scene(scene_id="final_redraw")
@@ -255,7 +262,7 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 final_redraw_scn.add_frame(
                     character.input_symbol,
                     duration=1,
-                    colors=ColorPair(fg=self.character_final_color_map[character]),
+                    colors=self.character_final_color_map[character],
                 )
 
                 for _ in range(30):
@@ -368,7 +375,8 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
         self.active_glitch_wave_top: int | None = None
         self.active_glitch_wave_lines: list[VHSTapeIterator.Line] = []
         self.active_glitch_lines: list[VHSTapeIterator.Line] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_stable_color_map: dict[EffectCharacter, ColorPair] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def build(self) -> None:
@@ -382,11 +390,31 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                input_fg = character.animation.input_fg_color
+                input_bg = character.animation.input_bg_color
+                self.character_stable_color_map[character] = ColorPair(
+                    fg=input_fg or self.DYNAMIC_NEUTRAL_GRAY,
+                    bg=input_bg,
+                )
+                self.character_final_color_map[character] = ColorPair(
+                    fg=input_fg,
+                    bg=input_bg,
+                )
+            else:
+                gradient_color = final_gradient_mapping[character.input_coord]
+                stable_colors = ColorPair(fg=gradient_color)
+                self.character_stable_color_map[character] = stable_colors
+                self.character_final_color_map[character] = stable_colors
         for row_index, characters in enumerate(
             self.terminal.get_characters_grouped(grouping=argutils.CharacterGroup.ROW_BOTTOM_TO_TOP),
         ):
-            self.lines[row_index] = VHSTapeIterator.Line(characters, self.config, self.character_final_color_map)
+            self.lines[row_index] = VHSTapeIterator.Line(
+                characters,
+                self.config,
+                self.character_stable_color_map,
+                self.character_final_color_map,
+            )
         for character in self.terminal.get_characters():
             self.terminal.set_character_visibility(character, is_visible=True)
             character.animation.activate_scene(character.animation.query_scene("base"))

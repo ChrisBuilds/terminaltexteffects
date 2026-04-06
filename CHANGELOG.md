@@ -93,6 +93,7 @@
 * SynthGrid - Added `existing_color_handling="dynamic"` support at the end of `dissolve_scn`. The dissolve shimmer remains effect-colored, and the final dissolve frame now resolves to parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
 * Thunderstorm - Added `existing_color_handling="dynamic"` support from the beginning of the effect. Text characters now start from parsed input ANSI colors or neutral gray, fade down for the storm, still use the normal lightning flash/glow behavior, and return after the storm to normal input brightness or to no explicit color for originally uncolored text.
 * Unstable - Added `existing_color_handling="dynamic"` support from the start of the effect. Characters now begin in parsed input ANSI fg/bg colors or neutral gray, still shift toward the effect's unstable color during `rumble`, and then coalesce back to their input colors or to no explicit color if none were parsed.
+* VHSTape - Added `existing_color_handling="dynamic"` support for the stable text phases and final redraw. Characters now rest in parsed input ANSI fg/bg colors or neutral gray, effect-colored glitch and noise scenes remain unchanged, and the final redraw resolves to input colors or to no explicit color if none were parsed.
 * Overflow - Fixed `existing_color_handling="dynamic"` final-row handling so uncolored characters no longer pick up the final gradient color and instead remain uncolored. Final rows with parsed input ANSI fg/bg colors continue to preserve those input colors.
 
 ## 0.14.2
