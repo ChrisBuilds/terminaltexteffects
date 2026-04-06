@@ -149,6 +149,8 @@ class SpotlightsConfig(BaseConfig):
 class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
     """Effect iterator for the Spotlights effect."""
 
+    DYNAMIC_NEUTRAL_GRAY = Color("#808080")
+
     def __init__(self, effect: Spotlights) -> None:
         """Initialize the effect iterator.
 
@@ -159,8 +161,36 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.illuminated_chars: set[EffectCharacter] = set()
-        self.character_color_map: dict[EffectCharacter, tuple[Color, Color]] = {}  # (bright, dark)
+        self.character_color_map: dict[EffectCharacter, tuple[ColorPair, ColorPair]] = {}
         self.build()
+
+    @staticmethod
+    def _adjust_color_pair_brightness(colors: ColorPair, brightness_factor: float) -> ColorPair:
+        return ColorPair(
+            fg=(
+                animation.Animation.adjust_color_brightness(colors.fg_color, brightness_factor)
+                if colors.fg_color
+                else None
+            ),
+            bg=(
+                animation.Animation.adjust_color_brightness(colors.bg_color, brightness_factor)
+                if colors.bg_color
+                else None
+            ),
+        )
+
+    @staticmethod
+    def _has_input_colors(character: EffectCharacter) -> bool:
+        return any((character.animation.input_fg_color, character.animation.input_bg_color))
+
+    def _get_expand_color_override(self, character: EffectCharacter) -> ColorPair | None:
+        if self.terminal.config.existing_color_handling != "dynamic" or not self.expanding:
+            return None
+        if character.animation.input_fg_color is None and character.animation.input_bg_color is not None:
+            return ColorPair(bg=character.animation.input_bg_color)
+        if not self._has_input_colors(character):
+            return ColorPair()
+        return None
 
     def make_spotlights(self, num_spotlights: int) -> list[EffectCharacter]:
         """Create the spotlights.
@@ -238,10 +268,14 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 chars_in_range.add(character)
         chars_no_longer_in_range = self.illuminated_chars - chars_in_range
         for character in chars_no_longer_in_range:
-            character.animation.set_appearance(
-                character.input_symbol,
-                ColorPair(fg=self.character_color_map[character][1]),
-            )
+            expand_override = self._get_expand_color_override(character)
+            if expand_override is None:
+                character.animation.set_appearance(
+                    character.input_symbol,
+                    self.character_color_map[character][1],
+                )
+            else:
+                character.animation.set_appearance(character.input_symbol, expand_override)
 
         for character in chars_in_range:
             distance = min(
@@ -260,13 +294,17 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                     1 - (distance - range_ * (1 - self.config.beam_falloff)) / (range_ * self.config.beam_falloff),
                     0.2,
                 )
-                adjusted_color = animation.Animation.adjust_color_brightness(
+                adjusted_color = self._adjust_color_pair_brightness(
                     self.character_color_map[character][0],
                     brightness_factor,
                 )
             else:
                 adjusted_color = self.character_color_map[character][0]
-            character.animation.set_appearance(character.input_symbol, ColorPair(fg=adjusted_color))
+            expand_override = self._get_expand_color_override(character)
+            if expand_override is None:
+                character.animation.set_appearance(character.input_symbol, adjusted_color)
+            else:
+                character.animation.set_appearance(character.input_symbol, expand_override)
         self.illuminated_chars = chars_in_range
 
     def build(self) -> None:
@@ -281,15 +319,39 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            if self.terminal.config.existing_color_handling == "dynamic" and character.animation.input_fg_color:
-                color_bright = character.animation.input_fg_color
-                color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                if character.animation.input_fg_color or character.animation.input_bg_color:
+                    bright_fg = character.animation.input_fg_color
+                    if bright_fg is None and character.animation.input_bg_color is not None:
+                        bright_fg = self.DYNAMIC_NEUTRAL_GRAY
+                    bright_pair = ColorPair(
+                        fg=bright_fg,
+                        bg=character.animation.input_bg_color,
+                    )
+                    dark_pair = ColorPair(
+                        fg=(
+                            animation.Animation.adjust_color_brightness(bright_fg, 0.2)
+                            if bright_fg
+                            else None
+                        ),
+                        bg=(
+                            animation.Animation.adjust_color_brightness(character.animation.input_bg_color, 0.2)
+                            if character.animation.input_bg_color
+                            else None
+                        ),
+                    )
+                else:
+                    bright_pair = ColorPair(fg=self.DYNAMIC_NEUTRAL_GRAY)
+                    dark_pair = ColorPair(
+                        fg=animation.Animation.adjust_color_brightness(self.DYNAMIC_NEUTRAL_GRAY, 0.2),
+                    )
             else:
                 color_bright = final_gradient_mapping[character.input_coord]
-                color_dark = animation.Animation.adjust_color_brightness(color_bright, 0.2)
+                bright_pair = ColorPair(fg=color_bright)
+                dark_pair = ColorPair(fg=animation.Animation.adjust_color_brightness(color_bright, 0.2))
             self.terminal.set_character_visibility(character, is_visible=True)
-            self.character_color_map[character] = (color_bright, color_dark)
-            character.animation.set_appearance(character.input_symbol, ColorPair(fg=color_dark))
+            self.character_color_map[character] = (bright_pair, dark_pair)
+            character.animation.set_appearance(character.input_symbol, dark_pair)
         smallest_dimension = min(self.terminal.canvas.right, self.terminal.canvas.top)
         self.illuminate_range = max(
             int(
@@ -302,6 +364,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         )
         self.search_duration = self.config.search_duration
         self.searching = True
+        self.expanding = False
         self.complete = False
         for spotlight in self.spotlights:
             spotlight.motion.activate_path("0")
@@ -320,6 +383,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
             if not any(spotlight.motion.active_path for spotlight in self.spotlights):
                 while len(self.spotlights) > 1:
                     self.spotlights.pop()
+                self.expanding = True
                 self.illuminate_range += 1
                 if self.illuminate_range > max(self.terminal.canvas.right, self.terminal.canvas.top) // 1.5:
                     self.complete = True
