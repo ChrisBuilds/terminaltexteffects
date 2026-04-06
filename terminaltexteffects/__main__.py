@@ -82,6 +82,8 @@ def build_parser() -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEf
 
     # TODO: Add a CLI argument for the terminal background color so fade-based effects can target
     # the actual background instead of assuming black.
+    # TODO: Add a CLI argument for a default text color so dynamic color-handling effects can use
+    # it when input characters have no parsed colors.
     TerminalConfig._populate_parser(parser)
 
     subparsers = parser.add_subparsers(
