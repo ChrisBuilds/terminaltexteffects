@@ -11,7 +11,7 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, EffectCharacter, Gradient, easing, geometry
+from terminaltexteffects import Color, ColorPair, EffectCharacter, Gradient, easing, geometry
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -164,7 +164,7 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.pending_groups: list[list[EffectCharacter]] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def build(self) -> None:  # noqa: PLR0915
@@ -178,7 +178,15 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
 
         groups: list[list[EffectCharacter]] = []
         if self.config.grouping == "row":
@@ -246,16 +254,25 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
                     character.motion.set_coordinate(starting_coord)
             for character in group:
                 gradient_scn = character.animation.new_scene()
-                char_gradient = Gradient(
-                    self.config.final_gradient_stops[0],
-                    self.character_final_color_map[character],
-                    steps=10,
-                )
-                gradient_scn.apply_gradient_to_symbols(
-                    character.input_symbol,
-                    self.config.final_gradient_frames,
-                    fg_gradient=char_gradient,
-                )
+                if self.terminal.config.existing_color_handling == "dynamic":
+                    gradient_scn.add_frame(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        colors=self.character_final_color_map[character],
+                    )
+                else:
+                    final_fg_color = self.character_final_color_map[character].fg_color
+                    assert final_fg_color is not None
+                    char_gradient = Gradient(
+                        self.config.final_gradient_stops[0],
+                        final_fg_color,
+                        steps=10,
+                    )
+                    gradient_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        fg_gradient=char_gradient,
+                    )
                 character.animation.activate_scene(gradient_scn)
 
         self.pending_groups = groups
