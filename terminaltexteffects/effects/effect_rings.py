@@ -160,7 +160,8 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             ring_coords: list[Coord],
             ring_gap: int,
             ring_color: Color,
-            character_color_map: dict[EffectCharacter, Color],
+            character_color_map: dict[EffectCharacter, ColorPair],
+            existing_color_handling: str,
         ) -> None:
             """Initialize the ring.
 
@@ -171,7 +172,8 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                 ring_coords (list[Coord]): Coordinates of the ring.
                 ring_gap (int): Distance between rings.
                 ring_color (Color): Color of the ring.
-                character_color_map (dict[EffectCharacter, Color]): Mapping of characters to colors.
+                character_color_map (dict[EffectCharacter, ColorPair]): Mapping of characters to colors.
+                existing_color_handling (str): Existing color handling mode for the terminal.
 
             """
             self.config = config
@@ -187,13 +189,19 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             self.rotations = 0
             self.rotation_speed = random.uniform(self.config.spin_speed[0], self.config.spin_speed[1])
             self.character_color_map = character_color_map
+            self.existing_color_handling = existing_color_handling
 
         def add_character(self, character: EffectCharacter, clockwise: int) -> None:
             """Add a character to the ring."""
             # make gradient scene
             gradient_scn = character.animation.new_scene(scene_id="gradient")
-            char_gradient = Gradient(self.character_color_map[character], self.ring_color, steps=8)
-            gradient_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=char_gradient)
+            if self.existing_color_handling == "dynamic":
+                gradient_scn.add_frame(character.input_symbol, 1, colors=self.character_color_map[character])
+            else:
+                final_fg_color = self.character_color_map[character].fg_color
+                assert final_fg_color is not None
+                char_gradient = Gradient(final_fg_color, self.ring_color, steps=8)
+                gradient_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=char_gradient)
 
             # make rotation waypoints
             ring_paths: list[motion.Path] = []
@@ -206,8 +214,13 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             self.character_last_ring_path[character] = ring_paths[0]
             # make disperse scene
             disperse_scn = character.animation.new_scene(is_looping=False, scene_id="disperse")
-            disperse_gradient = Gradient(self.ring_color, self.character_color_map[character], steps=8)
-            disperse_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=disperse_gradient)
+            if self.existing_color_handling == "dynamic":
+                disperse_scn.add_frame(character.input_symbol, 1, colors=self.character_color_map[character])
+            else:
+                final_fg_color = self.character_color_map[character].fg_color
+                assert final_fg_color is not None
+                disperse_gradient = Gradient(self.ring_color, final_fg_color, steps=8)
+                disperse_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=disperse_gradient)
             character.motion.chain_paths(ring_paths, loop=True)
             self.characters.append(character)
 
@@ -263,7 +276,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
         self.ring_gap = int(
             max(round(min(self.terminal.canvas.top, self.terminal.canvas.right) * self.config.ring_gap), 1),
         )
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def build(self) -> None:
@@ -280,12 +293,20 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
             start_scn = character.animation.new_scene()
             start_scn.add_frame(
                 character.input_symbol,
                 1,
-                colors=ColorPair(fg=self.character_final_color_map[character]),
+                colors=self.character_final_color_map[character],
             )
             home_path = character.motion.new_path(speed=0.8, ease=easing.out_quad, path_id="home")
             home_path.new_waypoint(character.input_coord)
@@ -313,6 +334,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
                 self.ring_gap,
                 self.config.ring_colors[len(self.rings) % len(self.config.ring_colors)],
                 self.character_final_color_map,
+                self.terminal.config.existing_color_handling,
             )
         # assign characters to rings
         for ring_count, ring in enumerate(self.rings.values()):

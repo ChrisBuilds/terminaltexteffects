@@ -81,6 +81,7 @@
 * Print - Added `existing_color_handling="dynamic"` support in the typed animation scene. Characters still show the print-head block symbols and color while being typed, then resolve to any parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
 * Rain - Added `existing_color_handling="dynamic"` support in `fade_scn`. Characters still fall as rain-colored rain symbols, and when they reach their input coordinates they now fade into any parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
 * RandomSequence - Added `existing_color_handling="dynamic"` support in the fade-in scene. Characters with parsed input ANSI fg/bg colors now fade in to those input colors, while uncolored characters fade through neutral gray and then finish with no explicit color applied.
+* Rings - Added `existing_color_handling="dynamic"` support that uses parsed input ANSI fg/bg colors or no color throughout the entire effect. In dynamic mode, the start, ring, and disperse phases no longer apply effect-owned ring colors.
 * Overflow - Fixed `existing_color_handling="dynamic"` final-row handling so uncolored characters no longer pick up the final gradient color and instead remain uncolored. Final rows with parsed input ANSI fg/bg colors continue to preserve those input colors.
 
 ## 0.14.2
