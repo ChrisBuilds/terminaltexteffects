@@ -87,6 +87,7 @@
 * Slide - Added `existing_color_handling="dynamic"` support that uses parsed input ANSI fg/bg colors or no color for the entire effect. In dynamic mode, no effect-owned gradient colors are applied while character groups slide into place.
 * Smoke - Added `existing_color_handling="dynamic"` support that starts characters in black, then reveals them using parsed input ANSI fg/bg colors or no color. In dynamic mode, the smoke and paint phases no longer use effect-owned colors.
 * Spotlights - Completed `existing_color_handling="dynamic"` support with per-channel bright and dim input-color handling. Colored characters now start as faded input colors, uncolored characters start as faded neutral gray, and the final spotlight expand clears temporary fallback foreground color so bg-only or uncolored characters finish without an unintended fg color.
+* Spray - Added `existing_color_handling="dynamic"` support that uses parsed input ANSI fg/bg colors or no color for the entire effect. In dynamic mode, the spray scene no longer applies effect-owned gradient colors.
 * Overflow - Fixed `existing_color_handling="dynamic"` final-row handling so uncolored characters no longer pick up the final gradient color and instead remain uncolored. Final rows with parsed input ANSI fg/bg colors continue to preserve those input colors.
 
 ## 0.14.2

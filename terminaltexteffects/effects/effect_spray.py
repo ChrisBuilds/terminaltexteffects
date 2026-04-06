@@ -13,7 +13,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, easing
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, easing
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -145,7 +145,7 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
         """
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def build(self) -> None:
@@ -170,7 +170,15 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
         spray_origin_map = {
             SprayIterator.SprayPosition.CENTER: (self.terminal.canvas.center),
             SprayIterator.SprayPosition.N: Coord(self.terminal.canvas.right // 2, self.terminal.canvas.top),
@@ -203,12 +211,16 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
                 0,
             )
             droplet_scn = character.animation.new_scene()
-            spray_gradient = Gradient(
-                random.choice(final_gradient.spectrum),
-                self.character_final_color_map[character],
-                steps=7,
-            )
-            droplet_scn.apply_gradient_to_symbols(character.input_symbol, 20, fg_gradient=spray_gradient)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                for _ in range(7):
+                    droplet_scn.add_frame(character.input_symbol, 20, colors=self.character_final_color_map[character])
+            else:
+                spray_gradient = Gradient(
+                    random.choice(final_gradient.spectrum),
+                    typing.cast("Color", self.character_final_color_map[character].fg_color),
+                    steps=7,
+                )
+                droplet_scn.apply_gradient_to_symbols(character.input_symbol, 20, fg_gradient=spray_gradient)
             character.animation.activate_scene(droplet_scn)
             character.motion.activate_path(input_coord_path)
             self.pending_chars.append(character)
