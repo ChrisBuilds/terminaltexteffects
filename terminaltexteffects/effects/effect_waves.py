@@ -195,7 +195,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
         """
         super().__init__(effect)
         self.pending_columns: list[list[EffectCharacter]] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def build(self) -> None:
@@ -210,7 +210,15 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
         )
         wave_gradient = Gradient(*self.config.wave_gradient_stops, steps=self.config.wave_gradient_steps)
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
             wave_scn = character.animation.new_scene()
             wave_scn.ease = self.config.wave_easing
             for _ in range(self.config.wave_count):
@@ -220,12 +228,46 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                     fg_gradient=wave_gradient,
                 )
             final_scn = character.animation.new_scene()
-            for step in Gradient(
-                wave_gradient.spectrum[-1],
-                self.character_final_color_map[character],
-                steps=self.config.final_gradient_steps,
-            ):
-                final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(fg=step))
+            if self.terminal.config.existing_color_handling == "dynamic":
+                final_colors = self.character_final_color_map[character]
+                if final_colors.fg_color is None and final_colors.bg_color is None:
+                    final_scn.add_frame(character.input_symbol, 10, colors=ColorPair())
+                else:
+                    final_fg_color = final_colors.fg_color
+                    final_bg_color = final_colors.bg_color
+                    final_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        duration=10,
+                        fg_gradient=(
+                            Gradient(
+                                wave_gradient.spectrum[-1],
+                                final_fg_color,
+                                steps=self.config.final_gradient_steps,
+                            )
+                            if final_fg_color is not None
+                            else None
+                        ),
+                        bg_gradient=(
+                            Gradient(
+                                wave_gradient.spectrum[-1],
+                                final_bg_color,
+                                steps=self.config.final_gradient_steps,
+                            )
+                            if final_bg_color is not None
+                            else None
+                        ),
+                    )
+                    if final_fg_color is None:
+                        final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(bg=final_bg_color))
+            else:
+                final_fg_color = self.character_final_color_map[character].fg_color
+                assert final_fg_color is not None
+                for step in Gradient(
+                    wave_gradient.spectrum[-1],
+                    final_fg_color,
+                    steps=self.config.final_gradient_steps,
+                ):
+                    final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(fg=step))
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
                 wave_scn,
@@ -233,6 +275,8 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                 final_scn,
             )
             character.animation.activate_scene(wave_scn)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                character.animation.set_appearance(character.input_symbol, self.character_final_color_map[character])
         grouping_map = {
             "column_left_to_right": argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             "column_right_to_left": argutils.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
