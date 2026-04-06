@@ -151,7 +151,7 @@ class RainIterator(BaseEffectIterator[RainConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.group_by_row: dict[int, list[EffectCharacter | None]] = {}
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def build(self) -> None:
@@ -165,15 +165,40 @@ class RainIterator(BaseEffectIterator[RainConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
 
         for character in self.terminal.get_characters():
             raindrop_color = random.choice(self.config.rain_colors)
             rain_scn = character.animation.new_scene()
             rain_scn.add_frame(random.choice(self.config.rain_symbols), 1, colors=ColorPair(fg=raindrop_color))
-            raindrop_gradient = Gradient(raindrop_color, self.character_final_color_map[character], steps=7)
             fade_scn = character.animation.new_scene()
-            fade_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=raindrop_gradient)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                final_fg_color = self.character_final_color_map[character].fg_color
+                final_bg_color = self.character_final_color_map[character].bg_color
+                fg_gradient = Gradient(raindrop_color, final_fg_color, steps=7) if final_fg_color else None
+                bg_gradient = Gradient(raindrop_color, final_bg_color, steps=7) if final_bg_color else None
+                if fg_gradient or bg_gradient:
+                    fade_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        3,
+                        fg_gradient=fg_gradient,
+                        bg_gradient=bg_gradient,
+                    )
+                else:
+                    fade_scn.add_frame(character.input_symbol, 3, colors=ColorPair())
+            else:
+                final_fg_color = self.character_final_color_map[character].fg_color
+                assert final_fg_color is not None
+                raindrop_gradient = Gradient(raindrop_color, final_fg_color, steps=7)
+                fade_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=raindrop_gradient)
             character.animation.activate_scene(rain_scn)
             character.motion.set_coordinate(Coord(character.input_coord.column, self.terminal.canvas.top))
             input_path = character.motion.new_path(

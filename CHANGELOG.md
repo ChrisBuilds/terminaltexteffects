@@ -79,6 +79,7 @@
 * OrbittingVolley - Added `existing_color_handling="dynamic"` support for launched input characters. The orbiting launcher visuals remain effect-colored, while launched characters now use any parsed input ANSI fg/bg colors immediately or no explicit color if none were parsed.
 * Pour - Added `existing_color_handling="dynamic"` support in the pour gradient scene. Characters still begin from the effect's `starting_color`, then transition to any parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
 * Print - Added `existing_color_handling="dynamic"` support in the typed animation scene. Characters still show the print-head block symbols and color while being typed, then resolve to any parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
+* Rain - Added `existing_color_handling="dynamic"` support in `fade_scn`. Characters still fall as rain-colored rain symbols, and when they reach their input coordinates they now fade into any parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
 * Overflow - Fixed `existing_color_handling="dynamic"` final-row handling so uncolored characters no longer pick up the final gradient color and instead remain uncolored. Final rows with parsed input ANSI fg/bg colors continue to preserve those input colors.
 
 ## 0.14.2
