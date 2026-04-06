@@ -106,6 +106,7 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
         """Initialize the effect iterator."""
         super().__init__(effect)
         self.character_final_color_map: dict[tte.EffectCharacter, tte.ColorPair] = {}
+        self.dynamic_second_sweep_palette: list[tte.Color] = []
         self.complete = False
         self.phase = "first sweep"
         self.easer: tte.easing.SequenceEaser
@@ -132,11 +133,26 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
             tte.Color("#101010"),
         ]
 
+        if self.terminal.config.existing_color_handling == "dynamic":
+            for character in self.terminal.get_characters():
+                if character.animation.input_fg_color is not None:
+                    self.dynamic_second_sweep_palette.append(character.animation.input_fg_color)
+                if character.animation.input_bg_color is not None:
+                    self.dynamic_second_sweep_palette.append(character.animation.input_bg_color)
+            if not self.dynamic_second_sweep_palette:
+                self.dynamic_second_sweep_palette = list(final_fg_gradient.spectrum)
+
         for character in self.terminal.get_characters(inner_fill_chars=True, outer_fill_chars=True):
             if not character.is_fill_character:
-                self.character_final_color_map[character] = tte.ColorPair(
-                    fg=final_gradient_mapping[character.input_coord],
-                )
+                if self.terminal.config.existing_color_handling == "dynamic":
+                    self.character_final_color_map[character] = tte.ColorPair(
+                        fg=character.animation.input_fg_color,
+                        bg=character.animation.input_bg_color,
+                    )
+                else:
+                    self.character_final_color_map[character] = tte.ColorPair(
+                        fg=final_gradient_mapping[character.input_coord],
+                    )
             initial_sweep_scn = character.animation.new_scene(scene_id="initial_sweep")
             for char in self.config.sweep_symbols:
                 initial_sweep_scn.add_frame(
@@ -150,13 +166,25 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
                 second_sweep_scn.add_frame(
                     char,
                     5,
-                    colors=tte.ColorPair(fg=random.choice(final_fg_gradient.spectrum)),
+                    colors=tte.ColorPair(
+                        fg=(
+                            random.choice(self.dynamic_second_sweep_palette)
+                            if self.terminal.config.existing_color_handling == "dynamic"
+                            else random.choice(final_fg_gradient.spectrum)
+                        ),
+                    ),
                 )
             second_sweep_scn.add_frame(
                 character.input_symbol,
                 1,
-                colors=tte.ColorPair(
-                    fg=final_gradient_mapping[character.input_coord] if not character.is_fill_character else "000000",
+                colors=(
+                    self.character_final_color_map[character]
+                    if not character.is_fill_character
+                    else (
+                        tte.ColorPair()
+                        if self.terminal.config.existing_color_handling == "dynamic"
+                        else tte.ColorPair(fg="000000")
+                    )
                 ),
             )
 

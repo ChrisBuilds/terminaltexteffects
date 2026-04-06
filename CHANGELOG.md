@@ -89,6 +89,7 @@
 * Spotlights - Completed `existing_color_handling="dynamic"` support with per-channel bright and dim input-color handling. Colored characters now start as faded input colors, uncolored characters start as faded neutral gray, and the final spotlight expand clears temporary fallback foreground color so bg-only or uncolored characters finish without an unintended fg color.
 * Spray - Added `existing_color_handling="dynamic"` support that uses parsed input ANSI fg/bg colors or no color for the entire effect. In dynamic mode, the spray scene no longer applies effect-owned gradient colors.
 * Swarm - Added `existing_color_handling="dynamic"` support in the landing `input_scn`. Swarm and flash motion remain effect-colored, and settling characters now transition to parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
+* Sweep - Added `existing_color_handling="dynamic"` support in the second sweep scene. The first sweep remains unchanged, the second sweep shimmer now draws from parsed input ANSI fg/bg colors when available, and characters finish in their input colors or with no explicit color if none were parsed.
 * Overflow - Fixed `existing_color_handling="dynamic"` final-row handling so uncolored characters no longer pick up the final gradient color and instead remain uncolored. Final rows with parsed input ANSI fg/bg colors continue to preserve those input colors.
 
 ## 0.14.2
