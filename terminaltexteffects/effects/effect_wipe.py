@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, EffectCharacter, Gradient, easing
+from terminaltexteffects import Color, ColorPair, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -122,7 +122,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
 
         """
         super().__init__(effect)
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.easer = easing.SequenceEaser(
             self.terminal.get_characters_grouped(self.config.wipe_direction),
             easing_function=self.config.wipe_ease,
@@ -141,18 +141,42 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
             wipe_scn = character.animation.new_scene(scene_id="wipe")
-            wipe_gradient = Gradient(
-                final_gradient.spectrum[0],
-                self.character_final_color_map[character],
-                steps=self.config.final_gradient_steps,
-            )
-            wipe_scn.apply_gradient_to_symbols(
-                character.input_symbol,
-                self.config.final_gradient_frames,
-                fg_gradient=wipe_gradient,
-            )
+            if self.terminal.config.existing_color_handling == "dynamic":
+                final_colors = self.character_final_color_map[character]
+                frame_count = (
+                    sum(self.config.final_gradient_steps) + 1
+                    if isinstance(self.config.final_gradient_steps, tuple)
+                    else self.config.final_gradient_steps + 1
+                )
+                for _ in range(frame_count):
+                    wipe_scn.add_frame(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        colors=final_colors,
+                    )
+            else:
+                final_fg_color = self.character_final_color_map[character].fg_color
+                assert final_fg_color is not None
+                wipe_gradient = Gradient(
+                    final_gradient.spectrum[0],
+                    final_fg_color,
+                    steps=self.config.final_gradient_steps,
+                )
+                wipe_scn.apply_gradient_to_symbols(
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    fg_gradient=wipe_gradient,
+                )
 
     def __next__(self) -> str:
         """Return the next frame in the animation."""
