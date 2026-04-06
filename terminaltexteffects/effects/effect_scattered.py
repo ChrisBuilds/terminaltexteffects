@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -117,7 +117,7 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
         """Initialize the effect iterator."""
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def build(self) -> None:
@@ -131,7 +131,15 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
             if self.terminal.canvas.right < 2 or self.terminal.canvas.top < 2:
                 character.motion.set_coordinate(Coord(1, 1))
             else:
@@ -156,12 +164,21 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
             character.motion.activate_path(input_coord_path)
             self.terminal.set_character_visibility(character, is_visible=True)
             gradient_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
-            char_gradient = Gradient(final_gradient.spectrum[0], self.character_final_color_map[character], steps=10)
-            gradient_scn.apply_gradient_to_symbols(
-                character.input_symbol,
-                self.config.final_gradient_frames,
-                fg_gradient=char_gradient,
-            )
+            if self.terminal.config.existing_color_handling == "dynamic":
+                gradient_scn.add_frame(
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    colors=self.character_final_color_map[character],
+                )
+            else:
+                final_fg_color = self.character_final_color_map[character].fg_color
+                assert final_fg_color is not None
+                char_gradient = Gradient(final_gradient.spectrum[0], final_fg_color, steps=10)
+                gradient_scn.apply_gradient_to_symbols(
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    fg_gradient=char_gradient,
+                )
             character.animation.activate_scene(gradient_scn)
             self.active_characters.add(character)
         self._initial_hold_frames = 25
