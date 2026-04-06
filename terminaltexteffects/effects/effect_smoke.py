@@ -126,7 +126,7 @@ class SmokeIterator(BaseEffectIterator[SmokeConfig]):
         """
         super().__init__(effect)
         self.pending_chars: list[tte.EffectCharacter] = []
-        self.character_final_color_map: dict[tte.EffectCharacter, tte.Color] = {}
+        self.character_final_color_map: dict[tte.EffectCharacter, tte.ColorPair] = {}
         self.gen_alg = PrimsWeighted(self.terminal, limit_to_text_boundary=not self.config.use_whole_canvas)
         self.fill_alg = BreadthFirst(
             self.terminal,
@@ -155,30 +155,49 @@ class SmokeIterator(BaseEffectIterator[SmokeConfig]):
         )
         for character in self.terminal.get_characters(inner_fill_chars=True, outer_fill_chars=True):
             self.terminal.set_character_visibility(character=character, is_visible=True)
-            character.animation.set_appearance(
-                character.input_symbol,
-                colors=tte.ColorPair(fg=self.config.starting_color),
-            )
-            self.character_final_color_map[character] = final_gradient_mapping.get(
-                character.input_coord,
-                blk,
-            )
-            paint_gradient = tte.Gradient(
-                *self.config.final_gradient_stops,
-                final_gradient_mapping.get(character.input_coord, blk),
-                steps=5,
-            )
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = tte.ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+                base_colors = tte.ColorPair(fg=blk)
+            else:
+                self.character_final_color_map[character] = tte.ColorPair(
+                    fg=final_gradient_mapping.get(
+                        character.input_coord,
+                        blk,
+                    ),
+                )
+                base_colors = tte.ColorPair(fg=self.config.starting_color)
             paint_chars = (character.input_symbol,)
             paint_scn = character.animation.new_scene(scene_id="paint")
-            paint_scn.apply_gradient_to_symbols(paint_chars, duration=5, fg_gradient=paint_gradient)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                paint_scn.add_frame(character.input_symbol, 5, colors=self.character_final_color_map[character])
+            else:
+                final_fg_color = self.character_final_color_map[character].fg_color
+                assert final_fg_color is not None
+                paint_gradient = tte.Gradient(
+                    *self.config.final_gradient_stops,
+                    final_fg_color,
+                    steps=5,
+                )
+                paint_scn.apply_gradient_to_symbols(paint_chars, duration=5, fg_gradient=paint_gradient)
 
             smoke_scn = character.animation.new_scene(scene_id="smoke")
-            smoke_scn.apply_gradient_to_symbols(self.config.smoke_symbols, 3, fg_gradient=smoke_gradient)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                for smoke_symbol in self.config.smoke_symbols:
+                    smoke_scn.add_frame(smoke_symbol, 10, colors=self.character_final_color_map[character])
+            else:
+                smoke_scn.apply_gradient_to_symbols(self.config.smoke_symbols, 3, fg_gradient=smoke_gradient)
             character.event_handler.register_event(
                 event=tte.Event.SCENE_COMPLETE,
                 caller=smoke_scn,
                 action=tte.Action.ACTIVATE_SCENE,
                 target=paint_scn,
+            )
+            character.animation.set_appearance(
+                character.input_symbol,
+                colors=base_colors,
             )
 
         while not self.gen_alg.complete:
