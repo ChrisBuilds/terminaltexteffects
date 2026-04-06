@@ -11,7 +11,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, EffectCharacter, Gradient
+from terminaltexteffects import Color, ColorPair, EffectCharacter, Gradient
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -112,6 +112,8 @@ class RandomSequenceConfig(BaseConfig):
 class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
     """Iterator for the RandomSequence effect."""
 
+    DYNAMIC_NEUTRAL_GRAY = Color("#808080")
+
     def __init__(self, effect: RandomSequence) -> None:
         """Initialize the effect iterator.
 
@@ -121,7 +123,7 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
         """
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.characters_per_tick = max(int(self.config.speed * len(self.terminal._input_characters)), 1)
         self.build()
 
@@ -136,15 +138,53 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
             self.terminal.set_character_visibility(character, is_visible=False)
             gradient_scn = character.animation.new_scene()
-            gradient = Gradient(self.config.starting_color, self.character_final_color_map[character], steps=7)
-            gradient_scn.apply_gradient_to_symbols(
-                character.input_symbol,
-                self.config.final_gradient_frames,
-                fg_gradient=gradient,
-            )
+            if self.terminal.config.existing_color_handling == "dynamic":
+                final_fg_color = self.character_final_color_map[character].fg_color
+                final_bg_color = self.character_final_color_map[character].bg_color
+                if final_fg_color or final_bg_color:
+                    fg_gradient = (
+                        Gradient(self.config.starting_color, final_fg_color, steps=7) if final_fg_color else None
+                    )
+                    bg_gradient = (
+                        Gradient(self.config.starting_color, final_bg_color, steps=7) if final_bg_color else None
+                    )
+                    gradient_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        fg_gradient=fg_gradient,
+                        bg_gradient=bg_gradient,
+                    )
+                else:
+                    gradient_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        fg_gradient=Gradient(self.config.starting_color, self.DYNAMIC_NEUTRAL_GRAY, steps=7),
+                    )
+                    gradient_scn.add_frame(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        colors=ColorPair(),
+                    )
+            else:
+                final_fg_color = self.character_final_color_map[character].fg_color
+                assert final_fg_color is not None
+                gradient = Gradient(self.config.starting_color, final_fg_color, steps=7)
+                gradient_scn.apply_gradient_to_symbols(
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    fg_gradient=gradient,
+                )
             character.animation.activate_scene(gradient_scn)
             self.pending_chars.append(character)
         random.shuffle(self.pending_chars)
