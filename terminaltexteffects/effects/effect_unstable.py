@@ -11,7 +11,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Coord, EffectCharacter, Gradient, easing
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -132,15 +132,18 @@ class UnstableConfig(BaseConfig):
 class UnstableIterator(BaseEffectIterator[UnstableConfig]):
     """Effect iterator for the Unstable effect."""
 
+    DYNAMIC_NEUTRAL_GRAY = Color("#808080")
+
     def __init__(self, effect: Unstable) -> None:
         """Initialize the effect iterator."""
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.jumbled_coords: dict[EffectCharacter, Coord] = {}
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
+        self.character_start_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
-    def build(self) -> None:
+    def build(self) -> None:  # noqa: PLR0915
         """Build the initial effect state."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
@@ -151,7 +154,21 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                start_fg_color = character.animation.input_fg_color or self.DYNAMIC_NEUTRAL_GRAY
+                start_colors = ColorPair(
+                    fg=start_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+                final_colors = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                start_colors = ColorPair(fg=final_gradient_mapping[character.input_coord])
+                final_colors = start_colors
+            self.character_start_color_map[character] = start_colors
+            self.character_final_color_map[character] = final_colors
         character_coords = [character.input_coord for character in self.terminal.get_characters()]
         for character in self.terminal.get_characters():
             pos = random.randint(0, 3)
@@ -182,17 +199,94 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                 ease=self.config.reassembly_ease,
             )
             reassembly_path.new_waypoint(character.input_coord)
-            unstable_gradient = Gradient(
-                self.character_final_color_map[character],
-                self.config.unstable_color,
-                steps=12,
-            )
             rumble_scn = character.animation.new_scene(scene_id="rumble")
-            rumble_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=unstable_gradient)
-            final_color = Gradient(self.config.unstable_color, self.character_final_color_map[character], steps=12)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                start_fg_color = self.character_start_color_map[character].fg_color or self.DYNAMIC_NEUTRAL_GRAY
+                start_bg_color = self.character_start_color_map[character].bg_color
+                rumble_scn.apply_gradient_to_symbols(
+                    character.input_symbol,
+                    10,
+                    fg_gradient=Gradient(
+                        start_fg_color,
+                        self.config.unstable_color,
+                        steps=12,
+                    ),
+                    bg_gradient=(
+                        Gradient(
+                            start_bg_color,
+                            self.config.unstable_color,
+                            steps=12,
+                        )
+                        if start_bg_color is not None
+                        else None
+                    ),
+                )
+            else:
+                final_fg_color = self.character_final_color_map[character].fg_color or self.DYNAMIC_NEUTRAL_GRAY
+                unstable_gradient = Gradient(
+                    final_fg_color,
+                    self.config.unstable_color,
+                    steps=12,
+                )
+                rumble_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=unstable_gradient)
             final_scn = character.animation.new_scene(scene_id="final")
-            final_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=final_color)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                final_fg_color = self.character_final_color_map[character].fg_color
+                final_bg_color = self.character_final_color_map[character].bg_color
+                if (
+                    final_fg_color is None
+                    and final_bg_color is None
+                ):
+                    final_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        3,
+                        fg_gradient=Gradient(
+                            self.config.unstable_color,
+                            self.DYNAMIC_NEUTRAL_GRAY,
+                            steps=12,
+                        ),
+                    )
+                    final_scn.add_frame(character.input_symbol, 3, colors=ColorPair())
+                else:
+                    final_scn.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        3,
+                        fg_gradient=(
+                            Gradient(
+                                self.config.unstable_color,
+                                final_fg_color,
+                                steps=12,
+                            )
+                            if final_fg_color is not None
+                            else None
+                        ),
+                        bg_gradient=(
+                            Gradient(
+                                self.config.unstable_color,
+                                final_bg_color,
+                                steps=12,
+                            )
+                            if final_bg_color is not None
+                            else None
+                        ),
+                    )
+                    if final_fg_color is None:
+                        final_scn.add_frame(
+                            character.input_symbol,
+                            3,
+                            colors=ColorPair(bg=final_bg_color),
+                        )
+            else:
+                final_fg_color = self.character_final_color_map[character].fg_color or self.DYNAMIC_NEUTRAL_GRAY
+                final_color = Gradient(
+                    self.config.unstable_color,
+                    final_fg_color,
+                    steps=12,
+                )
+                final_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=final_color)
             character.animation.activate_scene(rumble_scn)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                character.animation.set_appearance(character.input_symbol, self.character_start_color_map[character])
             self.terminal.set_character_visibility(character, is_visible=True)
         self._explosion_hold_time = 30
         self.phase = "rumble"
