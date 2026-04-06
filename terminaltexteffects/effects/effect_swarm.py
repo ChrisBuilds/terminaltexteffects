@@ -9,6 +9,7 @@ Classes:
 from __future__ import annotations
 
 import random
+import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import (
@@ -145,6 +146,8 @@ class SwarmConfig(BaseConfig):
 class SwarmIterator(BaseEffectIterator[SwarmConfig]):
     """Effect iterator for the Swarm effect."""
 
+    DYNAMIC_CLEAR_COLOR = Color("#ffffff")
+
     def __init__(
         self,
         effect: Swarm,
@@ -158,7 +161,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.swarms: list[list[EffectCharacter]] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def make_swarms(self, swarm_size: int) -> None:
@@ -199,7 +202,15 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
         flash_list = [self.config.flash_color for _ in range(10)]
         for swarm in self.swarms:
             swarm_gradient = Gradient(random.choice(self.config.base_color), self.config.flash_color, steps=7)
@@ -232,14 +243,12 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
 
             # assign characters waypoints for swarm areas and inner waypoints within the swarm areas
             for character in swarm:
-                swarm_area_count = 0
                 character.motion.set_coordinate(swarm_spawn)
                 flash_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
                 for step in swarm_gradient_mirror:
                     flash_scn.add_frame(character.input_symbol, 1, colors=ColorPair(fg=step))
-                for swarm_area_coords in swarm_area_coordinate_map.values():
+                for swarm_area_count, swarm_area_coords in enumerate(swarm_area_coordinate_map.values()):
                     swarm_area_name = f"{swarm_area_count}_swarm_area"
-                    swarm_area_count += 1
                     origin_path = character.motion.new_path(path_id=swarm_area_name, speed=0.4, ease=easing.out_sine)
                     origin_path.new_waypoint(random.choice(swarm_area_coords), waypoint_id=swarm_area_name)
                     character.event_handler.register_event(
@@ -274,8 +283,45 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 input_path = character.motion.new_path(speed=0.45, ease=easing.in_out_quad)
                 input_path.new_waypoint(character.input_coord)
                 input_scn = character.animation.new_scene()
-                for step in Gradient(self.config.flash_color, self.character_final_color_map[character], steps=10):
-                    input_scn.add_frame(character.input_symbol, 3, colors=ColorPair(fg=step))
+                if self.terminal.config.existing_color_handling == "dynamic":
+                    if (
+                        self.character_final_color_map[character].fg_color is None
+                        and self.character_final_color_map[character].bg_color is None
+                    ):
+                        clear_gradient = Gradient(self.config.flash_color, self.DYNAMIC_CLEAR_COLOR, steps=10)
+                        for step in clear_gradient:
+                            input_scn.add_frame(character.input_symbol, 3, colors=ColorPair(fg=step))
+                        input_scn.add_frame(character.input_symbol, 3, colors=ColorPair())
+                    else:
+                        input_scn.apply_gradient_to_symbols(
+                            character.input_symbol,
+                            3,
+                            fg_gradient=(
+                                Gradient(
+                                    self.config.flash_color,
+                                    typing.cast("Color", self.character_final_color_map[character].fg_color),
+                                    steps=10,
+                                )
+                                if self.character_final_color_map[character].fg_color
+                                else None
+                            ),
+                            bg_gradient=(
+                                Gradient(
+                                    self.config.flash_color,
+                                    typing.cast("Color", self.character_final_color_map[character].bg_color),
+                                    steps=10,
+                                )
+                                if self.character_final_color_map[character].bg_color
+                                else None
+                            ),
+                        )
+                else:
+                    for step in Gradient(
+                        self.config.flash_color,
+                        typing.cast("Color", self.character_final_color_map[character].fg_color),
+                        steps=10,
+                    ):
+                        input_scn.add_frame(character.input_symbol, 3, colors=ColorPair(fg=step))
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_COMPLETE,
                     input_path,
