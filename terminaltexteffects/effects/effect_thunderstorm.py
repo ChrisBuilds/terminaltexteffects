@@ -163,6 +163,8 @@ class ThunderstormConfig(BaseConfig):
 class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
     """Effect iterator for the NamedEffect effect."""
 
+    DYNAMIC_NEUTRAL_GRAY = tte.Color("#808080")
+
     def __init__(self, effect: Thunderstorm) -> None:
         """Initialize the effect iterator.
 
@@ -171,7 +173,9 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
 
         """
         super().__init__(effect)
-        self.character_final_color_map: dict[tte.EffectCharacter, tte.Color] = {}
+        self.character_final_color_map: dict[tte.EffectCharacter, tte.ColorPair] = {}
+        self.character_visible_color_map: dict[tte.EffectCharacter, tte.ColorPair] = {}
+        self.character_storm_color_map: dict[tte.EffectCharacter, tte.ColorPair] = {}
         self.delay = 0
         self.strike_progression_delay = 0
         self.rain_drops: list[tte.EffectCharacter] = []
@@ -187,6 +191,79 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         self.phase: str = "pre-storm"
         self.storm_start_time = time.monotonic()
         self.build()
+
+    @staticmethod
+    def _adjust_color_pair_brightness(colors: tte.ColorPair, brightness: float) -> tte.ColorPair:
+        return tte.ColorPair(
+            fg=(
+                tte.Animation.adjust_color_brightness(colors.fg_color, brightness)
+                if colors.fg_color is not None
+                else None
+            ),
+            bg=(
+                tte.Animation.adjust_color_brightness(colors.bg_color, brightness)
+                if colors.bg_color is not None
+                else None
+            ),
+        )
+
+    @staticmethod
+    def _add_color_pair_gradient_frames(
+        scene: tte.Scene,
+        symbol: str,
+        start_colors: tte.ColorPair,
+        end_colors: tte.ColorPair,
+        *,
+        steps: int,
+        duration: int,
+    ) -> None:
+        fg_steps = (
+            list(
+                tte.Gradient(
+                    typing.cast("tte.Color", start_colors.fg_color),
+                    typing.cast("tte.Color", end_colors.fg_color),
+                    steps=steps,
+                ),
+            )
+            if start_colors.fg_color is not None and end_colors.fg_color is not None
+            else [end_colors.fg_color if end_colors.fg_color is not None else start_colors.fg_color] * steps
+        )
+        bg_steps = (
+            list(
+                tte.Gradient(
+                    typing.cast("tte.Color", start_colors.bg_color),
+                    typing.cast("tte.Color", end_colors.bg_color),
+                    steps=steps,
+                ),
+            )
+            if start_colors.bg_color is not None and end_colors.bg_color is not None
+            else [end_colors.bg_color if end_colors.bg_color is not None else start_colors.bg_color] * steps
+        )
+        for index in range(steps):
+            scene.add_frame(
+                symbol=symbol,
+                colors=tte.ColorPair(
+                    fg=fg_steps[index],
+                    bg=bg_steps[index],
+                ),
+                duration=duration,
+            )
+
+    def hide_character(self, character: tte.EffectCharacter, *_: typing.Any) -> None:
+        """Hide a helper character."""
+        self.terminal.set_character_visibility(character, is_visible=False)
+
+    def return_spark_to_pool(self, character: tte.EffectCharacter, *_: typing.Any) -> None:
+        """Return a spark character to the available pool."""
+        self.available_sparks.append(character)
+
+    def return_strike_to_pool(self, character: tte.EffectCharacter, *_: typing.Any) -> None:
+        """Return a strike character to the available pool."""
+        self.available_strike_chars.append(character)
+
+    def return_raindrop_to_pool(self, character: tte.EffectCharacter, *_: typing.Any) -> None:
+        """Return a raindrop character to the available pool."""
+        self.rain_drops.append(character)
 
     def build(self) -> None:
         """Build the effect."""
@@ -205,36 +282,108 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         # setup scenes on text characters
         all_chars = self.terminal.get_characters()
         for text_char in all_chars:
-            faded_color = tte.Animation.adjust_color_brightness(
-                final_gradient_mapping[text_char.input_coord],
-                brightness=0.5,
-            )
+            if self.terminal.config.existing_color_handling == "dynamic":
+                visible_colors = tte.ColorPair(
+                    fg=(
+                        text_char.animation.input_fg_color
+                        if text_char.animation.input_fg_color is not None
+                        else self.DYNAMIC_NEUTRAL_GRAY
+                    ),
+                    bg=text_char.animation.input_bg_color,
+                )
+                restore_colors = tte.ColorPair(
+                    fg=text_char.animation.input_fg_color,
+                    bg=text_char.animation.input_bg_color,
+                )
+            else:
+                visible_colors = tte.ColorPair(
+                    fg=final_gradient_mapping[text_char.input_coord],
+                )
+                restore_colors = visible_colors
+            storm_colors = self._adjust_color_pair_brightness(visible_colors, brightness=0.5)
+            self.character_visible_color_map[text_char] = visible_colors
+            self.character_storm_color_map[text_char] = storm_colors
+            self.character_final_color_map[text_char] = restore_colors
+
             # post-strike glow and cool scene
-            glow_gradient = tte.Gradient(self.config.glowing_text_color, faded_color, steps=7)
             glow_scn = text_char.animation.new_scene(scene_id="glow")
-            for color in glow_gradient:
-                glow_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=6)
+            glow_fg_gradient = tte.Gradient(
+                self.config.glowing_text_color,
+                typing.cast("tte.Color", storm_colors.fg_color),
+                steps=7,
+            )
+            for color in glow_fg_gradient:
+                glow_scn.add_frame(
+                    symbol=text_char.input_symbol,
+                    colors=tte.ColorPair(fg=color, bg=storm_colors.bg_color),
+                    duration=6,
+                )
+            if self.terminal.config.existing_color_handling == "dynamic":
+                glow_scn.add_frame(symbol=text_char.input_symbol, colors=storm_colors, duration=6)
 
             # fade before storm scene
-            fade_gradient = tte.Gradient(final_gradient_mapping[text_char.input_coord], faded_color, steps=7)
             fade_scn = text_char.animation.new_scene(scene_id="fade")
-            for color in fade_gradient:
-                fade_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=12)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self._add_color_pair_gradient_frames(
+                    fade_scn,
+                    text_char.input_symbol,
+                    visible_colors,
+                    storm_colors,
+                    steps=7,
+                    duration=12,
+                )
+                fade_scn.add_frame(symbol=text_char.input_symbol, colors=storm_colors, duration=12)
+            else:
+                fade_gradient = tte.Gradient(
+                    typing.cast("tte.Color", visible_colors.fg_color),
+                    typing.cast("tte.Color", storm_colors.fg_color),
+                    steps=7,
+                )
+                for color in fade_gradient:
+                    fade_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=12)
 
-            unfade_gradient = list(fade_gradient)[::-1]
             unfade_scn = text_char.animation.new_scene(scene_id="unfade")
-            for color in unfade_gradient:
-                unfade_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=12)
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self._add_color_pair_gradient_frames(
+                    unfade_scn,
+                    text_char.input_symbol,
+                    storm_colors,
+                    visible_colors,
+                    steps=7,
+                    duration=12,
+                )
+                unfade_scn.add_frame(symbol=text_char.input_symbol, colors=visible_colors, duration=12)
+                if restore_colors != visible_colors:
+                    unfade_scn.add_frame(symbol=text_char.input_symbol, colors=restore_colors, duration=12)
+            else:
+                unfade_gradient = list(
+                    tte.Gradient(
+                        typing.cast("tte.Color", visible_colors.fg_color),
+                        typing.cast("tte.Color", storm_colors.fg_color),
+                        steps=7,
+                    ),
+                )[::-1]
+                for color in unfade_gradient:
+                    unfade_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=12)
 
             # lightning flash scene
             lightning_flash_color = tte.Animation.adjust_color_brightness(
-                final_gradient_mapping[text_char.input_coord],
+                typing.cast("tte.Color", visible_colors.fg_color),
                 brightness=1.7,
             )
             strike_scn = text_char.animation.new_scene(scene_id="flash")
-            flash_gradient = tte.Gradient(faded_color, lightning_flash_color, steps=7, loop=True)
+            flash_gradient = tte.Gradient(
+                typing.cast("tte.Color", storm_colors.fg_color),
+                lightning_flash_color,
+                steps=7,
+                loop=True,
+            )
             for color in flash_gradient:
-                strike_scn.add_frame(symbol=text_char.input_symbol, colors=tte.ColorPair(fg=color), duration=6)
+                strike_scn.add_frame(
+                    symbol=text_char.input_symbol,
+                    colors=tte.ColorPair(fg=color, bg=storm_colors.bg_color),
+                    duration=6,
+                )
 
             self.terminal.set_character_visibility(text_char, is_visible=True)
 
@@ -327,13 +476,13 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 event=tte.Event.PATH_COMPLETE,
                 caller=spark_path,
                 action=tte.Action.CALLBACK,
-                target=tte.EventHandler.Callback(lambda c: self.terminal.set_character_visibility(c, is_visible=False)),
+                target=tte.EventHandler.Callback(self.hide_character),
             )
             spark_char.event_handler.register_event(
                 event=tte.Event.PATH_COMPLETE,
                 caller=spark_path,
                 action=tte.Action.CALLBACK,
-                target=tte.EventHandler.Callback(lambda c: self.available_sparks.append(c)),
+                target=tte.EventHandler.Callback(self.return_spark_to_pool),
             )
 
             spark_char.animation.activate_scene("glow")
@@ -406,7 +555,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 tte.Event.PATH_COMPLETE,
                 fall_path,
                 tte.Action.CALLBACK,
-                rain_char.event_handler.Callback(lambda c: self.rain_drops.append(c)),
+                rain_char.event_handler.Callback(self.return_raindrop_to_pool),
             )
 
             self.terminal.set_character_visibility(rain_char, is_visible=True)
@@ -484,7 +633,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 event=tte.Event.SCENE_COMPLETE,
                 caller=fade_scn,
                 action=tte.Action.CALLBACK,
-                target=tte.EventHandler.Callback(lambda c: self.terminal.set_character_visibility(c, is_visible=False)),
+                target=tte.EventHandler.Callback(self.hide_character),
             )
             strike_char.event_handler.register_event(
                 event=tte.Event.SCENE_COMPLETE,
@@ -496,7 +645,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 event=tte.Event.SCENE_COMPLETE,
                 caller=fade_scn,
                 action=tte.Action.CALLBACK,
-                target=tte.EventHandler.Callback(lambda c: self.available_strike_chars.append(c)),
+                target=tte.EventHandler.Callback(self.return_strike_to_pool),
             )
 
         for text_char in self.terminal.get_characters():

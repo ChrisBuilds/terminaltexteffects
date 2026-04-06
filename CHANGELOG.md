@@ -91,6 +91,7 @@
 * Swarm - Added `existing_color_handling="dynamic"` support in the landing `input_scn`. Swarm and flash motion remain effect-colored, and settling characters now transition to parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
 * Sweep - Added `existing_color_handling="dynamic"` support in the second sweep scene. The first sweep remains unchanged, the second sweep shimmer now draws from parsed input ANSI fg/bg colors when available, and characters finish in their input colors or with no explicit color if none were parsed.
 * SynthGrid - Added `existing_color_handling="dynamic"` support at the end of `dissolve_scn`. The dissolve shimmer remains effect-colored, and the final dissolve frame now resolves to parsed input ANSI fg/bg colors or to no explicit color if none were parsed.
+* Thunderstorm - Added `existing_color_handling="dynamic"` support from the beginning of the effect. Text characters now start from parsed input ANSI colors or neutral gray, fade down for the storm, still use the normal lightning flash/glow behavior, and return after the storm to normal input brightness or to no explicit color for originally uncolored text.
 * Overflow - Fixed `existing_color_handling="dynamic"` final-row handling so uncolored characters no longer pick up the final gradient color and instead remain uncolored. Final rows with parsed input ANSI fg/bg colors continue to preserve those input colors.
 
 ## 0.14.2
