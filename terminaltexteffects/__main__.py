@@ -80,6 +80,8 @@ def build_parser() -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEf
         help="Space-separated list of Effects to exclude when randomly selecting an effect",
     )
 
+    # TODO: Add a CLI argument for the terminal background color so fade-based effects can target
+    # the actual background instead of assuming black.
     TerminalConfig._populate_parser(parser)
 
     subparsers = parser.add_subparsers(
