@@ -113,7 +113,7 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
         """Initialize the effect iterator."""
         super().__init__(effect)
         self.pending_groups: list[list[EffectCharacter]] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def build(self) -> None:  # noqa: PLR0915
@@ -132,10 +132,18 @@ class SliceIterator(BaseEffectIterator[SliceConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair(
+                    fg=final_gradient_mapping[character.input_coord],
+                )
             character.animation.set_appearance(
                 character.input_symbol,
-                ColorPair(fg=self.character_final_color_map[character]),
+                self.character_final_color_map[character],
             )
         if self.config.slice_direction == "vertical":
             self.rows = self.terminal.get_characters_grouped(grouping=slice_direction_map[self.config.slice_direction])
