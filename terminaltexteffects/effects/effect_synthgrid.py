@@ -282,6 +282,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
         self.pending_groups: list[tuple[int, list[EffectCharacter]]] = []
         self.grid_lines: list[GridLine] = []
         self.group_tracker: dict[int, int] = {}
+        self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
     def find_even_gap(self, dimension: int) -> int:
@@ -320,6 +321,18 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
             self.terminal.canvas.text_right,
             self.config.text_gradient_direction,
         )
+        for character in self.terminal.get_characters():
+            if self.terminal.config.existing_color_handling == "dynamic":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            elif character.input_symbol != " ":
+                self.character_final_color_map[character] = ColorPair(
+                    fg=text_gradient_mapping[character.input_coord],
+                )
+            else:
+                self.character_final_color_map[character] = ColorPair()
 
         self.grid_lines.append(
             GridLine(
@@ -433,7 +446,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                     dissolve_scn.add_frame(
                         character.input_symbol,
                         1,
-                        colors=ColorPair(fg=text_gradient_mapping[character.input_coord]),
+                        colors=self.character_final_color_map[character],
                     )
                 character.animation.activate_scene(dissolve_scn)
                 character.event_handler.register_event(
