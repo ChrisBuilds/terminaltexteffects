@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
+from typing import TYPE_CHECKING
+
 from terminaltexteffects.utils.exceptions.base_terminaltexteffects_exception import TerminalTextEffectsError
+
+if TYPE_CHECKING:
+    from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
 
 
 class InvalidCharacterGroupError(TerminalTextEffectsError):
@@ -69,4 +73,22 @@ class InvalidColorSortError(TerminalTextEffectsError):
         """
         self.color_sort = color_sort
         self.message = f"Invalid color sort provided: `{color_sort}`. Ref ColorSort."
+        super().__init__(self.message)
+
+
+class UnsupportedAnsiSequenceError(TerminalTextEffectsError):
+    """Raised when terminal input contains ANSI/control sequences TTE does not support."""
+
+    def __init__(self, sequence: str) -> None:
+        """Initialize an UnsupportedAnsiSequenceError.
+
+        Args:
+            sequence (str): The unsupported ANSI/control sequence found in the input.
+
+        """
+        self.sequence = sequence
+        self.message = (
+            f"Unsupported ANSI/control sequence in input: {sequence!r}. "
+            "TerminalTextEffects supports 8-bit and 24-bit SGR foreground/background color sequences only."
+        )
         super().__init__(self.message)

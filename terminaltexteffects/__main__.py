@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 import terminaltexteffects.effects
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
+from terminaltexteffects.utils.exceptions import UnsupportedAnsiSequenceError
 from terminaltexteffects.utils.shell_completion import SUPPORTED_SHELLS, get_completion_script
 
 if TYPE_CHECKING:
@@ -80,9 +81,9 @@ def build_parser() -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEf
         help="Space-separated list of Effects to exclude when randomly selecting an effect",
     )
 
-    # TODO: Add a CLI argument for the terminal background color so fade-based effects can target
+    # Future: add a CLI argument for the terminal background color so fade-based effects can target
     # the actual background instead of assuming black.
-    # TODO: Add a CLI argument for a default text color so dynamic color-handling effects can use
+    # Future: add a CLI argument for a default text color so dynamic color-handling effects can use
     # it when input characters have no parsed colors.
     TerminalConfig._populate_parser(parser)
 
@@ -217,6 +218,9 @@ def main() -> None:
         with effect.terminal_output() as terminal:
             for frame in effect:
                 terminal.print(frame)
+    except UnsupportedAnsiSequenceError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(1)
 

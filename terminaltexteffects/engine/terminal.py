@@ -26,6 +26,7 @@ from terminaltexteffects.utils.exceptions import (
     InvalidCharacterGroupError,
     InvalidCharacterSortError,
     InvalidColorSortError,
+    UnsupportedAnsiSequenceError,
 )
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
@@ -544,6 +545,10 @@ class Terminal:
     """
 
     ansi_sequence_color_map: typing.ClassVar[dict[str, Color]] = {}
+    ansi_escape_sequence_pattern: typing.ClassVar[re.Pattern[str]] = re.compile(
+        r"(?:\x1b\][^\x07]*(?:\x07|\x1b\\))|(?:\x1b\[[0-?]*[ -/]*[@-~])|(?:\x1b.)",
+    )
+    csi_sequence_pattern: typing.ClassVar[re.Pattern[str]] = re.compile(r"\x1b\[([0-?]*)([ -/]*)([@-~])")
 
     def __init__(self, input_data: str, config: TerminalConfig | None = None) -> None:
         """Initialize the Terminal.
@@ -597,10 +602,9 @@ class Terminal:
     def _preprocess_input_data(self, input_data: str) -> list[list[EffectCharacter]]:  # noqa: PLR0915
         """Preprocess the input data.
 
-        Tabs are expanded to spaces, trailing whitespace is stripped from each line, and
-        the input is decomposed into `EffectCharacter` rows while tracking supported
-        8-bit and 24-bit SGR foreground/background color sequences found in the data.
-        Other SGR sequences are ignored, and reset sequences clear the tracked colors.
+        Input is decomposed into `EffectCharacter` rows while tracking supported
+        SGR foreground/background color sequences and fetch-style cursor movement
+        sequences. Unsupported ANSI/control sequences raise `UnsupportedAnsiSequenceError`.
 
         Args:
             input_data (str): The input data to be displayed in the terminal.
@@ -610,89 +614,250 @@ class Terminal:
 
         """
 
-        def find_ansi_sequences_with_positions(
-            text: str,
-        ) -> list[tuple[int, int]]:  # [(start,end), ...]
-            """Find SGR foreground and background ANSI escape sequences in the input text and return their positions.
+        def build_color_sequence(color_code: int | str, sequence_type: str) -> str:
+            """Build a normalized supported color SGR sequence."""
+            if isinstance(color_code, int):
+                return f"\x1b[{sequence_type};5;{color_code}m"
+            color_ints = [int(color_code[index : index + 2], 16) for index in range(0, 6, 2)]
+            return f"\x1b[{sequence_type};2;{color_ints[0]};{color_ints[1]};{color_ints[2]}m"
 
-            Args:
-                text (str): The input text.
+        def parse_csi_parameters(parameters: str) -> list[int]:
+            """Parse CSI parameters, treating omitted values as zero."""
+            if any(char not in "0123456789;" for char in parameters):
+                msg = f"\x1b[{parameters}"
+                raise UnsupportedAnsiSequenceError(msg)
+            if not parameters:
+                return []
+            return [int(parameter) if parameter else 0 for parameter in parameters.split(";")]
 
-            Returns:
-                list[tuple[int, int]]: A list of tuples containing the start and end positions of the
-                    ANSI escape sequences.
+        def apply_sgr_sequence(  # noqa: PLR0915
+            sequence: str,
+            active_sequences: dict[str, str],
+            active_colors: dict[str, Color | None],
+            active_styles: dict[str, bool],
+            standard_fg_parameter: dict[str, int | None],
+        ) -> None:
+            """Apply supported SGR color parameters to the active input color state."""
+            parameters = parse_csi_parameters(sequence[2:-1])
+            if not parameters:
+                parameters = [0]
+            param_index = 0
+            while param_index < len(parameters):
+                parameter = parameters[param_index]
+                if parameter == 0:
+                    active_sequences["fg_color"] = active_sequences["bg_color"] = ""
+                    active_colors["fg_color"] = active_colors["bg_color"] = None
+                    active_styles["bold"] = False
+                    standard_fg_parameter["fg_color"] = None
+                elif parameter == 1:
+                    active_styles["bold"] = True
+                    if standard_fg_parameter["fg_color"] is not None:
+                        active_colors["fg_color"] = Color(standard_fg_parameter["fg_color"] - 30 + 8)
+                elif parameter == 22:
+                    active_styles["bold"] = False
+                    if standard_fg_parameter["fg_color"] is not None:
+                        active_colors["fg_color"] = Color(standard_fg_parameter["fg_color"] - 30)
+                elif parameter == 39:
+                    active_sequences["fg_color"] = ""
+                    active_colors["fg_color"] = None
+                    standard_fg_parameter["fg_color"] = None
+                elif parameter == 49:
+                    active_sequences["bg_color"] = ""
+                    active_colors["bg_color"] = None
+                elif 30 <= parameter <= 37:
+                    color = Color(parameter - 30 + (8 if active_styles["bold"] else 0))
+                    active_sequences["fg_color"] = f"\x1b[{parameter}m"
+                    active_colors["fg_color"] = color
+                    standard_fg_parameter["fg_color"] = parameter
+                elif 90 <= parameter <= 97:
+                    color = Color(parameter - 90 + 8)
+                    active_sequences["fg_color"] = f"\x1b[{parameter}m"
+                    active_colors["fg_color"] = color
+                    standard_fg_parameter["fg_color"] = None
+                elif 40 <= parameter <= 47:
+                    color = Color(parameter - 40)
+                    active_sequences["bg_color"] = f"\x1b[{parameter}m"
+                    active_colors["bg_color"] = color
+                elif 100 <= parameter <= 107:
+                    color = Color(parameter - 100 + 8)
+                    active_sequences["bg_color"] = f"\x1b[{parameter}m"
+                    active_colors["bg_color"] = color
+                elif parameter in (38, 48):
+                    if param_index + 1 >= len(parameters):
+                        raise UnsupportedAnsiSequenceError(sequence)
+                    sequence_type = "fg_color" if parameter == 38 else "bg_color"
+                    color_sequence_type = str(parameter)
+                    color_mode = parameters[param_index + 1]
+                    if color_mode == 5:
+                        if param_index + 2 >= len(parameters):
+                            raise UnsupportedAnsiSequenceError(sequence)
+                        color_code: int | str = parameters[param_index + 2]
+                        color = Color(color_code)
+                        param_index += 2
+                    elif color_mode == 2:
+                        if param_index + 4 >= len(parameters):
+                            raise UnsupportedAnsiSequenceError(sequence)
+                        color_code = "".join(f"{parameters[param_index + offset]:02X}" for offset in range(2, 5))
+                        color = Color(color_code)
+                        param_index += 4
+                    else:
+                        raise UnsupportedAnsiSequenceError(sequence)
+                    active_sequences[sequence_type] = build_color_sequence(color_code, color_sequence_type)
+                    active_colors[sequence_type] = color
+                    if sequence_type == "fg_color":
+                        standard_fg_parameter["fg_color"] = None
+                param_index += 1
 
-            """
-            # match all SGR sequences, though only 8bit and 24bit color sequences will be used, the others are ignored
-            ansi_escape_pattern = r"(\x1b|\x1B|\033)\[[\d;]*m"
-            matches = re.finditer(ansi_escape_pattern, text)
-            return [(match.start(), match.end() - 1) for match in matches]
+        def default_parameter(parameters: list[int]) -> int:
+            """Return the first CSI parameter, defaulting zero/omitted values to one."""
+            if not parameters:
+                return 1
+            return max(parameters[0], 1)
+
+        def is_supported_private_mode_sequence(sequence: str) -> bool:
+            """Return whether a CSI private mode sequence is safe to ignore while parsing input."""
+            return sequence in {"\x1b[?25h", "\x1b[?25l", "\x1b[?7h", "\x1b[?7l"}
+
+        def apply_cursor_sequence(sequence: str, row: int, column: int) -> tuple[int, int]:
+            """Apply a supported cursor movement sequence and return the new cursor position."""
+            csi_match = self.csi_sequence_pattern.fullmatch(sequence)
+            if not csi_match:
+                raise UnsupportedAnsiSequenceError(sequence)
+            parameters_text, intermediates, final_byte = csi_match.groups()
+            if intermediates:
+                raise UnsupportedAnsiSequenceError(sequence)
+            if parameters_text.startswith("?"):
+                raise UnsupportedAnsiSequenceError(sequence)
+            parameters = parse_csi_parameters(parameters_text)
+            if final_byte == "A":
+                row -= default_parameter(parameters)
+            elif final_byte == "B":
+                row += default_parameter(parameters)
+            elif final_byte == "C":
+                column += default_parameter(parameters)
+            elif final_byte == "D":
+                column -= default_parameter(parameters)
+            elif final_byte == "E":
+                row += default_parameter(parameters)
+                column = 0
+            elif final_byte == "F":
+                row -= default_parameter(parameters)
+                column = 0
+            elif final_byte == "G":
+                column = default_parameter(parameters) - 1
+            elif final_byte in ("H", "f"):
+                row = default_parameter(parameters) - 1
+                column = (parameters[1] if len(parameters) > 1 and parameters[1] else 1) - 1
+            else:
+                raise UnsupportedAnsiSequenceError(sequence)
+            return max(row, 0), max(column, 0)
+
+        def build_character(
+            symbol: str,
+            active_sequences: dict[str, str],
+            active_colors: dict[str, Color | None],
+            active_styles: dict[str, bool],
+        ) -> EffectCharacter:
+            """Build an input character with the current terminal configuration and input colors."""
+            character = EffectCharacter(self._next_character_id, symbol, 0, 0)
+            self._next_character_id += 1
+            for sequence_type, sequence in active_sequences.items():
+                color = active_colors[sequence_type]
+                if sequence and color:
+                    character._input_ansi_sequences[sequence_type] = sequence
+                    self._input_colors_frequency[color] = self._input_colors_frequency.get(color, 0) + 1
+                    if sequence_type == "fg_color":
+                        character.animation.input_fg_color = color
+                    else:
+                        character.animation.input_bg_color = color
+            character.animation.input_bold = active_styles["bold"]
+            character.animation.no_color = self.config.no_color
+            character.animation.use_xterm_colors = self.config.xterm_colors
+            character.animation.existing_color_handling = self.config.existing_color_handling
+            character.uses_input_preexisting_colors = True
+            if character.animation.existing_color_handling == "always":
+                character.animation.set_appearance(character.input_symbol)
+            return character
+
+        screen: dict[tuple[int, int], EffectCharacter] = {}
+        active_sequences = {"fg_color": "", "bg_color": ""}
+        active_colors: dict[str, Color | None] = {"fg_color": None, "bg_color": None}
+        active_styles = {"bold": False}
+        standard_fg_parameter: dict[str, int | None] = {"fg_color": None}
+        row = column = 0
+        char_index = max_row = max_column = 0
+        while char_index < len(input_data):
+            if input_data[char_index] == "\x1b":
+                sequence_match = self.ansi_escape_sequence_pattern.match(input_data, char_index)
+                if not sequence_match:
+                    raise UnsupportedAnsiSequenceError(input_data[char_index])
+                sequence = sequence_match.group(0)
+                if sequence.startswith("\x1b["):
+                    csi_match = self.csi_sequence_pattern.fullmatch(sequence)
+                    if not csi_match:
+                        raise UnsupportedAnsiSequenceError(sequence)
+                    final_byte = csi_match.group(3)
+                    if final_byte == "m":
+                        apply_sgr_sequence(
+                            sequence,
+                            active_sequences,
+                            active_colors,
+                            active_styles,
+                            standard_fg_parameter,
+                        )
+                    elif is_supported_private_mode_sequence(sequence):
+                        pass
+                    else:
+                        row, column = apply_cursor_sequence(sequence, row, column)
+                        max_row = max(max_row, row)
+                        max_column = max(max_column, column)
+                else:
+                    raise UnsupportedAnsiSequenceError(sequence)
+                char_index = sequence_match.end()
+            elif input_data[char_index] == "\n":
+                row += 1
+                column = 0
+                max_row = max(max_row, row)
+                char_index += 1
+            elif input_data[char_index] == "\r":
+                column = 0
+                char_index += 1
+            else:
+                symbol = input_data[char_index]
+                if symbol == "\t":
+                    symbol = " "
+                    spaces_to_next_tab = self.config.tab_width - (column % self.config.tab_width)
+                else:
+                    spaces_to_next_tab = 1
+                for _ in range(spaces_to_next_tab):
+                    screen[(row, column)] = build_character(symbol, active_sequences, active_colors, active_styles)
+                    max_row = max(max_row, row)
+                    max_column = max(max_column, column)
+                    column += 1
+                char_index += 1
 
         characters: list[list[EffectCharacter]] = []
-        # replace tabs with spaces
-        input_data = input_data.replace("\t", " " * self.config.tab_width)
-        # remove trailing whitespace from each line
-        input_data_lines = input_data.splitlines()
-        input_data = ""
-        for line in input_data_lines:
-            input_data += line.rstrip() + "\n"
-        # find ansi sequences
-        sequence_list = find_ansi_sequences_with_positions(input_data)
-        active_sequences = {"fg_color": "", "bg_color": ""}
-        char_index = 0
-        current_character_line: list[EffectCharacter] = []
-        while char_index < len(input_data):
-            if input_data[char_index] == "\n":
-                characters.append(current_character_line)
-                current_character_line = []
-                char_index += 1
-            elif sequence_list and char_index == sequence_list[0][0]:
-                active_sequence = input_data[sequence_list[0][0] : sequence_list[0][1] + 1]
-                # only apply sequences that are 8bit or 24bit color (only support RGB colorspace, though 38;3 and 38;4
-                # exist and indicate CMY and CMYK colorspaces, respectively)
-                # match foreground colors
-                if re.match(r"(\x1b|\x1B|\033)\[38;(2|5)", active_sequence):
-                    active_sequences["fg_color"] = active_sequence
-                # match background colors
-                elif re.match(r"(\x1b|\x1B|\033)\[48;(2|5)", active_sequence):
-                    active_sequences["bg_color"] = active_sequence
-                # match reset sequence and clear active sequences
-                elif re.match(r"(\x1b|\x1B|\033)\[0?m", active_sequence):
-                    active_sequences["fg_color"] = active_sequences["bg_color"] = ""
-                char_index = sequence_list[0][1] + 1
-                sequence_list.pop(0)
-            else:
-                character = EffectCharacter(self._next_character_id, input_data[char_index], 0, 0)
-                for sequence_type, sequence in active_sequences.items():
-                    if sequence:
-                        character._input_ansi_sequences[sequence_type] = sequence
-                        if sequence in Terminal.ansi_sequence_color_map:
-                            color = Terminal.ansi_sequence_color_map[sequence]
-                        else:
-                            color = Color(ansitools.parse_ansi_color_sequence(sequence))
+        for screen_row in range(max_row + 1):
+            character_line: list[EffectCharacter] = []
+            for screen_column in range(max_column + 1):
+                character = screen.get((screen_row, screen_column))
+                if character is None:
+                    character = build_character(
+                        " ",
+                        {"fg_color": "", "bg_color": ""},
+                        {"fg_color": None, "bg_color": None},
+                        {"bold": False},
+                    )
+                character_line.append(character)
+            while character_line and character_line[-1].input_symbol == " " and not any(
+                (character_line[-1].animation.input_fg_color, character_line[-1].animation.input_bg_color),
+            ):
+                character_line.pop()
+            characters.append(character_line)
+        while characters and not characters[-1]:
+            characters.pop()
 
-                            Terminal.ansi_sequence_color_map[sequence] = color
-                        if color in self._input_colors_frequency:
-                            self._input_colors_frequency[color] += 1
-                        else:
-                            self._input_colors_frequency[color] = 1
-                        if sequence_type == "fg_color":
-                            character.animation.input_fg_color = color
-                        else:
-                            character.animation.input_bg_color = color
-                character.animation.no_color = self.config.no_color
-                character.animation.use_xterm_colors = self.config.xterm_colors
-                character.animation.existing_color_handling = self.config.existing_color_handling
-                character.uses_input_preexisting_colors = True
-                # if existing_color_handling is set to 'always', set the appearance to the input symbol with
-                # any existing color sequences
-                if character.animation.existing_color_handling == "always":
-                    character.animation.set_appearance(character.input_symbol)
-                current_character_line.append(character)
-                self._next_character_id += 1
-                char_index += 1
-
-        return characters
+        return characters or [[build_character(" ", active_sequences, active_colors, active_styles)]]
 
     def _calc_canvas_offsets(self) -> tuple[int, int]:
         """Calculate terminal-space offsets for the anchored canvas.
@@ -838,7 +1003,9 @@ class Terminal:
         for row, line in enumerate(formatted_lines):
             for column, character in enumerate(line, start=1):
                 character._input_coord = Coord(column, input_height - row)
-                if character._input_symbol != " ":
+                if character._input_symbol != " " or any(
+                    (character.animation.input_fg_color, character.animation.input_bg_color),
+                ):
                     input_characters.append(character)
 
         anchored_characters = self.canvas._anchor_text(input_characters, self.config.anchor_text)
@@ -1213,8 +1380,9 @@ class Terminal:
         self.terminal_state = terminal_state
 
     def prep_canvas(self) -> None:
-        """Prepare the terminal for the effect by hiding the cursor, positioning the
-        canvas, and writing blank canvas rows.
+        """Prepare the terminal for the effect.
+
+        Hide the cursor, position the canvas, and write blank canvas rows.
 
         If `config.reuse_canvas` is `True`, the cursor is first moved to the previously
         saved canvas position before the blank rows are written. This is intended to let

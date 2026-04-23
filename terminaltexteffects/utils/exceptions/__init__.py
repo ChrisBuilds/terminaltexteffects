@@ -23,4 +23,5 @@ from terminaltexteffects.utils.exceptions.terminal_exceptions import (
     InvalidCharacterGroupError,
     InvalidCharacterSortError,
     InvalidColorSortError,
+    UnsupportedAnsiSequenceError,
 )

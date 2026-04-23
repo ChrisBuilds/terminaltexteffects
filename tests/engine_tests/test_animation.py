@@ -259,6 +259,29 @@ def test_animation_set_appearance_existing_colors(character: EffectCharacter) ->
     )
 
 
+def test_animation_set_appearance_existing_bold(character: EffectCharacter) -> None:
+    """Ensure always mode applies parsed input bold styling."""
+    character.animation.existing_color_handling = "always"
+    character.uses_input_preexisting_colors = True
+    character.animation.input_fg_color = Color(10)
+    character.animation.input_bold = True
+    character.animation.set_appearance("a")
+    current_visual = character.animation.current_character_visual
+    assert current_visual.bold is True
+    assert current_visual.colors == ColorPair(fg=Color(10))
+    assert current_visual.formatted_symbol.startswith("\x1b[1m")
+
+
+def test_animation_set_appearance_without_existing_bold(character: EffectCharacter) -> None:
+    """Ensure parsed input bold is opt-in and does not affect non-bold input."""
+    character.animation.existing_color_handling = "always"
+    character.uses_input_preexisting_colors = True
+    character.animation.input_fg_color = Color(2)
+    character.animation.input_bold = False
+    character.animation.set_appearance("a")
+    assert character.animation.current_character_visual.bold is False
+
+
 def test_animation_set_appearance_existing_colors_without_input_colors_clears_effect_colors(
     character: EffectCharacter,
 ) -> None:
@@ -442,6 +465,15 @@ def test_scene_input_color_from_existing(character: EffectCharacter) -> None:
     assert new_scene.preexisting_colors == ColorPair("#ffffff", "#000000")
 
 
+def test_scene_input_bold_from_existing(character: EffectCharacter) -> None:
+    """Ensure Scenes capture preexisting input bold from the animation."""
+    character.animation.existing_color_handling = "always"
+    character.uses_input_preexisting_colors = True
+    character.animation.input_bold = True
+    new_scene = character.animation.new_scene()
+    assert new_scene.preexisting_bold is True
+
+
 def test_scene_add_frame_existing_colors(character: EffectCharacter) -> None:
     """Confirm scene-level preexisting colors override per-frame colors."""
     character.animation.existing_color_handling = "always"
@@ -454,6 +486,16 @@ def test_scene_add_frame_existing_colors(character: EffectCharacter) -> None:
     assert new_scene.frames[0].character_visual.colors == ColorPair("#ffffff", "#000000")
 
 
+def test_scene_add_frame_existing_bold(character: EffectCharacter) -> None:
+    """Confirm scene-level preexisting bold overrides per-frame bold styling."""
+    character.animation.existing_color_handling = "always"
+    character.uses_input_preexisting_colors = True
+    character.animation.input_bold = True
+    new_scene = character.animation.new_scene()
+    new_scene.add_frame(symbol="a", duration=1, bold=False)
+    assert new_scene.frames[0].character_visual.bold is True
+
+
 def test_scene_input_color_from_existing_skips_helper_characters(character: EffectCharacter) -> None:
     """Ensure helper characters do not receive scene preexisting colors in always mode."""
     character.animation.existing_color_handling = "always"
@@ -462,6 +504,7 @@ def test_scene_input_color_from_existing_skips_helper_characters(character: Effe
     character.animation.input_bg_color = Color("#000000")
     new_scene = character.animation.new_scene()
     assert new_scene.preexisting_colors is None
+    assert new_scene.preexisting_bold is False
 
 
 def test_activate_scene_with_no_frames(character: EffectCharacter) -> None:

@@ -138,6 +138,24 @@ def test_main_print_completion_invalid_shell_exits(monkeypatch: pytest.MonkeyPat
         __main__.main()
 
 
+def test_main_unsupported_ansi_sequence_exits_with_error(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Unsupported terminal control sequences should fail cleanly before rendering."""
+    monkeypatch.setattr(__main__.sys, "argv", ["tte", "rain"])
+    monkeypatch.setattr(__main__.Terminal, "get_piped_input", lambda: "abc\x1b[2Jdef")
+
+    with pytest.raises(SystemExit) as exc_info:
+        __main__.main()
+
+    assert exc_info.value.code == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "Unsupported ANSI/control sequence" in captured.err
+    assert "\\x1b[2J" in captured.err
+
+
 def test_build_parser_includes_plugin_effect_in_completion(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

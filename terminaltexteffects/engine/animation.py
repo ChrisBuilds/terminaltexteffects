@@ -79,7 +79,7 @@ class CharacterVisual:
         formatting_string = ""
         if self.bold:
             formatting_string += ansitools.apply_bold()
-        # TODO: Review the dim ANSI sequence and decide whether CharacterVisual should emit it.
+        # Future: review the dim ANSI sequence and decide whether CharacterVisual should emit it.
         if self.italic:
             formatting_string += ansitools.apply_italic()
         if self.underline:
@@ -146,6 +146,7 @@ class Scene:
         easing_total_steps (int): The total number of steps in the easing function
         easing_current_step (int): The current step in the easing function
         preexisting_colors (graphics.ColorPair | None): The preexisting colors parsed from the input.
+        preexisting_bold (bool): Whether parsed input bold styling should override frame bold styling.
 
     """
 
@@ -196,6 +197,7 @@ class Scene:
         self.easing_total_steps: int = 0
         self.easing_current_step: int = 0
         self.preexisting_colors: graphics.ColorPair | None = None
+        self.preexisting_bold: bool = False
 
     def _get_color_code(self, color: graphics.Color | None) -> str | int | None:
         """Get the color code for the given color.
@@ -264,6 +266,8 @@ class Scene:
         # override fg and bg colors if they are set in the Scene due to existing color handling = always
         if self.preexisting_colors:
             colors = self.preexisting_colors
+        if self.preexisting_bold:
+            bold = True
 
         # get the color code for the fg and bg colors
         if colors:
@@ -481,6 +485,7 @@ class Animation:
         existing_color_handling (str): how to handle color ANSI sequences from the input data
         input_fg_color (graphics.Color | None): the input foreground Color
         input_bg_color (graphics.Color | None): the input background Color
+        input_bold (bool): whether the input character was parsed with active bold SGR styling
         xterm_color_map (dict[str, int]): a mapping of RGB color codes to XTerm-256 color codes
         active_scene_current_step (int): Reserved for scene-step tracking; currently reset on activation but
             otherwise unused.
@@ -513,8 +518,9 @@ class Animation:
         self.existing_color_handling: typing.Literal["always", "dynamic", "ignore"] = "ignore"
         self.input_fg_color: graphics.Color | None = None
         self.input_bg_color: graphics.Color | None = None
+        self.input_bold: bool = False
         self.xterm_color_map: dict[str, int] = {}
-        # TODO: Review whether `active_scene_current_step` should be removed or implemented for real scene tracking.
+        # Future: review whether `active_scene_current_step` should be removed or implemented for real scene tracking.
         self.active_scene_current_step: int = 0
         self.current_character_visual: CharacterVisual = CharacterVisual(character.input_symbol)
 
@@ -578,12 +584,14 @@ class Animation:
                     found_unique = True
                 else:
                     current_id += 1
-        # TODO: Review whether scene IDs should be enforced as unique and raise on duplicates.
+        # Future: review whether scene IDs should be enforced as unique and raise on duplicates.
         # Confirm no effects intentionally overwrite scenes today, then update this behavior and docs together.
         if self.existing_color_handling == "always" and self.character.uses_input_preexisting_colors:
             preexisting_colors = graphics.ColorPair(fg=self.input_fg_color, bg=self.input_bg_color)
+            preexisting_bold = self.input_bold
         else:
             preexisting_colors = None
+            preexisting_bold = False
         new_scene = Scene(
             scene_id=scene_id,
             is_looping=is_looping,
@@ -593,6 +601,7 @@ class Animation:
             use_xterm_colors=self.use_xterm_colors,
         )
         new_scene.preexisting_colors = preexisting_colors
+        new_scene.preexisting_bold = preexisting_bold
         self.scenes[scene_id] = new_scene
         return new_scene
 
@@ -658,14 +667,17 @@ class Animation:
             colors = graphics.ColorPair(fg=None, bg=None)
         # In always mode, input-derived characters use exactly the parsed input fg/bg pair,
         # even when one or both channels are absent.
+        bold = False
         if self.existing_color_handling == "always" and self.character.uses_input_preexisting_colors:
             colors = graphics.ColorPair(fg=self.input_fg_color, bg=self.input_bg_color)
+            bold = self.input_bold
 
         char_vis_fg_color: str | int | None = self._get_color_code(colors.fg_color)
         char_vis_bg_color: str | int | None = self._get_color_code(colors.bg_color)
 
         self.current_character_visual = CharacterVisual(
             symbol,
+            bold=bold,
             colors=colors,
             _fg_color_code=char_vis_fg_color,
             _bg_color_code=char_vis_bg_color,
