@@ -154,6 +154,24 @@ def test_matrix_dynamic_with_preexisting_bg_only_uses_input_bg_color() -> None:
     assert final_frame._bg_color_code == Color(106).rgb_color
 
 
+def test_matrix_dynamic_with_preexisting_bg_space_uses_input_bg_color() -> None:
+    """Verify dynamic mode resolves parsed background colors on input spaces."""
+    effect = effect_matrix.Matrix("\x1b[48;5;106m \x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+    effect.effect_config.rain_time = 1
+
+    iterator = cast("effect_matrix.MatrixIterator", iter(effect))
+    character = iterator.terminal.get_characters()[0]
+    resolve_scene = character.animation.scenes["resolve"]
+    final_frame = resolve_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == " "
+    assert final_frame.colors == ColorPair(bg=Color(106))
+    assert final_frame._fg_color_code is None
+    assert final_frame._bg_color_code == Color(106).rgb_color
+    assert iterator._has_input_colors(character)
+
+
 def test_matrix_dynamic_with_preexisting_fg_and_bg_uses_input_colors() -> None:
     """Verify dynamic mode restores parsed foreground and background colors together."""
     effect = effect_matrix.Matrix("\x1b[38;5;196m\x1b[48;5;106mA\x1b[0m")
@@ -169,6 +187,24 @@ def test_matrix_dynamic_with_preexisting_fg_and_bg_uses_input_colors() -> None:
     assert final_frame.colors == ColorPair(fg=Color(196), bg=Color(106))
     assert final_frame._fg_color_code == Color(196).rgb_color
     assert final_frame._bg_color_code == Color(106).rgb_color
+
+
+def test_matrix_always_with_preexisting_bg_space_uses_input_bg_color() -> None:
+    """Verify always mode resolves parsed background colors on input spaces."""
+    effect = effect_matrix.Matrix("\x1b[48;5;106m \x1b[0m")
+    effect.terminal_config = _make_terminal_config("always")
+    effect.effect_config.rain_time = 1
+
+    iterator = cast("effect_matrix.MatrixIterator", iter(effect))
+    character = iterator.terminal.get_characters()[0]
+    resolve_scene = character.animation.scenes["resolve"]
+    final_frame = resolve_scene.frames[-1].character_visual
+
+    assert final_frame.symbol == " "
+    assert final_frame.colors == ColorPair(bg=Color(106))
+    assert final_frame._fg_color_code is None
+    assert final_frame._bg_color_code == Color(106).rgb_color
+    assert iterator._has_input_colors(character)
 
 
 def test_matrix_ignore_with_preexisting_colors_uses_effect_gradient() -> None:

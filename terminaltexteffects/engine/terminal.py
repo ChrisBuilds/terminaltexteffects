@@ -644,57 +644,57 @@ class Terminal:
             param_index = 0
             while param_index < len(parameters):
                 parameter = parameters[param_index]
-                if parameter == 0:
+                if parameter == 0:  # SGR 0: reset all attributes
                     active_sequences["fg_color"] = active_sequences["bg_color"] = ""
                     active_colors["fg_color"] = active_colors["bg_color"] = None
                     active_styles["bold"] = False
                     standard_fg_parameter["fg_color"] = None
-                elif parameter == 1:
+                elif parameter == 1:  # SGR 1: bold / increased intensity
                     active_styles["bold"] = True
                     if standard_fg_parameter["fg_color"] is not None:
                         active_colors["fg_color"] = Color(standard_fg_parameter["fg_color"] - 30 + 8)
-                elif parameter == 22:
+                elif parameter == 22:  # SGR 22: normal intensity (not bold)
                     active_styles["bold"] = False
                     if standard_fg_parameter["fg_color"] is not None:
                         active_colors["fg_color"] = Color(standard_fg_parameter["fg_color"] - 30)
-                elif parameter == 39:
+                elif parameter == 39:  # SGR 39: default foreground color
                     active_sequences["fg_color"] = ""
                     active_colors["fg_color"] = None
                     standard_fg_parameter["fg_color"] = None
-                elif parameter == 49:
+                elif parameter == 49:  # SGR 49: default background color
                     active_sequences["bg_color"] = ""
                     active_colors["bg_color"] = None
-                elif 30 <= parameter <= 37:
+                elif 30 <= parameter <= 37:  # SGR 30-37: standard foreground colors
                     color = Color(parameter - 30 + (8 if active_styles["bold"] else 0))
                     active_sequences["fg_color"] = f"\x1b[{parameter}m"
                     active_colors["fg_color"] = color
                     standard_fg_parameter["fg_color"] = parameter
-                elif 90 <= parameter <= 97:
+                elif 90 <= parameter <= 97:  # SGR 90-97: bright foreground colors
                     color = Color(parameter - 90 + 8)
                     active_sequences["fg_color"] = f"\x1b[{parameter}m"
                     active_colors["fg_color"] = color
                     standard_fg_parameter["fg_color"] = None
-                elif 40 <= parameter <= 47:
+                elif 40 <= parameter <= 47:  # SGR 40-47: standard background colors
                     color = Color(parameter - 40)
                     active_sequences["bg_color"] = f"\x1b[{parameter}m"
                     active_colors["bg_color"] = color
-                elif 100 <= parameter <= 107:
+                elif 100 <= parameter <= 107:  # SGR 100-107: bright background colors
                     color = Color(parameter - 100 + 8)
                     active_sequences["bg_color"] = f"\x1b[{parameter}m"
                     active_colors["bg_color"] = color
-                elif parameter in (38, 48):
+                elif parameter in (38, 48):  # SGR 38/48: extended foreground/background color
                     if param_index + 1 >= len(parameters):
                         raise UnsupportedAnsiSequenceError(sequence)
                     sequence_type = "fg_color" if parameter == 38 else "bg_color"
                     color_sequence_type = str(parameter)
                     color_mode = parameters[param_index + 1]
-                    if color_mode == 5:
+                    if color_mode == 5:  # SGR ...;5;n: 8-bit indexed color
                         if param_index + 2 >= len(parameters):
                             raise UnsupportedAnsiSequenceError(sequence)
                         color_code: int | str = parameters[param_index + 2]
                         color = Color(color_code)
                         param_index += 2
-                    elif color_mode == 2:
+                    elif color_mode == 2:  # SGR ...;2;r;g;b: 24-bit RGB color
                         if param_index + 4 >= len(parameters):
                             raise UnsupportedAnsiSequenceError(sequence)
                         color_code = "".join(f"{parameters[param_index + offset]:02X}" for offset in range(2, 5))
@@ -729,23 +729,23 @@ class Terminal:
             if parameters_text.startswith("?"):
                 raise UnsupportedAnsiSequenceError(sequence)
             parameters = parse_csi_parameters(parameters_text)
-            if final_byte == "A":
+            if final_byte == "A":  # CSI A: cursor up
                 row -= default_parameter(parameters)
-            elif final_byte == "B":
+            elif final_byte == "B":  # CSI B: cursor down
                 row += default_parameter(parameters)
-            elif final_byte == "C":
+            elif final_byte == "C":  # CSI C: cursor forward
                 column += default_parameter(parameters)
-            elif final_byte == "D":
+            elif final_byte == "D":  # CSI D: cursor back
                 column -= default_parameter(parameters)
-            elif final_byte == "E":
+            elif final_byte == "E":  # CSI E: cursor next line
                 row += default_parameter(parameters)
                 column = 0
-            elif final_byte == "F":
+            elif final_byte == "F":  # CSI F: cursor previous line
                 row -= default_parameter(parameters)
                 column = 0
-            elif final_byte == "G":
+            elif final_byte == "G":  # CSI G: cursor horizontal absolute
                 column = default_parameter(parameters) - 1
-            elif final_byte in ("H", "f"):
+            elif final_byte in ("H", "f"):  # CSI H/f: cursor position / horizontal-vertical position
                 row = default_parameter(parameters) - 1
                 column = (parameters[1] if len(parameters) > 1 and parameters[1] else 1) - 1
             else:

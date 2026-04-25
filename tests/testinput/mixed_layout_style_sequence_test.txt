@@ -1,0 +1,27 @@
+[?25l[?7l+------------------+
+| LEFT LOGO BLOCK  |
+| logo row A       |
+| logo row B       |
+| logo row C       |
++------------------+[1;25H+--------------------------------+
+[2;25H| RIGHT PANEL FROM H/f MOVES     |
+[3;25H| [1muser@host[22m                      |
+[4;25H| OS: cursor layout              |
+[5;25H| std: [30m[40m K [31m[41m R [32m[42m G [33m[43m Y [0m              |
+[6;25H| brt: [90m[100m k [91m[101m r [92m[102m g [93m[103m y [0m              |
+[7;25H+--------------------------------+
+
+CURSOR MOVEMENT CHECKS
+G absolute column:[26GG-MARK starts at col 26
+C forward spacing: START[8CAFTER-C
+D back overwrite: 123456789[5D<BACK>
+A/B vertical anchor
+[2Bfrom B lands two rows below anchor[1Afrom A lands one row above B
+[18;1HE/F line movement anchor[2Efrom E appears two rows below[1Ffrom F appears one row above E
+[22;1HABSOLUTE POSITIONING CHECKS
+[23;1HH puts this at row 23 col 1[23;34ff puts this at row 23 col 34
+[25;1HSTYLE AND RESET CHECKS
+[26;1H[1;32mBOLD_GREEN[22m normal-green [39mdefault-fg
+[27;1H[44mblue-bg[49m default-bg [48;5;94m8bit-bg[0m
+[28;1H[38;2;255;128;0m24bit-orange-fg[0m plain after reset
+[30;1HEND OF LAYOUT + STYLE SEQUENCE TEST[?25h[?7h

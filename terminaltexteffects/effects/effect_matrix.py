@@ -429,6 +429,10 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         self.build()
         self.rain_start = time.time()
 
+    @staticmethod
+    def _has_input_colors(character: EffectCharacter) -> bool:
+        return any((character.animation.input_fg_color, character.animation.input_bg_color))
+
     def build(self) -> None:
         """Build the initial state of the effect."""
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
@@ -560,7 +564,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                         for _ in range(random.randint(1, 4)):
                             if column.visible_characters:
                                 next_char = column.resolve_char()
-                                if next_char.input_symbol != " ":
+                                if next_char.input_symbol != " " or self._has_input_colors(next_char):
                                     next_char.animation.activate_scene("resolve")
                                     self.active_characters.add(next_char)
                                 else:

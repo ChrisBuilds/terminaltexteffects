@@ -133,6 +133,15 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
         self.pending_smoke: set[EffectCharacter] = set()
         self.build()
 
+    @staticmethod
+    def _has_input_colors(character: EffectCharacter) -> bool:
+        return any((character.animation.input_fg_color, character.animation.input_bg_color))
+
+    def _is_burnable(self, character: EffectCharacter) -> bool:
+        return character.input_symbol != " " or (
+            self.terminal.config.existing_color_handling != "ignore" and self._has_input_colors(character)
+        )
+
     def _make_smoke(self) -> deque[EffectCharacter]:
         smoke_particles: deque[EffectCharacter] = deque()
         for _ in range(2000):
@@ -270,7 +279,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             for _ in range(random.randint(2, 4)):
                 if self.algo.char_link_order:
                     next_char = self.algo.char_link_order.pop(0)
-                    if next_char.input_symbol == " ":
+                    if not self._is_burnable(next_char):
                         continue
                     next_char.animation.activate_scene("burn")
                     self.active_characters.add(next_char)

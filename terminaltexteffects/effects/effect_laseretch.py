@@ -340,6 +340,10 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
         self.active_characters.update(self.laser.beam_chars)
         self.color_shifted_chars: set[tte.EffectCharacter] = set()
 
+    @staticmethod
+    def _has_input_colors(character: tte.EffectCharacter) -> bool:
+        return any((character.animation.input_fg_color, character.animation.input_bg_color))
+
     def build(self) -> None:
         """Build the effect."""
         final_fg_gradient = tte.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
@@ -424,7 +428,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                     if not self.pending_chars:
                         break
                     next_char = self.pending_chars.pop(0)
-                    while next_char.input_symbol == " ":
+                    while next_char.input_symbol == " " and not self._has_input_colors(next_char):
                         if self.pending_chars:
                             next_char = self.pending_chars.pop(0)
                         else:

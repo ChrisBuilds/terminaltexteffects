@@ -440,14 +440,11 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                         2,
                         colors=ColorPair(fg=random.choice(text_gradient.spectrum)),
                     )
-                if character.input_symbol == " ":
-                    dissolve_scn.add_frame(character.input_symbol, 1)
-                else:
-                    dissolve_scn.add_frame(
-                        character.input_symbol,
-                        1,
-                        colors=self.character_final_color_map[character],
-                    )
+                dissolve_scn.add_frame(
+                    character.input_symbol,
+                    1,
+                    colors=self.character_final_color_map.get(character, ColorPair()),
+                )
                 character.animation.activate_scene(dissolve_scn)
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,

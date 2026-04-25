@@ -26,6 +26,12 @@ def _get_first_nonspace_character(
     return next(character for character in iterator.terminal.get_characters() if character.input_symbol != " ")
 
 
+def _get_first_space_character(
+    iterator: effect_synthgrid.SynthGridIterator,
+) -> effect_synthgrid.EffectCharacter:
+    return next(character for character in iterator.terminal.get_characters() if character.input_symbol == " ")
+
+
 @pytest.mark.parametrize(
     "input_data",
     ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
@@ -181,6 +187,23 @@ def test_synthgrid_dynamic_with_preexisting_bg_only_restores_input_bg() -> None:
     assert dissolve_scene is not None
     final_frame = dissolve_scene.frames[-1].character_visual
     assert final_frame.symbol == "A"
+    assert final_frame.colors == ColorPair(bg=Color(106))
+    assert final_frame._fg_color_code is None
+    assert final_frame._bg_color_code == Color(106).rgb_color
+
+
+def test_synthgrid_dynamic_with_preexisting_bg_space_restores_input_bg() -> None:
+    """Verify dynamic mode restores a parsed background color on input spaces."""
+    effect = effect_synthgrid.SynthGrid("\x1b[48;5;106m \x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = cast("effect_synthgrid.SynthGridIterator", iter(effect))
+    character = _get_first_space_character(iterator)
+    dissolve_scene = character.animation.active_scene
+
+    assert dissolve_scene is not None
+    final_frame = dissolve_scene.frames[-1].character_visual
+    assert final_frame.symbol == " "
     assert final_frame.colors == ColorPair(bg=Color(106))
     assert final_frame._fg_color_code is None
     assert final_frame._bg_color_code == Color(106).rgb_color

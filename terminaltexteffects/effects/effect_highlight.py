@@ -146,11 +146,14 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
+            input_bg_color = None
             if self.terminal.config.existing_color_handling == "dynamic":
                 base_color = character.animation.input_fg_color
+                input_bg_color = character.animation.input_bg_color
             else:
                 base_color = final_gradient_mapping[character.input_coord]
             self.character_final_color_map[character] = base_color
+            base_colors = ColorPair(fg=base_color, bg=input_bg_color)
             if base_color:
                 highlight_color = Animation.adjust_color_brightness(
                     base_color,
@@ -163,23 +166,23 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
                     base_color,
                     steps=(3, self.config.highlight_width, 3),
                 )
-                character.animation.set_appearance(character.input_symbol, ColorPair(fg=base_color))
+                character.animation.set_appearance(character.input_symbol, base_colors)
             else:
                 highlight_gradient = None
-                character.animation.set_appearance(character.input_symbol, ColorPair())
+                character.animation.set_appearance(character.input_symbol, base_colors)
             specular_highlight_scn = character.animation.new_scene(scene_id="highlight")
             if highlight_gradient:
                 for color in highlight_gradient:
                     specular_highlight_scn.add_frame(
                         character.input_symbol,
                         2,
-                        colors=ColorPair(fg=color),
+                        colors=ColorPair(fg=color, bg=input_bg_color),
                     )
             else:
                 specular_highlight_scn.add_frame(
                     character.input_symbol,
                     2,
-                    colors=ColorPair(),
+                    colors=base_colors,
                 )
             self.terminal.set_character_visibility(character, is_visible=True)
 

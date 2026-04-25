@@ -111,6 +111,25 @@ def test_highlight_dynamic_with_preexisting_fg_uses_input_fg_for_base_and_return
     assert final_frame._bg_color_code is None
 
 
+def test_highlight_dynamic_with_preexisting_bg_space_preserves_input_bg() -> None:
+    """Verify dynamic mode preserves parsed background color on input spaces."""
+    effect = effect_highlight.Highlight("\x1b[48;5;21m \x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = cast("effect_highlight.HighlightIterator", iter(effect))
+    character = iterator.terminal.get_characters()[0]
+    highlight_scene = character.animation.scenes["highlight"]
+    base_visual = character.animation.current_character_visual
+    final_frame = highlight_scene.frames[-1].character_visual
+
+    assert base_visual.colors == ColorPair(bg=effect_highlight.Color(21))
+    assert base_visual._fg_color_code is None
+    assert base_visual._bg_color_code == effect_highlight.Color(21).rgb_color
+    assert final_frame.colors == ColorPair(bg=effect_highlight.Color(21))
+    assert final_frame._fg_color_code is None
+    assert final_frame._bg_color_code == effect_highlight.Color(21).rgb_color
+
+
 def test_highlight_dynamic_without_preexisting_fg_has_no_visible_highlight_effect() -> None:
     """Verify dynamic mode leaves no-fg characters uncolored throughout the highlight scene."""
     effect = effect_highlight.Highlight("A")
@@ -166,3 +185,22 @@ def test_highlight_always_with_preexisting_colors_uses_input_colors() -> None:
     assert final_frame.colors == ColorPair(fg=effect_highlight.Color(196))
     assert final_frame._fg_color_code == effect_highlight.Color(196).rgb_color
     assert final_frame._bg_color_code is None
+
+
+def test_highlight_always_with_preexisting_bg_space_uses_input_bg() -> None:
+    """Verify always mode resolves visible frames for input spaces to the parsed background color."""
+    effect = effect_highlight.Highlight("\x1b[48;5;21m \x1b[0m")
+    effect.terminal_config = _make_terminal_config("always")
+
+    iterator = cast("effect_highlight.HighlightIterator", iter(effect))
+    character = iterator.terminal.get_characters()[0]
+    highlight_scene = character.animation.scenes["highlight"]
+    base_visual = character.animation.current_character_visual
+    final_frame = highlight_scene.frames[-1].character_visual
+
+    assert base_visual.colors == ColorPair(bg=effect_highlight.Color(21))
+    assert base_visual._fg_color_code is None
+    assert base_visual._bg_color_code == effect_highlight.Color(21).rgb_color
+    assert final_frame.colors == ColorPair(bg=effect_highlight.Color(21))
+    assert final_frame._fg_color_code is None
+    assert final_frame._bg_color_code == effect_highlight.Color(21).rgb_color

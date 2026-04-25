@@ -25,6 +25,10 @@ def _get_input_character(iterator: effect_spotlights.SpotlightsIterator) -> effe
     return next(character for character in iterator.terminal.get_characters() if character.input_symbol != " ")
 
 
+def _get_space_character(iterator: effect_spotlights.SpotlightsIterator) -> effect_spotlights.EffectCharacter:
+    return next(character for character in iterator.terminal.get_characters() if character.input_symbol == " ")
+
+
 def _place_spotlight_on_character(
     iterator: effect_spotlights.SpotlightsIterator,
     character: effect_spotlights.EffectCharacter,
@@ -232,6 +236,27 @@ def test_spotlights_dynamic_illumination_uses_gray_fg_and_bright_input_bg() -> N
     assert current_visual._bg_color_code == Color(106).rgb_color
 
 
+def test_spotlights_dynamic_illumination_uses_gray_fg_and_bright_input_bg_for_spaces() -> None:
+    """Verify spotlight illumination includes bg-colored input spaces."""
+    effect = effect_spotlights.Spotlights("\x1b[48;5;106m \x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = cast("effect_spotlights.SpotlightsIterator", iter(effect))
+    character = _get_space_character(iterator)
+    _place_spotlight_on_character(iterator, character)
+
+    iterator.illuminate_chars(iterator.illuminate_range)
+    current_visual = character.animation.current_character_visual
+
+    assert current_visual.symbol == " "
+    assert current_visual.colors == ColorPair(
+        fg=effect_spotlights.SpotlightsIterator.DYNAMIC_NEUTRAL_GRAY,
+        bg=Color(106),
+    )
+    assert current_visual._fg_color_code == effect_spotlights.SpotlightsIterator.DYNAMIC_NEUTRAL_GRAY.rgb_color
+    assert current_visual._bg_color_code == Color(106).rgb_color
+
+
 def test_spotlights_dynamic_illumination_uses_bright_input_fg_and_bg() -> None:
     """Verify spotlight illumination restores both parsed input color channels together."""
     effect = effect_spotlights.Spotlights("\x1b[38;5;196m\x1b[48;5;106mA\x1b[0m")
@@ -299,6 +324,25 @@ def test_spotlights_dynamic_expand_clears_gray_fg_for_bg_only_characters() -> No
     current_visual = character.animation.current_character_visual
 
     assert current_visual.symbol == "A"
+    assert current_visual.colors == ColorPair(bg=Color(106))
+    assert current_visual._fg_color_code is None
+    assert current_visual._bg_color_code == Color(106).rgb_color
+
+
+def test_spotlights_dynamic_expand_clears_gray_fg_for_bg_only_spaces() -> None:
+    """Verify final spotlight expand preserves bg-colored spaces without temporary gray fg."""
+    effect = effect_spotlights.Spotlights("\x1b[48;5;106m \x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = cast("effect_spotlights.SpotlightsIterator", iter(effect))
+    character = _get_space_character(iterator)
+    _place_spotlight_on_character(iterator, character)
+    iterator.expanding = True
+
+    iterator.illuminate_chars(iterator.illuminate_range)
+    current_visual = character.animation.current_character_visual
+
+    assert current_visual.symbol == " "
     assert current_visual.colors == ColorPair(bg=Color(106))
     assert current_visual._fg_color_code is None
     assert current_visual._bg_color_code == Color(106).rgb_color

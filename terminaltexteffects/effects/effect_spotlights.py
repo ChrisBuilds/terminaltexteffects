@@ -183,6 +183,9 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
     def _has_input_colors(character: EffectCharacter) -> bool:
         return any((character.animation.input_fg_color, character.animation.input_bg_color))
 
+    def _is_spotlightable(self, character: EffectCharacter) -> bool:
+        return character.input_symbol != " " or self._has_input_colors(character)
+
     def _get_expand_color_override(self, character: EffectCharacter) -> ColorPair | None:
         if self.terminal.config.existing_color_handling != "dynamic" or not self.expanding:
             return None
@@ -264,7 +267,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         chars_in_range: set[EffectCharacter] = set()
         for coord in coords_in_range:
             character = self.terminal.get_character_by_input_coord(coord)
-            if character and character.input_symbol != " ":
+            if character and self._is_spotlightable(character):
                 chars_in_range.add(character)
         chars_no_longer_in_range = self.illuminated_chars - chars_in_range
         for character in chars_no_longer_in_range:
