@@ -49,6 +49,17 @@ To enable completions for future shells, add the relevant command to your `~/.ba
 If you add or remove custom effect plugins from `~/.config/terminaltexteffects/effects`, regenerate the completion
 script so the available effect names stay in sync.
 
+TTE can randomly select an effect with `--random-effect`/`-R`. Use `--seed` to make that selection repeatable, or
+limit the pool with `--include-effects` and `--exclude-effects`:
+
+```bash title="Random effect selection"
+ls | tte --random-effect --seed 123 --include-effects beams decrypt rain
+```
+
+Custom effect modules are discovered from `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or
+`~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set. Any `.py` file in that directory that
+provides `get_effect_resources()` can register an effect command alongside the built-in effects.
+
 The example below will pass the output of the `ls` command to TTE with the following options:
 
 * *Global* options:
@@ -77,5 +88,7 @@ screenfetch -N | tte slide --merge
 
 !!! note
 
-    Fetch applications which utilize terminal sequences for color/formatting will not work with TTE. 
-    Check if your fetch application has a raw output switch.
+    TTE is not a full terminal emulator, but it does parse common fetch-style input. Supported input includes
+    SGR foreground/background colors, common cursor movement CSI sequences, carriage returns, and selected DEC
+    private mode toggles for cursor visibility and line wrapping. Unsupported control sequences still fail fast with
+    an error so they do not leak into the rendered animation.

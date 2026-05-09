@@ -41,8 +41,9 @@ class TerminalConfig(BaseConfig):
         xterm_colors (bool): Convert any colors specified in RGB hex to the closest XTerm-256 color.
         no_color (bool): Disable all colors in the effect.
         terminal_background_color (Color): Background color of the terminal used by effects that depend on it.
-        existing_color_handling (Literal['always','dynamic','ignore']): Specify handling of existing ANSI color
-            sequences in the input data. 'always' will always use the input colors, ignoring any effect specific
+        existing_color_handling (Literal['always','dynamic','ignore']): Specify handling of existing ANSI SGR color
+            sequences in the input data. Supported input colors include 3-bit, 4-bit, 8-bit, and 24-bit
+            foreground/background sequences. 'always' will always use the input colors, ignoring any effect specific
             colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore
             the colors in the input data. Default is 'ignore'.
         wrap_text (bool): Wrap text wider than the canvas width.
@@ -111,14 +112,15 @@ class TerminalConfig(BaseConfig):
         default="ignore",
         choices=["always", "dynamic", "ignore"],
         help=(
-            "Specify handling of existing 8-bit and 24-bit ANSI color sequences in the input data. 3-bit and 4-bit "
-            "sequences are not supported. 'always' will always use the input colors, ignoring any effect specific "
-            "colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will "
-            "ignore the colors in the input data. Default is 'ignore'."
+            "Specify handling of existing ANSI SGR color sequences in the input data. Supported input colors include "
+            "3-bit, 4-bit, 8-bit, and 24-bit foreground/background sequences. 'always' will always use the input "
+            "colors, ignoring any effect specific colors. 'dynamic' will leave it to the effect implementation to "
+            "apply input colors. 'ignore' will ignore the colors in the input data. Default is 'ignore'."
         ),
     )  # pyright: ignore[reportAssignmentType]
     (
-        "Literal['always','dynamic','ignore'] : Specify handling of existing ANSI color sequences in the input data. "
+        "Literal['always','dynamic','ignore'] : Specify handling of existing ANSI SGR color sequences in the input "
+        "data. Supported input colors include 3-bit, 4-bit, 8-bit, and 24-bit foreground/background sequences. "
         "'always' will always use the input colors, ignoring any effect specific colors. 'dynamic' will leave it to "
         "the effect implementation to apply input colors. 'ignore' will ignore the colors in the input data. "
         "Default is 'ignore'."

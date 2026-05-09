@@ -149,6 +149,8 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
   --input-file, -i INPUT_FILE
                         File to read input from
   --version, -v         show program's version number and exit
+  --print-completion {bash,zsh}
+                        Print a shell completion script for the requested shell and exit.
   --random-effect, -R   Randomly select an effect to apply
   --seed SEED           Seed to use for random effect selection
   --include-effects INCLUDE_EFFECTS [INCLUDE_EFFECTS ...]
@@ -162,9 +164,9 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
   --terminal-background-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                         The background color of your terminal. Used to determine the appropriate color for fade-in/out within effects.
   --existing-color-handling {always,dynamic,ignore}
-                        Specify handling of existing 8-bit and 24-bit ANSI color sequences in the input data. 3-bit and 4-bit sequences are not supported. 'always' will always use the
-                        input colors, ignoring any effect specific colors. 'dynamic' will leave it to the effect implementation to apply input colors. 'ignore' will ignore the colors in
-                        the input data. Default is 'ignore'.
+                        Specify handling of existing ANSI SGR color sequences in the input data. Supported input colors include 3-bit, 4-bit, 8-bit, and 24-bit foreground/background
+                        sequences. 'always' will always use the input colors, ignoring any effect specific colors. 'dynamic' will leave it to the effect implementation to apply input
+                        colors. 'ignore' will ignore the colors in the input data. Default is 'ignore'.
   --wrap-text           Wrap text wider than the canvas width.
   --frame-rate FRAME_RATE
                         Target frame rate for the animation in frames per second. Set to 0 to disable frame rate limiting. Defaults to 60.
@@ -240,11 +242,18 @@ OR
 
 * Use ```<effect> -h``` to view options for a specific effect, such as color or movement direction.
   * Ex: ```tte decrypt -h```
+* Randomly select an effect with `--random-effect`/`-R`.
+  * Use `--seed` to make the random choice repeatable.
+  * Use `--include-effects` or `--exclude-effects` to limit the random selection pool.
 * Generate shell completions with `tte --print-completion bash` or `tte --print-completion zsh`.
   * Bash: `eval "$(tte --print-completion bash)"`
   * Zsh: `eval "$(tte --print-completion zsh)"`
   * To enable completions for future shells, add the relevant command above to your shell startup file such as `~/.bashrc` or `~/.zshrc`.
   * If you add or remove custom effect plugins from `~/.config/terminaltexteffects/effects`, regenerate the completion script so the effect list stays current.
+* Add custom effect modules to `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set.
+  * Any `.py` file in that directory that provides `get_effect_resources()` can register an effect command alongside the built-in effects.
+* TTE is not a full terminal emulator, but it parses common fetch-style input including SGR foreground/background colors, cursor movement CSI sequences, carriage returns, and selected DEC private mode toggles.
+  * Unsupported control sequences fail fast with an error so they do not leak into the rendered animation.
 
 For more information, view the [Application Usage Guide](https://chrisbuilds.github.io/terminaltexteffects/appguide/).
 

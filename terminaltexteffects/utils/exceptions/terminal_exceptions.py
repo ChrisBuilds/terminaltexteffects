@@ -89,6 +89,7 @@ class UnsupportedAnsiSequenceError(TerminalTextEffectsError):
         self.sequence = sequence
         self.message = (
             f"Unsupported ANSI/control sequence in input: {sequence!r}. "
-            "TerminalTextEffects supports 8-bit and 24-bit SGR foreground/background color sequences only."
+            "TerminalTextEffects supports common SGR foreground/background color sequences, fetch-style CSI cursor "
+            "movement, and selected DEC private mode toggles."
         )
         super().__init__(self.message)

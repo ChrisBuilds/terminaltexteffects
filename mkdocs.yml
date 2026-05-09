@@ -92,6 +92,7 @@ nav:
         - SpanningTree:
           - engine/utils/spanningtree/base_generator.md
           - Algorithms:
+            - engine/utils/spanningtree/algos/aldous_broder.md
             - engine/utils/spanningtree/algos/recursive_backtracker.md
             - engine/utils/spanningtree/algos/prims_simple.md
             - engine/utils/spanningtree/algos/prims_weighted.md

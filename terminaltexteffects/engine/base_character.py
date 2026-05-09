@@ -31,17 +31,7 @@ class EventHandler:
 
     Attributes:
         character (EffectCharacter): The character whose events are handled by this EventHandler.
-        registered_events (
-            dict[
-                tuple[Event, animation.Scene | motion.Waypoint | motion.Path],
-                list[
-                    tuple[
-                        Action,
-                        animation.Scene | motion.Waypoint | motion.Path | int | Coord | Callback | str | None,
-                    ]
-                ],
-            ]
-        ): Registered event/action mappings keyed by the triggering event and caller object.
+        registered_events: Registered event/action mappings keyed by the triggering event and caller object.
 
     Note:
         SEGMENT_ENTERED/EXITED events will trigger the first time the character enters or exits a segment.
@@ -294,13 +284,19 @@ class EventHandler:
             raise EventRegistrationCallerError(event, caller, event_caller_map[event])
 
         # find target Path when provided path_id
-        if action in (EventHandler.Action.ACTIVATE_PATH, EventHandler.Action.DEACTIVATE_PATH) and isinstance(target, str):
+        if action in (EventHandler.Action.ACTIVATE_PATH, EventHandler.Action.DEACTIVATE_PATH) and isinstance(
+            target,
+            str,
+        ):
             if (path_query_result := self.character.motion.query_path(target)) is None:
                 raise PathNotFoundError(path_id=target)
             target = path_query_result
 
         # find target Scene when provided scene_id
-        elif action in (EventHandler.Action.ACTIVATE_SCENE, EventHandler.Action.DEACTIVATE_SCENE) and isinstance(target, str):
+        elif action in (EventHandler.Action.ACTIVATE_SCENE, EventHandler.Action.DEACTIVATE_SCENE) and isinstance(
+            target,
+            str,
+        ):
             if (scene_query_result := self.character.animation.query_scene(target)) is None:
                 raise SceneNotFoundError(scene_id=target)
             target = scene_query_result
