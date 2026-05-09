@@ -15,6 +15,14 @@ Documentation = "https://chrisbuilds.github.io/terminaltexteffects/"
 tte = "terminaltexteffects.__main__:main"
 terminaltexteffects = "terminaltexteffects.__main__:main"
 
+[project.optional-dependencies]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.22",
+    "mkdocstrings-python>=1.11.1",
+    "pymdown-extensions>=10.15",
+]
+
 [tool.ruff]
 show-fixes = true
 unsafe-fixes = true
