@@ -30,6 +30,13 @@
   allocating a duplicate coordinate on every active-character motion tick. This reduces per-frame allocation overhead
   in movement-heavy effects while preserving identical rendered output.
 
+### Bug Fixes (0.16.0)
+
+---
+
+* Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
+  could cause later runs with the same canvas geometry to fail with an `IndexError`.
+
 ## 0.15.0
 
 ---

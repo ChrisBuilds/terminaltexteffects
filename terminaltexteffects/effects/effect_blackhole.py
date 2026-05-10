@@ -217,10 +217,12 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
 
     def collapse_blackhole(self) -> None:
         """Collapse the blackhole characters."""
-        black_hole_ring_positions = geometry.find_coords_on_circle(
-            self.terminal.canvas.center,
-            self.blackhole_radius + 3,
-            len(self.blackhole_chars),
+        black_hole_ring_positions = list(
+            geometry.find_coords_on_circle(
+                self.terminal.canvas.center,
+                self.blackhole_radius + 3,
+                len(self.blackhole_chars),
+            ),
         )
         unstable_symbols = ["◦", "◎", "◉", "●", "◉", "◎", "◦"]
         point_char_made = False
