@@ -22,8 +22,6 @@ from terminaltexteffects.engine.base_config import (
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
 
-# TODO: rename effect to dissolve and add a dissolve-out option
-
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
     """Get the command, effect class, and configuration class for the effect.
@@ -40,7 +38,6 @@ class RandomSequenceConfig(BaseConfig):
     """Configuration for the RandomSequence effect.
 
     Attributes:
-        starting_color (Color): Color of the characters at spawn.
         speed (float): Speed of the animation as a percentage of the total number of characters to reveal in each tick.
             Valid values are 0 < n <= 1.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
@@ -58,20 +55,10 @@ class RandomSequenceConfig(BaseConfig):
         help="Prints the input data in a random sequence.",
         description="randomsequence | Prints the input data in a random sequence.",
         epilog=(
-            "Example: terminaltexteffects randomsequence --starting-color 000000 --speed 0.007 "
-            "--final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 12 --final-gradient-frames 8 "
-            "--final-gradient-direction vertical"
+            "Example: terminaltexteffects randomsequence --speed 0.007 --final-gradient-stops 8A008A 00D1FF "
+            "ffffff --final-gradient-steps 12 --final-gradient-frames 8 --final-gradient-direction vertical"
         ),
     )
-
-    starting_color: Color = argutils.ArgSpec(
-        name="--starting-color",
-        type=argutils.ColorArg.type_parser,
-        default=Color("#000000"),
-        metavar=argutils.ColorArg.METAVAR,
-        help="Color of the characters at spawn.",
-    )  # pyright: ignore[reportAssignmentType]
-    "Color : Color of the characters at spawn."
 
     speed: float = argutils.ArgSpec(
         name="--speed",
@@ -129,6 +116,7 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
 
     def build(self) -> None:
         """Build the initial state of the effect."""
+        terminal_background_color = self.terminal.config.terminal_background_color
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
             self.terminal.canvas.text_bottom,
@@ -154,10 +142,10 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
                 final_bg_color = self.character_final_color_map[character].bg_color
                 if final_fg_color or final_bg_color:
                     fg_gradient = (
-                        Gradient(self.config.starting_color, final_fg_color, steps=7) if final_fg_color else None
+                        Gradient(terminal_background_color, final_fg_color, steps=7) if final_fg_color else None
                     )
                     bg_gradient = (
-                        Gradient(self.config.starting_color, final_bg_color, steps=7) if final_bg_color else None
+                        Gradient(terminal_background_color, final_bg_color, steps=7) if final_bg_color else None
                     )
                     gradient_scn.apply_gradient_to_symbols(
                         character.input_symbol,
@@ -169,7 +157,7 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
                     gradient_scn.apply_gradient_to_symbols(
                         character.input_symbol,
                         self.config.final_gradient_frames,
-                        fg_gradient=Gradient(self.config.starting_color, self.DYNAMIC_NEUTRAL_GRAY, steps=7),
+                        fg_gradient=Gradient(terminal_background_color, self.DYNAMIC_NEUTRAL_GRAY, steps=7),
                     )
                     gradient_scn.add_frame(
                         character.input_symbol,
@@ -179,7 +167,7 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
             else:
                 final_fg_color = self.character_final_color_map[character].fg_color
                 assert final_fg_color is not None
-                gradient = Gradient(self.config.starting_color, final_fg_color, steps=7)
+                gradient = Gradient(terminal_background_color, final_fg_color, steps=7)
                 gradient_scn.apply_gradient_to_symbols(
                     character.input_symbol,
                     self.config.final_gradient_frames,

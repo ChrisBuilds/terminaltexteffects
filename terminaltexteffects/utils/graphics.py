@@ -10,6 +10,7 @@ Classes:
 
 from __future__ import annotations
 
+import functools
 import itertools
 import random
 import typing
@@ -89,8 +90,9 @@ class Color:
     def __str__(self) -> str:
         """Return a string representation of the Color object."""
         color_block = f"{colorterm.fg(self.rgb_color)}█████{ansitools.reset_all()}"
+        xterm_display = f" | XTerm Color: {self.xterm_color}" if self.xterm_color is not None else ""
         return (
-            f"Color Code: {self.rgb_color}{f' | XTerm Color: {self.xterm_color}' if self.xterm_color is not None else ''}"
+            f"Color Code: {self.rgb_color}{xterm_display}"
             f"\nColor Appearance: {color_block}"
         )
 
@@ -475,3 +477,6 @@ def shift_color_towards(color: Color, target_color: Color, factor: float) -> Col
     # Convert back to hex
     shifted_color = f"{int(new_red * 255):02x}{int(new_green * 255):02x}{int(new_blue * 255):02x}"
     return Color(shifted_color)
+
+
+shift_color_towards = functools.wraps(shift_color_towards)(functools.lru_cache(maxsize=8192)(shift_color_towards))

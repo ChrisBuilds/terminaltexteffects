@@ -46,7 +46,7 @@ from terminaltexteffects.effects import (
     effect_wipe,
 )
 from terminaltexteffects.engine.terminal import TerminalConfig
-from terminaltexteffects.utils import geometry
+from terminaltexteffects.utils import geometry, graphics
 from terminaltexteffects.utils.argutils import CharacterGroup
 from terminaltexteffects.utils.easing import (
     EasingFunction,
@@ -227,8 +227,9 @@ ANCHORS = ["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"]
 
 @pytest.fixture(autouse=True)
 def clear_lru_cache() -> Generator[None, Any, None]:
-    """Fixture to clear the LRU caches for geometry functions."""
+    """Fixture to clear utility LRU caches."""
     yield
+    graphics.shift_color_towards.cache_clear()  # type: ignore[attr-defined]
     geometry.find_coords_on_circle.cache_clear()  # type: ignore[attr-defined]
     geometry.find_coords_in_circle.cache_clear()  # type: ignore[attr-defined]
     geometry.find_coords_in_rect.cache_clear()  # type: ignore[attr-defined]

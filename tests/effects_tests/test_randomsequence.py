@@ -66,23 +66,39 @@ def test_randomsequence_final_gradient(
             terminal.print(frame)
 
 
-@pytest.mark.parametrize("starting_color", [Color("#000000"), Color("#ff00ff")])
 @pytest.mark.parametrize("speed", [0.0001, 0.5, 1])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_randomsequence_args(
     terminal_config_default_no_framerate: TerminalConfig,
     input_data: str,
-    starting_color: Color,
     speed: float,
 ) -> None:
     """Ensure RandomSequence accepts and renders with various configuration arguments."""
     effect = effect_random_sequence.RandomSequence(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
-    effect.effect_config.starting_color = starting_color
     effect.effect_config.speed = speed
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+def test_randomsequence_reveal_starts_from_terminal_background_color() -> None:
+    """Verify the reveal gradient starts from the configured terminal background color."""
+    background_color = Color("#123456")
+    effect = effect_random_sequence.RandomSequence("A")
+    effect.terminal_config = _make_terminal_config("ignore")
+    effect.terminal_config.terminal_background_color = background_color
+
+    iterator = cast("effect_random_sequence.RandomSequenceIterator", iter(effect))
+    character = iterator.terminal.get_characters()[0]
+    final_scene = character.animation.active_scene
+
+    assert final_scene is not None
+    first_frame = final_scene.frames[0].character_visual
+    assert first_frame.symbol == "A"
+    assert first_frame.colors == ColorPair(fg=background_color)
+    assert first_frame._fg_color_code == background_color.rgb_color
+    assert first_frame._bg_color_code is None
 
 
 def test_randomsequence_dynamic_without_preexisting_colors_has_gray_fade_and_uncolored_final_frame() -> None:

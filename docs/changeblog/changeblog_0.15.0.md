@@ -1,4 +1,4 @@
-# 0.15.0 (Quality of Life Catch-Up)
+# 0.15.0 (Go Fetch)
 
 ## Release 0.15.0
 
@@ -173,6 +173,8 @@ FinalGradientDirectionArg
 ```
 
 All effects now use these helpers, which keeps parser defaults and help text more consistent. This also matters for shell completion because completions are only as good as the parser they are generated from.
+
+RandomSequence now uses `--terminal-background-color` as the starting point for its reveal fade, so its effect-specific `--starting-color` option has been removed.
 
 Several spanning tree generators received bug fixes and focused test coverage. The highlights:
 

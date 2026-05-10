@@ -961,8 +961,6 @@ Prints the input data in a random sequence, one character at a time.
 ??? example "RandomSequence Command Line Arguments"
 
     ```
-    --starting-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
-                        Color of the characters at spawn. (default: 000000)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('8A008A', '00D1FF', 'FFFFFF'))
@@ -974,7 +972,7 @@ Prints the input data in a random sequence, one character at a time.
                         Direction of the final gradient. (default: Direction.VERTICAL)
     --speed (float > 0)   Speed of the animation as a percentage of the total number of characters. (default: 0.004)
 
-    Example: terminaltexteffects randomsequence --starting-color 000000 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 12 --speed 0.004
+    Example: terminaltexteffects randomsequence --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --final-gradient-frames 12 --speed 0.004
     ```
 ---
 

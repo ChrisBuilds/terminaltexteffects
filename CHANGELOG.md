@@ -62,6 +62,7 @@
 * Updated `utils.graphics` documentation to align `Color`, `ColorPair`, and `Gradient` docs with stored `Color` objects, discrete spectrum lookup behavior, color normalization, and color-shift interpolation and extrapolation semantics.
 * Updated `utils.hexterm` documentation to clarify accepted color types, nearest-color matching behavior, return types, and the module's mapping-focused summary.
 * `Color.__str__()` and `ColorPair.__str__()` now correctly include valid XTerm color `0` in their output, and focused utility tests cover the regression.
+* `shift_color_towards()` now uses an LRU cache to avoid recomputing repeated color transitions during effect rendering.
 * Updated the `terminaltexteffects.__main__` entry-point documentation to describe effect discovery, plugin loading, duplicate-command validation, and the CLI's input and exit behavior more accurately.
 
 #### Effects Changes (0.15.0)
