@@ -53,6 +53,7 @@ nav:
     - Install: installation.md
     - Application Usage: appguide.md
     - Library Usage: libguide.md
+    - Performance Testing: performance.md
   # - Effect Building Guide:
   #   - effectguide/effectguide.md
   #   - effectguide/effectguide_lesson0.md

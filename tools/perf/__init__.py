@@ -1,0 +1,1 @@
+"""Performance tooling for TerminalTextEffects."""
