@@ -8,7 +8,7 @@ This release is mostly about catching up on the quality-of-life work that makes 
 
 There are no new built-in effects this time. Instead, TTE can now generate shell completions for `bash` and `zsh`, handle more of the ANSI escape sequence soup produced by terminal tools such as `neofetch` and `fastfetch`, and do a much better job preserving input colors in `existing_color_handling="dynamic"` mode.
 
-There is also support for discovering user-provided effects from a config directory, along with a pile of engine documentation and test improvements. This is the sort of release where the most important work is not always glamorous, but it makes everything else feel a bit less wobbly.
+There is also support for discovering user-provided effects from a config directory, along with a pile of engine documentation and test improvements.
 
 ### Push Tab, Receive Effect
 
@@ -35,22 +35,29 @@ eval "$(tte --print-completion zsh)"
 
 If you want completions to stick around, add the relevant command to your shell startup file. The generated completion script includes discovered effects and their options, so custom effects show up there too.
 
-One small but useful bit of polish: the `zsh` completion script now initializes `compinit` and `bashcompinit` when needed. That means the basic `eval "$(tte --print-completion zsh)"` path works with less shell ceremony.
-
-There is something deeply pleasing about writing an overcomplicated animation engine and then finally giving your shell the ability to complete `--final-gradient-direction`.
+One small but useful bit of polish: the `zsh` completion script initializes `compinit` and `bashcompinit` when needed. That means the basic `eval "$(tte --print-completion zsh)"` path works with less shell ceremony.
 
 
 ### Go Fetch
 
 ---
 
-TTE has supported parsing ANSI colors from input for a while, but terminal applications do more than color text. Fetch-style tools often move the cursor around to lay out a logo and system information side-by-side. Previously, some of those cursor movement sequences could leak through as visible text. That is a bad look, in the very literal sense.
+TTE has supported parsing ANSI colors from input for a while, but terminal applications do more than color text. Fetch-style tools often move the cursor around to lay out a logo and system information side-by-side. Previously, TTE had no idea what to do with the control sequences fetch tools use for layout, so it treated them as text. That often led to interesting chaos as the sequences were broken apart and reassembled throughout the effect.
 
-TTE now interprets common cursor movement CSI sequences into its virtual input canvas:
+TTE now interprets common cursor movement CSI sequences into its virtual input canvas. That includes relative movement up, down, forward, and back; moving to the next or previous line; setting the cursor column; and jumping to an explicit row/column position:
 
 ```text
-A B C D E F G H f
+A: cursor up
+B: cursor down
+C: cursor forward
+D: cursor back
+E: next line
+F: previous line
+G: set column
+H/f: set row and column
 ```
+
+In practice, those sequences let TTE reconstruct terminal layouts that are drawn out of order. When a fetch tool prints a logo, moves the cursor, then prints system details next to it, TTE can now place those characters on the intended canvas cells before the effect starts.
 
 It also accepts common DEC private mode toggles for cursor visibility and line wrapping as no-op input state:
 
@@ -58,7 +65,7 @@ It also accepts common DEC private mode toggles for cursor visibility and line w
 ?25h ?25l ?7h ?7l
 ```
 
-That does not mean TTE is a full terminal emulator. It is not. But it now understands enough of the layout language used by common fetch applications to preserve the intended shape instead of eating the control characters and leaving crumbs on the floor.
+That does not mean TTE is a full terminal emulator. But it now understands enough of the layout language used by common fetch applications to preserve the intended shape.
 
 The color parser also got more complete. TTE now supports 3-bit and 4-bit SGR foreground/background colors, reset sequences, and mixed style/color SGR sequences. Bold standard ANSI foreground colors are preserved as bright colors, which better matches how normal terminals display many fetch outputs.
 
@@ -172,7 +179,7 @@ FinalGradientFramesArg
 FinalGradientDirectionArg
 ```
 
-All effects now use these helpers, which keeps parser defaults and help text more consistent. This also matters for shell completion because completions are only as good as the parser they are generated from.
+All effects now use these helpers, which keeps parser defaults and help text more consistent.
 
 RandomSequence now uses `--terminal-background-color` as the starting point for its reveal fade, so its effect-specific `--starting-color` option has been removed.
 
