@@ -254,6 +254,9 @@ class Path:
                     event_handler._handle_event(event_handler.Event.SEGMENT_ENTERED, segment.end)
                 break
             distance_to_travel -= segment.distance
+            if not segment.enter_event_triggered:
+                segment.enter_event_triggered = True
+                event_handler._handle_event(event_handler.Event.SEGMENT_ENTERED, segment.end)
             if not segment.exit_event_triggered:
                 segment.exit_event_triggered = True
                 event_handler._handle_event(event_handler.Event.SEGMENT_EXITED, segment.end)

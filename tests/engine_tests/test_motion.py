@@ -238,6 +238,72 @@ def test_path_step_multiple_segments(character: EffectCharacter) -> None:
         current_point = p.step(character.event_handler)
 
 
+def test_path_step_hopped_segments_trigger_enter_and_exit(character: EffectCharacter) -> None:
+    """Test that fully crossed segments trigger both enter and exit events."""
+    p = Path("p", speed=25)
+    p.new_waypoint(Coord(0, 0))
+    p.new_waypoint(Coord(10, 0))
+    p.new_waypoint(Coord(20, 0))
+    p.new_waypoint(Coord(30, 0))
+    p.new_waypoint(Coord(40, 0))
+    p.new_waypoint(Coord(50, 0))
+    triggered_events: list[str] = []
+
+    for waypoint, enter_label, exit_label in (
+        (p.waypoints[1], "enter_1", "exit_1"),
+        (p.waypoints[2], "enter_2", "exit_2"),
+        (p.waypoints[3], "enter_3", "exit_3"),
+    ):
+        character.event_handler.register_event(
+            EventHandler.Event.SEGMENT_ENTERED,
+            waypoint,
+            EventHandler.Action.CALLBACK,
+            EventHandler.Callback(lambda _character, label: triggered_events.append(label), enter_label),
+        )
+        character.event_handler.register_event(
+            EventHandler.Event.SEGMENT_EXITED,
+            waypoint,
+            EventHandler.Action.CALLBACK,
+            EventHandler.Callback(lambda _character, label: triggered_events.append(label), exit_label),
+        )
+
+    p.step(character.event_handler)
+
+    assert triggered_events == ["enter_1", "exit_1", "enter_2", "exit_2", "enter_3"]
+
+
+def test_path_step_boundary_segment_does_not_trigger_exit(character: EffectCharacter) -> None:
+    """Test that landing exactly on a segment boundary enters but does not exit that segment."""
+    p = Path("p", speed=10)
+    p.new_waypoint(Coord(0, 0))
+    p.new_waypoint(Coord(10, 0))
+    p.new_waypoint(Coord(20, 0))
+    triggered_events: list[str] = []
+
+    character.event_handler.register_event(
+        EventHandler.Event.SEGMENT_ENTERED,
+        p.waypoints[1],
+        EventHandler.Action.CALLBACK,
+        EventHandler.Callback(lambda _character: triggered_events.append("enter_1")),
+    )
+    character.event_handler.register_event(
+        EventHandler.Event.SEGMENT_EXITED,
+        p.waypoints[1],
+        EventHandler.Action.CALLBACK,
+        EventHandler.Callback(lambda _character: triggered_events.append("exit_1")),
+    )
+    character.event_handler.register_event(
+        EventHandler.Event.SEGMENT_ENTERED,
+        p.waypoints[2],
+        EventHandler.Action.CALLBACK,
+        EventHandler.Callback(lambda _character: triggered_events.append("enter_2")),
+    )
+
+    p.step(character.event_handler)
+
+    assert triggered_events == ["enter_1"]
+
+
 def test_path_step_multiple_segments_eased(character: EffectCharacter) -> None:
     """Test stepping through a path with multiple segments and easing."""
     p = Path("p", ease=easing.in_out_elastic)
