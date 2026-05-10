@@ -1514,8 +1514,18 @@ wheels = [
 
 [[package]]
 name = "terminaltexteffects"
-version = "0.14.2"
+version = "0.15.0"
 source = { editable = "." }
+
+[package.optional-dependencies]
+docs = [
+    { name = "mkdocs" },
+    { name = "mkdocs-material" },
+    { name = "mkdocstrings-python", version = "1.11.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+    { name = "mkdocstrings-python", version = "1.18.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
+    { name = "pymdown-extensions", version = "10.15", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+    { name = "pymdown-extensions", version = "10.16.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -1534,6 +1544,13 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6.1" },
+    { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.6.22" },
+    { name = "mkdocstrings-python", marker = "extra == 'docs'", specifier = ">=1.11.1" },
+    { name = "pymdown-extensions", marker = "extra == 'docs'", specifier = ">=10.15" },
+]
+provides-extras = ["docs"]
 
 [package.metadata.requires-dev]
 dev = [
