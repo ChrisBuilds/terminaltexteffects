@@ -29,6 +29,9 @@
 * `Motion.move()` now reuses the current immutable `Coord` object when preserving `previous_coord` instead of
   allocating a duplicate coordinate on every active-character motion tick. This reduces per-frame allocation overhead
   in movement-heavy effects while preserving identical rendered output.
+* `Motion.activate_path()` now replaces an existing origin segment in place when reactivating a path instead of
+  removing and reinserting the first segment. This reduces list churn in activation-heavy effects while preserving
+  identical rendered output.
 
 ### Bug Fixes (0.16.0)
 
