@@ -585,7 +585,7 @@ class Motion:
         in the terminal.
         """
         # preserve previous coordinate to allow for clearing the location in the terminal
-        self.previous_coord = Coord(self.current_coord.column, self.current_coord.row)
+        self.previous_coord = self.current_coord
 
         if not self.active_path or not self.active_path.segments:
             return

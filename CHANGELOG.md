@@ -2,6 +2,34 @@
 
 ---
 
+## 0.16.0
+
+---
+
+### New Features (0.16.0)
+
+---
+
+#### Development Tooling (0.16.0)
+
+---
+
+* Added a stdlib-only performance benchmarking workflow via `tools/perf/benchmark_effects.py`.
+  The harness measures effect iterator build time, render iteration time, total time, frame counts,
+  and output character counts without terminal stdout rendering or frame-rate sleeps.
+* Added benchmark report JSON output, advisory baseline/candidate comparison, deterministic seeding,
+  input presets, and optional `cProfile` output for investigating performance changes.
+* Added focused tests for the benchmark harness and documented the recommended performance optimization workflow in
+  `docs/performance.md`.
+
+#### Engine Changes (0.16.0)
+
+---
+
+* `Motion.move()` now reuses the current immutable `Coord` object when preserving `previous_coord` instead of
+  allocating a duplicate coordinate on every active-character motion tick. This reduces per-frame allocation overhead
+  in movement-heavy effects while preserving identical rendered output.
+
 ## 0.15.0
 
 ---
