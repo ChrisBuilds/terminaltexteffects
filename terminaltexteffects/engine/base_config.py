@@ -95,6 +95,7 @@ class BaseConfig:
         Raises:
             AttributeError: If `parser` is a subparser collection and `cls.parser_spec`
                 is not defined.
+
         """
         if isinstance(parser, argparse._SubParsersAction):
             parser = parser.add_parser(**vars(cls.parser_spec))  # pyright: ignore[reportAttributeAccessIssue]
@@ -128,6 +129,7 @@ class BaseConfig:
 
         Returns:
             CONFIG: A populated config instance.
+
         """
         if parsed_args is not None:
             config_args: dict[str, typing.Any] = {}
