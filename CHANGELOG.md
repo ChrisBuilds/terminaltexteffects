@@ -39,6 +39,7 @@
 
 ---
 
+* Animation - Fixed `adjust_color_brightness()` rounding so a brightness factor of `1` preserves mixed-channel RGB colors instead of subtly darkening individual channels.
 * Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 
