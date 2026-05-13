@@ -23,7 +23,7 @@ from terminaltexteffects.utils.exceptions import (
 )
 
 if typing.TYPE_CHECKING:
-    from terminaltexteffects.engine import base_character  # pragma: no cover
+    from terminaltexteffects.engine import base_character, motion  # pragma: no cover
 
 
 @dataclass
@@ -771,7 +771,7 @@ class Animation:
             blue = hue_to_rgb(lightness_scaled, color_intensity, hue_value - 1 / 3)
 
         # Convert to hex
-        adjusted_color = f"{int(red * 255):02x}{int(green * 255):02x}{int(blue * 255):02x}"
+        adjusted_color = f"{round(red * 255):02x}{round(green * 255):02x}{round(blue * 255):02x}"
         return graphics.Color(adjusted_color)
 
     def _ease_animation(self, easing_func: easing.EasingFunction) -> float:
@@ -801,71 +801,75 @@ class Animation:
             * When a non-looping scene completes, it is reset, deactivated, and a `SCENE_COMPLETE`
               event is triggered.
         """
-        if self.active_scene and self.active_scene.frames:
-            # if the active scene is synced to movement, calculate the sequence index based on the
-            # current waypoint progress
-            if self.active_scene.sync:
-                if self.character.motion.active_path:
-                    if self.active_scene.sync == Scene.SyncMetric.STEP:
-                        sequence_index = round(
-                            (len(self.active_scene.frames) - 1)
-                            * (
-                                max(self.character.motion.active_path.current_step, 1)
-                                / max(self.character.motion.active_path.max_steps, 1)
-                            ),
-                        )
-                    elif self.active_scene.sync == Scene.SyncMetric.DISTANCE:
-                        sequence_index = round(
-                            (len(self.active_scene.frames) - 1)
-                            * (
-                                max(
-                                    max(self.character.motion.active_path.total_distance, 1)
-                                    - max(
-                                        self.character.motion.active_path.total_distance
-                                        - self.character.motion.active_path.last_distance_reached,
-                                        1,
-                                    ),
-                                    1,
-                                )
-                                / max(self.character.motion.active_path.total_distance, 1)
-                            ),
-                        )
-                    try:
-                        self.current_character_visual = self.active_scene.frames[sequence_index].character_visual  # type: ignore[unbound]
-                    except IndexError:
-                        self.current_character_visual = self.active_scene.frames[-1].character_visual
-                # when the active waypoint has been deactivated, use the final symbol in the scene and finish the scene
-                else:
-                    self.current_character_visual = self.active_scene.frames[-1].character_visual
-                    self.active_scene.played_frames.extend(self.active_scene.frames)
-                    self.active_scene.frames.clear()
+        scene = self.active_scene
+        if scene is None or not scene.frames:
+            return
 
-            elif self.active_scene and self.active_scene.ease:
-                easing_factor = self._ease_animation(self.active_scene.ease)
-                frame_index = round(easing_factor * max(self.active_scene.easing_total_steps - 1, 0))
-                frame_index = max(min(frame_index, self.active_scene.easing_total_steps - 1), 0)
-                frame = self.active_scene.frame_index_map[frame_index]
-                self.current_character_visual = frame.character_visual
-                self.active_scene.easing_current_step += 1
-                if self.active_scene.easing_current_step == self.active_scene.easing_total_steps:
-                    if self.active_scene.is_looping:
-                        self.active_scene.easing_current_step = 0
-                    else:
-                        self.active_scene.played_frames.extend(self.active_scene.frames)
-                        self.active_scene.frames.clear()
+        if scene.sync:
+            self._step_synced_scene(scene)
+        elif scene.ease:
+            self._step_eased_scene(scene)
+        else:
+            self.current_character_visual = scene.get_next_visual()
 
+        self._complete_scene_if_finished(scene)
+
+    def _step_synced_scene(self, scene: Scene) -> None:
+        """Apply the frame that matches the active motion path's progress."""
+        active_path = self.character.motion.active_path
+        if active_path is None:
+            self.current_character_visual = scene.frames[-1].character_visual
+            scene.played_frames.extend(scene.frames)
+            scene.frames.clear()
+            return
+
+        frame_index = self._synced_scene_frame_index(scene, active_path)
+        self.current_character_visual = scene.frames[frame_index].character_visual
+
+    def _synced_scene_frame_index(self, scene: Scene, active_path: motion.Path) -> int:
+        """Return the scene frame index for the active path's progress."""
+        final_frame_index = len(scene.frames) - 1
+        if scene.sync == Scene.SyncMetric.STEP:
+            progress_ratio = max(active_path.current_step, 1) / max(active_path.max_steps, 1)
+        else:
+            total_distance = max(active_path.total_distance, 1)
+            remaining_distance = max(active_path.total_distance - active_path.last_distance_reached, 1)
+            distance_reached = max(total_distance - remaining_distance, 1)
+            progress_ratio = distance_reached / total_distance
+
+        frame_index = round(final_frame_index * progress_ratio)
+        return max(min(frame_index, final_frame_index), 0)
+
+    def _step_eased_scene(self, scene: Scene) -> None:
+        """Apply the eased frame and update easing playback state."""
+        assert scene.ease is not None
+        easing_factor = self._ease_animation(scene.ease)
+        final_frame_index = max(scene.easing_total_steps - 1, 0)
+        frame_index = round(easing_factor * final_frame_index)
+        frame_index = max(min(frame_index, final_frame_index), 0)
+        self.current_character_visual = scene.frame_index_map[frame_index].character_visual
+
+        scene.easing_current_step += 1
+        if scene.easing_current_step == scene.easing_total_steps:
+            if scene.is_looping:
+                scene.easing_current_step = 0
             else:
-                self.current_character_visual = self.active_scene.get_next_visual()
-            if self.active_scene_is_complete():
-                completed_scene = self.active_scene
-                if not self.active_scene.is_looping:
-                    self.active_scene.reset_scene()
-                    self.active_scene = None
+                scene.played_frames.extend(scene.frames)
+                scene.frames.clear()
 
-                self.character.event_handler._handle_event(
-                    self.character.event_handler.Event.SCENE_COMPLETE,
-                    completed_scene,
-                )
+    def _complete_scene_if_finished(self, scene: Scene) -> None:
+        """Reset completed scenes and trigger completion events."""
+        if not self.active_scene_is_complete():
+            return
+
+        if not scene.is_looping:
+            scene.reset_scene()
+            self.active_scene = None
+
+        self.character.event_handler._handle_event(
+            self.character.event_handler.Event.SCENE_COMPLETE,
+            scene,
+        )
 
     def activate_scene(self, scene: Scene | str) -> None:
         """Set the active scene and updates the current character visual.

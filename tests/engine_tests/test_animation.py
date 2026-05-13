@@ -296,7 +296,17 @@ def test_animation_adjust_color_brightness_half(character: EffectCharacter) -> N
     """Confirm halving brightness scales the color toward black."""
     red = Color("#ff0000")
     new_color = character.animation.adjust_color_brightness(red, 0.5)
-    assert new_color == Color("#7f0000")
+    assert new_color == Color("#800000")
+
+
+@pytest.mark.parametrize(
+    "color",
+    [Color("#808000"), Color("#008080"), Color("#800080"), Color("#123456"), Color("#abcdef")],
+)
+def test_animation_adjust_color_brightness_identity(character: EffectCharacter, color: Color) -> None:
+    """Ensure a brightness factor of one preserves mixed-channel RGB colors."""
+    new_color = character.animation.adjust_color_brightness(color, 1)
+    assert new_color == color
 
 
 def test_animation_adjust_color_brightness_double(character: EffectCharacter) -> None:
@@ -310,7 +320,7 @@ def test_animation_adjust_color_brightness_quarter(character: EffectCharacter) -
     """Ensure quarter brightness darkens the color proportionally."""
     red = Color("#ff0000")
     new_color = character.animation.adjust_color_brightness(red, 0.25)
-    assert new_color == Color("#3f0000")
+    assert new_color == Color("#400000")
 
 
 def test_animation_adjust_color_brightness_zero(character: EffectCharacter) -> None:
