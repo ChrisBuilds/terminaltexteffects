@@ -10,10 +10,9 @@ Classes:
 from __future__ import annotations
 
 import random
-from collections import deque
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient
+from terminaltexteffects import Color, EffectCharacter, EventHandler, Gradient, ParticlePool, ParticleReset
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -129,8 +128,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.algo = PrimsSimple(self.terminal, limit_to_text_boundary=True)
-        self.smoke_particles = self._make_smoke()
-        self.pending_smoke: set[EffectCharacter] = set()
+        self.smoke_particles = self._make_smoke_pool()
         self.build()
 
     @staticmethod
@@ -142,11 +140,8 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             self.terminal.config.existing_color_handling != "ignore" and self._has_input_colors(character)
         )
 
-    def _make_smoke(self) -> deque[EffectCharacter]:
-        smoke_particles: deque[EffectCharacter] = deque()
-        for _ in range(2000):
-            new_char = self.terminal.add_character(random.choice((".", ",", "'", "`", "#", "*")), Coord(0, 0))
-
+    def _make_smoke_pool(self) -> ParticlePool:
+        def initialize_smoke(new_char: EffectCharacter) -> None:
             smoke_scn = new_char.animation.new_scene(scene_id="smoke")
             for color in Gradient(Color("#504F4F"), Color("#C7C7C7"), steps=9):
                 smoke_scn.add_frame(
@@ -154,22 +149,24 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
                     10,
                     colors=ColorPair(fg=color),
                 )
-
-            new_char.event_handler.register_event(
-                EventHandler.Event.SCENE_COMPLETE,
-                smoke_scn,
-                EventHandler.Action.CALLBACK,
-                EventHandler.Callback(lambda c: self.terminal.set_character_visibility(c, is_visible=False)),
-            )
             new_char.layer = 2
-            smoke_particles.append(new_char)
-        return smoke_particles
+
+        smoke_pool = ParticlePool(
+            self.terminal,
+            self.active_characters,
+            (".", ",", "'", "`", "#", "*"),
+            initial_count=2000,
+            max_size=2000,
+            initializer=initialize_smoke,
+        )
+        for smoke_particle in smoke_pool.particles:
+            smoke_pool.reclaim_on_event(smoke_particle, smoke_particle.animation.query_scene("smoke"))
+        return smoke_pool
 
     def _emit_smoke(self, origin: Coord, smoke_chance: float) -> None:
-        """Emit sparks from the laser beam.
+        """Emit smoke from a burning character.
 
-        Sets up the spark character Path and activates the Path and Scene for each spark character.
-        The spark characters are added to the effect active_characters set.
+        Sets up the smoke character path and activates the path and scene.
 
         Args:
             origin (Coord): Starting point for the smoke path.
@@ -178,23 +175,26 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
         """
         if random.random() > smoke_chance:
             return
-        next_particle = self.smoke_particles[-1]
-        self.smoke_particles.rotate(1)
-        next_particle.motion.set_coordinate(origin)
-        if next_particle.animation.active_scene:
-            next_particle.animation.active_scene.reset_scene()
-        self.terminal.set_character_visibility(next_particle, is_visible=True)
-        smoke_path = next_particle.motion.new_path(speed=0.5)
-        rise_target_coord = Coord(
-            random.randint(origin.column - 4, origin.column + 4),
-            self.terminal.canvas.top + 1,
+
+        def on_emit_smoke(next_particle: EffectCharacter) -> None:
+            smoke_scn = next_particle.animation.query_scene("smoke")
+            smoke_scn.reset_scene()
+            smoke_path = next_particle.motion.new_path(speed=0.5)
+            rise_target_coord = Coord(
+                random.randint(origin.column - 4, origin.column + 4),
+                self.terminal.canvas.top + 1,
+            )
+            smoke_path.new_waypoint(
+                rise_target_coord,
+            )
+            next_particle.motion.activate_path(smoke_path)
+            next_particle.animation.activate_scene(smoke_scn)
+
+        self.smoke_particles.emit(
+            origin,
+            on_emit_smoke,
+            reset=ParticleReset(clear_paths=True, deactivate_path=True, deactivate_scene=True),
         )
-        smoke_path.new_waypoint(
-            rise_target_coord,
-        )
-        next_particle.motion.activate_path(smoke_path)
-        next_particle.animation.activate_scene("smoke")
-        self.pending_smoke.add(next_particle)
 
     def build(self) -> None:
         """Build the Burn effect."""
@@ -274,8 +274,6 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
     def __next__(self) -> str:
         """Return the next frame in the animation."""
         if self.algo.char_link_order or self.active_characters:
-            self.active_characters.update(self.pending_smoke)
-            self.pending_smoke.clear()
             for _ in range(random.randint(2, 4)):
                 if self.algo.char_link_order:
                     next_char = self.algo.char_link_order.pop(0)

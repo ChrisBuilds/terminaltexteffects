@@ -236,7 +236,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                 *config.spark_gradient_stops,
                 steps=(3, 8),
             )
-            self.sparks = self._make_sparks()
+            self.sparks_pool = self._make_sparks_pool()
             while row <= self.terminal.canvas.top:
                 symbol = "*" if not self.beam_chars else "/"
                 char = self.terminal.add_character(symbol, tte.Coord(col, row))
@@ -251,29 +251,27 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                 laser_gradient.rotate(-1)
                 char.animation.activate_scene(laser_scn)
 
-        def _make_sparks(self) -> deque[tte.EffectCharacter]:
-            sparks: deque[tte.EffectCharacter] = deque()
-            for _ in range(2000):
-                new_char = self.terminal.add_character(random.choice((".", ",", "*")), self.position)
-
-                spark_scn = new_char.animation.new_scene(scene_id="spark")
+        def _make_sparks_pool(self) -> tte.ParticlePool:
+            def initialize_sparks(spark_char: tte.EffectCharacter) -> None:
+                spark_char.layer = 2
+                spark_scn = spark_char.animation.new_scene(scene_id="spark")
                 for color in self.spark_gradient:
                     spark_scn.add_frame(
-                        new_char.input_symbol,
+                        spark_char.input_symbol,
                         self.config.spark_cooling_frames,
                         colors=tte.ColorPair(fg=color),
                     )
 
-                new_char.event_handler.register_event(
-                    tte.EventHandler.Event.SCENE_COMPLETE,
-                    spark_scn,
-                    tte.EventHandler.Action.CALLBACK,
-                    tte.EventHandler.Callback(lambda c: self.terminal.set_character_visibility(c, is_visible=False)),
-                )
-
-                new_char.layer = 2
-                sparks.append(new_char)
-            return sparks
+            sparks_pool = tte.ParticlePool(
+                self.terminal,
+                self.active_chars,
+                symbols=(".", ",", "*"),
+                initial_count=2000,
+                initializer=initialize_sparks,
+            )
+            for spark in sparks_pool.particles:
+                sparks_pool.reclaim_on_event(spark, spark.animation.query_scene("spark"))
+            return sparks_pool
 
         def reposition(self, target: tte.Coord) -> None:
             """Reposition the laser beam to the target coordinate.
@@ -298,20 +296,15 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
             """Emit sparks from the laser beam.
 
             Sets up the spark character Path and activates the Path and Scene for each spark character.
-            The spark characters are added to the effect active_characters set.
 
             Args:
                 spark_count (int, optional): Number of spark characters to emit. Defaults to 1.
 
             """
-            for _ in range(spark_count):
-                next_spark = self.sparks[-1]
-                self.sparks.rotate(1)
-                next_spark.motion.set_coordinate(self.position)
-                if next_spark.animation.active_scene:
-                    next_spark.animation.active_scene.reset_scene()
-                self.terminal.set_character_visibility(next_spark, is_visible=True)
-                spark_path = next_spark.motion.new_path(ease=tte.easing.out_sine, speed=0.3)
+
+            def setup_spark_path(spark_char: tte.EffectCharacter) -> None:
+                spark_char.motion.set_coordinate(self.position)
+                spark_path = spark_char.motion.new_path(ease=tte.easing.out_sine, speed=0.3)
                 fall_target_coord = tte.Coord(
                     random.randint(self.position.column - 20, self.position.column + 20),
                     self.terminal.canvas.bottom,
@@ -320,9 +313,11 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                     fall_target_coord,
                     bezier_control=tte.Coord(fall_target_coord.column, self.position.row + random.randint(-10, 20)),
                 )
-                next_spark.motion.activate_path(spark_path)
-                next_spark.animation.activate_scene("spark")
-                self.active_chars.add(next_spark)
+                spark_char.motion.activate_path(spark_path)
+                spark_char.animation.activate_scene("spark")
+
+            for _ in range(spark_count):
+                self.sparks_pool.emit(self.position, on_emit=setup_spark_path)
 
         def disable(self) -> None:
             """Disable the laser beam by setting the visibility of the beam characters to False."""

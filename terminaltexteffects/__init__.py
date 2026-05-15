@@ -5,6 +5,7 @@ This package provides various text effects for terminal applications.
 
 from terminaltexteffects.engine.animation import Animation, Scene
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.engine.effect_support import ParticlePool, ParticleReset
 from terminaltexteffects.engine.motion import (
     Motion,
     Path,

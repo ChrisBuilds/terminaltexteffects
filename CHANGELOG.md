@@ -26,6 +26,11 @@
 
 ---
 
+* Added `engine.effect_support.particles`, a reusable particle helper for effect-owned helper characters. The helper
+  provides `ParticlePool` and `ParticleReset` for pooling transient characters, applying per-emission setup with
+  `on_emit`, and reclaiming particles directly or from character events.
+* `BaseEffectIterator.update()` now ticks a snapshot of `active_characters`, allowing character events and callbacks to
+  add or remove active characters during an update without mutating the set being iterated.
 * `Motion.move()` now reuses the current immutable `Coord` object when preserving `previous_coord` instead of
   allocating a duplicate coordinate on every active-character motion tick. This reduces per-frame allocation overhead
   in movement-heavy effects while preserving identical rendered output.
@@ -34,6 +39,13 @@
   identical rendered output.
 * Motion segment events now trigger `SEGMENT_ENTERED` before `SEGMENT_EXITED` for segments that are completely crossed
   in a single path step, matching the documented enter/exit event semantics.
+
+#### Effects Changes (0.16.0)
+
+---
+
+* Burn smoke now uses `ParticlePool` for pooled helper characters and event-based reclaim behavior.
+* LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 
 ### Bug Fixes (0.16.0)
 

@@ -8,6 +8,7 @@ import pytest
 
 from terminaltexteffects.effects import effect_burn
 from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, Gradient
 
 
@@ -81,6 +82,29 @@ def test_burn_args(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+def test_burn_smoke_particles_reclaim_through_pool() -> None:
+    """Verify burn smoke uses the engine particle pool lifecycle."""
+    effect = effect_burn.Burn("A")
+    effect.terminal_config = _make_terminal_config("ignore")
+    iterator = cast("effect_burn.BurnIterator", iter(effect))
+    available_before = len(iterator.smoke_particles.available)
+
+    iterator._emit_smoke(Coord(1, 1), smoke_chance=1)
+
+    assert len(iterator.smoke_particles.available) == available_before - 1
+    smoke_particle = next(particle for particle in iterator.smoke_particles.particles if particle.is_visible)
+    assert smoke_particle in iterator.active_characters
+
+    for _ in range(100):
+        smoke_particle.tick()
+        if smoke_particle in iterator.smoke_particles.available:
+            break
+
+    assert not smoke_particle.is_visible
+    assert smoke_particle not in iterator.active_characters
+    assert smoke_particle in iterator.smoke_particles.available
 
 
 def test_burn_dynamic_without_preexisting_colors_has_uncolored_final_frame() -> None:

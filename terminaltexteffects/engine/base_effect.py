@@ -89,7 +89,7 @@ class BaseEffectIterator(ABC, Generic[T]):
         Each character in `active_characters` is ticked once. After all ticks complete,
         characters whose `is_active` flag is false are removed from the set.
         """
-        for character in self.active_characters:
+        for character in tuple(self.active_characters):
             character.tick()
         self.active_characters -= {character for character in self.active_characters if not character.is_active}
 
