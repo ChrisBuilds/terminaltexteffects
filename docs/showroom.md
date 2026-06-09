@@ -1446,7 +1446,7 @@ Create a thunderstorm in the terminal.
     --glowing-text-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                         Color for the text when glowing after a lightning strike. (default: Color Code: EF5411 Color Appearance: █████)
     --text-glow-time (int > 0)
-                        Duration, in number of frames, for the glowing/cooling animation for post-lightning text glow. (default: 6)
+                        Number of frames to display each color in the post-lightning text glow cooling gradient. Increase to slow down the cooling animation. (default: 6)
     --raindrop-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
                         Symbols to use for the raindrops. (default: ('\\', '.', ','))
     --spark-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
@@ -1454,7 +1454,7 @@ Create a thunderstorm in the terminal.
     --spark-glow-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                         Color for the spark glow after a lightning strike. (default: Color Code: ff4d00 Color Appearance: █████)
     --spark-glow-time (int > 0)
-                        Duration, in number of frames, for the cooling animation for post-lightning sparks. (default: 18)
+                        Number of frames to display each color in the post-lightning spark cooling gradient. Increase to slow down the cooling animation. (default: 18)
     --storm-time (int > 0)
                         Duration, in seconds, the storm will occur. (default: 12)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]

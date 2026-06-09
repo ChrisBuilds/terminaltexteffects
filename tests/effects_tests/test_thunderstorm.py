@@ -110,6 +110,132 @@ def test_thunderstorm_args(
             terminal.print(frame)
 
 
+def test_thunderstorm_glow_times_set_each_gradient_color_duration() -> None:
+    """Verify glow timing values control each color frame rather than the total scene duration."""
+    effect = effect_thunderstorm.Thunderstorm("A")
+    effect.terminal_config = _make_terminal_config("ignore")
+    effect.effect_config.text_glow_time = 3
+    effect.effect_config.spark_glow_time = 5
+
+    iterator = cast("effect_thunderstorm.ThunderstormIterator", iter(effect))
+    character = _get_first_nonspace_character(iterator)
+    text_glow_scene = character.animation.query_scene("glow")
+    spark_glow_scene = iterator.spark_pool.particles[0].animation.query_scene("glow")
+
+    assert text_glow_scene is not None
+    assert spark_glow_scene is not None
+    assert len(text_glow_scene.frames) > 1
+    assert all(frame.duration == effect.effect_config.text_glow_time for frame in text_glow_scene.frames)
+    assert len(spark_glow_scene.frames) > 1
+    assert all(frame.duration == effect.effect_config.spark_glow_time for frame in spark_glow_scene.frames)
+
+
+def test_thunderstorm_spark_pool_reclaims_sparks_on_scene_completion() -> None:
+    """Verify emitted sparks are reclaimed when their glow scene completes."""
+    effect = effect_thunderstorm.Thunderstorm("A")
+    effect.terminal_config = _make_terminal_config("ignore")
+    iterator = cast("effect_thunderstorm.ThunderstormIterator", iter(effect))
+    impact_coord = effect_thunderstorm.tte.Coord(1, iterator.terminal.canvas.top)
+
+    spark = iterator.spark_pool.emit(
+        impact_coord,
+        on_emit=iterator._setup_sparks_for_impact,
+        reset=effect_thunderstorm.tte.ParticleReset(clear_events=True),
+    )
+
+    assert spark is not None
+    glow_scene = spark.animation.query_scene("glow")
+    assert (
+        effect_thunderstorm.tte.Event.SCENE_COMPLETE,
+        glow_scene,
+    ) in spark.event_handler.registered_events
+
+    while spark.animation.active_scene is not None:
+        spark.tick()
+
+    assert not spark.is_visible
+    assert spark not in iterator.active_characters
+    assert spark in iterator.spark_pool.available
+
+
+def test_thunderstorm_lazily_created_sparks_receive_reclaim_callback() -> None:
+    """Verify sparks created after preallocation use the same lifecycle as initial particles."""
+    effect = effect_thunderstorm.Thunderstorm("A")
+    effect.terminal_config = _make_terminal_config("ignore")
+    iterator = cast("effect_thunderstorm.ThunderstormIterator", iter(effect))
+    preallocated_count = len(iterator.spark_pool)
+
+    checked_out = [iterator.spark_pool.acquire() for _ in range(preallocated_count)]
+    spark = iterator.spark_pool.emit(
+        effect_thunderstorm.tte.Coord(1, iterator.terminal.canvas.top),
+        on_emit=iterator._setup_sparks_for_impact,
+        reset=effect_thunderstorm.tte.ParticleReset(clear_events=True),
+    )
+
+    assert all(particle is not None for particle in checked_out)
+    assert spark is not None
+    assert len(iterator.spark_pool) == preallocated_count + 1
+    glow_scene = spark.animation.query_scene("glow")
+    assert (
+        effect_thunderstorm.tte.Event.SCENE_COMPLETE,
+        glow_scene,
+    ) in spark.event_handler.registered_events
+
+
+def test_thunderstorm_rain_pool_initializes_preallocated_and_lazy_drops() -> None:
+    """Verify all raindrops receive the same persistent pool initialization."""
+    effect = effect_thunderstorm.Thunderstorm("A")
+    effect.terminal_config = _make_terminal_config("ignore")
+    iterator = cast("effect_thunderstorm.ThunderstormIterator", iter(effect))
+    preallocated_count = len(iterator.rain_pool)
+
+    assert preallocated_count == 50
+    assert len(iterator.rain_pool.available) == preallocated_count
+    assert all(drop.layer == 1 for drop in iterator.rain_pool.particles)
+    assert all(
+        drop.animation.current_character_visual.colors == ColorPair(fg=Color("#aaaaff"))
+        for drop in iterator.rain_pool.particles
+    )
+
+    checked_out = [iterator.rain_pool.acquire() for _ in range(preallocated_count)]
+    lazy_drop = iterator.rain_pool.acquire()
+
+    assert all(drop is not None for drop in checked_out)
+    assert lazy_drop is not None
+    assert len(iterator.rain_pool) == preallocated_count + 1
+    assert lazy_drop.layer == 1
+    assert lazy_drop.animation.current_character_visual.colors == ColorPair(fg=Color("#aaaaff"))
+
+
+def test_thunderstorm_rain_pool_reclaims_drop_on_path_completion() -> None:
+    """Verify an emitted raindrop returns to the pool after completing its fall."""
+    effect = effect_thunderstorm.Thunderstorm("A")
+    effect.terminal_config = _make_terminal_config("ignore")
+    iterator = cast("effect_thunderstorm.ThunderstormIterator", iter(effect))
+    origin = effect_thunderstorm.tte.Coord(0, iterator.terminal.canvas.top + 1)
+
+    drop = iterator.rain_pool.emit(
+        origin,
+        on_emit=iterator._setup_raindrop,
+        reset=effect_thunderstorm.tte.ParticleReset(clear_events=True),
+    )
+
+    assert drop is not None
+    fall_path = drop.motion.active_path
+    assert fall_path is not None
+    assert (
+        effect_thunderstorm.tte.Event.PATH_COMPLETE,
+        fall_path,
+    ) in drop.event_handler.registered_events
+
+    while drop.motion.active_path is not None:
+        drop.tick()
+
+    assert not drop.is_visible
+    assert drop not in iterator.active_characters
+    assert drop in iterator.rain_pool.available
+
+
 def test_thunderstorm_dynamic_without_preexisting_colors_uses_gray_then_clears() -> None:
     """Verify dynamic mode uses gray during the storm and clears to no color after it ends."""
     effect = effect_thunderstorm.Thunderstorm("A")

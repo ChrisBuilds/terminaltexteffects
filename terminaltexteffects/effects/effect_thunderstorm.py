@@ -80,9 +80,15 @@ class ThunderstormConfig(BaseConfig):
         type=argutils.PositiveInt.type_parser,
         default=6,
         metavar=argutils.PositiveInt.METAVAR,
-        help="Duration, in number of frames, for the glowing/cooling animation for post-lightning text glow.",
+        help=(
+            "Number of frames to display each color in the post-lightning text glow cooling gradient. "
+            "Increase to slow down the cooling animation."
+        ),
     )  # pyright: ignore[reportAssignmentType]
-    "int: Duration, in number of frames, for the glowing/cooling animation for post-lightning text glow."
+    (
+        "int: Number of frames to display each color in the post-lightning text glow cooling gradient. "
+        "Increase to slow down the cooling animation."
+    )
 
     raindrop_symbols: tuple[str, ...] = argutils.ArgSpec(
         name="--raindrop-symbols",
@@ -120,9 +126,15 @@ class ThunderstormConfig(BaseConfig):
         type=argutils.PositiveInt.type_parser,
         default=18,
         metavar=argutils.PositiveInt.METAVAR,
-        help="Duration, in number of frames, for the cooling animation for post-lightning sparks.",
+        help=(
+            "Number of frames to display each color in the post-lightning spark cooling gradient. "
+            "Increase to slow down the cooling animation."
+        ),
     )  # pyright: ignore[reportAssignmentType]
-    "int: Duration, in number of frames, for the cooling animation for post-lightning sparks."
+    (
+        "int: Number of frames to display each color in the post-lightning spark cooling gradient. "
+        "Increase to slow down the cooling animation."
+    )
 
     storm_time: int = argutils.ArgSpec(
         name="--storm-time",
@@ -178,12 +190,11 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         self.character_storm_color_map: dict[tte.EffectCharacter, tte.ColorPair] = {}
         self.delay = 0
         self.strike_progression_delay = 0
-        self.rain_drops: list[tte.EffectCharacter] = []
+        self.rain_pool = self.build_rain_pool()
         self.pending_strike_chars: list[EffectCharacter] = []
         self.available_strike_chars: list[EffectCharacter] = []
         self.active_strike_chars: list[EffectCharacter] = []
-        self.pending_sparks: list[EffectCharacter] = []
-        self.available_sparks: list[EffectCharacter] = []
+        self.spark_pool = self.build_spark_pool()
         self.pending_glow_chars: list[EffectCharacter] = []
         self.strike_in_progress: bool = False
         self.flashing: bool = False
@@ -249,22 +260,6 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 duration=duration,
             )
 
-    def hide_character(self, character: tte.EffectCharacter, *_: typing.Any) -> None:
-        """Hide a helper character."""
-        self.terminal.set_character_visibility(character, is_visible=False)
-
-    def return_spark_to_pool(self, character: tte.EffectCharacter, *_: typing.Any) -> None:
-        """Return a spark character to the available pool."""
-        self.available_sparks.append(character)
-
-    def return_strike_to_pool(self, character: tte.EffectCharacter, *_: typing.Any) -> None:
-        """Return a strike character to the available pool."""
-        self.available_strike_chars.append(character)
-
-    def return_raindrop_to_pool(self, character: tte.EffectCharacter, *_: typing.Any) -> None:
-        """Return a raindrop character to the available pool."""
-        self.rain_drops.append(character)
-
     def build(self) -> None:
         """Build the effect."""
         final_gradient = tte.Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
@@ -275,8 +270,6 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             self.terminal.canvas.text_right,
             self.config.final_gradient_direction,
         )
-        self.build_raindrop_characters()
-        self.build_spark_characters()
         self.build_strike_characters()
 
         # setup scenes on text characters
@@ -316,10 +309,14 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 glow_scn.add_frame(
                     symbol=text_char.input_symbol,
                     colors=tte.ColorPair(fg=color, bg=storm_colors.bg_color),
-                    duration=6,
+                    duration=self.config.text_glow_time,
                 )
             if self.terminal.config.existing_color_handling == "dynamic":
-                glow_scn.add_frame(symbol=text_char.input_symbol, colors=storm_colors, duration=6)
+                glow_scn.add_frame(
+                    symbol=text_char.input_symbol,
+                    colors=storm_colors,
+                    duration=self.config.text_glow_time,
+                )
 
             # fade before storm scene
             fade_scn = text_char.animation.new_scene(scene_id="fade")
@@ -400,6 +397,78 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             target=tte.EventHandler.Callback(fade_complete),
         )
 
+    def build_rain_pool(self) -> tte.ParticlePool:
+        """Build and return the raindrop particle pool."""
+
+        def initialize_raindrop(rain_char: EffectCharacter) -> None:
+            rain_char.layer = 1
+            rain_char.animation.set_appearance(
+                symbol=rain_char.input_symbol,
+                colors=tte.ColorPair(fg=tte.Color("#aaaaff")),
+            )
+
+        return tte.ParticlePool(
+            terminal=self.terminal,
+            active_characters=self.active_characters,
+            symbols=self.config.raindrop_symbols,
+            initial_count=50,
+            initializer=initialize_raindrop,
+        )
+
+    def build_spark_pool(self) -> tte.ParticlePool:
+        """Build and return the spark particle pool."""
+        spark_gradient = tte.Gradient(
+            self.config.spark_glow_color,
+            self.terminal.config.terminal_background_color,
+            steps=7,
+        )
+
+        def _build_spark_characters(new_spark_char: EffectCharacter) -> None:
+            """Build spark characters for the lightning strike effect."""
+            new_spark_char.layer = 2
+            spark_scn = new_spark_char.animation.new_scene(scene_id="glow", ease=tte.easing.in_circ)
+            for color in spark_gradient:
+                spark_scn.add_frame(
+                    symbol=new_spark_char.input_symbol,
+                    colors=tte.ColorPair(fg=color),
+                    duration=self.config.spark_glow_time,
+                )
+
+        return tte.ParticlePool(
+            terminal=self.terminal,
+            active_characters=self.active_characters,
+            symbols=self.config.spark_symbols,
+            initial_count=200,
+            max_size=2000,
+            initializer=_build_spark_characters,
+        )
+
+    def build_strike_characters(self, count: int = 200) -> None:
+        """Build strike characters for the lightning strike effect."""
+        for _ in range(count):
+            strike_char = self.terminal.add_character(
+                symbol="|",
+                coord=tte.Coord(1, 1),
+            )
+            self.available_strike_chars.append(strike_char)
+
+    def hide_character(self, character: tte.EffectCharacter, *_: typing.Any) -> None:
+        """Hide a helper character."""
+        self.terminal.set_character_visibility(character, is_visible=False)
+
+    def return_strike_to_pool(self, character: tte.EffectCharacter, *_: typing.Any) -> None:
+        """Return a strike character to the available pool."""
+        self.available_strike_chars.append(character)
+
+    def get_next_strike_char(self) -> tte.EffectCharacter:
+        """Get the next available strike character, creating more when needed."""
+        if not self.available_strike_chars:
+            self.build_strike_characters(20)
+        strike_char = self.available_strike_chars.pop()
+        strike_char.animation.scenes.clear()
+        strike_char.event_handler.registered_events.clear()
+        return strike_char
+
     def set_strike_in_progress_false(self, *_: typing.Any) -> None:
         """Reset the strike in progress flag."""
         self.strike_in_progress = False
@@ -416,78 +485,30 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             input_char.animation.activate_scene("glow")
             self.pending_glow_chars.append(input_char)
 
-    def get_next_strike_char(self) -> tte.EffectCharacter:
-        """Get the next available strike character.
-
-        If no characters are available, new ones will be created.
-
-        Returns:
-            tte.EffectCharacter: The next available strike character.
-
-        """
-        if not self.available_strike_chars:
-            self.build_strike_characters(20)
-        strike_char = self.available_strike_chars.pop()
-        strike_char.animation.scenes.clear()
-        strike_char.event_handler.registered_events.clear()
-        return strike_char
-
-    def get_next_spark_char(self) -> tte.EffectCharacter:
-        """Get the next available spark character.
-
-        If no characters are available, new ones will be created.
-
-        Returns:
-            tte.EffectCharacter: The next available spark character.
-
-        """
-        if not self.available_sparks:
-            self.build_spark_characters(20)
-        spark_char = self.available_sparks.pop()
-        spark_char.motion.paths.clear()
-        spark_char.event_handler.registered_events.clear()
-        return spark_char
-
-    def setup_sparks_for_impact(self) -> None:
+    def _setup_sparks_for_impact(self, spark_char: EffectCharacter) -> None:
         """Configure sparks for the impact of a lightning strike."""
-        # setup sparks at lightning strike bottom impact
-        last_strike_char = self.pending_strike_chars[-1]
-        for _ in range(random.randint(6, 10)):
-            spark_char = self.get_next_spark_char()
-            spark_char.motion.set_coordinate(last_strike_char.motion.current_coord)
-
-            spark_path = spark_char.motion.new_path(
-                speed=random.uniform(0.1, 0.25),
-                ease=tte.easing.out_quint,
-                hold_time=30,
-            )
-            spark_target = tte.Coord(
-                column=last_strike_char.motion.current_coord.column + random.randint(4, 20) * random.choice((1, -1)),
-                row=self.terminal.canvas.bottom,
-            )
-            bezier_column = last_strike_char.motion.current_coord.column - (
-                (last_strike_char.motion.current_coord.column - spark_target.column) // 2
-            )
-            spark_path.new_waypoint(
-                coord=spark_target,
-                bezier_control=tte.Coord(column=bezier_column, row=random.randint(1, self.terminal.canvas.top)),
-            )
-            spark_char.event_handler.register_event(
-                event=tte.Event.PATH_COMPLETE,
-                caller=spark_path,
-                action=tte.Action.CALLBACK,
-                target=tte.EventHandler.Callback(self.hide_character),
-            )
-            spark_char.event_handler.register_event(
-                event=tte.Event.PATH_COMPLETE,
-                caller=spark_path,
-                action=tte.Action.CALLBACK,
-                target=tte.EventHandler.Callback(self.return_spark_to_pool),
-            )
-
-            spark_char.animation.activate_scene("glow")
-            spark_char.motion.activate_path(spark_path)
-            self.pending_sparks.append(spark_char)
+        impact_coord = spark_char.motion.current_coord
+        spark_path = spark_char.motion.new_path(
+            speed=random.uniform(0.1, 0.25),
+            ease=tte.easing.out_quint,
+            hold_time=30,
+        )
+        spark_target = tte.Coord(
+            column=impact_coord.column + random.randint(4, 20) * random.choice((1, -1)),
+            row=self.terminal.canvas.bottom,
+        )
+        bezier_column = impact_coord.column - ((impact_coord.column - spark_target.column) // 2)
+        spark_path.new_waypoint(
+            coord=spark_target,
+            bezier_control=tte.Coord(column=bezier_column, row=random.randint(1, self.terminal.canvas.top)),
+        )
+        self.spark_pool.reclaim_on_event(
+            spark_char,
+            spark_char.animation.query_scene("glow"),
+            event=tte.Event.SCENE_COMPLETE,
+        )
+        spark_char.animation.activate_scene("glow")
+        spark_char.motion.activate_path(spark_path)
 
     def setup_lightning_strike(self, branch_neighbor: tte.EffectCharacter | None = None) -> None:
         """Build a lightning strike effect."""
@@ -530,68 +551,6 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 self.setup_lightning_strike(branch_neighbor=strike_char)
             branch_neighbor = None
         self.strike_branch_chance = 0.05
-        self.setup_sparks_for_impact()
-
-    def build_raindrop_characters(self, count: int = 50) -> None:
-        """Build raindrop characters."""
-        for _ in range(count):
-            spawn_column = random.randint(1 - self.terminal.canvas.top, self.terminal.canvas.right)
-            rain_char = self.terminal.add_character(
-                symbol=random.choice(self.config.raindrop_symbols),
-                coord=tte.Coord(column=spawn_column - 1, row=self.terminal.canvas.top + 1),
-            )
-            rain_char.layer = 1
-            rain_char.animation.set_appearance(
-                symbol=rain_char.input_symbol,
-                colors=tte.ColorPair(fg=tte.Color("#aaaaff")),
-            )
-            fall_path = rain_char.motion.new_path(path_id="fall", speed=1)
-            fall_path.new_waypoint(
-                tte.Coord(column=spawn_column + self.terminal.canvas.top, row=self.terminal.canvas.bottom - 1),
-            )
-            rain_char.motion.activate_path(fall_path)
-
-            rain_char.event_handler.register_event(
-                tte.Event.PATH_COMPLETE,
-                fall_path,
-                tte.Action.CALLBACK,
-                rain_char.event_handler.Callback(self.return_raindrop_to_pool),
-            )
-
-            self.terminal.set_character_visibility(rain_char, is_visible=True)
-            self.rain_drops.append(rain_char)
-
-    def build_spark_characters(self, count: int = 100) -> None:
-        """Build spark characters for the lightning strike effect."""
-        spark_gradient = tte.Gradient(
-            self.config.spark_glow_color,
-            self.terminal.config.terminal_background_color,
-            steps=7,
-        )
-        for _ in range(count):
-            spark = self.terminal.add_character(
-                symbol=random.choice(self.config.spark_symbols),
-                coord=tte.Coord(1, 1),
-            )
-            spark.layer = 2
-
-            spark_scn = spark.animation.new_scene(scene_id="glow", ease=tte.easing.in_circ)
-            for color in spark_gradient:
-                spark_scn.add_frame(
-                    symbol=spark.input_symbol,
-                    colors=tte.ColorPair(fg=color),
-                    duration=self.config.spark_glow_time,
-                )
-            self.available_sparks.append(spark)
-
-    def build_strike_characters(self, count: int = 200) -> None:
-        """Build strike characters for the lightning strike effect."""
-        for _ in range(count):
-            strike_char = self.terminal.add_character(
-                symbol="|",
-                coord=tte.Coord(1, 1),
-            )
-            self.available_strike_chars.append(strike_char)
 
     def lightning_strike(self) -> None:
         """Trigger a lightning strike effect."""
@@ -670,10 +629,13 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 # and setup the post-fade callback to indicate the strike has
                 # ended
                 if not self.pending_strike_chars:
-                    while self.pending_sparks:
-                        spark = self.pending_sparks.pop()
-                        self.terminal.set_character_visibility(spark, is_visible=True)
-                        self.active_characters.add(spark)
+                    for _ in range(random.randint(12, 18)):
+                        self.spark_pool.emit(
+                            self.active_strike_chars[-1].motion.current_coord,
+                            on_emit=self._setup_sparks_for_impact,
+                            visible=True,
+                            reset=tte.ParticleReset(clear_events=True),
+                        )
                     next_strike_char.event_handler.register_event(
                         event=tte.Event.SCENE_COMPLETE,
                         caller="fade",
@@ -691,22 +653,39 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                         text_char.animation.activate_scene("flash")
                         self.active_characters.add(text_char)
 
+    def _setup_raindrop(self, rain_char: EffectCharacter) -> None:
+        """Configure a raindrop for one fall across the canvas."""
+        origin = rain_char.motion.current_coord
+        fall_path = rain_char.motion.new_path(
+            speed=random.uniform(0.5, 1.5),
+        )
+        fall_path.new_waypoint(
+            tte.Coord(
+                column=origin.column + self.terminal.canvas.top + 1,
+                row=self.terminal.canvas.bottom - 1,
+            ),
+        )
+        self.rain_pool.reclaim_on_event(
+            rain_char,
+            fall_path,
+            event=tte.Event.PATH_COMPLETE,
+        )
+        rain_char.motion.activate_path(fall_path)
+
     def rain(self) -> None:
         """Handle the rain effect."""
-        if self.rain_drops:
-            if not self.delay:
-                for _ in range(random.randint(1, 6)):
-                    if not self.rain_drops:
-                        self.build_raindrop_characters(20)
-                    drop = self.rain_drops.pop(random.randint(0, len(self.rain_drops) - 1))
-                    drop.motion.set_coordinate(drop.input_coord)
-                    fall_path = drop.motion.query_path("fall")
-                    fall_path.speed = random.uniform(0.5, 1.5)
-                    drop.motion.activate_path(fall_path)
-                    self.active_characters.add(drop)
-                self.delay = random.randint(1, 7)
-            else:
-                self.delay -= 1
+        if self.delay:
+            self.delay -= 1
+            return
+
+        for _ in range(random.randint(1, 6)):
+            spawn_column = random.randint(1 - self.terminal.canvas.top, self.terminal.canvas.right)
+            self.rain_pool.emit(
+                tte.Coord(column=spawn_column - 1, row=self.terminal.canvas.top + 1),
+                on_emit=self._setup_raindrop,
+                reset=tte.ParticleReset(clear_events=True),
+            )
+        self.delay = random.randint(1, 7)
 
     def pre_storm_text_fade(self) -> None:
         """Activate the fade effect for all text characters before the storm."""

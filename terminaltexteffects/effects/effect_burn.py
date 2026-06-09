@@ -151,7 +151,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
                 )
             new_char.layer = 2
 
-        smoke_pool = ParticlePool(
+        return ParticlePool(
             self.terminal,
             self.active_characters,
             (".", ",", "'", "`", "#", "*"),
@@ -159,9 +159,6 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             max_size=2000,
             initializer=initialize_smoke,
         )
-        for smoke_particle in smoke_pool.particles:
-            smoke_pool.reclaim_on_event(smoke_particle, smoke_particle.animation.query_scene("smoke"))
-        return smoke_pool
 
     def _emit_smoke(self, origin: Coord, smoke_chance: float) -> None:
         """Emit smoke from a burning character.
@@ -189,6 +186,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             )
             next_particle.motion.activate_path(smoke_path)
             next_particle.animation.activate_scene(smoke_scn)
+            self.smoke_particles.reclaim_on_event(next_particle, caller=next_particle.animation.query_scene("smoke"))
 
         self.smoke_particles.emit(
             origin,
