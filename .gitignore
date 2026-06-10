@@ -167,7 +167,7 @@ github_resources/*
 *.gv
 effect_test.py
 effect_canvas_test.
-
+effect_dev.py
 .vscode/*
 lib_tests/*
 dev_notes/*
