@@ -16,7 +16,7 @@ with effect.terminal_output() as terminal:
         terminal.print(frame)
 ```
 
-For the full elephant choreography, use a canvas of at least 61 columns by 12 rows. A taller canvas gives the clearest
+For the full elephant choreography, use a canvas of at least 51 columns by 15 rows. A taller canvas gives the clearest
 separation between the floor-level elephant and centred branding. Smaller canvases automatically use a compact
 elephant or a particle-free splash reveal.
 
