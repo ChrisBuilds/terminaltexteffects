@@ -12,6 +12,7 @@ import pytest
 
 from terminaltexteffects import __main__
 from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
 
@@ -67,6 +68,34 @@ def test_elephant_splash_exposes_effect_resources() -> None:
     )
 
 
+def test_elephant_state_machine_exposes_the_required_choreography_states() -> None:
+    """The central iterator state names document which sprite motions are permitted."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+
+    assert [state.name for state in module.ElephantState] == [
+        "ENTERING",
+        "WALKING_TO_TARGET",
+        "SETTLING",
+        "LOWERING_TRUNK",
+        "REVEALING_LOGO",
+        "HOLDING",
+        "RAISING_TRUNK",
+        "WALKING_OUT",
+        "COMPLETE",
+    ]
+
+
+def test_effect_begins_in_entering_state_with_shared_integer_sprite_coordinates() -> None:
+    """The authoritative state and origin exist before the first rendered frame."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+    iterator = _make_iterator(80, 24)
+
+    assert iterator.state is module.ElephantState.ENTERING
+    assert iterator.elephant_x == iterator.elephant.elephant_x
+    assert iterator.elephant_y == iterator.elephant.elephant_y
+    assert iterator.current_pose == iterator.elephant.current_pose == 0
+
+
 def test_elephant_splash_config_defaults() -> None:
     """The default palette and timing match the public effect contract."""
     module = import_module("terminaltexteffects.effects.effect_elephant_splash")
@@ -77,6 +106,8 @@ def test_elephant_splash_config_defaults() -> None:
     assert config.elephant_highlight_color == Color("#C4B5FD")
     assert config.water_colors == (Color("#38BDF8"), Color("#7DD3FC"), Color("#E0F2FE"))
     assert config.movement_speed == 0.35
+    assert config.walk_pose_frames == 8
+    assert config.horizontal_step_frames == 4
     assert config.final_gradient_stops == (Color("#8B5CF6"), Color("#C4B5FD"), Color("#F5F3FF"))
     assert config.final_gradient_steps == 12
     assert config.final_gradient_frames == 4
@@ -130,8 +161,8 @@ def test_raised_and_primary_spray_pose_use_the_selected_jgs_elephant_exactly() -
         "    \\__/  \\___/    \\___/",
     )
 
-    assert module.ElephantSplashIterator.FULL_POSES["raise_3"] == selected_elephant
-    assert module.ElephantSplashIterator.FULL_POSES["spray_1"] == selected_elephant
+    assert tuple(row.rstrip() for row in module.ElephantSplashIterator.FULL_POSES["raise_3"]) == selected_elephant
+    assert tuple(row.rstrip() for row in module.ElephantSplashIterator.FULL_POSES["spray_1"]) == selected_elephant
 
 
 def test_selected_elephant_credit_lives_in_documentation_not_the_sprite() -> None:
@@ -149,6 +180,31 @@ def test_every_full_pose_preserves_the_selected_elephants_back_and_face() -> Non
     for pose in module.ElephantSplashIterator.FULL_POSES.values():
         assert any('.-""-.-""""-.' in row for row in pose)
         assert any(";    e" in row for row in pose)
+
+
+def test_all_full_sprite_poses_share_one_padded_bounding_box() -> None:
+    """Every authored pose addresses the same persistent sprite-cell grid."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+    dimensions = {(len(pose), len(row)) for pose in module.ElephantSplashIterator.FULL_POSES.values() for row in pose}
+
+    assert len(dimensions) == 1
+
+
+def test_walking_changes_legs_without_moving_the_body_or_trunk() -> None:
+    """The walk cycle cannot make the lowered trunk behave like another leg."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+    poses = module.ElephantSplashIterator.FULL_POSES
+    neutral = poses["walk_1"]
+
+    for pose_name in ("walk_2", "walk_3", "walk_4"):
+        pose = poses[pose_name]
+        assert pose[:12] == neutral[:12]
+        assert all(row[25:] == neutral_row[25:] for row, neutral_row in zip(pose[12:], neutral[12:]))
+
+    assert not poses["walk_2"][-1][:9].strip()
+    assert "\\__/" in poses["walk_2"][-2][:9]
+    assert not poses["walk_4"][-1][9:19].strip()
+    assert "\\___/" in poses["walk_4"][-2][8:19]
 
 
 @pytest.mark.parametrize("pose_name", ["raise_3", "spray_1", "spray_2", "wiggle_1", "wiggle_2"])
@@ -247,6 +303,72 @@ def test_elephant_sprite_is_bounded_and_starts_outside_canvas(canvas_width: int,
     assert len(iterator.elephant.characters) <= iterator.elephant.width * iterator.elephant.height
     assert all(ord(symbol) < 128 for pose in iterator.elephant.poses.values() for row in pose for symbol in row)
     assert all(character.layer == 2 for character in iterator.elephant.characters)
+
+
+def test_elephant_uses_one_persistent_cell_for_every_bounding_box_coordinate() -> None:
+    """Sprite cells represent fixed local coordinates rather than whichever glyph occupies them."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+    iterator = _make_iterator(80, 24)
+    elephant = iterator.elephant
+
+    assert len(elephant.cells) == elephant.width * elephant.height
+    assert all(isinstance(cell, module.SpriteCell) for cell in elephant.cells)
+    assert {(cell.row, cell.column) for cell in elephant.cells} == {
+        (row, column) for row in range(elephant.height) for column in range(elephant.width)
+    }
+    assert len({cell.character for cell in elephant.cells}) == len(elephant.cells)
+
+
+def test_applying_a_pose_updates_visibility_and_position_for_every_sprite_cell() -> None:
+    """One pose application atomically projects the complete grid from the shared integer origin."""
+    iterator = _make_iterator(80, 24)
+    elephant = iterator.elephant
+    elephant.set_origin(elephant.target_coord.column, elephant.target_coord.row)
+    elephant.apply_pose("walk_2")
+    pose = elephant.poses["walk_2"]
+
+    for cell in elephant.cells:
+        grid_row = elephant.height - cell.row - 1
+        symbol = pose[grid_row][cell.column]
+        assert cell.character.motion.current_coord == Coord(
+            elephant.elephant_x + cell.column,
+            elephant.elephant_y + cell.row,
+        )
+        assert (cell.character in iterator.terminal._visible_characters) is (symbol != " ")
+        assert cell.character.animation.current_character_visual.symbol == symbol
+
+
+def test_horizontal_walk_moves_the_shared_origin_one_column_every_four_frames() -> None:
+    """Integer stepping replaces continuously eased sub-frame elephant motion."""
+    iterator = _make_iterator(80, 24)
+    elephant = iterator.elephant
+    start_x = elephant.elephant_x
+
+    for _ in range(3):
+        elephant.step_walk(direction=1)
+        assert elephant.elephant_x == start_x
+
+    elephant.step_walk(direction=1)
+
+    assert elephant.elephant_x == start_x + 1
+    assert all(
+        cell.character.motion.current_coord.column == elephant.elephant_x + cell.column for cell in elephant.cells
+    )
+
+
+def test_walk_pose_is_held_for_eight_frames_without_individual_cell_paths() -> None:
+    """The central pose counter synchronises the complete sprite independently of TTE paths."""
+    iterator = _make_iterator(80, 24)
+    elephant = iterator.elephant
+
+    for _ in range(8):
+        elephant.step_walk(direction=1)
+        assert elephant.current_pose == 0
+
+    elephant.step_walk(direction=1)
+
+    assert elephant.current_pose == 1
+    assert all(cell.character.motion.active_path is None for cell in elephant.cells)
 
 
 @pytest.mark.parametrize(("canvas_width", "canvas_height"), [(41, 16), (51, 15), (61, 12), (48, 12), (12, 6)])
@@ -378,7 +500,7 @@ def test_elephant_walks_in_with_multiple_poses_before_raising_its_trunk() -> Non
 
     for _ in range(500):
         frame = next(iterator)
-        seen_poses.add(iterator.elephant.current_pose)
+        seen_poses.add(iterator.elephant.current_pose_name)
         assert frame
         if iterator.phase.name == "RAISE_TRUNK":
             break
@@ -398,6 +520,27 @@ def test_elephant_stops_to_drink_before_raising_its_trunk() -> None:
     assert iterator.phase.name == "DRINK"
 
 
+def test_trunk_interaction_freezes_the_walk_cycle_and_logo_waits_for_lowest_pose() -> None:
+    """Leg poses stop at the puddle and branding cannot reveal during trunk lowering."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+    iterator = _make_iterator(80, 24, "ORCA")
+    while iterator.state is not module.ElephantState.LOWERING_TRUNK:
+        next(iterator)
+    frozen_walk_frame = iterator.elephant.walk_frame
+    lowering_poses: set[str] = set()
+
+    while iterator.state is module.ElephantState.LOWERING_TRUNK:
+        next(iterator)
+        lowering_poses.add(iterator.elephant.current_pose_name)
+        assert iterator.elephant.walk_frame == frozen_walk_frame
+        assert all(character not in iterator.terminal._visible_characters for character in iterator.input_characters)
+
+    while iterator.state is not module.ElephantState.REVEALING_LOGO:
+        next(iterator)
+
+    assert lowering_poses == {"drink_1", "drink_2", "drink_3"}
+
+
 @pytest.mark.parametrize(("canvas_width", "canvas_height"), [(80, 24), (12, 6)])
 def test_drinking_poses_lower_the_trunk_while_the_puddle_shrinks(
     canvas_width: int,
@@ -414,7 +557,7 @@ def test_drinking_poses_lower_the_trunk_while_the_puddle_shrinks(
     while iterator.phase.name == "DRINK":
         next(iterator)
         drinking_frames += 1
-        seen_poses.add(iterator.elephant.current_pose)
+        seen_poses.add(iterator.elephant.current_pose_name)
         puddle_sizes.append(iterator.puddle.visible_count)
 
     assert iterator.phase.name == "RAISE_TRUNK"
@@ -493,7 +636,7 @@ def test_elephant_raises_its_trunk_in_three_timed_poses() -> None:
 
     for _ in range(30):
         next(iterator)
-        seen_poses.add(iterator.elephant.current_pose)
+        seen_poses.add(iterator.elephant.current_pose_name)
 
     assert seen_poses == {"raise_1", "raise_2", "raise_3"}
     assert iterator.phase.name == "SPLASH"
@@ -607,7 +750,7 @@ def test_reveal_releases_all_twelve_radial_bands_over_twenty_three_frames() -> N
     assert all(character in iterator.terminal._visible_characters for character in iterator.input_characters)
     assert all(character.animation.active_scene is not None for character in iterator.input_characters)
     assert iterator.phase.name == "REVEAL"
-    assert iterator.elephant.current_pose in {"wiggle_1", "wiggle_2"}
+    assert iterator.elephant.current_pose_name == "spray_1"
 
 
 def test_completed_reveal_enters_a_celebration_before_walk_out() -> None:
@@ -624,7 +767,8 @@ def test_completed_reveal_enters_a_celebration_before_walk_out() -> None:
 
 
 def test_elephant_celebrates_for_forty_eight_frames_then_walks_out() -> None:
-    """Two ear-wiggle poses play in place before the exit path begins."""
+    """The completed elephant holds still, reverses its trunk poses, then resumes at WALK_1."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
     iterator = _make_iterator(80, 24, "PURPLE\nELEPHANT")
     while iterator.phase.name != "CELEBRATE":
         next(iterator)
@@ -635,22 +779,30 @@ def test_elephant_celebrates_for_forty_eight_frames_then_walks_out() -> None:
     while iterator.phase.name == "CELEBRATE":
         next(iterator)
         celebration_frames += 1
-        seen_poses.add(iterator.elephant.current_pose)
+        seen_poses.add(iterator.elephant.current_pose_name)
 
     assert celebration_frames == 48
-    assert seen_poses == {"wiggle_1", "wiggle_2"}
-    assert iterator.phase.name == "WALK_OUT"
+    assert seen_poses == {"spray_1"}
+    assert iterator.state is module.ElephantState.RAISING_TRUNK
     assert iterator.elephant.anchor.motion.current_coord == stationary_coord
-    assert iterator.elephant.anchor.motion.active_path.path_id == "walk_out"
+
+    reverse_poses: list[str] = []
+    while iterator.state is module.ElephantState.RAISING_TRUNK:
+        next(iterator)
+        reverse_poses.append(iterator.elephant.current_pose_name)
+
+    assert {"raise_1", "raise_2", "raise_3"}.issubset(reverse_poses)
+    assert iterator.state is module.ElephantState.WALKING_OUT
+    assert iterator.elephant.current_pose_name == "walk_1"
 
 
 def test_full_choreography_finishes_cleanly_within_frame_budget() -> None:
     """The default full-canvas effect terminates with only the original branding visible."""
     iterator = _make_iterator(80, 24, "PURPLE\nELEPHANT")
-    rendered_frames = list(islice(iterator, 801))
+    rendered_frames = list(islice(iterator, 1001))
 
     assert iterator.phase.name == "COMPLETE"
-    assert 1 <= len(rendered_frames) < 800
+    assert 1 <= len(rendered_frames) < 1000
     assert not iterator.active_characters
     assert len(iterator.water_pool.available) == len(iterator.water_pool)
     assert all(character not in iterator.terminal._visible_characters for character in iterator.elephant.characters)
@@ -784,6 +936,10 @@ def test_cli_parser_builds_custom_elephant_splash_config() -> None:
             "ffffff",
             "--movement-speed",
             "0.7",
+            "--walk-pose-frames",
+            "6",
+            "--horizontal-step-frames",
+            "3",
             "--final-gradient-stops",
             "800080",
             "ffffff",
@@ -805,5 +961,7 @@ def test_cli_parser_builds_custom_elephant_splash_config() -> None:
     assert config.elephant_highlight_color == Color("#dda0dd")
     assert config.water_colors == (Color("#00ffff"), Color("#ffffff"))
     assert config.movement_speed == 0.7
+    assert config.walk_pose_frames == 6
+    assert config.horizontal_step_frames == 3
     assert config.final_gradient_direction is Gradient.Direction.HORIZONTAL
     assert config.final_hold_frames == 0

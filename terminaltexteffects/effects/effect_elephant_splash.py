@@ -29,6 +29,38 @@ def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
     return "elephantsplash", ElephantSplash, ElephantSplashConfig
 
 
+def _pad_sprite_poses(poses: dict[str, tuple[str, ...]]) -> dict[str, tuple[str, ...]]:
+    """Pad authored sprite grids to one shared rectangular bounding box."""
+    height = max(len(pose) for pose in poses.values())
+    width = max(len(row) for pose in poses.values() for row in pose)
+    return {
+        name: tuple(row.ljust(width) for row in (*pose, *("",) * (height - len(pose)))) for name, pose in poses.items()
+    }
+
+
+@dataclass(frozen=True)
+class SpriteCell:
+    """One persistent local coordinate in a multiline sprite grid."""
+
+    row: int
+    column: int
+    character: EffectCharacter
+
+
+class ElephantState(Enum):
+    """Authoritative choreography state for coordinated elephant movement."""
+
+    ENTERING = auto()
+    WALKING_TO_TARGET = auto()
+    SETTLING = auto()
+    LOWERING_TRUNK = auto()
+    REVEALING_LOGO = auto()
+    HOLDING = auto()
+    RAISING_TRUNK = auto()
+    WALKING_OUT = auto()
+    COMPLETE = auto()
+
+
 @dataclass
 class ElephantSplashConfig(BaseConfig):
     """Configuration for the Elephant Splash effect.
@@ -37,7 +69,9 @@ class ElephantSplashConfig(BaseConfig):
         elephant_color: Primary color of the elephant.
         elephant_highlight_color: Highlight color for the elephant's expressive details.
         water_colors: Colors used by droplets and the initial branding splash.
-        movement_speed: Speed of the elephant's entrance and exit paths.
+        movement_speed: Legacy movement-speed setting retained for configuration compatibility.
+        walk_pose_frames: Frames to hold each authored walking pose.
+        horizontal_step_frames: Frames between one-column sprite-origin steps.
         final_gradient_stops: Colors used for the completed branding gradient.
         final_gradient_steps: Number of steps between final gradient stops.
         final_gradient_frames: Frames displayed for each branding cooling step.
@@ -84,7 +118,21 @@ class ElephantSplashConfig(BaseConfig):
         type=argutils.PositiveFloat.type_parser,
         default=0.35,
         metavar=argutils.PositiveFloat.METAVAR,
-        help="Speed of the elephant's entrance and exit.",
+        help="Legacy movement-speed setting retained for configuration compatibility.",
+    )  # pyright: ignore[reportAssignmentType]
+    walk_pose_frames: int = argutils.ArgSpec(
+        name="--walk-pose-frames",
+        type=argutils.PositiveInt.type_parser,
+        default=8,
+        metavar=argutils.PositiveInt.METAVAR,
+        help="Number of frames to hold each walking pose.",
+    )  # pyright: ignore[reportAssignmentType]
+    horizontal_step_frames: int = argutils.ArgSpec(
+        name="--horizontal-step-frames",
+        type=argutils.PositiveInt.type_parser,
+        default=4,
+        metavar=argutils.PositiveInt.METAVAR,
+        help="Number of frames between one-column elephant steps.",
     )  # pyright: ignore[reportAssignmentType]
     final_gradient_stops: tuple[Color, ...] = FinalGradientStopsArg(
         default=(Color("#8B5CF6"), Color("#C4B5FD"), Color("#F5F3FF")),
@@ -168,40 +216,42 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         '         .-""""-/       ((      \'--\' /',
         *_FULL_TRUNK_UP[6:],
     )
-    FULL_POSES: typing.ClassVar[dict[str, tuple[str, ...]]] = {
-        "walk_1": _FULL_TRUNK_DOWN,
-        "walk_2": (
-            *_FULL_TRUNK_DOWN[:-4],
-            " |/  /      _,.-----\\  |  \\         |",
-            "    /     .;  |    |    |   \\        |",
-            "   |    /  |  \\    /   |\\__/       /",
-            "    \\__/  \\___/    \\___/       \\__~",
-        ),
-        "walk_3": (
-            *_FULL_TRUNK_DOWN[:-4],
-            " |/  /     _,.-----\\    |  \\         |",
-            "    /    .;    |    |    |   \\        |",
-            "   |     / |   \\    /  |\\__/       /",
-            "    \\__/  \\___/    \\___/       \\__~",
-        ),
-        "walk_4": (
-            *_FULL_TRUNK_DOWN[:-4],
-            " |/  /     _,.-----\\   |   \\         |",
-            "    /    .;   |     |   |    \\        |",
-            "   |    / |    \\   /   |\\__/       /",
-            "    \\__/  \\___/    \\___/       \\__~",
-        ),
-        "drink_1": _FULL_TRUNK_DOWN,
-        "drink_2": (*_FULL_TRUNK_DOWN[:-1], "    \\__/  \\___/    \\___/       \\__o"),
-        "drink_3": (*_FULL_TRUNK_DOWN[:-1], "    \\__/  \\___/    \\___/       \\__."),
-        "raise_1": _FULL_TRUNK_DOWN,
-        "raise_2": _FULL_TRUNK_MID,
-        "raise_3": _FULL_TRUNK_UP,
-        "spray_1": _FULL_TRUNK_UP,
-        "spray_2": _FULL_TRUNK_UP_WIGGLE,
-        "wiggle_1": _FULL_TRUNK_UP,
-        "wiggle_2": _FULL_TRUNK_UP_WIGGLE,
-    }
+    FULL_POSES: typing.ClassVar[dict[str, tuple[str, ...]]] = _pad_sprite_poses(
+        {
+            "walk_1": _FULL_TRUNK_DOWN,
+            "walk_2": (
+                *_FULL_TRUNK_DOWN[:-4],
+                _FULL_TRUNK_DOWN[12],
+                "    /   .;    |    |   |   \\        |",
+                "   \\__/ / |   \\    /   |\\__/       /",
+                "          \\___/    \\___/       \\__~",
+            ),
+            "walk_3": (
+                *_FULL_TRUNK_DOWN[:-4],
+                _FULL_TRUNK_DOWN[12],
+                "    /     .; |    |   |    \\        |",
+                "   |    / |   \\   \\___/|\\__/       /",
+                "    \\__/  \\___/                \\__~",
+            ),
+            "walk_4": (
+                *_FULL_TRUNK_DOWN[:-4],
+                _FULL_TRUNK_DOWN[12],
+                "    /    .;  |     |  |    \\        |",
+                "   |    / \\___/    /   |\\__/       /",
+                "    \\__/           \\___/       \\__~",
+            ),
+            "drink_1": _FULL_TRUNK_DOWN,
+            "drink_2": (*_FULL_TRUNK_DOWN[:-1], "    \\__/  \\___/    \\___/       \\__o"),
+            "drink_3": (*_FULL_TRUNK_DOWN[:-1], "    \\__/  \\___/    \\___/       \\__."),
+            "raise_1": _FULL_TRUNK_DOWN,
+            "raise_2": _FULL_TRUNK_MID,
+            "raise_3": _FULL_TRUNK_UP,
+            "spray_1": _FULL_TRUNK_UP,
+            "spray_2": _FULL_TRUNK_UP_WIGGLE,
+            "wiggle_1": _FULL_TRUNK_UP,
+            "wiggle_2": _FULL_TRUNK_UP_WIGGLE,
+        },
+    )
     FULL_TRUNK_TIP_ROWS: typing.ClassVar[dict[str, int]] = {
         "walk_1": 15,
         "walk_2": 15,
@@ -218,22 +268,24 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         "wiggle_1": 0,
         "wiggle_2": 0,
     }
-    COMPACT_POSES: typing.ClassVar[dict[str, tuple[str, ...]]] = {
-        "walk_1": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  /_\\ /_\\"),
-        "walk_2": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  _/\\ /_\\"),
-        "walk_3": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  /_\\ _/\\"),
-        "walk_4": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  _/\\ _/\\"),
-        "drink_1": ("   __", " /'  '-.", "| (o)    \\", " \\    __ \\", "  /_\\ /_\\ \\~"),
-        "drink_2": ("   __", " /'  '-.", "| (o)    \\", " \\    __ \\", "  /_\\ /_\\ \\o"),
-        "drink_3": ("   __", " /'  '-.", "| (o)    \\", " \\    __ \\", "  /_\\ /_\\ \\."),
-        "raise_1": ("   __", " /'  '-.", "| (o)   \\_", " \\    __/'", "  /_\\ /_\\"),
-        "raise_2": ("   __", " /'  '-.", "| (o)    \\__", " \\    __/'", "  /_\\ /_\\"),
-        "raise_3": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
-        "spray_1": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
-        "spray_2": ("   __", " /' ((-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
-        "wiggle_1": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
-        "wiggle_2": ("   __", " /' ((-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
-    }
+    COMPACT_POSES: typing.ClassVar[dict[str, tuple[str, ...]]] = _pad_sprite_poses(
+        {
+            "walk_1": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  /_\\ /_\\"),
+            "walk_2": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  _/\\ /_\\"),
+            "walk_3": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  /_\\ _/\\"),
+            "walk_4": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  _/\\ _/\\"),
+            "drink_1": ("   __", " /'  '-.", "| (o)    \\", " \\    __ \\", "  /_\\ /_\\ \\~"),
+            "drink_2": ("   __", " /'  '-.", "| (o)    \\", " \\    __ \\", "  /_\\ /_\\ \\o"),
+            "drink_3": ("   __", " /'  '-.", "| (o)    \\", " \\    __ \\", "  /_\\ /_\\ \\."),
+            "raise_1": ("   __", " /'  '-.", "| (o)   \\_", " \\    __/'", "  /_\\ /_\\"),
+            "raise_2": ("   __", " /'  '-.", "| (o)    \\__", " \\    __/'", "  /_\\ /_\\"),
+            "raise_3": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
+            "spray_1": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
+            "spray_2": ("   __", " /' ((-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
+            "wiggle_1": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
+            "wiggle_2": ("   __", " /' ((-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
+        },
+    )
     COMPACT_TRUNK_TIP_ROWS: typing.ClassVar[dict[str, int]] = {
         "walk_1": 3,
         "walk_2": 3,
@@ -253,6 +305,8 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
 
     class Elephant:
         """A rigid, pose-driven group of effect-owned characters."""
+
+        WALK_POSES: typing.ClassVar[tuple[str, ...]] = ("walk_1", "walk_2", "walk_3", "walk_4")
 
         def __init__(
             self,
@@ -279,6 +333,8 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             }
             baseline = terminal.canvas.bottom
             self.start_coord = Coord(terminal.canvas.left - self.width, baseline)
+            self.elephant_x = self.start_coord.column
+            self.elephant_y = self.start_coord.row
             self.anchor = terminal.add_character(" ", self.start_coord)
             target_column = max(
                 terminal.canvas.left,
@@ -286,31 +342,35 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             )
             self.target_coord = Coord(target_column, baseline)
             self.character_offsets: dict[EffectCharacter, Coord] = {}
-            occupied_offsets = {
-                Coord(column, self.height - row_index - 1)
-                for pose in self.poses.values()
-                for row_index, row in enumerate(pose)
-                for column, symbol in enumerate(row)
-                if symbol != " "
-            }
-            for offset in sorted(occupied_offsets, key=lambda coord: (coord.row, coord.column)):
-                character = terminal.add_character(" ", self._coord_for_offset(offset))
-                character.layer = 2
-                terminal.set_character_visibility(character, is_visible=True)
-                self.character_offsets[character] = offset
+            self.cells: list[SpriteCell] = []
+            for row in range(self.height):
+                for column in range(self.width):
+                    offset = Coord(column, row)
+                    character = terminal.add_character(" ", self._coord_for_offset(offset))
+                    character.layer = 2
+                    terminal.set_character_visibility(character, is_visible=False)
+                    self.character_offsets[character] = offset
+                    self.cells.append(SpriteCell(row, column, character))
             self.characters = list(self.character_offsets)
-            self.current_pose = "walk_1"
-            entrance_path = self.anchor.motion.new_path(path_id="walk_in", speed=config.movement_speed)
-            entrance_path.new_waypoint(self.target_coord)
-            self.anchor.motion.activate_path(entrance_path)
-            self.apply_pose(self.current_pose)
+            self.current_pose = 0
+            self.current_pose_name = "walk_1"
+            self.walk_frame = 0
+            self.horizontal_step_frame = 0
+            self.exit_column = terminal.canvas.right + 1
+            self.apply_pose(self.current_pose_name)
 
         def _coord_for_offset(self, offset: Coord, anchor_coord: Coord | None = None) -> Coord:
-            anchor_coord = anchor_coord or self.anchor.motion.current_coord
+            anchor_coord = anchor_coord or Coord(self.elephant_x, self.elephant_y)
             return Coord(
                 anchor_coord.column + offset.column,
                 anchor_coord.row + offset.row,
             )
+
+        def set_origin(self, elephant_x: int, elephant_y: int) -> None:
+            """Set the shared integer sprite origin used by every persistent cell."""
+            self.elephant_x = elephant_x
+            self.elephant_y = elephant_y
+            self.anchor.motion.set_coordinate(Coord(elephant_x, elephant_y))
 
         def trunk_coord_for_pose(self, pose_name: str, anchor_coord: Coord | None = None) -> Coord:
             """Return the declared trunk-tip coordinate for one pose."""
@@ -320,40 +380,65 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             """Apply one fixed ASCII pose to all sprite characters."""
             pose = self.poses[pose_name]
             shadow_color = self.characters[0].animation.adjust_color_brightness(self.config.elephant_color, 0.65)
-            for character, offset in self.character_offsets.items():
-                row_index = self.height - offset.row - 1
-                symbol = pose[row_index][offset.column]
-                if symbol in {"e", "o", ">"} or "(" in pose[row_index][max(0, offset.column - 1) : offset.column + 2]:
+            for cell in self.cells:
+                row_index = self.height - cell.row - 1
+                symbol = pose[row_index][cell.column]
+                if symbol in {"e", "o", ">"} or "(" in pose[row_index][max(0, cell.column - 1) : cell.column + 2]:
                     color = self.config.elephant_highlight_color
-                elif offset.row <= 1:
+                elif cell.row <= 1:
                     color = shadow_color
                 else:
                     color = self.config.elephant_color
-                character.animation.set_appearance(symbol, ColorPair(fg=color))
-                character.motion.set_coordinate(self._coord_for_offset(offset))
-            self.current_pose = pose_name
+                cell.character.animation.set_appearance(symbol, ColorPair(fg=color))
+                coord = self._coord_for_offset(Coord(cell.column, cell.row))
+                cell.character.motion.set_coordinate(coord)
+                is_inside_canvas = (
+                    self.terminal.canvas.left <= coord.column <= self.terminal.canvas.right
+                    and self.terminal.canvas.bottom <= coord.row <= self.terminal.canvas.top
+                )
+                self.terminal.set_character_visibility(
+                    cell.character,
+                    is_visible=symbol != " " and is_inside_canvas,
+                )
+            self.current_pose_name = pose_name
+
+        def step_walk(self, direction: int, limit_column: int | None = None) -> bool:
+            """Advance the shared origin and central walk cycle using integer counters."""
+            self.current_pose = self.walk_frame // self.config.walk_pose_frames % len(self.WALK_POSES)
+            pose_name = self.WALK_POSES[self.current_pose]
+            self.horizontal_step_frame += 1
+            if self.horizontal_step_frame >= self.config.horizontal_step_frames:
+                next_column = self.elephant_x + direction
+                if limit_column is not None:
+                    next_column = min(next_column, limit_column) if direction > 0 else max(next_column, limit_column)
+                self.set_origin(next_column, self.elephant_y)
+                self.horizontal_step_frame = 0
+            self.apply_pose(pose_name)
+            self.walk_frame += 1
+            return limit_column is not None and self.elephant_x == limit_column
 
         def tick_walk(self, frame: int) -> None:
-            """Advance the anchor and apply the corresponding walking pose."""
-            self.anchor.motion.move()
-            pose_name = f"walk_{(frame // 8) % 4 + 1}"
-            self.apply_pose(pose_name)
+            """Compatibility wrapper for the central integer walk controller."""
+            del frame
+            self.step_walk(direction=1)
 
         def start_walk_out(self) -> None:
-            """Activate the path that carries the elephant beyond the right edge."""
-            exit_path = self.anchor.motion.new_path(path_id="walk_out", speed=self.config.movement_speed)
-            exit_path.new_waypoint(Coord(self.terminal.canvas.right + 1, self.anchor.motion.current_coord.row))
-            self.anchor.motion.activate_path(exit_path)
+            """Reset the central walk cycle before leaving to the right."""
+            self.current_pose = 0
+            self.current_pose_name = "walk_1"
+            self.walk_frame = 0
+            self.horizontal_step_frame = 0
+            self.apply_pose("walk_1")
 
         def hide(self) -> None:
             """Hide every visible sprite character."""
-            for character in self.characters:
-                self.terminal.set_character_visibility(character, is_visible=False)
+            for cell in self.cells:
+                self.terminal.set_character_visibility(cell.character, is_visible=False)
 
         @property
         def trunk_coord(self) -> Coord:
             """Return the declared trunk-tip coordinate in the current pose."""
-            return self.trunk_coord_for_pose(self.current_pose)
+            return self.trunk_coord_for_pose(self.current_pose_name)
 
     class Puddle:
         """A small effect-owned water source resting on the canvas floor."""
@@ -451,6 +536,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         else:
             self.sprite_mode = "fallback"
         self.phase = self.Phase.SPLASH if self.sprite_mode == "fallback" else self.Phase.WALK_IN
+        self.state = ElephantState.REVEALING_LOGO if self.sprite_mode == "fallback" else ElephantState.ENTERING
         self.input_characters = self.terminal.get_characters()
         self.reveal_groups: list[list[EffectCharacter]] = [[] for _ in range(12)]
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
@@ -485,6 +571,22 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         self.phase_frame = 0
         self.droplets_emitted = 0
         self.next_reveal_group = 0
+        self.returning_to_walk = False
+
+    @property
+    def elephant_x(self) -> int:
+        """Return the shared horizontal sprite origin."""
+        return self.elephant.elephant_x if self.elephant is not None else self.terminal.canvas.left
+
+    @property
+    def elephant_y(self) -> int:
+        """Return the shared vertical sprite origin."""
+        return self.elephant.elephant_y if self.elephant is not None else self.terminal.canvas.bottom
+
+    @property
+    def current_pose(self) -> int:
+        """Return the authoritative central walk-pose index."""
+        return self.elephant.current_pose if self.elephant is not None else 0
 
     def _make_intake_characters(self) -> list[EffectCharacter]:
         """Create a small hidden stream used while the elephant drinks."""
@@ -672,16 +774,33 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         assert self.elephant is not None
         assert self.puddle is not None
         self.puddle.ripple(self.phase_frame)
-        self.elephant.tick_walk(self.phase_frame)
+        if self.state in {ElephantState.ENTERING, ElephantState.WALKING_TO_TARGET}:
+            reached_target = self.elephant.step_walk(direction=1, limit_column=self.elephant.target_coord.column)
+            if self.elephant.elephant_x >= self.terminal.canvas.left:
+                self.state = ElephantState.WALKING_TO_TARGET
+            if reached_target:
+                self.state = ElephantState.SETTLING
+                self.phase_frame = 0
+            else:
+                self.phase_frame += 1
+            return
+        walk_cycle_frames = self.config.walk_pose_frames * len(self.elephant.WALK_POSES)
+        if self.elephant.walk_frame % walk_cycle_frames:
+            self.elephant.step_walk(direction=0)
+            return
+        self.elephant.current_pose = 0
+        self.elephant.apply_pose("walk_1")
         self.phase_frame += 1
-        if self.elephant.anchor.motion.movement_is_complete():
+        if self.phase_frame >= 8:
             self.phase = self.Phase.DRINK
+            self.state = ElephantState.LOWERING_TRUNK
             self.phase_frame = 0
 
     def _step_drink(self) -> None:
         """Lower the trunk and consume the puddle from its edges inward."""
         assert self.elephant is not None
         assert self.puddle is not None
+        self.state = ElephantState.LOWERING_TRUNK
         self.puddle.ripple(self.phase_frame)
         pose_index = min(self.phase_frame // (self.DRINK_FRAMES // 3) + 1, 3)
         self.elephant.apply_pose(f"drink_{pose_index}")
@@ -695,20 +814,35 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             for character in self.intake_characters:
                 self.terminal.set_character_visibility(character, is_visible=False)
             self.phase = self.Phase.RAISE_TRUNK
+            self.state = ElephantState.RAISING_TRUNK
             self.phase_frame = 0
 
     def _step_raise_trunk(self) -> None:
         """Advance the three-pose trunk raise by one frame."""
         assert self.elephant is not None
+        self.state = ElephantState.RAISING_TRUNK
+        if self.returning_to_walk:
+            pose_index = max(3 - self.phase_frame // 10, 1)
+            self.elephant.apply_pose(f"raise_{pose_index}")
+            self.phase_frame += 1
+            if self.phase_frame >= 30:
+                self.returning_to_walk = False
+                self.elephant.start_walk_out()
+                self.phase = self.Phase.WALK_OUT
+                self.state = ElephantState.WALKING_OUT
+                self.phase_frame = 0
+            return
         pose_index = min(self.phase_frame // 10 + 1, 3)
         self.elephant.apply_pose(f"raise_{pose_index}")
         self.phase_frame += 1
         if self.phase_frame >= 30:
             self.phase = self.Phase.SPLASH
+            self.state = ElephantState.REVEALING_LOGO
             self.phase_frame = 0
 
     def _step_splash(self) -> None:
         """Advance either the particle splash or the tiny-canvas fallback."""
+        self.state = ElephantState.REVEALING_LOGO
         if self.elephant is None:
             symbol = "." if self.phase_frame < 3 else "*"
             color = self.config.water_colors[0] if self.phase_frame < 3 else self.config.water_colors[-1]
@@ -732,6 +866,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
 
     def _step_reveal(self) -> None:
         """Release one radial band every two frames and await scene completion."""
+        self.state = ElephantState.REVEALING_LOGO
         if self.phase_frame % 2 == 0 and self.next_reveal_group < len(self.reveal_groups):
             for character in self.reveal_groups[self.next_reveal_group]:
                 self.terminal.set_character_visibility(character, is_visible=True)
@@ -739,42 +874,50 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
                 self.active_characters.add(character)
             self.next_reveal_group += 1
         if self.elephant is not None:
-            self.elephant.apply_pose(f"wiggle_{(self.phase_frame // 8) % 2 + 1}")
+            self.elephant.apply_pose("spray_1")
         self.update()
         self.phase_frame += 1
         input_characters_are_active = any(character in self.active_characters for character in self.input_characters)
         if self.next_reveal_group == len(self.reveal_groups) and not input_characters_are_active:
             if self.elephant is not None:
                 self.phase = self.Phase.CELEBRATE
+                self.state = ElephantState.HOLDING
                 self.phase_frame = 0
             else:
                 self.phase = self.Phase.HOLD
+                self.state = ElephantState.HOLDING
                 self.phase_frame = 1
 
     def _step_celebrate(self) -> None:
-        """Wiggle in place beside the completed branding before leaving."""
+        """Hold the complete elephant and branding before leaving."""
         assert self.elephant is not None
-        self.elephant.apply_pose(f"wiggle_{(self.phase_frame // 12) % 2 + 1}")
+        self.state = ElephantState.HOLDING
+        self.elephant.apply_pose("spray_1")
         self.phase_frame += 1
         if self.phase_frame >= self.CELEBRATE_FRAMES:
-            self.elephant.start_walk_out()
-            self.phase = self.Phase.WALK_OUT
+            self.returning_to_walk = True
+            self.phase = self.Phase.RAISE_TRUNK
+            self.state = ElephantState.RAISING_TRUNK
             self.phase_frame = 0
 
     def _step_walk_out(self) -> None:
         """Advance the elephant beyond the right edge and hide its helpers."""
         assert self.elephant is not None
-        self.elephant.tick_walk(self.phase_frame)
+        self.state = ElephantState.WALKING_OUT
+        reached_exit = self.elephant.step_walk(direction=1, limit_column=self.elephant.exit_column)
         self.phase_frame += 1
-        if self.elephant.anchor.motion.movement_is_complete():
+        if reached_exit:
             self.elephant.hide()
             self.phase = self.Phase.HOLD
+            self.state = ElephantState.HOLDING
             self.phase_frame = 1
 
     def _step_hold(self) -> None:
         """Hold the clean final branding frame for the configured duration."""
+        self.state = ElephantState.HOLDING
         if self.phase_frame >= max(1, self.config.final_hold_frames):
             self.phase = self.Phase.COMPLETE
+            self.state = ElephantState.COMPLETE
             raise StopIteration
         self.phase_frame += 1
 
