@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import importlib.util
 from importlib import import_module
+from itertools import islice
+from typing import Any
 
 import pytest
 
+from terminaltexteffects import __main__
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
@@ -20,7 +23,7 @@ def _make_iterator(
     existing_color_handling: str = "ignore",
     no_color: bool = False,
     xterm_colors: bool = False,
-):
+) -> Any:
     module = import_module("terminaltexteffects.effects.effect_elephant_splash")
     terminal_config = TerminalConfig._build_config()
     terminal_config.canvas_width = canvas_width
@@ -109,7 +112,9 @@ def test_elephant_sprite_is_bounded_and_starts_outside_canvas(canvas_width: int,
     iterator = _make_iterator(canvas_width, canvas_height)
 
     assert iterator.elephant is not None
-    assert iterator.elephant.anchor.motion.current_coord.column == iterator.terminal.canvas.left - iterator.elephant.width
+    assert (
+        iterator.elephant.anchor.motion.current_coord.column == iterator.terminal.canvas.left - iterator.elephant.width
+    )
     assert len(iterator.elephant.characters) <= iterator.elephant.width * iterator.elephant.height
     assert all(ord(symbol) < 128 for pose in iterator.elephant.poses.values() for row in pose for symbol in row)
     assert all(character.layer == 2 for character in iterator.elephant.characters)
@@ -197,7 +202,9 @@ def test_splash_emits_four_active_droplets_from_the_trunk() -> None:
         next(iterator)
 
     next(iterator)
-    emitted_particles = [particle for particle in iterator.water_pool.particles if particle not in iterator.water_pool.available]
+    emitted_particles = [
+        particle for particle in iterator.water_pool.particles if particle not in iterator.water_pool.available
+    ]
 
     assert len(emitted_particles) == 4
     assert set(emitted_particles).issubset(iterator.active_characters)
@@ -241,19 +248,10 @@ def test_reveal_releases_all_twelve_radial_bands_over_twenty_three_frames() -> N
 def test_full_choreography_finishes_cleanly_within_frame_budget() -> None:
     """The default full-canvas effect terminates with only the original branding visible."""
     iterator = _make_iterator(80, 24, "PURPLE\nELEPHANT")
-    rendered_frames = 0
-
-    for _ in range(800):
-        try:
-            next(iterator)
-        except StopIteration:
-            break
-        rendered_frames += 1
-    else:
-        pytest.fail("Elephant Splash did not finish within 800 frames")
+    rendered_frames = list(islice(iterator, 801))
 
     assert iterator.phase.name == "COMPLETE"
-    assert 1 <= rendered_frames < 800
+    assert 1 <= len(rendered_frames) < 800
     assert not iterator.active_characters
     assert len(iterator.water_pool.available) == len(iterator.water_pool)
     assert all(character not in iterator.terminal._visible_characters for character in iterator.elephant.characters)
@@ -267,15 +265,7 @@ def test_full_choreography_finishes_cleanly_within_frame_budget() -> None:
 def test_tiny_canvas_uses_a_finite_particle_free_splash_reveal() -> None:
     """The fallback animates symbols directly and always emits a clean final frame."""
     iterator = _make_iterator(1, 1, "A", final_hold_frames=0)
-    rendered_frames = []
-
-    for _ in range(100):
-        try:
-            rendered_frames.append(next(iterator))
-        except StopIteration:
-            break
-    else:
-        pytest.fail("Fallback choreography did not finish within 100 frames")
+    rendered_frames = list(islice(iterator, 101))
 
     assert iterator.phase.name == "COMPLETE"
     assert iterator.water_pool is None
@@ -349,3 +339,53 @@ def test_no_color_mode_keeps_the_choreography_without_color_codes() -> None:
     assert visual.symbol == "A"
     assert visual._fg_color_code is None
     assert visual._bg_color_code is None
+
+
+def test_xterm_mode_converts_the_final_gradient() -> None:
+    """Xterm mode converts the effect's RGB gradient to an indexed color."""
+    iterator = _make_iterator(1, 1, "A", final_hold_frames=0, xterm_colors=True)
+
+    for _ in iterator:
+        pass
+
+    assert isinstance(iterator.input_characters[0].animation.current_character_visual._fg_color_code, int)
+
+
+def test_cli_parser_builds_custom_elephant_splash_config() -> None:
+    """The discovered command accepts every effect-specific public option."""
+    parser, effect_resource_map = __main__.build_parser()
+    parsed_args = parser.parse_args(
+        [
+            "elephantsplash",
+            "--elephant-color",
+            "800080",
+            "--elephant-highlight-color",
+            "dda0dd",
+            "--water-colors",
+            "00ffff",
+            "ffffff",
+            "--movement-speed",
+            "0.7",
+            "--final-gradient-stops",
+            "800080",
+            "ffffff",
+            "--final-gradient-steps",
+            "6",
+            "--final-gradient-frames",
+            "2",
+            "--final-gradient-direction",
+            "horizontal",
+            "--final-hold-frames",
+            "0",
+        ],
+    )
+    effect_class, config_class = effect_resource_map["elephantsplash"]
+    config = config_class._build_config(parsed_args)
+
+    assert effect_class.__name__ == "ElephantSplash"
+    assert config.elephant_color == Color("#800080")
+    assert config.elephant_highlight_color == Color("#dda0dd")
+    assert config.water_colors == (Color("#00ffff"), Color("#ffffff"))
+    assert config.movement_speed == 0.7
+    assert config.final_gradient_direction is Gradient.Direction.HORIZONTAL
+    assert config.final_hold_frames == 0

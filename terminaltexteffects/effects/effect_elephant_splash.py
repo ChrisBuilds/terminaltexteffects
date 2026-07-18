@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import random
+import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 
+from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -14,12 +16,13 @@ from terminaltexteffects.engine.base_config import (
     FinalGradientStopsArg,
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.effect_support.particles import ParticlePool
-from terminaltexteffects.engine.terminal import Terminal
 from terminaltexteffects.utils import argutils, easing, geometry
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
+
+if typing.TYPE_CHECKING:
+    from terminaltexteffects.engine.terminal import Terminal
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -91,7 +94,7 @@ class ElephantSplashConfig(BaseConfig):
 class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
     """Iterator for the Elephant Splash effect."""
 
-    FULL_POSES = {
+    FULL_POSES: typing.ClassVar[dict[str, tuple[str, ...]]] = {
         "walk_1": (
             "      __",
             " .---'  '---.",
@@ -203,7 +206,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             "   /_\\   /_\\",
         ),
     }
-    COMPACT_POSES = {
+    COMPACT_POSES: typing.ClassVar[dict[str, tuple[str, ...]]] = {
         "walk_1": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  /_\\ /_\\"),
         "walk_2": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  _/\\ /_\\"),
         "walk_3": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  /_\\ _/\\"),
@@ -226,6 +229,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             config: ElephantSplashConfig,
             poses: dict[str, tuple[str, ...]],
         ) -> None:
+            """Create a pose-driven elephant on the supplied terminal."""
             self.terminal = terminal
             self.config = config
             self.height = max(len(pose) for pose in poses.values())
@@ -329,6 +333,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         COMPLETE = auto()
 
     def __init__(self, effect: ElephantSplash) -> None:
+        """Build the responsive sprite, branding scenes, and particle pool."""
         super().__init__(effect)
         if self.terminal.canvas.width >= 24 and self.terminal.canvas.height >= 10:
             self.sprite_mode = "full"
@@ -396,7 +401,11 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
                         bg_gradient=bg_gradient,
                     )
                 else:
-                    reveal_scene.add_frame(character.input_symbol, self.config.final_gradient_frames, colors=ColorPair())
+                    reveal_scene.add_frame(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        colors=ColorPair(),
+                    )
             else:
                 cooling_gradient = Gradient(
                     water_finish,
@@ -418,10 +427,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             for water_color in self.config.water_colors:
                 droplet_scene.add_frame(particle.input_symbol, 3, colors=ColorPair(fg=water_color))
 
-        if self.sprite_mode == "compact":
-            droplet_count = 16
-        else:
-            droplet_count = min(48, max(24, (len(self.input_characters) + 1) // 2))
+        droplet_count = 16 if self.sprite_mode == "compact" else min(48, max(24, (len(self.input_characters) + 1) // 2))
         return ParticlePool(
             self.terminal,
             self.active_characters,
@@ -440,9 +446,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         target = target_character.input_coord
         if target == origin:
             alternate_column = (
-                self.terminal.canvas.right
-                if origin.column != self.terminal.canvas.right
-                else self.terminal.canvas.left
+                self.terminal.canvas.right if origin.column != self.terminal.canvas.right else self.terminal.canvas.left
             )
             target = Coord(alternate_column, target.row)
 
@@ -468,23 +472,43 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
 
     def __next__(self) -> str:
         """Advance and render one frame of the effect."""
-        if self.phase is self.Phase.WALK_IN and self.elephant is not None:
-            self.elephant.tick_walk(self.phase_frame)
-            self.phase_frame += 1
-            if self.elephant.anchor.motion.movement_is_complete():
-                self.phase = self.Phase.RAISE_TRUNK
-                self.phase_frame = 0
-                self.elephant.apply_pose("raise_1")
-            return self.frame
-        if self.phase is self.Phase.RAISE_TRUNK and self.elephant is not None:
-            pose_index = min(self.phase_frame // 10 + 1, 3)
-            self.elephant.apply_pose(f"raise_{pose_index}")
-            self.phase_frame += 1
-            if self.phase_frame >= 30:
-                self.phase = self.Phase.SPLASH
-                self.phase_frame = 0
-            return self.frame
-        if self.phase is self.Phase.SPLASH and self.elephant is None:
+        phase_handlers: dict[ElephantSplashIterator.Phase, typing.Callable[[], None]] = {
+            self.Phase.WALK_IN: self._step_walk_in,
+            self.Phase.RAISE_TRUNK: self._step_raise_trunk,
+            self.Phase.SPLASH: self._step_splash,
+            self.Phase.REVEAL: self._step_reveal,
+            self.Phase.WALK_OUT: self._step_walk_out,
+            self.Phase.HOLD: self._step_hold,
+        }
+        handler = phase_handlers.get(self.phase)
+        if handler is None:
+            raise StopIteration
+        handler()
+        return self.frame
+
+    def _step_walk_in(self) -> None:
+        """Advance the walking entrance by one frame."""
+        assert self.elephant is not None
+        self.elephant.tick_walk(self.phase_frame)
+        self.phase_frame += 1
+        if self.elephant.anchor.motion.movement_is_complete():
+            self.phase = self.Phase.RAISE_TRUNK
+            self.phase_frame = 0
+            self.elephant.apply_pose("raise_1")
+
+    def _step_raise_trunk(self) -> None:
+        """Advance the three-pose trunk raise by one frame."""
+        assert self.elephant is not None
+        pose_index = min(self.phase_frame // 10 + 1, 3)
+        self.elephant.apply_pose(f"raise_{pose_index}")
+        self.phase_frame += 1
+        if self.phase_frame >= 30:
+            self.phase = self.Phase.SPLASH
+            self.phase_frame = 0
+
+    def _step_splash(self) -> None:
+        """Advance either the particle splash or the tiny-canvas fallback."""
+        if self.elephant is None:
             symbol = "." if self.phase_frame < 3 else "*"
             color = self.config.water_colors[0] if self.phase_frame < 3 else self.config.water_colors[-1]
             for character in self.input_characters:
@@ -494,55 +518,55 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             if self.phase_frame >= 6:
                 self.phase = self.Phase.REVEAL
                 self.phase_frame = 0
-            return self.frame
-        if self.phase is self.Phase.SPLASH and self.elephant is not None and self.water_pool is not None:
-            self.elephant.apply_pose(f"spray_{(self.phase_frame // 8) % 2 + 1}")
-            remaining = len(self.water_pool) - self.droplets_emitted
-            for _ in range(min(4, remaining)):
-                self._emit_droplet()
-            self.update()
-            self.phase_frame += 1
-            if self.droplets_emitted == len(self.water_pool) and len(self.water_pool.available) == len(self.water_pool):
-                self.phase = self.Phase.REVEAL
-                self.phase_frame = 0
-            return self.frame
-        if self.phase is self.Phase.REVEAL:
-            if self.phase_frame % 2 == 0 and self.next_reveal_group < len(self.reveal_groups):
-                for character in self.reveal_groups[self.next_reveal_group]:
-                    self.terminal.set_character_visibility(character, is_visible=True)
-                    character.animation.activate_scene("reveal")
-                    self.active_characters.add(character)
-                self.next_reveal_group += 1
+            return
+        assert self.water_pool is not None
+        self.elephant.apply_pose(f"spray_{(self.phase_frame // 8) % 2 + 1}")
+        remaining = len(self.water_pool) - self.droplets_emitted
+        for _ in range(min(4, remaining)):
+            self._emit_droplet()
+        self.update()
+        self.phase_frame += 1
+        if self.droplets_emitted == len(self.water_pool) and len(self.water_pool.available) == len(self.water_pool):
+            self.phase = self.Phase.REVEAL
+            self.phase_frame = 0
+
+    def _step_reveal(self) -> None:
+        """Release one radial band every two frames and await scene completion."""
+        if self.phase_frame % 2 == 0 and self.next_reveal_group < len(self.reveal_groups):
+            for character in self.reveal_groups[self.next_reveal_group]:
+                self.terminal.set_character_visibility(character, is_visible=True)
+                character.animation.activate_scene("reveal")
+                self.active_characters.add(character)
+            self.next_reveal_group += 1
+        if self.elephant is not None:
+            self.elephant.apply_pose(f"wiggle_{(self.phase_frame // 8) % 2 + 1}")
+        self.update()
+        self.phase_frame += 1
+        input_characters_are_active = any(character in self.active_characters for character in self.input_characters)
+        if self.next_reveal_group == len(self.reveal_groups) and not input_characters_are_active:
             if self.elephant is not None:
-                self.elephant.apply_pose(f"wiggle_{(self.phase_frame // 8) % 2 + 1}")
-            self.update()
-            self.phase_frame += 1
-            input_characters_are_active = any(
-                character in self.active_characters for character in self.input_characters
-            )
-            if self.next_reveal_group == len(self.reveal_groups) and not input_characters_are_active:
-                if self.elephant is not None:
-                    self.elephant.start_walk_out()
-                    self.phase = self.Phase.WALK_OUT
-                else:
-                    self.phase = self.Phase.HOLD
-                self.phase_frame = 0
-            return self.frame
-        if self.phase is self.Phase.WALK_OUT and self.elephant is not None:
-            self.elephant.tick_walk(self.phase_frame)
-            self.phase_frame += 1
-            if self.elephant.anchor.motion.movement_is_complete():
-                self.elephant.hide()
+                self.elephant.start_walk_out()
+                self.phase = self.Phase.WALK_OUT
+            else:
                 self.phase = self.Phase.HOLD
-                self.phase_frame = 0
-            return self.frame
-        if self.phase is self.Phase.HOLD:
-            if self.phase_frame >= max(1, self.config.final_hold_frames):
-                self.phase = self.Phase.COMPLETE
-                raise StopIteration
-            self.phase_frame += 1
-            return self.frame
-        raise StopIteration
+            self.phase_frame = 0
+
+    def _step_walk_out(self) -> None:
+        """Advance the elephant beyond the right edge and hide its helpers."""
+        assert self.elephant is not None
+        self.elephant.tick_walk(self.phase_frame)
+        self.phase_frame += 1
+        if self.elephant.anchor.motion.movement_is_complete():
+            self.elephant.hide()
+            self.phase = self.Phase.HOLD
+            self.phase_frame = 0
+
+    def _step_hold(self) -> None:
+        """Hold the clean final branding frame for the configured duration."""
+        if self.phase_frame >= max(1, self.config.final_hold_frames):
+            self.phase = self.Phase.COMPLETE
+            raise StopIteration
+        self.phase_frame += 1
 
 
 class ElephantSplash(BaseEffect[ElephantSplashConfig]):
