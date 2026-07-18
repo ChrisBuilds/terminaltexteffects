@@ -32,7 +32,20 @@ def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
 
 @dataclass
 class ElephantSplashConfig(BaseConfig):
-    """Configuration for the Elephant Splash effect."""
+    """Configuration for the Elephant Splash effect.
+
+    Attributes:
+        elephant_color: Primary color of the elephant.
+        elephant_highlight_color: Highlight color for the elephant's expressive details.
+        water_colors: Colors used by droplets and the initial branding splash.
+        movement_speed: Speed of the elephant's entrance and exit paths.
+        final_gradient_stops: Colors used for the completed branding gradient.
+        final_gradient_steps: Number of steps between final gradient stops.
+        final_gradient_frames: Frames displayed for each branding cooling step.
+        final_gradient_direction: Direction of the completed branding gradient.
+        final_hold_frames: Frames to hold the completed branding before stopping.
+
+    """
 
     parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="elephantsplash",

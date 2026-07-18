@@ -353,6 +353,41 @@ Movie style text decryption effect.
     ```
 ---
 
+## Elephant Splash
+
+A cute purple elephant walks into view, sprays arcing water from its trunk, and reveals the input through a
+blue-to-purple splash wave.
+
+![Demo](./img/effects_demos/elephantsplash_demo.gif)
+
+[Reference](./effects/elephantsplash.md){ .md-button } [Config](./effects/elephantsplash.md#terminaltexteffects.effects.effect_elephant_splash.ElephantSplashConfig){ .md-button }
+
+??? example "Elephant Splash Command Line Arguments"
+
+    ```
+    --elephant-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                        Primary color of the elephant. (default: 8B5CF6)
+    --elephant-highlight-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                        Highlight color used for the elephant's ears, eye, and smile. (default: C4B5FD)
+    --water-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Colors used for the water droplets and splash reveal. (default: 38BDF8 7DD3FC E0F2FE)
+    --movement-speed (float > 0)
+                        Speed of the elephant's entrance and exit. (default: 0.35)
+    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Colors used for the completed branding gradient. (default: 8B5CF6 C4B5FD F5F3FF)
+    --final-gradient-steps (int > 0) [(int > 0) ...]
+                        Number of steps between final gradient stops. (default: 12)
+    --final-gradient-frames (int > 0)
+                        Frames displayed for each branding cooling step. (default: 4)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
+                        Direction of the completed branding gradient. (default: radial)
+    --final-hold-frames (int >= 0)
+                        Frames to hold the completed branding. Zero still emits one clean frame. (default: 120)
+
+    Example: terminaltexteffects --canvas-width 0 --canvas-height 0 --anchor-canvas c --anchor-text c elephantsplash
+    ```
+---
+
 ## ErrorCorrect
 
 Swaps characters from an incorrect initial position to the correct position.

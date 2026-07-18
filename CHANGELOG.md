@@ -44,6 +44,8 @@
 
 ---
 
+* Added Elephant Splash, a responsive effect featuring a playful purple ASCII elephant, pooled water droplets,
+  and a radial splash reveal with compact and tiny-canvas fallbacks.
 * Burn smoke now uses `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 * LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 
