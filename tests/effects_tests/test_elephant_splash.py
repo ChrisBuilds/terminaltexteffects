@@ -165,6 +165,25 @@ def test_raised_and_primary_spray_pose_use_the_selected_jgs_elephant_exactly() -
     assert tuple(row.rstrip() for row in module.ElephantSplashIterator.FULL_POSES["spray_1"]) == selected_elephant
 
 
+def test_walking_uses_the_complete_upward_curled_trunk() -> None:
+    """Every walking pose keeps the selected elephant's complete raised trunk and face."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+    selected_upper_body = module.ElephantSplashIterator.FULL_POSES["raise_3"][:12]
+
+    for pose_name in ("walk_1", "walk_2", "walk_3", "walk_4"):
+        assert module.ElephantSplashIterator.FULL_POSES[pose_name][:12] == selected_upper_body
+
+
+def test_drinking_lowers_the_trunk_only_after_the_elephant_stops() -> None:
+    """The three interaction poses move the trunk tip from raised to puddle height."""
+    iterator = _make_iterator(80, 24)
+    elephant = iterator.elephant
+
+    tip_rows = [elephant.trunk_coord_for_pose(f"drink_{index}").row for index in range(1, 4)]
+
+    assert tip_rows[0] > tip_rows[1] > tip_rows[2]
+
+
 def test_selected_elephant_credit_lives_in_documentation_not_the_sprite() -> None:
     """The artist remains credited without rendering a signature inside the animation."""
     documentation = Path("docs/effects/elephantsplash.md").read_text(encoding="utf-8")
@@ -240,11 +259,11 @@ def test_every_elephant_pose_declares_its_visible_trunk_tip(canvas_width: int, c
         assert elephant.trunk_coord_for_pose(pose_name) == elephant._coord_for_offset(tip_offset)
 
 
-def test_full_drinking_and_spraying_tips_are_at_opposite_trunk_extremes() -> None:
-    """The drinking tip touches the floor while the spraying tip sits above the elephant's eye."""
+def test_lowest_drinking_and_spraying_tips_are_at_opposite_trunk_extremes() -> None:
+    """The lowered tip touches the floor while the spraying tip sits above the elephant's eye."""
     iterator = _make_iterator(80, 24)
     elephant = iterator.elephant
-    drink_tip = elephant.trunk_coord_for_pose("drink_1", elephant.target_coord)
+    drink_tip = elephant.trunk_coord_for_pose("drink_3", elephant.target_coord)
     spray_tip = elephant.trunk_coord_for_pose("spray_1", elephant.target_coord)
 
     assert drink_tip.row == iterator.terminal.canvas.bottom
