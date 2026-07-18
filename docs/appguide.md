@@ -59,6 +59,8 @@ ls | tte --random-effect --seed 123 --include-effects beams decrypt rain
 Custom effect modules are discovered from `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or
 `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set. Any `.py` file in that directory that
 provides `get_effect_resources()` can register an effect command alongside the built-in effects.
+If a custom effect cannot be imported or registered, TTE prints a warning to standard error, skips that file, and
+keeps the built-in effects and other valid custom effects available.
 
 The example below will pass the output of the `ls` command to TTE with the following options:
 
