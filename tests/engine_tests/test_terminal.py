@@ -137,6 +137,24 @@ def test_terminal_init_no_input() -> None:
     assert len(terminal.get_characters()) == 8
 
 
+def test_terminal_init_whitespace_only_matches_empty_input() -> None:
+    """Whitespace-only library input should use the established empty-input placeholder."""
+    try:
+        whitespace_terminal = Terminal(input_data=" \t\n ")
+    except ValueError as error:
+        pytest.fail(f"Whitespace-only input should not fail canvas anchoring: {error}")
+
+    empty_terminal = Terminal(input_data="")
+    whitespace_characters = [
+        (character.input_symbol, character.input_coord) for character in whitespace_terminal.get_characters()
+    ]
+    empty_characters = [
+        (character.input_symbol, character.input_coord) for character in empty_terminal.get_characters()
+    ]
+
+    assert whitespace_characters == empty_characters
+
+
 def test_terminal_init_ignore_terminal_dimensions() -> None:
     config = TerminalConfig._build_config()
     config.ignore_terminal_dimensions = True
