@@ -44,9 +44,9 @@
 
 ---
 
-* Added Elephant Splash, a responsive effect where a playful purple ASCII elephant walks along the floor, drinks a
-  shrinking puddle, sprays pooled water droplets upward, and celebrates the radial branding reveal. Compact and
-  tiny-canvas fallbacks keep the choreography usable in smaller terminals.
+* Added Elephant Splash, a responsive effect where a large purple side-profile elephant walks along the floor, draws
+  bubbles from a bright two-row puddle, sprays pooled water droplets upward, and celebrates the radial branding
+  reveal. Compact and tiny-canvas fallbacks keep the choreography usable in smaller terminals.
 * Burn smoke now uses `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 * LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 

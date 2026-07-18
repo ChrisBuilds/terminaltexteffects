@@ -2,8 +2,8 @@
 
 ![Demo](../img/effects_demos/elephantsplash_demo.gif)
 
-A purple elephant walks along the canvas floor to a small puddle, lowers its trunk as the water disappears, then
-sprays the water upward to reveal the centred input. After an ear-wiggle celebration, it walks off along the bottom.
+A large purple elephant walks along the canvas floor to a rippling puddle, lowers its trunk as bubbles draw the water
+upward, then sprays it toward the centred input. After an ear-wiggle celebration, it walks off along the bottom.
 
 ## Quick Start
 
@@ -16,7 +16,7 @@ with effect.terminal_output() as terminal:
         terminal.print(frame)
 ```
 
-For the full elephant choreography, use a canvas of at least 24 columns by 10 rows. A taller canvas gives the clearest
+For the full elephant choreography, use a canvas of at least 48 columns by 12 rows. A taller canvas gives the clearest
 separation between the floor-level elephant and centred branding. Smaller canvases automatically use a compact
 elephant or a particle-free splash reveal.
 
