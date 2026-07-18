@@ -91,10 +91,27 @@ def test_elephant_splash_has_a_public_library_export() -> None:
     assert hasattr(effects_module, "ElephantSplashConfig")
 
 
+def test_full_poses_have_a_tall_recognisable_elephant_silhouette() -> None:
+    """Every full pose retains the scale and defining features of a side-profile elephant."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+    for pose in module.ElephantSplashIterator.FULL_POSES.values():
+        occupied_columns = [column for row in pose for column, symbol in enumerate(row) if symbol != " "]
+        occupied_rows = [row_index for row_index, row in enumerate(pose) if row.strip()]
+        assert max(occupied_columns) - min(occupied_columns) + 1 >= 28
+        assert max(occupied_rows) - min(occupied_rows) + 1 >= 11
+        assert any("(   )" in row for row in pose)
+        assert any("o" in row for row in pose)
+        assert any(">" in row for row in pose)
+        assert any(row.startswith("~\\") for row in pose)
+        assert sum(bool(row[-6:].strip()) for row in pose[-5:]) >= 4
+
+
 @pytest.mark.parametrize(
     ("canvas_width", "canvas_height", "expected_mode", "expected_phase"),
     [
-        (24, 10, "full", "WALK_IN"),
+        (80, 24, "full", "WALK_IN"),
+        (48, 12, "full", "WALK_IN"),
+        (24, 10, "compact", "WALK_IN"),
         (12, 6, "compact", "WALK_IN"),
         (11, 5, "fallback", "SPLASH"),
     ],
@@ -135,6 +152,20 @@ def test_elephant_walks_on_the_bottom_canvas_baseline(canvas_width: int, canvas_
     assert iterator.elephant.target_coord.row == iterator.terminal.canvas.bottom
 
 
+def test_full_elephant_tusk_uses_the_highlight_colour() -> None:
+    """The small tusk remains readable against the purple silhouette."""
+    iterator = _make_iterator(80, 24)
+    tusk = next(
+        character
+        for character in iterator.elephant.characters
+        if character.animation.current_character_visual.symbol == ">"
+    )
+
+    assert tusk.animation.current_character_visual.colors == ColorPair(
+        fg=iterator.config.elephant_highlight_color,
+    )
+
+
 def test_every_compact_pose_fits_the_minimum_compact_canvas_width() -> None:
     """No expressive trunk pose is clipped on a twelve-column canvas."""
     module = import_module("terminaltexteffects.effects.effect_elephant_splash")
@@ -142,25 +173,50 @@ def test_every_compact_pose_fits_the_minimum_compact_canvas_width() -> None:
     assert all(len(row) <= 12 for pose in module.ElephantSplashIterator.COMPACT_POSES.values() for row in pose)
 
 
-@pytest.mark.parametrize(("canvas_width", "canvas_height", "expected_size"), [(80, 24, 7), (24, 10, 7), (12, 6, 3)])
+@pytest.mark.parametrize(
+    ("canvas_width", "canvas_height", "expected_width", "expected_height"),
+    [(80, 24, 15, 2), (24, 10, 3, 1), (12, 6, 3, 1)],
+)
 def test_a_visible_puddle_waits_on_the_bottom_in_front_of_the_elephant(
     canvas_width: int,
     canvas_height: int,
-    expected_size: int,
+    expected_width: int,
+    expected_height: int,
 ) -> None:
-    """The water source is a bounded bottom-row helper placed beyond the trunk."""
+    """The water source is a prominent, bounded helper placed beyond the trunk."""
     iterator = _make_iterator(canvas_width, canvas_height)
 
     assert iterator.puddle is not None
-    assert len(iterator.puddle.characters) == expected_size
-    assert iterator.puddle.visible_count == expected_size
-    assert all(
-        character.motion.current_coord.row == iterator.terminal.canvas.bottom
-        for character in iterator.puddle.characters
-    )
+    puddle_columns = {character.motion.current_coord.column for character in iterator.puddle.characters}
+    puddle_rows = {character.motion.current_coord.row for character in iterator.puddle.characters}
+    assert len(puddle_columns) == expected_width
+    assert len(puddle_rows) == expected_height
+    assert len(iterator.puddle.characters) == expected_width * expected_height
+    assert iterator.puddle.visible_count == expected_width * expected_height
+    assert min(puddle_rows) == iterator.terminal.canvas.bottom
     assert min(character.motion.current_coord.column for character in iterator.puddle.characters) > (
         iterator.elephant.target_coord.column
     )
+
+
+def test_full_puddle_ripples_while_the_elephant_approaches() -> None:
+    """The larger water source remains visibly active before drinking begins."""
+    iterator = _make_iterator(80, 24)
+    initial_visuals = tuple(
+        (character.animation.current_character_visual.symbol, character.animation.current_character_visual.colors)
+        for character in iterator.puddle.characters
+    )
+
+    for _ in range(12):
+        next(iterator)
+
+    current_visuals = tuple(
+        (character.animation.current_character_visual.symbol, character.animation.current_character_visual.colors)
+        for character in iterator.puddle.characters
+    )
+    assert iterator.phase.name == "WALK_IN"
+    assert current_visuals != initial_visuals
+    assert iterator.puddle.visible_count == len(iterator.puddle.characters)
 
 
 def test_tiny_canvas_does_not_create_an_elephant_or_particles() -> None:
@@ -223,6 +279,50 @@ def test_drinking_poses_lower_the_trunk_while_the_puddle_shrinks(
     assert seen_poses == {"drink_1", "drink_2", "drink_3"}
     assert puddle_sizes[-1] == 0
     assert puddle_sizes == sorted(puddle_sizes, reverse=True)
+
+
+def test_drinking_pulls_three_visible_bubbles_from_the_puddle_into_the_trunk() -> None:
+    """A moving intake stream connects the shrinking water source to the elephant."""
+    iterator = _make_iterator(80, 24)
+    while iterator.phase.name != "DRINK":
+        next(iterator)
+
+    next(iterator)
+    initial_coords = tuple(character.motion.current_coord for character in iterator.intake_characters)
+
+    assert len(iterator.intake_characters) == 3
+    assert all(character in iterator.terminal._visible_characters for character in iterator.intake_characters)
+
+    for _ in range(12):
+        next(iterator)
+
+    assert tuple(character.motion.current_coord for character in iterator.intake_characters) != initial_coords
+
+    while iterator.phase.name == "DRINK":
+        next(iterator)
+
+    assert all(character not in iterator.terminal._visible_characters for character in iterator.intake_characters)
+
+
+def test_full_puddle_contracts_toward_its_centre_by_complete_columns() -> None:
+    """Two-row water shrinks as one coherent pool instead of splitting diagonally."""
+    iterator = _make_iterator(80, 24)
+    while iterator.phase.name != "DRINK":
+        next(iterator)
+    while iterator.phase_frame < iterator.DRINK_FRAMES // 2:
+        next(iterator)
+
+    visible_characters = [
+        character for character in iterator.puddle.characters if character in iterator.terminal._visible_characters
+    ]
+    visible_columns = {character.motion.current_coord.column for character in visible_characters}
+    expected_columns = set(range(min(visible_columns), max(visible_columns) + 1))
+    puddle_center = iterator.puddle.start_column + (iterator.puddle.width - 1) / 2
+
+    assert len(visible_columns) < iterator.puddle.width
+    assert visible_columns == expected_columns
+    assert abs((min(visible_columns) + max(visible_columns)) / 2 - puddle_center) <= 0.5
+    assert len(visible_characters) == len(visible_columns) * iterator.puddle.height
 
 
 def test_elephant_raises_its_trunk_in_three_timed_poses() -> None:
