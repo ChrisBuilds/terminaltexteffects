@@ -27,6 +27,7 @@ from terminaltexteffects.effects.effect_scattered import Scattered
 from terminaltexteffects.effects.effect_slice import Slice
 from terminaltexteffects.effects.effect_slide import Slide
 from terminaltexteffects.effects.effect_smoke import Smoke
+from terminaltexteffects.effects.effect_snake import Snake
 from terminaltexteffects.effects.effect_spotlights import Spotlights
 from terminaltexteffects.effects.effect_spray import Spray
 from terminaltexteffects.effects.effect_swarm import Swarm
