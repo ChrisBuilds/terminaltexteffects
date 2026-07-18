@@ -71,6 +71,17 @@ def test_canvas_anchor_text(anchor) -> None:
         assert chars[1].motion.current_coord == Coord(6, 6)
 
 
+def test_terminal_accepts_plain_whitespace_without_input_characters() -> None:
+    """Plain whitespace creates a valid Terminal with no input characters."""
+    terminal = Terminal("   \n  ")
+
+    assert terminal.get_characters() == []
+    assert terminal.canvas.text_left == 0
+    assert terminal.canvas.text_right == 0
+    assert terminal.canvas.text_bottom == 0
+    assert terminal.canvas.text_top == 0
+
+
 def test_canvas_coord_is_in_canvas() -> None:
     canvas = Canvas(10, 10)
     assert canvas.coord_is_in_canvas(Coord(5, 5))

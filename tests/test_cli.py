@@ -88,10 +88,64 @@ def test_build_parser_registers_effects() -> None:
 
     assert "matrix" in effect_resource_map
     assert "highlight" in effect_resource_map
+    assert "snake" in effect_resource_map
 
     help_output = parser.format_help()
     assert "matrix" in help_output
     assert "highlight" in help_output
+    assert "snake" in help_output
+
+
+def test_snake_help_exposes_effect_options(capsys: pytest.CaptureFixture[str]) -> None:
+    """Snake help lists its effect-specific configuration options."""
+    parser, _ = __main__.build_parser()
+
+    with pytest.raises(SystemExit, match="0"):
+        parser.parse_args(["snake", "--help"])
+
+    output = capsys.readouterr().out
+    assert "--snake-count" in output
+    assert "--snake-colors" in output
+    assert "--head-symbol" in output
+    assert "--final-gradient-direction" in output
+
+
+def test_snake_count_rejects_zero() -> None:
+    """Snake count uses positive-integer CLI validation."""
+    parser, _ = __main__.build_parser()
+
+    with pytest.raises(SystemExit, match="2"):
+        parser.parse_args(["snake", "--snake-count", "0"])
+
+
+def test_snake_cli_invocation_renders_the_final_input() -> None:
+    """A representative Snake subprocess renders the final input successfully."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "terminaltexteffects",
+            "--frame-rate",
+            "0",
+            "snake",
+            "--snake-count",
+            "2",
+            "--spawn-delay",
+            "0",
+            "--movement-speed",
+            "2",
+        ],
+        input="SNAKE",
+        capture_output=True,
+        text=True,
+        cwd=str(__main__.Path(__file__).resolve().parents[1]),
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    plain_output = __main__.Terminal.ansi_escape_sequence_pattern.sub("", result.stdout)
+    assert "SNAKE" in plain_output
 
 
 def test_main_print_completion_bash_outputs_script(

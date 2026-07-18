@@ -10,6 +10,13 @@
 
 ---
 
+#### New Effects (0.16.0)
+
+---
+
+* Added Snake, an orthogonal grid animation in which multiple edge-entering snakes carry input characters and
+  deposit them into their final positions while their bodies shrink.
+
 #### Development Tooling (0.16.0)
 
 ---
