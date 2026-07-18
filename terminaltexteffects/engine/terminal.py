@@ -564,7 +564,7 @@ class Terminal:
             self.config = TerminalConfig._build_config()
         else:
             self.config = config
-        if not input_data:
+        if not input_data.strip():
             input_data = "No Input."
         self._next_character_id = 0
         self._input_colors_frequency: dict[Color, int] = {}
