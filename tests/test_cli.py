@@ -88,10 +88,37 @@ def test_build_parser_registers_effects() -> None:
 
     assert "matrix" in effect_resource_map
     assert "highlight" in effect_resource_map
+    assert "fishing" in effect_resource_map
 
     help_output = parser.format_help()
     assert "matrix" in help_output
     assert "highlight" in help_output
+    assert "fishing" in help_output
+
+
+def test_fishing_cli_help_exposes_core_options(capsys: pytest.CaptureFixture[str]) -> None:
+    """The dynamically discovered Fishing subcommand should publish its compact configuration surface."""
+    parser, _ = __main__.build_parser()
+
+    with pytest.raises(SystemExit, match="0"):
+        parser.parse_args(["fishing", "--help"])
+
+    help_output = capsys.readouterr().out
+    assert "--hook-count" in help_output
+    assert "--line-color" in help_output
+    assert "--wrong-catch-chance" in help_output
+
+
+def test_fishing_cli_executes_representative_input() -> None:
+    """The actual module CLI should render Fishing successfully from piped input."""
+    result = _run_bash(
+        "printf FISH | "
+        f"{sys.executable} -m terminaltexteffects --frame-rate 0 --canvas-width 8 --canvas-height 5 --seed 7 "
+        "fishing --hook-count 2 --cast-delay 0 --cast-speed 10 --reel-speed 10 --wrong-catch-chance 0",
+    )
+
+    assert all(symbol in result.stdout for symbol in "FISH")
+    assert "J" in result.stdout
 
 
 def test_main_print_completion_bash_outputs_script(
