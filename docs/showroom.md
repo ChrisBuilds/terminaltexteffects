@@ -355,8 +355,8 @@ Movie style text decryption effect.
 
 ## Elephant Splash
 
-A cute purple elephant walks into view, sprays arcing water from its trunk, and reveals the input through a
-blue-to-purple splash wave.
+A cute purple elephant walks along the bottom, drinks a shrinking puddle, and sprays the water upward to reveal the
+centred input before celebrating and walking away.
 
 ![Demo](./img/effects_demos/elephantsplash_demo.gif)
 
