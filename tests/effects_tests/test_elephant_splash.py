@@ -210,13 +210,16 @@ def test_drinking_poses_lower_the_trunk_while_the_puddle_shrinks(
         next(iterator)
     puddle_sizes = [iterator.puddle.visible_count]
     seen_poses: set[str] = set()
+    drinking_frames = 0
 
     while iterator.phase.name == "DRINK":
         next(iterator)
+        drinking_frames += 1
         seen_poses.add(iterator.elephant.current_pose)
         puddle_sizes.append(iterator.puddle.visible_count)
 
     assert iterator.phase.name == "RAISE_TRUNK"
+    assert drinking_frames == 72
     assert seen_poses == {"drink_1", "drink_2", "drink_3"}
     assert puddle_sizes[-1] == 0
     assert puddle_sizes == sorted(puddle_sizes, reverse=True)
@@ -342,7 +345,7 @@ def test_completed_reveal_enters_a_celebration_before_walk_out() -> None:
     assert iterator.elephant.anchor.motion.movement_is_complete()
 
 
-def test_elephant_celebrates_for_twenty_four_frames_then_walks_out() -> None:
+def test_elephant_celebrates_for_forty_eight_frames_then_walks_out() -> None:
     """Two ear-wiggle poses play in place before the exit path begins."""
     iterator = _make_iterator(80, 24, "PURPLE\nELEPHANT")
     while iterator.phase.name != "CELEBRATE":
@@ -356,7 +359,7 @@ def test_elephant_celebrates_for_twenty_four_frames_then_walks_out() -> None:
         celebration_frames += 1
         seen_poses.add(iterator.elephant.current_pose)
 
-    assert celebration_frames == 24
+    assert celebration_frames == 48
     assert seen_poses == {"wiggle_1", "wiggle_2"}
     assert iterator.phase.name == "WALK_OUT"
     assert iterator.elephant.anchor.motion.current_coord == stationary_coord

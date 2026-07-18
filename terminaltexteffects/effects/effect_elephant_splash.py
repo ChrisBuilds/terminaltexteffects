@@ -107,6 +107,9 @@ class ElephantSplashConfig(BaseConfig):
 class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
     """Iterator for the Elephant Splash effect."""
 
+    DRINK_FRAMES: typing.ClassVar[int] = 72
+    CELEBRATE_FRAMES: typing.ClassVar[int] = 48
+
     FULL_POSES: typing.ClassVar[dict[str, tuple[str, ...]]] = {
         "walk_1": (
             "      __",
@@ -590,12 +593,14 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         """Lower the trunk and consume the puddle from its edges inward."""
         assert self.elephant is not None
         assert self.puddle is not None
-        pose_index = min(self.phase_frame // 8 + 1, 3)
+        pose_index = min(self.phase_frame // (self.DRINK_FRAMES // 3) + 1, 3)
         self.elephant.apply_pose(f"drink_{pose_index}")
         self.phase_frame += 1
-        remaining_water = len(self.puddle.characters) - self.phase_frame * len(self.puddle.characters) // 24
+        remaining_water = (
+            len(self.puddle.characters) - self.phase_frame * len(self.puddle.characters) // self.DRINK_FRAMES
+        )
         self.puddle.shrink_to(max(0, remaining_water))
-        if self.phase_frame >= 24:
+        if self.phase_frame >= self.DRINK_FRAMES:
             self.phase = self.Phase.RAISE_TRUNK
             self.phase_frame = 0
 
@@ -657,9 +662,9 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
     def _step_celebrate(self) -> None:
         """Wiggle in place beside the completed branding before leaving."""
         assert self.elephant is not None
-        self.elephant.apply_pose(f"wiggle_{(self.phase_frame // 8) % 2 + 1}")
+        self.elephant.apply_pose(f"wiggle_{(self.phase_frame // 12) % 2 + 1}")
         self.phase_frame += 1
-        if self.phase_frame >= 24:
+        if self.phase_frame >= self.CELEBRATE_FRAMES:
             self.elephant.start_walk_out()
             self.phase = self.Phase.WALK_OUT
             self.phase_frame = 0
