@@ -11,6 +11,16 @@ from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, Gradient
 
 
+def _make_iterator(canvas_width: int, canvas_height: int, input_data: str = "TTE"):
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+    terminal_config = TerminalConfig._build_config()
+    terminal_config.canvas_width = canvas_width
+    terminal_config.canvas_height = canvas_height
+    terminal_config.ignore_terminal_dimensions = True
+    terminal_config.frame_rate = 0
+    return iter(module.ElephantSplash(input_data, terminal_config=terminal_config))
+
+
 def test_elephant_splash_effect_module_exists() -> None:
     """The built-in Elephant Splash effect has a discoverable module."""
     module_spec = importlib.util.find_spec("terminaltexteffects.effects.effect_elephant_splash")
@@ -72,14 +82,60 @@ def test_elephant_splash_selects_a_responsive_sprite_mode(
     expected_phase: str,
 ) -> None:
     """Canvas dimensions select the full, compact, or splash-only choreography."""
-    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
-    terminal_config = TerminalConfig._build_config()
-    terminal_config.canvas_width = canvas_width
-    terminal_config.canvas_height = canvas_height
-    terminal_config.ignore_terminal_dimensions = True
-    terminal_config.frame_rate = 0
-
-    iterator = iter(module.ElephantSplash("TTE", terminal_config=terminal_config))
+    iterator = _make_iterator(canvas_width, canvas_height)
 
     assert iterator.sprite_mode == expected_mode
     assert iterator.phase.name == expected_phase
+
+
+@pytest.mark.parametrize(("canvas_width", "canvas_height"), [(80, 24), (24, 10), (12, 6)])
+def test_elephant_sprite_is_bounded_and_starts_outside_canvas(canvas_width: int, canvas_height: int) -> None:
+    """Sprite helpers are bounded, portable, and begin fully to the left of the canvas."""
+    iterator = _make_iterator(canvas_width, canvas_height)
+
+    assert iterator.elephant is not None
+    assert iterator.elephant.anchor.motion.current_coord.column == iterator.terminal.canvas.left - iterator.elephant.width
+    assert len(iterator.elephant.characters) <= iterator.elephant.width * iterator.elephant.height
+    assert all(ord(symbol) < 128 for pose in iterator.elephant.poses.values() for row in pose for symbol in row)
+    assert all(character.layer == 2 for character in iterator.elephant.characters)
+
+
+def test_tiny_canvas_does_not_create_an_elephant_or_particles() -> None:
+    """The splash-only fallback avoids impossible sprite and particle geometry."""
+    iterator = _make_iterator(1, 1, "A")
+
+    assert iterator.elephant is None
+    assert iterator.water_pool is None
+
+
+def test_elephant_walks_in_with_multiple_poses_before_raising_its_trunk() -> None:
+    """The entrance moves the rigid sprite and advances its walking cycle."""
+    iterator = _make_iterator(80, 24)
+    start_column = iterator.elephant.anchor.motion.current_coord.column
+    seen_poses: set[str] = set()
+
+    for _ in range(500):
+        frame = next(iterator)
+        seen_poses.add(iterator.elephant.current_pose)
+        assert frame
+        if iterator.phase.name == "RAISE_TRUNK":
+            break
+
+    assert iterator.phase.name == "RAISE_TRUNK"
+    assert iterator.elephant.anchor.motion.current_coord.column > start_column
+    assert len(seen_poses.intersection({"walk_1", "walk_2", "walk_3", "walk_4"})) >= 2
+
+
+def test_elephant_raises_its_trunk_in_three_timed_poses() -> None:
+    """The entrance is followed by the complete three-pose trunk sequence."""
+    iterator = _make_iterator(80, 24)
+    while iterator.phase.name == "WALK_IN":
+        next(iterator)
+    seen_poses: set[str] = set()
+
+    for _ in range(30):
+        next(iterator)
+        seen_poses.add(iterator.elephant.current_pose)
+
+    assert seen_poses == {"raise_1", "raise_2", "raise_3"}
+    assert iterator.phase.name == "SPLASH"

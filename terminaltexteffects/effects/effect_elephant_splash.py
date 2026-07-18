@@ -13,8 +13,11 @@ from terminaltexteffects.engine.base_config import (
     FinalGradientStopsArg,
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects.engine.terminal import Terminal
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.graphics import Color, Gradient
+from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -86,6 +89,209 @@ class ElephantSplashConfig(BaseConfig):
 class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
     """Iterator for the Elephant Splash effect."""
 
+    FULL_POSES = {
+        "walk_1": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\      /  |",
+            "| \\_/ o   /  |__",
+            "\\       /  /  ')",
+            " '-.__.-'__/--'",
+            "   /_\\   /_\\",
+        ),
+        "walk_2": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\      /  |",
+            "| \\_/ o   /  |__",
+            "\\       /  /  ')",
+            " '-.__.-'__/--'",
+            "   _/\\   /_\\",
+        ),
+        "walk_3": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\      /  |",
+            "| \\_/ o   /  |__",
+            "\\       /  /  ')",
+            " '-.__.-'__/--'",
+            "   /_\\   _/\\",
+        ),
+        "walk_4": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\      /  |",
+            "| \\_/ o   /  |__",
+            "\\       /  /  ')",
+            " '-.__.-'__/--'",
+            "   _/\\   _/\\",
+        ),
+        "raise_1": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\      /  |",
+            "| \\_/ o    \\_|__",
+            "\\        __/  ')",
+            " '-.___.--'--'",
+            "   /_\\   /_\\",
+        ),
+        "raise_2": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\       \\ |",
+            "| \\_/ o      \\|__",
+            "\\         __.--'",
+            " '-.___.---'",
+            "   /_\\   /_\\",
+        ),
+        "raise_3": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\        \\__",
+            "| \\_/ o        _/",
+            "\\          __.-'",
+            " '-.___.---'",
+            "   /_\\   /_\\",
+        ),
+        "spray_1": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\        \\___",
+            "| \\_/ o        _/",
+            "\\          __.-'",
+            " '-.___.---'",
+            "   /_\\   /_\\",
+        ),
+        "spray_2": (
+            "      __",
+            " .---'  '---.",
+            "/  _     (( ))\\",
+            "| / \\        \\___",
+            "| \\_/ o        _/",
+            "\\          __.-'",
+            " '-.___.---'",
+            "   /_\\   /_\\",
+        ),
+        "wiggle_1": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\        \\___",
+            "| \\_/ o        _/",
+            "\\          __.-'",
+            " '-.___.---'",
+            "   /_\\   /_\\",
+        ),
+        "wiggle_2": (
+            "      __",
+            " .---'  '---.",
+            "/  _     (( ))\\",
+            "| / \\        \\___",
+            "| \\_/ o        _/",
+            "\\          __.-'",
+            " '-.___.---'",
+            "   /_\\   /_\\",
+        ),
+    }
+    COMPACT_POSES = {
+        "walk_1": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  /_\\ /_\\"),
+        "walk_2": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  _/\\ /_\\"),
+        "walk_3": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  /_\\ _/\\"),
+        "walk_4": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  _/\\ _/\\"),
+        "raise_1": ("   __", " /'  '-.", "| (o)   \\_", " \\    __/'", "  /_\\ /_\\"),
+        "raise_2": ("   __", " /'  '-.", "| (o)    \\__", " \\    __/'", "  /_\\ /_\\"),
+        "raise_3": ("   __", " /'  '-.", "| (o)    \\___", " \\    __/'", "  /_\\ /_\\"),
+        "spray_1": ("   __", " /'  '-.", "| (o)    \\___", " \\    __/'", "  /_\\ /_\\"),
+        "spray_2": ("   __", " /' ((-.", "| (o)    \\___", " \\    __/'", "  /_\\ /_\\"),
+        "wiggle_1": ("   __", " /'  '-.", "| (o)    \\___", " \\    __/'", "  /_\\ /_\\"),
+        "wiggle_2": ("   __", " /' ((-.", "| (o)    \\___", " \\    __/'", "  /_\\ /_\\"),
+    }
+
+    class Elephant:
+        """A rigid, pose-driven group of effect-owned characters."""
+
+        def __init__(
+            self,
+            terminal: Terminal,
+            config: ElephantSplashConfig,
+            poses: dict[str, tuple[str, ...]],
+        ) -> None:
+            self.terminal = terminal
+            self.config = config
+            self.height = max(len(pose) for pose in poses.values())
+            self.width = max(len(row) for pose in poses.values() for row in pose)
+            self.poses = {
+                name: tuple(row.ljust(self.width) for row in (*pose, *("",) * (self.height - len(pose))))
+                for name, pose in poses.items()
+            }
+            baseline = max(
+                terminal.canvas.bottom,
+                min(terminal.canvas.center_row - self.height // 2, terminal.canvas.top - self.height + 1),
+            )
+            self.start_coord = Coord(terminal.canvas.left - self.width, baseline)
+            self.anchor = terminal.add_character(" ", self.start_coord)
+            target_column = max(
+                terminal.canvas.left,
+                min(terminal.canvas.center_column - self.width // 2, terminal.canvas.right - self.width + 1),
+            )
+            self.target_coord = Coord(target_column, baseline)
+            self.character_offsets: dict[EffectCharacter, Coord] = {}
+            occupied_offsets = {
+                Coord(column, self.height - row_index - 1)
+                for pose in self.poses.values()
+                for row_index, row in enumerate(pose)
+                for column, symbol in enumerate(row)
+                if symbol != " "
+            }
+            for offset in sorted(occupied_offsets, key=lambda coord: (coord.row, coord.column)):
+                character = terminal.add_character(" ", self._coord_for_offset(offset))
+                character.layer = 2
+                terminal.set_character_visibility(character, is_visible=True)
+                self.character_offsets[character] = offset
+            self.characters = list(self.character_offsets)
+            self.current_pose = "walk_1"
+            entrance_path = self.anchor.motion.new_path(path_id="walk_in", speed=config.movement_speed)
+            entrance_path.new_waypoint(self.target_coord)
+            self.anchor.motion.activate_path(entrance_path)
+            self.apply_pose(self.current_pose)
+
+        def _coord_for_offset(self, offset: Coord) -> Coord:
+            return Coord(
+                self.anchor.motion.current_coord.column + offset.column,
+                self.anchor.motion.current_coord.row + offset.row,
+            )
+
+        def apply_pose(self, pose_name: str) -> None:
+            """Apply one fixed ASCII pose to all sprite characters."""
+            pose = self.poses[pose_name]
+            shadow_color = self.characters[0].animation.adjust_color_brightness(self.config.elephant_color, 0.65)
+            for character, offset in self.character_offsets.items():
+                row_index = self.height - offset.row - 1
+                symbol = pose[row_index][offset.column]
+                if symbol == "o" or "(" in pose[row_index][max(0, offset.column - 1) : offset.column + 2]:
+                    color = self.config.elephant_highlight_color
+                elif offset.row <= 1:
+                    color = shadow_color
+                else:
+                    color = self.config.elephant_color
+                character.animation.set_appearance(symbol, ColorPair(fg=color))
+                character.motion.set_coordinate(self._coord_for_offset(offset))
+            self.current_pose = pose_name
+
+        def tick_walk(self, frame: int) -> None:
+            """Advance the anchor and apply the corresponding walking pose."""
+            self.anchor.motion.move()
+            pose_name = f"walk_{(frame // 8) % 4 + 1}"
+            self.apply_pose(pose_name)
+
     class Phase(Enum):
         """Ordered phases in the Elephant Splash choreography."""
 
@@ -106,9 +312,29 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         else:
             self.sprite_mode = "fallback"
         self.phase = self.Phase.SPLASH if self.sprite_mode == "fallback" else self.Phase.WALK_IN
+        pose_set = self.FULL_POSES if self.sprite_mode == "full" else self.COMPACT_POSES
+        self.elephant = self.Elephant(self.terminal, self.config, pose_set) if self.sprite_mode != "fallback" else None
+        self.water_pool = None
+        self.phase_frame = 0
 
     def __next__(self) -> str:
-        """Stop until the effect lifecycle is implemented."""
+        """Advance and render one frame of the effect."""
+        if self.phase is self.Phase.WALK_IN and self.elephant is not None:
+            self.elephant.tick_walk(self.phase_frame)
+            self.phase_frame += 1
+            if self.elephant.anchor.motion.movement_is_complete():
+                self.phase = self.Phase.RAISE_TRUNK
+                self.phase_frame = 0
+                self.elephant.apply_pose("raise_1")
+            return self.frame
+        if self.phase is self.Phase.RAISE_TRUNK and self.elephant is not None:
+            pose_index = min(self.phase_frame // 10 + 1, 3)
+            self.elephant.apply_pose(f"raise_{pose_index}")
+            self.phase_frame += 1
+            if self.phase_frame >= 30:
+                self.phase = self.Phase.SPLASH
+                self.phase_frame = 0
+            return self.frame
         raise StopIteration
 
 
