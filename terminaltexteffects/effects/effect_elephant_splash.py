@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -13,9 +14,10 @@ from terminaltexteffects.engine.base_config import (
     FinalGradientStopsArg,
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.engine.effect_support.particles import ParticlePool
 from terminaltexteffects.engine.terminal import Terminal
-from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils import argutils, easing, geometry
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
@@ -292,6 +294,29 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             pose_name = f"walk_{(frame // 8) % 4 + 1}"
             self.apply_pose(pose_name)
 
+        def start_walk_out(self) -> None:
+            """Activate the path that carries the elephant beyond the right edge."""
+            exit_path = self.anchor.motion.new_path(path_id="walk_out", speed=self.config.movement_speed)
+            exit_path.new_waypoint(Coord(self.terminal.canvas.right + 1, self.anchor.motion.current_coord.row))
+            self.anchor.motion.activate_path(exit_path)
+
+        def hide(self) -> None:
+            """Hide every visible sprite character."""
+            for character in self.characters:
+                self.terminal.set_character_visibility(character, is_visible=False)
+
+        @property
+        def trunk_coord(self) -> Coord:
+            """Return the rightmost visible coordinate in the current pose."""
+            pose = self.poses[self.current_pose]
+            occupied_offsets = [
+                Coord(column, self.height - row_index - 1)
+                for row_index, row in enumerate(pose)
+                for column, symbol in enumerate(row)
+                if symbol != " "
+            ]
+            return self._coord_for_offset(max(occupied_offsets, key=lambda offset: (offset.column, offset.row)))
+
     class Phase(Enum):
         """Ordered phases in the Elephant Splash choreography."""
 
@@ -312,10 +337,134 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         else:
             self.sprite_mode = "fallback"
         self.phase = self.Phase.SPLASH if self.sprite_mode == "fallback" else self.Phase.WALK_IN
+        self.input_characters = self.terminal.get_characters()
+        self.reveal_groups: list[list[EffectCharacter]] = [[] for _ in range(12)]
+        self.character_final_color_map: dict[EffectCharacter, Color] = {}
+        self._build_branding_reveal()
         pose_set = self.FULL_POSES if self.sprite_mode == "full" else self.COMPACT_POSES
         self.elephant = self.Elephant(self.terminal, self.config, pose_set) if self.sprite_mode != "fallback" else None
-        self.water_pool = None
+        self.water_pool = self._make_water_pool() if self.sprite_mode != "fallback" else None
         self.phase_frame = 0
+        self.droplets_emitted = 0
+        self.next_reveal_group = 0
+
+    def _build_branding_reveal(self) -> None:
+        """Prepare hidden input characters and their bounded radial reveal scenes."""
+        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+        final_color_mapping = final_gradient.build_coordinate_color_mapping(
+            self.terminal.canvas.text_bottom,
+            self.terminal.canvas.text_top,
+            self.terminal.canvas.text_left,
+            self.terminal.canvas.text_right,
+            self.config.final_gradient_direction,
+        )
+        water_start = self.config.water_colors[0]
+        water_finish = self.config.water_colors[-1]
+        for character in self.input_characters:
+            character.layer = 1
+            self.terminal.set_character_visibility(character, is_visible=False)
+            self.character_final_color_map[character] = final_color_mapping[character.input_coord]
+            normalized_distance = geometry.find_normalized_distance_from_center(
+                self.terminal.canvas.text_bottom,
+                self.terminal.canvas.text_top,
+                self.terminal.canvas.text_left,
+                self.terminal.canvas.text_right,
+                character.input_coord,
+            )
+            band_index = min(int(normalized_distance * len(self.reveal_groups)), len(self.reveal_groups) - 1)
+            self.reveal_groups[band_index].append(character)
+
+            reveal_scene = character.animation.new_scene(scene_id="reveal")
+            reveal_scene.add_frame(".", 2, colors=ColorPair(fg=water_start))
+            reveal_scene.add_frame("*", 2, colors=ColorPair(fg=water_finish))
+            if self.terminal.config.existing_color_handling == "dynamic":
+                fg_gradient = (
+                    Gradient(water_finish, character.animation.input_fg_color, steps=8)
+                    if character.animation.input_fg_color
+                    else None
+                )
+                bg_gradient = (
+                    Gradient(water_finish, character.animation.input_bg_color, steps=8)
+                    if character.animation.input_bg_color
+                    else None
+                )
+                if fg_gradient or bg_gradient:
+                    reveal_scene.apply_gradient_to_symbols(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        fg_gradient=fg_gradient,
+                        bg_gradient=bg_gradient,
+                    )
+                else:
+                    reveal_scene.add_frame(character.input_symbol, self.config.final_gradient_frames, colors=ColorPair())
+            else:
+                cooling_gradient = Gradient(
+                    water_finish,
+                    self.character_final_color_map[character],
+                    steps=8,
+                )
+                reveal_scene.apply_gradient_to_symbols(
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    fg_gradient=cooling_gradient,
+                )
+
+    def _make_water_pool(self) -> ParticlePool:
+        """Create a fixed-size pool of reusable water droplets."""
+
+        def initialize_droplet(particle: EffectCharacter) -> None:
+            particle.layer = 3
+            droplet_scene = particle.animation.new_scene(scene_id="droplet", is_looping=True)
+            for water_color in self.config.water_colors:
+                droplet_scene.add_frame(particle.input_symbol, 3, colors=ColorPair(fg=water_color))
+
+        if self.sprite_mode == "compact":
+            droplet_count = 16
+        else:
+            droplet_count = min(48, max(24, (len(self.input_characters) + 1) // 2))
+        return ParticlePool(
+            self.terminal,
+            self.active_characters,
+            symbols=(".", "o", "*", "'"),
+            initial_count=droplet_count,
+            max_size=droplet_count,
+            initializer=initialize_droplet,
+        )
+
+    def _emit_droplet(self) -> None:
+        """Emit one curved droplet from the elephant's trunk."""
+        if self.elephant is None or self.water_pool is None:
+            return
+        origin = self.elephant.trunk_coord
+        target_character = random.choice(self.input_characters)
+        target = target_character.input_coord
+        if target == origin:
+            alternate_column = (
+                self.terminal.canvas.right
+                if origin.column != self.terminal.canvas.right
+                else self.terminal.canvas.left
+            )
+            target = Coord(alternate_column, target.row)
+
+        def configure_droplet(particle: EffectCharacter) -> None:
+            control_row = min(
+                self.terminal.canvas.top,
+                max(origin.row, target.row) + random.randint(3, 6),
+            )
+            control = Coord((origin.column + target.column) // 2, control_row)
+            droplet_path = particle.motion.new_path(speed=0.6, ease=easing.out_sine)
+            droplet_path.new_waypoint(target, bezier_control=control)
+            particle.motion.activate_path(droplet_path)
+            particle.animation.activate_scene("droplet")
+            self.water_pool.reclaim_on_event(
+                particle,
+                droplet_path,
+                event=EventHandler.Event.PATH_COMPLETE,
+            )
+
+        emitted = self.water_pool.emit(origin, on_emit=configure_droplet)
+        if emitted is not None:
+            self.droplets_emitted += 1
 
     def __next__(self) -> str:
         """Advance and render one frame of the effect."""
@@ -334,6 +483,64 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             if self.phase_frame >= 30:
                 self.phase = self.Phase.SPLASH
                 self.phase_frame = 0
+            return self.frame
+        if self.phase is self.Phase.SPLASH and self.elephant is None:
+            symbol = "." if self.phase_frame < 3 else "*"
+            color = self.config.water_colors[0] if self.phase_frame < 3 else self.config.water_colors[-1]
+            for character in self.input_characters:
+                self.terminal.set_character_visibility(character, is_visible=True)
+                character.animation.set_appearance(symbol, ColorPair(fg=color))
+            self.phase_frame += 1
+            if self.phase_frame >= 6:
+                self.phase = self.Phase.REVEAL
+                self.phase_frame = 0
+            return self.frame
+        if self.phase is self.Phase.SPLASH and self.elephant is not None and self.water_pool is not None:
+            self.elephant.apply_pose(f"spray_{(self.phase_frame // 8) % 2 + 1}")
+            remaining = len(self.water_pool) - self.droplets_emitted
+            for _ in range(min(4, remaining)):
+                self._emit_droplet()
+            self.update()
+            self.phase_frame += 1
+            if self.droplets_emitted == len(self.water_pool) and len(self.water_pool.available) == len(self.water_pool):
+                self.phase = self.Phase.REVEAL
+                self.phase_frame = 0
+            return self.frame
+        if self.phase is self.Phase.REVEAL:
+            if self.phase_frame % 2 == 0 and self.next_reveal_group < len(self.reveal_groups):
+                for character in self.reveal_groups[self.next_reveal_group]:
+                    self.terminal.set_character_visibility(character, is_visible=True)
+                    character.animation.activate_scene("reveal")
+                    self.active_characters.add(character)
+                self.next_reveal_group += 1
+            if self.elephant is not None:
+                self.elephant.apply_pose(f"wiggle_{(self.phase_frame // 8) % 2 + 1}")
+            self.update()
+            self.phase_frame += 1
+            input_characters_are_active = any(
+                character in self.active_characters for character in self.input_characters
+            )
+            if self.next_reveal_group == len(self.reveal_groups) and not input_characters_are_active:
+                if self.elephant is not None:
+                    self.elephant.start_walk_out()
+                    self.phase = self.Phase.WALK_OUT
+                else:
+                    self.phase = self.Phase.HOLD
+                self.phase_frame = 0
+            return self.frame
+        if self.phase is self.Phase.WALK_OUT and self.elephant is not None:
+            self.elephant.tick_walk(self.phase_frame)
+            self.phase_frame += 1
+            if self.elephant.anchor.motion.movement_is_complete():
+                self.elephant.hide()
+                self.phase = self.Phase.HOLD
+                self.phase_frame = 0
+            return self.frame
+        if self.phase is self.Phase.HOLD:
+            if self.phase_frame >= max(1, self.config.final_hold_frames):
+                self.phase = self.Phase.COMPLETE
+                raise StopIteration
+            self.phase_frame += 1
             return self.frame
         raise StopIteration
 

@@ -8,17 +8,32 @@ from importlib import import_module
 import pytest
 
 from terminaltexteffects.engine.terminal import TerminalConfig
-from terminaltexteffects.utils.graphics import Color, Gradient
+from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
 
-def _make_iterator(canvas_width: int, canvas_height: int, input_data: str = "TTE"):
+def _make_iterator(
+    canvas_width: int,
+    canvas_height: int,
+    input_data: str = "TTE",
+    *,
+    final_hold_frames: int | None = None,
+    existing_color_handling: str = "ignore",
+    no_color: bool = False,
+    xterm_colors: bool = False,
+):
     module = import_module("terminaltexteffects.effects.effect_elephant_splash")
     terminal_config = TerminalConfig._build_config()
     terminal_config.canvas_width = canvas_width
     terminal_config.canvas_height = canvas_height
     terminal_config.ignore_terminal_dimensions = True
     terminal_config.frame_rate = 0
-    return iter(module.ElephantSplash(input_data, terminal_config=terminal_config))
+    terminal_config.existing_color_handling = existing_color_handling
+    terminal_config.no_color = no_color
+    terminal_config.xterm_colors = xterm_colors
+    effect = module.ElephantSplash(input_data, terminal_config=terminal_config)
+    if final_hold_frames is not None:
+        effect.effect_config.final_hold_frames = final_hold_frames
+    return iter(effect)
 
 
 def test_elephant_splash_effect_module_exists() -> None:
@@ -139,3 +154,198 @@ def test_elephant_raises_its_trunk_in_three_timed_poses() -> None:
 
     assert seen_poses == {"raise_1", "raise_2", "raise_3"}
     assert iterator.phase.name == "SPLASH"
+
+
+def test_branding_is_hidden_and_partitioned_into_twelve_reveal_bands() -> None:
+    """Every input character is prepared once for the bounded radial reveal."""
+    iterator = _make_iterator(80, 24, "PURPLE\nELEPHANT")
+    input_characters = iterator.terminal.get_characters()
+    grouped_characters = [character for group in iterator.reveal_groups for character in group]
+
+    assert len(iterator.reveal_groups) == 12
+    assert set(grouped_characters) == set(input_characters)
+    assert len(grouped_characters) == len(input_characters)
+    assert all(character not in iterator.terminal._visible_characters for character in input_characters)
+    assert all(character.animation.query_scene("reveal", None) is not None for character in input_characters)
+    assert all(character.layer == 1 for character in input_characters)
+
+
+@pytest.mark.parametrize(
+    ("canvas_width", "canvas_height", "input_data", "expected_droplets"),
+    [(80, 24, "A", 24), (80, 24, "X" * 200, 40), (12, 6, "TTE", 16)],
+)
+def test_water_pool_is_preallocated_and_bounded(
+    canvas_width: int,
+    canvas_height: int,
+    input_data: str,
+    expected_droplets: int,
+) -> None:
+    """Full and compact splashes allocate a fixed, capped particle pool."""
+    iterator = _make_iterator(canvas_width, canvas_height, input_data)
+
+    assert len(iterator.water_pool) == expected_droplets
+    assert iterator.water_pool.max_size == expected_droplets
+    assert len(iterator.water_pool.available) == expected_droplets
+    assert all(particle.layer == 3 for particle in iterator.water_pool.particles)
+    assert all(particle not in iterator.terminal._visible_characters for particle in iterator.water_pool.particles)
+
+
+def test_splash_emits_four_active_droplets_from_the_trunk() -> None:
+    """The first splash frame emits a bounded batch with active paths and scenes."""
+    iterator = _make_iterator(80, 24, "TTE")
+    while iterator.phase.name != "SPLASH":
+        next(iterator)
+
+    next(iterator)
+    emitted_particles = [particle for particle in iterator.water_pool.particles if particle not in iterator.water_pool.available]
+
+    assert len(emitted_particles) == 4
+    assert set(emitted_particles).issubset(iterator.active_characters)
+    assert all(particle.motion.active_path is not None for particle in emitted_particles)
+    assert all(particle.animation.active_scene is not None for particle in emitted_particles)
+    assert all(particle in iterator.terminal._visible_characters for particle in emitted_particles)
+
+
+def test_splash_waits_for_every_droplet_to_be_reclaimed() -> None:
+    """The reveal cannot start while a water path remains active."""
+    iterator = _make_iterator(80, 24, "PURPLE\nELEPHANT")
+
+    for _ in range(800):
+        next(iterator)
+        if iterator.phase.name == "REVEAL":
+            break
+
+    assert iterator.phase.name == "REVEAL"
+    assert iterator.droplets_emitted == len(iterator.water_pool)
+    assert len(iterator.water_pool.available) == len(iterator.water_pool)
+    assert not set(iterator.water_pool.particles).intersection(iterator.active_characters)
+    assert all(particle not in iterator.terminal._visible_characters for particle in iterator.water_pool.particles)
+
+
+def test_reveal_releases_all_twelve_radial_bands_over_twenty_three_frames() -> None:
+    """The branding wave has bounded timing independent of the input size."""
+    iterator = _make_iterator(80, 24, "PURPLE\nELEPHANT")
+    while iterator.phase.name != "REVEAL":
+        next(iterator)
+
+    for _ in range(23):
+        next(iterator)
+
+    assert iterator.next_reveal_group == 12
+    assert all(character in iterator.terminal._visible_characters for character in iterator.input_characters)
+    assert all(character.animation.active_scene is not None for character in iterator.input_characters)
+    assert iterator.phase.name == "REVEAL"
+    assert iterator.elephant.current_pose in {"wiggle_1", "wiggle_2"}
+
+
+def test_full_choreography_finishes_cleanly_within_frame_budget() -> None:
+    """The default full-canvas effect terminates with only the original branding visible."""
+    iterator = _make_iterator(80, 24, "PURPLE\nELEPHANT")
+    rendered_frames = 0
+
+    for _ in range(800):
+        try:
+            next(iterator)
+        except StopIteration:
+            break
+        rendered_frames += 1
+    else:
+        pytest.fail("Elephant Splash did not finish within 800 frames")
+
+    assert iterator.phase.name == "COMPLETE"
+    assert 1 <= rendered_frames < 800
+    assert not iterator.active_characters
+    assert len(iterator.water_pool.available) == len(iterator.water_pool)
+    assert all(character not in iterator.terminal._visible_characters for character in iterator.elephant.characters)
+    assert all(character in iterator.terminal._visible_characters for character in iterator.input_characters)
+    assert all(
+        character.animation.current_character_visual.symbol == character.input_symbol
+        for character in iterator.input_characters
+    )
+
+
+def test_tiny_canvas_uses_a_finite_particle_free_splash_reveal() -> None:
+    """The fallback animates symbols directly and always emits a clean final frame."""
+    iterator = _make_iterator(1, 1, "A", final_hold_frames=0)
+    rendered_frames = []
+
+    for _ in range(100):
+        try:
+            rendered_frames.append(next(iterator))
+        except StopIteration:
+            break
+    else:
+        pytest.fail("Fallback choreography did not finish within 100 frames")
+
+    assert iterator.phase.name == "COMPLETE"
+    assert iterator.water_pool is None
+    assert not iterator.active_characters
+    assert iterator.input_characters[0] in iterator.terminal._visible_characters
+    assert iterator.input_characters[0].animation.current_character_visual.symbol == "A"
+    assert rendered_frames
+
+
+@pytest.mark.parametrize(
+    ("input_data", "existing_color_handling", "expected_colors"),
+    [
+        ("A", "dynamic", ColorPair()),
+        ("\x1b[38;5;196mA\x1b[0m", "dynamic", ColorPair(fg=Color(196))),
+        ("\x1b[48;5;106mA\x1b[0m", "dynamic", ColorPair(bg=Color(106))),
+        (
+            "\x1b[38;5;196m\x1b[48;5;106mA\x1b[0m",
+            "always",
+            ColorPair(fg=Color(196), bg=Color(106)),
+        ),
+    ],
+)
+def test_final_branding_preserves_existing_colors(
+    input_data: str,
+    existing_color_handling: str,
+    expected_colors: ColorPair,
+) -> None:
+    """Dynamic and always modes restore the input color channels exactly."""
+    iterator = _make_iterator(
+        1,
+        1,
+        input_data,
+        final_hold_frames=0,
+        existing_color_handling=existing_color_handling,
+    )
+
+    for _ in iterator:
+        pass
+
+    assert iterator.input_characters[0].animation.current_character_visual.colors == expected_colors
+
+
+def test_ignore_mode_finishes_with_the_effect_gradient() -> None:
+    """Ignore mode replaces parsed colors with the configured radial gradient."""
+    iterator = _make_iterator(
+        1,
+        1,
+        "\x1b[38;5;196mA\x1b[0m",
+        final_hold_frames=0,
+        existing_color_handling="ignore",
+    )
+
+    for _ in iterator:
+        pass
+
+    character = iterator.input_characters[0]
+    assert character.animation.current_character_visual.colors == ColorPair(
+        fg=iterator.character_final_color_map[character],
+    )
+
+
+def test_no_color_mode_keeps_the_choreography_without_color_codes() -> None:
+    """Disabling color retains the final symbol while omitting ANSI color codes."""
+    iterator = _make_iterator(1, 1, "A", final_hold_frames=0, no_color=True)
+
+    for _ in iterator:
+        pass
+
+    visual = iterator.input_characters[0].animation.current_character_visual
+
+    assert visual.symbol == "A"
+    assert visual._fg_color_code is None
+    assert visual._bg_color_code is None
