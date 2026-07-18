@@ -259,11 +259,11 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         "drink_3": ("   __", " /'  '-.", "| (o)    \\", " \\    __ \\", "  /_\\ /_\\ \\."),
         "raise_1": ("   __", " /'  '-.", "| (o)   \\_", " \\    __/'", "  /_\\ /_\\"),
         "raise_2": ("   __", " /'  '-.", "| (o)    \\__", " \\    __/'", "  /_\\ /_\\"),
-        "raise_3": ("   __", " /'  '-.", "| (o)    \\___", " \\    __/'", "  /_\\ /_\\"),
-        "spray_1": ("   __", " /'  '-.", "| (o)    \\___", " \\    __/'", "  /_\\ /_\\"),
-        "spray_2": ("   __", " /' ((-.", "| (o)    \\___", " \\    __/'", "  /_\\ /_\\"),
-        "wiggle_1": ("   __", " /'  '-.", "| (o)    \\___", " \\    __/'", "  /_\\ /_\\"),
-        "wiggle_2": ("   __", " /' ((-.", "| (o)    \\___", " \\    __/'", "  /_\\ /_\\"),
+        "raise_3": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
+        "spray_1": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
+        "spray_2": ("   __", " /' ((-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
+        "wiggle_1": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
+        "wiggle_2": ("   __", " /' ((-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
     }
 
     class Elephant:
@@ -405,6 +405,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         RAISE_TRUNK = auto()
         SPLASH = auto()
         REVEAL = auto()
+        CELEBRATE = auto()
         WALK_OUT = auto()
         HOLD = auto()
         COMPLETE = auto()
@@ -566,6 +567,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             self.Phase.RAISE_TRUNK: self._step_raise_trunk,
             self.Phase.SPLASH: self._step_splash,
             self.Phase.REVEAL: self._step_reveal,
+            self.Phase.CELEBRATE: self._step_celebrate,
             self.Phase.WALK_OUT: self._step_walk_out,
             self.Phase.HOLD: self._step_hold,
         }
@@ -646,12 +648,21 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         input_characters_are_active = any(character in self.active_characters for character in self.input_characters)
         if self.next_reveal_group == len(self.reveal_groups) and not input_characters_are_active:
             if self.elephant is not None:
-                self.elephant.start_walk_out()
-                self.phase = self.Phase.WALK_OUT
+                self.phase = self.Phase.CELEBRATE
                 self.phase_frame = 0
             else:
                 self.phase = self.Phase.HOLD
                 self.phase_frame = 1
+
+    def _step_celebrate(self) -> None:
+        """Wiggle in place beside the completed branding before leaving."""
+        assert self.elephant is not None
+        self.elephant.apply_pose(f"wiggle_{(self.phase_frame // 8) % 2 + 1}")
+        self.phase_frame += 1
+        if self.phase_frame >= 24:
+            self.elephant.start_walk_out()
+            self.phase = self.Phase.WALK_OUT
+            self.phase_frame = 0
 
     def _step_walk_out(self) -> None:
         """Advance the elephant beyond the right edge and hide its helpers."""

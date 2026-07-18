@@ -23,6 +23,8 @@ def _make_iterator(
     existing_color_handling: str = "ignore",
     no_color: bool = False,
     xterm_colors: bool = False,
+    anchor_canvas: str | None = None,
+    anchor_text: str | None = None,
 ) -> Any:
     module = import_module("terminaltexteffects.effects.effect_elephant_splash")
     terminal_config = TerminalConfig._build_config()
@@ -33,6 +35,10 @@ def _make_iterator(
     terminal_config.existing_color_handling = existing_color_handling
     terminal_config.no_color = no_color
     terminal_config.xterm_colors = xterm_colors
+    if anchor_canvas is not None:
+        terminal_config.anchor_canvas = anchor_canvas
+    if anchor_text is not None:
+        terminal_config.anchor_text = anchor_text
     effect = module.ElephantSplash(input_data, terminal_config=terminal_config)
     if final_hold_frames is not None:
         effect.effect_config.final_hold_frames = final_hold_frames
@@ -127,6 +133,13 @@ def test_elephant_walks_on_the_bottom_canvas_baseline(canvas_width: int, canvas_
 
     assert iterator.elephant.start_coord.row == iterator.terminal.canvas.bottom
     assert iterator.elephant.target_coord.row == iterator.terminal.canvas.bottom
+
+
+def test_every_compact_pose_fits_the_minimum_compact_canvas_width() -> None:
+    """No expressive trunk pose is clipped on a twelve-column canvas."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+
+    assert all(len(row) <= 12 for pose in module.ElephantSplashIterator.COMPACT_POSES.values() for row in pose)
 
 
 @pytest.mark.parametrize(("canvas_width", "canvas_height", "expected_size"), [(80, 24, 7), (24, 10, 7), (12, 6, 3)])
@@ -260,7 +273,7 @@ def test_water_pool_is_preallocated_and_bounded(
 
 def test_splash_emits_four_active_droplets_from_the_trunk() -> None:
     """The first splash frame emits a bounded batch with active paths and scenes."""
-    iterator = _make_iterator(80, 24, "TTE")
+    iterator = _make_iterator(80, 24, "TTE", anchor_canvas="c", anchor_text="c")
     while iterator.phase.name != "SPLASH":
         next(iterator)
 
@@ -274,6 +287,14 @@ def test_splash_emits_four_active_droplets_from_the_trunk() -> None:
     assert all(particle.motion.active_path is not None for particle in emitted_particles)
     assert all(particle.animation.active_scene is not None for particle in emitted_particles)
     assert all(particle in iterator.terminal._visible_characters for particle in emitted_particles)
+    branding_coords = {character.input_coord for character in iterator.input_characters}
+    for particle in emitted_particles:
+        path = particle.motion.active_path
+        origin = path.origin_segment.start.coord
+        destination = path.waypoints[-1]
+        assert destination.coord in branding_coords
+        assert destination.coord.row > origin.row
+        assert destination.bezier_control[0].row > destination.coord.row
 
 
 def test_splash_waits_for_every_droplet_to_be_reclaimed() -> None:
@@ -306,6 +327,40 @@ def test_reveal_releases_all_twelve_radial_bands_over_twenty_three_frames() -> N
     assert all(character.animation.active_scene is not None for character in iterator.input_characters)
     assert iterator.phase.name == "REVEAL"
     assert iterator.elephant.current_pose in {"wiggle_1", "wiggle_2"}
+
+
+def test_completed_reveal_enters_a_celebration_before_walk_out() -> None:
+    """The elephant remains beside the completed branding for a playful beat."""
+    iterator = _make_iterator(80, 24, "PURPLE\nELEPHANT")
+    while iterator.phase.name != "REVEAL":
+        next(iterator)
+
+    while iterator.phase.name == "REVEAL":
+        next(iterator)
+
+    assert iterator.phase.name == "CELEBRATE"
+    assert iterator.elephant.anchor.motion.movement_is_complete()
+
+
+def test_elephant_celebrates_for_twenty_four_frames_then_walks_out() -> None:
+    """Two ear-wiggle poses play in place before the exit path begins."""
+    iterator = _make_iterator(80, 24, "PURPLE\nELEPHANT")
+    while iterator.phase.name != "CELEBRATE":
+        next(iterator)
+    stationary_coord = iterator.elephant.anchor.motion.current_coord
+    seen_poses: set[str] = set()
+    celebration_frames = 0
+
+    while iterator.phase.name == "CELEBRATE":
+        next(iterator)
+        celebration_frames += 1
+        seen_poses.add(iterator.elephant.current_pose)
+
+    assert celebration_frames == 24
+    assert seen_poses == {"wiggle_1", "wiggle_2"}
+    assert iterator.phase.name == "WALK_OUT"
+    assert iterator.elephant.anchor.motion.current_coord == stationary_coord
+    assert iterator.elephant.anchor.motion.active_path.path_id == "walk_out"
 
 
 def test_full_choreography_finishes_cleanly_within_frame_budget() -> None:
