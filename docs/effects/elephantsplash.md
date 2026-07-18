@@ -2,8 +2,9 @@
 
 ![Demo](../img/effects_demos/elephantsplash_demo.gif)
 
-A large purple elephant walks along the canvas floor to a rippling puddle, lowers its trunk as bubbles draw the water
-upward, then sprays it toward the centred input. After an ear-wiggle celebration, it walks off along the bottom.
+A large purple elephant walks along the canvas floor as one coordinated ASCII sprite, stops at a rippling puddle,
+lowers its trunk as bubbles draw the water upward, then sprays it toward the centred input. It holds still while the
+branding settles, raises its trunk, and walks off while the revealed text remains in place.
 
 ## Quick Start
 
