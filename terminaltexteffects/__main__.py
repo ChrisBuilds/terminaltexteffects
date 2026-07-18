@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import importlib.util
 import os
@@ -25,20 +26,136 @@ if TYPE_CHECKING:
     from terminaltexteffects.engine.base_effect import BaseEffect
 
 
+def _get_effect_resources(
+    module: ModuleType,
+) -> tuple[str, type[BaseEffect], type[BaseConfig]] | None:
+    """Return validated effect resources from a module when provided."""
+    if not hasattr(module, "get_effect_resources"):
+        return None
+    resources = module.get_effect_resources()
+    if not isinstance(resources, tuple) or len(resources) != 3:
+        msg = "get_effect_resources() must return a three-item tuple"
+        raise ValueError(msg)
+    return resources
+
+
+def _register_effect_resources(
+    resources: tuple[str, type[BaseEffect], type[BaseConfig]],
+    subparsers: argparse._SubParsersAction,
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+) -> None:
+    """Register effect resources and populate their CLI options.
+
+    The configuration parser is populated before the resource map is mutated so a
+    parser failure cannot leave an effect command that is not invokable.
+
+    Raises:
+        ValueError: If the effect command has already been registered.
+
+    """
+    effect_cmd, effect_class, config_class = resources
+    if effect_cmd in effect_resource_map:
+        msg = f"Duplicate effect command detected: {effect_cmd}"
+        raise ValueError(msg)
+    previous_choices = dict(subparsers.choices)
+    previous_choice_actions = list(subparsers._choices_actions)
+    parser_populated = False
+    try:
+        config_class._populate_parser(subparsers)
+        parser_populated = True
+    finally:
+        if not parser_populated:
+            subparsers.choices.clear()
+            subparsers.choices.update(previous_choices)
+            subparsers._choices_actions[:] = previous_choice_actions
+    effect_resource_map[effect_cmd] = (effect_class, config_class)
+
+
+def _validate_user_effect_resources(
+    resources: tuple[str, type[BaseEffect], type[BaseConfig]],
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+) -> None:
+    """Validate user resources against disposable parser state."""
+    effect_cmd, _, config_class = resources
+    if not isinstance(effect_cmd, str) or not effect_cmd:
+        msg = "Effect command must be a non-empty string"
+        raise ValueError(msg)
+    if effect_cmd in effect_resource_map:
+        msg = f"Duplicate effect command detected: {effect_cmd}"
+        raise ValueError(msg)
+    parser_spec = config_class.parser_spec
+    if parser_spec.name != effect_cmd:
+        msg = f"Effect command '{effect_cmd}' does not match parser command '{parser_spec.name}'"
+        raise ValueError(msg)
+
+
+def _warn_user_plugin(plugin_file: Path, exc: Exception) -> None:
+    """Write a non-fatal user plugin warning to stderr."""
+    print(
+        f"Warning: Failed to load user effect plugin '{plugin_file}': {type(exc).__name__}: {exc}",
+        file=sys.stderr,
+    )
+
+
+def _load_user_effect_module(plugin_file: Path, module_name: str) -> ModuleType:
+    """Load one user effect module under its collision-safe module name."""
+    spec = importlib.util.spec_from_file_location(module_name, plugin_file)
+    if spec is None or spec.loader is None:
+        msg = "Unable to create a module specification"
+        raise ImportError(msg)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _register_discovered_effects(
+    subparsers: argparse._SubParsersAction,
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+) -> None:
+    """Register built-in effects and isolate failures in user effect plugins."""
+    for module_info in pkgutil.iter_modules(
+        terminaltexteffects.effects.__path__,
+        terminaltexteffects.effects.__name__ + ".",
+    ):
+        module = importlib.import_module(module_info.name)
+        resources = _get_effect_resources(module)
+        if resources is not None:
+            _register_effect_resources(resources, subparsers, effect_resource_map)
+
+    plugins_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "terminaltexteffects" / "effects"
+    if not plugins_dir.exists():
+        return
+
+    for plugin_file in sorted(plugins_dir.glob("*.py")):
+        if plugin_file.name == "__init__.py":
+            continue
+        path_digest = hashlib.sha256(str(plugin_file.resolve()).encode()).hexdigest()[:12]
+        module_name = f"_terminaltexteffects_user_effect_{plugin_file.stem}_{path_digest}"
+        try:
+            module = _load_user_effect_module(plugin_file, module_name)
+            resources = _get_effect_resources(module)
+            if resources is not None:
+                _validate_user_effect_resources(resources, effect_resource_map)
+                _register_effect_resources(resources, subparsers, effect_resource_map)
+        except Exception as exc:  # noqa: BLE001
+            sys.modules.pop(module_name, None)
+            _warn_user_plugin(plugin_file, exc)
+
+
 def build_parser() -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
     """Build the CLI parser and discover available effects.
 
-    This includes registering built-in effect modules and user-provided effect
-    modules from the XDG config effects directory, then returning the parsed CLI
-    parser together with a mapping of effect command names to their effect and
-    config classes.
+    This includes registering built-in effect modules and valid user-provided effect
+    modules from the XDG config effects directory. User modules that fail to import
+    or register are skipped with a warning to standard error.
 
     Returns:
         tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The CLI parser and a
             mapping of effect names to their classes and configurations.
 
     Raises:
-        ValueError: If two discovered effect modules register the same effect command.
+        ValueError: If built-in effect modules register the same effect command.
 
     """
     parser = argparse.ArgumentParser(
@@ -95,51 +212,7 @@ def build_parser() -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEf
 
     effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]] = {}
 
-    def _register_effect_from_module(module: ModuleType) -> None:
-        """Register an effect module's resources and populate its CLI options.
-
-        If the module defines `get_effect_resources()`, that callable is expected to
-        return the effect command name, effect class, and config class. The config class
-        is then used to populate the subparser for that effect command.
-
-        Args:
-            module: The module to inspect for effect resources.
-
-        Raises:
-            ValueError: If the module registers an effect command that has already been
-                registered.
-
-        """
-        if hasattr(module, "get_effect_resources"):
-            effect_cmd: str
-            effect_class: type[BaseEffect]
-            config_class: type[BaseConfig]
-            effect_cmd, effect_class, config_class = module.get_effect_resources()
-            if effect_cmd in effect_resource_map:
-                msg = f"Duplicate effect command detected: {effect_cmd}"
-                raise ValueError(msg)
-            effect_resource_map[effect_cmd] = (effect_class, config_class)
-            config_class._populate_parser(subparsers)
-
-    for module_info in pkgutil.iter_modules(
-        terminaltexteffects.effects.__path__,
-        terminaltexteffects.effects.__name__ + ".",
-    ):
-        module = importlib.import_module(module_info.name)
-        _register_effect_from_module(module)
-
-    plugins_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "terminaltexteffects" / "effects"
-    if plugins_dir.exists():
-        for plugin_file in plugins_dir.glob("*.py"):
-            if plugin_file.name == "__init__.py":
-                continue
-            module_name = plugin_file.stem
-            spec = importlib.util.spec_from_file_location(module_name, plugin_file)
-            if spec and spec.loader:
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[module_name] = module
-                spec.loader.exec_module(module)
-                _register_effect_from_module(module)
+    _register_discovered_effects(subparsers, effect_resource_map)
 
     return parser, effect_resource_map
 

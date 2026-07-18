@@ -18,6 +18,7 @@ from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, he
 from terminaltexteffects.utils.exceptions import (
     ActivateEmptySceneError,
     AnimationSceneError,
+    DuplicateSceneIDError,
     FrameDurationError,
     SceneNotFoundError,
 )
@@ -198,6 +199,7 @@ class Scene:
         self.easing_current_step: int = 0
         self.preexisting_colors: graphics.ColorPair | None = None
         self.preexisting_bold: bool = False
+        self._loop_cycle_complete: bool = False
 
     def _get_color_code(self, color: graphics.Color | None) -> str | int | None:
         """Get the color code for the given color.
@@ -328,6 +330,7 @@ class Scene:
             CharacterVisual: The visual of the current frame in the Scene.
 
         """
+        self._loop_cycle_complete = False
         current_frame = self.frames[0]
         next_visual = current_frame.character_visual
         current_frame.ticks_elapsed += 1
@@ -337,6 +340,7 @@ class Scene:
             if self.is_looping and not self.frames:
                 self.frames.extend(self.played_frames)
                 self.played_frames.clear()
+                self._loop_cycle_complete = True
         return next_visual
 
     def apply_gradient_to_symbols(
@@ -359,7 +363,8 @@ class Scene:
             None
 
         Raises:
-            AnimationSceneError: if gradients are invalid or symbols are invalid
+            AnimationSceneError: If the gradients are invalid, the symbol sequence is empty, or any symbol is not
+                exactly one character long.
 
         """
         T = typing.TypeVar("T")
@@ -415,8 +420,11 @@ class Scene:
                 "Foreground and background gradient are empty. At least one gradient must have at least one color."
             )
             raise AnimationSceneError(message)
+        if not symbols:
+            message = "Symbols must contain at least one symbol."
+            raise AnimationSceneError(message)
         for symbol in symbols:
-            if len(symbol) > 1:
+            if len(symbol) != 1:
                 message = f"Symbol must be a string with a length of 1. Received: `{symbol}`."
                 raise AnimationSceneError(message)
         color_pairs: list[graphics.ColorPair] = []
@@ -457,6 +465,7 @@ class Scene:
         self.frames.extend(self.played_frames)
         self.played_frames.clear()
         self.easing_current_step = 0
+        self._loop_cycle_complete = False
 
     def __eq__(self, other: object) -> bool:
         """Check if two Scene objects are equal based on their scene_id."""
@@ -562,8 +571,7 @@ class Animation:
         """Create a new Scene and add it to the Animation.
 
         If no ID is provided, a unique ID is generated. If `existing_color_handling` is `"always"`,
-        the Scene inherits the animation's input colors as `preexisting_colors`. If a Scene with the
-        same ID already exists, it is replaced in the animation's scene mapping.
+        the Scene inherits the animation's input colors as `preexisting_colors`.
 
         Args:
             scene_id (str): Name for the scene. Used to query for the scene.
@@ -573,6 +581,9 @@ class Animation:
 
         Returns:
             Scene: The new Scene.
+
+        Raises:
+            DuplicateSceneIDError: If an explicitly provided Scene ID has already been used.
 
         """
         if not scene_id:
@@ -584,8 +595,8 @@ class Animation:
                     found_unique = True
                 else:
                     current_id += 1
-        # Future: review whether scene IDs should be enforced as unique and raise on duplicates.
-        # Confirm no effects intentionally overwrite scenes today, then update this behavior and docs together.
+        elif scene_id in self.scenes:
+            raise DuplicateSceneIDError(scene_id)
         if self.existing_color_handling == "always" and self.character.uses_input_preexisting_colors:
             preexisting_colors = graphics.ColorPair(fg=self.input_fg_color, bg=self.input_bg_color)
             preexisting_bold = self.input_bold
@@ -796,14 +807,17 @@ class Animation:
             * Synced scenes select a frame based on the active motion path's progress.
             * Eased scenes select a frame from `frame_index_map` using easing progress.
             * All other scenes advance by consuming frame duration through `Scene.get_next_visual()`.
-            * If a synced scene no longer has an active motion path, the final frame is applied and
-              the scene is marked complete.
+            * If a synced scene no longer has an active motion path, the final frame is applied. A
+              non-looping synced scene is then marked complete, while a looping scene keeps its frames.
             * When a non-looping scene completes, it is reset, deactivated, and a `SCENE_COMPLETE`
               event is triggered.
+            * Looping sequential and eased scenes trigger `SCENE_COMPLETE` once when each playback cycle wraps.
+              Synced looping scenes rely on their associated motion path events instead.
         """
         scene = self.active_scene
         if scene is None or not scene.frames:
             return
+        scene._loop_cycle_complete = False
 
         if scene.sync:
             self._step_synced_scene(scene)
@@ -819,6 +833,8 @@ class Animation:
         active_path = self.character.motion.active_path
         if active_path is None:
             self.current_character_visual = scene.frames[-1].character_visual
+            if scene.is_looping:
+                return
             scene.played_frames.extend(scene.frames)
             scene.frames.clear()
             return
@@ -853,13 +869,17 @@ class Animation:
         if scene.easing_current_step == scene.easing_total_steps:
             if scene.is_looping:
                 scene.easing_current_step = 0
+                scene._loop_cycle_complete = True
             else:
                 scene.played_frames.extend(scene.frames)
                 scene.frames.clear()
 
     def _complete_scene_if_finished(self, scene: Scene) -> None:
         """Reset completed scenes and trigger completion events."""
-        if not self.active_scene_is_complete():
+        if scene.is_looping:
+            if not scene._loop_cycle_complete:
+                return
+        elif not self.active_scene_is_complete():
             return
 
         if not scene.is_looping:
@@ -898,6 +918,7 @@ class Animation:
         else:
             found_scene = scene
         self.active_scene = found_scene
+        self.active_scene._loop_cycle_complete = False
         self.active_scene_current_step = 0
         self.current_character_visual = self.active_scene.activate()
         self.character.event_handler._handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, found_scene)

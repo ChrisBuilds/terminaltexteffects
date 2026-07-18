@@ -52,6 +52,15 @@
 ---
 
 * Animation - Fixed `adjust_color_brightness()` rounding so a brightness factor of `1` preserves mixed-channel RGB colors instead of subtly darkening individual channels.
+* Animation - Looping sequential and eased scenes now trigger `SCENE_COMPLETE` once at each completed loop boundary;
+  synced looping scenes no longer trigger the event on every animation tick or discard their frames when no motion
+  path is active.
+* Animation - `Scene.apply_gradient_to_symbols()` now rejects empty symbol sequences and symbols that are not exactly
+  one character long with an `AnimationSceneError`.
+* Animation - Creating a scene with an explicit ID that is already in use now raises `DuplicateSceneIDError` instead
+  of silently replacing the original scene.
+* Application - Invalid user effect plugins now produce a path-specific warning and are skipped without hiding
+  built-in effects or other valid user plugins.
 * Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 * Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number
