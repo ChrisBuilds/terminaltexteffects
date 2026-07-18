@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 from importlib import import_module
 from itertools import islice
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -99,12 +100,55 @@ def test_full_poses_have_a_tall_recognisable_elephant_silhouette() -> None:
         occupied_rows = [row_index for row_index, row in enumerate(pose) if row.strip()]
         occupied_width = max(occupied_columns) - min(occupied_columns) + 1
         assert 34 <= occupied_width <= 52
-        assert max(occupied_rows) - min(occupied_rows) + 1 >= 14
+        assert max(occupied_rows) - min(occupied_rows) + 1 >= 13
         assert not any("(   )" in row for row in pose)
-        assert any("o" in row for row in pose)
+        assert any("e" in row for row in pose)
         assert any(">" in row for row in pose)
-        assert any(row.startswith("~\\") for row in pose)
-        assert sum(row.count("/__\\") for row in pose[-3:]) >= 4
+        assert not any("jgs" in row.lower() for row in pose)
+        assert sum(row.count("\\__/") + row.count("\\___/") for row in pose[-3:]) >= 3
+
+
+def test_raised_and_primary_spray_pose_use_the_selected_jgs_elephant_exactly() -> None:
+    """The chosen playful elephant remains the canonical raised-trunk artwork without reinterpretation."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+    selected_elephant = (
+        "                                       _",
+        "                                      / )",
+        "                                     ; |",
+        '                  .-""-.-""""-.      | ;',
+        "                 /'     \\      \\    / /",
+        '         .-""""-/       (       \'--\' /',
+        "       .'       |        ;    e     /",
+        "      /          \\       |      __.'",
+        "     /            '._     ;    .-'",
+        "    //|              \\     \\,-'",
+        "   // |               `;.___>",
+        " /`|  /                |`\\",
+        " |/  /     _,.-----\\   |  \\",
+        "    /    .;   |    |   |   \\",
+        "   |    / |   \\    /   |\\__/",
+        "    \\__/  \\___/    \\___/",
+    )
+
+    assert module.ElephantSplashIterator.FULL_POSES["raise_3"] == selected_elephant
+    assert module.ElephantSplashIterator.FULL_POSES["spray_1"] == selected_elephant
+
+
+def test_selected_elephant_credit_lives_in_documentation_not_the_sprite() -> None:
+    """The artist remains credited without rendering a signature inside the animation."""
+    documentation = Path("docs/effects/elephantsplash.md").read_text(encoding="utf-8")
+
+    assert "jgs" in documentation
+    assert "https://asciiart.website/art/4937" in documentation
+
+
+def test_every_full_pose_preserves_the_selected_elephants_back_and_face() -> None:
+    """Only the legs and trunk move; the chosen elephant does not morph into another drawing."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+
+    for pose in module.ElephantSplashIterator.FULL_POSES.values():
+        assert any('.-""-.-""""-.' in row for row in pose)
+        assert any(";    e" in row for row in pose)
 
 
 @pytest.mark.parametrize("pose_name", ["raise_3", "spray_1", "spray_2", "wiggle_1", "wiggle_2"])
@@ -113,19 +157,10 @@ def test_full_raised_trunk_stays_proportional_to_the_head(pose_name: str) -> Non
     iterator = _make_iterator(80, 24)
     elephant = iterator.elephant
     pose = elephant.poses[pose_name]
-    eye_column = next(row.index("o") for row in pose if "o" in row)
+    eye_column = next(row.index("e") for row in pose if "e" in row)
     tip = elephant.trunk_tip_offsets[pose_name]
 
     assert 2 <= tip.column - eye_column <= 12
-
-
-@pytest.mark.parametrize("pose_name", ["raise_2", "raise_3", "spray_1", "spray_2"])
-def test_full_raised_poses_keep_a_closed_front_torso(pose_name: str) -> None:
-    """Lifting the trunk does not make the elephant's chest and shoulder disappear."""
-    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
-    pose = module.ElephantSplashIterator.FULL_POSES[pose_name]
-
-    assert all(len(row.rstrip()) >= 34 for row in pose[7:11])
 
 
 def test_full_elephant_head_does_not_draw_a_second_closed_muzzle() -> None:
@@ -166,7 +201,7 @@ def test_full_raised_trunk_curves_above_the_elephants_eye(pose_name: str) -> Non
     iterator = _make_iterator(80, 24)
     elephant = iterator.elephant
     pose = elephant.poses[pose_name]
-    eye_row_index, eye_column = next((row_index, row.index("o")) for row_index, row in enumerate(pose) if "o" in row)
+    eye_row_index, eye_column = next((row_index, row.index("e")) for row_index, row in enumerate(pose) if "e" in row)
     tip = elephant.trunk_tip_offsets[pose_name]
     eye_row = elephant.height - eye_row_index - 1
 
@@ -178,7 +213,8 @@ def test_full_raised_trunk_curves_above_the_elephants_eye(pose_name: str) -> Non
     ("canvas_width", "canvas_height", "expected_mode", "expected_phase"),
     [
         (80, 24, "full", "WALK_IN"),
-        (51, 15, "full", "WALK_IN"),
+        (41, 16, "full", "WALK_IN"),
+        (51, 15, "compact", "WALK_IN"),
         (61, 12, "compact", "WALK_IN"),
         (48, 12, "compact", "WALK_IN"),
         (24, 10, "compact", "WALK_IN"),
@@ -213,7 +249,7 @@ def test_elephant_sprite_is_bounded_and_starts_outside_canvas(canvas_width: int,
     assert all(character.layer == 2 for character in iterator.elephant.characters)
 
 
-@pytest.mark.parametrize(("canvas_width", "canvas_height"), [(51, 15), (61, 12), (48, 12), (12, 6)])
+@pytest.mark.parametrize(("canvas_width", "canvas_height"), [(41, 16), (51, 15), (61, 12), (48, 12), (12, 6)])
 def test_every_stopped_elephant_pose_fits_inside_its_canvas(canvas_width: int, canvas_height: int) -> None:
     """Responsive mode selection never allows the active sprite to clip at its stopping point."""
     iterator = _make_iterator(canvas_width, canvas_height)
@@ -245,6 +281,20 @@ def test_full_elephant_tusk_uses_the_highlight_colour() -> None:
     )
 
     assert tusk.animation.current_character_visual.colors == ColorPair(
+        fg=iterator.config.elephant_highlight_color,
+    )
+
+
+def test_selected_elephant_eye_uses_the_highlight_colour() -> None:
+    """The canonical artwork's `e` eye remains expressive against the purple face."""
+    iterator = _make_iterator(80, 24)
+    eye = next(
+        character
+        for character in iterator.elephant.characters
+        if character.animation.current_character_visual.symbol == "e"
+    )
+
+    assert eye.animation.current_character_visual.colors == ColorPair(
         fg=iterator.config.elephant_highlight_color,
     )
 
