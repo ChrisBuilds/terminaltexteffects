@@ -106,11 +106,50 @@ def test_full_poses_have_a_tall_recognisable_elephant_silhouette() -> None:
         assert sum(bool(row[-6:].strip()) for row in pose[-5:]) >= 4
 
 
+@pytest.mark.parametrize(("canvas_width", "canvas_height"), [(80, 24), (12, 6)])
+def test_every_elephant_pose_declares_its_visible_trunk_tip(canvas_width: int, canvas_height: int) -> None:
+    """Water effects use a deliberate trunk endpoint instead of a rightmost-character guess."""
+    iterator = _make_iterator(canvas_width, canvas_height)
+    elephant = iterator.elephant
+
+    assert set(elephant.trunk_tip_offsets) == set(elephant.poses)
+    for pose_name, tip_offset in elephant.trunk_tip_offsets.items():
+        row_index = elephant.height - tip_offset.row - 1
+        assert elephant.poses[pose_name][row_index][tip_offset.column] != " "
+        assert elephant.trunk_coord_for_pose(pose_name) == elephant._coord_for_offset(tip_offset)
+
+
+def test_full_drinking_and_spraying_tips_are_at_opposite_trunk_extremes() -> None:
+    """The drinking tip touches the floor while the spraying tip sits above the elephant's eye."""
+    iterator = _make_iterator(80, 24)
+    elephant = iterator.elephant
+    drink_tip = elephant.trunk_coord_for_pose("drink_1", elephant.target_coord)
+    spray_tip = elephant.trunk_coord_for_pose("spray_1", elephant.target_coord)
+
+    assert drink_tip.row == iterator.terminal.canvas.bottom
+    assert spray_tip.row >= elephant.target_coord.row + 8
+
+
+@pytest.mark.parametrize("pose_name", ["raise_3", "spray_1", "spray_2", "wiggle_1", "wiggle_2"])
+def test_full_raised_trunk_curves_above_the_elephants_eye(pose_name: str) -> None:
+    """A lifted trunk has an unmistakable upturned tip instead of a long rectangular snout."""
+    iterator = _make_iterator(80, 24)
+    elephant = iterator.elephant
+    pose = elephant.poses[pose_name]
+    eye_row_index, eye_column = next((row_index, row.index("o")) for row_index, row in enumerate(pose) if "o" in row)
+    tip = elephant.trunk_tip_offsets[pose_name]
+    eye_row = elephant.height - eye_row_index - 1
+
+    assert tip.row > eye_row
+    assert tip.column > eye_column + 8
+
+
 @pytest.mark.parametrize(
     ("canvas_width", "canvas_height", "expected_mode", "expected_phase"),
     [
         (80, 24, "full", "WALK_IN"),
-        (48, 12, "full", "WALK_IN"),
+        (61, 12, "full", "WALK_IN"),
+        (48, 12, "compact", "WALK_IN"),
         (24, 10, "compact", "WALK_IN"),
         (12, 6, "compact", "WALK_IN"),
         (11, 5, "fallback", "SPLASH"),
@@ -141,6 +180,18 @@ def test_elephant_sprite_is_bounded_and_starts_outside_canvas(canvas_width: int,
     assert len(iterator.elephant.characters) <= iterator.elephant.width * iterator.elephant.height
     assert all(ord(symbol) < 128 for pose in iterator.elephant.poses.values() for row in pose for symbol in row)
     assert all(character.layer == 2 for character in iterator.elephant.characters)
+
+
+@pytest.mark.parametrize(("canvas_width", "canvas_height"), [(61, 12), (48, 12), (12, 6)])
+def test_every_stopped_elephant_pose_fits_inside_its_canvas(canvas_width: int, canvas_height: int) -> None:
+    """Responsive mode selection never allows the active sprite to clip at its stopping point."""
+    iterator = _make_iterator(canvas_width, canvas_height)
+    elephant = iterator.elephant
+
+    for pose in elephant.poses.values():
+        occupied_columns = [column for row in pose for column, symbol in enumerate(row) if symbol != " "]
+        assert elephant.target_coord.column + min(occupied_columns) >= iterator.terminal.canvas.left
+        assert elephant.target_coord.column + max(occupied_columns) <= iterator.terminal.canvas.right
 
 
 @pytest.mark.parametrize(("canvas_width", "canvas_height"), [(80, 24), (24, 10), (12, 6)])
@@ -197,6 +248,16 @@ def test_a_visible_puddle_waits_on_the_bottom_in_front_of_the_elephant(
     assert min(character.motion.current_coord.column for character in iterator.puddle.characters) > (
         iterator.elephant.target_coord.column
     )
+
+
+@pytest.mark.parametrize(("canvas_width", "canvas_height"), [(80, 24), (12, 6)])
+def test_puddle_begins_beside_the_lowered_trunk_tip(canvas_width: int, canvas_height: int) -> None:
+    """The water source is positioned from the drinking pose, keeping trunk and puddle connected."""
+    iterator = _make_iterator(canvas_width, canvas_height)
+    drink_tip = iterator.elephant.trunk_coord_for_pose("drink_1", iterator.elephant.target_coord)
+    puddle_columns = {character.motion.current_coord.column for character in iterator.puddle.characters}
+
+    assert min(abs(column - drink_tip.column) for column in puddle_columns) <= 1
 
 
 def test_full_puddle_ripples_while_the_elephant_approaches() -> None:
@@ -304,6 +365,22 @@ def test_drinking_pulls_three_visible_bubbles_from_the_puddle_into_the_trunk() -
     assert all(character not in iterator.terminal._visible_characters for character in iterator.intake_characters)
 
 
+def test_drinking_bubbles_arrive_at_the_declared_trunk_tip() -> None:
+    """At least one intake bubble visibly completes its journey at the end of the trunk."""
+    iterator = _make_iterator(80, 24)
+    while iterator.phase.name != "DRINK":
+        next(iterator)
+
+    bubble_reached_tip = False
+    while iterator.phase.name == "DRINK":
+        next(iterator)
+        bubble_reached_tip |= any(
+            character.motion.current_coord == iterator.elephant.trunk_coord for character in iterator.intake_characters
+        )
+
+    assert bubble_reached_tip
+
+
 def test_full_puddle_contracts_toward_its_centre_by_complete_columns() -> None:
     """Two-row water shrinks as one coherent pool instead of splitting diagonally."""
     iterator = _make_iterator(80, 24)
@@ -374,8 +451,8 @@ def test_water_pool_is_preallocated_and_bounded(
     assert all(particle not in iterator.terminal._visible_characters for particle in iterator.water_pool.particles)
 
 
-def test_splash_emits_four_active_droplets_from_the_trunk() -> None:
-    """The first splash frame emits a bounded batch with active paths and scenes."""
+def test_splash_starts_one_active_droplet_at_the_raised_trunk_tip() -> None:
+    """The first splash frame begins a paced stream instead of a floating particle cluster."""
     iterator = _make_iterator(80, 24, "TTE", anchor_canvas="c", anchor_text="c")
     while iterator.phase.name != "SPLASH":
         next(iterator)
@@ -385,7 +462,7 @@ def test_splash_emits_four_active_droplets_from_the_trunk() -> None:
         particle for particle in iterator.water_pool.particles if particle not in iterator.water_pool.available
     ]
 
-    assert len(emitted_particles) == 4
+    assert len(emitted_particles) == 1
     assert set(emitted_particles).issubset(iterator.active_characters)
     assert all(particle.motion.active_path is not None for particle in emitted_particles)
     assert all(particle.animation.active_scene is not None for particle in emitted_particles)
@@ -395,9 +472,28 @@ def test_splash_emits_four_active_droplets_from_the_trunk() -> None:
         path = particle.motion.active_path
         origin = path.origin_segment.start.coord
         destination = path.waypoints[-1]
+        assert origin == iterator.elephant.trunk_coord
         assert destination.coord in branding_coords
         assert destination.coord.row > origin.row
         assert destination.bezier_control[0].row > destination.coord.row
+
+
+def test_splash_stream_emits_once_per_frame_and_fans_across_the_branding() -> None:
+    """Successive droplets form a continuous, distributed arc toward the reveal area."""
+    iterator = _make_iterator(80, 24, "PURPLE\nELEPHANT", anchor_canvas="c", anchor_text="c")
+    while iterator.phase.name != "SPLASH":
+        next(iterator)
+
+    for _ in range(8):
+        next(iterator)
+
+    emitted_particles = [
+        particle for particle in iterator.water_pool.particles if particle not in iterator.water_pool.available
+    ]
+    destinations = {particle.motion.active_path.waypoints[-1].coord for particle in emitted_particles}
+
+    assert iterator.droplets_emitted == 8
+    assert len(destinations) >= 6
 
 
 def test_splash_waits_for_every_droplet_to_be_reclaimed() -> None:

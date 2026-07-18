@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import random
 import typing
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -128,11 +127,11 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         '       _..-""""""""""""-.._',
         "    .-'                    '-.",
         "  .'       _                  '._",
-        " /       .' '-.             o   |___",
-        "|       /  (   )\\         ___      '--.",
-        "|       |   '-' |        /   \\   >     \\",
-        "~\\      \\      /       /     |    _____/",
-        " '-._    '----'     _.-'      '--'",
+        " /       .' '-.             o   |__",
+        "|       /  (   )\\         ___    '--.__",
+        "|       |   '-' |        /   \\  >      '--.__",
+        "~\\      \\      /       /     |          '---~",
+        " '-._    '----'     _.-'      |",
         "     '--._______.--'  |",
         "       |  |    |  |   |",
         "       |  |    |  |   |",
@@ -141,12 +140,12 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
     _FULL_TRUNK_UP: typing.ClassVar[tuple[str, ...]] = (
         '       _..-""""""""""""-.._',
         "    .-'                    '-.",
-        "  .'       _                  '._",
-        " /       .' '-.             o   |______",
-        "|       /  (   )\\         ___         '----.__",
-        "|       |   '-' |        /   \\   >            _/",
-        "~\\      \\      /       /     '--------------'",
-        " '-._    '----'     _.-'",
+        "  .'       _                  '._                         .-~",
+        " /       .' '-.             o   |__                  _.-'",
+        "|       /  (   )\\         ___    '--.          _.-'",
+        "|       |   '-' |        /   \\  >   '---.____.-'",
+        "~\\      \\      /       /     |",
+        " '-._    '----'     _.-'      |",
         "     '--._______.--'  |",
         "       |  |    |  |   |",
         "       |  |    |  |   |",
@@ -155,12 +154,12 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
     _FULL_TRUNK_UP_WIGGLE: typing.ClassVar[tuple[str, ...]] = (
         '       _..-""""""""""""-.._',
         "    .-'                    '-.",
-        "  .'       _                  '._",
-        " /       .' '-.             o   |______",
-        "|       / ((   ))\\        ___         '----.__",
-        "|       |   '-' |        /   \\   >            _/",
-        "~\\      \\      /       /     '--------------'",
-        " '-._    '----'     _.-'",
+        "  .'       _                  '._                         .-~",
+        " /       .' '-.             o   |__                  _.-'",
+        "|       / ((   ))\\        ___    '--.          _.-'",
+        "|       |   '-' |        /   \\  >   '---.____.-'",
+        "~\\      \\      /       /     |",
+        " '-._    '----'     _.-'      |",
         "     '--._______.--'  |",
         "       |  |    |  |   |",
         "       |  |    |  |   |",
@@ -197,6 +196,22 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         "wiggle_1": _FULL_TRUNK_UP,
         "wiggle_2": _FULL_TRUNK_UP_WIGGLE,
     }
+    FULL_TRUNK_TIP_ROWS: typing.ClassVar[dict[str, int]] = {
+        "walk_1": 11,
+        "walk_2": 11,
+        "walk_3": 11,
+        "walk_4": 11,
+        "drink_1": 11,
+        "drink_2": 11,
+        "drink_3": 11,
+        "raise_1": 11,
+        "raise_2": 6,
+        "raise_3": 2,
+        "spray_1": 2,
+        "spray_2": 2,
+        "wiggle_1": 2,
+        "wiggle_2": 2,
+    }
     COMPACT_POSES: typing.ClassVar[dict[str, tuple[str, ...]]] = {
         "walk_1": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  /_\\ /_\\"),
         "walk_2": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  _/\\ /_\\"),
@@ -213,6 +228,22 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         "wiggle_1": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
         "wiggle_2": ("   __", " /' ((-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
     }
+    COMPACT_TRUNK_TIP_ROWS: typing.ClassVar[dict[str, int]] = {
+        "walk_1": 3,
+        "walk_2": 3,
+        "walk_3": 3,
+        "walk_4": 3,
+        "drink_1": 4,
+        "drink_2": 4,
+        "drink_3": 4,
+        "raise_1": 2,
+        "raise_2": 2,
+        "raise_3": 2,
+        "spray_1": 2,
+        "spray_2": 2,
+        "wiggle_1": 2,
+        "wiggle_2": 2,
+    }
 
     class Elephant:
         """A rigid, pose-driven group of effect-owned characters."""
@@ -222,6 +253,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             terminal: Terminal,
             config: ElephantSplashConfig,
             poses: dict[str, tuple[str, ...]],
+            trunk_tip_rows: dict[str, int],
         ) -> None:
             """Create a pose-driven elephant on the supplied terminal."""
             self.terminal = terminal
@@ -231,6 +263,13 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             self.poses = {
                 name: tuple(row.ljust(self.width) for row in (*pose, *("",) * (self.height - len(pose))))
                 for name, pose in poses.items()
+            }
+            self.trunk_tip_offsets = {
+                name: Coord(
+                    max(column for column, symbol in enumerate(self.poses[name][row_index]) if symbol != " "),
+                    self.height - row_index - 1,
+                )
+                for name, row_index in trunk_tip_rows.items()
             }
             baseline = terminal.canvas.bottom
             self.start_coord = Coord(terminal.canvas.left - self.width, baseline)
@@ -260,11 +299,16 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             self.anchor.motion.activate_path(entrance_path)
             self.apply_pose(self.current_pose)
 
-        def _coord_for_offset(self, offset: Coord) -> Coord:
+        def _coord_for_offset(self, offset: Coord, anchor_coord: Coord | None = None) -> Coord:
+            anchor_coord = anchor_coord or self.anchor.motion.current_coord
             return Coord(
-                self.anchor.motion.current_coord.column + offset.column,
-                self.anchor.motion.current_coord.row + offset.row,
+                anchor_coord.column + offset.column,
+                anchor_coord.row + offset.row,
             )
+
+        def trunk_coord_for_pose(self, pose_name: str, anchor_coord: Coord | None = None) -> Coord:
+            """Return the declared trunk-tip coordinate for one pose."""
+            return self._coord_for_offset(self.trunk_tip_offsets[pose_name], anchor_coord)
 
         def apply_pose(self, pose_name: str) -> None:
             """Apply one fixed ASCII pose to all sprite characters."""
@@ -302,15 +346,8 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
 
         @property
         def trunk_coord(self) -> Coord:
-            """Return the rightmost visible coordinate in the current pose."""
-            pose = self.poses[self.current_pose]
-            occupied_offsets = [
-                Coord(column, self.height - row_index - 1)
-                for row_index, row in enumerate(pose)
-                for column, symbol in enumerate(row)
-                if symbol != " "
-            ]
-            return self._coord_for_offset(max(occupied_offsets, key=lambda offset: (offset.column, offset.row)))
+            """Return the declared trunk-tip coordinate in the current pose."""
+            return self.trunk_coord_for_pose(self.current_pose)
 
     class Puddle:
         """A small effect-owned water source resting on the canvas floor."""
@@ -399,7 +436,8 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
     def __init__(self, effect: ElephantSplash) -> None:
         """Build the responsive sprite, branding scenes, and particle pool."""
         super().__init__(effect)
-        if self.terminal.canvas.width >= 48 and self.terminal.canvas.height >= 12:
+        full_sprite_width = max(len(row) for pose in self.FULL_POSES.values() for row in pose)
+        if self.terminal.canvas.width >= full_sprite_width and self.terminal.canvas.height >= 12:
             self.sprite_mode = "full"
         elif self.terminal.canvas.width >= 12 and self.terminal.canvas.height >= 6:
             self.sprite_mode = "compact"
@@ -411,19 +449,28 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self._build_branding_reveal()
         pose_set = self.FULL_POSES if self.sprite_mode == "full" else self.COMPACT_POSES
-        self.elephant = self.Elephant(self.terminal, self.config, pose_set) if self.sprite_mode != "fallback" else None
+        trunk_tip_rows = self.FULL_TRUNK_TIP_ROWS if self.sprite_mode == "full" else self.COMPACT_TRUNK_TIP_ROWS
+        self.elephant = (
+            self.Elephant(self.terminal, self.config, pose_set, trunk_tip_rows)
+            if self.sprite_mode != "fallback"
+            else None
+        )
         puddle_width = 3 if self.sprite_mode == "compact" else 15
         puddle_height = 1 if self.sprite_mode == "compact" else 2
-        standing_width = max(len(row.rstrip()) for row in pose_set["walk_1"])
+        drinking_tip = (
+            self.elephant.trunk_coord_for_pose("drink_1", self.elephant.target_coord)
+            if self.elephant is not None
+            else None
+        )
         self.puddle = (
             self.Puddle(
                 self.terminal,
                 self.config.water_colors,
                 puddle_width,
                 puddle_height,
-                self.elephant.target_coord.column + standing_width - 2,
+                drinking_tip.column + 1,
             )
-            if self.elephant is not None
+            if drinking_tip is not None
             else None
         )
         self.intake_characters = self._make_intake_characters()
@@ -563,7 +610,11 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         if self.elephant is None or self.water_pool is None:
             return
         origin = self.elephant.trunk_coord
-        target_character = random.choice(self.input_characters)
+        ordered_targets = sorted(
+            self.input_characters,
+            key=lambda character: (character.input_coord.column, character.input_coord.row),
+        )
+        target_character = ordered_targets[self.droplets_emitted % len(ordered_targets)]
         target = target_character.input_coord
         if target == origin:
             alternate_column = (
@@ -574,10 +625,10 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         def configure_droplet(particle: EffectCharacter) -> None:
             control_row = min(
                 self.terminal.canvas.top,
-                max(origin.row, target.row) + random.randint(3, 6),
+                max(origin.row, target.row) + 3 + self.droplets_emitted % 4,
             )
             control = Coord((origin.column + target.column) // 2, control_row)
-            droplet_path = particle.motion.new_path(speed=0.6, ease=easing.out_sine)
+            droplet_path = particle.motion.new_path(speed=1.6, ease=easing.out_sine)
             droplet_path.new_waypoint(target, bezier_control=control)
             particle.motion.activate_path(droplet_path)
             particle.animation.activate_scene("droplet")
@@ -664,8 +715,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             return
         assert self.water_pool is not None
         self.elephant.apply_pose(f"spray_{(self.phase_frame // 8) % 2 + 1}")
-        remaining = len(self.water_pool) - self.droplets_emitted
-        for _ in range(min(4, remaining)):
+        if self.droplets_emitted < len(self.water_pool):
             self._emit_droplet()
         self.update()
         self.phase_frame += 1
