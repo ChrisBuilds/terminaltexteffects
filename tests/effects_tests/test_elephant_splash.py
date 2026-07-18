@@ -275,6 +275,25 @@ def test_tiny_canvas_uses_a_finite_particle_free_splash_reveal() -> None:
     assert rendered_frames
 
 
+@pytest.mark.parametrize(("canvas_width", "canvas_height"), [(80, 24), (12, 6), (1, 1)])
+@pytest.mark.parametrize("final_hold_frames", [0, 1, 3])
+def test_final_hold_counts_the_transition_as_its_first_clean_frame(
+    canvas_width: int,
+    canvas_height: int,
+    final_hold_frames: int,
+) -> None:
+    """The transition into HOLD is the first guaranteed clean final frame."""
+    iterator = _make_iterator(canvas_width, canvas_height, "A", final_hold_frames=final_hold_frames)
+
+    while iterator.phase.name != "HOLD":
+        next(iterator)
+
+    remaining_frames = list(iterator)
+
+    assert iterator.phase.name == "COMPLETE"
+    assert len(remaining_frames) == max(0, final_hold_frames - 1)
+
+
 @pytest.mark.parametrize(
     ("input_data", "existing_color_handling", "expected_colors"),
     [

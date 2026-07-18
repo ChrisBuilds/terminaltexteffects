@@ -560,9 +560,10 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             if self.elephant is not None:
                 self.elephant.start_walk_out()
                 self.phase = self.Phase.WALK_OUT
+                self.phase_frame = 0
             else:
                 self.phase = self.Phase.HOLD
-            self.phase_frame = 0
+                self.phase_frame = 1
 
     def _step_walk_out(self) -> None:
         """Advance the elephant beyond the right edge and hide its helpers."""
@@ -572,7 +573,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         if self.elephant.anchor.motion.movement_is_complete():
             self.elephant.hide()
             self.phase = self.Phase.HOLD
-            self.phase_frame = 0
+            self.phase_frame = 1
 
     def _step_hold(self) -> None:
         """Hold the clean final branding frame for the configured duration."""
