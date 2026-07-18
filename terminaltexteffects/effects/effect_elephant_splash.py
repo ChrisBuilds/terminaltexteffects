@@ -148,6 +148,36 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             " '-.__.-'__/--'",
             "   _/\\   _/\\",
         ),
+        "drink_1": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\        \\",
+            "| \\_/ o       \\",
+            "\\          __. \\",
+            " '-.___.---' \\ \\",
+            "   /_\\   /_\\  \\~",
+        ),
+        "drink_2": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\        \\",
+            "| \\_/ o       \\",
+            "\\          __. \\",
+            " '-.___.---' \\ \\",
+            "   /_\\   /_\\  \\o",
+        ),
+        "drink_3": (
+            "      __",
+            " .---'  '---.",
+            "/  _      ( )\\",
+            "| / \\        \\",
+            "| \\_/ o       \\",
+            "\\          __. \\",
+            " '-.___.---' \\ \\",
+            "   /_\\   /_\\  \\.",
+        ),
         "raise_1": (
             "      __",
             " .---'  '---.",
@@ -224,6 +254,9 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         "walk_2": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  _/\\ /_\\"),
         "walk_3": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  /_\\ _/\\"),
         "walk_4": ("   __", " /'  '-.", "| (o)  |__", " \\   /  ')", "  _/\\ _/\\"),
+        "drink_1": ("   __", " /'  '-.", "| (o)    \\", " \\    __ \\", "  /_\\ /_\\ \\~"),
+        "drink_2": ("   __", " /'  '-.", "| (o)    \\", " \\    __ \\", "  /_\\ /_\\ \\o"),
+        "drink_3": ("   __", " /'  '-.", "| (o)    \\", " \\    __ \\", "  /_\\ /_\\ \\."),
         "raise_1": ("   __", " /'  '-.", "| (o)   \\_", " \\    __/'", "  /_\\ /_\\"),
         "raise_2": ("   __", " /'  '-.", "| (o)    \\__", " \\    __/'", "  /_\\ /_\\"),
         "raise_3": ("   __", " /'  '-.", "| (o)    \\___", " \\    __/'", "  /_\\ /_\\"),
@@ -251,10 +284,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
                 name: tuple(row.ljust(self.width) for row in (*pose, *("",) * (self.height - len(pose))))
                 for name, pose in poses.items()
             }
-            baseline = max(
-                terminal.canvas.bottom,
-                min(terminal.canvas.center_row - self.height // 2, terminal.canvas.top - self.height + 1),
-            )
+            baseline = terminal.canvas.bottom
             self.start_coord = Coord(terminal.canvas.left - self.width, baseline)
             self.anchor = terminal.add_character(" ", self.start_coord)
             target_column = max(
@@ -334,10 +364,44 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             ]
             return self._coord_for_offset(max(occupied_offsets, key=lambda offset: (offset.column, offset.row)))
 
+    class Puddle:
+        """A small effect-owned water source resting on the canvas floor."""
+
+        def __init__(self, terminal: Terminal, colors: tuple[Color, ...], size: int, near_column: int) -> None:
+            """Create a visible, canvas-bounded row of water characters."""
+            self.terminal = terminal
+            symbols = ".~~~~~." if size == 7 else "~~~"
+            start_column = max(terminal.canvas.left, min(near_column, terminal.canvas.right - size + 1))
+            self.characters: list[EffectCharacter] = []
+            for index, symbol in enumerate(symbols):
+                character = terminal.add_character(
+                    symbol,
+                    Coord(start_column + index, terminal.canvas.bottom),
+                )
+                character.layer = 2
+                character.animation.set_appearance(symbol, ColorPair(fg=colors[index % len(colors)]))
+                terminal.set_character_visibility(character, is_visible=True)
+                self.characters.append(character)
+
+        @property
+        def visible_count(self) -> int:
+            """Return the number of water characters currently on screen."""
+            return sum(character in self.terminal._visible_characters for character in self.characters)
+
+        def shrink_to(self, visible_count: int) -> None:
+            """Keep a centred subset visible to make the puddle contract."""
+            center = (len(self.characters) - 1) / 2
+            visible_indices = set(
+                sorted(range(len(self.characters)), key=lambda index: abs(index - center))[:visible_count],
+            )
+            for index, character in enumerate(self.characters):
+                self.terminal.set_character_visibility(character, is_visible=index in visible_indices)
+
     class Phase(Enum):
         """Ordered phases in the Elephant Splash choreography."""
 
         WALK_IN = auto()
+        DRINK = auto()
         RAISE_TRUNK = auto()
         SPLASH = auto()
         REVEAL = auto()
@@ -361,6 +425,17 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         self._build_branding_reveal()
         pose_set = self.FULL_POSES if self.sprite_mode == "full" else self.COMPACT_POSES
         self.elephant = self.Elephant(self.terminal, self.config, pose_set) if self.sprite_mode != "fallback" else None
+        puddle_size = 3 if self.sprite_mode == "compact" else 7
+        self.puddle = (
+            self.Puddle(
+                self.terminal,
+                self.config.water_colors,
+                puddle_size,
+                self.elephant.target_coord.column + self.elephant.width - 2,
+            )
+            if self.elephant is not None
+            else None
+        )
         self.water_pool = self._make_water_pool() if self.sprite_mode != "fallback" else None
         self.phase_frame = 0
         self.droplets_emitted = 0
@@ -487,6 +562,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         """Advance and render one frame of the effect."""
         phase_handlers: dict[ElephantSplashIterator.Phase, typing.Callable[[], None]] = {
             self.Phase.WALK_IN: self._step_walk_in,
+            self.Phase.DRINK: self._step_drink,
             self.Phase.RAISE_TRUNK: self._step_raise_trunk,
             self.Phase.SPLASH: self._step_splash,
             self.Phase.REVEAL: self._step_reveal,
@@ -505,9 +581,21 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         self.elephant.tick_walk(self.phase_frame)
         self.phase_frame += 1
         if self.elephant.anchor.motion.movement_is_complete():
+            self.phase = self.Phase.DRINK
+            self.phase_frame = 0
+
+    def _step_drink(self) -> None:
+        """Lower the trunk and consume the puddle from its edges inward."""
+        assert self.elephant is not None
+        assert self.puddle is not None
+        pose_index = min(self.phase_frame // 8 + 1, 3)
+        self.elephant.apply_pose(f"drink_{pose_index}")
+        self.phase_frame += 1
+        remaining_water = len(self.puddle.characters) - self.phase_frame * len(self.puddle.characters) // 24
+        self.puddle.shrink_to(max(0, remaining_water))
+        if self.phase_frame >= 24:
             self.phase = self.Phase.RAISE_TRUNK
             self.phase_frame = 0
-            self.elephant.apply_pose("raise_1")
 
     def _step_raise_trunk(self) -> None:
         """Advance the three-pose trunk raise by one frame."""

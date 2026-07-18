@@ -120,6 +120,36 @@ def test_elephant_sprite_is_bounded_and_starts_outside_canvas(canvas_width: int,
     assert all(character.layer == 2 for character in iterator.elephant.characters)
 
 
+@pytest.mark.parametrize(("canvas_width", "canvas_height"), [(80, 24), (24, 10), (12, 6)])
+def test_elephant_walks_on_the_bottom_canvas_baseline(canvas_width: int, canvas_height: int) -> None:
+    """Every sprite size enters, stops, and exits along the bottom edge."""
+    iterator = _make_iterator(canvas_width, canvas_height)
+
+    assert iterator.elephant.start_coord.row == iterator.terminal.canvas.bottom
+    assert iterator.elephant.target_coord.row == iterator.terminal.canvas.bottom
+
+
+@pytest.mark.parametrize(("canvas_width", "canvas_height", "expected_size"), [(80, 24, 7), (24, 10, 7), (12, 6, 3)])
+def test_a_visible_puddle_waits_on_the_bottom_in_front_of_the_elephant(
+    canvas_width: int,
+    canvas_height: int,
+    expected_size: int,
+) -> None:
+    """The water source is a bounded bottom-row helper placed beyond the trunk."""
+    iterator = _make_iterator(canvas_width, canvas_height)
+
+    assert iterator.puddle is not None
+    assert len(iterator.puddle.characters) == expected_size
+    assert iterator.puddle.visible_count == expected_size
+    assert all(
+        character.motion.current_coord.row == iterator.terminal.canvas.bottom
+        for character in iterator.puddle.characters
+    )
+    assert min(character.motion.current_coord.column for character in iterator.puddle.characters) > (
+        iterator.elephant.target_coord.column
+    )
+
+
 def test_tiny_canvas_does_not_create_an_elephant_or_particles() -> None:
     """The splash-only fallback avoids impossible sprite and particle geometry."""
     iterator = _make_iterator(1, 1, "A")
@@ -146,10 +176,43 @@ def test_elephant_walks_in_with_multiple_poses_before_raising_its_trunk() -> Non
     assert len(seen_poses.intersection({"walk_1", "walk_2", "walk_3", "walk_4"})) >= 2
 
 
-def test_elephant_raises_its_trunk_in_three_timed_poses() -> None:
-    """The entrance is followed by the complete three-pose trunk sequence."""
+def test_elephant_stops_to_drink_before_raising_its_trunk() -> None:
+    """Reaching the puddle starts a distinct drinking phase."""
     iterator = _make_iterator(80, 24)
+
     while iterator.phase.name == "WALK_IN":
+        next(iterator)
+
+    assert iterator.phase.name == "DRINK"
+
+
+@pytest.mark.parametrize(("canvas_width", "canvas_height"), [(80, 24), (12, 6)])
+def test_drinking_poses_lower_the_trunk_while_the_puddle_shrinks(
+    canvas_width: int,
+    canvas_height: int,
+) -> None:
+    """The elephant visibly consumes the complete puddle before lifting its trunk."""
+    iterator = _make_iterator(canvas_width, canvas_height)
+    while iterator.phase.name == "WALK_IN":
+        next(iterator)
+    puddle_sizes = [iterator.puddle.visible_count]
+    seen_poses: set[str] = set()
+
+    while iterator.phase.name == "DRINK":
+        next(iterator)
+        seen_poses.add(iterator.elephant.current_pose)
+        puddle_sizes.append(iterator.puddle.visible_count)
+
+    assert iterator.phase.name == "RAISE_TRUNK"
+    assert seen_poses == {"drink_1", "drink_2", "drink_3"}
+    assert puddle_sizes[-1] == 0
+    assert puddle_sizes == sorted(puddle_sizes, reverse=True)
+
+
+def test_elephant_raises_its_trunk_in_three_timed_poses() -> None:
+    """Drinking is followed by the complete three-pose trunk sequence."""
+    iterator = _make_iterator(80, 24)
+    while iterator.phase.name != "RAISE_TRUNK":
         next(iterator)
     seen_poses: set[str] = set()
 
