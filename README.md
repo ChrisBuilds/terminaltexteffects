@@ -189,7 +189,7 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
   Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
-  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,colorshift,crumble,decrypt,errorcorrect,expand,fireworks,highlight,laseretch,matrix,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slice,slide,smoke,spotlights,spray,swarm,sweep,synthgrid,thunderstorm,unstable,vhstape,waves,wipe}
+  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,colorshift,crumble,decrypt,errorcorrect,expand,fireworks,highlight,laseretch,matrix,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slice,slide,smoke,snake,spotlights,spray,swarm,sweep,synthgrid,thunderstorm,unstable,vhstape,waves,wipe}
                         Available Effects
     beams               Create beams which travel over the canvas illuminating the characters behind them.
     binarypath          Binary representations of each character move towards the home coordinate of the character.
@@ -218,6 +218,7 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
     slice               Slices the input in half and slides it into place from opposite directions.
     slide               Slide characters into view from outside the terminal.
     smoke               Smoke floods the canvas colorizing any characters it crosses.
+    snake               Snakes carry characters through the canvas and assemble the input text.
     spotlights          Spotlights search the text area, illuminating characters, before converging in the center and expanding.
     spray               Draws the characters spawning at varying rates from a single point.
     swarm               Characters are grouped into swarms and move around the terminal before settling into position.
