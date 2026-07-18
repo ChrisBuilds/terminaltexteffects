@@ -10,6 +10,13 @@
 
 ---
 
+#### New Effects (0.16.0)
+
+---
+
+* Added Fishing, where concurrent hooks catch scattered swimming characters and reel them into their final text
+  positions, with reusable fishing lines, bite ripples, and bounded optional junk catches.
+
 #### Development Tooling (0.16.0)
 
 ---

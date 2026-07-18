@@ -500,6 +500,40 @@ Launches characters up the screen where they explode like fireworks and fall int
     ```
 ---
 
+## Fishing
+
+Fishing hooks catch scattered, swimming characters and reel them into their correct text positions.
+
+[Reference](./effects/fishing.md){ .md-button } [Config](./effects/fishing.md#terminaltexteffects.effects.effect_fishing.FishingConfig){ .md-button }
+
+??? example "Fishing Command Line Arguments"
+
+    ```
+    --hook-count (int > 0)
+                        Maximum number of fishing hooks working concurrently. (default: 3)
+    --line-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
+                        Color used for fishing lines and hooks. (default: D6F6FF)
+    --water-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Colors used while input characters swim before being caught. (default: 0B7285 1098AD 66D9E8)
+    --cast-speed (float > 0)
+                        Speed at which hooks slide and cast toward swimming characters. (default: 0.75)
+    --reel-speed (float > 0)
+                        Speed used while reeling catches and returning hooks. (default: 1.25)
+    --cast-delay (int >= 0)
+                        Frames between casts and between each hook's initial start. (default: 4)
+    --wrong-catch-chance (0 <= float(n) <= 1)
+                        One-time probability that each hook catches harmless junk before a real target. (default: 0.05)
+    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Final character gradient colors. (default: 1E90FF 00D1B2 FFE66D)
+    --final-gradient-steps (int > 0) [(int > 0) ...]
+                        Number of steps in the final gradient. (default: 12)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
+                        Direction of the final gradient across the text. (default: horizontal)
+
+    Example: terminaltexteffects fishing --hook-count 3 --line-color D6F6FF --water-colors 0B7285 1098AD 66D9E8 --cast-speed 0.75 --reel-speed 1.25 --cast-delay 4 --wrong-catch-chance 0.05 --final-gradient-stops 1E90FF 00D1B2 FFE66D --final-gradient-steps 12 --final-gradient-direction horizontal
+    ```
+---
+
 ## Highlight
 
 Run a specular highlight across the text.
