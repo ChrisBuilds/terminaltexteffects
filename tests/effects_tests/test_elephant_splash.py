@@ -97,13 +97,43 @@ def test_full_poses_have_a_tall_recognisable_elephant_silhouette() -> None:
     for pose in module.ElephantSplashIterator.FULL_POSES.values():
         occupied_columns = [column for row in pose for column, symbol in enumerate(row) if symbol != " "]
         occupied_rows = [row_index for row_index, row in enumerate(pose) if row.strip()]
-        assert max(occupied_columns) - min(occupied_columns) + 1 >= 28
-        assert max(occupied_rows) - min(occupied_rows) + 1 >= 11
-        assert any("(   )" in row for row in pose)
+        occupied_width = max(occupied_columns) - min(occupied_columns) + 1
+        assert 34 <= occupied_width <= 52
+        assert max(occupied_rows) - min(occupied_rows) + 1 >= 14
+        assert not any("(   )" in row for row in pose)
         assert any("o" in row for row in pose)
         assert any(">" in row for row in pose)
         assert any(row.startswith("~\\") for row in pose)
-        assert sum(bool(row[-6:].strip()) for row in pose[-5:]) >= 4
+        assert sum(row.count("/__\\") for row in pose[-3:]) >= 4
+
+
+@pytest.mark.parametrize("pose_name", ["raise_3", "spray_1", "spray_2", "wiggle_1", "wiggle_2"])
+def test_full_raised_trunk_stays_proportional_to_the_head(pose_name: str) -> None:
+    """The lifted trunk curves naturally above the face instead of stretching across the screen."""
+    iterator = _make_iterator(80, 24)
+    elephant = iterator.elephant
+    pose = elephant.poses[pose_name]
+    eye_column = next(row.index("o") for row in pose if "o" in row)
+    tip = elephant.trunk_tip_offsets[pose_name]
+
+    assert 2 <= tip.column - eye_column <= 12
+
+
+@pytest.mark.parametrize("pose_name", ["raise_2", "raise_3", "spray_1", "spray_2"])
+def test_full_raised_poses_keep_a_closed_front_torso(pose_name: str) -> None:
+    """Lifting the trunk does not make the elephant's chest and shoulder disappear."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+    pose = module.ElephantSplashIterator.FULL_POSES[pose_name]
+
+    assert all(len(row.rstrip()) >= 34 for row in pose[7:11])
+
+
+def test_full_elephant_head_does_not_draw_a_second_closed_muzzle() -> None:
+    """The side profile has one readable ear rather than two neighbouring circular features."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+
+    for pose in module.ElephantSplashIterator.FULL_POSES.values():
+        assert not any("/  \\" in row for row in pose[3:9])
 
 
 @pytest.mark.parametrize(("canvas_width", "canvas_height"), [(80, 24), (12, 6)])
@@ -148,7 +178,8 @@ def test_full_raised_trunk_curves_above_the_elephants_eye(pose_name: str) -> Non
     ("canvas_width", "canvas_height", "expected_mode", "expected_phase"),
     [
         (80, 24, "full", "WALK_IN"),
-        (61, 12, "full", "WALK_IN"),
+        (51, 15, "full", "WALK_IN"),
+        (61, 12, "compact", "WALK_IN"),
         (48, 12, "compact", "WALK_IN"),
         (24, 10, "compact", "WALK_IN"),
         (12, 6, "compact", "WALK_IN"),
@@ -182,7 +213,7 @@ def test_elephant_sprite_is_bounded_and_starts_outside_canvas(canvas_width: int,
     assert all(character.layer == 2 for character in iterator.elephant.characters)
 
 
-@pytest.mark.parametrize(("canvas_width", "canvas_height"), [(61, 12), (48, 12), (12, 6)])
+@pytest.mark.parametrize(("canvas_width", "canvas_height"), [(51, 15), (61, 12), (48, 12), (12, 6)])
 def test_every_stopped_elephant_pose_fits_inside_its_canvas(canvas_width: int, canvas_height: int) -> None:
     """Responsive mode selection never allows the active sprite to clip at its stopping point."""
     iterator = _make_iterator(canvas_width, canvas_height)
@@ -192,6 +223,7 @@ def test_every_stopped_elephant_pose_fits_inside_its_canvas(canvas_width: int, c
         occupied_columns = [column for row in pose for column, symbol in enumerate(row) if symbol != " "]
         assert elephant.target_coord.column + min(occupied_columns) >= iterator.terminal.canvas.left
         assert elephant.target_coord.column + max(occupied_columns) <= iterator.terminal.canvas.right
+    assert elephant.target_coord.row + elephant.height - 1 <= iterator.terminal.canvas.top
 
 
 @pytest.mark.parametrize(("canvas_width", "canvas_height"), [(80, 24), (24, 10), (12, 6)])
@@ -474,7 +506,7 @@ def test_splash_starts_one_active_droplet_at_the_raised_trunk_tip() -> None:
         destination = path.waypoints[-1]
         assert origin == iterator.elephant.trunk_coord
         assert destination.coord in branding_coords
-        assert destination.coord.row > origin.row
+        assert destination.bezier_control[0].row > origin.row
         assert destination.bezier_control[0].row > destination.coord.row
 
 
