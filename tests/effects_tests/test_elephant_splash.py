@@ -165,13 +165,23 @@ def test_raised_and_primary_spray_pose_use_the_selected_jgs_elephant_exactly() -
     assert tuple(row.rstrip() for row in module.ElephantSplashIterator.FULL_POSES["spray_1"]) == selected_elephant
 
 
-def test_walking_uses_the_complete_upward_curled_trunk() -> None:
-    """Every walking pose keeps the selected elephant's complete raised trunk and face."""
+def test_walking_uses_a_hanging_trunk_with_only_its_tip_curled() -> None:
+    """Walking keeps the trunk down while its complete two-sided tip curls upward."""
     module = import_module("terminaltexteffects.effects.effect_elephant_splash")
-    selected_upper_body = module.ElephantSplashIterator.FULL_POSES["raise_3"][:12]
 
     for pose_name in ("walk_1", "walk_2", "walk_3", "walk_4"):
-        assert module.ElephantSplashIterator.FULL_POSES[pose_name][:12] == selected_upper_body
+        pose = module.ElephantSplashIterator.FULL_POSES[pose_name]
+        assert not any(row.strip() for row in pose[:3])
+        assert pose[10][30] == "\\"
+        assert pose[10][36] == "|"
+        assert pose[11][31] == "\\"
+        assert pose[11][36] == "|"
+        assert pose[12][32] == "|"
+        assert pose[12][36] == "|"
+        assert pose[13][33] == "|"
+        assert pose[13][36] == "|"
+        assert pose[-2][34:37] == "\\_)"
+        assert not pose[-1][25:].strip()
 
 
 def test_drinking_lowers_the_trunk_only_after_the_elephant_stops() -> None:
@@ -181,7 +191,8 @@ def test_drinking_lowers_the_trunk_only_after_the_elephant_stops() -> None:
 
     tip_rows = [elephant.trunk_coord_for_pose(f"drink_{index}").row for index in range(1, 4)]
 
-    assert tip_rows[0] > tip_rows[1] > tip_rows[2]
+    assert tip_rows[0] >= tip_rows[1] >= tip_rows[2]
+    assert tip_rows[0] > tip_rows[2]
 
 
 def test_selected_elephant_credit_lives_in_documentation_not_the_sprite() -> None:
@@ -210,7 +221,7 @@ def test_all_full_sprite_poses_share_one_padded_bounding_box() -> None:
 
 
 def test_walking_changes_legs_without_moving_the_body_or_trunk() -> None:
-    """The walk cycle cannot make the lowered trunk behave like another leg."""
+    """The walk cycle moves grounded feet forward and back without changing the body or trunk."""
     module = import_module("terminaltexteffects.effects.effect_elephant_splash")
     poses = module.ElephantSplashIterator.FULL_POSES
     neutral = poses["walk_1"]
@@ -218,12 +229,18 @@ def test_walking_changes_legs_without_moving_the_body_or_trunk() -> None:
     for pose_name in ("walk_2", "walk_3", "walk_4"):
         pose = poses[pose_name]
         assert pose[:12] == neutral[:12]
-        assert all(row[25:] == neutral_row[25:] for row, neutral_row in zip(pose[12:], neutral[12:]))
+        assert all(row[30:] == neutral_row[30:] for row, neutral_row in zip(pose[12:], neutral[12:]))
 
-    assert not poses["walk_2"][-1][:9].strip()
-    assert "\\__/" in poses["walk_2"][-2][:9]
-    assert not poses["walk_4"][-1][9:19].strip()
-    assert "\\___/" in poses["walk_4"][-2][8:19]
+    ground_rows = [poses[pose_name][-1][:25] for pose_name in ("walk_1", "walk_2", "walk_3", "walk_4")]
+    assert all(ground.count("\\__/") + ground.count("\\___/") == 3 for ground in ground_rows)
+    assert len(set(ground_rows)) >= 3
+
+
+def test_elephant_poses_never_duplicate_the_ear_curve() -> None:
+    """No pose turns the elephant's single ear curve into a blinking pair of C shapes."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+
+    assert all("((" not in row for pose in module.ElephantSplashIterator.FULL_POSES.values() for row in pose)
 
 
 @pytest.mark.parametrize("pose_name", ["raise_3", "spray_1", "spray_2", "wiggle_1", "wiggle_2"])
@@ -720,6 +737,20 @@ def test_splash_starts_one_active_droplet_at_the_raised_trunk_tip() -> None:
         assert destination.coord in branding_coords
         assert destination.bezier_control[0].row > origin.row
         assert destination.bezier_control[0].row > destination.coord.row
+
+
+def test_splash_keeps_the_elephants_ear_and_body_in_one_stable_pose() -> None:
+    """Water particles animate independently while the complete elephant remains frozen."""
+    iterator = _make_iterator(80, 24, "ORCA")
+    while iterator.phase.name != "SPLASH":
+        next(iterator)
+
+    seen_poses: set[str] = set()
+    for _ in range(16):
+        next(iterator)
+        seen_poses.add(iterator.elephant.current_pose_name)
+
+    assert seen_poses == {"spray_1"}
 
 
 def test_splash_stream_emits_once_per_frame_and_fans_across_the_branding() -> None:

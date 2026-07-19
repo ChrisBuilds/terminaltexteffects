@@ -175,6 +175,15 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         "   |    / |   \\    /   |\\__/       /",
         "    \\__/  \\___/    \\___/       \\__~",
     )
+    _FULL_WALKING_TRUNK: typing.ClassVar[tuple[str, ...]] = (
+        *_FULL_TRUNK_DOWN[:10],
+        "   // |               `;.___> \\     |",
+        " /`|  /                |`\\     \\    |",
+        " |/  /     _,.-----\\   |  \\     |   |",
+        "    /    .;   |    |   |   \\     |  |",
+        "   |    / |   \\    /   |\\__/      \\_)",
+        "    \\__/  \\___/    \\___/",
+    )
     _FULL_TRUNK_MID: typing.ClassVar[tuple[str, ...]] = (
         "",
         "",
@@ -211,38 +220,31 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         "   |    / |   \\    /   |\\__/",
         "    \\__/  \\___/    \\___/",
     )
-    _FULL_TRUNK_UP_WIGGLE: typing.ClassVar[tuple[str, ...]] = (
-        *_FULL_TRUNK_UP[:5],
-        '         .-""""-/       ((      \'--\' /',
-        *_FULL_TRUNK_UP[6:],
-    )
+    _FULL_TRUNK_UP_WIGGLE: typing.ClassVar[tuple[str, ...]] = _FULL_TRUNK_UP
     FULL_POSES: typing.ClassVar[dict[str, tuple[str, ...]]] = _pad_sprite_poses(
         {
-            "walk_1": _FULL_TRUNK_UP,
+            "walk_1": _FULL_WALKING_TRUNK,
             "walk_2": (
-                *_FULL_TRUNK_UP[:-4],
-                _FULL_TRUNK_UP[12],
-                "    /   .;    |    |   |   \\",
-                "   \\__/ / |   \\    /   |\\__/",
-                "          \\___/    \\___/",
+                *_FULL_WALKING_TRUNK[:-3],
+                "   /     .;   |    |   |   \\     |  |",
+                "  /     / |   \\    /   |\\__/      \\_)",
+                "   \\___/  \\___/    \\___/",
             ),
             "walk_3": (
-                *_FULL_TRUNK_UP[:-4],
-                _FULL_TRUNK_UP[12],
-                "    /     .; |    |   |    \\",
-                "   |    / |   \\   \\___/|\\__/",
-                "    \\__/  \\___/",
+                *_FULL_WALKING_TRUNK[:-3],
+                "    /   .;    |   |   |   \\      |  |",
+                "   |   /  |   \\   /    |\\__/      \\_)",
+                "   \\___/   \\___/   \\___/",
             ),
             "walk_4": (
-                *_FULL_TRUNK_UP[:-4],
-                _FULL_TRUNK_UP[12],
-                "    /    .;  |     |  |    \\",
-                "   |    / \\___/    /   |\\__/",
-                "    \\__/           \\___/",
+                *_FULL_WALKING_TRUNK[:-3],
+                "    /    .;   |    |    |  \\     |  |",
+                "   |    / |   \\    /    \\__/      \\_)",
+                "    \\__/  \\___/     \\__/",
             ),
-            "drink_1": _FULL_TRUNK_UP,
-            "drink_2": _FULL_TRUNK_MID,
-            "drink_3": _FULL_TRUNK_DOWN,
+            "drink_1": _FULL_WALKING_TRUNK,
+            "drink_2": (*_FULL_TRUNK_DOWN[:-1], "    \\__/  \\___/    \\___/       \\__o"),
+            "drink_3": (*_FULL_TRUNK_DOWN[:-1], "    \\__/  \\___/    \\___/       \\__."),
             "raise_1": _FULL_TRUNK_DOWN,
             "raise_2": _FULL_TRUNK_MID,
             "raise_3": _FULL_TRUNK_UP,
@@ -253,12 +255,12 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
         },
     )
     FULL_TRUNK_TIP_ROWS: typing.ClassVar[dict[str, int]] = {
-        "walk_1": 0,
-        "walk_2": 0,
-        "walk_3": 0,
-        "walk_4": 0,
-        "drink_1": 0,
-        "drink_2": 2,
+        "walk_1": 14,
+        "walk_2": 14,
+        "walk_3": 14,
+        "walk_4": 14,
+        "drink_1": 14,
+        "drink_2": 15,
         "drink_3": 15,
         "raise_1": 15,
         "raise_2": 2,
@@ -281,9 +283,9 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
             "raise_2": ("   __", " /'  '-.", "| (o)    \\__", " \\    __/'", "  /_\\ /_\\"),
             "raise_3": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
             "spray_1": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
-            "spray_2": ("   __", " /' ((-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
+            "spray_2": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
             "wiggle_1": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
-            "wiggle_2": ("   __", " /' ((-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
+            "wiggle_2": ("   __", " /'  '-.", "| (o)   \\___", " \\    __/'", "  /_\\ /_\\"),
         },
     )
     COMPACT_TRUNK_TIP_ROWS: typing.ClassVar[dict[str, int]] = {
@@ -855,7 +857,7 @@ class ElephantSplashIterator(BaseEffectIterator[ElephantSplashConfig]):
                 self.phase_frame = 0
             return
         assert self.water_pool is not None
-        self.elephant.apply_pose(f"spray_{(self.phase_frame // 8) % 2 + 1}")
+        self.elephant.apply_pose("spray_1")
         if self.droplets_emitted < len(self.water_pool):
             self._emit_droplet()
         self.update()
