@@ -172,13 +172,13 @@ def test_walking_uses_a_hanging_trunk_with_only_its_tip_curled() -> None:
     for pose_name in ("walk_1", "walk_2", "walk_3", "walk_4"):
         pose = module.ElephantSplashIterator.FULL_POSES[pose_name]
         assert not any(row.strip() for row in pose[:3])
-        assert pose[10][30] == "\\"
+        assert pose[10][32] == "\\"
         assert pose[10][36] == "|"
-        assert pose[11][31] == "\\"
+        assert pose[11][33] == "\\"
         assert pose[11][36] == "|"
-        assert pose[12][32] == "|"
+        assert pose[12][34] == "|"
         assert pose[12][36] == "|"
-        assert pose[13][33] == "|"
+        assert pose[13][34] == "|"
         assert pose[13][36] == "|"
         assert pose[-2][34:37] == "\\_)"
         assert not pose[-1][25:].strip()
@@ -193,6 +193,21 @@ def test_drinking_lowers_the_trunk_only_after_the_elephant_stops() -> None:
 
     assert tip_rows[0] >= tip_rows[1] >= tip_rows[2]
     assert tip_rows[0] > tip_rows[2]
+
+
+def test_drinking_uses_the_same_narrow_two_sided_trunk_without_embedded_bubbles() -> None:
+    """Interaction poses retain both trunk contours while particles provide the water symbols."""
+    module = import_module("terminaltexteffects.effects.effect_elephant_splash")
+
+    for pose_name in ("drink_1", "drink_2", "drink_3"):
+        pose = module.ElephantSplashIterator.FULL_POSES[pose_name]
+        assert pose[10][32] == "\\"
+        assert pose[10][36] == "|"
+        assert pose[11][33] == "\\"
+        assert pose[11][36] == "|"
+        assert pose[12][34] == "|"
+        assert pose[12][36] == "|"
+        assert not any(symbol in "o.~" for row in pose[10:] for symbol in row[29:])
 
 
 def test_selected_elephant_credit_lives_in_documentation_not_the_sprite() -> None:
