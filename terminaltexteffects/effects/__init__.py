@@ -9,6 +9,7 @@ from terminaltexteffects.effects.effect_burn import Burn
 from terminaltexteffects.effects.effect_colorshift import ColorShift
 from terminaltexteffects.effects.effect_crumble import Crumble
 from terminaltexteffects.effects.effect_decrypt import Decrypt
+from terminaltexteffects.effects.effect_elephant_splash import ElephantSplash, ElephantSplashConfig
 from terminaltexteffects.effects.effect_errorcorrect import ErrorCorrect
 from terminaltexteffects.effects.effect_expand import Expand
 from terminaltexteffects.effects.effect_fireworks import Fireworks

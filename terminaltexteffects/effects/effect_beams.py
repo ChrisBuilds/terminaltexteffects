@@ -341,8 +341,12 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
             inner_fill_chars=True,
         ):
             groups.append(BeamsIterator.Group(column, "column", self.terminal, self.config))  # noqa: PERF401
+        configured_characters: set[tte.EffectCharacter] = set()
         for group in groups:
             for character in group.characters:
+                if character in configured_characters:
+                    continue
+                configured_characters.add(character)
                 beam_row_scn = character.animation.new_scene(scene_id="beam_row")
                 beam_column_scn = character.animation.new_scene(scene_id="beam_column")
                 brigthen_scn = character.animation.new_scene(scene_id="brighten")
@@ -393,7 +397,11 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                         bg_gradient=bg_brighten_gradient,
                     )
                 else:
-                    brigthen_scn.add_frame(character.input_symbol, self.config.final_gradient_frames, colors=tte.ColorPair())
+                    brigthen_scn.add_frame(
+                        character.input_symbol,
+                        self.config.final_gradient_frames,
+                        colors=tte.ColorPair(),
+                    )
 
         self.pending_groups = groups
         random.shuffle(self.pending_groups)

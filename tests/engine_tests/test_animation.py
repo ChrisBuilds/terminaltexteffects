@@ -4,7 +4,7 @@ import pytest
 
 from terminaltexteffects.engine.animation import CharacterVisual, Frame, Scene
 from terminaltexteffects.engine.base_character import EffectCharacter
-from terminaltexteffects.utils import easing
+from terminaltexteffects.utils import easing, exceptions
 from terminaltexteffects.utils.exceptions import (
     ActivateEmptySceneError,
     AnimationSceneError,
@@ -180,6 +180,17 @@ def test_animation_new_scene_without_id(character: EffectCharacter) -> None:
     assert "0" in animation.scenes
 
 
+def test_animation_new_scene_duplicate_id_preserves_original(character: EffectCharacter) -> None:
+    """Reject a duplicate scene ID without replacing the original scene."""
+    animation = character.animation
+    original_scene = animation.new_scene(scene_id="test_scene")
+
+    with pytest.raises(exceptions.DuplicateSceneIDError, match="test_scene"):
+        animation.new_scene(scene_id="test_scene")
+
+    assert animation.query_scene("test_scene") is original_scene
+
+
 def test_animation_new_scene_id_generation_deleted_scene(character: EffectCharacter) -> None:
     """Test that a new scene ID is generated when the previous scene ID has been deleted."""
     for _ in range(4):
@@ -209,6 +220,32 @@ def test_animation_looping_active_scene_is_complete(character: EffectCharacter) 
     scene.add_frame(symbol="a", duration=2)
     animation.activate_scene(scene)
     assert animation.active_scene_is_complete() is True
+
+
+def test_animation_looping_scene_emits_complete_once_per_cycle(character: EffectCharacter) -> None:
+    """Emit SCENE_COMPLETE only when sequential looping playback wraps."""
+    scene = character.animation.new_scene(scene_id="test_scene", is_looping=True)
+    scene.add_frame(symbol="a", duration=2)
+    scene.add_frame(symbol="b", duration=2)
+    completed_cycles: list[str] = []
+    character.event_handler.register_event(
+        character.event_handler.Event.SCENE_COMPLETE,
+        scene,
+        character.event_handler.Action.CALLBACK,
+        character.event_handler.Callback(lambda _character: completed_cycles.append(scene.scene_id)),
+    )
+    character.animation.activate_scene(scene)
+
+    for _ in range(3):
+        character.animation.step_animation()
+    assert completed_cycles == []
+
+    character.animation.step_animation()
+    assert completed_cycles == ["test_scene"]
+
+    for _ in range(4):
+        character.animation.step_animation()
+    assert completed_cycles == ["test_scene", "test_scene"]
 
 
 def test_animation_non_looping_active_scene_is_complete(character: EffectCharacter) -> None:
@@ -422,6 +459,65 @@ def test_animation_step_animation_eased_scene_looping(character: EffectCharacter
         character.animation.step_animation()
 
 
+def test_animation_eased_looping_scene_emits_complete_once_per_cycle(character: EffectCharacter) -> None:
+    """Emit SCENE_COMPLETE only when eased looping playback wraps."""
+    scene = character.animation.new_scene(scene_id="test_scene", ease=easing.in_sine, is_looping=True)
+    scene.add_frame(symbol="a", duration=2)
+    scene.add_frame(symbol="b", duration=2)
+    completed_cycles: list[str] = []
+    character.event_handler.register_event(
+        character.event_handler.Event.SCENE_COMPLETE,
+        scene,
+        character.event_handler.Action.CALLBACK,
+        character.event_handler.Callback(lambda _character: completed_cycles.append(scene.scene_id)),
+    )
+    character.animation.activate_scene(scene)
+
+    for _ in range(3):
+        character.animation.step_animation()
+    assert completed_cycles == []
+
+    character.animation.step_animation()
+    assert completed_cycles == ["test_scene"]
+
+
+def test_animation_synced_looping_scene_does_not_emit_complete_per_tick(character: EffectCharacter) -> None:
+    """Use path events rather than per-tick completion events for synced loops."""
+    path = character.motion.new_path()
+    path.new_waypoint(Coord(10, 10))
+    character.motion.activate_path(path)
+    scene = character.animation.new_scene(scene_id="test_scene", sync=Scene.SyncMetric.STEP, is_looping=True)
+    scene.add_frame(symbol="a", duration=2)
+    scene.add_frame(symbol="b", duration=2)
+    completed_cycles: list[str] = []
+    character.event_handler.register_event(
+        character.event_handler.Event.SCENE_COMPLETE,
+        scene,
+        character.event_handler.Action.CALLBACK,
+        character.event_handler.Callback(lambda _character: completed_cycles.append(scene.scene_id)),
+    )
+    character.animation.activate_scene(scene)
+
+    for _ in range(3):
+        character.animation.step_animation()
+
+    assert completed_cycles == []
+
+
+def test_animation_synced_looping_scene_without_path_preserves_frames(character: EffectCharacter) -> None:
+    """Keep a synced looping scene reusable while no motion path is active."""
+    scene = character.animation.new_scene(scene_id="test_scene", sync=Scene.SyncMetric.STEP, is_looping=True)
+    scene.add_frame(symbol="a", duration=2)
+    scene.add_frame(symbol="b", duration=2)
+    character.animation.activate_scene(scene)
+
+    character.animation.step_animation()
+
+    assert [frame.character_visual.symbol for frame in scene.frames] == ["a", "b"]
+    assert character.animation.active_scene is scene
+    assert character.animation.current_character_visual.symbol == "b"
+
+
 def test_animation_deactivate_scene(character: EffectCharacter) -> None:
     """Verify that deactivating a scene clears the active scene reference."""
     scene = character.animation.new_scene(scene_id="test_scene")
@@ -575,6 +671,32 @@ def test_scene_apply_gradient_to_symbols_invalid_symbols(character: EffectCharac
         new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient)
 
 
+@pytest.mark.parametrize("symbols", ["", []])
+def test_scene_apply_gradient_to_symbols_empty_sequence(
+    character: EffectCharacter,
+    symbols: str | list[str],
+) -> None:
+    """Reject an empty symbol sequence without adding partial frames."""
+    new_scene = character.animation.new_scene(scene_id="test_scene")
+    gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=2)
+
+    with pytest.raises(AnimationSceneError, match="at least one symbol"):
+        new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient)
+
+    assert not new_scene.frames
+
+
+def test_scene_apply_gradient_to_symbols_empty_symbol(character: EffectCharacter) -> None:
+    """Reject an empty individual symbol without adding partial frames."""
+    new_scene = character.animation.new_scene(scene_id="test_scene")
+    gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=2)
+
+    with pytest.raises(AnimationSceneError, match="length of 1"):
+        new_scene.apply_gradient_to_symbols(["a", ""], duration=1, fg_gradient=gradient)
+
+    assert not new_scene.frames
+
+
 def test_scene_apply_gradient_to_symbols_single_single_step(character: EffectCharacter) -> None:
     """Verify a single-step gradient produces start and end frames."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
@@ -680,8 +802,8 @@ def test_scene_reset_scene(character: EffectCharacter) -> None:
 
 def test_scene_id_equality(character: EffectCharacter) -> None:
     """Ensure scenes with matching IDs compare as equal."""
-    new_scene = character.animation.new_scene(scene_id="test_scene")
-    new_scene2 = character.animation.new_scene(scene_id="test_scene")
+    new_scene = Scene(scene_id="test_scene")
+    new_scene2 = Scene(scene_id="test_scene")
     assert new_scene == new_scene2
 
 
