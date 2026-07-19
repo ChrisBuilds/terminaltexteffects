@@ -466,6 +466,36 @@ Characters expand from the center.
     ```
 ---
 
+## Fireflies
+
+Fireflies drift in from the canvas edges, blink independently, gather around hidden text positions, and illuminate the original text in uneven clusters.
+
+[Reference](./effects/fireflies.md){ .md-button } [Config](./effects/fireflies.md#terminaltexteffects.effects.effect_fireflies.FirefliesConfig){ .md-button }
+
+??? example "Fireflies Command Line Arguments"
+
+    ```
+    --firefly-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Colors used from dimmest to brightest while fireflies blink. (default: ('6b5c20', 'd4a72c', 'fff2a1'))
+    --firefly-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
+                        One-cell symbols used in sequence while fireflies blink. (default: ('.', '*', 'o', '*'))
+    --movement-speed (float > 0)
+                        Base movement speed for fireflies. Individual speeds vary around this value. (default: 0.18)
+    --wander-cycles (int > 0)
+                        Maximum number of wandering waypoints before a firefly gathers near the text. (default: 3)
+    --auxiliary-count (int >= 0)
+                        Maximum number of atmospheric fireflies. Tiny canvases automatically use fewer. (default: 6)
+    --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
+                        Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color. (default: ('3f4f24', 'd6a928', 'ffe680'))
+    --final-gradient-steps (int > 0) [(int > 0) ...]
+                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: 12)
+    --final-gradient-direction (diagonal, horizontal, vertical, radial)
+                        Direction of the final gradient across the text. (default: Direction.HORIZONTAL)
+
+    Example: terminaltexteffects fireflies --firefly-colors 6b5c20 d4a72c fff2a1 --firefly-symbols . '*' o '*' --movement-speed 0.18 --wander-cycles 3 --auxiliary-count 6 --final-gradient-stops 3f4f24 d6a928 ffe680 --final-gradient-steps 12 --final-gradient-direction horizontal
+    ```
+---
+
 ## Fireworks
 
 Launches characters up the screen where they explode like fireworks and fall into place.

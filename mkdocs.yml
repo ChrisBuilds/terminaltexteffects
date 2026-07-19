@@ -110,6 +110,7 @@ nav:
       - effects/decrypt.md
       - effects/errorcorrect.md
       - effects/expand.md
+      - effects/fireflies.md
       - effects/fireworks.md
       - effects/highlight.md
       - effects/laseretch.md
