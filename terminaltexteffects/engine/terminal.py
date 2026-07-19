@@ -359,11 +359,11 @@ class Canvas:
     ) -> list[EffectCharacter]:
         """Anchors the text within the canvas based on the specified anchor point.
 
-        The `characters` argument must be non-empty; this method expects at least one
-        character when calculating anchored text bounds.
+        Empty character lists are represented by the full canvas bounds. This permits
+        effects to handle whitespace-only input as a quiet canvas.
 
         Args:
-            characters (list[EffectCharacter]): Non-empty list of characters to reposition within the canvas.
+            characters (list[EffectCharacter]): Characters to reposition within the canvas.
             anchor (Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]): Anchor point for the text
                 within the Canvas.
 
@@ -372,6 +372,18 @@ class Canvas:
                 coordinates within the canvas after anchoring.
 
         """
+        if not characters:
+            self.text_left = self.left
+            self.text_right = self.right
+            self.text_top = self.top
+            self.text_bottom = self.bottom
+            self.text_width = self.width
+            self.text_height = self.height
+            self.text_center_row = self.center_row
+            self.text_center_column = self.center_column
+            self.text_center = self.center
+            return []
+
         # translate coordinate based on anchor within the canvas
         input_width = max([character._input_coord.column for character in characters])
         input_height = max([character._input_coord.row for character in characters])

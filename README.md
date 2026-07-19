@@ -189,7 +189,7 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
   Effect:
   Name of the effect to apply. Use <effect> -h for effect specific help.
 
-  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,colorshift,crumble,decrypt,errorcorrect,expand,fireworks,highlight,laseretch,matrix,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slice,slide,smoke,spotlights,spray,swarm,sweep,synthgrid,thunderstorm,unstable,vhstape,waves,wipe}
+  {beams,binarypath,blackhole,bouncyballs,bubbles,burn,colorshift,crumble,decrypt,errorcorrect,expand,fireflies,fireworks,highlight,laseretch,matrix,middleout,orbittingvolley,overflow,pour,print,rain,randomsequence,rings,scattered,slice,slide,smoke,spotlights,spray,swarm,sweep,synthgrid,thunderstorm,unstable,vhstape,waves,wipe}
                         Available Effects
     beams               Create beams which travel over the canvas illuminating the characters behind them.
     binarypath          Binary representations of each character move towards the home coordinate of the character.
@@ -202,6 +202,7 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
     decrypt             Display a movie style decryption effect.
     errorcorrect        Some characters start in the wrong position and are corrected in sequence.
     expand              Expands the text from a single point.
+    fireflies           Fireflies drift through the night and gradually illuminate the text.
     fireworks           Characters launch and explode like fireworks and fall into place.
     highlight           Run a specular highlight across the text.
     laseretch           A laser etches characters onto the terminal.

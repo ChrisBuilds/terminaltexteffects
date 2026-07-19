@@ -39,12 +39,16 @@
   identical rendered output.
 * Motion segment events now trigger `SEGMENT_ENTERED` before `SEGMENT_EXITED` for segments that are completely crossed
   in a single path step, matching the documented enter/exit event semantics.
+* `Canvas._anchor_text()` now accepts an empty input-character list so whitespace-only Python API input can be handled
+  by effects as a quiet canvas instead of raising during terminal construction.
 
 #### Effects Changes (0.16.0)
 
 ---
 
 * Burn smoke now uses `ParticlePool` for pooled helper characters and event-based reclaim behavior.
+* Added Fireflies, a calm nighttime effect with independently blinking input-character lights, bounded curved
+  wandering, spatial gathering, staggered landing illumination, pooled atmospheric helpers, and a final warm pulse.
 * LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 
 ### Bug Fixes (0.16.0)
