@@ -11,6 +11,7 @@ from terminaltexteffects.effects.effect_crumble import Crumble
 from terminaltexteffects.effects.effect_decrypt import Decrypt
 from terminaltexteffects.effects.effect_errorcorrect import ErrorCorrect
 from terminaltexteffects.effects.effect_expand import Expand
+from terminaltexteffects.effects.effect_fireflies import Fireflies
 from terminaltexteffects.effects.effect_fireworks import Fireworks
 from terminaltexteffects.effects.effect_highlight import Highlight
 from terminaltexteffects.effects.effect_laseretch import LaserEtch
