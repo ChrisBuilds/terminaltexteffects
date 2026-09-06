@@ -309,25 +309,13 @@ class Gradient:
             start, end = color_pair
             start_color_ints = start.rgb_ints
             end_color_ints = end.rgb_ints
-            # Initialize an empty list to store the gradient colors
             gradient_colors: list[Color] = []
-            # Calculate the color deltas for each RGB value
-            red_delta = (end_color_ints[0] - start_color_ints[0]) // step_count
-            green_delta = (end_color_ints[1] - start_color_ints[1]) // step_count
-            blue_delta = (end_color_ints[2] - start_color_ints[2]) // step_count
-            # Calculate the intermediate colors and add them to the gradient colors list
             range_start = int(len(spectrum) > 0)  # if this is the first pair, add the start color to the spectrum
             for i in range(range_start, max(step_count, 0)):
-                red = start_color_ints[0] + (red_delta * i)
-                green = start_color_ints[1] + (green_delta * i)
-                blue = start_color_ints[2] + (blue_delta * i)
-
-                # Ensure that the RGB values are within the valid range of 0-255
-                red = max(0, min(red, 255))
-                green = max(0, min(green, 255))
-                blue = max(0, min(blue, 255))
-
-                # Convert the RGB values to a hex color string and add it to the gradient colors list
+                fraction = i / step_count
+                red = round(start_color_ints[0] + ((end_color_ints[0] - start_color_ints[0]) * fraction))
+                green = round(start_color_ints[1] + ((end_color_ints[1] - start_color_ints[1]) * fraction))
+                blue = round(start_color_ints[2] + ((end_color_ints[2] - start_color_ints[2]) * fraction))
                 gradient_colors.append(Color(f"{red:02x}{green:02x}{blue:02x}"))
             # Add the end color to the gradient colors list
             gradient_colors.append(end)

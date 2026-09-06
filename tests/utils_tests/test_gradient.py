@@ -41,7 +41,20 @@ def test_gradient_slice() -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
     assert g[0] == Color("#ffffff")
     assert g[-1] == Color("#000000")
-    assert g[1:3] == [Color("#bfbfbf"), Color("#7f7f7f")]
+    assert g[1:3] == [Color("#bfbfbf"), Color("#808080")]
+
+
+def test_gradient_interpolates_small_ascending_channel_deltas() -> None:
+    gradient = Gradient(Color("#000000"), Color("#010101"), steps=10)
+
+    assert [color.rgb_color for color in gradient] == ["000000"] * 6 + ["010101"] * 5
+
+
+def test_gradient_does_not_overshoot_descending_channel_deltas() -> None:
+    gradient = Gradient(Color("#909090"), Color("#808080"), steps=100)
+
+    assert all(0x80 <= channel <= 0x90 for color in gradient for channel in color.rgb_ints)
+    assert gradient[-2] == Color("#808080")
 
 
 def test_gradient_iter() -> None:
@@ -115,7 +128,7 @@ def test_gradient_loop() -> None:
 def test_gradient_get_color_at_fraction() -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
     assert g.get_color_at_fraction(0) == Color("#ffffff")
-    assert g.get_color_at_fraction(0.5) == Color("#7f7f7f")
+    assert g.get_color_at_fraction(0.5) == Color("#808080")
     assert g.get_color_at_fraction(1) == Color("#000000")
 
 
