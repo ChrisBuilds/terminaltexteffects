@@ -57,7 +57,7 @@ def test_canvas_anchor_text(anchor) -> None:
     elif anchor == "se":
         assert chars[1].motion.current_coord == Coord(10, 1)
     elif anchor == "e":
-        assert chars[1].motion.current_coord == Coord(10, 6)
+        assert chars[1].motion.current_coord == Coord(10, 5)
     elif anchor == "ne":
         assert chars[1].motion.current_coord == Coord(10, 10)
     elif anchor == "n":
@@ -65,10 +65,30 @@ def test_canvas_anchor_text(anchor) -> None:
     elif anchor == "nw":
         assert chars[0].motion.current_coord == Coord(1, 10)
     elif anchor == "w":
-        assert chars[0].motion.current_coord == Coord(1, 6)
+        assert chars[0].motion.current_coord == Coord(1, 5)
     elif anchor == "c":
-        assert chars[0].motion.current_coord == Coord(5, 6)
-        assert chars[1].motion.current_coord == Coord(6, 6)
+        assert chars[0].motion.current_coord == Coord(5, 5)
+        assert chars[1].motion.current_coord == Coord(6, 5)
+
+
+@pytest.mark.parametrize(
+    ("input_data", "expected_coords"),
+    [
+        pytest.param("X", [Coord(3, 3)], id="single-character"),
+        pytest.param("XYZ", [Coord(2, 3), Coord(3, 3), Coord(4, 3)], id="odd-width"),
+        pytest.param("X\nY\nZ", [Coord(3, 4), Coord(3, 3), Coord(3, 2)], id="odd-height"),
+    ],
+)
+def test_terminal_center_anchor_odd_text_dimensions(input_data: str, expected_coords: list[Coord]) -> None:
+    """Verify center anchoring aligns odd text dimensions to the canvas center."""
+    config = TerminalConfig._build_config()
+    config.canvas_width = 5
+    config.canvas_height = 5
+    config.anchor_text = "c"
+
+    terminal = Terminal(input_data, config=config)
+
+    assert [character.input_coord for character in terminal.get_characters()] == expected_coords
 
 
 def test_canvas_anchor_empty_text_resets_bounds() -> None:

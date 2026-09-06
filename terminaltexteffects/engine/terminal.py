@@ -381,14 +381,14 @@ class Canvas:
         column_delta = row_delta = 0
         if input_width != self.width:
             if anchor in ("s", "n", "c"):
-                column_delta = self.center_column - (input_width // 2)
+                column_delta = self.center_column - ((input_width + 1) // 2)
             elif anchor in ("se", "e", "ne"):
                 column_delta = self.right - input_width
             elif anchor in ("sw", "w", "nw"):
                 column_delta = self.left - 1
         if input_height != self.height:
             if anchor in ("w", "e", "c"):
-                row_delta = self.center_row - (input_height // 2)
+                row_delta = self.center_row - ((input_height + 1) // 2)
             elif anchor in ("nw", "n", "ne"):
                 row_delta = self.top - input_height
             elif anchor in ("sw", "s", "se"):
