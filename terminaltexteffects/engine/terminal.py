@@ -583,6 +583,8 @@ class Terminal:
         self._next_character_id = 0
         self._input_colors_frequency: dict[Color, int] = {}
         self._preprocessed_character_lines = self._preprocess_input_data(input_data)
+        self._wrapped_character_lines: list[list[EffectCharacter]] | None = None
+        self._wrapped_character_lines_width: int | None = None
         self._terminal_width, self._terminal_height = self._get_terminal_dimensions()
         self.canvas = Canvas(*self._get_canvas_dimensions())
         if not self.config.ignore_terminal_dimensions:
@@ -927,7 +929,7 @@ class Terminal:
         else:
             input_height = len(self._preprocessed_character_lines)
             if self.config.wrap_text:
-                input_height = len(self._wrap_lines(self._preprocessed_character_lines, canvas_width))
+                input_height = len(self._get_wrapped_character_lines(canvas_width))
             if self.config.ignore_terminal_dimensions:
                 canvas_height = input_height
             else:
@@ -991,6 +993,13 @@ class Terminal:
             wrapped_lines.append(current_line)
         return wrapped_lines
 
+    def _get_wrapped_character_lines(self, width: int) -> list[list[EffectCharacter]]:
+        """Return cached wrapped input rows for the given canvas width."""
+        if self._wrapped_character_lines is None or self._wrapped_character_lines_width != width:
+            self._wrapped_character_lines = self._wrap_lines(self._preprocessed_character_lines, width)
+            self._wrapped_character_lines_width = width
+        return self._wrapped_character_lines
+
     def _setup_input_characters(self) -> list[EffectCharacter]:
         """Set up the input characters discovered during preprocessing.
 
@@ -1005,9 +1014,8 @@ class Terminal:
             list[EffectCharacter]: list of EffectCharacter objects
 
         """
-        formatted_lines = []
         formatted_lines = (
-            self._wrap_lines(self._preprocessed_character_lines, self.canvas.right)
+            self._get_wrapped_character_lines(self.canvas.right)
             if self.config.wrap_text
             else self._preprocessed_character_lines
         )

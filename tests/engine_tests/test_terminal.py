@@ -328,6 +328,33 @@ def test_terminal_wrap_text_ignoring_terminal_dimensions_preserves_all_input() -
     assert (terminal.canvas.text_width, terminal.canvas.text_height) == (3, 2)
 
 
+def test_terminal_wrap_text_reuses_wrapped_rows(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify canvas sizing and input setup share one wrapped-row allocation."""
+    original_wrap_lines = Terminal._wrap_lines
+    wrap_call_count = 0
+
+    def wrapped_lines_spy(
+        terminal: Terminal,
+        lines: list[list[EffectCharacter]],
+        width: int,
+    ) -> list[list[EffectCharacter]]:
+        nonlocal wrap_call_count
+        wrap_call_count += 1
+        return original_wrap_lines(terminal, lines, width)
+
+    monkeypatch.setattr(Terminal, "_wrap_lines", wrapped_lines_spy)
+    config = TerminalConfig._build_config()
+    config.canvas_width = 3
+    config.wrap_text = True
+    config.ignore_terminal_dimensions = True
+
+    terminal = Terminal(input_data="ABCDEF", config=config)
+
+    assert wrap_call_count == 1
+    assert terminal._wrapped_character_lines is not None
+    assert len(terminal._wrapped_character_lines) == 2
+
+
 def test_get_terminal_dimensions_raise_oserror(monkeypatch: pytest.MonkeyPatch) -> None:
     def raise_oserror() -> NoReturn:
         raise OSError

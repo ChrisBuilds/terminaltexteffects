@@ -39,6 +39,8 @@
   identical rendered output.
 * Eased scene playback now stores one cumulative frame boundary per frame instead of one dictionary entry per playback
   tick. This reduces animation build-time allocation and memory use for long-duration scenes.
+* Wrapped terminal input rows are now calculated once and reused for both canvas sizing and character setup, reducing
+  preprocessing allocation for wrapped input.
 * Motion segment events now trigger `SEGMENT_ENTERED` before `SEGMENT_EXITED` for segments that are completely crossed
   in a single path step, matching the documented enter/exit event semantics.
 

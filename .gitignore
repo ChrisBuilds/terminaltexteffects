@@ -160,6 +160,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 notes.txt
+OPTIMIZATION_NOTES.md
 terminaltexteffects/test_tte.py
 */*.stats
 *.prof
