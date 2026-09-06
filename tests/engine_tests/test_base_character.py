@@ -7,7 +7,6 @@ from typing import Any
 import pytest
 
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.engine.animation import Scene
 from terminaltexteffects.engine.motion import Path
 from terminaltexteffects.utils.exceptions.base_character_exceptions import (
     DuplicateEventRegistrationError,
@@ -253,6 +252,32 @@ def test_eventhandler_handle_event(eventhandler: EventHandler) -> None:
     eventhandler.register_event(EventHandler.Event.PATH_COMPLETE, p1, EventHandler.Action.ACTIVATE_PATH, p2)
     eventhandler._handle_event(EventHandler.Event.PATH_COMPLETE, p1)
     assert eventhandler.character.motion.active_path == p2
+
+
+def test_eventhandler_handle_event_dispatches_scene_and_character_actions(eventhandler: EventHandler) -> None:
+    """Test that scene and character actions execute with their registered targets."""
+    caller = Path("caller")
+    scene = eventhandler.character.animation.new_scene(scene_id="scene")
+    scene.add_frame("b", duration=1)
+    callback_characters: list[EffectCharacter] = []
+    callback = EventHandler.Callback(callback_characters.append)
+    target_coord = Coord(3, 4)
+    event = EventHandler.Event.PATH_COMPLETE
+
+    eventhandler.character.animation.set_appearance("x")
+    eventhandler.register_event(event, caller, EventHandler.Action.ACTIVATE_SCENE, scene)
+    eventhandler.register_event(event, caller, EventHandler.Action.SET_LAYER, 5)
+    eventhandler.register_event(event, caller, EventHandler.Action.SET_COORDINATE, target_coord)
+    eventhandler.register_event(event, caller, EventHandler.Action.RESET_APPEARANCE)
+    eventhandler.register_event(event, caller, EventHandler.Action.CALLBACK, callback)
+
+    eventhandler._handle_event(event, caller)
+
+    assert eventhandler.character.animation.active_scene is scene
+    assert eventhandler.character.layer == 5
+    assert eventhandler.character.motion.current_coord == target_coord
+    assert eventhandler.character.animation.current_character_visual.symbol == "a"
+    assert callback_characters == [eventhandler.character]
 
 
 def test_eventhandler_handle_event_deactivate_path_with_none_target(eventhandler: EventHandler) -> None:

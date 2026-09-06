@@ -358,24 +358,32 @@ class EventHandler:
             actions registered for that event/caller pair are executed in order.
 
         """
-        action_map = {
-            EventHandler.Action.ACTIVATE_PATH: self.character.motion.activate_path,
-            EventHandler.Action.ACTIVATE_SCENE: self.character.animation.activate_scene,
-            EventHandler.Action.DEACTIVATE_PATH: self.character.motion.deactivate_path,
-            EventHandler.Action.DEACTIVATE_SCENE: self.character.animation.deactivate_scene,
-            EventHandler.Action.RESET_APPEARANCE: lambda _: self.character.animation.set_appearance(
-                self.character.input_symbol,
-            ),
-            EventHandler.Action.SET_LAYER: lambda layer: setattr(self.character, "layer", layer),
-            EventHandler.Action.SET_COORDINATE: lambda coord: setattr(self.character.motion, "current_coord", coord),
-            EventHandler.Action.CALLBACK: lambda callback: callback.callback(self.character, *callback.args),
-        }
-
-        if (event, caller) not in self.registered_events:
+        event_actions = self.registered_events.get((event, caller))
+        if event_actions is None:
             return
-        for event_action in self.registered_events[(event, caller)]:
-            action, target = event_action
-            action_map[action](target)  # type: ignore[operator]
+        for action, target in event_actions:
+            if action is EventHandler.Action.ACTIVATE_PATH:
+                self.character.motion.activate_path(target)  # type: ignore[arg-type]
+            elif action is EventHandler.Action.ACTIVATE_SCENE:
+                self.character.animation.activate_scene(target)  # type: ignore[arg-type]
+            elif action is EventHandler.Action.DEACTIVATE_PATH:
+                if target is None:
+                    self.character.motion.deactivate_path()
+                else:
+                    self.character.motion.deactivate_path(target)  # type: ignore[arg-type]
+            elif action is EventHandler.Action.DEACTIVATE_SCENE:
+                if target is None:
+                    self.character.animation.deactivate_scene()
+                else:
+                    self.character.animation.deactivate_scene(target)  # type: ignore[arg-type]
+            elif action is EventHandler.Action.RESET_APPEARANCE:
+                self.character.animation.set_appearance(self.character.input_symbol)
+            elif action is EventHandler.Action.SET_LAYER:
+                self.character.layer = target  # type: ignore[assignment]
+            elif action is EventHandler.Action.SET_COORDINATE:
+                self.character.motion.current_coord = target  # type: ignore[assignment]
+            elif action is EventHandler.Action.CALLBACK:
+                target.callback(self.character, *target.args)  # type: ignore[union-attr]
 
 
 class EffectCharacter:
