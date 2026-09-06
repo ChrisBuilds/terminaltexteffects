@@ -84,6 +84,17 @@ class BaseConfig:
     a subparser must define a `parser_spec` attribute with type `argutils.ParserSpec`.
     """
 
+    def __post_init__(self) -> None:
+        """Replace unprovided `ArgSpec` field values with their defaults.
+
+        This makes direct configuration construction suitable for library use
+        while preserving `ArgSpec` values on the class for parser generation.
+        """
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if isinstance(value, argutils.ArgSpec):
+                object.__setattr__(self, field.name, value.default)
+
     @classmethod
     def _populate_parser(cls, parser: argparse.ArgumentParser | argparse._SubParsersAction) -> None:
         """Populate the argument parser with the config class's argument specs.

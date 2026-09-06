@@ -91,6 +91,13 @@ def test_terminal_center_anchor_odd_text_dimensions(input_data: str, expected_co
     assert [character.input_coord for character in terminal.get_characters()] == expected_coords
 
 
+def test_terminal_direct_config_uses_defaults() -> None:
+    """Verify library callers can pass a directly constructed config to Terminal."""
+    terminal = Terminal("A", config=TerminalConfig())
+
+    assert terminal.config == TerminalConfig._build_config()
+
+
 def test_canvas_anchor_empty_text_resets_bounds() -> None:
     """Verify anchoring an empty text region clears any prior text bounds."""
     canvas = Canvas(10, 10)

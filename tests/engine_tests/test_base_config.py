@@ -48,6 +48,22 @@ def test_build_config_none_uses_argspec_defaults() -> None:
     assert config.beta == "b"
 
 
+def test_direct_config_uses_argspec_defaults() -> None:
+    """Direct construction should resolve `ArgSpec` defaults for library users."""
+    config = ExampleConfig()
+
+    assert config.alpha == 1
+    assert config.beta == "b"
+
+
+def test_direct_config_preserves_explicit_values() -> None:
+    """Direct construction should retain values passed by the caller."""
+    config = ExampleConfig(alpha=7)
+
+    assert config.alpha == 7
+    assert config.beta == "b"
+
+
 def test_build_config_full_namespace_uses_namespace_values() -> None:
     """Use all provided namespace values when every field is present."""
     parsed_args: argparse.Namespace = argparse.Namespace(alpha=7, beta="z")

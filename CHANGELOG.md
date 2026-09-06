@@ -66,6 +66,8 @@
   `DuplicateSceneIDError`, preventing event callbacks from retaining detached scene instances.
 * Terminal - Fixed terminal construction for empty and fully clipped text regions. Effects now raise a clear
   `EmptyInputError` when no visible input characters remain within the configured canvas.
+* Configuration - Fixed direct `BaseConfig` and `TerminalConfig` construction leaving CLI `ArgSpec` objects in config
+  fields. Library callers can now instantiate configs with defaults and pass them directly to effects or `Terminal`.
 * Terminal - Fixed wrapped input being clipped when terminal dimensions are ignored. Automatic canvas height now
   includes every wrapped input row.
 * Terminal - Fixed center anchoring for odd-sized text regions. Their center cells now align with the canvas center.
