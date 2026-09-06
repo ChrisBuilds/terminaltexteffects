@@ -69,6 +69,8 @@
   their specified stop range and transition smoothly to the end stop.
 * Geometry - Fixed cached coordinate results being shared as mutable lists. Callers can now reorder or modify returned
   coordinate lists without corrupting later cache hits.
+* Geometry - Fixed Bézier path-length estimation omitting the final segment to the endpoint. Curved motion now uses
+  the complete sampled path length when calculating its progress.
 * Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 * Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number

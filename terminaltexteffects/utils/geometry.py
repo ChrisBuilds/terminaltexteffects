@@ -320,10 +320,9 @@ def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord
         control = (control,)
     length = 0.0
     prev_coord = start
-    for t in range(1, 10):
+    for t in range(1, 11):
         coord = find_coord_on_bezier_curve(start, control, end, t / 10)
         length += find_length_of_line(prev_coord, coord, double_row_diff=True)
-        prev_coord = coord
         prev_coord = coord
     return length
 

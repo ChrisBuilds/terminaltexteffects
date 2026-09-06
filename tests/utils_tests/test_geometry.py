@@ -183,7 +183,7 @@ def test_find_length_of_bezier_curve() -> None:
     end = geometry.Coord(10, 10)
     control = geometry.Coord(5, 0)
     length = geometry.find_length_of_bezier_curve(start, end, control)
-    assert length == 19.008767012245137
+    assert length == 23.1318726378628
 
 
 def test_find_length_of_bezier_curve_two_control_points() -> None:
@@ -193,7 +193,16 @@ def test_find_length_of_bezier_curve_two_control_points() -> None:
     control1 = geometry.Coord(5, 0)
     control2 = geometry.Coord(5, 10)
     length = geometry.find_length_of_bezier_curve(start, (control1, control2), end)
-    assert length == 22.662619116234062
+    assert length == 23.662619116234062
+
+
+def test_find_length_of_bezier_curve_includes_final_interval() -> None:
+    """Test that the curve-length approximation includes the endpoint."""
+    start = geometry.Coord(0, 0)
+    control = geometry.Coord(0, 10)
+    end = geometry.Coord(10, 10)
+
+    assert geometry.find_length_of_bezier_curve(start, control, end) == 26.94427190999916
 
 
 def test_find_length_of_line() -> None:
