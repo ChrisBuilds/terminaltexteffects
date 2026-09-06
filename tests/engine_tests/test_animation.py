@@ -202,13 +202,13 @@ def test_animation_query_nonexistent_scene(character: EffectCharacter) -> None:
         animation.query_scene("nonexistent_scene")
 
 
-def test_animation_looping_active_scene_is_complete(character: EffectCharacter) -> None:
-    """Test that the looping active scene is complete after all frames have been processed."""
+def test_animation_looping_active_scene_is_incomplete(character: EffectCharacter) -> None:
+    """Test that an active looping scene is not treated as complete."""
     animation = character.animation
     scene = animation.new_scene(scene_id="test_scene", is_looping=True)
     scene.add_frame(symbol="a", duration=2)
     animation.activate_scene(scene)
-    assert animation.active_scene_is_complete() is True
+    assert animation.active_scene_is_complete() is False
 
 
 def test_animation_non_looping_active_scene_is_complete(character: EffectCharacter) -> None:
@@ -358,7 +358,7 @@ def test_animation_ease_animation_active_scene(character: EffectCharacter) -> No
     for _ in range(10):
         character.animation.step_animation()
     n = character.animation._ease_animation(easing.in_sine)
-    assert n == 0.2928932188134524
+    assert n == pytest.approx(easing.in_sine(10 / 19))
 
 
 def test_animation_step_animation_sync_step(character: EffectCharacter) -> None:
@@ -403,23 +403,58 @@ def test_animation_step_animation_sync_waypoint_deactivated(character: EffectCha
 
 
 def test_animation_step_animation_eased_scene(character: EffectCharacter) -> None:
-    """Ensure eased scenes progress until completion."""
-    scene = character.animation.new_scene(scene_id="test_scene", ease=easing.in_sine)
-    scene.add_frame(symbol="a", duration=10)
-    scene.add_frame(symbol="b", duration=10)
+    """Ensure eased scenes display their final frame before completion."""
+    scene = character.animation.new_scene(scene_id="test_scene", ease=easing.linear)
+    for symbol in "abc":
+        scene.add_frame(symbol=symbol, duration=1)
     character.animation.activate_scene(scene)
+    observed_symbols = []
     while character.animation.active_scene:
         character.animation.step_animation()
+        observed_symbols.append(character.animation.current_character_visual.symbol)
+
+    assert observed_symbols == ["a", "b", "c"]
+
+
+def test_animation_step_animation_eased_scene_preserves_duration(character: EffectCharacter) -> None:
+    """Ensure eased scenes preserve frame-duration playback ticks."""
+    scene = character.animation.new_scene(scene_id="test_scene", ease=easing.linear)
+    for symbol, duration in (("a", 2), ("b", 3), ("c", 2)):
+        scene.add_frame(symbol=symbol, duration=duration)
+    character.animation.activate_scene(scene)
+    observed_symbols = []
+    while character.animation.active_scene:
+        character.animation.step_animation()
+        observed_symbols.append(character.animation.current_character_visual.symbol)
+
+    assert observed_symbols == ["a", "a", "b", "b", "b", "c", "c"]
+
+
+def test_animation_step_animation_eased_single_frame_scene(character: EffectCharacter) -> None:
+    """Ensure a single-frame eased scene does not divide by zero."""
+    scene = character.animation.new_scene(scene_id="test_scene", ease=easing.linear)
+    scene.add_frame(symbol="a", duration=1)
+    character.animation.activate_scene(scene)
+
+    character.animation.step_animation()
+
+    assert character.animation.current_character_visual.symbol == "a"
+    assert character.animation.active_scene is None
 
 
 def test_animation_step_animation_eased_scene_looping(character: EffectCharacter) -> None:
-    """Ensure eased looping scenes continue cycling without errors."""
-    scene = character.animation.new_scene(scene_id="test_scene", ease=easing.in_sine, is_looping=True)
-    scene.add_frame(symbol="a", duration=10)
-    scene.add_frame(symbol="b", duration=10)
+    """Ensure eased looping scenes include the final frame in each cycle."""
+    scene = character.animation.new_scene(scene_id="test_scene", ease=easing.linear, is_looping=True)
+    for symbol in "abc":
+        scene.add_frame(symbol=symbol, duration=1)
     character.animation.activate_scene(scene)
-    for _ in range(100):
+    observed_symbols = []
+    for _ in range(6):
         character.animation.step_animation()
+        observed_symbols.append(character.animation.current_character_visual.symbol)
+
+    assert observed_symbols == ["a", "b", "c", "a", "b", "c"]
+    assert character.animation.active_scene is scene
 
 
 def test_animation_deactivate_scene(character: EffectCharacter) -> None:

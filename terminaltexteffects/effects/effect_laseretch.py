@@ -322,6 +322,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
         def disable(self) -> None:
             """Disable the laser beam by setting the visibility of the beam characters to False."""
             for char in self.beam_chars:
+                char.animation.deactivate_scene()
                 self.terminal.set_character_visibility(char, is_visible=False)
 
     def __init__(self, effect: LaserEtch) -> None:

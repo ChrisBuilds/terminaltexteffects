@@ -636,14 +636,14 @@ class Animation:
     def active_scene_is_complete(self) -> bool:
         """Return whether the active scene should be treated as complete.
 
-        A scene is treated as complete when there is no active scene, when the active
-        scene has no remaining frames to play, or when the active scene is looping.
+        A scene is treated as complete when there is no active scene or when the active
+        scene has no remaining frames to play.
 
         Returns:
             bool: True if the active scene is complete, False otherwise.
 
         """
-        return bool(not self.active_scene or not self.active_scene.frames or self.active_scene.is_looping)
+        return bool(not self.active_scene or not self.active_scene.frames)
 
     def set_appearance(self, symbol: str | None = None, colors: graphics.ColorPair | None = None) -> None:
         """Update the current character visual with the symbol and colors provided.
@@ -786,7 +786,10 @@ class Animation:
         """
         if self.active_scene is None:
             return 0
-        elapsed_step_ratio = self.active_scene.easing_current_step / self.active_scene.easing_total_steps
+        elapsed_step_ratio = self.active_scene.easing_current_step / max(
+            self.active_scene.easing_total_steps - 1,
+            1,
+        )
         return easing_func(elapsed_step_ratio)
 
     def step_animation(self) -> None:
@@ -862,14 +865,13 @@ class Animation:
         if not self.active_scene_is_complete():
             return
 
+        scene.reset_scene()
         if not scene.is_looping:
-            scene.reset_scene()
             self.active_scene = None
-
-        self.character.event_handler._handle_event(
-            self.character.event_handler.Event.SCENE_COMPLETE,
-            scene,
-        )
+            self.character.event_handler._handle_event(
+                self.character.event_handler.Event.SCENE_COMPLETE,
+                scene,
+            )
 
     def activate_scene(self, scene: Scene | str) -> None:
         """Set the active scene and updates the current character visual.
