@@ -114,6 +114,16 @@ def test_scene_add_frame() -> None:
     assert frame.character_visual.bold is True
 
 
+def test_scene_eased_frame_boundaries_scale_with_frame_count() -> None:
+    """Ensure eased playback stores one cumulative boundary per frame."""
+    scene = Scene(scene_id="test_scene", ease=easing.linear)
+    for symbol, duration in (("a", 2), ("b", 3), ("c", 2)):
+        scene.add_frame(symbol=symbol, duration=duration)
+
+    assert scene._frame_end_steps == [2, 5, 7]
+    assert len(scene._frame_end_steps) == len(scene.frames)
+
+
 def test_scene_add_frame_invalid_duration() -> None:
     """Test that a FrameDurationError is raised when a frame with a duration of 0 is added to the scene."""
     scene = Scene(scene_id="test_scene")

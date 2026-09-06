@@ -37,6 +37,8 @@
 * `Motion.activate_path()` now replaces an existing origin segment in place when reactivating a path instead of
   removing and reinserting the first segment. This reduces list churn in activation-heavy effects while preserving
   identical rendered output.
+* Eased scene playback now stores one cumulative frame boundary per frame instead of one dictionary entry per playback
+  tick. This reduces animation build-time allocation and memory use for long-duration scenes.
 * Motion segment events now trigger `SEGMENT_ENTERED` before `SEGMENT_EXITED` for segments that are completely crossed
   in a single path step, matching the documented enter/exit event semantics.
 

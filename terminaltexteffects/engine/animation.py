@@ -11,6 +11,7 @@ Classes:
 from __future__ import annotations
 
 import typing
+from bisect import bisect_right
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -143,7 +144,7 @@ class Scene:
         use_xterm_colors (bool): Whether to convert all colors to XTerm-256 colors
         frames (list[Frame]): The list of Frames in the Scene
         played_frames (list[Frame]): The list of Frames that have been played
-        frame_index_map (dict[int, Frame]): A mapping of frame index to Frame
+        _frame_end_steps (list[int]): Cumulative frame-duration boundaries for eased playback.
         easing_total_steps (int): The total number of steps in the easing function
         easing_current_step (int): The current step in the easing function
         preexisting_colors (graphics.ColorPair | None): The preexisting colors parsed from the input.
@@ -194,7 +195,7 @@ class Scene:
         self.use_xterm_colors = use_xterm_colors
         self.frames: list[Frame] = []
         self.played_frames: list[Frame] = []
-        self.frame_index_map: dict[int, Frame] = {}
+        self._frame_end_steps: list[int] = []
         self.easing_total_steps: int = 0
         self.easing_current_step: int = 0
         self.preexisting_colors: graphics.ColorPair | None = None
@@ -296,9 +297,8 @@ class Scene:
         )
         frame = Frame(char_vis, duration)
         self.frames.append(frame)
-        for _ in range(frame.duration):
-            self.frame_index_map[self.easing_total_steps] = frame
-            self.easing_total_steps += 1
+        self.easing_total_steps += frame.duration
+        self._frame_end_steps.append(self.easing_total_steps)
 
     def activate(self) -> CharacterVisual:
         """Activate the Scene by returning the first frame's `CharacterVisual`.
@@ -801,7 +801,7 @@ class Animation:
 
         Behavior:
             * Synced scenes select a frame based on the active motion path's progress.
-            * Eased scenes select a frame from `frame_index_map` using easing progress.
+            * Eased scenes select a frame using cumulative duration boundaries and easing progress.
             * All other scenes advance by consuming frame duration through `Scene.get_next_visual()`.
             * If a synced scene no longer has an active motion path, the final frame is applied and
               the scene is marked complete.
@@ -854,7 +854,8 @@ class Animation:
         final_frame_index = max(scene.easing_total_steps - 1, 0)
         frame_index = round(easing_factor * final_frame_index)
         frame_index = max(min(frame_index, final_frame_index), 0)
-        self.current_character_visual = scene.frame_index_map[frame_index].character_visual
+        frame_position = bisect_right(scene._frame_end_steps, frame_index)
+        self.current_character_visual = scene.frames[frame_position].character_visual
 
         scene.easing_current_step += 1
         if scene.easing_current_step == scene.easing_total_steps:
