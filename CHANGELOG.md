@@ -67,6 +67,8 @@
 * Terminal - Fixed center anchoring for odd-sized text regions. Their center cells now align with the canvas center.
 * Gradient - Fixed fractional RGB interpolation for long and descending gradients. Generated colors now stay within
   their specified stop range and transition smoothly to the end stop.
+* Geometry - Fixed cached coordinate results being shared as mutable lists. Callers can now reorder or modify returned
+  coordinate lists without corrupting later cache hits.
 * Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 * Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number

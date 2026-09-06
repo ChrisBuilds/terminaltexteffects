@@ -19,8 +19,12 @@ from __future__ import annotations
 
 import functools
 import math
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
-from typing import Iterator
+from typing import ParamSpec
+
+
+P = ParamSpec("P")
 
 
 @dataclass(eq=True, frozen=True)
@@ -45,6 +49,28 @@ class Coord:
 
     column: int
     row: int
+
+
+def _cache_coordinate_list(
+    maxsize: int,
+) -> Callable[[Callable[P, list[Coord]]], Callable[P, list[Coord]]]:
+    """Cache coordinate sequences immutably while returning a fresh list to callers."""
+
+    def decorator(function: Callable[P, list[Coord]]) -> Callable[P, list[Coord]]:
+        @functools.lru_cache(maxsize=maxsize)
+        def cached_function(*args: P.args, **kwargs: P.kwargs) -> tuple[Coord, ...]:
+            return tuple(function(*args, **kwargs))
+
+        @functools.wraps(function)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> list[Coord]:
+            return list(cached_function(*args, **kwargs))
+
+        wrapper.cache_clear = cached_function.cache_clear  # type: ignore[attr-defined]
+        wrapper.cache_info = cached_function.cache_info  # type: ignore[attr-defined]
+        wrapper.cache_parameters = cached_function.cache_parameters  # type: ignore[attr-defined]
+        return wrapper
+
+    return decorator
 
 
 def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, unique: bool = True) -> list[Coord]:
@@ -86,7 +112,7 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, 
     return points
 
 
-find_coords_on_circle = functools.wraps(find_coords_on_circle)(functools.lru_cache(maxsize=8192)(find_coords_on_circle))
+find_coords_on_circle = _cache_coordinate_list(8192)(find_coords_on_circle)
 
 
 def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
@@ -120,7 +146,7 @@ def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
     return coords_in_ellipse
 
 
-find_coords_in_circle = functools.wraps(find_coords_in_circle)(functools.lru_cache(maxsize=8192)(find_coords_in_circle))
+find_coords_in_circle = _cache_coordinate_list(8192)(find_coords_in_circle)
 
 
 def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
@@ -152,7 +178,7 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
     return coords
 
 
-find_coords_in_rect = functools.wraps(find_coords_in_rect)(functools.lru_cache(maxsize=8192)(find_coords_in_rect))
+find_coords_in_rect = _cache_coordinate_list(8192)(find_coords_in_rect)
 
 
 def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> list[Coord]:
@@ -185,7 +211,7 @@ def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> lis
     return coords
 
 
-find_coords_on_rect = functools.wraps(find_coords_on_rect)(functools.lru_cache(maxsize=8192)(find_coords_on_rect))
+find_coords_on_rect = _cache_coordinate_list(8192)(find_coords_on_rect)
 
 
 def extrapolate_along_ray(origin: Coord, target: Coord, offset_from_target: float) -> Coord:

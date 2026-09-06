@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Callable
+
 import pytest
 
 from terminaltexteffects.utils import geometry
@@ -43,6 +45,27 @@ def test_find_coords_on_circle_unique(coord: geometry.Coord) -> None:
     """Test that the function returns the correct number of unique coordinates."""
     coords = geometry.find_coords_on_circle(coord, 5, 0, unique=True)
     assert len(set(coords)) == len(coords)
+
+
+@pytest.mark.parametrize(
+    ("function", "args"),
+    [
+        (geometry.find_coords_on_circle, (geometry.Coord(5, 5), 3)),
+        (geometry.find_coords_in_circle, (geometry.Coord(5, 5), 3)),
+        (geometry.find_coords_in_rect, (geometry.Coord(5, 5), 3)),
+        (geometry.find_coords_on_rect, (geometry.Coord(5, 5), 3, 3)),
+    ],
+)
+def test_cached_coordinate_results_are_not_mutable(
+    function: Callable[..., list[geometry.Coord]],
+    args: tuple[object, ...],
+) -> None:
+    """Test that mutating a returned list does not affect a later cache hit."""
+    expected_coords = function(*args)
+    modified_coords = function(*args)
+    modified_coords.clear()
+
+    assert function(*args) == expected_coords
 
 
 def test_find_coords_in_circle(coord: geometry.Coord) -> None:
