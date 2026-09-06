@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import shutil
 from typing import NoReturn
 
@@ -623,6 +625,37 @@ def test_terminal_get_characters_grouped_with_grouping(grouping) -> None:
     elif grouping == CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT:
         assert chars[0][0].input_symbol == "k"
         assert chars[-1][-1].input_symbol == "e"
+
+
+@pytest.mark.parametrize(
+    ("grouping", "expected_groups"),
+    [
+        pytest.param(
+            CharacterGroup.COLUMN_LEFT_TO_RIGHT,
+            [["d", "a"], ["e", "b"], ["f", "c"]],
+            id="left-to-right",
+        ),
+        pytest.param(
+            CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            [["f", "c"], ["e", "b"], ["d", "a"]],
+            id="right-to-left",
+        ),
+    ],
+)
+def test_terminal_get_characters_grouped_columns_preserve_order_and_canvas_bounds(
+    grouping: CharacterGroup,
+    expected_groups: list[list[str]],
+) -> None:
+    """Verify column groups retain row order and exclude characters beyond the canvas."""
+    config = TerminalConfig._build_config()
+    config.canvas_width = 3
+    config.canvas_height = 2
+    terminal = Terminal(input_data="abc\ndef", config=config)
+    terminal.add_character("z", Coord(4, 1))
+
+    groups = terminal.get_characters_grouped(grouping, added_chars=True)
+
+    assert [[character.input_symbol for character in group] for group in groups] == expected_groups
 
 
 def test_terminal_get_characters_grouped_invalid_grouping() -> None:

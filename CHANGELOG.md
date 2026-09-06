@@ -41,6 +41,8 @@
   tick. This reduces animation build-time allocation and memory use for long-duration scenes.
 * Wrapped terminal input rows are now calculated once and reused for both canvas sizing and character setup, reducing
   preprocessing allocation for wrapped input.
+* Column character grouping now buckets selected characters in one pass instead of rescanning every character for every
+  canvas column, reducing grouping work for wide canvases.
 * Motion segment events now trigger `SEGMENT_ENTERED` before `SEGMENT_EXITED` for segments that are completely crossed
   in a single path step, matching the documented enter/exit event semantics.
 

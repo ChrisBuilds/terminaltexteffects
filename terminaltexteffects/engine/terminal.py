@@ -1257,13 +1257,16 @@ class Terminal:
             CharacterGroup.COLUMN_LEFT_TO_RIGHT,
             CharacterGroup.COLUMN_RIGHT_TO_LEFT,
         ):
-            columns = []
-            for column_index in range(self.canvas.right + 1):
-                characters_in_column = [
-                    character for character in all_characters if character.input_coord.column == column_index
-                ]
-                if characters_in_column:
-                    columns.append(characters_in_column)
+            characters_by_column: dict[int, list[EffectCharacter]] = {}
+            for character in all_characters:
+                column_index = character.input_coord.column
+                if 0 <= column_index <= self.canvas.right:
+                    characters_by_column.setdefault(column_index, []).append(character)
+            columns = [
+                characters_by_column[column_index]
+                for column_index in range(self.canvas.right + 1)
+                if column_index in characters_by_column
+            ]
             if grouping == CharacterGroup.COLUMN_RIGHT_TO_LEFT:
                 columns.reverse()
             return columns
