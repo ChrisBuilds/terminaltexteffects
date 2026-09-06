@@ -52,6 +52,16 @@
 ---
 
 * Animation - Fixed `adjust_color_brightness()` rounding so a brightness factor of `1` preserves mixed-channel RGB colors instead of subtly darkening individual channels.
+* Motion - Fixed crashes and incorrect path state updates when `SEGMENT_ENTERED`, `SEGMENT_EXITED`, or `PATH_HOLDING`
+  callbacks deactivate, replace, or restart the active path. Processing of the old traversal now stops, preserving
+  callback-set coordinates and the newly activated path's state until the next tick.
+* Animation - Fixed looping scenes being treated as complete while active. Loops now continue advancing without
+  triggering `SCENE_COMPLETE` events, and remain active until explicitly deactivated. LaserEtch now deactivates its
+  looping beam scenes when the laser is disabled so the effect can complete normally.
+* Animation - Fixed eased scenes skipping their final frame. Eased playback now maps its existing duration ticks
+  inclusively across the easing range so the final tick evaluates at full progress.
+* Terminal - Fixed terminal construction for empty and fully clipped text regions. Effects now raise a clear
+  `EmptyInputError` when no visible input characters remain within the configured canvas.
 * Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 * Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number
