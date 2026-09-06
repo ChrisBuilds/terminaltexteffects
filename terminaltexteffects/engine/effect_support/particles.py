@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import random
 import typing
+import weakref
 from collections import deque
 from dataclasses import dataclass
 
@@ -134,6 +135,8 @@ class ParticlePool:
 
     """
 
+    _particle_owners: typing.ClassVar[weakref.WeakValueDictionary[int, ParticlePool]] = weakref.WeakValueDictionary()
+
     def __init__(
         self,
         terminal: Terminal,
@@ -214,6 +217,7 @@ class ParticlePool:
         particle = self.terminal.add_character(symbol or random.choice(self.symbols), self.coord)
         if self.initializer is not None:
             self.initializer(particle)
+        self._particle_owners[id(particle)] = self
         self.particles.append(particle)
         return particle
 
@@ -413,7 +417,20 @@ class ParticlePool:
             particles: Existing `EffectCharacter` instances to track and make
                 available.
 
+        Raises:
+            ValueError: If a particle is already owned by a pool or is listed
+                more than once in `particles`.
+
         """
-        for particle in particles:
+        new_particles = list(particles)
+        particle_ids = [id(particle) for particle in new_particles]
+        if len(set(particle_ids)) != len(particle_ids):
+            message = "A particle can only be added once to a pool."
+            raise ValueError(message)
+        if any(particle_id in self._particle_owners for particle_id in particle_ids):
+            message = "A particle is already owned by a ParticlePool."
+            raise ValueError(message)
+        for particle in new_particles:
+            self._particle_owners[id(particle)] = self
             self.particles.append(particle)
             self.available.append(particle)

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from terminaltexteffects.engine.effect_support.particles import ParticlePool, ParticleReset
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.utils.geometry import Coord
@@ -104,6 +106,34 @@ def test_particle_lazy_pool_creates_particles_on_demand() -> None:
     assert particle is not None
     assert len(pool) == 1
     assert terminal.get_characters(added_chars=True, input_chars=False) == [particle]
+
+
+def test_particle_pool_extend_rejects_duplicate_particles() -> None:
+    """Extending with duplicate particles must leave the pool unchanged."""
+    terminal = make_terminal()
+    pool = ParticlePool(terminal, set(), ".")
+    particle = terminal.add_character(".", Coord(1, 1))
+
+    with pytest.raises(ValueError, match="only be added once"):
+        pool.extend([particle, particle])
+
+    assert not pool.particles
+    assert not pool.available
+
+
+def test_particle_pool_extend_rejects_particles_owned_by_another_pool() -> None:
+    """Pools must not concurrently own the same particle."""
+    terminal = make_terminal()
+    particle = terminal.add_character(".", Coord(1, 1))
+    first_pool = ParticlePool(terminal, set(), ".")
+    second_pool = ParticlePool(terminal, set(), ".")
+    first_pool.extend([particle])
+
+    with pytest.raises(ValueError, match="already owned"):
+        second_pool.extend([particle])
+
+    assert first_pool.particles == [particle]
+    assert not second_pool.particles
 
 
 def test_particle_reclaim_on_scene_complete_returns_particle_to_pool() -> None:
