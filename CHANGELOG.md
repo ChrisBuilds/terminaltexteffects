@@ -62,6 +62,8 @@
   inclusively across the easing range so the final tick evaluates at full progress.
 * Terminal - Fixed terminal construction for empty and fully clipped text regions. Effects now raise a clear
   `EmptyInputError` when no visible input characters remain within the configured canvas.
+* Terminal - Fixed wrapped input being clipped when terminal dimensions are ignored. Automatic canvas height now
+  includes every wrapped input row.
 * Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 * Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number

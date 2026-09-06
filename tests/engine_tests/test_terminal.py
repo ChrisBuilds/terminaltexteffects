@@ -288,6 +288,19 @@ def test_terminal_get_canvas_dimensions_match_input_text_wrap_text(monkeypatch: 
     assert terminal.canvas.height == 2
 
 
+def test_terminal_wrap_text_ignoring_terminal_dimensions_preserves_all_input() -> None:
+    """Ensure automatic height includes all wrapped rows when terminal limits are ignored."""
+    config = TerminalConfig._build_config()
+    config.canvas_width = 3
+    config.wrap_text = True
+    config.ignore_terminal_dimensions = True
+    terminal = Terminal(input_data="ABCDEF", config=config)
+
+    assert (terminal.canvas.width, terminal.canvas.height) == (3, 2)
+    assert "".join(character.input_symbol for character in terminal.get_characters()) == "ABCDEF"
+    assert (terminal.canvas.text_width, terminal.canvas.text_height) == (3, 2)
+
+
 def test_get_terminal_dimensions_raise_oserror(monkeypatch: pytest.MonkeyPatch) -> None:
     def raise_oserror() -> NoReturn:
         raise OSError
