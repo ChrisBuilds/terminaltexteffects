@@ -582,3 +582,102 @@ def test_motion_move_path_looping(character: EffectCharacter) -> None:
     character.motion.activate_path(p)
     for _ in range(100):
         character.motion.move()
+
+
+@pytest.mark.parametrize("change", ["deactivate", "replace", "restart"])
+@pytest.mark.parametrize(
+    ("event", "speed"),
+    [
+        pytest.param(EventHandler.Event.SEGMENT_ENTERED, 1, id="enter-current-segment"),
+        pytest.param(EventHandler.Event.SEGMENT_ENTERED, 3, id="enter-crossed-segment"),
+        pytest.param(EventHandler.Event.SEGMENT_EXITED, 3, id="exit-crossed-segment"),
+        pytest.param(EventHandler.Event.PATH_HOLDING, 3, id="holding"),
+    ],
+)
+def test_motion_callback_path_change(
+    character: EffectCharacter,
+    event: EventHandler.Event,
+    speed: int,
+    change: str,
+) -> None:
+    """Path-changing callbacks stop the old traversal without overwriting callback state."""
+    path = character.motion.new_path(speed=speed, hold_time=2)
+    first = path.new_waypoint(Coord(1, 0))
+    last = path.new_waypoint(Coord(3, 0))
+    replacement = character.motion.new_path(hold_time=4)
+    replacement.new_waypoint(Coord(30, 10))
+    callback_coord = Coord(10, 10)
+    events: list[str] = []
+
+    def change_path(char: EffectCharacter) -> None:
+        events.append("change")
+        char.motion.set_coordinate(callback_coord)
+        if change == "deactivate":
+            char.motion.deactivate_path()
+        elif change == "replace":
+            char.motion.activate_path(replacement)
+        else:
+            char.motion.activate_path(path)
+
+    character.event_handler.register_event(
+        event,
+        path if event is EventHandler.Event.PATH_HOLDING else first,
+        EventHandler.Action.CALLBACK,
+        EventHandler.Callback(change_path),
+    )
+    if event is not EventHandler.Event.PATH_HOLDING:
+        character.event_handler.register_event(
+            EventHandler.Event.SEGMENT_ENTERED,
+            last,
+            EventHandler.Action.CALLBACK,
+            EventHandler.Callback(lambda _: events.append("stale segment")),
+        )
+    character.event_handler.register_event(
+        EventHandler.Event.PATH_COMPLETE,
+        path,
+        EventHandler.Action.CALLBACK,
+        EventHandler.Callback(lambda _: events.append("stale completion")),
+    )
+    character.motion.activate_path(path)
+    character.motion.move()
+
+    assert events == ["change"]
+    assert character.motion.current_coord == callback_coord
+    assert character.motion.previous_coord == Coord(0, 0)
+    if change == "deactivate":
+        assert character.motion.active_path is None
+        character.motion.move()
+        assert character.motion.current_coord == callback_coord
+    else:
+        active_path = replacement if change == "replace" else path
+        assert character.motion.active_path is active_path
+        assert active_path.current_step == 0
+        assert active_path.hold_time_remaining == active_path.hold_time
+        assert active_path.origin_segment is not None
+        assert active_path.origin_segment.start.coord == callback_coord
+        character.event_handler.registered_events.clear()
+        character.motion.move()
+        assert active_path.current_step == 1
+        # A slow diagonal step may round back to the origin on its first tick.
+        character.motion.move()
+        assert active_path.current_step == 2
+        assert character.motion.current_coord != callback_coord
+
+
+def test_motion_callback_deactivating_other_path_continues(character: EffectCharacter) -> None:
+    """Deactivating an inactive path during an event must not interrupt movement."""
+    path = character.motion.new_path()
+    waypoint = path.new_waypoint(Coord(2, 0))
+    other_path = character.motion.new_path()
+    character.event_handler.register_event(
+        EventHandler.Event.SEGMENT_ENTERED,
+        waypoint,
+        EventHandler.Action.DEACTIVATE_PATH,
+        other_path,
+    )
+    character.motion.activate_path(path)
+
+    character.motion.move()
+
+    assert character.motion.active_path is path
+    assert character.motion.current_coord == Coord(1, 0)

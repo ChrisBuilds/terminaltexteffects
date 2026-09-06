@@ -246,20 +246,29 @@ class Path:
 
         distance_to_travel = distance_factor * self.total_distance
         self.last_distance_reached = distance_to_travel
+        motion = event_handler.character.motion
+        active_path = motion.active_path
+        path_generation = motion._path_generation
         for segment in self.segments:
             if distance_to_travel <= segment.distance:
                 active_segment = segment
                 if not segment.enter_event_triggered:
                     segment.enter_event_triggered = True
                     event_handler._handle_event(event_handler.Event.SEGMENT_ENTERED, segment.end)
+                    if motion.active_path is not active_path or motion._path_generation != path_generation:
+                        return motion.current_coord
                 break
             distance_to_travel -= segment.distance
             if not segment.enter_event_triggered:
                 segment.enter_event_triggered = True
                 event_handler._handle_event(event_handler.Event.SEGMENT_ENTERED, segment.end)
+                if motion.active_path is not active_path or motion._path_generation != path_generation:
+                    return motion.current_coord
             if not segment.exit_event_triggered:
                 segment.exit_event_triggered = True
                 event_handler._handle_event(event_handler.Event.SEGMENT_EXITED, segment.end)
+                if motion.active_path is not active_path or motion._path_generation != path_generation:
+                    return motion.current_coord
         # if the distance_to_travel is further than the last waypoint,
         # preserve the distance from the start of the final segment
         else:
@@ -355,6 +364,8 @@ class Motion:
         self.current_coord: Coord = Coord(character.input_coord.column, character.input_coord.row)
         self.previous_coord: Coord = Coord(-1, -1)
         self.active_path: Path | None = None
+        # Detect callback-driven restarts even when the active path's identity is unchanged.
+        self._path_generation = 0
 
     def set_coordinate(self, coord: Coord) -> None:
         """Set the current coordinate to the given coordinate.
@@ -505,6 +516,7 @@ class Motion:
         if not found_path.waypoints:
             raise ActivateEmptyPathError(found_path.path_id)
         self.active_path = found_path
+        self._path_generation += 1
         first_waypoint = self.active_path.waypoints[0]
         if first_waypoint.bezier_control:
             distance_to_first_waypoint = geometry.find_length_of_bezier_curve(
@@ -561,6 +573,8 @@ class Motion:
 
         """
         if path is None:
+            if self.active_path is not None:
+                self._path_generation += 1
             self.active_path = None
             return
         if isinstance(path, str):
@@ -571,6 +585,7 @@ class Motion:
             found_path = path
         if self.active_path and self.active_path is found_path:
             self.active_path = None
+            self._path_generation += 1
 
     def move(self) -> None:
         """Move the character along the active path.
@@ -588,19 +603,30 @@ class Motion:
 
         The character's previous coordinate is preserved before moving to allow for clearing the location
         in the terminal.
+
+        If a segment or holding callback deactivates, replaces, or restarts the path,
+        processing of the old traversal stops. Callback coordinates are preserved and
+        any newly activated traversal begins moving on the next tick.
         """
         # preserve previous coordinate to allow for clearing the location in the terminal
         self.previous_coord = self.current_coord
 
         if not self.active_path or not self.active_path.segments:
             return
-        self.current_coord = self.active_path.step(self.character.event_handler)
+        path = self.active_path
+        path_generation = self._path_generation
+        next_coord = path.step(self.character.event_handler)
+        if self.active_path is not path or self._path_generation != path_generation:
+            return
+        self.current_coord = next_coord
         if self.active_path.current_step == self.active_path.max_steps:
             if self.active_path.hold_time and self.active_path.hold_time_remaining == self.active_path.hold_time:
                 self.character.event_handler._handle_event(
                     self.character.event_handler.Event.PATH_HOLDING,
                     self.active_path,
                 )
+                if self.active_path is not path or self._path_generation != path_generation:
+                    return
                 self.active_path.hold_time_remaining -= 1
                 return
             if self.active_path.hold_time_remaining:
