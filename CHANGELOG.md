@@ -62,6 +62,8 @@
   looping beam scenes when the laser is disabled so the effect can complete normally.
 * Animation - Fixed eased scenes skipping their final frame. Eased playback now maps its existing duration ticks
   inclusively across the easing range so the final tick evaluates at full progress.
+* Animation - Fixed explicit duplicate scene IDs silently replacing existing scenes. Scene creation now raises
+  `DuplicateSceneIDError`, preventing event callbacks from retaining detached scene instances.
 * Terminal - Fixed terminal construction for empty and fully clipped text regions. Effects now raise a clear
   `EmptyInputError` when no visible input characters remain within the configured canvas.
 * Terminal - Fixed wrapped input being clipped when terminal dimensions are ignored. Automatic canvas height now

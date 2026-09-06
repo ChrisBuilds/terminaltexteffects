@@ -8,6 +8,7 @@ from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.exceptions import (
     ActivateEmptySceneError,
     AnimationSceneError,
+    DuplicateSceneIDError,
     FrameDurationError,
     SceneNotFoundError,
 )
@@ -713,11 +714,21 @@ def test_scene_reset_scene(character: EffectCharacter) -> None:
     assert not new_scene.played_frames
 
 
-def test_scene_id_equality(character: EffectCharacter) -> None:
+def test_scene_id_equality() -> None:
     """Ensure scenes with matching IDs compare as equal."""
-    new_scene = character.animation.new_scene(scene_id="test_scene")
-    new_scene2 = character.animation.new_scene(scene_id="test_scene")
+    new_scene = Scene(scene_id="test_scene")
+    new_scene2 = Scene(scene_id="test_scene")
     assert new_scene == new_scene2
+
+
+def test_animation_new_scene_duplicate_id(character: EffectCharacter) -> None:
+    """Ensure duplicate scene IDs raise instead of replacing the original scene."""
+    scene = character.animation.new_scene(scene_id="test_scene")
+
+    with pytest.raises(DuplicateSceneIDError, match="test_scene"):
+        character.animation.new_scene(scene_id="test_scene")
+
+    assert character.animation.scenes["test_scene"] is scene
 
 
 def test_scene_equality_incorrect_type(character: EffectCharacter) -> None:

@@ -4,6 +4,7 @@ Classes:
     FrameDurationError: Raised when a frame is added to a Scene with an invalid duration.
     ActivateEmptySceneError: Raised when a Scene without any frames is activated.
     AnimationSceneError: Generic Scene/animation error with a provided message.
+    DuplicateSceneIDError: Raised when a Scene is initialized with an existing ID.
 
 """
 
@@ -68,6 +69,21 @@ class AnimationSceneError(TerminalTextEffectsError):
         """
         self.message = message
         super().__init__(message)
+
+
+class DuplicateSceneIDError(TerminalTextEffectsError):
+    """Raised when a Scene is initialized with a duplicate ID."""
+
+    def __init__(self, scene_id: str) -> None:
+        """Initialize a DuplicateSceneIDError.
+
+        Args:
+            scene_id (str): The ID already used by a Scene in the Animation.
+
+        """
+        self.scene_id = scene_id
+        self.message = f"Scene ID `{scene_id}` has already been used."
+        super().__init__(self.message)
 
 
 class SceneNotFoundError(TerminalTextEffectsError):

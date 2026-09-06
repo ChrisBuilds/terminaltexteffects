@@ -18,6 +18,7 @@ from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, he
 from terminaltexteffects.utils.exceptions import (
     ActivateEmptySceneError,
     AnimationSceneError,
+    DuplicateSceneIDError,
     FrameDurationError,
     SceneNotFoundError,
 )
@@ -563,7 +564,7 @@ class Animation:
 
         If no ID is provided, a unique ID is generated. If `existing_color_handling` is `"always"`,
         the Scene inherits the animation's input colors as `preexisting_colors`. If a Scene with the
-        same ID already exists, it is replaced in the animation's scene mapping.
+        same ID already exists, `DuplicateSceneIDError` is raised.
 
         Args:
             scene_id (str): Name for the scene. Used to query for the scene.
@@ -573,6 +574,9 @@ class Animation:
 
         Returns:
             Scene: The new Scene.
+
+        Raises:
+            DuplicateSceneIDError: If `scene_id` is already used by the animation.
 
         """
         if not scene_id:
@@ -584,8 +588,8 @@ class Animation:
                     found_unique = True
                 else:
                     current_id += 1
-        # Future: review whether scene IDs should be enforced as unique and raise on duplicates.
-        # Confirm no effects intentionally overwrite scenes today, then update this behavior and docs together.
+        if scene_id in self.scenes:
+            raise DuplicateSceneIDError(scene_id)
         if self.existing_color_handling == "always" and self.character.uses_input_preexisting_colors:
             preexisting_colors = graphics.ColorPair(fg=self.input_fg_color, bg=self.input_bg_color)
             preexisting_bold = self.input_bold
