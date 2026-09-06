@@ -76,6 +76,15 @@ class InvalidColorSortError(TerminalTextEffectsError):
         super().__init__(self.message)
 
 
+class EmptyInputError(TerminalTextEffectsError):
+    """Raised when an effect has no visible input characters to render."""
+
+    def __init__(self) -> None:
+        """Initialize an EmptyInputError."""
+        self.message = "Input contains no visible characters within the configured canvas."
+        super().__init__(self.message)
+
+
 class UnsupportedAnsiSequenceError(TerminalTextEffectsError):
     """Raised when terminal input contains ANSI/control sequences TTE does not support."""
 

@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
+from terminaltexteffects.utils.exceptions import EmptyInputError
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -50,6 +51,9 @@ class BaseEffectIterator(ABC, Generic[T]):
         __iter__: Return the iterator object.
         __next__: Return the next frame of the effect.
 
+    Raises:
+        EmptyInputError: The configured canvas contains no visible input characters.
+
     """
 
     def __init__(self, effect: BaseEffect) -> None:
@@ -61,6 +65,8 @@ class BaseEffectIterator(ABC, Generic[T]):
         """
         self.config: T = deepcopy(effect.effect_config)
         self.terminal = Terminal(effect.input_data, deepcopy(effect.terminal_config))
+        if not self.terminal.get_characters():
+            raise EmptyInputError
         self.active_characters: set[EffectCharacter] = set()
         self.preexisting_colors_present: bool = any(
             any((character.animation.input_fg_color, character.animation.input_bg_color))

@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import terminaltexteffects.effects
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.utils.exceptions import UnsupportedAnsiSequenceError
+from terminaltexteffects.utils.exceptions import EmptyInputError, UnsupportedAnsiSequenceError
 from terminaltexteffects.utils.shell_completion import SUPPORTED_SHELLS, get_completion_script
 
 if TYPE_CHECKING:
@@ -213,10 +213,11 @@ def main() -> None:
     effect_config = effect_config_class._build_config(None if args.random_effect else args)
     effect = effect_class(input_data, effect_config, terminal_config)
     try:
+        effect_iterator = iter(effect)
         with effect.terminal_output() as terminal:
-            for frame in effect:
+            for frame in effect_iterator:
                 terminal.print(frame)
-    except UnsupportedAnsiSequenceError as e:
+    except (EmptyInputError, UnsupportedAnsiSequenceError) as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
     except KeyboardInterrupt:

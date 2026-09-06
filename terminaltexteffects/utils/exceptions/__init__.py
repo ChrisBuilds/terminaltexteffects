@@ -20,6 +20,7 @@ from terminaltexteffects.utils.exceptions.motion_exceptions import (
     WaypointNotFoundError,
 )
 from terminaltexteffects.utils.exceptions.terminal_exceptions import (
+    EmptyInputError,
     InvalidCharacterGroupError,
     InvalidCharacterSortError,
     InvalidColorSortError,

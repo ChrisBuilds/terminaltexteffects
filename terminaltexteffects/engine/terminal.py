@@ -359,11 +359,9 @@ class Canvas:
     ) -> list[EffectCharacter]:
         """Anchors the text within the canvas based on the specified anchor point.
 
-        The `characters` argument must be non-empty; this method expects at least one
-        character when calculating anchored text bounds.
-
         Args:
-            characters (list[EffectCharacter]): Non-empty list of characters to reposition within the canvas.
+            characters (list[EffectCharacter]): Characters to reposition within the canvas. An empty list produces
+                an empty text region.
             anchor (Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]): Anchor point for the text
                 within the Canvas.
 
@@ -372,6 +370,10 @@ class Canvas:
                 coordinates within the canvas after anchoring.
 
         """
+        if not characters:
+            self._reset_text_bounds()
+            return []
+
         # translate coordinate based on anchor within the canvas
         input_width = max([character._input_coord.column for character in characters])
         input_height = max([character._input_coord.row for character in characters])
@@ -403,6 +405,10 @@ class Canvas:
 
         characters = [character for character in characters if self.coord_is_in_canvas(character.input_coord)]
 
+        if not characters:
+            self._reset_text_bounds()
+            return []
+
         # get text dimensions, centers, and extents
         self.text_left = min([character.input_coord.column for character in characters])
         self.text_right = max([character.input_coord.column for character in characters])
@@ -414,6 +420,14 @@ class Canvas:
         self.text_center_column = self.text_left + ((self.text_right - self.text_left) // 2)
         self.text_center = Coord(self.text_center_column, self.text_center_row)
         return characters
+
+    def _reset_text_bounds(self) -> None:
+        """Set the text bounds to the empty-region sentinel values."""
+        self.text_left = self.text_right = 0
+        self.text_top = self.text_bottom = 0
+        self.text_width = self.text_height = 0
+        self.text_center_row = self.text_center_column = 0
+        self.text_center = Coord(0, 0)
 
     def coord_is_in_canvas(self, coord: Coord) -> bool:
         """Check whether a coordinate is within the canvas.

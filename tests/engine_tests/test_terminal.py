@@ -71,6 +71,17 @@ def test_canvas_anchor_text(anchor) -> None:
         assert chars[1].motion.current_coord == Coord(6, 6)
 
 
+def test_canvas_anchor_empty_text_resets_bounds() -> None:
+    """Verify anchoring an empty text region clears any prior text bounds."""
+    canvas = Canvas(10, 10)
+    character = EffectCharacter(0, symbol="a", input_column=1, input_row=1)
+    canvas._anchor_text([character], anchor="sw")
+
+    assert canvas._anchor_text([], anchor="sw") == []
+    assert (canvas.text_left, canvas.text_right, canvas.text_bottom, canvas.text_top) == (0, 0, 0, 0)
+    assert (canvas.text_width, canvas.text_height, canvas.text_center) == (0, 0, Coord(0, 0))
+
+
 def test_canvas_coord_is_in_canvas() -> None:
     canvas = Canvas(10, 10)
     assert canvas.coord_is_in_canvas(Coord(5, 5))
@@ -130,6 +141,27 @@ def test_terminal_init_with_config() -> None:
     config.frame_rate = 10
     terminal = Terminal("test", config=config)
     assert terminal.config.frame_rate == 10
+
+
+@pytest.mark.parametrize("input_data", ["   ", "\x1b[0m"])
+def test_terminal_init_empty_text_region(input_data: str) -> None:
+    """Verify Terminal supports text that produces no visible input characters."""
+    terminal = Terminal(input_data)
+
+    assert terminal.get_characters() == []
+    assert (terminal.canvas.text_left, terminal.canvas.text_right) == (0, 0)
+    assert (terminal.canvas.text_bottom, terminal.canvas.text_top) == (0, 0)
+    assert not terminal.canvas.coord_is_in_text(Coord(1, 1))
+
+
+def test_terminal_init_fully_clipped_text_region() -> None:
+    """Verify Terminal supports input that lies entirely outside a constrained canvas."""
+    config = TerminalConfig._build_config()
+    config.canvas_width = 1
+    terminal = Terminal("   X", config=config)
+
+    assert terminal.get_characters() == []
+    assert (terminal.canvas.text_width, terminal.canvas.text_height) == (0, 0)
 
 
 def test_terminal_init_no_input() -> None:

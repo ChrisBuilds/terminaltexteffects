@@ -156,6 +156,32 @@ def test_main_unsupported_ansi_sequence_exits_with_error(
     assert "\\x1b[2J" in captured.err
 
 
+@pytest.mark.parametrize(
+    ("arguments", "input_data"),
+    [
+        pytest.param(["tte", "rain"], "\x1b[0m", id="ansi-only-input"),
+        pytest.param(["tte", "--canvas-width", "1", "rain"], "   X", id="fully-clipped-input"),
+    ],
+)
+def test_main_empty_renderable_input_exits_with_error(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    arguments: list[str],
+    input_data: str,
+) -> None:
+    """Input without visible characters should fail before effect construction."""
+    monkeypatch.setattr(__main__.sys, "argv", arguments)
+    monkeypatch.setattr(__main__.Terminal, "get_piped_input", lambda: input_data)
+
+    with pytest.raises(SystemExit) as exc_info:
+        __main__.main()
+
+    assert exc_info.value.code == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "Input contains no visible characters" in captured.err
+
+
 def test_build_parser_includes_plugin_effect_in_completion(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
