@@ -620,6 +620,15 @@ class Motion:
             return
         self.current_coord = next_coord
         if self.active_path.current_step == self.active_path.max_steps:
+            final_segment = self.active_path.segments[-1]
+            if final_segment.enter_event_triggered and not final_segment.exit_event_triggered:
+                final_segment.exit_event_triggered = True
+                self.character.event_handler._handle_event(
+                    self.character.event_handler.Event.SEGMENT_EXITED,
+                    final_segment.end,
+                )
+                if self.active_path is not path or self._path_generation != path_generation:
+                    return
             if self.active_path.hold_time and self.active_path.hold_time_remaining == self.active_path.hold_time:
                 self.character.event_handler._handle_event(
                     self.character.event_handler.Event.PATH_HOLDING,

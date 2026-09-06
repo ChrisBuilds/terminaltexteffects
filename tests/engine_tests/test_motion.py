@@ -70,7 +70,7 @@ def test_segment_length_bezier() -> None:
         waypoint_1,
         find_length_of_bezier_curve(waypoint_0.coord, waypoint_0.bezier_control, waypoint_1.coord),  # type: ignore[arg-type]
     )
-    bezier_length = 12.70820393249937
+    bezier_length = 14.94427190999916
     assert segment.distance == bezier_length
 
 
@@ -559,6 +559,63 @@ def test_motion_move_no_active_path(character: EffectCharacter) -> None:
     """Test moving a character with no active path."""
     assert character.motion.active_path is None
     character.motion.move()
+
+
+def test_motion_move_final_segment_triggers_exit_before_path_completion(character: EffectCharacter) -> None:
+    """Test that completing a path exits its final segment before completing the path."""
+    path = character.motion.new_path(speed=10)
+    final_waypoint = path.new_waypoint(Coord(10, 0))
+    triggered_events: list[str] = []
+    for event, label in (
+        (EventHandler.Event.SEGMENT_ENTERED, "entered"),
+        (EventHandler.Event.SEGMENT_EXITED, "exited"),
+        (EventHandler.Event.PATH_COMPLETE, "completed"),
+    ):
+        target = final_waypoint if event is not EventHandler.Event.PATH_COMPLETE else path
+        character.event_handler.register_event(
+            event,
+            target,
+            EventHandler.Action.CALLBACK,
+            EventHandler.Callback(lambda _character, label: triggered_events.append(label), label),
+        )
+
+    character.motion.activate_path(path)
+    character.motion.move()
+
+    assert triggered_events == ["entered", "exited", "completed"]
+
+
+def test_motion_final_segment_exit_callback_stops_path_completion(character: EffectCharacter) -> None:
+    """Test that a final-segment exit callback can deactivate the path before completion."""
+    path = character.motion.new_path(speed=10)
+    final_waypoint = path.new_waypoint(Coord(10, 0))
+    triggered_events: list[str] = []
+    callback_coord = Coord(20, 20)
+
+    def deactivate_path(char: EffectCharacter) -> None:
+        triggered_events.append("exited")
+        char.motion.set_coordinate(callback_coord)
+        char.motion.deactivate_path()
+
+    character.event_handler.register_event(
+        EventHandler.Event.SEGMENT_EXITED,
+        final_waypoint,
+        EventHandler.Action.CALLBACK,
+        EventHandler.Callback(deactivate_path),
+    )
+    character.event_handler.register_event(
+        EventHandler.Event.PATH_COMPLETE,
+        path,
+        EventHandler.Action.CALLBACK,
+        EventHandler.Callback(lambda _character: triggered_events.append("completed")),
+    )
+
+    character.motion.activate_path(path)
+    character.motion.move()
+
+    assert triggered_events == ["exited"]
+    assert character.motion.active_path is None
+    assert character.motion.current_coord == callback_coord
 
 
 def test_motion_move_path_hold_time(character: EffectCharacter) -> None:

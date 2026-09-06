@@ -55,6 +55,8 @@
 * Motion - Fixed crashes and incorrect path state updates when `SEGMENT_ENTERED`, `SEGMENT_EXITED`, or `PATH_HOLDING`
   callbacks deactivate, replace, or restart the active path. Processing of the old traversal now stops, preserving
   callback-set coordinates and the newly activated path's state until the next tick.
+* Motion - Fixed final path segments not emitting `SEGMENT_EXITED` before path completion. Exit handlers now run for
+  every completed segment and can safely deactivate or replace the path.
 * Animation - Fixed looping scenes being treated as complete while active. Loops now continue advancing without
   triggering `SCENE_COMPLETE` events, and remain active until explicitly deactivated. LaserEtch now deactivates its
   looping beam scenes when the laser is disabled so the effect can complete normally.
