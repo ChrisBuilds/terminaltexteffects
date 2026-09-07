@@ -130,6 +130,8 @@
 * Rings - Fixed `spin_duration=0` being rejected even though zero is supported for skipping directly to the next
   phase.
 * Thunderstorm - Fixed fractional `storm_time` values being rejected, restoring support for sub-second storms.
+* Shell completions are now generated with `shtab` during development and bundled with the package. Completion no
+  longer imports user effect plugins during generation, and zsh now receives a native completion script.
 
 ## 0.15.0
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import os
 import subprocess
 import sys
@@ -131,7 +132,9 @@ def test_main_print_completion_bash_outputs_script(
     __main__.main()
 
     output = capsys.readouterr().out
-    assert "complete -F _tte_completion tte" in output
+    assert "complete -o filenames -F _shtab_tte tte" in output
+    assert "complete -o filenames -F _shtab_tte terminaltexteffects" in output
+    assert "mapfile" not in output
     assert "--wrap-text" in output
     assert "--random-effect" in output
     assert "--include-effects" in output
@@ -146,15 +149,16 @@ def test_main_print_completion_zsh_outputs_script(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """Printing zsh completion should emit a zsh-loadable wrapper."""
+    """Printing zsh completion should emit a native zsh script."""
     monkeypatch.setattr(__main__.sys, "argv", ["tte", "--print-completion", "zsh"])
 
     __main__.main()
 
     output = capsys.readouterr().out
-    assert "autoload -Uz compinit bashcompinit" in output
-    assert "bashcompinit" in output
-    assert "complete -F _tte_completion tte" in output
+    assert output.startswith("#compdef tte terminaltexteffects")
+    assert "_arguments" in output
+    assert "compdef _shtab_tte -N tte terminaltexteffects" in output
+    assert "bashcompinit" not in output
 
 
 def test_main_print_completion_invalid_shell_exits(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -209,13 +213,28 @@ def test_main_empty_renderable_input_exits_with_error(
     assert "Input contains no visible characters" in captured.err
 
 
-def test_build_parser_includes_plugin_effect_in_completion(
+def test_runtime_parser_includes_plugin_effect(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Normal runtime parser construction should continue to discover plugins."""
+    _write_demo_plugin(tmp_path)
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    _, effect_resource_map = __main__.build_parser()
+
+    assert "plugindemo" in effect_resource_map
+
+
+def test_bundled_completion_does_not_import_plugin_effect(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """Plugin-discovered effects should appear in generated completion output."""
-    _write_demo_plugin(tmp_path)
+    """Printing bundled completion should not import user effect modules."""
+    plugin_dir = tmp_path / "terminaltexteffects" / "effects"
+    plugin_dir.mkdir(parents=True)
+    (plugin_dir / "broken_plugin.py").write_text("raise RuntimeError('plugin imported')", encoding="utf-8")
 
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     monkeypatch.setattr(__main__.sys, "argv", ["tte", "--print-completion", "bash"])
@@ -223,8 +242,7 @@ def test_build_parser_includes_plugin_effect_in_completion(
     __main__.main()
 
     output = capsys.readouterr().out
-    assert "plugindemo" in output
-    assert "--plugin-speed" in output
+    assert "complete -o filenames -F _shtab_tte tte" in output
 
 
 def test_bash_completion_registers_in_clean_shell() -> None:
@@ -235,21 +253,20 @@ def test_bash_completion_registers_in_clean_shell() -> None:
         ')"; complete -p tte; complete -p terminaltexteffects',
     )
 
-    assert "complete -F _tte_completion tte" in result.stdout
-    assert "complete -F _tte_completion terminaltexteffects" in result.stdout
+    assert "complete -o filenames -F _shtab_tte tte" in result.stdout
+    assert "complete -o filenames -F _shtab_tte terminaltexteffects" in result.stdout
 
 
 def test_zsh_completion_registers_in_clean_shell() -> None:
-    """The zsh completion script should self-bootstrap in a clean shell."""
+    """The native zsh completion script should self-bootstrap in a clean shell."""
     result = _run_zsh(
         'eval "$('
         f"{sys.executable} -m terminaltexteffects --print-completion zsh"
-        ')"; whence -w _tte_completion; complete -p tte; complete -p terminaltexteffects',
+        ')"; whence -w _shtab_tte; print -r -- "tte:${_comps[tte]} terminaltexteffects:${_comps[terminaltexteffects]}"',
     )
 
-    assert "_tte_completion: function" in result.stdout
-    assert "complete -F _tte_completion tte" in result.stdout
-    assert "complete -F _tte_completion terminaltexteffects" in result.stdout
+    assert "_shtab_tte: function" in result.stdout
+    assert "tte:_shtab_tte terminaltexteffects:_shtab_tte" in result.stdout
 
 
 def test_bash_completion_suggests_effect_names_and_options() -> None:
@@ -259,11 +276,11 @@ def test_bash_completion_suggests_effect_names_and_options() -> None:
 eval "$(""" + f"{sys.executable}" + """ -m terminaltexteffects --print-completion bash)"
 COMP_WORDS=(tte ma)
 COMP_CWORD=1
-_tte_completion
+_shtab_tte
 printf 'effects:%s\\n' "${COMPREPLY[*]}"
 COMP_WORDS=(tte matrix --ra)
 COMP_CWORD=2
-_tte_completion
+_shtab_tte
 printf 'options:%s\\n' "${COMPREPLY[*]}"
 """,
     )
@@ -275,7 +292,7 @@ printf 'options:%s\\n' "${COMPREPLY[*]}"
 
 def test_bash_completion_suggests_choice_and_file_values(tmp_path: Path) -> None:
     """Bash completion should offer choice values and file path completions."""
-    completion_file = tmp_path / "demo.txt"
+    completion_file = tmp_path / "demo file.txt"
     completion_file.write_text("demo", encoding="utf-8")
 
     result = _run_bash(
@@ -283,21 +300,26 @@ def test_bash_completion_suggests_choice_and_file_values(tmp_path: Path) -> None
 eval "$({sys.executable} -m terminaltexteffects --print-completion bash)"
 COMP_WORDS=(tte --print-completion "")
 COMP_CWORD=2
-_tte_completion
+_shtab_tte
 printf 'shells:%s\\n' "${{COMPREPLY[*]}}"
 COMP_WORDS=(tte --input-file "{tmp_path}/d")
 COMP_CWORD=2
-_tte_completion
+_shtab_tte
 printf 'files:%s\\n' "${{COMPREPLY[*]}}"
+COMP_WORDS=(tte --include-effects ma)
+COMP_CWORD=2
+_shtab_tte
+printf 'included:%s\\n' "${{COMPREPLY[*]}}"
 """,
     )
 
     assert "shells:bash zsh" in result.stdout
     assert str(completion_file) in result.stdout
+    assert "included:matrix" in result.stdout
 
 
-def test_bash_completion_includes_plugin_effect_in_clean_shell(tmp_path: Path) -> None:
-    """Plugin effects should be available through the full bash completion flow."""
+def test_bash_completion_excludes_plugin_effect_in_clean_shell(tmp_path: Path) -> None:
+    """Bundled completion should not change when a user plugin is installed."""
     _write_demo_plugin(tmp_path)
 
     result = _run_bash(
@@ -305,15 +327,24 @@ def test_bash_completion_includes_plugin_effect_in_clean_shell(tmp_path: Path) -
 eval "$(""" + f"{sys.executable}" + """ -m terminaltexteffects --print-completion bash)"
 COMP_WORDS=(tte pl)
 COMP_CWORD=1
-_tte_completion
+_shtab_tte
 printf 'effects:%s\\n' "${COMPREPLY[*]}"
 COMP_WORDS=(tte plugindemo --pl)
 COMP_CWORD=2
-_tte_completion
+_shtab_tte
 printf 'options:%s\\n' "${COMPREPLY[*]}"
 """,
         env={"XDG_CONFIG_HOME": str(tmp_path)},
     )
 
-    assert "effects:plugindemo" in result.stdout
-    assert "--plugin-speed" in result.stdout
+    assert "effects:" in result.stdout
+    assert "plugindemo" not in result.stdout
+    assert "--plugin-speed" not in result.stdout
+
+
+def test_bundled_completion_scripts_are_current() -> None:
+    """Committed completion resources should match the built-in parser."""
+    pytest.importorskip("shtab")
+    generator = importlib.import_module("tools.generate_shell_completions")
+
+    assert generator.write_completion_scripts(check=True)

@@ -25,13 +25,19 @@ if TYPE_CHECKING:
     from terminaltexteffects.engine.base_effect import BaseEffect
 
 
-def build_parser() -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
+def build_parser(
+    *,
+    include_user_effects: bool = True,
+) -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
     """Build the CLI parser and discover available effects.
 
-    This includes registering built-in effect modules and user-provided effect
-    modules from the XDG config effects directory, then returning the parsed CLI
-    parser together with a mapping of effect command names to their effect and
-    config classes.
+    This registers built-in effect modules and, when requested, user-provided
+    effect modules from the XDG config effects directory. It returns the parsed
+    CLI parser together with a mapping of effect command names to their effect
+    and config classes.
+
+    Args:
+        include_user_effects: Whether to discover effects from the user's XDG config directory.
 
     Returns:
         tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The CLI parser and a
@@ -129,7 +135,7 @@ def build_parser() -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEf
         _register_effect_from_module(module)
 
     plugins_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "terminaltexteffects" / "effects"
-    if plugins_dir.exists():
+    if include_user_effects and plugins_dir.exists():
         for plugin_file in plugins_dir.glob("*.py"):
             if plugin_file.name == "__init__.py":
                 continue
@@ -146,7 +152,8 @@ def build_parser() -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEf
 
 def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
     """Build the CLI parser, discover available effects, and parse arguments."""
-    parser, effect_resource_map = build_parser()
+    include_user_effects = "--print-completion" not in sys.argv[1:]
+    parser, effect_resource_map = build_parser(include_user_effects=include_user_effects)
     return parser.parse_args(), effect_resource_map
 
 
@@ -172,8 +179,7 @@ def main() -> None:
     """
     args, effect_resource_map = build_parsers_and_parse_args()
     if args.print_completion:
-        parser, _ = build_parser()
-        print(get_completion_script(args.print_completion, parser), end="")
+        print(get_completion_script(args.print_completion), end="")
         return
     if args.seed is not None:
         random.seed(args.seed)

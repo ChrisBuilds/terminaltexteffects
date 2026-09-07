@@ -245,11 +245,12 @@ OR
 * Randomly select an effect with `--random-effect`/`-R`.
   * Use `--seed` to make the random choice repeatable.
   * Use `--include-effects` or `--exclude-effects` to limit the random selection pool.
-* Generate shell completions with `tte --print-completion bash` or `tte --print-completion zsh`.
+* Generate shell completions for bundled effects with `tte --print-completion bash` or
+  `tte --print-completion zsh`.
   * Bash: `eval "$(tte --print-completion bash)"`
   * Zsh: `eval "$(tte --print-completion zsh)"`
   * To enable completions for future shells, add the relevant command above to your shell startup file such as `~/.bashrc` or `~/.zshrc`.
-  * If you add or remove custom effect plugins from `~/.config/terminaltexteffects/effects`, regenerate the completion script so the effect list stays current.
+  * Completion scripts cover built-in effects only; options from custom effect plugins are not included.
 * Add custom effect modules to `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set.
   * Any `.py` file in that directory that provides `get_effect_resources()` can register an effect command alongside the built-in effects.
 * TTE is not a full terminal emulator, but it parses common fetch-style input including SGR foreground/background colors, cursor movement CSI sequences, carriage returns, and selected DEC private mode toggles.

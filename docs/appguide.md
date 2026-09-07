@@ -35,7 +35,7 @@ tte [global_options] <effect_name> [effect_options]
 
 Using the `-h` argument in place of the global_options or effect_options will produce either the global or effect help output, respectively.
 
-Shell completions are also available for bash and zsh:
+Shell completions for bundled effects are also available for bash and zsh:
 
 ```bash title="Generate shell completions"
 eval "$(tte --print-completion bash)"
@@ -46,8 +46,7 @@ eval "$(tte --print-completion zsh)"
 ```
 
 To enable completions for future shells, add the relevant command to your `~/.bashrc` or `~/.zshrc`.
-If you add or remove custom effect plugins from `~/.config/terminaltexteffects/effects`, regenerate the completion
-script so the available effect names stay in sync.
+Completion scripts cover built-in effects only; options from custom effect plugins are not included.
 
 TTE can randomly select an effect with `--random-effect`/`-R`. Use `--seed` to make that selection repeatable, or
 limit the pool with `--include-effects` and `--exclude-effects`:

@@ -1504,6 +1504,15 @@ wheels = [
 ]
 
 [[package]]
+name = "shtab"
+version = "1.9.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fc/67/179150085f25bb5435ed81befd9a0152764b3bb1b1167f7625fc320d9c56/shtab-1.9.2.tar.gz", hash = "sha256:8f9ef33e1c89d6c294c9bd8fc5c0d661892054a60f7ab9c909e80302061f2a3f", size = 49510, upload-time = "2026-07-31T19:58:04.082Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/0f/3e783ec50e47a63d8b8e3be6b75d1115e8fd8e1f78c6e8b83ae4d4ad686e/shtab-1.9.2-py3-none-any.whl", hash = "sha256:0b2f15f239de932b0d544519ca9b62608d6e2c38840e697dcc14b7a4e282d6e2", size = 15135, upload-time = "2026-07-31T19:58:02.888Z" },
+]
+
+[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1541,6 +1550,7 @@ dev = [
     { name = "pytest-cov", version = "7.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "pytest-xdist", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "pytest-xdist", version = "3.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
+    { name = "shtab", marker = "python_full_version >= '3.9'" },
 ]
 
 [package.metadata]
@@ -1561,6 +1571,7 @@ dev = [
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
     { name = "pytest-xdist", specifier = ">=3.6.1" },
+    { name = "shtab", marker = "python_full_version >= '3.9'", specifier = "==1.9.2" },
 ]
 
 [[package]]

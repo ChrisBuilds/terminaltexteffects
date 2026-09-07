@@ -90,4 +90,5 @@ dev = [
     "pytest>=8.3.5",
     "pytest-cov>=5.0.0",
     "pytest-xdist>=3.6.1",
+    "shtab==1.9.2; python_version >= '3.9'",
 ]
