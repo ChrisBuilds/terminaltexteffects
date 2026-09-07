@@ -66,6 +66,12 @@ def test_is_valid_color_invalid_hex_length() -> None:
     assert hexterm.is_valid_color("ff") is False
 
 
+@pytest.mark.parametrize("color", ["1234567", "#1234567", "##123456"])
+def test_is_valid_color_rejects_malformed_hex_prefix_or_length(color: str) -> None:
+    """Only six digits with at most one leading '#' form a valid RGB color."""
+    assert hexterm.is_valid_color(color) is False
+
+
 def test_is_valid_color_invalid_xterm_color() -> None:
     """Test that an invalid xterm color is recognized as invalid."""
     assert hexterm.is_valid_color(256) is False

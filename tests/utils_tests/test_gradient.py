@@ -244,6 +244,13 @@ def test_color_invalid_hex_color() -> None:
         Color("#ffffzz")
 
 
+@pytest.mark.parametrize("color", ["1234567", "#1234567", "##123456"])
+def test_color_rejects_malformed_hex_prefix_or_length(color: str) -> None:
+    """Reject RGB strings that rendering would otherwise truncate or normalize."""
+    with pytest.raises(ValueError, match="Invalid color value"):
+        Color(color)
+
+
 def test_color_valid_hex_with_hash():
     assert Color("#ffffff") == Color("#ffffff")
 

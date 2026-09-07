@@ -53,18 +53,7 @@ class Color:
             ValueError: If the color value is not a valid XTerm-256 color code or an RGB hex color string.
 
         """
-        if isinstance(color_value, str):
-            color_value = color_value.strip("#")
-        self.color_arg = color_value
-        self.xterm_color: int | None = None
-        if hexterm.is_valid_color(color_value):
-            if isinstance(color_value, int):
-                self.xterm_color = color_value
-                self.rgb_color = hexterm.xterm_to_hex(color_value)
-            else:
-                self.rgb_color = color_value
-                self.xterm_color = None
-        else:
+        if not hexterm.is_valid_color(color_value):
             msg = (
                 "Invalid color value. Color must be an XTerm-256 color code or an RGB hex color string. "
                 "Example: 255 or 'ffffff' or '#ffffff'"
@@ -72,6 +61,16 @@ class Color:
             raise ValueError(
                 msg,
             )
+        if isinstance(color_value, str):
+            color_value = color_value.removeprefix("#")
+        self.color_arg = color_value
+        self.xterm_color: int | None = None
+        if isinstance(color_value, int):
+            self.xterm_color = color_value
+            self.rgb_color = hexterm.xterm_to_hex(color_value)
+        else:
+            self.rgb_color = color_value
+            self.xterm_color = None
 
     @property
     def rgb_ints(self) -> tuple[int, int, int]:

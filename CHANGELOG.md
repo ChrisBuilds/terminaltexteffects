@@ -92,6 +92,8 @@
 * Configuration - Fixed library configuration values bypassing CLI validation. `ArgSpec` parsers now normalize both
   CLI spellings and canonical library values during config construction and assignment, including tuple options,
   booleans, choices, colors, enums, ranges, and custom easing callables.
+* Color - Fixed malformed RGB hex values being accepted and silently truncated during rendering. RGB colors now require
+  exactly six hexadecimal digits with, at most, one leading `#`.
 * Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 * Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number
