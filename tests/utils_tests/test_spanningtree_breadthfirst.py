@@ -98,6 +98,7 @@ def test_breadth_first_step_records_each_discovery_once_with_the_first_discoveri
     second_frontier_char = get_char(terminal, 2, 1)
     discovered_char = get_char(terminal, 1, 1)
     first_frontier_char._link(discovered_char)
+    second_frontier_char._link(discovered_char)
 
     generator = BreadthFirst(terminal, starting_char=starting_char)
     generator._frontier = [first_frontier_char, second_frontier_char]

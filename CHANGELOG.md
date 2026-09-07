@@ -47,6 +47,8 @@
   canvas column, reducing grouping work for wide canvases.
 * Outside/middle character sorting now interleaves sorted characters with indexes instead of repeated front-pops,
   reducing the ordering pass from quadratic to linear work.
+* Smoke's breadth-first fill traversal now uses an efficient queue and constant-time discovery tracking, reducing
+  traversal overhead on wide or densely linked character graphs.
 * Event dispatch now branches directly on registered actions instead of allocating an action map and callback lambdas
   for every event, reducing allocation in event-heavy effects.
 * Motion segment events now trigger `SEGMENT_ENTERED` before `SEGMENT_EXITED` for segments that are completely crossed
