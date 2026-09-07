@@ -435,18 +435,23 @@ def shift_color_towards(color: Color, target_color: Color, factor: float) -> Col
     """Shift one color towards another by a given factor.
 
     A factor of `0` returns the original color and a factor of `1` returns the
-    target color. Values between `0` and `1` interpolate between the two colors,
-    while values outside that range extrapolate past the target or away from it.
+    target color. The factor must be between `0` and `1`, inclusive.
 
     Args:
         color (Color): The original color.
         target_color (Color): The target color to shift towards.
-        factor (float): Interpolation or extrapolation factor used to shift the color.
+        factor (float): Interpolation factor used to shift the color.
 
     Returns:
         Color: The resulting color after shifting.
 
+    Raises:
+        ValueError: If `factor` is outside the inclusive range from `0` to `1`.
+
     """
+    if not 0 <= factor <= 1:
+        msg = "Factor must be between 0 and 1, inclusive."
+        raise ValueError(msg)
 
     def interpolate(start: float, end: float, factor: float) -> float:
         """Interpolate between two values by a given factor."""

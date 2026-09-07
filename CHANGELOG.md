@@ -103,6 +103,8 @@
 * Engine - Fixed `EffectCharacter` instances from separate terminals comparing equal when their terminal-local IDs
   matched. Characters now use object identity for equality and hashing, preventing cross-terminal set and dictionary
   collisions.
+* Color - Fixed `shift_color_towards()` documenting unsupported RGB extrapolation. It now rejects factors outside the
+  inclusive interpolation range from `0` to `1` with a clear `ValueError`.
 * Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 * Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number

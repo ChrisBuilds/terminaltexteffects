@@ -1,7 +1,7 @@
 import pytest
 
 from terminaltexteffects.engine.motion import Coord
-from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient, random_color
+from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient, random_color, shift_color_towards
 
 pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
@@ -20,6 +20,22 @@ def test_color_pair_init_single_color() -> None:
     cp = ColorPair("#ffffff")
     assert cp.fg_color == Color("#ffffff")
     assert cp.bg_color is None
+
+
+@pytest.mark.parametrize(
+    ("factor", "expected"),
+    [(0, Color("#000000")), (0.5, Color("#7f7f7f")), (1, Color("#ffffff"))],
+)
+def test_shift_color_towards_interpolates_within_unit_interval(factor: float, expected: Color) -> None:
+    """Shift colors only across the valid interpolation interval."""
+    assert shift_color_towards(Color("#000000"), Color("#ffffff"), factor) == expected
+
+
+@pytest.mark.parametrize("factor", [-0.1, 1.1])
+def test_shift_color_towards_rejects_out_of_range_factor(factor: float) -> None:
+    """Reject extrapolation factors before they can create invalid RGB channels."""
+    with pytest.raises(ValueError, match="Factor must be between 0 and 1"):
+        shift_color_towards(Color("#000000"), Color("#ffffff"), factor)
 
 
 def test_gradient_zero_stops() -> None:
