@@ -592,6 +592,30 @@ def test_scene_get_next_visual_looping(character: EffectCharacter) -> None:
     assert visual.symbol == "a"
 
 
+def test_scene_get_next_visual_preserves_frame_inspection_during_playback(character: EffectCharacter) -> None:
+    """Ordinary playback advances by index while retaining the list-backed frame sequence."""
+    new_scene = character.animation.new_scene(scene_id="test_scene")
+    new_scene.add_frame(symbol="a", duration=1)
+    new_scene.add_frame(symbol="b", duration=1)
+
+    assert new_scene.get_next_visual().symbol == "a"
+    assert [frame.character_visual.symbol for frame in new_scene.frames] == ["a", "b"]
+    assert new_scene.get_next_visual().symbol == "b"
+    assert not new_scene.frames
+    assert [frame.character_visual.symbol for frame in new_scene.played_frames] == ["a", "b"]
+
+
+def test_scene_activate_returns_current_frame_after_partial_playback(character: EffectCharacter) -> None:
+    """Reactivating a partially played scene preserves the ordinary playback position."""
+    new_scene = character.animation.new_scene(scene_id="test_scene")
+    new_scene.add_frame(symbol="a", duration=1)
+    new_scene.add_frame(symbol="b", duration=1)
+
+    new_scene.get_next_visual()
+
+    assert new_scene.activate().symbol == "b"
+
+
 def test_scene_apply_gradient_to_symbols_empty_gradient(character: EffectCharacter) -> None:
     """Ensure empty gradient spectra trigger an error."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
@@ -731,6 +755,19 @@ def test_scene_reset_scene(character: EffectCharacter) -> None:
     for sequence in new_scene.frames:
         assert sequence.ticks_elapsed == 0
     assert not new_scene.played_frames
+
+
+def test_scene_reset_scene_after_completion(character: EffectCharacter) -> None:
+    """Reset restores a fully consumed ordinary scene to its first frame."""
+    new_scene = character.animation.new_scene(scene_id="test_scene")
+    new_scene.add_frame(symbol="a", duration=1)
+    new_scene.add_frame(symbol="b", duration=1)
+    new_scene.get_next_visual()
+    new_scene.get_next_visual()
+
+    new_scene.reset_scene()
+
+    assert new_scene.get_next_visual().symbol == "a"
 
 
 def test_scene_id_equality() -> None:

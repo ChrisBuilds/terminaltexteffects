@@ -39,6 +39,8 @@
   identical rendered output.
 * Eased scene playback now stores one cumulative frame boundary per frame instead of one dictionary entry per playback
   tick. This reduces animation build-time allocation and memory use for long-duration scenes.
+* Ordinary scene playback now advances through frames with an internal index instead of repeatedly removing the first
+  list element. This avoids quadratic list-shifting work for long scenes while retaining list-backed frame inspection.
 * Wrapped terminal input rows are now calculated once and reused for both canvas sizing and character setup, reducing
   preprocessing allocation for wrapped input.
 * Column character grouping now buckets selected characters in one pass instead of rescanning every character for every

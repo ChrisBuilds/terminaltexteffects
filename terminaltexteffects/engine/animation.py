@@ -144,6 +144,7 @@ class Scene:
         use_xterm_colors (bool): Whether to convert all colors to XTerm-256 colors
         frames (list[Frame]): The list of Frames in the Scene
         played_frames (list[Frame]): The list of Frames that have been played
+        _frame_index (int): The current frame index for ordinary playback.
         _frame_end_steps (list[int]): Cumulative frame-duration boundaries for eased playback.
         easing_total_steps (int): The total number of steps in the easing function
         easing_current_step (int): The current step in the easing function
@@ -195,6 +196,7 @@ class Scene:
         self.use_xterm_colors = use_xterm_colors
         self.frames: list[Frame] = []
         self.played_frames: list[Frame] = []
+        self._frame_index: int = 0
         self._frame_end_steps: list[int] = []
         self.easing_total_steps: int = 0
         self.easing_current_step: int = 0
@@ -301,7 +303,7 @@ class Scene:
         self._frame_end_steps.append(self.easing_total_steps)
 
     def activate(self) -> CharacterVisual:
-        """Activate the Scene by returning the first frame's `CharacterVisual`.
+        """Activate the Scene by returning the current frame's `CharacterVisual`.
 
         Called by the `Animation` object when the Scene is activated.
 
@@ -313,7 +315,7 @@ class Scene:
 
         """
         if self.frames:
-            return self.frames[0].character_visual
+            return self.frames[self._frame_index].character_visual
         raise ActivateEmptySceneError(self)
 
     def get_next_visual(self) -> CharacterVisual:
@@ -321,23 +323,27 @@ class Scene:
 
         Retrieve the current frame from `frames`, then increment the frame's `ticks_elapsed`.
         If `ticks_elapsed` reaches the frame duration, reset that frame's `ticks_elapsed` to `0`
-        and move it from `frames` to `played_frames`. If the Scene is looping and all frames
-        have been played, restore `frames` from `played_frames` so the next loop begins from
-        the start of each frame again. Return the current frame's `CharacterVisual`.
+        and advance the playback index. When a non-looping Scene completes, move all frames
+        to `played_frames`; looping Scenes reset their playback index to begin again.
+        Return the current frame's `CharacterVisual`.
 
         Returns:
             CharacterVisual: The visual of the current frame in the Scene.
 
         """
-        current_frame = self.frames[0]
+        current_frame = self.frames[self._frame_index]
         next_visual = current_frame.character_visual
         current_frame.ticks_elapsed += 1
         if current_frame.ticks_elapsed == current_frame.duration:
             current_frame.ticks_elapsed = 0
-            self.played_frames.append(self.frames.pop(0))
-            if self.is_looping and not self.frames:
-                self.frames.extend(self.played_frames)
-                self.played_frames.clear()
+            self._frame_index += 1
+            if self._frame_index == len(self.frames):
+                if self.is_looping:
+                    self._frame_index = 0
+                else:
+                    self.played_frames.extend(self.frames)
+                    self.frames.clear()
+                    self._frame_index = 0
         return next_visual
 
     def apply_gradient_to_symbols(
@@ -460,6 +466,7 @@ class Scene:
         self.frames.clear()
         self.frames.extend(self.played_frames)
         self.played_frames.clear()
+        self._frame_index = 0
         self.easing_current_step = 0
 
     def __eq__(self, other: object) -> bool:
