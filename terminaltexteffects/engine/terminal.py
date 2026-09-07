@@ -1222,7 +1222,7 @@ class Terminal:
         outer_fill_chars: bool = False,
         added_chars: bool = False,
     ) -> list[list[EffectCharacter]]:
-        """Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping.
+        """Get visible-canvas EffectCharacters grouped by the specified `CharacterGroup` grouping.
 
         Args:
             grouping (CharacterGroup, optional): order to group the characters. Defaults to ROW_TOP_TO_BOTTOM.
@@ -1232,8 +1232,8 @@ class Terminal:
             added_chars (bool, optional): whether to include added characters. Defaults to False.
 
         Returns:
-            list[list[EffectCharacter]]: list of lists of EffectCharacters in the terminal. Inner lists correspond
-                to groups as specified in the grouping.
+            list[list[EffectCharacter]]: List of lists of selected EffectCharacters within the visible canvas. Inner
+                lists correspond to groups as specified in the grouping.
 
         Raises:
             InvalidCharacterGroupError: If an invalid grouping option is provided.
@@ -1248,6 +1248,15 @@ class Terminal:
             all_characters.extend(self._outer_fill_characters)
         if added_chars:
             all_characters.extend(self._added_characters)
+
+        all_characters = [
+            character
+            for character in all_characters
+            if (
+                self.canvas.left <= character.input_coord.column <= self.canvas.right
+                and self.canvas.bottom <= character.input_coord.row <= self.canvas.top
+            )
+        ]
 
         all_characters.sort(
             key=lambda character: (character.input_coord.row, character.input_coord.column),

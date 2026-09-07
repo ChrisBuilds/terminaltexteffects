@@ -566,7 +566,7 @@ def test_terminal_get_characters_grouped(input_chars, inner_fill_chars, outer_fi
     config = TerminalConfig._build_config()
     config.canvas_width = 7
     terminal = Terminal(input_data="abcde\nfg hij\nklmno", config=config)
-    terminal.add_character("a", Coord(0, 0))
+    terminal.add_character("a", Coord(1, 1))
     chars = terminal.get_characters_grouped(
         input_chars=input_chars,
         inner_fill_chars=inner_fill_chars,
@@ -673,6 +673,20 @@ def test_terminal_get_characters_grouped_columns_preserve_order_and_canvas_bound
     groups = terminal.get_characters_grouped(grouping, added_chars=True)
 
     assert [[character.input_symbol for character in group] for group in groups] == expected_groups
+
+
+@pytest.mark.parametrize("grouping", list(CharacterGroup))
+def test_terminal_get_characters_grouped_excludes_off_canvas_added_characters(grouping: CharacterGroup) -> None:
+    """Every grouping excludes selected added characters outside the visible canvas."""
+    config = TerminalConfig._build_config()
+    config.canvas_width = 3
+    config.canvas_height = 2
+    terminal = Terminal(input_data="abc\ndef", config=config)
+    off_canvas_character = terminal.add_character("z", Coord(4, 1))
+
+    groups = terminal.get_characters_grouped(grouping, added_chars=True)
+
+    assert all(character is not off_canvas_character for group in groups for character in group)
 
 
 def test_terminal_get_characters_grouped_invalid_grouping() -> None:
