@@ -75,6 +75,30 @@ EASING_EPILOG = """\
 _MISSING = object()
 
 
+def format_cli_default(value: typing.Any, type_parser: typing.Any = _MISSING) -> str:
+    """Format a canonical value using its equivalent command-line spelling.
+
+    This is the fallback used for argument defaults when an `ArgSpec` does not
+    provide a more specific `default_formatter`.
+    """
+    if type_parser in (PositiveIntRange.type_parser, PositiveFloatRange.type_parser):
+        return format_cli_range(value)
+    if isinstance(value, Color):
+        return str(value.color_arg)
+    if isinstance(value, Enum):
+        return value.name.lower()
+    if isinstance(value, (tuple, list)):
+        return " ".join(format_cli_default(item) for item in value)
+    if callable(value):
+        return value.__name__
+    return str(value)
+
+
+def format_cli_range(value: tuple[int, int] | tuple[float, float]) -> str:
+    """Format a two-value range using the hyphenated command-line syntax."""
+    return f"{value[0]}-{value[1]}"
+
+
 @dataclass(frozen=True)
 class ParserSpec:
     """Specification for creating an argparse subparser for an effect config.
@@ -100,6 +124,9 @@ class ArgSpec:
     The `type` callable is the normalization contract shared by CLI parsing and
     library configuration. Custom callables must accept both CLI strings and
     values that are already in their canonical library form.
+
+    `default_formatter`, when supplied, formats the canonical default for CLI
+    help text only. It does not affect parsing or configuration construction.
     """
 
     name: str
@@ -111,6 +138,7 @@ class ArgSpec:
     action: str | type[argparse.Action] = _MISSING  # type: ignore[arg-type]
     choices: list[typing.Any] = _MISSING  # type: ignore[arg-type]
     nargs: str | int = _MISSING  # type: ignore[arg-type]
+    default_formatter: typing.Callable[[typing.Any], str] = _MISSING  # type: ignore[assignment]
 
     def normalize(self, value: typing.Any) -> typing.Any:
         """Normalize and validate a configuration value described by this spec."""
@@ -135,6 +163,17 @@ class ArgSpec:
 
 class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
     """Combine ArgumentDefaultsHelpFormatter and RawDescriptionHelpFormatter for argparse."""
+
+    def _get_help_string(self, action: argparse.Action) -> str:
+        """Return help text with defaults rendered as command-line values."""
+        help_string = super()._get_help_string(action) or ""
+        default_formatter = getattr(action, "default_formatter", None)
+        if default_formatter is None:
+            default_value = format_cli_default(action.default, action.type)
+        else:
+            default_value = default_formatter(action.default)
+        default_value = default_value.replace("%", "%%")
+        return help_string.replace("%(default)s", default_value)
 
 
 class CharacterGroup(Enum):

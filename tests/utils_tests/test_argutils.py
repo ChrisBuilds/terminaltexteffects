@@ -8,6 +8,28 @@ from terminaltexteffects.utils.graphics import Color, Gradient
 pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (argutils.CharacterGroup.ROW_TOP_TO_BOTTOM, "row_top_to_bottom"),
+        (Gradient.Direction.VERTICAL, "vertical"),
+        (Color("aabbcc"), "aabbcc"),
+        ((Color("aabbcc"), Color(42)), "aabbcc 42"),
+        (easing.in_out_sine, "in_out_sine"),
+    ],
+)
+def test_format_cli_default_uses_cli_spellings(value: object, expected: str) -> None:
+    """Canonical built-in values should render as valid command-line values."""
+    assert argutils.format_cli_default(value) == expected
+
+
+def test_format_cli_range_uses_hyphenated_cli_syntax() -> None:
+    """Range defaults should use the format accepted by range parsers."""
+    assert argutils.format_cli_range((1, 10)) == "1-10"
+    assert argutils.format_cli_range((0.1, 0.5)) == "0.1-0.5"
+    assert argutils.format_cli_default((1, 10), argutils.PositiveIntRange.type_parser) == "1-10"
+
+
 def test_postive_int_valid_int():
     assert argutils.PositiveInt.type_parser("1") == 1
 

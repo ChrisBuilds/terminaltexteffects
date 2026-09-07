@@ -65,6 +65,7 @@ class WipeConfig(BaseConfig):
         name="--wipe-direction",
         default=argutils.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
         type=argutils.CharacterGroupArg.type_parser,
+        metavar=" ".join(argutils.CharacterGroupArg.METAVAR),
         help="Direction the text will wipe.",
     )  # pyright: ignore[reportAssignmentType]
     "CharacterGroup : Direction the text will wipe."

@@ -133,7 +133,10 @@ class BaseConfig:
             spec = field.default
             assert isinstance(spec, argutils.ArgSpec)
             add_args_sig = {k: v for k, v in vars(spec).items() if v is not argutils._MISSING}
-            parser.add_argument(add_args_sig.pop("name"), **add_args_sig)
+            default_formatter = add_args_sig.pop("default_formatter", None)
+            action = parser.add_argument(add_args_sig.pop("name"), **add_args_sig)
+            if default_formatter is not None:
+                action.__dict__["default_formatter"] = default_formatter
 
     @classmethod
     def _build_config(cls: type[CONFIG], parsed_args: argparse.Namespace | None = None) -> CONFIG:

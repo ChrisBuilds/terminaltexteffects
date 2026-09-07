@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 import subprocess
 import sys
@@ -10,6 +11,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from terminaltexteffects import __main__
+from terminaltexteffects.utils import argutils
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -92,6 +94,31 @@ def test_build_parser_registers_effects() -> None:
     help_output = parser.format_help()
     assert "matrix" in help_output
     assert "highlight" in help_output
+
+
+def test_wipe_help_renders_direction_default_as_cli_value() -> None:
+    """Ensure wipe help presents its enum default in command-line syntax."""
+    parser, _ = __main__.build_parser()
+    subparsers = next(action for action in parser._actions if action.dest == "effect")
+    assert isinstance(subparsers, argparse._SubParsersAction)
+
+    help_output = subparsers.choices["wipe"].format_help()
+
+    assert "(default:\n                        diagonal_top_left_to_bottom_right)" in help_output
+    assert "CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT" not in help_output
+    assert all(direction in help_output for direction in argutils.CharacterGroupArg.METAVAR)
+
+
+def test_laseretch_help_renders_color_defaults_as_cli_values() -> None:
+    """Ensure multi-color defaults are displayed as CLI tokens rather than Python objects."""
+    parser, _ = __main__.build_parser()
+    subparsers = next(action for action in parser._actions if action.dest == "effect")
+    assert isinstance(subparsers, argparse._SubParsersAction)
+
+    help_output = subparsers.choices["laseretch"].format_help()
+
+    assert "(default: ffe680 ff7b00)" in help_output
+    assert "Color('ffe680')" not in help_output
 
 
 def test_main_print_completion_bash_outputs_script(

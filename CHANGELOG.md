@@ -63,6 +63,9 @@
 
 ---
 
+* Configuration - Fixed CLI help displaying Python representations for defaults such as colors, enums, gradients,
+  easing functions, and ranges. Defaults now use their valid command-line syntax and enum arguments list all accepted
+  options.
 * Animation - Fixed `adjust_color_brightness()` rounding so a brightness factor of `1` preserves mixed-channel RGB colors instead of subtly darkening individual channels.
 * Motion - Fixed crashes and incorrect path state updates when `SEGMENT_ENTERED`, `SEGMENT_EXITED`, or `PATH_HOLDING`
   callbacks deactivate, replace, or restart the active path. Processing of the old traversal now stops, preserving

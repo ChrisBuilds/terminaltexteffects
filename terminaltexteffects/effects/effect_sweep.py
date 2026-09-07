@@ -65,6 +65,7 @@ class SweepConfig(BaseConfig):
         name="--first-sweep-direction",
         default=argutils.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
         type=argutils.CharacterGroupArg.type_parser,
+        metavar=" ".join(argutils.CharacterGroupArg.METAVAR),
         help="Direction of the first sweep, revealing uncolored characters.",
     )  # pyright: ignore[reportAssignmentType]
     "CharacterGroup : Direction of the first sweep, revealing uncolored characters."
@@ -73,6 +74,7 @@ class SweepConfig(BaseConfig):
         name="--second-sweep-direction",
         default=argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
         type=argutils.CharacterGroupArg.type_parser,
+        metavar=" ".join(argutils.CharacterGroupArg.METAVAR),
         help="Direction of the second sweep, coloring the characters.",
     )  # pyright: ignore[reportAssignmentType]
     "CharacterGroup : Direction of the second sweep, coloring the characters."

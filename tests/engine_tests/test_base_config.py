@@ -73,6 +73,20 @@ class NormalizedConfig(BaseConfig):
     )
 
 
+@dataclass
+class FormattedDefaultConfig(BaseConfig):
+    """Config model with a custom help-only default formatter."""
+
+    parser_spec: argutils.ParserSpec = ExampleConfig.parser_spec
+    custom: str = argutils.ArgSpec(  # pyright: ignore[reportAssignmentType]
+        name="--custom",
+        default="canonical-value",
+        type=str,
+        help="Custom formatter test option.",
+        default_formatter=lambda value: f"cli-{value}",
+    )
+
+
 def test_build_config_none_uses_argspec_defaults() -> None:
     """Build config from declared ArgSpec defaults when parsed args are not provided."""
     config: ExampleConfig = ExampleConfig._build_config(None)
@@ -175,6 +189,16 @@ def test_build_config_preserves_omitted_tuple_action_default_representation() ->
     LaserEtchConfig._populate_parser(parser)
 
     assert LaserEtchConfig._build_config(parser.parse_args([])).final_gradient_steps == 8
+
+
+def test_default_formatter_only_changes_help_output() -> None:
+    """Custom default formatters must not alter parsed or library configuration values."""
+    parser = argparse.ArgumentParser(formatter_class=argutils.CustomFormatter)
+    FormattedDefaultConfig._populate_parser(parser)
+
+    assert "(default:cli-canonical-value)" in "".join(parser.format_help().split())
+    assert parser.parse_args([]).custom == "canonical-value"
+    assert FormattedDefaultConfig._build_config().custom == "canonical-value"
 
 
 def _builtin_config_types() -> list[type[BaseConfig]]:
