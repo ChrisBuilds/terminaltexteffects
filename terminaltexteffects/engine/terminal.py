@@ -582,8 +582,11 @@ class Terminal:
             input_data = "No Input."
         self._next_character_id = 0
         self._input_colors_frequency: dict[Color, int] = {}
+        self._preprocessed_character_columns: dict[EffectCharacter, int] = {}
+        self._preprocessed_line_widths: list[int] = []
         self._preprocessed_character_lines = self._preprocess_input_data(input_data)
         self._wrapped_character_lines: list[list[EffectCharacter]] | None = None
+        self._wrapped_character_line_widths: list[int] | None = None
         self._wrapped_character_lines_width: int | None = None
         self._terminal_width, self._terminal_height = self._get_terminal_dimensions()
         self.canvas = Canvas(*self._get_canvas_dimensions())
@@ -798,6 +801,7 @@ class Terminal:
             return character
 
         screen: dict[tuple[int, int], EffectCharacter] = {}
+        occupied_coords: set[tuple[int, int]] = set()
         active_sequences = {"fg_color": "", "bg_color": ""}
         active_colors: dict[str, Color | None] = {"fg_color": None, "bg_color": None}
         active_styles = {"bold": False}
@@ -848,34 +852,46 @@ class Terminal:
                 else:
                     spaces_to_next_tab = 1
                 for _ in range(spaces_to_next_tab):
-                    screen[(row, column)] = build_character(symbol, active_sequences, active_colors, active_styles)
+                    coord = (row, column)
+                    occupied_coords.add(coord)
+                    if symbol != " " or any(active_colors.values()):
+                        screen[coord] = build_character(symbol, active_sequences, active_colors, active_styles)
+                    else:
+                        screen.pop(coord, None)
+                        self._next_character_id += 1
                     max_row = max(max_row, row)
                     max_column = max(max_column, column)
                     column += 1
                 char_index += 1
 
-        characters: list[list[EffectCharacter]] = []
-        for screen_row in range(max_row + 1):
-            character_line: list[EffectCharacter] = []
-            for screen_column in range(max_column + 1):
-                character = screen.get((screen_row, screen_column))
-                if character is None:
-                    character = build_character(
-                        " ",
-                        {"fg_color": "", "bg_color": ""},
-                        {"fg_color": None, "bg_color": None},
-                        {"bold": False},
-                    )
-                character_line.append(character)
-            while character_line and character_line[-1].input_symbol == " " and not any(
-                (character_line[-1].animation.input_fg_color, character_line[-1].animation.input_bg_color),
-            ):
-                character_line.pop()
-            characters.append(character_line)
-        while characters and not characters[-1]:
-            characters.pop()
+        # Preserve the ID progression of the former dense rectangle without allocating
+        # temporary characters for coordinates that will become fill characters.
+        rectangle_size = (max_row + 1) * (max_column + 1)
+        self._next_character_id += rectangle_size - len(occupied_coords)
 
-        return characters or [[build_character(" ", active_sequences, active_colors, active_styles)]]
+        if not screen:
+            fallback_character = build_character(" ", active_sequences, active_colors, active_styles)
+            self._preprocessed_character_columns = {fallback_character: 0}
+            self._preprocessed_line_widths = [1]
+            return [[fallback_character]]
+
+        last_character_row = max(screen_row for screen_row, _ in screen)
+        characters: list[list[EffectCharacter]] = []
+        character_columns: dict[EffectCharacter, int] = {}
+        line_widths: list[int] = []
+        entries_by_row: dict[int, list[tuple[int, EffectCharacter]]] = {}
+        for (screen_row, screen_column), character in screen.items():
+            entries_by_row.setdefault(screen_row, []).append((screen_column, character))
+        for screen_row in range(last_character_row + 1):
+            line_entries = sorted(entries_by_row.get(screen_row, []), key=lambda entry: entry[0])
+            character_line = [character for _, character in line_entries]
+            characters.append(character_line)
+            line_widths.append(line_entries[-1][0] + 1 if line_entries else 0)
+            character_columns.update({character: screen_column for screen_column, character in line_entries})
+
+        self._preprocessed_character_columns = character_columns
+        self._preprocessed_line_widths = line_widths
+        return characters
 
     def _calc_canvas_offsets(self) -> tuple[int, int]:
         """Calculate terminal-space offsets for the anchored canvas.
@@ -917,7 +933,7 @@ class Terminal:
         elif self.config.canvas_width == 0:
             canvas_width = self._terminal_width
         else:
-            input_width = max([len(line) for line in self._preprocessed_character_lines])
+            input_width = max(self._preprocessed_line_widths)
             if self.config.ignore_terminal_dimensions:
                 canvas_width = input_width
             else:
@@ -985,12 +1001,27 @@ class Terminal:
 
         """
         wrapped_lines = []
-        for line in lines:
-            current_line = line
-            while len(current_line) > width:
-                wrapped_lines.append(current_line[:width])
-                current_line = current_line[width:]
-            wrapped_lines.append(current_line)
+        wrapped_line_widths = []
+        line_widths = (
+            self._preprocessed_line_widths
+            if lines is self._preprocessed_character_lines
+            else [
+                max((self._preprocessed_character_columns[character] for character in line), default=-1) + 1
+                for line in lines
+            ]
+        )
+        for line, line_width in zip(lines, line_widths):
+            wrapped_line_count = max((line_width + width - 1) // width, 1)
+            line_chunks = [[] for _ in range(wrapped_line_count)]
+            for character in line:
+                logical_column = self._preprocessed_character_columns[character]
+                line_chunks[logical_column // width].append(character)
+            wrapped_lines.extend(line_chunks)
+            wrapped_line_widths.extend(
+                min(width, max(line_width - (chunk_index * width), 0))
+                for chunk_index in range(wrapped_line_count)
+            )
+        self._wrapped_character_line_widths = wrapped_line_widths
         return wrapped_lines
 
     def _get_wrapped_character_lines(self, width: int) -> list[list[EffectCharacter]]:
@@ -1022,7 +1053,9 @@ class Terminal:
         input_height = len(formatted_lines)
         input_characters: list[EffectCharacter] = []
         for row, line in enumerate(formatted_lines):
-            for column, character in enumerate(line, start=1):
+            for character in line:
+                logical_column = self._preprocessed_character_columns[character]
+                column = logical_column % self.canvas.right + 1 if self.config.wrap_text else logical_column + 1
                 character._input_coord = Coord(column, input_height - row)
                 if character._input_symbol != " " or any(
                     (character.animation.input_fg_color, character.animation.input_bg_color),

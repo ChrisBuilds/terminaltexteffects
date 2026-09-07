@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal
 
 import pytest
 
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.utils.exceptions import UnsupportedAnsiSequenceError
+from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
+
+if TYPE_CHECKING:
+    from terminaltexteffects.engine.base_character import EffectCharacter
 
 pytestmark = [pytest.mark.engine, pytest.mark.terminal, pytest.mark.smoke]
 
@@ -26,8 +31,27 @@ def _make_terminal(
 
 
 def _line_symbols(terminal: Terminal) -> list[str]:
-    """Return preprocessed lines as plain text."""
-    return ["".join(character.input_symbol for character in line) for line in terminal._preprocessed_character_lines]
+    """Return sparse preprocessed lines expanded to their logical widths."""
+    symbols_by_line: list[str] = []
+    for line, width in zip(terminal._preprocessed_character_lines, terminal._preprocessed_line_widths):
+        symbols = [" "] * width
+        for character in line:
+            symbols[terminal._preprocessed_character_columns[character]] = character.input_symbol
+        symbols_by_line.append("".join(symbols))
+    return symbols_by_line
+
+
+def _characters_in_preprocessed_columns(
+    terminal: Terminal,
+    row: int,
+    columns: range,
+) -> list[EffectCharacter]:
+    """Return retained characters at zero-based logical columns in a preprocessed row."""
+    characters_by_column = {
+        terminal._preprocessed_character_columns[character]: character
+        for character in terminal._preprocessed_character_lines[row]
+    }
+    return [characters_by_column[column] for column in columns]
 
 
 @pytest.mark.parametrize(
@@ -201,16 +225,16 @@ def test_terminal_fastfetch_style_output_with_swatch_background_colors() -> None
         "           ",
         "           ",
     ]
-    swatch_row = terminal._preprocessed_character_lines[2]
-    assert [character.animation.input_bg_color for character in swatch_row[5:8]] == [Color(0), Color(0), Color(0)]
-    assert [character.animation.input_bg_color for character in swatch_row[8:]] == [Color(1), Color(1), Color(1)]
-    bright_swatch_row = terminal._preprocessed_character_lines[3]
-    assert [character.animation.input_bg_color for character in bright_swatch_row[5:8]] == [
+    swatch_row = _characters_in_preprocessed_columns(terminal, 2, range(5, 11))
+    assert [character.animation.input_bg_color for character in swatch_row[:3]] == [Color(0), Color(0), Color(0)]
+    assert [character.animation.input_bg_color for character in swatch_row[3:]] == [Color(1), Color(1), Color(1)]
+    bright_swatch_row = _characters_in_preprocessed_columns(terminal, 3, range(5, 11))
+    assert [character.animation.input_bg_color for character in bright_swatch_row[:3]] == [
         Color(8),
         Color(8),
         Color(8),
     ]
-    assert [character.animation.input_bg_color for character in bright_swatch_row[8:]] == [
+    assert [character.animation.input_bg_color for character in bright_swatch_row[3:]] == [
         Color(9),
         Color(9),
         Color(9),
@@ -241,25 +265,80 @@ def test_terminal_neofetch_style_output_with_private_modes_and_swatch_colors() -
     assert terminal._preprocessed_character_lines[1][0].animation.input_bold is True
     assert terminal._preprocessed_character_lines[1][5].animation.input_fg_color == Color(10)
     assert terminal._preprocessed_character_lines[1][5].animation.input_bold is True
-    standard_swatch_row = terminal._preprocessed_character_lines[2]
-    assert [character.animation.input_bg_color for character in standard_swatch_row[5:8]] == [
+    standard_swatch_row = _characters_in_preprocessed_columns(terminal, 2, range(5, 11))
+    assert [character.animation.input_bg_color for character in standard_swatch_row[:3]] == [
         Color(0),
         Color(0),
         Color(0),
     ]
-    assert [character.animation.input_bg_color for character in standard_swatch_row[8:]] == [
+    assert [character.animation.input_bg_color for character in standard_swatch_row[3:]] == [
         Color(1),
         Color(1),
         Color(1),
     ]
-    bright_swatch_row = terminal._preprocessed_character_lines[3]
-    assert [character.animation.input_bg_color for character in bright_swatch_row[5:8]] == [
+    bright_swatch_row = _characters_in_preprocessed_columns(terminal, 3, range(5, 11))
+    assert [character.animation.input_bg_color for character in bright_swatch_row[:3]] == [
         Color(8),
         Color(8),
         Color(8),
     ]
-    assert [character.animation.input_bg_color for character in bright_swatch_row[8:]] == [
+    assert [character.animation.input_bg_color for character in bright_swatch_row[3:]] == [
         Color(9),
         Color(9),
         Color(9),
     ]
+
+
+def test_terminal_keeps_colored_spaces_as_sparse_input_characters() -> None:
+    """Foreground- and background-colored spaces must not become generic fill characters."""
+    terminal = _make_terminal("\x1b[31m \x1b[39m \x1b[44m \x1b[0m", existing_color_handling="always")
+
+    assert terminal._preprocessed_line_widths == [3]
+    assert len(terminal._preprocessed_character_lines[0]) == 2
+    assert [character.input_coord.column for character in terminal.get_characters()] == [1, 3]
+    assert terminal.get_characters()[0].animation.input_fg_color == Color(1)
+    assert terminal.get_characters()[1].animation.input_bg_color == Color(4)
+    assert terminal.get_character_by_input_coord(Coord(2, 1)).is_fill_character is True  # type: ignore[union-attr]
+
+
+def test_terminal_mixed_layout_style_fixture_preserves_sparse_layout_and_ids() -> None:
+    """The mixed cursor/style fixture should retain its layout with only observable input characters."""
+    input_path = Path(__file__).parents[1] / "testinput" / "mixed_layout_style_sequence_test.txt"
+    terminal = _make_terminal(input_path.read_text(encoding="utf-8"))
+
+    assert (terminal.canvas.width, terminal.canvas.height) == (62, 30)
+    assert terminal._preprocessed_line_widths == [
+        58,
+        58,
+        58,
+        58,
+        58,
+        58,
+        58,
+        0,
+        22,
+        48,
+        39,
+        28,
+        19,
+        0,
+        62,
+        34,
+        0,
+        24,
+        30,
+        29,
+        0,
+        27,
+        61,
+        0,
+        22,
+        34,
+        26,
+        33,
+        0,
+        35,
+    ]
+    assert sum(map(len, terminal._preprocessed_character_lines)) == 687
+    assert len(terminal.get_characters()) == 687
+    assert terminal._next_character_id == 3100
