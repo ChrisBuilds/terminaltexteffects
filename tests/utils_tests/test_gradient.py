@@ -37,6 +37,20 @@ def test_gradient_zero_steps_tuple() -> None:
         Gradient(Color("#ffffff"), Color("#000000"), Color("#ff0000"), steps=(1, 0))
 
 
+@pytest.mark.parametrize("steps", [(), (0,), (-1,), (1, 0), (1, -1), (1, 2, 0)])
+def test_gradient_rejects_empty_or_nonpositive_tuple_steps(steps: tuple[int, ...]) -> None:
+    """Validate every tuple step before generation, including unused trailing values."""
+    with pytest.raises(ValueError, match="Steps must be"):
+        Gradient(Color("#ffffff"), Color("#000000"), steps=steps)
+
+
+def test_gradient_repeats_valid_short_tuple_steps() -> None:
+    """A valid short tuple retains its documented step-repetition behavior."""
+    gradient = Gradient(Color("#ffffff"), Color("#000000"), Color("#ff0000"), steps=(2,))
+
+    assert len(gradient.spectrum) == 5
+
+
 def test_gradient_slice() -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
     assert g[0] == Color("#ffffff")

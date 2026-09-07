@@ -214,7 +214,7 @@ class Gradient:
                 first gradient color. Defaults to False.
 
         Raises:
-            ValueError: If no color stops are provided.
+            ValueError: If no color stops are provided or any step count is invalid.
 
         Attributes:
             _stops (tuple[Color]): Tuple of Color objects representing the color stops.
@@ -232,10 +232,22 @@ class Gradient:
         if len(self._stops) < 1:
             msg = "At least one stop must be provided."
             raise ValueError(msg)
+        self._validate_steps(steps)
         self._steps = steps
         self._loop = loop
         self.spectrum: list[Color] = self._generate(self._steps)
         self._index: int = 0
+
+    @staticmethod
+    def _validate_steps(steps: int | tuple[int, ...]) -> None:
+        """Validate gradient step counts before spectrum generation."""
+        step_values = (steps,) if isinstance(steps, int) and not isinstance(steps, bool) else steps
+        if not isinstance(step_values, tuple) or not step_values:
+            msg = "Steps must be a positive integer or a non-empty tuple of positive integers."
+            raise ValueError(msg)
+        if any(isinstance(step, bool) or not isinstance(step, int) or step < 1 for step in step_values):
+            msg = "Steps must be a positive integer or a non-empty tuple of positive integers."
+            raise ValueError(msg)
 
     def get_color_at_fraction(self, fraction: float) -> Color:
         """Return the precomputed spectrum color corresponding to a normalized fraction.
@@ -283,10 +295,6 @@ class Gradient:
         """
         if isinstance(steps, int):
             steps = (steps,)
-            for step in steps:
-                if step < 1:
-                    msg = "Steps must be greater than 0."
-                    raise ValueError(msg)
         spectrum: list[Color] = []
         if len(self._stops) == 1:
             color = self._stops[0]
@@ -302,9 +310,6 @@ class Gradient:
             steps = steps + (steps[-1],) * (len(color_pairs) - len(steps))
         color_pair: tuple[Color, Color]
         for color_pair, step_count in zip(color_pairs, steps):
-            if step_count < 1:
-                msg = f"Invalid steps: {step_count} | Steps must be greater than 0."
-                raise ValueError(msg)
             start, end = color_pair
             start_color_ints = start.rgb_ints
             end_color_ints = end.rgb_ints
