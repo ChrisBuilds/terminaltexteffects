@@ -40,7 +40,7 @@ class ErrorCorrectConfig(BaseConfig):
 
     Attributes:
         error_pairs (float): Percent of characters that are in the wrong position. This is a float between 0 and
-            1.0. 0.2 means 20 percent of the characters will be in the wrong position. Valid values are 0 < n <= 1.0.
+            1.0. 0.2 means 20 percent of the characters will be in the wrong position. Valid values are 0 <= n <= 1.0.
         swap_delay (int): Number of frames between swaps. Valid values are n >= 0.
         error_color (Color): Color for the characters that are in the wrong position.
         correct_color (Color): Color for the characters once corrected, this is a gradient from error-color and
@@ -67,9 +67,9 @@ class ErrorCorrectConfig(BaseConfig):
     )
     error_pairs: float = argutils.ArgSpec(
         name="--error-pairs",
-        type=argutils.PositiveFloat.type_parser,
+        type=argutils.NonNegativeRatio.type_parser,
         default=0.1,
-        metavar="(int > 0)",
+        metavar=argutils.NonNegativeRatio.METAVAR,
         help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means "
         "20 percent of the characters will be in the wrong position.",
     )  # pyright: ignore[reportAssignmentType]
@@ -155,6 +155,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.swapped: list[tuple[EffectCharacter, EffectCharacter]] = []
         self.swap_delay = 0
+        self._has_rendered_frame = False
         self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
@@ -299,7 +300,10 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
         correcting_gradient = Gradient(self.config.error_color, self.config.correct_color, steps=10)
         block_wipe_start = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
         block_wipe_end = ("▇", "▆", "▅", "▄", "▃", "▂", "▁")
-        for _ in range(int(self.config.error_pairs * len(self.terminal.get_characters()))):
+        pair_count = int(self.config.error_pairs * len(all_characters))
+        if self.config.error_pairs and len(all_characters) >= 2:
+            pair_count = max(1, pair_count)
+        for _ in range(pair_count):
             if len(all_characters) < 2:
                 break
             char1 = all_characters.pop(random.randrange(len(all_characters)))
@@ -316,6 +320,8 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
 
     def __next__(self) -> str:
         """Return the next frame in the animation."""
+        if not (self.swapped or self.active_characters or self.swap_delay or not self._has_rendered_frame):
+            raise StopIteration
         if self.swapped and not self.swap_delay:
             next_pair = self.swapped.pop(0)
             for char in next_pair:
@@ -326,8 +332,8 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
             self.swap_delay -= 1
         if self.active_characters:
             self.update()
-            return self.frame
-        raise StopIteration
+        self._has_rendered_frame = True
+        return self.frame
 
 
 class ErrorCorrect(BaseEffect[ErrorCorrectConfig]):

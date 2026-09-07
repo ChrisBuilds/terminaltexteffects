@@ -136,14 +136,14 @@ class ThunderstormConfig(BaseConfig):
         "Increase to slow down the cooling animation."
     )
 
-    storm_time: int = argutils.ArgSpec(
+    storm_time: float = argutils.ArgSpec(
         name="--storm-time",
-        type=argutils.PositiveInt.type_parser,
+        type=argutils.PositiveFloat.type_parser,
         default=12,
-        metavar=argutils.PositiveInt.METAVAR,
+        metavar=argutils.PositiveFloat.METAVAR,
         help="Duration, in seconds, the storm will occur.",
     )  # pyright: ignore[reportAssignmentType]
-    "int: Duration, in seconds, the storm will occur."
+    "float: Duration, in seconds, the storm will occur."
 
     final_gradient_stops: tuple[tte.Color, ...] = FinalGradientStopsArg(
         default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#FFFFFF")),

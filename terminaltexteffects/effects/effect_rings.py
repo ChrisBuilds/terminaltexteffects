@@ -89,8 +89,9 @@ class RingsConfig(BaseConfig):
     "float : Distance between rings as a percent of the smallest canvas dimension."
     spin_duration: int = argutils.ArgSpec(
         name="--spin-duration",
-        type=argutils.PositiveInt.type_parser,
+        type=argutils.NonNegativeInt.type_parser,
         default=200,
+        metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames for each cycle of the spin phase.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames for each cycle of the spin phase."

@@ -121,6 +121,15 @@
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 * Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number
   of frames each color is displayed in the post-lightning text glow cooling gradient.
+* Bubbles - Fixed `bubble_delay=0` being rejected even though zero is a supported delay for launching bubbles on
+  consecutive frames.
+* Beams - Fixed effect construction raising `DuplicateSceneIDError` after duplicate scene ID validation was added.
+  Row and column beam groups now share one named scene set per character.
+* ErrorCorrect - Fixed zero or very small `error_pairs` values producing no output. Zero now renders the settled
+  text, while any positive ratio schedules at least one pair when the input contains two or more characters.
+* Rings - Fixed `spin_duration=0` being rejected even though zero is supported for skipping directly to the next
+  phase.
+* Thunderstorm - Fixed fractional `storm_time` values being rejected, restoring support for sub-second storms.
 
 ## 0.15.0
 

@@ -108,9 +108,9 @@ class BubblesConfig(BaseConfig):
 
     bubble_delay: int = argutils.ArgSpec(
         name="--bubble-delay",
-        type=argutils.PositiveInt.type_parser,
+        type=argutils.NonNegativeInt.type_parser,
         default=20,
-        metavar=argutils.PositiveInt.METAVAR,
+        metavar=argutils.NonNegativeInt.METAVAR,
         help="Number of frames between bubbles.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames between bubbles."

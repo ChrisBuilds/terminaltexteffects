@@ -341,59 +341,62 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
             inner_fill_chars=True,
         ):
             groups.append(BeamsIterator.Group(column, "column", self.terminal, self.config))  # noqa: PERF401
-        for group in groups:
-            for character in group.characters:
-                beam_row_scn = character.animation.new_scene(scene_id="beam_row")
-                beam_column_scn = character.animation.new_scene(scene_id="beam_column")
-                brigthen_scn = character.animation.new_scene(scene_id="brighten")
+        for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
+            beam_row_scn = character.animation.new_scene(scene_id="beam_row")
+            beam_column_scn = character.animation.new_scene(scene_id="beam_column")
+            brigthen_scn = character.animation.new_scene(scene_id="brighten")
+            beam_row_scn.apply_gradient_to_symbols(
+                self.config.beam_row_symbols,
+                self.config.beam_gradient_frames,
+                fg_gradient=beam_gradient,
+            )
+            beam_column_scn.apply_gradient_to_symbols(
+                self.config.beam_column_symbols,
+                self.config.beam_gradient_frames,
+                fg_gradient=beam_gradient,
+            )
+            fg_fade_gradient = bg_fade_gradient = fg_brighten_gradient = bg_brighten_gradient = None
+            char_fg_color = self.character_final_color_map[character].fg_color
+            char_bg_color = self.character_final_color_map[character].bg_color
+            if char_fg_color:
+                faded_fg_color = character.animation.adjust_color_brightness(char_fg_color, 0.3)
+                fg_fade_gradient = tte.Gradient(char_fg_color, faded_fg_color, steps=10)
+                fg_brighten_gradient = tte.Gradient(faded_fg_color, char_fg_color, steps=10)
+            if char_bg_color:
+                faded_bg_color = character.animation.adjust_color_brightness(char_bg_color, 0.3)
+                bg_fade_gradient = tte.Gradient(char_bg_color, faded_bg_color, steps=10)
+                bg_brighten_gradient = tte.Gradient(faded_bg_color, char_bg_color, steps=10)
+
+            if fg_fade_gradient or bg_fade_gradient:
                 beam_row_scn.apply_gradient_to_symbols(
-                    self.config.beam_row_symbols,
-                    self.config.beam_gradient_frames,
-                    fg_gradient=beam_gradient,
+                    character.input_symbol,
+                    2,
+                    fg_gradient=fg_fade_gradient,
+                    bg_gradient=bg_fade_gradient,
                 )
                 beam_column_scn.apply_gradient_to_symbols(
-                    self.config.beam_column_symbols,
-                    self.config.beam_gradient_frames,
-                    fg_gradient=beam_gradient,
+                    character.input_symbol,
+                    2,
+                    fg_gradient=fg_fade_gradient,
+                    bg_gradient=bg_fade_gradient,
                 )
-                fg_fade_gradient = bg_fade_gradient = fg_brighten_gradient = bg_brighten_gradient = None
-                char_fg_color = self.character_final_color_map[character].fg_color
-                char_bg_color = self.character_final_color_map[character].bg_color
-                if char_fg_color:
-                    faded_fg_color = character.animation.adjust_color_brightness(char_fg_color, 0.3)
-                    fg_fade_gradient = tte.Gradient(char_fg_color, faded_fg_color, steps=10)
-                    fg_brighten_gradient = tte.Gradient(faded_fg_color, char_fg_color, steps=10)
-                if char_bg_color:
-                    faded_bg_color = character.animation.adjust_color_brightness(char_bg_color, 0.3)
-                    bg_fade_gradient = tte.Gradient(char_bg_color, faded_bg_color, steps=10)
-                    bg_brighten_gradient = tte.Gradient(faded_bg_color, char_bg_color, steps=10)
+            else:
+                beam_row_scn.add_frame(character.input_symbol, 2, colors=tte.ColorPair())
+                beam_column_scn.add_frame(character.input_symbol, 2, colors=tte.ColorPair())
 
-                if fg_fade_gradient or bg_fade_gradient:
-                    beam_row_scn.apply_gradient_to_symbols(
-                        character.input_symbol,
-                        2,
-                        fg_gradient=fg_fade_gradient,
-                        bg_gradient=bg_fade_gradient,
-                    )
-                    beam_column_scn.apply_gradient_to_symbols(
-                        character.input_symbol,
-                        2,
-                        fg_gradient=fg_fade_gradient,
-                        bg_gradient=bg_fade_gradient,
-                    )
-                else:
-                    beam_row_scn.add_frame(character.input_symbol, 2, colors=tte.ColorPair())
-                    beam_column_scn.add_frame(character.input_symbol, 2, colors=tte.ColorPair())
-
-                if fg_brighten_gradient or bg_brighten_gradient:
-                    brigthen_scn.apply_gradient_to_symbols(
-                        character.input_symbol,
-                        self.config.final_gradient_frames,
-                        fg_gradient=fg_brighten_gradient,
-                        bg_gradient=bg_brighten_gradient,
-                    )
-                else:
-                    brigthen_scn.add_frame(character.input_symbol, self.config.final_gradient_frames, colors=tte.ColorPair())
+            if fg_brighten_gradient or bg_brighten_gradient:
+                brigthen_scn.apply_gradient_to_symbols(
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    fg_gradient=fg_brighten_gradient,
+                    bg_gradient=bg_brighten_gradient,
+                )
+            else:
+                brigthen_scn.add_frame(
+                    character.input_symbol,
+                    self.config.final_gradient_frames,
+                    colors=tte.ColorPair(),
+                )
 
         self.pending_groups = groups
         random.shuffle(self.pending_groups)

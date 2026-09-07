@@ -94,6 +94,28 @@ def test_errorcorrect_args(
             terminal.print(frame)
 
 
+def test_errorcorrect_zero_pairs_renders_settled_text_once() -> None:
+    """A zero pair ratio should still emit the visible settled text."""
+    effect = effect_errorcorrect.ErrorCorrect("AB")
+    effect.effect_config.error_pairs = 0
+
+    frames = list(effect)
+
+    assert len(frames) == 1
+    assert "A" in frames[0]
+    assert "B" in frames[0]
+
+
+def test_errorcorrect_positive_ratio_schedules_at_least_one_pair() -> None:
+    """A positive ratio should animate a pair even when its raw pair count rounds down."""
+    effect = effect_errorcorrect.ErrorCorrect("AB")
+    effect.effect_config.error_pairs = 0.0001
+
+    iterator = cast("effect_errorcorrect.ErrorCorrectIterator", iter(effect))
+
+    assert len(iterator.swapped) == 1
+
+
 def test_errorcorrect_dynamic_unswapped_with_preexisting_fg_uses_input_fg_from_start() -> None:
     """Verify unswapped characters use parsed foreground color immediately in dynamic mode."""
     effect = effect_errorcorrect.ErrorCorrect("\x1b[38;5;196mA\x1b[0m")
