@@ -136,6 +136,34 @@ def test_particle_pool_extend_rejects_particles_owned_by_another_pool() -> None:
     assert not second_pool.particles
 
 
+def test_particle_pool_reclaim_rejects_particle_owned_by_another_pool() -> None:
+    """Reclaiming a foreign particle must not make it available in this pool."""
+    terminal = make_terminal()
+    first_pool = ParticlePool(terminal, set(), ".")
+    second_pool = ParticlePool(terminal, set(), ".")
+    particle = first_pool.acquire()
+
+    assert particle is not None
+    with pytest.raises(ValueError, match="not owned"):
+        second_pool.reclaim(particle)
+
+    assert particle not in second_pool.available
+    assert not second_pool.particles
+
+
+def test_particle_pool_reclaim_rejects_unowned_particle() -> None:
+    """Reclaiming a character never adopted by a pool must fail."""
+    terminal = make_terminal()
+    pool = ParticlePool(terminal, set(), ".")
+    particle = terminal.add_character(".", Coord(1, 1))
+
+    with pytest.raises(ValueError, match="not owned"):
+        pool.reclaim(particle)
+
+    assert not pool.available
+    assert not pool.particles
+
+
 def test_particle_reclaim_on_scene_complete_returns_particle_to_pool() -> None:
     """Reclaim callbacks return particles after scene completion."""
     terminal = make_terminal()

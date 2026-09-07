@@ -354,7 +354,13 @@ class ParticlePool:
             deactivate: Deactivate any active path and scene before making the
                 character available.
 
+        Raises:
+            ValueError: If `character` is not owned by this pool.
+
         """
+        if self._particle_owners.get(id(character)) is not self:
+            message = "Cannot reclaim a particle that is not owned by this ParticlePool."
+            raise ValueError(message)
         if hide:
             self.terminal.set_character_visibility(character, is_visible=False)
         if deactivate:
