@@ -96,6 +96,8 @@
   exactly six hexadecimal digits with, at most, one leading `#`.
 * Gradient - Fixed invalid step tuples causing empty spectra, accidental `IndexError`s, or silently ignored invalid
   values. Gradient construction now rejects empty, non-integer, and non-positive step counts before generation.
+* Animation - Fixed empty symbol sequences passed to `Scene.apply_gradient_to_symbols()` raising an internal
+  `ZeroDivisionError`. The method now raises `AnimationSceneError` with a clear validation message.
 * Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 * Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number

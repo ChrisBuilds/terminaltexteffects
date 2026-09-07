@@ -621,6 +621,15 @@ def test_scene_apply_gradient_to_symbols_invalid_symbols(character: EffectCharac
         new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient)
 
 
+def test_scene_apply_gradient_to_symbols_empty_symbols(character: EffectCharacter) -> None:
+    """Ensure an empty symbol sequence raises an API-level scene error."""
+    new_scene = character.animation.new_scene(scene_id="test_scene")
+    gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=2)
+
+    with pytest.raises(AnimationSceneError, match="At least one symbol"):
+        new_scene.apply_gradient_to_symbols([], duration=1, fg_gradient=gradient)
+
+
 def test_scene_apply_gradient_to_symbols_single_single_step(character: EffectCharacter) -> None:
     """Verify a single-step gradient produces start and end frames."""
     new_scene = character.animation.new_scene(scene_id="test_scene")

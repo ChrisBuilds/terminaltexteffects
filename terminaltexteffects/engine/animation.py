@@ -416,6 +416,9 @@ class Scene:
                 "Foreground and background gradient are empty. At least one gradient must have at least one color."
             )
             raise AnimationSceneError(message)
+        if not symbols:
+            message = "At least one symbol must be provided."
+            raise AnimationSceneError(message)
         for symbol in symbols:
             if len(symbol) > 1:
                 message = f"Symbol must be a string with a length of 1. Received: `{symbol}`."
