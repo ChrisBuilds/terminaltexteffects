@@ -94,7 +94,7 @@ _shtab_tte_beams_options=(
   "--final-gradient-stops[Space separated, unquoted, list of colors for the wipe gradient.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
   "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
   "--final-wipe-speed[Speed of the final wipe as measured in diagonal groups activated per frame.]:final_wipe_speed:"
 )
 
@@ -105,7 +105,7 @@ _shtab_tte_binarypath_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
   "--binary-colors[Space separated, unquoted, list of colors for the binary characters. Character color is randomly assigned from this list.]:binary_colors:"
   "--movement-speed[Speed of the binary groups as they travel around the terminal.]:movement_speed:"
   "--active-binary-groups[Maximum number of binary groups that are active at any given time as a percentage of the total number of binary groups. Lower this to improve performance.]:active_binary_groups:"
@@ -120,7 +120,7 @@ _shtab_tte_blackhole_options=(
   "--star-colors[List of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color.]:star_colors:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -132,10 +132,10 @@ _shtab_tte_bouncyballs_options=(
   "--ball-symbols[Space separated list of symbols to use for the balls.]:ball_symbols:"
   "--ball-delay[Number of frames between ball drops, increase to reduce ball drop rate.]:ball_delay:"
   "--movement-speed[Movement speed of the characters. ]:movement_speed:"
-  "--movement-easing[Easing function to use for character movement.]:movement_easing:"
+  "--movement-easing[Easing function to use for character movement.]:movement_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -149,10 +149,10 @@ _shtab_tte_bubbles_options=(
   "--bubble-speed[Speed of the floating bubbles. ]:bubble_speed:"
   "--bubble-delay[Number of frames between bubbles.]:bubble_delay:"
   "--pop-condition[Condition for a bubble to pop. \'row\' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. \'bottom\' will pop the bubble at the bottom row of the terminal. \'anywhere\' will pop the bubble randomly, or at the bottom of the terminal.]:pop_condition:(row bottom anywhere)"
-  "--movement-easing[Easing function to use for character movement after a bubble pops.]:movement_easing:"
+  "--movement-easing[Easing function to use for character movement after a bubble pops.]:movement_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -165,7 +165,7 @@ _shtab_tte_burn_options=(
   "--smoke-chance[Chance a given character will produce smoke while burning. Use 0 for no smoke.]:smoke_chance:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -177,14 +177,14 @@ _shtab_tte_colorshift_options=(
   "--gradient-steps[Number of gradient steps to use. More steps will create a smoother gradient animation.]:gradient_steps:"
   "--gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:gradient_frames:"
   "--no-travel[Do not display the gradient as a wave.]"
-  "--travel-direction[Direction the gradient travels across the canvas.]:travel_direction:"
+  "--travel-direction[Direction the gradient travels across the canvas.]:travel_direction:(diagonal horizontal vertical radial)"
   "--reverse-travel-direction[Reverse the gradient travel direction.]"
   "--no-loop[Do not loop the gradient. If not set, the gradient generation will loop the final gradient color back to the first gradient color.]"
   "--cycles[Number of times to cycle the gradient.]:cycles:"
   "--skip-final-gradient[Skip the final gradient.]"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -194,7 +194,7 @@ _shtab_tte_crumble_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -206,7 +206,7 @@ _shtab_tte_decrypt_options=(
   "--ciphertext-colors[Space separated, unquoted, list of colors for the ciphertext. Color will be randomly selected for each character.]:ciphertext_colors:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -218,9 +218,9 @@ _shtab_tte_dev_options=(
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
   "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"
-  "--final-gradient-direction[Direction of the final gradient.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient.]:final_gradient_direction:(diagonal horizontal vertical radial)"
   "--movement-speed[Speed of the ___.]:movement_speed:"
-  "--easing[Easing function to use for character movement.]:easing:"
+  "--easing[Easing function to use for character movement.]:easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -235,7 +235,7 @@ _shtab_tte_errorcorrect_options=(
   "--movement-speed[Speed of the characters while moving to the correct position. ]:movement_speed:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -243,11 +243,11 @@ _shtab_tte_errorcorrect_defaults_added=0
 
 _shtab_tte_expand_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--expand-easing[Easing function to use for character movement.]:expand_easing:"
+  "--expand-easing[Easing function to use for character movement.]:expand_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--movement-speed[Movement speed of the characters. ]:movement_speed:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -263,7 +263,7 @@ _shtab_tte_fireworks_options=(
   "--explode-distance[Maximum distance from the firework shell origin to the explode waypoint as a percentage of the total canvas width.]:explode_distance:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -272,11 +272,11 @@ _shtab_tte_fireworks_defaults_added=0
 _shtab_tte_highlight_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--highlight-brightness[Brightness of the highlight color. Values less than 1 will darken the highlight color, while values greater than 1 will brighten the highlight color.]:highlight_brightness:"
-  "--highlight-direction[Direction the highlight will travel.]:highlight_direction:"
+  "--highlight-direction[Direction the highlight will travel.]:highlight_direction:(column_left_to_right column_right_to_left row_top_to_bottom row_bottom_to_top diagonal_top_left_to_bottom_right diagonal_bottom_left_to_top_right diagonal_top_right_to_bottom_left diagonal_bottom_right_to_top_left center_to_outside outside_to_center)"
   "--highlight-width[Width of the highlight. n \>\= 1]:highlight_width:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -294,7 +294,7 @@ _shtab_tte_laseretch_options=(
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
   "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -314,7 +314,7 @@ _shtab_tte_matrix_options=(
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
   "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -326,11 +326,11 @@ _shtab_tte_middleout_options=(
   "--expand-direction[Direction the text will expand.]:expand_direction:(vertical horizontal)"
   "--center-movement-speed[Speed of the characters during the initial expansion of the center vertical\/horiztonal line. ]:center_movement_speed:"
   "--full-movement-speed[Speed of the characters during the final full expansion. ]:full_movement_speed:"
-  "--center-easing[Easing function to use for initial expansion.]:center_easing:"
-  "--full-easing[Easing function to use for full expansion.]:full_easing:"
+  "--center-easing[Easing function to use for initial expansion.]:center_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
+  "--full-easing[Easing function to use for full expansion.]:full_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -346,10 +346,10 @@ _shtab_tte_orbittingvolley_options=(
   "--character-movement-speed[Speed of the launched characters.]:character_movement_speed:"
   "--volley-size[Percent of total input characters each launcher will fire per volley. Lower limit of one character.]:volley_size:"
   "--launch-delay[Number of animation ticks to wait between volleys of characters.]:launch_delay:"
-  "--character-easing[Easing function to use for launched character movement.]:character_easing:"
+  "--character-easing[Easing function to use for launched character movement.]:character_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -362,7 +362,7 @@ _shtab_tte_overflow_options=(
   "--overflow-speed[Speed of the overflow effect.]:overflow_speed:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -378,8 +378,8 @@ _shtab_tte_pour_options=(
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
   "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
-  "--movement-easing[Easing function to use for character movement.]:movement_easing:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
+  "--movement-easing[Easing function to use for character movement.]:movement_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -389,10 +389,10 @@ _shtab_tte_print_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--print-head-return-speed[Speed of the print head when performing a carriage return.]:print_head_return_speed:"
   "--print-speed[Speed of the print head when printing characters.]:print_speed:"
-  "--print-head-easing[Easing function to use for print head movement.]:print_head_easing:"
+  "--print-head-easing[Easing function to use for print head movement.]:print_head_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -405,8 +405,8 @@ _shtab_tte_rain_options=(
   "--rain-symbols[Space separated list of symbols to use for the rain drops. Symbols are randomly chosen from the list.]:rain_symbols:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
-  "--movement-easing[Easing function to use for character movement.]:movement_easing:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
+  "--movement-easing[Easing function to use for character movement.]:movement_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -418,7 +418,7 @@ _shtab_tte_randomsequence_options=(
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
   "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -434,7 +434,7 @@ _shtab_tte_rings_options=(
   "--spin-disperse-cycles[Number of times the animation will cycles between spinning rings and dispersed characters.]:spin_disperse_cycles:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -443,11 +443,11 @@ _shtab_tte_rings_defaults_added=0
 _shtab_tte_scattered_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--movement-speed[Movement speed of the characters. ]:movement_speed:"
-  "--movement-easing[Easing function to use for character movement.]:movement_easing:"
+  "--movement-easing[Easing function to use for character movement.]:movement_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
   "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -457,10 +457,10 @@ _shtab_tte_slice_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--slice-direction[Direction of the slice.]:slice_direction:(vertical horizontal diagonal)"
   "--movement-speed[Movement speed of the characters. ]:movement_speed:"
-  "--movement-easing[Easing function to use for character movement.]:movement_easing:"
+  "--movement-easing[Easing function to use for character movement.]:movement_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -473,11 +473,11 @@ _shtab_tte_slide_options=(
   "--gap[Number of frames to wait before adding the next group of characters. Increasing this value creates a more staggered effect.]:gap:"
   "--reverse-direction[Reverse the direction of the characters.]"
   "--merge[Merge the character groups originating from either side of the terminal. (--reverse-direction is ignored when merging)]"
-  "--movement-easing[Easing function to use for character movement.]:movement_easing:"
+  "--movement-easing[Easing function to use for character movement.]:movement_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
   "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -491,7 +491,7 @@ _shtab_tte_smoke_options=(
   "--use-whole-canvas[If True, the entire canvas will be flooded. Otherwise the effect is limited to the text boundary.]"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -506,7 +506,7 @@ _shtab_tte_spotlights_options=(
   "--spotlight-count[Number of spotlights to use.]:spotlight_count:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -517,10 +517,10 @@ _shtab_tte_spray_options=(
   "--spray-position[Position for the spray origin.]:spray_position:(n ne e se s sw w nw center)"
   "--spray-volume[Number of characters to spray per tick as a percent of the total number of characters.]:spray_volume:"
   "--movement-speed-range[Movement speed range of the characters.]:movement_speed_range:"
-  "--movement-easing[Easing function to use for character movement.]:movement_easing:"
+  "--movement-easing[Easing function to use for character movement.]:movement_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -535,7 +535,7 @@ _shtab_tte_swarm_options=(
   "--swarm-area-count-range[Range of the number of areas where characters will swarm.]:swarm_area_count_range:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -544,11 +544,11 @@ _shtab_tte_swarm_defaults_added=0
 _shtab_tte_sweep_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--sweep-symbols[Space separated list of symbols to use for the sweep shimmer.]:sweep_symbols:"
-  "--first-sweep-direction[Direction of the first sweep, revealing uncolored characters.]:first_sweep_direction:"
-  "--second-sweep-direction[Direction of the second sweep, coloring the characters.]:second_sweep_direction:"
+  "--first-sweep-direction[Direction of the first sweep, revealing uncolored characters.]:first_sweep_direction:(column_left_to_right column_right_to_left row_top_to_bottom row_bottom_to_top diagonal_top_left_to_bottom_right diagonal_bottom_left_to_top_right diagonal_top_right_to_bottom_left diagonal_bottom_right_to_top_left center_to_outside outside_to_center)"
+  "--second-sweep-direction[Direction of the second sweep, coloring the characters.]:second_sweep_direction:(column_left_to_right column_right_to_left row_top_to_bottom row_bottom_to_top diagonal_top_left_to_bottom_right diagonal_bottom_left_to_top_right diagonal_top_right_to_bottom_left diagonal_bottom_right_to_top_left center_to_outside outside_to_center)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied from bottom to top). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -558,10 +558,10 @@ _shtab_tte_synthgrid_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--grid-gradient-stops[Space separated, unquoted, list of colors for the grid gradient.]:grid_gradient_stops:"
   "--grid-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:grid_gradient_steps:"
-  "--grid-gradient-direction[Direction of the gradient for the grid color.]:grid_gradient_direction:"
+  "--grid-gradient-direction[Direction of the gradient for the grid color.]:grid_gradient_direction:(diagonal horizontal vertical radial)"
   "--text-gradient-stops[Space separated, unquoted, list of colors for the text gradient.]:text_gradient_stops:"
   "--text-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:text_gradient_steps:"
-  "--text-gradient-direction[Direction of the gradient for the text color.]:text_gradient_direction:"
+  "--text-gradient-direction[Direction of the gradient for the text color.]:text_gradient_direction:(diagonal horizontal vertical radial)"
   "--grid-row-symbol[Symbol to use for grid row lines.]:grid_row_symbol:"
   "--grid-column-symbol[Symbol to use for grid column lines.]:grid_column_symbol:"
   "--text-generation-symbols[Space separated, unquoted, list of characters for the text generation animation.]:text_generation_symbols:"
@@ -584,7 +584,7 @@ _shtab_tte_thunderstorm_options=(
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
   "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -593,13 +593,13 @@ _shtab_tte_thunderstorm_defaults_added=0
 _shtab_tte_unstable_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--unstable-color[Color transitioned to as the characters become unstable.]:unstable_color:"
-  "--explosion-ease[Easing function to use for character movement during the explosion.]:explosion_ease:"
+  "--explosion-ease[Easing function to use for character movement during the explosion.]:explosion_ease:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--explosion-speed[Speed of characters during explosion. ]:explosion_speed:"
-  "--reassembly-ease[Easing function to use for character reassembly.]:reassembly_ease:"
+  "--reassembly-ease[Easing function to use for character reassembly.]:reassembly_ease:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--reassembly-speed[Speed of characters during reassembly. ]:reassembly_speed:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -615,7 +615,7 @@ _shtab_tte_vhstape_options=(
   "--total-glitch-time[Total time, frames, that the glitching phase will last.]:total_glitch_time:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -629,10 +629,10 @@ _shtab_tte_waves_options=(
   "--wave-count[Number of waves to generate. n \> 0.]:wave_count:"
   "--wave-length[The number of frames for each step of the wave. Higher wave-lengths will create a slower wave.]:wave_length:"
   "--wave-direction[Direction of the wave.]:wave_direction:(column_left_to_right column_right_to_left row_top_to_bottom row_bottom_to_top center_to_outside outside_to_center)"
-  "--wave-easing[Easing function to use for wave travel.]:wave_easing:"
+  "--wave-easing[Easing function to use for wave travel.]:wave_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session
@@ -640,13 +640,13 @@ _shtab_tte_waves_defaults_added=0
 
 _shtab_tte_wipe_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--wipe-direction[Direction the text will wipe.]:wipe_direction:"
+  "--wipe-direction[Direction the text will wipe.]:wipe_direction:(column_left_to_right column_right_to_left row_top_to_bottom row_bottom_to_top diagonal_top_left_to_bottom_right diagonal_bottom_left_to_top_right diagonal_top_right_to_bottom_left diagonal_bottom_right_to_top_left center_to_outside outside_to_center)"
   "--wipe-delay[Number of frames to wait before adding the next character group. Increase, to slow down the effect.]:wipe_delay:"
-  "--wipe-ease[Easing function to use for the wipe effect.]:wipe_ease:"
+  "--wipe-ease[Easing function to use for the wipe effect.]:wipe_ease:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the wipe gradient.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
   "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"
-  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:"
+  "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
 )
 
 # guard to ensure default positional specs are added only once per session

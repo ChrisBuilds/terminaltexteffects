@@ -250,6 +250,8 @@ OR
   * Run `tte --print-completion` without a shell name to print copy-and-paste setup commands.
   * Bash: `eval "$(tte --print-completion bash)"`
   * Zsh: `eval "$(tte --print-completion zsh)"`
+  * Completion includes valid values for enum-like options such as gradient directions, grouping modes, and easing
+    functions.
   * To enable completions for future shells, add the relevant command above to your shell startup file such as `~/.bashrc` or `~/.zshrc`.
   * Completion scripts cover built-in effects only; options from custom effect plugins are not included.
 * Add custom effect modules to `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set.

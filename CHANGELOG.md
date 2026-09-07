@@ -133,6 +133,8 @@
 * Shell completions are now generated with `shtab` during development and bundled with the package. Completion no
   longer imports user effect plugins during generation, and zsh now receives a native completion script.
 * Running `tte --print-completion` without a shell argument now prints copy-and-paste setup commands for bash and zsh.
+* Shell completion now suggests valid values for custom enum-like arguments, including gradient directions,
+  character grouping modes, and easing functions.
 
 ## 0.15.0
 

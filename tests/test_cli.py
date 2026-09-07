@@ -174,6 +174,9 @@ def test_main_print_completion_zsh_outputs_script(
     assert output.startswith("#compdef tte terminaltexteffects")
     assert "_arguments" in output
     assert "compdef _shtab_tte -N tte terminaltexteffects" in output
+    assert ":final_gradient_direction:(diagonal horizontal vertical radial)" in output
+    assert ":wipe_ease:(linear in_sine" in output
+    assert "in_out_bounce)" in output
     assert "bashcompinit" not in output
 
 
@@ -304,6 +307,32 @@ printf 'options:%s\\n' "${COMPREPLY[*]}"
     assert "effects:matrix" in result.stdout
     assert "--rain-color-gradient" in result.stdout
     assert "--rain-symbols" in result.stdout
+
+
+def test_bash_completion_suggests_custom_validator_values() -> None:
+    """Bash completion should expose enum-like and easing values from custom validators."""
+    result = _run_bash(
+        """
+eval "$(""" + f"{sys.executable}" + """ -m terminaltexteffects --print-completion bash)"
+COMP_WORDS=(tte beams --final-gradient-direction "")
+COMP_CWORD=3
+_shtab_tte
+printf 'directions:%s\\n' "${COMPREPLY[*]}"
+COMP_WORDS=(tte wipe --wipe-direction diagonal_)
+COMP_CWORD=3
+_shtab_tte
+printf 'groups:%s\\n' "${COMPREPLY[*]}"
+COMP_WORDS=(tte wipe --wipe-ease in_out_b)
+COMP_CWORD=3
+_shtab_tte
+printf 'easing:%s\\n' "${COMPREPLY[*]}"
+""",
+    )
+
+    assert "directions:diagonal horizontal vertical radial" in result.stdout
+    assert "diagonal_top_left_to_bottom_right" in result.stdout
+    assert "diagonal_bottom_right_to_top_left" in result.stdout
+    assert "easing:in_out_back in_out_bounce" in result.stdout
 
 
 def test_bash_completion_suggests_choice_and_file_values(tmp_path: Path) -> None:

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import cast
 
 import shtab
 
 from terminaltexteffects import __main__ as tte_main
+from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.shell_completion import SUPPORTED_SHELLS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -15,6 +17,14 @@ COMPLETION_DIR = PROJECT_ROOT / "terminaltexteffects" / "completions"
 COMPLETION_PATHS = {
     "bash": COMPLETION_DIR / "tte.bash",
     "zsh": COMPLETION_DIR / "_tte",
+}
+
+_COMPLETION_CHOICES_BY_TYPE = {
+    argutils.CharacterGroupArg.type_parser: argutils.CharacterGroupArg.COMPLETION_CHOICES,
+    argutils.CharacterSortArg.type_parser: argutils.CharacterSortArg.COMPLETION_CHOICES,
+    argutils.ColorSortArg.type_parser: argutils.ColorSortArg.COMPLETION_CHOICES,
+    argutils.GradientDirection.type_parser: argutils.GradientDirection.COMPLETION_CHOICES,
+    argutils.Ease.type_parser: argutils.Ease.COMPLETION_CHOICES,
 }
 
 _BASH_MAPFILE_BLOCK = """  if [[ $pos_only = 0 && "${completing_word}" == -* ]]; then
@@ -65,6 +75,12 @@ def _configure_completers(
             action.choices = SUPPORTED_SHELLS
         elif "--include-effects" in action.option_strings or "--exclude-effects" in action.option_strings:
             action.choices = effect_names
+        elif action.choices is None and action.type in _COMPLETION_CHOICES_BY_TYPE:
+            action.choices = _COMPLETION_CHOICES_BY_TYPE[action.type]
+        if isinstance(action, argparse._SubParsersAction):
+            subparsers = cast("dict[str, argparse.ArgumentParser]", action.choices)
+            for subparser in subparsers.values():
+                _configure_completers(subparser, effect_names)
 
 
 def _register_aliases(script: str, shell: str) -> str:

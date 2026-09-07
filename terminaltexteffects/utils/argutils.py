@@ -199,7 +199,8 @@ class CharacterGroupArg:
 
     """
 
-    METAVAR = tuple(n.lower() for n in CharacterGroup._member_names_)
+    COMPLETION_CHOICES = tuple(n.lower() for n in CharacterGroup._member_names_)
+    METAVAR = COMPLETION_CHOICES
 
     @staticmethod
     def type_parser(arg: str | CharacterGroup) -> CharacterGroup:
@@ -244,7 +245,8 @@ class CharacterSortArg:
 
     """
 
-    METAVAR = tuple(n.lower() for n in CharacterSort._member_names_)
+    COMPLETION_CHOICES = tuple(n.lower() for n in CharacterSort._member_names_)
+    METAVAR = COMPLETION_CHOICES
 
     @staticmethod
     def type_parser(arg: str | CharacterSort) -> CharacterSort:
@@ -285,7 +287,8 @@ class ColorSortArg:
 
     """
 
-    METAVAR = tuple(n.lower() for n in ColorSort._member_names_)
+    COMPLETION_CHOICES = tuple(n.lower() for n in ColorSort._member_names_)
+    METAVAR = COMPLETION_CHOICES
 
     @staticmethod
     def type_parser(arg: str | ColorSort) -> ColorSort:
@@ -685,7 +688,8 @@ class GradientDirection:
 
     """
 
-    METAVAR = "(diagonal, horizontal, vertical, radial)"
+    COMPLETION_CHOICES = ("diagonal", "horizontal", "vertical", "radial")
+    METAVAR = f"({', '.join(COMPLETION_CHOICES)})"
 
     @staticmethod
     def type_parser(arg: str | Gradient.Direction) -> Gradient.Direction:
@@ -872,6 +876,40 @@ class Ease:
     """
 
     METAVAR = "(Easing Function)"
+    _FUNCTION_MAP: typing.ClassVar[dict[str, easing.EasingFunction]] = {
+        "linear": easing.linear,
+        "in_sine": easing.in_sine,
+        "out_sine": easing.out_sine,
+        "in_out_sine": easing.in_out_sine,
+        "in_quad": easing.in_quad,
+        "out_quad": easing.out_quad,
+        "in_out_quad": easing.in_out_quad,
+        "in_cubic": easing.in_cubic,
+        "out_cubic": easing.out_cubic,
+        "in_out_cubic": easing.in_out_cubic,
+        "in_quart": easing.in_quart,
+        "out_quart": easing.out_quart,
+        "in_out_quart": easing.in_out_quart,
+        "in_quint": easing.in_quint,
+        "out_quint": easing.out_quint,
+        "in_out_quint": easing.in_out_quint,
+        "in_expo": easing.in_expo,
+        "out_expo": easing.out_expo,
+        "in_out_expo": easing.in_out_expo,
+        "in_circ": easing.in_circ,
+        "out_circ": easing.out_circ,
+        "in_out_circ": easing.in_out_circ,
+        "in_back": easing.in_back,
+        "out_back": easing.out_back,
+        "in_out_back": easing.in_out_back,
+        "in_elastic": easing.in_elastic,
+        "out_elastic": easing.out_elastic,
+        "in_out_elastic": easing.in_out_elastic,
+        "in_bounce": easing.in_bounce,
+        "out_bounce": easing.out_bounce,
+        "in_out_bounce": easing.in_out_bounce,
+    }
+    COMPLETION_CHOICES: typing.ClassVar[tuple[str, ...]] = tuple(_FUNCTION_MAP)
 
     @staticmethod
     def type_parser(arg: str | typing.Callable) -> typing.Callable:
@@ -889,42 +927,8 @@ class Ease:
         """
         if callable(arg):
             return arg
-        easing_func_map = {
-            "linear": easing.linear,
-            "in_sine": easing.in_sine,
-            "out_sine": easing.out_sine,
-            "in_out_sine": easing.in_out_sine,
-            "in_quad": easing.in_quad,
-            "out_quad": easing.out_quad,
-            "in_out_quad": easing.in_out_quad,
-            "in_cubic": easing.in_cubic,
-            "out_cubic": easing.out_cubic,
-            "in_out_cubic": easing.in_out_cubic,
-            "in_quart": easing.in_quart,
-            "out_quart": easing.out_quart,
-            "in_out_quart": easing.in_out_quart,
-            "in_quint": easing.in_quint,
-            "out_quint": easing.out_quint,
-            "in_out_quint": easing.in_out_quint,
-            "in_expo": easing.in_expo,
-            "out_expo": easing.out_expo,
-            "in_out_expo": easing.in_out_expo,
-            "in_circ": easing.in_circ,
-            "out_circ": easing.out_circ,
-            "in_out_circ": easing.in_out_circ,
-            "in_back": easing.in_back,
-            "out_back": easing.out_back,
-            "in_out_back": easing.in_out_back,
-            "in_elastic": easing.in_elastic,
-            "out_elastic": easing.out_elastic,
-            "in_out_elastic": easing.in_out_elastic,
-            "in_bounce": easing.in_bounce,
-            "out_bounce": easing.out_bounce,
-            "in_out_bounce": easing.in_out_bounce,
-        }
-
         try:
-            return easing_func_map[arg.lower()]
+            return Ease._FUNCTION_MAP[arg.lower()]
         except (AttributeError, KeyError):
             msg = f"invalid ease value: '{arg}' is not a valid ease."
             raise argparse.ArgumentTypeError(msg) from None

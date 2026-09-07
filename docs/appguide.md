@@ -48,6 +48,8 @@ eval "$(tte --print-completion zsh)"
 ```
 
 To enable completions for future shells, add the relevant command to your `~/.bashrc` or `~/.zshrc`.
+Completion includes valid values for enum-like options such as gradient directions, grouping modes, and easing
+functions.
 Completion scripts cover built-in effects only; options from custom effect plugins are not included.
 
 TTE can randomly select an effect with `--random-effect`/`-R`. Use `--seed` to make that selection repeatable, or
