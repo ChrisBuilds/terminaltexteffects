@@ -551,6 +551,26 @@ def test_terminal_get_characters_with_character_sort(sort) -> None:
         assert len(chars) == 15
 
 
+@pytest.mark.parametrize(
+    ("input_data", "sort", "expected_symbols"),
+    [
+        ("abcde", CharacterSort.OUTSIDE_ROW_TO_MIDDLE, "aebdc"),
+        ("abcde", CharacterSort.MIDDLE_ROW_TO_OUTSIDE, "cdbea"),
+        ("abcd", CharacterSort.OUTSIDE_ROW_TO_MIDDLE, "adbc"),
+        ("abcd", CharacterSort.MIDDLE_ROW_TO_OUTSIDE, "cbda"),
+    ],
+)
+def test_terminal_outside_middle_sorts_preserve_full_order(
+    input_data: str,
+    sort: CharacterSort,
+    expected_symbols: str,
+) -> None:
+    """Outside/middle sorts alternate sequence ends for odd and even lengths."""
+    terminal = Terminal(input_data=input_data, config=TerminalConfig._build_config())
+
+    assert "".join(character.input_symbol for character in terminal.get_characters(sort=sort)) == expected_symbols
+
+
 def test_terminal_get_characters_invalid_character_sort() -> None:
     config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)

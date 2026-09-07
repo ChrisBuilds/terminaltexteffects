@@ -45,6 +45,8 @@
   preprocessing allocation for wrapped input.
 * Column character grouping now buckets selected characters in one pass instead of rescanning every character for every
   canvas column, reducing grouping work for wide canvases.
+* Outside/middle character sorting now interleaves sorted characters with indexes instead of repeated front-pops,
+  reducing the ordering pass from quadratic to linear work.
 * Event dispatch now branches directly on registered actions instead of allocating an action map and callback lambdas
   for every event, reducing allocation in event-heavy effects.
 * Motion segment events now trigger `SEGMENT_ENTERED` before `SEGMENT_EXITED` for segments that are completely crossed

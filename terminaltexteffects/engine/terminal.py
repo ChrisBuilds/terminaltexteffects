@@ -1203,9 +1203,16 @@ class Terminal:
             CharacterSort.OUTSIDE_ROW_TO_MIDDLE,
             CharacterSort.MIDDLE_ROW_TO_OUTSIDE,
         ):
-            all_characters = [
-                all_characters.pop(0) if i % 2 == 0 else all_characters.pop(-1) for i in range(len(all_characters))
-            ]
+            outside_to_middle: list[EffectCharacter] = []
+            left_index = 0
+            right_index = len(all_characters) - 1
+            while left_index <= right_index:
+                outside_to_middle.append(all_characters[left_index])
+                left_index += 1
+                if left_index <= right_index:
+                    outside_to_middle.append(all_characters[right_index])
+                    right_index -= 1
+            all_characters = outside_to_middle
             if sort is CharacterSort.MIDDLE_ROW_TO_OUTSIDE:
                 all_characters.reverse()
         else:
