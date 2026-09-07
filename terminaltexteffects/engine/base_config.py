@@ -84,6 +84,20 @@ class BaseConfig:
     a subparser must define a `parser_spec` attribute with type `argutils.ParserSpec`.
     """
 
+    def __setattr__(self, name: str, value: typing.Any) -> None:
+        """Normalize values assigned to `ArgSpec`-backed configuration fields."""
+        field = getattr(type(self), "__dataclass_fields__", {}).get(name)
+        spec = field.default if field is not None else None
+        if not isinstance(spec, argutils.ArgSpec) or isinstance(value, argutils.ArgSpec):
+            object.__setattr__(self, name, value)
+            return
+        try:
+            normalized = spec.normalize(value)
+        except (argparse.ArgumentTypeError, TypeError, ValueError) as error:
+            msg = f"Invalid value for '{name}': {error}"
+            raise ValueError(msg) from error
+        object.__setattr__(self, name, normalized)
+
     def __post_init__(self) -> None:
         """Replace unprovided `ArgSpec` field values with their defaults.
 
@@ -125,10 +139,10 @@ class BaseConfig:
     def _build_config(cls: type[CONFIG], parsed_args: argparse.Namespace | None = None) -> CONFIG:
         """Build a config instance from parsed arguments or `ArgSpec` defaults.
 
-        When `parsed_args` is provided, matching namespace attributes are used first and
-        missing fields fall back to each field's `ArgSpec.default` when available. When
-        `parsed_args` is `None`, the config is built entirely from `ArgSpec.default`
-        values.
+        When `parsed_args` is provided, matching namespace attributes are used first.
+        Missing `ArgSpec` fields are omitted so dataclass defaults follow the same
+        resolution path as direct construction. When `parsed_args` is `None`, the
+        config is constructed directly from its dataclass defaults.
 
         Args:
             parsed_args (argparse.Namespace | None): Parsed CLI arguments, or None to use
@@ -148,20 +162,17 @@ class BaseConfig:
                 if field.name == "parser_spec":
                     continue
                 if hasattr(parsed_args, field.name):
-                    config_args[field.name] = getattr(parsed_args, field.name)
+                    value = getattr(parsed_args, field.name)
+                    if isinstance(field.default, argutils.ArgSpec) and value == field.default.default:
+                        continue
+                    config_args[field.name] = value
                 elif isinstance(field.default, argutils.ArgSpec):
-                    config_args[field.name] = field.default.default
+                    continue
                 else:
                     msg = f"Missing required config field '{field.name}' for {cls.__name__} in parsed arguments."
                     raise AttributeError(msg)
             return cls(**config_args)
-        return cls(
-            **{
-                field.name: field.default.default
-                for field in fields(cls)
-                if isinstance(field.default, argutils.ArgSpec)
-            },
-        )
+        return cls()
 
 
 CONFIG = typing.TypeVar("CONFIG", bound=BaseConfig)

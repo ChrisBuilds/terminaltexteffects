@@ -8,6 +8,7 @@ import pytest
 
 from terminaltexteffects.effects import effect_laseretch
 from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.graphics import Color, ColorPair
 
 
@@ -18,6 +19,20 @@ def _make_terminal_config(
     terminal_config.frame_rate = 0
     terminal_config.existing_color_handling = existing_color_handling
     return terminal_config
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("algorithm", "algorithm"),
+        ("row_top_to_bottom", argutils.CharacterGroup.ROW_TOP_TO_BOTTOM),
+        (argutils.CharacterGroup.ROW_TOP_TO_BOTTOM, argutils.CharacterGroup.ROW_TOP_TO_BOTTOM),
+    ],
+)
+def test_laseretch_etch_pattern_normalizes_cli_and_native_values(value: object, expected: object) -> None:
+    """LaserEtch accepts its sentinel and canonical character-group values."""
+    config = effect_laseretch.LaserEtchConfig(etch_pattern=value)  # pyright: ignore[reportArgumentType]
+    assert config.etch_pattern == expected
 
 
 @pytest.mark.parametrize(

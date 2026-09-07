@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import shutil
-from typing import NoReturn
+from typing import Any, NoReturn, cast
 
 import pytest
 
@@ -98,6 +98,23 @@ def test_terminal_direct_config_uses_defaults() -> None:
     terminal = Terminal("A", config=TerminalConfig())
 
     assert terminal.config == TerminalConfig._build_config()
+
+
+def test_terminal_config_normalizes_direct_values() -> None:
+    """Terminal configuration accepts CLI spellings and native library values."""
+    config = TerminalConfig(
+        tab_width=cast(Any, "4"),
+        terminal_background_color=cast(Any, "#ffffff"),
+    )
+
+    assert config.tab_width == 4
+    assert config.terminal_background_color == Color("ffffff")
+
+
+def test_terminal_config_rejects_invalid_tab_width_during_construction() -> None:
+    """Invalid tab widths fail at configuration time instead of terminal construction."""
+    with pytest.raises(ValueError, match="tab_width"):
+        TerminalConfig(tab_width=0)
 
 
 def test_canvas_anchor_empty_text_resets_bounds() -> None:

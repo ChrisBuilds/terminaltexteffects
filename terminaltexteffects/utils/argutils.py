@@ -96,6 +96,10 @@ class ArgSpec:
     Non-missing fields map directly to keyword arguments for
     `argparse.ArgumentParser.add_argument()`. The `default` value is also used by
     `BaseConfig._build_config()` when constructing configs without parsed CLI input.
+
+    The `type` callable is the normalization contract shared by CLI parsing and
+    library configuration. Custom callables must accept both CLI strings and
+    values that are already in their canonical library form.
     """
 
     name: str
@@ -107,6 +111,26 @@ class ArgSpec:
     action: str | type[argparse.Action] = _MISSING  # type: ignore[arg-type]
     choices: list[typing.Any] = _MISSING  # type: ignore[arg-type]
     nargs: str | int = _MISSING  # type: ignore[arg-type]
+
+    def normalize(self, value: typing.Any) -> typing.Any:
+        """Normalize and validate a configuration value described by this spec."""
+        if self.action == "store_true":
+            if not isinstance(value, bool):
+                msg = f"invalid value: '{value}' must be a boolean."
+                raise argparse.ArgumentTypeError(msg)
+            return value
+
+        values = value if self.action is TupleAction and isinstance(value, (list, tuple)) else (value,)
+        if self.action is TupleAction:
+            return tuple(self._normalize_scalar(item) for item in values)
+        return self._normalize_scalar(value)
+
+    def _normalize_scalar(self, value: typing.Any) -> typing.Any:
+        normalized = self.type(value) if self.type is not _MISSING else value
+        if self.choices is not _MISSING and normalized not in self.choices:
+            msg = f"invalid choice: '{normalized}' (choose from {', '.join(map(str, self.choices))})"
+            raise argparse.ArgumentTypeError(msg)
+        return normalized
 
 
 class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
@@ -139,7 +163,7 @@ class CharacterGroupArg:
     METAVAR = tuple(n.lower() for n in CharacterGroup._member_names_)
 
     @staticmethod
-    def type_parser(arg: str) -> CharacterGroup:
+    def type_parser(arg: str | CharacterGroup) -> CharacterGroup:
         """Validate argument is a valid CharacterGroup.
 
         Args:
@@ -152,9 +176,11 @@ class CharacterGroupArg:
             CharacterGroup: validated CharacterGroup
 
         """
+        if isinstance(arg, CharacterGroup):
+            return arg
         try:
             return CharacterGroup[arg.upper()]
-        except KeyError:
+        except (AttributeError, KeyError):
             msg = f"invalid CharacterGroup: '{arg}' is not a valid CharacterGroup."
             raise argparse.ArgumentTypeError(msg) from None
 
@@ -182,7 +208,7 @@ class CharacterSortArg:
     METAVAR = tuple(n.lower() for n in CharacterSort._member_names_)
 
     @staticmethod
-    def type_parser(arg: str) -> CharacterSort:
+    def type_parser(arg: str | CharacterSort) -> CharacterSort:
         """Validate argument is a valid CharacterSort.
 
         Args:
@@ -195,9 +221,11 @@ class CharacterSortArg:
             CharacterSort: validated CharacterSort
 
         """
+        if isinstance(arg, CharacterSort):
+            return arg
         try:
             return CharacterSort[arg.upper()]
-        except KeyError:
+        except (AttributeError, KeyError):
             msg = f"invalid CharacterSort: '{arg}' is not a valid CharacterSort."
             raise argparse.ArgumentTypeError(msg) from None
 
@@ -221,7 +249,7 @@ class ColorSortArg:
     METAVAR = tuple(n.lower() for n in ColorSort._member_names_)
 
     @staticmethod
-    def type_parser(arg: str) -> ColorSort:
+    def type_parser(arg: str | ColorSort) -> ColorSort:
         """Validate argument is a valid ColorSort.
 
         Args:
@@ -234,9 +262,11 @@ class ColorSortArg:
             ColorSort: validated ColorSort
 
         """
+        if isinstance(arg, ColorSort):
+            return arg
         try:
             return ColorSort[arg.upper()]
-        except KeyError:
+        except (AttributeError, KeyError):
             msg = f"invalid ColorSort: '{arg}' is not a valid ColorSort."
             raise argparse.ArgumentTypeError(msg) from None
 
@@ -275,7 +305,7 @@ class PositiveInt:
     METAVAR = "(int > 0)"
 
     @staticmethod
-    def type_parser(arg: str) -> int:
+    def type_parser(arg: str | int) -> int:
         """Validate argument is a positive integer. n > 0.
 
         Args:
@@ -285,9 +315,11 @@ class PositiveInt:
             int: validated positive integer
 
         """
+        if isinstance(arg, bool) or not isinstance(arg, (str, int)):
+            msg = f"invalid value: '{arg}' is not a valid integer."
+            raise argparse.ArgumentTypeError(msg)
         try:
             arg_int = int(arg)
-
         except ValueError:
             msg = f"invalid value: '{arg}' is not a valid integer."
             raise argparse.ArgumentTypeError(msg) from None
@@ -309,7 +341,7 @@ class NonNegativeInt:
     METAVAR = "(int >= 0)"
 
     @staticmethod
-    def type_parser(arg: str) -> int:
+    def type_parser(arg: str | int) -> int:
         """Validate argument is a nonnegative integer. n >= 0.
 
         Args:
@@ -322,9 +354,11 @@ class NonNegativeInt:
             int: validated gap value
 
         """
+        if isinstance(arg, bool) or not isinstance(arg, (str, int)):
+            msg = f"invalid value: '{arg}' is not a valid integer."
+            raise argparse.ArgumentTypeError(msg)
         try:
             arg_int = int(arg)
-
         except ValueError:
             msg = f"invalid value: '{arg}' is not a valid integer."
             raise argparse.ArgumentTypeError(msg) from None
@@ -352,7 +386,7 @@ class PositiveIntRange:
     METAVAR = "(hyphen separated positive int range e.g. '1-10')"
 
     @staticmethod
-    def type_parser(arg: str) -> tuple[int, int]:
+    def type_parser(arg: str | tuple[int, int] | list[int]) -> tuple[int, int]:
         """Validate argument is a valid range of integers n > 0.
 
         Args:
@@ -363,7 +397,13 @@ class PositiveIntRange:
 
         """
         try:
-            start, end = map(int, arg.split("-"))
+            if isinstance(arg, (tuple, list)):
+                if len(arg) != 2 or any(isinstance(value, bool) or not isinstance(value, int) for value in arg):
+                    msg = f"invalid range: '{arg}' is not a valid range of positive ints. Must be start-end. Ex: 1-10"
+                    raise argparse.ArgumentTypeError(msg)
+                start, end = arg
+            else:
+                start, end = map(int, arg.split("-"))
             if start <= 0:
                 msg = f"invalid range: '{arg}' is not a valid range of positive ints. Must be start > 0. Ex: 1-10"
                 raise argparse.ArgumentTypeError(
@@ -375,7 +415,7 @@ class PositiveIntRange:
                     msg,
                 )
 
-        except ValueError:
+        except (AttributeError, ValueError):
             msg = f"invalid range: '{arg}' is not a valid range of positive ints. Must be start-end. Ex: 1-10"
             raise argparse.ArgumentTypeError(
                 msg,
@@ -395,7 +435,7 @@ class PositiveFloat:
     METAVAR = "(float > 0)"
 
     @staticmethod
-    def type_parser(arg: str) -> float:
+    def type_parser(arg: str | float) -> float:
         """Validate argument is a positive float. n > 0.
 
         Args:
@@ -408,14 +448,17 @@ class PositiveFloat:
             float: validated positive float
 
         """
+        if isinstance(arg, bool) or not isinstance(arg, (str, int, float)):
+            msg = f"invalid value: '{arg}' is not a valid float."
+            raise argparse.ArgumentTypeError(msg)
         try:
-            float(arg)
+            arg_float = float(arg)
         except ValueError:
             msg = f"invalid value: '{arg}' is not a valid float."
             raise argparse.ArgumentTypeError(msg) from None
 
-        if float(arg) > 0:
-            return float(arg)
+        if arg_float > 0:
+            return arg_float
         msg = f"invalid value: '{arg}' is not a valid value. Argument must be a float > 0."
         raise argparse.ArgumentTypeError(msg)
 
@@ -431,7 +474,7 @@ class NonNegativeFloat:
     METAVAR = "(float >= 0)"
 
     @staticmethod
-    def type_parser(arg: str) -> float:
+    def type_parser(arg: str | float) -> float:
         """Validate argument is a nonnegative float. n >= 0.
 
         Args:
@@ -444,16 +487,19 @@ class NonNegativeFloat:
             float: validated value
 
         """
+        if isinstance(arg, bool) or not isinstance(arg, (str, int, float)):
+            msg = f"invalid argument value: '{arg}' is not a valid float."
+            raise argparse.ArgumentTypeError(msg)
         try:
-            float(arg)
+            arg_float = float(arg)
         except ValueError:
             msg = f"invalid argument value: '{arg}' is not a valid float."
             raise argparse.ArgumentTypeError(msg) from None
 
-        if float(arg) < 0:
+        if arg_float < 0:
             msg = f"invalid argument value: '{arg}' is out of range. Must be float >= 0."
             raise argparse.ArgumentTypeError(msg)
-        return float(arg)
+        return arg_float
 
 
 class PositiveFloatRange:
@@ -470,7 +516,7 @@ class PositiveFloatRange:
     METAVAR = "(hyphen separated float range e.g. '0.25-0.5')"
 
     @staticmethod
-    def type_parser(arg: str) -> tuple[float, float]:
+    def type_parser(arg: str | tuple[float, float] | list[float]) -> tuple[float, float]:
         """Validate argument is a valid range of positive floats.
 
         Args:
@@ -481,7 +527,16 @@ class PositiveFloatRange:
 
         """
         try:
-            start, end = map(float, arg.split("-"))
+            if isinstance(arg, (tuple, list)):
+                invalid_value = len(arg) != 2 or any(
+                    isinstance(value, bool) or not isinstance(value, (int, float)) for value in arg
+                )
+                if invalid_value:
+                    msg = f"invalid range: '{arg}' is not a valid range. Must be start-end. Ex: 0.1-1.0"
+                    raise argparse.ArgumentTypeError(msg)
+                start, end = map(float, arg)
+            else:
+                start, end = map(float, arg.split("-"))
             if start > end:
                 msg = f"invalid range: '{arg}' is not a valid range of floats. Must be start <= end. Ex: 0.1-1.0"
                 raise argparse.ArgumentTypeError(
@@ -493,7 +548,7 @@ class PositiveFloatRange:
                     msg,
                 )
 
-        except ValueError:
+        except (AttributeError, ValueError):
             msg = f"invalid range: '{arg}' is not a valid range. Must be start-end. Ex: 0.1-1.0"
             raise argparse.ArgumentTypeError(msg) from None
 
@@ -514,7 +569,7 @@ class NonNegativeRatio:
     METAVAR = "(0 <= float(n) <= 1)"
 
     @staticmethod
-    def type_parser(arg: str) -> float:
+    def type_parser(arg: str | float) -> float:
         """Validate argument is a float value between zero and one.
 
         Args:
@@ -527,14 +582,17 @@ class NonNegativeRatio:
             float: validated float value
 
         """
+        if isinstance(arg, bool) or not isinstance(arg, (str, int, float)):
+            msg = f"invalid value: '{arg}' is not a float or int."
+            raise argparse.ArgumentTypeError(msg)
         try:
-            float(arg)
+            arg_float = float(arg)
         except ValueError:
             msg = f"invalid value: '{arg}' is not a float or int."
             raise argparse.ArgumentTypeError(msg) from None
 
-        if 0 <= float(arg) <= 1:
-            return float(arg)
+        if 0 <= arg_float <= 1:
+            return arg_float
         msg = f"invalid value: '{arg}' is not a float >= 0 and <= 1. Example: 0.5"
         raise argparse.ArgumentTypeError(msg)
 
@@ -552,7 +610,7 @@ class PositiveRatio:
     METAVAR = "(0 < float(n) <= 1)"
 
     @staticmethod
-    def type_parser(arg: str) -> float:
+    def type_parser(arg: str | float) -> float:
         """Validate argument is a positive float.
 
         Args:
@@ -565,14 +623,17 @@ class PositiveRatio:
             float: validated float value
 
         """
+        if isinstance(arg, bool) or not isinstance(arg, (str, int, float)):
+            msg = f"invalid value: '{arg}' is not a float or int."
+            raise argparse.ArgumentTypeError(msg)
         try:
-            float(arg)
+            arg_float = float(arg)
         except ValueError:
             msg = f"invalid value: '{arg}' is not a float or int."
             raise argparse.ArgumentTypeError(msg) from None
 
-        if 0 < float(arg) <= 1:
-            return float(arg)
+        if 0 < arg_float <= 1:
+            return arg_float
         msg = f"invalid value: '{arg}' must be 0 < n <=1. Example: 0.5"
         raise argparse.ArgumentTypeError(msg)
 
@@ -588,7 +649,7 @@ class GradientDirection:
     METAVAR = "(diagonal, horizontal, vertical, radial)"
 
     @staticmethod
-    def type_parser(arg: str) -> Gradient.Direction:
+    def type_parser(arg: str | Gradient.Direction) -> Gradient.Direction:
         """Validate argument is a valid gradient direction.
 
         Args:
@@ -601,13 +662,15 @@ class GradientDirection:
             argparse.ArgumentTypeError: Argument value is not a valid gradient direction.
 
         """
+        if isinstance(arg, Gradient.Direction):
+            return arg
         direction_map = {
             "horizontal": Gradient.Direction.HORIZONTAL,
             "vertical": Gradient.Direction.VERTICAL,
             "diagonal": Gradient.Direction.DIAGONAL,
             "radial": Gradient.Direction.RADIAL,
         }
-        if arg.lower() in direction_map:
+        if isinstance(arg, str) and arg.lower() in direction_map:
             return direction_map[arg.lower()]
         msg = (
             f"invalid gradient direction: '{arg}' is not a valid gradient direction. Choices are diagonal,"
@@ -629,7 +692,7 @@ class ColorArg:
     METAVAR = "(XTerm [0-255] OR RGB Hex [000000-ffffff])"
 
     @staticmethod
-    def type_parser(arg: str) -> Color:
+    def type_parser(arg: str | int | Color) -> Color:
         """Validate argument is a valid color value.
 
         Args:
@@ -642,26 +705,22 @@ class ColorArg:
             Color : validated color value
 
         """
-        xterm_min = 0
-        xterm_max = 255
-        if len(arg) <= 3:
-            try:
-                return Color(int(arg))
-            except ValueError:
-                msg = (
-                    f"invalid color value: '{arg}' is not a valid XTerm or RGB color."
-                    f" Must be in range {xterm_min}-{xterm_max} or 000000-FFFFFF."
-                )
-                raise argparse.ArgumentTypeError(msg) from None
-        else:
-            try:
-                return Color(arg)
-            except ValueError:
-                msg = (
-                    f"invalid color value: '{arg}' is not a valid XTerm or RGB color."
-                    f" Must be in range {xterm_min}-{xterm_max} or 000000-FFFFFF."
-                )
-                raise argparse.ArgumentTypeError(msg) from None
+        if isinstance(arg, Color):
+            return arg
+        if isinstance(arg, bool) or not isinstance(arg, (str, int)):
+            msg = (
+                f"invalid color value: '{arg}' is not a valid XTerm or RGB color."
+                " Must be in range 0-255 or 000000-FFFFFF."
+            )
+            raise argparse.ArgumentTypeError(msg)
+        try:
+            return Color(int(arg)) if isinstance(arg, int) or len(arg) <= 3 else Color(arg)
+        except (TypeError, ValueError):
+            msg = (
+                f"invalid color value: '{arg}' is not a valid XTerm or RGB color."
+                " Must be in range 0-255 or 000000-FFFFFF."
+            )
+            raise argparse.ArgumentTypeError(msg) from None
 
 
 class Symbol:
@@ -685,7 +744,7 @@ class Symbol:
             str: validated symbol
 
         """
-        if len(arg) == 1 and arg.isprintable():
+        if isinstance(arg, str) and len(arg) == 1 and arg.isprintable():
             return arg
         msg = f"invalid symbol: '{arg}' is not a valid symbol. Must be a single ASCII/UTF-8 character."
         raise argparse.ArgumentTypeError(msg)
@@ -702,7 +761,7 @@ class CanvasDimension:
     METAVAR = "int >= -1"
 
     @staticmethod
-    def type_parser(arg: str) -> int:
+    def type_parser(arg: str | int) -> int:
         """Validate argument is a nonnegative integer or `-1`.
 
         Args:
@@ -715,7 +774,9 @@ class CanvasDimension:
             int: validated canvas dimension
 
         """
-        if arg.isdigit() or arg == "-1":
+        if isinstance(arg, int) and not isinstance(arg, bool) and arg >= -1:
+            return arg
+        if isinstance(arg, str) and (arg.isdigit() or arg == "-1"):
             return int(arg)
         msg = f"invalid value '{arg}' is not a valid integer. Must be >= -1."
         raise argparse.ArgumentTypeError(msg)
@@ -734,7 +795,7 @@ class TerminalDimension:
     METAVAR = "int >= 0"
 
     @staticmethod
-    def type_parser(arg: str) -> int:
+    def type_parser(arg: str | int) -> int:
         """Validate argument is a valid terminal dimension.
 
         Args:
@@ -744,6 +805,9 @@ class TerminalDimension:
             int: validated terminal dimension
 
         """
+        if isinstance(arg, bool) or not isinstance(arg, (str, int)):
+            msg = f"invalid terminal dimensions: '{arg}' is not a valid terminal dimension. Must be >= 0."
+            raise argparse.ArgumentTypeError(msg)
         try:
             dimension = int(arg)
             if dimension < 0:
@@ -771,7 +835,7 @@ class Ease:
     METAVAR = "(Easing Function)"
 
     @staticmethod
-    def type_parser(arg: str) -> typing.Callable:
+    def type_parser(arg: str | typing.Callable) -> typing.Callable:
         """Validate argument is a valid easing function.
 
         Args:
@@ -784,6 +848,8 @@ class Ease:
             typing.Callable: The validated easing function.
 
         """
+        if callable(arg):
+            return arg
         easing_func_map = {
             "linear": easing.linear,
             "in_sine": easing.in_sine,
@@ -820,7 +886,7 @@ class Ease:
 
         try:
             return easing_func_map[arg.lower()]
-        except KeyError:
+        except (AttributeError, KeyError):
             msg = f"invalid ease value: '{arg}' is not a valid ease."
             raise argparse.ArgumentTypeError(msg) from None
 
@@ -836,7 +902,7 @@ class EasingStep:
     METAVAR = "0 < float(n) <= 1"
 
     @staticmethod
-    def type_parser(arg: str) -> float:
+    def type_parser(arg: str | float) -> float:
         """Validate argument is a valid easing step size value.
 
         Args:
@@ -849,6 +915,9 @@ class EasingStep:
             float: validated easing step size value
 
         """
+        if isinstance(arg, bool) or not isinstance(arg, (str, int, float)):
+            msg = f"invalid value: '{arg}' is not a valid float."
+            raise argparse.ArgumentTypeError(msg)
         try:
             f = float(arg)
         except ValueError:

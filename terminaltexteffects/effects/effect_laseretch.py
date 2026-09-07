@@ -36,7 +36,8 @@ def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
     return "laseretch", LaserEtch, LaserEtchConfig
 
 
-def _etch_pattern_type_parser(value: str) -> argutils.CharacterGroup | str:
+def _etch_pattern_type_parser(value: str | argutils.CharacterGroup) -> argutils.CharacterGroup | str:
+    """Normalize the algorithm sentinel or a `CharacterGroup` pattern."""
     if value == "algorithm":
         return "algorithm"
     return argutils.CharacterGroupArg.type_parser(value)

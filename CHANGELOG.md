@@ -87,6 +87,11 @@
   the complete sampled path length when calculating its progress.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
+* ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does
+  not own, preventing one pool from resetting or hiding a character checked out by another pool.
+* Configuration - Fixed library configuration values bypassing CLI validation. `ArgSpec` parsers now normalize both
+  CLI spellings and canonical library values during config construction and assignment, including tuple options,
+  booleans, choices, colors, enums, ranges, and custom easing callables.
 * Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 * Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number

@@ -155,3 +155,52 @@ def test_ease_valid_ease():
 def test_ease_invalid_ease():
     with pytest.raises(ArgumentTypeError):
         argutils.Ease.type_parser("invalid")
+
+
+@pytest.mark.parametrize(
+    ("parser", "cli_value", "native_value"),
+    [
+        (argutils.CharacterGroupArg.type_parser, "row_top_to_bottom", argutils.CharacterGroup.ROW_TOP_TO_BOTTOM),
+        (argutils.CharacterSortArg.type_parser, "random", argutils.CharacterSort.RANDOM),
+        (argutils.ColorSortArg.type_parser, "random", argutils.ColorSort.RANDOM),
+        (argutils.PositiveInt.type_parser, "2", 2),
+        (argutils.NonNegativeInt.type_parser, "0", 0),
+        (argutils.PositiveIntRange.type_parser, "1-2", (1, 2)),
+        (argutils.PositiveFloat.type_parser, "1.5", 1.5),
+        (argutils.NonNegativeFloat.type_parser, "0", 0.0),
+        (argutils.PositiveFloatRange.type_parser, "0.1-0.2", (0.1, 0.2)),
+        (argutils.NonNegativeRatio.type_parser, "0.5", 0.5),
+        (argutils.PositiveRatio.type_parser, "0.5", 0.5),
+        (argutils.GradientDirection.type_parser, "vertical", Gradient.Direction.VERTICAL),
+        (argutils.ColorArg.type_parser, "125", Color(125)),
+        (argutils.Symbol.type_parser, "x", "x"),
+        (argutils.CanvasDimension.type_parser, "-1", -1),
+        (argutils.TerminalDimension.type_parser, "2", 2),
+        (argutils.Ease.type_parser, "linear", easing.linear),
+        (argutils.EasingStep.type_parser, "0.5", 0.5),
+    ],
+)
+def test_parsers_accept_cli_and_canonical_values(parser, cli_value, native_value) -> None:
+    """Every built-in parser accepts both its CLI spelling and canonical form."""
+    assert parser(cli_value) == parser(native_value)
+
+
+@pytest.mark.parametrize(
+    ("parser", "invalid_value"),
+    [
+        (argutils.PositiveInt.type_parser, True),
+        (argutils.NonNegativeInt.type_parser, 1.0),
+        (argutils.PositiveIntRange.type_parser, (1, 2.0)),
+        (argutils.PositiveFloat.type_parser, True),
+        (argutils.PositiveFloatRange.type_parser, (0.1, True)),
+        (argutils.ColorArg.type_parser, True),
+        (argutils.Symbol.type_parser, 1),
+        (argutils.CanvasDimension.type_parser, True),
+        (argutils.TerminalDimension.type_parser, 1.5),
+        (argutils.EasingStep.type_parser, True),
+    ],
+)
+def test_parsers_reject_invalid_native_values(parser, invalid_value) -> None:
+    """Native values must meet the same constraints as CLI values."""
+    with pytest.raises(ArgumentTypeError):
+        parser(invalid_value)
