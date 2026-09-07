@@ -498,16 +498,6 @@ class EffectCharacter:
             char._link(self, bidirectional=False)
         self.links.add(char)
 
-    def __hash__(self) -> int:
-        """Return the hash value of the character."""
-        return hash(self.character_id)
-
-    def __eq__(self, other: object) -> bool:
-        """Check if two EffectCharacter instances are equal based on their character_id."""
-        if not isinstance(other, EffectCharacter):
-            return NotImplemented
-        return self.character_id == other.character_id
-
     def __repr__(self) -> str:
         """Return a string representation of the EffectCharacter instance."""
         return (

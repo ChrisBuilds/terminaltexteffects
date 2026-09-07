@@ -8,6 +8,7 @@ import pytest
 
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.motion import Path
+from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.utils.exceptions.base_character_exceptions import (
     DuplicateEventRegistrationError,
     EventRegistrationCallerError,
@@ -363,10 +364,25 @@ def test_effectcharacter_hash_consistency(effectcharacter: EffectCharacter) -> N
     assert hash(effectcharacter) == hash(effectcharacter)
 
 
-def test_effectcharacter_objects_have_same_hash(effectcharacter: EffectCharacter) -> None:
-    """Test that two EffectCharacter objects with the same attributes have the same hash."""
+def test_effectcharacter_objects_with_same_attributes_have_distinct_identity(effectcharacter: EffectCharacter) -> None:
+    """Separately created characters retain distinct identity-based equality and hashes."""
     effectcharacter2 = EffectCharacter(0, "a", 1, 1)
-    assert hash(effectcharacter) == hash(effectcharacter2)
+    assert effectcharacter != effectcharacter2
+    assert len({effectcharacter, effectcharacter2}) == 2
+
+
+def test_effectcharacters_from_different_terminals_do_not_collide() -> None:
+    """Terminal-local IDs must not collapse independent characters in sets or mappings."""
+    first = Terminal("a", TerminalConfig()).get_characters()[0]
+    second = Terminal("b", TerminalConfig()).get_characters()[0]
+
+    assert first.character_id == second.character_id == 0
+    assert first != second
+    assert len({first, second}) == 2
+    character_map = {first: "first", second: "second"}
+    assert len(character_map) == 2
+    assert character_map[first] == "first"
+    assert character_map[second] == "second"
 
 
 def test_effectcharacter_properties(effectcharacter: EffectCharacter) -> None:

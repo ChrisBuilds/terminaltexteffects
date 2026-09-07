@@ -100,6 +100,9 @@
   `ZeroDivisionError`. The method now raises `AnimationSceneError` with a clear validation message.
 * Terminal - Fixed `get_characters_grouped()` inconsistently including off-canvas added characters depending on the
   grouping direction. All grouping modes now restrict selected characters to the visible canvas.
+* Engine - Fixed `EffectCharacter` instances from separate terminals comparing equal when their terminal-local IDs
+  matched. Characters now use object identity for equality and hashing, preventing cross-terminal set and dictionary
+  collisions.
 * Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
   could cause later runs with the same canvas geometry to fail with an `IndexError`.
 * Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number
