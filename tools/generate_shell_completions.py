@@ -8,6 +8,7 @@ from pathlib import Path
 import shtab
 
 from terminaltexteffects import __main__ as tte_main
+from terminaltexteffects.utils.shell_completion import SUPPORTED_SHELLS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 COMPLETION_DIR = PROJECT_ROOT / "terminaltexteffects" / "completions"
@@ -60,6 +61,8 @@ def _configure_completers(
     for action in parser._actions:
         if "--input-file" in action.option_strings:
             action.complete = shtab.FILE  # type: ignore[attr-defined]
+        elif "--print-completion" in action.option_strings:
+            action.choices = SUPPORTED_SHELLS
         elif "--include-effects" in action.option_strings or "--exclude-effects" in action.option_strings:
             action.choices = effect_names
 

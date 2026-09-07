@@ -132,6 +132,7 @@
 * Thunderstorm - Fixed fractional `storm_time` values being rejected, restoring support for sub-second storms.
 * Shell completions are now generated with `shtab` during development and bundled with the package. Completion no
   longer imports user effect plugins during generation, and zsh now receives a native completion script.
+* Running `tte --print-completion` without a shell argument now prints copy-and-paste setup commands for bash and zsh.
 
 ## 0.15.0
 

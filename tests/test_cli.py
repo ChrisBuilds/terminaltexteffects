@@ -145,6 +145,22 @@ def test_main_print_completion_bash_outputs_script(
     assert "--rain-color-gradient" in output
 
 
+def test_main_print_completion_without_shell_outputs_setup_commands(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Printing completion without a shell should provide copy-and-paste setup commands."""
+    monkeypatch.setattr(__main__.sys, "argv", ["tte", "--print-completion"])
+
+    __main__.main()
+
+    assert capsys.readouterr().out == (
+        "Enable completions in the current shell:\n"
+        '  Bash: eval "$(tte --print-completion bash)"\n'
+        '  Zsh:  eval "$(tte --print-completion zsh)"\n'
+    )
+
+
 def test_main_print_completion_zsh_outputs_script(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],

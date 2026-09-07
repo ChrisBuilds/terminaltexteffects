@@ -65,6 +65,7 @@ _shtab_tte__h_nargs=0
 _shtab_tte___help_nargs=0
 _shtab_tte___version_nargs=0
 _shtab_tte__v_nargs=0
+_shtab_tte___print_completion_nargs='?'
 _shtab_tte___random_effect_nargs=0
 _shtab_tte__R_nargs=0
 _shtab_tte___include_effects_nargs=+

@@ -16,7 +16,11 @@ from typing import TYPE_CHECKING
 import terminaltexteffects.effects
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.utils.exceptions import EmptyInputError, UnsupportedAnsiSequenceError
-from terminaltexteffects.utils.shell_completion import SUPPORTED_SHELLS, get_completion_script
+from terminaltexteffects.utils.shell_completion import (
+    get_completion_instructions,
+    get_completion_script,
+    parse_completion_shell,
+)
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -63,8 +67,11 @@ def build_parser(
     )
     parser.add_argument(
         "--print-completion",
-        choices=SUPPORTED_SHELLS,
-        help="Print a shell completion script for the requested shell and exit.",
+        nargs="?",
+        const="",
+        type=parse_completion_shell,
+        metavar="{bash,zsh}",
+        help="Print completion setup commands, or a completion script for the requested shell, and exit.",
     )
     parser.add_argument("--random-effect", "-R", action="store_true", help="Randomly select an effect to apply")
     parser.add_argument(
@@ -178,8 +185,11 @@ def main() -> None:
     keyboard interruption.
     """
     args, effect_resource_map = build_parsers_and_parse_args()
-    if args.print_completion:
-        print(get_completion_script(args.print_completion), end="")
+    if args.print_completion is not None:
+        output = (
+            get_completion_script(args.print_completion) if args.print_completion else get_completion_instructions()
+        )
+        print(output, end="")
         return
     if args.seed is not None:
         random.seed(args.seed)

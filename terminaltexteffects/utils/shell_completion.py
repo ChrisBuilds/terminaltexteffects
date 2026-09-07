@@ -13,6 +13,24 @@ _COMPLETION_FILES = {
 }
 
 
+def parse_completion_shell(shell: str) -> str:
+    """Validate a requested completion shell while permitting the instruction sentinel."""
+    if shell == "" or shell in SUPPORTED_SHELLS:
+        return shell
+    choices = ", ".join(SUPPORTED_SHELLS)
+    msg = f"invalid choice: {shell!r} (choose from {choices})"
+    raise ValueError(msg)
+
+
+def get_completion_instructions() -> str:
+    """Return copy-and-paste commands for enabling completion in supported shells."""
+    return (
+        "Enable completions in the current shell:\n"
+        '  Bash: eval "$(tte --print-completion bash)"\n'
+        '  Zsh:  eval "$(tte --print-completion zsh)"\n'
+    )
+
+
 def get_completion_script(shell: str) -> str:
     """Return the bundled completion script for `shell`."""
     try:

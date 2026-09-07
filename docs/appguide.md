@@ -37,6 +37,8 @@ Using the `-h` argument in place of the global_options or effect_options will pr
 
 Shell completions for bundled effects are also available for bash and zsh:
 
+Run `tte --print-completion` to print copy-and-paste setup commands, or use the commands directly:
+
 ```bash title="Generate shell completions"
 eval "$(tte --print-completion bash)"
 ```

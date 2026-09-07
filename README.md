@@ -247,6 +247,7 @@ OR
   * Use `--include-effects` or `--exclude-effects` to limit the random selection pool.
 * Generate shell completions for bundled effects with `tte --print-completion bash` or
   `tte --print-completion zsh`.
+  * Run `tte --print-completion` without a shell name to print copy-and-paste setup commands.
   * Bash: `eval "$(tte --print-completion bash)"`
   * Zsh: `eval "$(tte --print-completion zsh)"`
   * To enable completions for future shells, add the relevant command above to your shell startup file such as `~/.bashrc` or `~/.zshrc`.

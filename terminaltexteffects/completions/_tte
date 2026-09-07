@@ -56,7 +56,7 @@ _shtab_tte_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   {--input-file,-i}"[File to read input from]:input_file:_files"
   "(- : *)"{--version,-v}"[show program\'s version number and exit]"
-  "--print-completion[Print a shell completion script for the requested shell and exit.]:print_completion:(bash zsh)"
+  "--print-completion[Print completion setup commands, or a completion script for the requested shell, and exit.]:print_completion:(bash zsh)"
   {--random-effect,-R}"[Randomly select an effect to apply]"
   "--seed[Seed to use for random effect selection]:seed:"
   "--include-effects[Space-separated list of Effects to include when randomly selecting an effect]:include_effects:(beams binarypath blackhole bouncyballs bubbles burn colorshift crumble decrypt dev errorcorrect expand fireworks highlight laseretch matrix middleout orbittingvolley overflow pour print rain randomsequence rings scattered slice slide smoke spotlights spray swarm sweep synthgrid thunderstorm unstable vhstape waves wipe)"
