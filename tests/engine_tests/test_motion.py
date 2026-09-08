@@ -70,8 +70,8 @@ def test_segment_length_bezier() -> None:
         waypoint_1,
         find_length_of_bezier_curve(waypoint_0.coord, waypoint_0.bezier_control, waypoint_1.coord),  # type: ignore[arg-type]
     )
-    bezier_length = 14.94427190999916
-    assert segment.distance == bezier_length
+    bezier_length = 14.789428575445976
+    assert segment.distance == pytest.approx(bezier_length, rel=1e-4)
 
 
 def test_segment_is_hashable() -> None:

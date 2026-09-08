@@ -19,12 +19,17 @@ from __future__ import annotations
 
 import functools
 import math
-from collections.abc import Callable, Iterator
 from dataclasses import dataclass
-from typing import ParamSpec
+from typing import TYPE_CHECKING, ParamSpec
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
 
 
 P = ParamSpec("P")
+
+_BEZIER_LENGTH_TOLERANCE = 1e-4
+_BEZIER_LENGTH_MAX_DEPTH = 12
 
 
 @dataclass(eq=True, frozen=True)
@@ -215,8 +220,7 @@ find_coords_on_rect = _cache_coordinate_list(8192)(find_coords_on_rect)
 
 
 def extrapolate_along_ray(origin: Coord, target: Coord, offset_from_target: float) -> Coord:
-    """Return the point `offset_from_target` units past `target` along the
-    `origin -> target` ray.
+    """Return the point `offset_from_target` units past `target` along the `origin -> target` ray.
 
     The coordinate returned is approximately `offset_from_target` units away from the
     target coordinate, away from the origin coordinate.
@@ -246,6 +250,25 @@ extrapolate_along_ray = functools.wraps(extrapolate_along_ray)(
 )
 
 
+def _find_point_on_bezier_curve(
+    start: Coord,
+    control: tuple[Coord, ...],
+    end: Coord,
+    t: float,
+) -> tuple[float, float]:
+    """Return an unrounded point on a Bézier curve."""
+    points = [(float(coord.column), float(coord.row)) for coord in (start, *control, end)]
+    while len(points) > 1:
+        points = [
+            (
+                (1 - t) * point[0] + t * next_point[0],
+                (1 - t) * point[1] + t * next_point[1],
+            )
+            for point, next_point in zip(points, points[1:])
+        ]
+    return points[0]
+
+
 def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Coord, t: float) -> Coord:
     """Find points on a bezier curve of any degree.
 
@@ -259,20 +282,8 @@ def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Co
         Coord: The coordinate on the bezier curve corresponding to the given parameter value.
 
     """
-    points = [start, *list(control), end]
-
-    def de_casteljau(points: list[Coord], t: float):  # noqa: ANN202
-        if len(points) == 1:
-            return points[0]
-        new_points = []
-        for i in range(len(points) - 1):
-            x = (1 - t) * points[i].column + t * points[i + 1].column
-            y = (1 - t) * points[i].row + t * points[i + 1].row
-            new_points.append(Coord(x, y))  # type: ignore[arg-type]
-        return de_casteljau(new_points, t)
-
-    result = de_casteljau(points, t)
-    return Coord(round(result.column), round(result.row))
+    column, row = _find_point_on_bezier_curve(start, control, end, t)
+    return Coord(round(column), round(row))
 
 
 find_coord_on_bezier_curve = functools.wraps(find_coord_on_bezier_curve)(
@@ -303,9 +314,9 @@ find_coord_on_line = functools.wraps(find_coord_on_line)(functools.lru_cache(max
 def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord) -> float:
     """Approximate the length of a bezier curve.
 
-    The curve is sampled at evenly spaced parameter values and the total length is
-    estimated by summing line lengths between successive sampled points using
-    terminal-adjusted row distances.
+    The curve length is calculated from unrounded floating-point points using
+    adaptive subdivision. Row values are doubled before measuring to account for
+    the terminal character aspect ratio.
 
     Args:
         start (Coord): The starting coordinate of the curve.
@@ -318,13 +329,29 @@ def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord
     """
     if isinstance(control, Coord):
         control = (control,)
-    length = 0.0
-    prev_coord = start
-    for t in range(1, 11):
-        coord = find_coord_on_bezier_curve(start, control, end, t / 10)
-        length += find_length_of_line(prev_coord, coord, double_row_diff=True)
-        prev_coord = coord
-    return length
+    points = [(float(coord.column), float(coord.row * 2)) for coord in (start, *control, end)]
+
+    def approximate_length(curve_points: list[tuple[float, float]], depth: int = 0) -> float:
+        chord_length = math.dist(curve_points[0], curve_points[-1])
+        control_polygon_length = sum(
+            math.dist(point, next_point) for point, next_point in zip(curve_points, curve_points[1:])
+        )
+        if depth >= _BEZIER_LENGTH_MAX_DEPTH or control_polygon_length - chord_length <= _BEZIER_LENGTH_TOLERANCE:
+            return (control_polygon_length + chord_length) / 2
+
+        levels = [curve_points]
+        while len(levels[-1]) > 1:
+            levels.append(
+                [
+                    ((point[0] + next_point[0]) / 2, (point[1] + next_point[1]) / 2)
+                    for point, next_point in zip(levels[-1], levels[-1][1:])
+                ],
+            )
+        left_curve = [level[0] for level in levels]
+        right_curve = [level[-1] for level in reversed(levels)]
+        return approximate_length(left_curve, depth + 1) + approximate_length(right_curve, depth + 1)
+
+    return approximate_length(points)
 
 
 find_length_of_bezier_curve = functools.wraps(find_length_of_bezier_curve)(

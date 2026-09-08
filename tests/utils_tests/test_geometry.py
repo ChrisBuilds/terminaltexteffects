@@ -168,6 +168,16 @@ def test_find_coord_on_bezier_curve_two_control_points() -> None:
     assert isinstance(geometry.find_coord_on_bezier_curve(start, (control1, control2), end, 0.5), geometry.Coord)
 
 
+def test_find_coord_on_bezier_curve_endpoints() -> None:
+    """Test that the curve includes its exact endpoints."""
+    start = geometry.Coord(2, 3)
+    end = geometry.Coord(11, 7)
+    control = (geometry.Coord(4, 12), geometry.Coord(8, -2))
+
+    assert geometry.find_coord_on_bezier_curve(start, control, end, 0) == start
+    assert geometry.find_coord_on_bezier_curve(start, control, end, 1) == end
+
+
 def test_find_coord_on_line() -> None:
     """Test that the function returns the correct coordinate."""
     start = geometry.Coord(0, 0)
@@ -182,8 +192,8 @@ def test_find_length_of_bezier_curve() -> None:
     start = geometry.Coord(0, 0)
     end = geometry.Coord(10, 10)
     control = geometry.Coord(5, 0)
-    length = geometry.find_length_of_bezier_curve(start, end, control)
-    assert length == 23.1318726378628
+    length = geometry.find_length_of_bezier_curve(start, control, end)
+    assert length == pytest.approx(23.233918812164685, rel=1e-4)
 
 
 def test_find_length_of_bezier_curve_two_control_points() -> None:
@@ -193,7 +203,7 @@ def test_find_length_of_bezier_curve_two_control_points() -> None:
     control1 = geometry.Coord(5, 0)
     control2 = geometry.Coord(5, 10)
     length = geometry.find_length_of_bezier_curve(start, (control1, control2), end)
-    assert length == 23.662619116234062
+    assert length == pytest.approx(23.46366410915411, rel=1e-4)
 
 
 def test_find_length_of_bezier_curve_includes_final_interval() -> None:
@@ -202,7 +212,30 @@ def test_find_length_of_bezier_curve_includes_final_interval() -> None:
     control = geometry.Coord(0, 10)
     end = geometry.Coord(10, 10)
 
-    assert geometry.find_length_of_bezier_curve(start, control, end) == 26.94427190999916
+    assert geometry.find_length_of_bezier_curve(start, control, end) == pytest.approx(24.886543055424067, rel=1e-4)
+
+
+def test_find_length_of_collinear_bezier_matches_line() -> None:
+    """Test that curve rasterization does not inflate the length of a straight Bézier."""
+    start = geometry.Coord(0, 0)
+    control = geometry.Coord(3, 2)
+    end = geometry.Coord(6, 4)
+
+    bezier_length = geometry.find_length_of_bezier_curve(start, control, end)
+    line_length = geometry.find_length_of_line(start, end, double_row_diff=True)
+
+    assert bezier_length == pytest.approx(line_length)
+
+
+def test_find_length_of_short_bezier_curve() -> None:
+    """Test that a short curve retains a meaningful floating-point length."""
+    start = geometry.Coord(0, 0)
+    control = geometry.Coord(0, 1)
+    end = geometry.Coord(1, 1)
+
+    length = geometry.find_length_of_bezier_curve(start, control, end)
+
+    assert geometry.find_length_of_line(start, end, double_row_diff=True) < length < 3
 
 
 def test_find_length_of_line() -> None:

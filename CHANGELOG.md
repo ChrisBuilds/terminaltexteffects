@@ -97,6 +97,8 @@
   coordinate lists without corrupting later cache hits.
 * Geometry - Fixed Bézier path-length estimation omitting the final segment to the endpoint. Curved motion now uses
   the complete sampled path length when calculating its progress.
+* Geometry - Fixed Bézier path-length estimation measuring rounded terminal coordinates. Lengths now use adaptive
+  floating-point subdivision, preventing rasterization from inflating curved-path durations.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
 * ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does
