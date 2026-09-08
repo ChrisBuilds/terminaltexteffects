@@ -105,6 +105,8 @@
   origin. Signed offsets now consistently move forward or backward along the ray.
 * Geometry - Shape coordinate helpers now reject negative dimensions and point limits consistently while preserving
   their existing zero-dimension behavior.
+* Geometry - Reduced coordinate-list cache limits from 8,192 to 128 entries for perimeter and rectangle helpers and
+  512 entries for filled circles, bounding retained shape data while preserving useful `spotlights` cache reuse.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
 * ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does

@@ -30,6 +30,8 @@ P = ParamSpec("P")
 
 _BEZIER_LENGTH_TOLERANCE = 1e-4
 _BEZIER_LENGTH_MAX_DEPTH = 12
+_COORDINATE_LIST_CACHE_SIZE = 128
+_CIRCLE_AREA_CACHE_SIZE = 512
 
 
 @dataclass(eq=True, frozen=True)
@@ -129,7 +131,7 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, 
     return points
 
 
-find_coords_on_circle = _cache_coordinate_list(8192)(find_coords_on_circle)
+find_coords_on_circle = _cache_coordinate_list(_COORDINATE_LIST_CACHE_SIZE)(find_coords_on_circle)
 
 
 def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
@@ -167,7 +169,7 @@ def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
     return coords_in_ellipse
 
 
-find_coords_in_circle = _cache_coordinate_list(8192)(find_coords_in_circle)
+find_coords_in_circle = _cache_coordinate_list(_CIRCLE_AREA_CACHE_SIZE)(find_coords_in_circle)
 
 
 def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
@@ -203,7 +205,7 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
     return coords
 
 
-find_coords_in_rect = _cache_coordinate_list(8192)(find_coords_in_rect)
+find_coords_in_rect = _cache_coordinate_list(_COORDINATE_LIST_CACHE_SIZE)(find_coords_in_rect)
 
 
 def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> list[Coord]:
@@ -240,7 +242,7 @@ def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> lis
     return coords
 
 
-find_coords_on_rect = _cache_coordinate_list(8192)(find_coords_on_rect)
+find_coords_on_rect = _cache_coordinate_list(_COORDINATE_LIST_CACHE_SIZE)(find_coords_on_rect)
 
 
 def extrapolate_along_ray(origin: Coord, target: Coord, offset_from_target: float) -> Coord:

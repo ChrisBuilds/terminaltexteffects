@@ -68,6 +68,23 @@ def test_cached_coordinate_results_are_not_mutable(
     assert function(*args) == expected_coords
 
 
+@pytest.mark.parametrize(
+    ("function", "expected_maxsize"),
+    [
+        (geometry.find_coords_on_circle, 128),
+        (geometry.find_coords_in_circle, 512),
+        (geometry.find_coords_in_rect, 128),
+        (geometry.find_coords_on_rect, 128),
+    ],
+)
+def test_coordinate_list_cache_size_is_bounded(
+    function: Callable[..., list[geometry.Coord]],
+    expected_maxsize: int,
+) -> None:
+    """Test that coordinate-list caches cannot retain thousands of complete shapes."""
+    assert function.cache_parameters()["maxsize"] == expected_maxsize  # type: ignore[attr-defined]
+
+
 def test_find_coords_in_circle(coord: geometry.Coord) -> None:
     """Test that the function returns the correct number of coordinates."""
     coords = geometry.find_coords_in_circle(coord, 5)
