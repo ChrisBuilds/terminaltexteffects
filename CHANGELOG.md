@@ -99,6 +99,8 @@
   the complete sampled path length when calculating its progress.
 * Geometry - Fixed Bézier path-length estimation measuring rounded terminal coordinates. Lengths now use adaptive
   floating-point subdivision, preventing rasterization from inflating curved-path durations.
+* Geometry - Fixed radial distance normalization being offset toward the lower-left. Odd and even rectangles now use
+  their true center, produce symmetric radial gradients, and support one-cell regions.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
 * ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does

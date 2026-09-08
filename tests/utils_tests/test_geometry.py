@@ -258,14 +258,49 @@ def test_find_normalized_distance_from_center() -> None:
     """Test that the function returns the correct distance."""
     coord = geometry.Coord(3, 3)
     distance = geometry.find_normalized_distance_from_center(1, 10, 1, 10, coord)
-    assert distance == 0.4
+    assert distance == pytest.approx(5 / 9)
 
 
 def test_find_normalized_distance_from_center_with_offset() -> None:
     """Test that the function returns the correct distance."""
     coord = geometry.Coord(6, 6)
     distance = geometry.find_normalized_distance_from_center(4, 13, 4, 13, coord)
-    assert distance == 0.4
+    assert distance == pytest.approx(5 / 9)
+
+
+def test_find_normalized_distance_from_center_odd_bounds_are_symmetric() -> None:
+    """Test that an odd-sized rectangle has a zero-distance center and symmetric corners."""
+    bounds = (1, 5, 1, 5)
+
+    assert geometry.find_normalized_distance_from_center(*bounds, geometry.Coord(3, 3)) == 0.0
+    for corner in (geometry.Coord(1, 1), geometry.Coord(1, 5), geometry.Coord(5, 1), geometry.Coord(5, 5)):
+        assert geometry.find_normalized_distance_from_center(*bounds, corner) == 1.0
+
+
+def test_find_normalized_distance_from_center_even_bounds_are_symmetric() -> None:
+    """Test that an even-sized rectangle is centered between its four central coordinates."""
+    bounds = (1, 4, 1, 4)
+    central_distances = {
+        geometry.find_normalized_distance_from_center(*bounds, coord)
+        for coord in (geometry.Coord(2, 2), geometry.Coord(2, 3), geometry.Coord(3, 2), geometry.Coord(3, 3))
+    }
+
+    assert len(central_distances) == 1
+    for corner in (geometry.Coord(1, 1), geometry.Coord(1, 4), geometry.Coord(4, 1), geometry.Coord(4, 4)):
+        assert geometry.find_normalized_distance_from_center(*bounds, corner) == 1.0
+
+
+def test_find_normalized_distance_from_center_offset_bounds_are_symmetric() -> None:
+    """Test that translating the bounds and coordinate does not change the normalized distance."""
+    base_distance = geometry.find_normalized_distance_from_center(1, 5, 1, 7, geometry.Coord(2, 4))
+    offset_distance = geometry.find_normalized_distance_from_center(6, 10, 11, 17, geometry.Coord(12, 9))
+
+    assert offset_distance == base_distance
+
+
+def test_find_normalized_distance_from_center_single_coordinate() -> None:
+    """Test that the only coordinate in a one-cell rectangle is its center."""
+    assert geometry.find_normalized_distance_from_center(4, 4, 7, 7, geometry.Coord(7, 4)) == 0.0
 
 
 def test_find_normalized_distance_from_center_out_of_bounds() -> None:

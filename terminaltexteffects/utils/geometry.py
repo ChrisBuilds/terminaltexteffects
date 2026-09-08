@@ -401,26 +401,18 @@ def find_normalized_distance_from_center(bottom: int, top: int, left: int, right
         float: Normalized distance from the center of the rectangle on the Canvas, float between 0 and 1.
 
     """
-    y_offset = bottom - 1
-    x_offset = left - 1
-    right = right - x_offset
-    top = top - y_offset
-    center_x = right / 2
-    center_y = top / 2
-
-    if (other_coord.column - x_offset) not in range(left - x_offset, right + 1) or (
-        other_coord.row - y_offset
-    ) not in range(bottom - y_offset, top + 1):
+    if not (left <= other_coord.column <= right and bottom <= other_coord.row <= top):
         msg = "Coordinate is not within the rectangle."
         raise ValueError(msg)
 
-    max_distance = ((right**2) + ((top * 2) ** 2)) ** 0.5
+    center_column = (left + right) / 2
+    center_row = (bottom + top) / 2
+    max_distance = math.hypot((right - left) / 2, top - bottom)
+    if max_distance == 0:
+        return 0.0
 
-    distance = (
-        ((other_coord.column - x_offset) - center_x) ** 2 + (((other_coord.row - y_offset) - center_y) * 2) ** 2
-    ) ** 0.5
-
-    return distance / (max_distance / 2)
+    distance = math.hypot(other_coord.column - center_column, (other_coord.row - center_row) * 2)
+    return distance / max_distance
 
 
 find_normalized_distance_from_center = functools.wraps(find_normalized_distance_from_center)(
