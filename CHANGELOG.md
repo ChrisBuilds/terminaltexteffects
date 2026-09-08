@@ -103,6 +103,8 @@
   their true center, produce symmetric radial gradients, and support one-cell regions.
 * Geometry - Fixed negative ray offsets equal to the origin-target distance returning the target instead of the
   origin. Signed offsets now consistently move forward or backward along the ray.
+* Geometry - Shape coordinate helpers now reject negative dimensions and point limits consistently while preserving
+  their existing zero-dimension behavior.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
 * ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does

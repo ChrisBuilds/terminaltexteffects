@@ -134,6 +134,26 @@ def test_find_coords_on_rect_small_exact_points() -> None:
     assert coords == expected
 
 
+@pytest.mark.parametrize(
+    ("function", "args"),
+    [
+        (geometry.find_coords_on_circle, (geometry.Coord(0, 0), -1)),
+        (geometry.find_coords_on_circle, (geometry.Coord(0, 0), 1, -1)),
+        (geometry.find_coords_in_circle, (geometry.Coord(0, 0), -1)),
+        (geometry.find_coords_in_rect, (geometry.Coord(0, 0), -1)),
+        (geometry.find_coords_on_rect, (geometry.Coord(0, 0), -1, 1)),
+        (geometry.find_coords_on_rect, (geometry.Coord(0, 0), 1, -1)),
+    ],
+)
+def test_shape_helpers_reject_negative_dimensions(
+    function: Callable[..., list[geometry.Coord]],
+    args: tuple[object, ...],
+) -> None:
+    """Test that shape helpers reject negative dimensions consistently."""
+    with pytest.raises(ValueError, match="must be non-negative"):
+        function(*args)
+
+
 def test_extrapolate_along_ray_positive_offset(coord: geometry.Coord) -> None:
     """Test that a positive offset moves beyond the target."""
     new_coord = geometry.Coord(coord.column + 5, coord.row + 5)

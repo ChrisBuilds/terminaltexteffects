@@ -78,6 +78,14 @@ def _cache_coordinate_list(
     return decorator
 
 
+def _validate_nonnegative_dimensions(**dimensions: int) -> None:
+    """Raise `ValueError` when a named dimension is negative."""
+    for name, value in dimensions.items():
+        if value < 0:
+            msg = f"{name} must be non-negative."
+            raise ValueError(msg)
+
+
 def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, unique: bool = True) -> list[Coord]:
     """Find points on a circle.
 
@@ -91,7 +99,11 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, 
     Returns:
         list (Coord): list of Coord points on the circle
 
+    Raises:
+        ValueError: If `radius` or `coords_limit` is negative.
+
     """
+    _validate_nonnegative_dimensions(radius=radius, coords_limit=coords_limit)
     points: list[Coord] = []
     if not radius:
         return points
@@ -133,7 +145,11 @@ def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
     Returns:
         list[Coord]: A list of coordinates within the circle.
 
+    Raises:
+        ValueError: If `diameter` is negative.
+
     """
+    _validate_nonnegative_dimensions(diameter=diameter)
     h, k = center.column, center.row
     coords_in_ellipse: list[Coord] = []
     if not diameter:
@@ -168,7 +184,11 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
     Returns:
         list[Coord]: list of Coord points in the rectangle
 
+    Raises:
+        ValueError: If `distance` is negative.
+
     """
+    _validate_nonnegative_dimensions(distance=distance)
     left_boundary = origin.column - distance
     right_boundary = origin.column + distance
     top_boundary = origin.row - distance
@@ -201,7 +221,11 @@ def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> lis
     Returns:
         list[Coord]: list of Coord points in the rectangle
 
+    Raises:
+        ValueError: If `half_width` or `half_height` is negative.
+
     """
+    _validate_nonnegative_dimensions(half_width=half_width, half_height=half_height)
     coords: list[Coord] = []
     if not half_width or not half_height:
         return coords
