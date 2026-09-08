@@ -87,13 +87,30 @@ def test_coordinate_list_cache_size_is_bounded(
 
 def test_find_coords_in_circle(coord: geometry.Coord) -> None:
     """Test that the function returns the correct number of coordinates."""
-    coords = geometry.find_coords_in_circle(coord, 5)
+    coords = geometry.find_coords_in_circle(coord, radius=5)
     assert len(coords) > 0
+
+
+def test_find_coords_in_circle_terminal_adjusted_bounds() -> None:
+    """Test the radius and terminal aspect-ratio behavior."""
+    center = geometry.Coord(10, 10)
+    radius = 4
+    coords = set(geometry.find_coords_in_circle(center, radius=radius))
+
+    assert {geometry.Coord(6, 10), geometry.Coord(14, 10), geometry.Coord(10, 8), geometry.Coord(10, 12)} <= coords
+    assert min(coord.column for coord in coords) == center.column - radius
+    assert max(coord.column for coord in coords) == center.column + radius
+    assert min(coord.row for coord in coords) == center.row - radius // 2
+    assert max(coord.row for coord in coords) == center.row + radius // 2
+    assert all(
+        geometry.find_length_of_line(center, coord, double_row_diff=True) <= radius
+        for coord in coords
+    )
 
 
 def test_find_coords_in_circle_zero_radius(coord: geometry.Coord) -> None:
     """Test that the function returns an empty list when the radius is zero."""
-    coords = geometry.find_coords_in_circle(coord, 0)
+    coords = geometry.find_coords_in_circle(coord, radius=0)
     assert len(coords) == 0
 
 

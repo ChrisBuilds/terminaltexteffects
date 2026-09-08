@@ -107,6 +107,8 @@
   their existing zero-dimension behavior.
 * Geometry - Reduced coordinate-list cache limits from 8,192 to 128 entries for perimeter and rectangle helpers and
   512 entries for filled circles, bounding retained shape data while preserving useful `spotlights` cache reuse.
+* Geometry - Renamed the `find_coords_in_circle()` `diameter` parameter to `radius` to match its terminal-adjusted
+  distance semantics, and clarified the generated ellipse's horizontal and vertical extents.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
 * ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does

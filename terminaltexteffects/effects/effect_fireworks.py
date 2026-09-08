@@ -196,7 +196,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 min_row = character.input_coord.row if not self.config.explode_anywhere else self.terminal.canvas.bottom
                 origin_y = random.randrange(min_row, self.terminal.canvas.top + 1)
                 origin_coord = Coord(origin_x, origin_y)
-                explode_waypoint_coords = geometry.find_coords_in_circle(origin_coord, self.explode_distance)
+                explode_waypoint_coords = geometry.find_coords_in_circle(origin_coord, radius=self.explode_distance)
             character.motion.set_coordinate(Coord(origin_x, self.terminal.canvas.bottom))  # type: ignore[attr-defined]
             apex_path = character.motion.new_path(path_id="apex_pth", speed=0.35, ease=easing.out_expo, layer=2)
             apex_wpt = apex_path.new_waypoint(origin_coord)  # type: ignore[attr-defined]

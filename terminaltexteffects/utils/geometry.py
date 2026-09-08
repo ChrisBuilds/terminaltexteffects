@@ -5,7 +5,7 @@ These functions are used by effects to enable more complex animations and moveme
 
 Functions:
     find_coords_on_circle: Finds points on a circle given the origin, radius, and number of points.
-    find_coords_in_circle: Finds coordinates within an ellipse given the center and major axis length.
+    find_coords_in_circle: Finds coordinates within a terminal-adjusted circle given its center and radius.
     find_coords_in_rect: Finds coordinates within a rectangle given the origin and distance.
     extrapolate_along_ray: Finds the coordinate past a target along the ray from an origin.
     find_coord_on_bezier_curve: Finds points on a bezier curve.
@@ -134,33 +134,34 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, 
 find_coords_on_circle = _cache_coordinate_list(_COORDINATE_LIST_CACHE_SIZE)(find_coords_on_circle)
 
 
-def find_coords_in_circle(center: Coord, diameter: int) -> list[Coord]:
-    """Find the coordinates within a circle with the given center and diameter.
+def find_coords_in_circle(center: Coord, radius: int) -> list[Coord]:
+    """Find coordinates within a terminal-adjusted circle.
 
-    The actual shape calculated is an ellipse with a major axis of length diameter, however the
-    terminal cell height/width ratio creates a circle visually.
+    The generated coordinate-space ellipse has a horizontal radius of `radius` columns and a
+    vertical radius of `radius / 2` rows. With terminal cells approximately twice as tall as they
+    are wide, this ellipse appears circular.
 
     Args:
         center (Coord): The center coordinate of the circle.
-        diameter (int): The length of the major axis of the circle.
+        radius (int): The terminal-adjusted circle radius, measured in column-distance units.
 
     Returns:
         list[Coord]: A list of coordinates within the circle.
 
     Raises:
-        ValueError: If `diameter` is negative.
+        ValueError: If `radius` is negative.
 
     """
-    _validate_nonnegative_dimensions(diameter=diameter)
+    _validate_nonnegative_dimensions(radius=radius)
     h, k = center.column, center.row
     coords_in_ellipse: list[Coord] = []
-    if not diameter:
+    if not radius:
         return coords_in_ellipse
 
-    a_squared = diameter**2
-    b_squared = (diameter / 2) ** 2
+    a_squared = radius**2
+    b_squared = (radius / 2) ** 2
 
-    for x in range(h - diameter, h + diameter + 1):
+    for x in range(h - radius, h + radius + 1):
         x_component = ((x - h) ** 2) / a_squared
         max_y_offset = int((b_squared * (1 - x_component)) ** 0.5)
         for y in range(k - max_y_offset, k + max_y_offset + 1):

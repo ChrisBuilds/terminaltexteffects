@@ -263,7 +263,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         """
         coords_in_range: list[Coord] = []
         for spotlight in self.spotlights:
-            coords_in_range.extend(geometry.find_coords_in_circle(spotlight.motion.current_coord, range_))
+            coords_in_range.extend(geometry.find_coords_in_circle(spotlight.motion.current_coord, radius=range_))
         chars_in_range: set[EffectCharacter] = set()
         for coord in coords_in_range:
             character = self.terminal.get_character_by_input_coord(coord)

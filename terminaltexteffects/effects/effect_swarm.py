@@ -237,7 +237,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 swarm_areas.append(next_focus_coord)
                 swarm_area_coordinate_map[last_focus_coord] = geometry.find_coords_in_circle(
                     last_focus_coord,
-                    max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 6, 1) * 2,
+                    radius=max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 6, 1) * 2,
                 )
                 last_focus_coord = next_focus_coord
 
