@@ -101,6 +101,8 @@
   floating-point subdivision, preventing rasterization from inflating curved-path durations.
 * Geometry - Fixed radial distance normalization being offset toward the lower-left. Odd and even rectangles now use
   their true center, produce symmetric radial gradients, and support one-cell regions.
+* Geometry - Fixed negative ray offsets equal to the origin-target distance returning the target instead of the
+  origin. Signed offsets now consistently move forward or backward along the ray.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
 * ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does

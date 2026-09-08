@@ -134,19 +134,31 @@ def test_find_coords_on_rect_small_exact_points() -> None:
     assert coords == expected
 
 
-def test_find_coord_at_distance(coord: geometry.Coord) -> None:
-    """Test that the function returns the correct coordinate."""
+def test_extrapolate_along_ray_positive_offset(coord: geometry.Coord) -> None:
+    """Test that a positive offset moves beyond the target."""
     new_coord = geometry.Coord(coord.column + 5, coord.row + 5)
     coord_at_distance = geometry.extrapolate_along_ray(coord, new_coord, 3)
-    # verify the coord returned is further away from the target coord
     assert coord_at_distance == geometry.Coord(8, 9)
 
 
-def test_find_coord_at_distance_zero_distance(coord: geometry.Coord) -> None:
-    """Test that the function returns the same coordinate when the distance is zero."""
-    coord_at_distance = geometry.extrapolate_along_ray(coord, coord, 0)
-    assert coord_at_distance.column == coord.column
-    assert coord_at_distance.row == coord.row
+@pytest.mark.parametrize(
+    ("offset", "expected"),
+    [
+        (0, geometry.Coord(10, 0)),
+        (-5, geometry.Coord(5, 0)),
+        (-10, geometry.Coord(0, 0)),
+        (-15, geometry.Coord(-5, 0)),
+    ],
+)
+def test_extrapolate_along_ray_nonpositive_offsets(offset: float, expected: geometry.Coord) -> None:
+    """Test zero and negative offsets relative to the target."""
+    assert geometry.extrapolate_along_ray(geometry.Coord(0, 0), geometry.Coord(10, 0), offset) == expected
+
+
+@pytest.mark.parametrize("offset", [-5, 0, 5])
+def test_extrapolate_along_ray_coincident_points(coord: geometry.Coord, offset: float) -> None:
+    """Test that coincident points remain fixed because they do not define a ray."""
+    assert geometry.extrapolate_along_ray(coord, coord, offset) == coord
 
 
 def test_find_coord_on_bezier_curve() -> None:

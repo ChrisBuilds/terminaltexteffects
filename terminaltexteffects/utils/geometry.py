@@ -222,22 +222,23 @@ find_coords_on_rect = _cache_coordinate_list(8192)(find_coords_on_rect)
 def extrapolate_along_ray(origin: Coord, target: Coord, offset_from_target: float) -> Coord:
     """Return the point `offset_from_target` units past `target` along the `origin -> target` ray.
 
-    The coordinate returned is approximately `offset_from_target` units away from the
-    target coordinate, away from the origin coordinate.
+    A positive offset continues past `target` away from `origin`, while a negative offset
+    moves back toward and potentially past `origin`. If `origin` and `target` coincide,
+    the direction is undefined and `target` is returned.
 
     Args:
         origin (Coord): origin coordinate (a)
         target (Coord): target coordinate (b)
-        offset_from_target (float): distance from the target coordinate (b), away from the origin coordinate (a)
+        offset_from_target (float): Signed distance from the target coordinate (b).
 
     Returns:
         Coord: Coordinate at the given distance (c).
 
     """
-    total_distance = find_length_of_line(origin, target) + offset_from_target
-    if total_distance == 0 or origin == target:
+    origin_target_distance = find_length_of_line(origin, target)
+    if origin_target_distance == 0:
         return target
-    t = total_distance / find_length_of_line(origin, target)
+    t = 1 + offset_from_target / origin_target_distance
     next_column, next_row = (
         ((1 - t) * origin.column + t * target.column),
         ((1 - t) * origin.row + t * target.row),
