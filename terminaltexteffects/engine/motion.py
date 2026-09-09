@@ -195,12 +195,13 @@ class Path:
                 self.waypoints[-2].coord,
                 waypoint.bezier_control,
                 waypoint.coord,
+                terminal_adjusted=True,
             )
         else:
             distance_from_previous = geometry.find_length_of_line(
                 self.waypoints[-2].coord,
                 waypoint.coord,
-                double_row_diff=True,
+                terminal_adjusted=True,
             )
         self.total_distance += distance_from_previous
         self.segments.append(Segment(self.waypoints[-2], waypoint, distance_from_previous))
@@ -523,12 +524,13 @@ class Motion:
                 self.current_coord,
                 first_waypoint.bezier_control,
                 first_waypoint.coord,
+                terminal_adjusted=True,
             )
         else:
             distance_to_first_waypoint = geometry.find_length_of_line(
                 self.current_coord,
                 first_waypoint.coord,
-                double_row_diff=True,
+                terminal_adjusted=True,
             )
         new_origin_segment = Segment(
             Waypoint("origin", self.current_coord),

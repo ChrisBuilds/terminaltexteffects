@@ -249,7 +249,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         coord_found = False
         while not coord_found:
             coord = self.terminal.canvas.random_coord()
-            distance = geometry.find_length_of_line(origin_coord, coord)
+            distance = geometry.find_length_of_line(origin_coord, coord, terminal_adjusted=True)
             if distance >= minimum_distance:
                 coord_found = True
         return coord  # type: ignore[arg-type]
@@ -286,7 +286,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                     geometry.find_length_of_line(
                         spotlight.motion.current_coord,
                         character.input_coord,
-                        double_row_diff=True,
+                        terminal_adjusted=True,
                     )
                     for spotlight in self.spotlights
                 ],

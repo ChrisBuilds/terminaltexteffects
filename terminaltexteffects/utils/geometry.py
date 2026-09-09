@@ -13,6 +13,9 @@ Functions:
     find_length_of_bezier_curve: Finds the length of a quadratic or cubic bezier curve.
     find_length_of_line: Finds the length of a line intersecting two coordinates.
     find_normalized_distance_from_center: Returns the normalized distance from the center of the Canvas.
+
+Constants:
+    TERMINAL_ROW_SCALE: Approximate terminal-cell height relative to its width.
 """
 
 from __future__ import annotations
@@ -32,6 +35,8 @@ _BEZIER_LENGTH_TOLERANCE = 1e-4
 _BEZIER_LENGTH_MAX_DEPTH = 12
 _COORDINATE_LIST_CACHE_SIZE = 128
 _CIRCLE_AREA_CACHE_SIZE = 512
+TERMINAL_ROW_SCALE: int = 2
+"""Approximate terminal-cell height relative to its width."""
 
 
 @dataclass(eq=True, frozen=True)
@@ -92,8 +97,8 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, 
     """Find points on a terminal-adjusted circle.
 
     The generated coordinate-space ellipse has a horizontal radius of `radius` columns and a
-    vertical radius of `radius // 2` rows. With terminal cells approximately twice as tall as they
-    are wide, this ellipse appears circular.
+    vertical radius of `radius // TERMINAL_ROW_SCALE` rows. With terminal cells approximately
+    `TERMINAL_ROW_SCALE` times as tall as they are wide, this ellipse appears circular.
 
     Args:
         origin (Coord): origin of the circle
@@ -117,7 +122,7 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, 
     if not coords_limit:
         coords_limit = round(2 * math.pi * radius)
     angle_step = 2 * math.pi / coords_limit
-    row_radius = radius // 2
+    row_radius = radius // TERMINAL_ROW_SCALE
     for i in range(coords_limit):
         angle = angle_step * i
         x = origin.column + radius * math.cos(angle)
@@ -140,8 +145,8 @@ def find_coords_in_circle(center: Coord, radius: int) -> list[Coord]:
     """Find coordinates within a terminal-adjusted circle.
 
     The generated coordinate-space ellipse has a horizontal radius of `radius` columns and a
-    vertical radius of `radius / 2` rows. With terminal cells approximately twice as tall as they
-    are wide, this ellipse appears circular.
+    vertical radius of `radius / TERMINAL_ROW_SCALE` rows. With terminal cells approximately
+    `TERMINAL_ROW_SCALE` times as tall as they are wide, this ellipse appears circular.
 
     Args:
         center (Coord): The center coordinate of the circle.
@@ -161,7 +166,7 @@ def find_coords_in_circle(center: Coord, radius: int) -> list[Coord]:
         return coords_in_ellipse
 
     a_squared = radius**2
-    b_squared = (radius / 2) ** 2
+    b_squared = (radius / TERMINAL_ROW_SCALE) ** 2
 
     for x in range(h - radius, h + radius + 1):
         x_component = ((x - h) ** 2) / a_squared
@@ -248,7 +253,13 @@ def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> lis
 find_coords_on_rect = _cache_coordinate_list(_COORDINATE_LIST_CACHE_SIZE)(find_coords_on_rect)
 
 
-def extrapolate_along_ray(origin: Coord, target: Coord, offset_from_target: float) -> Coord:
+def extrapolate_along_ray(
+    origin: Coord,
+    target: Coord,
+    offset_from_target: float,
+    *,
+    terminal_adjusted: bool = True,
+) -> Coord:
     """Return the point `offset_from_target` units past `target` along the `origin -> target` ray.
 
     A positive offset continues past `target` away from `origin`, while a negative offset
@@ -259,12 +270,13 @@ def extrapolate_along_ray(origin: Coord, target: Coord, offset_from_target: floa
         origin (Coord): origin coordinate (a)
         target (Coord): target coordinate (b)
         offset_from_target (float): Signed distance from the target coordinate (b).
+        terminal_adjusted (bool): Whether distance accounts for terminal cell height. Defaults to True.
 
     Returns:
         Coord: Coordinate at the given distance (c).
 
     """
-    origin_target_distance = find_length_of_line(origin, target)
+    origin_target_distance = find_length_of_line(origin, target, terminal_adjusted=terminal_adjusted)
     if origin_target_distance == 0:
         return target
     t = 1 + offset_from_target / origin_target_distance
@@ -341,17 +353,24 @@ def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
 find_coord_on_line = functools.wraps(find_coord_on_line)(functools.lru_cache(maxsize=16384)(find_coord_on_line))
 
 
-def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord, end: Coord) -> float:
+def find_length_of_bezier_curve(
+    start: Coord,
+    control: tuple[Coord, ...] | Coord,
+    end: Coord,
+    *,
+    terminal_adjusted: bool = True,
+) -> float:
     """Approximate the length of a bezier curve.
 
-    The curve length is calculated from unrounded floating-point points using
-    adaptive subdivision. Row values are doubled before measuring to account for
-    the terminal character aspect ratio.
+    The curve length is calculated from unrounded floating-point points using adaptive
+    subdivision. By default, row distances are scaled according to the terminal character
+    aspect ratio.
 
     Args:
         start (Coord): The starting coordinate of the curve.
         control (tuple[Coord, ...] | Coord): The control point(s) of the curve.
         end (Coord): The ending coordinate of the curve.
+        terminal_adjusted (bool): Whether distance accounts for terminal cell height. Defaults to True.
 
     Returns:
         float: The length of the bezier curve.
@@ -359,7 +378,8 @@ def find_length_of_bezier_curve(start: Coord, control: tuple[Coord, ...] | Coord
     """
     if isinstance(control, Coord):
         control = (control,)
-    points = [(float(coord.column), float(coord.row * 2)) for coord in (start, *control, end)]
+    row_scale = TERMINAL_ROW_SCALE if terminal_adjusted else 1
+    points = [(float(coord.column), float(coord.row * row_scale)) for coord in (start, *control, end)]
 
     def approximate_length(curve_points: list[tuple[float, float]], depth: int = 0) -> float:
         chord_length = math.dist(curve_points[0], curve_points[-1])
@@ -389,17 +409,15 @@ find_length_of_bezier_curve = functools.wraps(find_length_of_bezier_curve)(
 )
 
 
-def find_length_of_line(coord1: Coord, coord2: Coord, *, double_row_diff: bool = False) -> float:
-    """Return the length of the line intersecting coord1 and coord2.
+def find_length_of_line(coord1: Coord, coord2: Coord, *, terminal_adjusted: bool = True) -> float:
+    """Return the distance between two coordinates.
 
-    If double_row_diff is True, the row (y) distance is doubled to account for the terminal character
-    height/width ratio.
+    By default, row distances are scaled according to the terminal character aspect ratio.
 
     Args:
         coord1 (Coord): first coordinate.
         coord2 (Coord): second coordinate.
-        double_row_diff (bool, optional): whether to double the row difference to account for terminal character
-            height/width ratio. Defaults to False.
+        terminal_adjusted (bool): Whether distance accounts for terminal cell height. Defaults to True.
 
     Returns:
         float: length of the line
@@ -407,8 +425,8 @@ def find_length_of_line(coord1: Coord, coord2: Coord, *, double_row_diff: bool =
     """
     column_diff = coord2.column - coord1.column
     row_diff = coord2.row - coord1.row
-    if double_row_diff:
-        return math.hypot(column_diff, 2 * row_diff)
+    if terminal_adjusted:
+        row_diff *= TERMINAL_ROW_SCALE
     return math.hypot(column_diff, row_diff)
 
 
@@ -437,11 +455,17 @@ def find_normalized_distance_from_center(bottom: int, top: int, left: int, right
 
     center_column = (left + right) / 2
     center_row = (bottom + top) / 2
-    max_distance = math.hypot((right - left) / 2, top - bottom)
+    max_distance = math.hypot(
+        (right - left) / 2,
+        ((top - bottom) / 2) * TERMINAL_ROW_SCALE,
+    )
     if max_distance == 0:
         return 0.0
 
-    distance = math.hypot(other_coord.column - center_column, (other_coord.row - center_row) * 2)
+    distance = math.hypot(
+        other_coord.column - center_column,
+        (other_coord.row - center_row) * TERMINAL_ROW_SCALE,
+    )
     return distance / max_distance
 
 

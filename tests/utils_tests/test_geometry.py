@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Callable
 
 import pytest
@@ -57,8 +58,8 @@ def test_circle_helpers_share_terminal_adjusted_extents(radius: int) -> None:
     expected_bounds = (
         center.column - radius,
         center.column + radius,
-        center.row - radius // 2,
-        center.row + radius // 2,
+        center.row - radius // geometry.TERMINAL_ROW_SCALE,
+        center.row + radius // geometry.TERMINAL_ROW_SCALE,
     )
     perimeter_bounds = (
         min(coord.column for coord in perimeter),
@@ -130,10 +131,10 @@ def test_find_coords_in_circle_terminal_adjusted_bounds() -> None:
     assert {geometry.Coord(6, 10), geometry.Coord(14, 10), geometry.Coord(10, 8), geometry.Coord(10, 12)} <= coords
     assert min(coord.column for coord in coords) == center.column - radius
     assert max(coord.column for coord in coords) == center.column + radius
-    assert min(coord.row for coord in coords) == center.row - radius // 2
-    assert max(coord.row for coord in coords) == center.row + radius // 2
+    assert min(coord.row for coord in coords) == center.row - radius // geometry.TERMINAL_ROW_SCALE
+    assert max(coord.row for coord in coords) == center.row + radius // geometry.TERMINAL_ROW_SCALE
     assert all(
-        geometry.find_length_of_line(center, coord, double_row_diff=True) <= radius
+        geometry.find_length_of_line(center, coord, terminal_adjusted=True) <= radius
         for coord in coords
     )
 
@@ -222,6 +223,13 @@ def test_extrapolate_along_ray_positive_offset(coord: geometry.Coord) -> None:
     """Test that a positive offset moves beyond the target."""
     new_coord = geometry.Coord(coord.column + 5, coord.row + 5)
     coord_at_distance = geometry.extrapolate_along_ray(coord, new_coord, 3)
+    assert coord_at_distance == geometry.Coord(7, 8)
+
+
+def test_extrapolate_along_ray_cartesian_distance(coord: geometry.Coord) -> None:
+    """Test that ray offsets can use unadjusted Cartesian grid distance."""
+    new_coord = geometry.Coord(coord.column + 5, coord.row + 5)
+    coord_at_distance = geometry.extrapolate_along_ray(coord, new_coord, 3, terminal_adjusted=False)
     assert coord_at_distance == geometry.Coord(8, 9)
 
 
@@ -302,6 +310,17 @@ def test_find_length_of_bezier_curve_two_control_points() -> None:
     assert length == pytest.approx(23.46366410915411, rel=1e-4)
 
 
+def test_find_length_of_bezier_curve_cartesian_distance() -> None:
+    """Test that Bézier length can use unadjusted Cartesian grid distance."""
+    start = geometry.Coord(0, 0)
+    control = geometry.Coord(5, 5)
+    end = geometry.Coord(10, 10)
+
+    length = geometry.find_length_of_bezier_curve(start, control, end, terminal_adjusted=False)
+
+    assert length == pytest.approx(math.sqrt(200))
+
+
 def test_find_length_of_bezier_curve_includes_final_interval() -> None:
     """Test that the curve-length approximation includes the endpoint."""
     start = geometry.Coord(0, 0)
@@ -318,7 +337,7 @@ def test_find_length_of_collinear_bezier_matches_line() -> None:
     end = geometry.Coord(6, 4)
 
     bezier_length = geometry.find_length_of_bezier_curve(start, control, end)
-    line_length = geometry.find_length_of_line(start, end, double_row_diff=True)
+    line_length = geometry.find_length_of_line(start, end)
 
     assert bezier_length == pytest.approx(line_length)
 
@@ -331,22 +350,30 @@ def test_find_length_of_short_bezier_curve() -> None:
 
     length = geometry.find_length_of_bezier_curve(start, control, end)
 
-    assert geometry.find_length_of_line(start, end, double_row_diff=True) < length < 3
+    assert geometry.find_length_of_line(start, end) < length < 3
 
 
 def test_find_length_of_line() -> None:
-    """Test that the function returns the correct length."""
+    """Test that line length uses terminal-adjusted distance by default."""
     start = geometry.Coord(0, 0)
     end = geometry.Coord(10, 10)
     length = geometry.find_length_of_line(start, end)
-    assert length == 14.142135623730951
+    assert length == pytest.approx(math.sqrt(500))
 
 
-def test_find_length_of_line_double_row_diff() -> None:
-    """Test that the function returns the correct length."""
+def test_find_length_of_line_cartesian_distance() -> None:
+    """Test that line length can use unadjusted Cartesian grid distance."""
+    start = geometry.Coord(0, 0)
+    end = geometry.Coord(10, 10)
+    length = geometry.find_length_of_line(start, end, terminal_adjusted=False)
+    assert length == pytest.approx(math.sqrt(200))
+
+
+def test_find_length_of_line_terminal_row_scale() -> None:
+    """Test the shared terminal row scale."""
     start = geometry.Coord(0, 0)
     end = geometry.Coord(0, 10)
-    length = geometry.find_length_of_line(start, end, double_row_diff=True)
+    length = geometry.find_length_of_line(start, end)
     assert length == 20
 
 

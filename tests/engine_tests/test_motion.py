@@ -181,6 +181,31 @@ def test_path_new_waypoint_multiple_waypoints_with_bezier_segment() -> None:
     assert p.segments[0].distance == find_length_of_bezier_curve(Coord(0, 0), Coord(10, 10), Coord(10, 0))
 
 
+@pytest.mark.parametrize(
+    ("start", "control", "end"),
+    [
+        (Coord(0, 0), Coord(5, 0), Coord(10, 0)),
+        (Coord(0, 0), Coord(0, 5), Coord(0, 10)),
+        (Coord(0, 0), Coord(5, 5), Coord(10, 10)),
+    ],
+)
+def test_straight_and_collinear_bezier_paths_have_equal_duration(
+    start: Coord,
+    control: Coord,
+    end: Coord,
+) -> None:
+    """Test that terminal-adjusted line and Bézier paths take the same number of steps."""
+    line_path = Path("line", speed=0.5)
+    line_path.new_waypoint(start)
+    line_path.new_waypoint(end)
+    bezier_path = Path("bezier", speed=0.5)
+    bezier_path.new_waypoint(start)
+    bezier_path.new_waypoint(end, bezier_control=control)
+
+    assert bezier_path.total_distance == pytest.approx(line_path.total_distance)
+    assert bezier_path.max_steps == line_path.max_steps
+
+
 def test_path_query_waypoint_valid_waypoint() -> None:
     """Test querying an existing waypoint ID in a path."""
     p = Path("p")

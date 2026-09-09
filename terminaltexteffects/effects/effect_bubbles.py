@@ -177,7 +177,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             self.effect = effect
             self.characters = characters
             self.terminal = terminal
-            self.radius = 2 * max(len(self.characters) // 5, 1)
+            self.radius = geometry.TERMINAL_ROW_SCALE * max(len(self.characters) // 5, 1)
             self.origin = origin
             self.anchor_char = self.terminal.add_character(" ", self.origin)
             if self.effect.config.pop_condition == "row":
@@ -243,7 +243,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 self.characters,
                 geometry.find_coords_on_circle(
                     self.anchor_char.motion.current_coord,
-                    radius=self.radius + 6,
+                    radius=self.radius + (3 * geometry.TERMINAL_ROW_SCALE),
                     coords_limit=len(self.characters),
                 ),
             ):

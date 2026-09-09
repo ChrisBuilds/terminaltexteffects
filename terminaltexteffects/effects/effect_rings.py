@@ -318,7 +318,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
         random.shuffle(self.pending_chars)
         # make rings
         for radius_scale in range(1, max(self.terminal.canvas.right, self.terminal.canvas.top), self.ring_gap):
-            radius = radius_scale * 2
+            radius = radius_scale * geometry.TERMINAL_ROW_SCALE
             ring_coords = geometry.find_coords_on_circle(
                 self.terminal.canvas.center,
                 radius=radius,

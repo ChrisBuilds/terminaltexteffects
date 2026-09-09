@@ -127,11 +127,11 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.blackhole_chars: list[EffectCharacter] = []
         self.awaiting_consumption_chars: list[EffectCharacter] = []
-        self.blackhole_radius = 2 * max(
+        self.blackhole_radius = geometry.TERMINAL_ROW_SCALE * max(
             min(round(self.terminal.canvas.width * 0.3), round(self.terminal.canvas.height * 0.20)),
             3,
         )
-        self.blackhole_character_count = self.blackhole_radius * 3 // 2
+        self.blackhole_character_count = self.blackhole_radius * 3 // geometry.TERMINAL_ROW_SCALE
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.preexisting_colors_present = any(
             any((character.animation.input_fg_color, character.animation.input_bg_color))
@@ -218,7 +218,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         black_hole_ring_positions = list(
             geometry.find_coords_on_circle(
                 self.terminal.canvas.center,
-                radius=self.blackhole_radius + 6,
+                radius=self.blackhole_radius + (3 * geometry.TERMINAL_ROW_SCALE),
                 coords_limit=len(self.blackhole_chars),
             ),
         )
@@ -273,9 +273,11 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             Color("#049dbf"),
         ]
         for character in self.terminal.get_characters():
-            nearby_coord = geometry.find_coords_on_circle(character.input_coord, radius=6, coords_limit=5)[
-                random.randrange(0, 5)
-            ]
+            nearby_coord = geometry.find_coords_on_circle(
+                character.input_coord,
+                radius=3 * geometry.TERMINAL_ROW_SCALE,
+                coords_limit=5,
+            )[random.randrange(0, 5)]
             nearby_path = character.motion.new_path(speed=random.randint(3, 4) / 10, ease=easing.out_expo)
             nearby_path.new_waypoint(nearby_coord)
             input_path = character.motion.new_path(speed=random.randint(4, 6) / 100, ease=easing.in_cubic)

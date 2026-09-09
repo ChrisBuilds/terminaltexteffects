@@ -387,8 +387,10 @@ class Gradient:
         elif direction == Gradient.Direction.DIAGONAL:
             for row_value in range(min_row, max_row + 1):
                 for column_value in range(min_column, max_column + 1):
-                    fraction = (((row_value - row_offset) * 2) + (column_value - column_offset)) / (
-                        ((max_row - row_offset) * 2) + (max_column - column_offset)
+                    fraction = (
+                        ((row_value - row_offset) * geometry.TERMINAL_ROW_SCALE) + (column_value - column_offset)
+                    ) / (
+                        ((max_row - row_offset) * geometry.TERMINAL_ROW_SCALE) + (max_column - column_offset)
                     )
                     color = self.get_color_at_fraction(fraction)
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color

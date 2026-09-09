@@ -111,6 +111,8 @@
   distance semantics, and clarified the generated ellipse's horizontal and vertical extents.
 * Geometry - Standardized `find_coords_on_circle()` and `find_coords_in_circle()` so equal radii use matching
   terminal-adjusted extents, while preserving the established visual sizes of affected effects.
+* Geometry - Centralized terminal row scaling and made terminal-adjusted distance the default for line, Bézier, and
+  ray calculations. Pass `terminal_adjusted=False` to use Cartesian grid distance.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
 * ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does

@@ -207,6 +207,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 apex_wpt.coord,
                 explode_wpt.coord,
                 self.explode_distance // 2,
+                terminal_adjusted=True,
             )
             bloom_wpt = explode_path.new_waypoint(
                 Coord(bloom_control_point.column, max(1, bloom_control_point.row - 7)),

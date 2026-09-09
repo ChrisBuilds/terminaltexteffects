@@ -225,12 +225,15 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
             )
             # create areas where characters will swarm
             last_focus_coord = swarm_spawn
-            radius = 2 * max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 2, 1)
+            radius = geometry.TERMINAL_ROW_SCALE * max(
+                min(self.terminal.canvas.right, self.terminal.canvas.top) // 2,
+                1,
+            )
             while len(swarm_areas) < swarm_area_count:
                 potential_focus_coords = geometry.find_coords_on_circle(
                     last_focus_coord,
                     radius=radius,
-                    coords_limit=round(math.pi * radius),
+                    coords_limit=round(2 * math.pi * radius / geometry.TERMINAL_ROW_SCALE),
                 )
                 random.shuffle(potential_focus_coords)
                 for coord in potential_focus_coords:
@@ -242,7 +245,10 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 swarm_areas.append(next_focus_coord)
                 swarm_area_coordinate_map[last_focus_coord] = geometry.find_coords_in_circle(
                     last_focus_coord,
-                    radius=max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 6, 1) * 2,
+                    radius=(
+                        max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 6, 1)
+                        * geometry.TERMINAL_ROW_SCALE
+                    ),
                 )
                 last_focus_coord = next_focus_coord
 
