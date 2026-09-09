@@ -229,16 +229,11 @@ ANCHORS = ["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"]
 def clear_lru_cache() -> Generator[None, Any, None]:
     """Fixture to clear utility LRU caches."""
     yield
-    graphics.shift_color_towards.cache_clear()  # type: ignore[attr-defined]
-    geometry.find_coords_on_circle.cache_clear()  # type: ignore[attr-defined]
-    geometry.find_coords_in_circle.cache_clear()  # type: ignore[attr-defined]
-    geometry.find_coords_in_rect.cache_clear()  # type: ignore[attr-defined]
-    geometry.extrapolate_along_ray.cache_clear()  # type: ignore[attr-defined]
-    geometry.find_coord_on_bezier_curve.cache_clear()  # type: ignore[attr-defined]
-    geometry.find_coord_on_line.cache_clear()  # type: ignore[attr-defined]
-    geometry.find_length_of_bezier_curve.cache_clear()  # type: ignore[attr-defined]
-    geometry.find_length_of_line.cache_clear()  # type: ignore[attr-defined]
-    geometry.find_normalized_distance_from_center.cache_clear()  # type: ignore[attr-defined]
+    for module in (geometry, graphics):
+        for member in vars(module).values():
+            cache_clear = getattr(member, "cache_clear", None)
+            if callable(cache_clear):
+                cache_clear()
 
 
 @pytest.fixture
