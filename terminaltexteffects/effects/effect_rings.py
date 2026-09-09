@@ -317,8 +317,14 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
 
         random.shuffle(self.pending_chars)
         # make rings
-        for radius in range(1, max(self.terminal.canvas.right, self.terminal.canvas.top), self.ring_gap):
-            ring_coords = geometry.find_coords_on_circle(self.terminal.canvas.center, radius, 7 * radius, unique=True)
+        for radius_scale in range(1, max(self.terminal.canvas.right, self.terminal.canvas.top), self.ring_gap):
+            radius = radius_scale * 2
+            ring_coords = geometry.find_coords_on_circle(
+                self.terminal.canvas.center,
+                radius=radius,
+                coords_limit=7 * radius_scale,
+                unique=True,
+            )
             # check if any part of the ring is in the canvas, if not, stop creating rings
             if (
                 len([coord for coord in ring_coords if self.terminal.canvas.coord_is_in_canvas(coord)])

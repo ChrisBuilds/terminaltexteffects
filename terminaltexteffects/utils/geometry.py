@@ -89,11 +89,15 @@ def _validate_nonnegative_dimensions(**dimensions: int) -> None:
 
 
 def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, unique: bool = True) -> list[Coord]:
-    """Find points on a circle.
+    """Find points on a terminal-adjusted circle.
+
+    The generated coordinate-space ellipse has a horizontal radius of `radius` columns and a
+    vertical radius of `radius // 2` rows. With terminal cells approximately twice as tall as they
+    are wide, this ellipse appears circular.
 
     Args:
         origin (Coord): origin of the circle
-        radius (int): radius of the circle
+        radius (int): terminal-adjusted circle radius, measured in column-distance units
         coords_limit (int): limit the number of coords returned, if 0, the number of points is calculated based on the
             circumference of the circle
         unique (bool): whether to remove duplicate points. Defaults to True.
@@ -113,13 +117,11 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, 
     if not coords_limit:
         coords_limit = round(2 * math.pi * radius)
     angle_step = 2 * math.pi / coords_limit
+    row_radius = radius // 2
     for i in range(coords_limit):
         angle = angle_step * i
         x = origin.column + radius * math.cos(angle)
-        # correct for terminal character height/width ratio by doubling the x distance from origin
-        x_diff = x - origin.column
-        x += x_diff
-        y = origin.row + radius * math.sin(angle)
+        y = origin.row + row_radius * math.sin(angle)
         point_coord = Coord(round(x), round(y))
         if unique:
             if point_coord not in seen_points:

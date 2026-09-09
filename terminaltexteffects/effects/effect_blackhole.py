@@ -127,13 +127,11 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.blackhole_chars: list[EffectCharacter] = []
         self.awaiting_consumption_chars: list[EffectCharacter] = []
-        self.blackhole_radius = max(
-            min(
-                round(self.terminal.canvas.width * 0.3),
-                round(self.terminal.canvas.height * 0.20),
-            ),
+        self.blackhole_radius = 2 * max(
+            min(round(self.terminal.canvas.width * 0.3), round(self.terminal.canvas.height * 0.20)),
             3,
         )
+        self.blackhole_character_count = self.blackhole_radius * 3 // 2
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.preexisting_colors_present = any(
             any((character.animation.input_fg_color, character.animation.input_bg_color))
@@ -149,12 +147,12 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         for color in starfield_colors:
             gradient_map[color] = Gradient(color, Color("#000000"), steps=10)
         available_chars = list(self.terminal._input_characters)
-        while len(self.blackhole_chars) < self.blackhole_radius * 3 and available_chars:
+        while len(self.blackhole_chars) < self.blackhole_character_count and available_chars:
             self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
         black_hole_ring_positions = geometry.find_coords_on_circle(
             self.terminal.canvas.center,
-            self.blackhole_radius,
-            len(self.blackhole_chars),
+            radius=self.blackhole_radius,
+            coords_limit=len(self.blackhole_chars),
         )
         for position_index, character in enumerate(self.blackhole_chars):
             starting_pos = black_hole_ring_positions[position_index]
@@ -220,8 +218,8 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         black_hole_ring_positions = list(
             geometry.find_coords_on_circle(
                 self.terminal.canvas.center,
-                self.blackhole_radius + 3,
-                len(self.blackhole_chars),
+                radius=self.blackhole_radius + 6,
+                coords_limit=len(self.blackhole_chars),
             ),
         )
         unstable_symbols = ["◦", "◎", "◉", "●", "◉", "◎", "◦"]
@@ -275,7 +273,9 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             Color("#049dbf"),
         ]
         for character in self.terminal.get_characters():
-            nearby_coord = geometry.find_coords_on_circle(character.input_coord, 3, 5)[random.randrange(0, 5)]
+            nearby_coord = geometry.find_coords_on_circle(character.input_coord, radius=6, coords_limit=5)[
+                random.randrange(0, 5)
+            ]
             nearby_path = character.motion.new_path(speed=random.randint(3, 4) / 10, ease=easing.out_expo)
             nearby_path.new_waypoint(nearby_coord)
             input_path = character.motion.new_path(speed=random.randint(4, 6) / 100, ease=easing.in_cubic)

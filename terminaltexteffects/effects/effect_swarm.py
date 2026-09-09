@@ -8,6 +8,7 @@ Classes:
 
 from __future__ import annotations
 
+import math
 import random
 import typing
 from dataclasses import dataclass
@@ -224,9 +225,13 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
             )
             # create areas where characters will swarm
             last_focus_coord = swarm_spawn
-            radius = max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 2, 1)
+            radius = 2 * max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 2, 1)
             while len(swarm_areas) < swarm_area_count:
-                potential_focus_coords = geometry.find_coords_on_circle(last_focus_coord, radius)
+                potential_focus_coords = geometry.find_coords_on_circle(
+                    last_focus_coord,
+                    radius=radius,
+                    coords_limit=round(math.pi * radius),
+                )
                 random.shuffle(potential_focus_coords)
                 for coord in potential_focus_coords:
                     if self.terminal.canvas.coord_is_in_canvas(coord):

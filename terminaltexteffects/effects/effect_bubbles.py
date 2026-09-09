@@ -177,7 +177,7 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             self.effect = effect
             self.characters = characters
             self.terminal = terminal
-            self.radius = max(len(self.characters) // 5, 1)
+            self.radius = 2 * max(len(self.characters) // 5, 1)
             self.origin = origin
             self.anchor_char = self.terminal.add_character(" ", self.origin)
             if self.effect.config.pop_condition == "row":
@@ -194,8 +194,8 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
             for i, char in enumerate(self.characters):
                 point = geometry.find_coords_on_circle(
                     self.anchor_char.motion.current_coord,
-                    self.radius,
-                    len(self.characters),
+                    radius=self.radius,
+                    coords_limit=len(self.characters),
                     unique=False,
                 )[i]
                 char.motion.set_coordinate(point)
@@ -243,8 +243,8 @@ class BubblesIterator(BaseEffectIterator[BubblesConfig]):
                 self.characters,
                 geometry.find_coords_on_circle(
                     self.anchor_char.motion.current_coord,
-                    self.radius + 3,
-                    len(self.characters),
+                    radius=self.radius + 6,
+                    coords_limit=len(self.characters),
                 ),
             ):
                 pop_out_path = char.motion.new_path(path_id="pop_out", speed=0.3, ease=easing.out_expo)

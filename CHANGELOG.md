@@ -109,6 +109,8 @@
   512 entries for filled circles, bounding retained shape data while preserving useful `spotlights` cache reuse.
 * Geometry - Renamed the `find_coords_in_circle()` `diameter` parameter to `radius` to match its terminal-adjusted
   distance semantics, and clarified the generated ellipse's horizontal and vertical extents.
+* Geometry - Standardized `find_coords_on_circle()` and `find_coords_in_circle()` so equal radii use matching
+  terminal-adjusted extents, while preserving the established visual sizes of affected effects.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
 * ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does

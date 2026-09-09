@@ -47,6 +47,36 @@ def test_find_coords_on_circle_unique(coord: geometry.Coord) -> None:
     assert len(set(coords)) == len(coords)
 
 
+@pytest.mark.parametrize("radius", [1, 2, 3, 4, 5])
+def test_circle_helpers_share_terminal_adjusted_extents(radius: int) -> None:
+    """Test that equal radii produce matching perimeter and filled-circle bounds."""
+    center = geometry.Coord(10, 10)
+    perimeter = set(geometry.find_coords_on_circle(center, radius=radius, coords_limit=4))
+    filled = set(geometry.find_coords_in_circle(center, radius=radius))
+
+    expected_bounds = (
+        center.column - radius,
+        center.column + radius,
+        center.row - radius // 2,
+        center.row + radius // 2,
+    )
+    perimeter_bounds = (
+        min(coord.column for coord in perimeter),
+        max(coord.column for coord in perimeter),
+        min(coord.row for coord in perimeter),
+        max(coord.row for coord in perimeter),
+    )
+    filled_bounds = (
+        min(coord.column for coord in filled),
+        max(coord.column for coord in filled),
+        min(coord.row for coord in filled),
+        max(coord.row for coord in filled),
+    )
+
+    assert perimeter_bounds == filled_bounds == expected_bounds
+    assert perimeter <= filled
+
+
 @pytest.mark.parametrize(
     ("function", "args"),
     [
