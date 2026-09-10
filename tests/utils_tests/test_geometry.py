@@ -85,6 +85,8 @@ def test_circle_helpers_share_terminal_adjusted_extents(radius: int) -> None:
         (geometry.find_coords_in_circle, (geometry.Coord(5, 5), 3)),
         (geometry.find_coords_in_rect, (geometry.Coord(5, 5), 3)),
         (geometry.find_coords_on_rect, (geometry.Coord(5, 5), 3, 3)),
+        (geometry.rasterize_line, (geometry.Coord(0, 0), geometry.Coord(5, 3))),
+        (geometry.rasterize_supercover_line, (geometry.Coord(0, 0), geometry.Coord(5, 3))),
     ],
 )
 def test_cached_coordinate_results_are_not_mutable(
@@ -106,6 +108,8 @@ def test_cached_coordinate_results_are_not_mutable(
         (geometry.find_coords_in_circle, 512),
         (geometry.find_coords_in_rect, 128),
         (geometry.find_coords_on_rect, 128),
+        (geometry.rasterize_line, 128),
+        (geometry.rasterize_supercover_line, 128),
     ],
 )
 def test_coordinate_list_cache_size_is_bounded(
@@ -208,6 +212,85 @@ def test_find_coords_on_rect_small_exact_points() -> None:
         geometry.Coord(3, 3),
     }
     assert coords == expected
+
+
+@pytest.mark.parametrize(
+    ("start", "end", "expected"),
+    [
+        (geometry.Coord(1, 2), geometry.Coord(1, 2), [geometry.Coord(1, 2)]),
+        (
+            geometry.Coord(0, 0),
+            geometry.Coord(4, 0),
+            [geometry.Coord(column, 0) for column in range(5)],
+        ),
+        (
+            geometry.Coord(0, 0),
+            geometry.Coord(0, 4),
+            [geometry.Coord(0, row) for row in range(5)],
+        ),
+        (
+            geometry.Coord(0, 0),
+            geometry.Coord(4, 2),
+            [
+                geometry.Coord(0, 0),
+                geometry.Coord(1, 1),
+                geometry.Coord(2, 1),
+                geometry.Coord(3, 2),
+                geometry.Coord(4, 2),
+            ],
+        ),
+        (
+            geometry.Coord(0, 0),
+            geometry.Coord(2, 4),
+            [
+                geometry.Coord(0, 0),
+                geometry.Coord(1, 1),
+                geometry.Coord(1, 2),
+                geometry.Coord(2, 3),
+                geometry.Coord(2, 4),
+            ],
+        ),
+    ],
+)
+def test_rasterize_line(start: geometry.Coord, end: geometry.Coord, expected: list[geometry.Coord]) -> None:
+    """Test thin rasterization for point, axis-aligned, and sloped lines."""
+    assert geometry.rasterize_line(start, end) == expected
+
+
+def test_rasterize_supercover_line_includes_corner_neighbors() -> None:
+    """Test that exact grid-corner crossings include both adjacent cells."""
+    assert geometry.rasterize_supercover_line(geometry.Coord(0, 0), geometry.Coord(2, 2)) == [
+        geometry.Coord(0, 0),
+        geometry.Coord(1, 0),
+        geometry.Coord(0, 1),
+        geometry.Coord(1, 1),
+        geometry.Coord(2, 1),
+        geometry.Coord(1, 2),
+        geometry.Coord(2, 2),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("start", "end"),
+    [
+        (geometry.Coord(-3, -1), geometry.Coord(4, 2)),
+        (geometry.Coord(4, 2), geometry.Coord(-3, -1)),
+        (geometry.Coord(2, -4), geometry.Coord(-1, 5)),
+        (geometry.Coord(0, 0), geometry.Coord(0, 0)),
+    ],
+)
+def test_line_rasterization_contract(start: geometry.Coord, end: geometry.Coord) -> None:
+    """Test ordering, uniqueness, reversibility, endpoints, and supercover coverage."""
+    thin_line = geometry.rasterize_line(start, end)
+    supercover_line = geometry.rasterize_supercover_line(start, end)
+
+    assert thin_line[0] == supercover_line[0] == start
+    assert thin_line[-1] == supercover_line[-1] == end
+    assert len(thin_line) == len(set(thin_line))
+    assert len(supercover_line) == len(set(supercover_line))
+    assert thin_line == list(reversed(geometry.rasterize_line(end, start)))
+    assert supercover_line == list(reversed(geometry.rasterize_supercover_line(end, start)))
+    assert set(thin_line) <= set(supercover_line)
 
 
 @pytest.mark.parametrize(

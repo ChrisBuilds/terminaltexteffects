@@ -7,6 +7,8 @@ Functions:
     find_coords_on_circle: Finds points on a circle given the origin, radius, and number of points.
     find_coords_in_circle: Finds coordinates within a terminal-adjusted circle given its center and radius.
     find_coords_in_rect: Finds coordinates within a rectangle given the origin and distance.
+    rasterize_line: Rasterizes a thin line between two terminal coordinates.
+    rasterize_supercover_line: Rasterizes every terminal cell touched by a line.
     extrapolate_along_ray: Finds the coordinate past a target along the ray from an origin.
     find_coord_on_bezier_curve: Evaluates a Bézier curve at a parameter value.
     interpolate_coord: Linearly interpolates or extrapolates between two coordinates.
@@ -263,6 +265,121 @@ def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> lis
 
 
 find_coords_on_rect = _cache_coordinate_list(_COORDINATE_LIST_CACHE_SIZE)(find_coords_on_rect)
+
+
+def _in_canonical_order(start: Coord, end: Coord) -> bool:
+    """Return whether two endpoints are in the canonical rasterization order."""
+    return (start.column, start.row) <= (end.column, end.row)
+
+
+def _rasterize_line(start: Coord, end: Coord) -> list[Coord]:
+    """Rasterize a thin line whose endpoints are in canonical order."""
+    column, row = start
+    column_delta = abs(end.column - column)
+    row_delta = -abs(end.row - row)
+    column_step = 1 if column < end.column else -1
+    row_step = 1 if row < end.row else -1
+    error = column_delta + row_delta
+    coords: list[Coord] = []
+
+    while True:
+        coords.append(Coord(column, row))
+        if column == end.column and row == end.row:
+            return coords
+        doubled_error = 2 * error
+        if doubled_error >= row_delta:
+            error += row_delta
+            column += column_step
+        if doubled_error <= column_delta:
+            error += column_delta
+            row += row_step
+
+
+def rasterize_line(start: Coord, end: Coord) -> list[Coord]:
+    """Return a thin, one-cell-wide rasterization from `start` to `end`.
+
+    Bresenham's line algorithm selects one terminal-grid coordinate at each step along
+    the dominant axis. Both endpoints are included, coordinates are unique and ordered
+    from `start` to `end`, and reversing the endpoints reverses the result. Coincident
+    endpoints return a one-coordinate list. Terminal aspect-ratio scaling is not applied.
+
+    Args:
+        start (Coord): The first endpoint.
+        end (Coord): The second endpoint.
+
+    Returns:
+        list[Coord]: Ordered coordinates forming the rasterized line.
+
+    """
+    if _in_canonical_order(start, end):
+        return _rasterize_line(start, end)
+    return list(reversed(_rasterize_line(end, start)))
+
+
+rasterize_line = _cache_coordinate_list(_COORDINATE_LIST_CACHE_SIZE)(rasterize_line)
+
+
+def _rasterize_supercover_line(start: Coord, end: Coord) -> list[Coord]:
+    """Rasterize a supercover line whose endpoints are in canonical order."""
+    column, row = start
+    column_count = abs(end.column - column)
+    row_count = abs(end.row - row)
+    column_step = 1 if column < end.column else -1
+    row_step = 1 if row < end.row else -1
+    column_progress = 0
+    row_progress = 0
+    coords = [start]
+
+    while column_progress < column_count or row_progress < row_count:
+        if column_progress == column_count:
+            row += row_step
+            row_progress += 1
+        elif row_progress == row_count:
+            column += column_step
+            column_progress += 1
+        else:
+            decision = (1 + 2 * column_progress) * row_count - (1 + 2 * row_progress) * column_count
+            if decision == 0:
+                coords.append(Coord(column + column_step, row))
+                coords.append(Coord(column, row + row_step))
+                column += column_step
+                row += row_step
+                column_progress += 1
+                row_progress += 1
+            elif decision < 0:
+                column += column_step
+                column_progress += 1
+            else:
+                row += row_step
+                row_progress += 1
+        coords.append(Coord(column, row))
+
+    return coords
+
+
+def rasterize_supercover_line(start: Coord, end: Coord) -> list[Coord]:
+    """Return every terminal-grid cell touched by the line from `start` to `end`.
+
+    Both endpoints are included, coordinates are unique and ordered from `start` to
+    `end`, and reversing the endpoints reverses the result. When the line passes exactly
+    through a grid corner, both adjacent cells are included to preserve complete coverage.
+    Coincident endpoints return a one-coordinate list. Terminal aspect-ratio scaling is
+    not applied.
+
+    Args:
+        start (Coord): The first endpoint.
+        end (Coord): The second endpoint.
+
+    Returns:
+        list[Coord]: Ordered coordinates forming the supercover line.
+
+    """
+    if _in_canonical_order(start, end):
+        return _rasterize_supercover_line(start, end)
+    return list(reversed(_rasterize_supercover_line(end, start)))
+
+
+rasterize_supercover_line = _cache_coordinate_list(_COORDINATE_LIST_CACHE_SIZE)(rasterize_supercover_line)
 
 
 def extrapolate_along_ray(

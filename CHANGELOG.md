@@ -22,13 +22,34 @@
 * Added focused tests for the benchmark harness and documented the recommended performance optimization workflow in
   `docs/performance.md`.
 
-#### Engine Changes (0.16.0)
+#### Engine Features (0.16.0)
 
 ---
 
 * Added `engine.effect_support.particles`, a reusable particle helper for effect-owned helper characters. The helper
   provides `ParticlePool` and `ParticleReset` for pooling transient characters, applying per-emission setup with
   `on_emit`, and reclaiming particles directly or from character events.
+* Geometry - Added ordered, reversible Bresenham and supercover line rasterization helpers for thin drawing and
+  complete terminal-cell coverage.
+
+#### Application Features (0.16.0)
+
+---
+
+* Shell completions are now generated with `shtab` during development and bundled with the package. Completion no
+  longer imports user effect plugins during generation, and zsh now receives a native completion script.
+* Running `tte --print-completion` without a shell argument now prints copy-and-paste setup commands for bash and zsh.
+* Shell completion now suggests valid values for custom enum-like arguments, including gradient directions,
+  character grouping modes, and easing functions.
+
+### Changes (0.16.0)
+
+---
+
+#### Engine Changes (0.16.0)
+
+---
+
 * `BaseEffectIterator.update()` now ticks a snapshot of `active_characters`, allowing character events and callbacks to
   add or remove active characters during an update without mutating the set being iterated.
 * `Motion.move()` now reuses the current immutable `Coord` object when preserving `previous_coord` instead of
@@ -50,17 +71,29 @@
   canvas column, reducing grouping work for wide canvases.
 * Outside/middle character sorting now interleaves sorted characters with indexes instead of repeated front-pops,
   reducing the ordering pass from quadratic to linear work.
-* Smoke's breadth-first fill traversal now uses an efficient queue and constant-time discovery tracking, reducing
-  traversal overhead on wide or densely linked character graphs.
 * Event dispatch now branches directly on registered actions instead of allocating an action map and callback lambdas
   for every event, reducing allocation in event-heavy effects.
-* Motion segment events now trigger `SEGMENT_ENTERED` before `SEGMENT_EXITED` for segments that are completely crossed
-  in a single path step, matching the documented enter/exit event semantics.
+* Geometry - Shape coordinate helpers now reject negative dimensions and point limits consistently while preserving
+  their existing zero-dimension behavior.
+* Geometry - Reduced coordinate-list cache limits from 8,192 to 128 entries for perimeter and rectangle helpers and
+  512 entries for filled circles, bounding retained shape data while preserving useful `spotlights` cache reuse.
+* Geometry - Renamed the `find_coords_in_circle()` `diameter` parameter to `radius` to match its terminal-adjusted
+  distance semantics, and clarified the generated ellipse's horizontal and vertical extents.
+* Geometry - Standardized `find_coords_on_circle()` and `find_coords_in_circle()` so equal radii use matching
+  terminal-adjusted extents, while preserving the established visual sizes of affected effects.
+* Geometry - Centralized terminal row scaling and made terminal-adjusted distance the default for line, Bézier, and
+  ray calculations. Pass `terminal_adjusted=False` to use Cartesian grid distance.
+* Geometry - Degenerate circle and rectangle helpers now collapse to a center point or one-dimensional perimeter
+  instead of returning no coordinates.
+* Geometry - Added `interpolate_coord()` as the canonical linear interpolation API while preserving
+  `find_coord_on_line` as an alias, and aligned the Bézier evaluator and length helper control-point contracts.
 
 #### Effects Changes (0.16.0)
 
 ---
 
+* Smoke's breadth-first fill traversal now uses an efficient queue and constant-time discovery tracking, reducing
+  traversal overhead on wide or densely linked character graphs.
 * Burn smoke now uses `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 * LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 
@@ -77,6 +110,8 @@
   callback-set coordinates and the newly activated path's state until the next tick.
 * Motion - Fixed final path segments not emitting `SEGMENT_EXITED` before path completion. Exit handlers now run for
   every completed segment and can safely deactivate or replace the path.
+* Motion - Fixed segments crossed in a single path step emitting `SEGMENT_EXITED` before `SEGMENT_ENTERED`. Segment
+  events now follow their documented enter/exit order.
 * Animation - Fixed looping scenes being treated as complete while active. Loops now continue advancing without
   triggering `SCENE_COMPLETE` events, and remain active until explicitly deactivated. LaserEtch now deactivates its
   looping beam scenes when the laser is disabled so the effect can complete normally.
@@ -103,20 +138,6 @@
   their true center, produce symmetric radial gradients, and support one-cell regions.
 * Geometry - Fixed negative ray offsets equal to the origin-target distance returning the target instead of the
   origin. Signed offsets now consistently move forward or backward along the ray.
-* Geometry - Shape coordinate helpers now reject negative dimensions and point limits consistently while preserving
-  their existing zero-dimension behavior.
-* Geometry - Reduced coordinate-list cache limits from 8,192 to 128 entries for perimeter and rectangle helpers and
-  512 entries for filled circles, bounding retained shape data while preserving useful `spotlights` cache reuse.
-* Geometry - Renamed the `find_coords_in_circle()` `diameter` parameter to `radius` to match its terminal-adjusted
-  distance semantics, and clarified the generated ellipse's horizontal and vertical extents.
-* Geometry - Standardized `find_coords_on_circle()` and `find_coords_in_circle()` so equal radii use matching
-  terminal-adjusted extents, while preserving the established visual sizes of affected effects.
-* Geometry - Centralized terminal row scaling and made terminal-adjusted distance the default for line, Bézier, and
-  ray calculations. Pass `terminal_adjusted=False` to use Cartesian grid distance.
-* Geometry - Degenerate circle and rectangle helpers now collapse to a center point or one-dimensional perimeter
-  instead of returning no coordinates.
-* Geometry - Added `interpolate_coord()` as the canonical linear interpolation API while preserving
-  `find_coord_on_line` as an alias, and aligned the Bézier evaluator and length helper control-point contracts.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
 * ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does
@@ -150,11 +171,6 @@
 * Rings - Fixed `spin_duration=0` being rejected even though zero is supported for skipping directly to the next
   phase.
 * Thunderstorm - Fixed fractional `storm_time` values being rejected, restoring support for sub-second storms.
-* Shell completions are now generated with `shtab` during development and bundled with the package. Completion no
-  longer imports user effect plugins during generation, and zsh now receives a native completion script.
-* Running `tte --print-completion` without a shell argument now prints copy-and-paste setup commands for bash and zsh.
-* Shell completion now suggests valid values for custom enum-like arguments, including gradient directions,
-  character grouping modes, and easing functions.
 
 ## 0.15.0
 
