@@ -290,7 +290,7 @@ class Path:
                 segment_distance_to_travel_factor,
             )
         else:
-            next_coord = geometry.find_coord_on_line(
+            next_coord = geometry.interpolate_coord(
                 active_segment.start.coord,
                 active_segment.end.coord,
                 segment_distance_to_travel_factor,

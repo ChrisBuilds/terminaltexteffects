@@ -265,11 +265,11 @@ def test_extrapolate_along_ray_coincident_points(coord: geometry.Coord, offset: 
 
 
 def test_find_coord_on_bezier_curve() -> None:
-    """Test that the function returns the correct coordinate."""
+    """Test that the evaluator accepts one control coordinate directly."""
     start = geometry.Coord(0, 0)
     end = geometry.Coord(10, 10)
     control = geometry.Coord(5, 0)
-    coord_on_curve = geometry.find_coord_on_bezier_curve(start, (control,), end, 0.5)
+    coord_on_curve = geometry.find_coord_on_bezier_curve(start, control, end, 0.5)
     assert coord_on_curve == geometry.Coord(5, 2)
 
 
@@ -293,13 +293,46 @@ def test_find_coord_on_bezier_curve_endpoints() -> None:
     assert geometry.find_coord_on_bezier_curve(start, control, end, 1) == end
 
 
-def test_find_coord_on_line() -> None:
-    """Test that the function returns the correct coordinate."""
+def test_find_coord_on_bezier_curve_without_control_points() -> None:
+    """Test that an empty control tuple evaluates a linear Bézier curve."""
     start = geometry.Coord(0, 0)
     end = geometry.Coord(10, 10)
-    coord = geometry.find_coord_on_line(start, end, 0.5)
-    assert coord.column == 5
-    assert coord.row == 5
+
+    assert geometry.find_coord_on_bezier_curve(start, (), end, 0.5) == geometry.Coord(5, 5)
+    assert geometry.find_length_of_bezier_curve(start, (), end) == geometry.find_length_of_line(start, end)
+
+
+@pytest.mark.parametrize(
+    ("t", "expected"),
+    [
+        (-0.5, geometry.Coord(-5, -5)),
+        (0, geometry.Coord(0, 0)),
+        (0.5, geometry.Coord(5, 5)),
+        (1, geometry.Coord(10, 10)),
+        (1.5, geometry.Coord(15, 15)),
+    ],
+)
+def test_interpolate_coord(t: float, expected: geometry.Coord) -> None:
+    """Test interpolation at and extrapolation beyond both endpoints."""
+    start = geometry.Coord(0, 0)
+    end = geometry.Coord(10, 10)
+
+    assert geometry.interpolate_coord(start, end, t) == expected
+
+
+def test_find_coord_on_line_is_compatibility_alias() -> None:
+    """Test that the former public name remains available without a second implementation."""
+    assert geometry.find_coord_on_line is geometry.interpolate_coord
+
+
+@pytest.mark.parametrize("t", [-0.5, 1.5])
+def test_find_coord_on_bezier_curve_supports_extrapolation(t: float) -> None:
+    """Test that Bézier parameters outside the unit interval extrapolate."""
+    start = geometry.Coord(0, 0)
+    control = geometry.Coord(5, 5)
+    end = geometry.Coord(10, 10)
+
+    assert geometry.find_coord_on_bezier_curve(start, control, end, t) == geometry.interpolate_coord(start, end, t)
 
 
 def test_find_length_of_bezier_curve() -> None:

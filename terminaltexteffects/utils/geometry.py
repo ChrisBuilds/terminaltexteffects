@@ -8,9 +8,10 @@ Functions:
     find_coords_in_circle: Finds coordinates within a terminal-adjusted circle given its center and radius.
     find_coords_in_rect: Finds coordinates within a rectangle given the origin and distance.
     extrapolate_along_ray: Finds the coordinate past a target along the ray from an origin.
-    find_coord_on_bezier_curve: Finds points on a bezier curve.
-    find_coord_on_line: Finds points on a line.
-    find_length_of_bezier_curve: Finds the length of a quadratic or cubic bezier curve.
+    find_coord_on_bezier_curve: Evaluates a Bézier curve at a parameter value.
+    interpolate_coord: Linearly interpolates or extrapolates between two coordinates.
+    find_coord_on_line: Compatibility alias for `interpolate_coord`.
+    find_length_of_bezier_curve: Approximates the length of a Bézier curve of any degree.
     find_length_of_line: Finds the length of a line intersecting two coordinates.
     find_normalized_distance_from_center: Returns the normalized distance from the center of the Canvas.
 
@@ -322,19 +323,30 @@ def _find_point_on_bezier_curve(
     return points[0]
 
 
-def find_coord_on_bezier_curve(start: Coord, control: tuple[Coord, ...], end: Coord, t: float) -> Coord:
-    """Find points on a bezier curve of any degree.
+def find_coord_on_bezier_curve(
+    start: Coord,
+    control: tuple[Coord, ...] | Coord,
+    end: Coord,
+    t: float,
+) -> Coord:
+    """Evaluate a Bézier curve of any degree at parameter `t`.
+
+    Values of `t` between `0` and `1` evaluate the curve from `start` to `end`.
+    Values outside that interval intentionally extrapolate beyond the curve endpoints.
+    An empty control-point tuple describes a linear Bézier curve.
 
     Args:
         start (Coord): The starting coordinate of the curve.
-        control (tuple[Coord, ...]): The control points of the curve.
+        control (tuple[Coord, ...] | Coord): A single control point or tuple of control points.
         end (Coord): The ending coordinate of the curve.
-        t (float): The distance factor between the start and end coordinates.
+        t (float): The unrestricted Bézier parameter.
 
     Returns:
-        Coord: The coordinate on the bezier curve corresponding to the given parameter value.
+        Coord: The rounded coordinate at `t`.
 
     """
+    if isinstance(control, Coord):
+        control = (control,)
     column, row = _find_point_on_bezier_curve(start, control, end, t)
     return Coord(round(column), round(row))
 
@@ -344,16 +356,19 @@ find_coord_on_bezier_curve = functools.wraps(find_coord_on_bezier_curve)(
 )
 
 
-def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
-    """Find points on a line.
+def interpolate_coord(start: Coord, end: Coord, t: float) -> Coord:
+    """Linearly interpolate or extrapolate between two coordinates.
+
+    A value of `0` returns `start`, `1` returns `end`, and values outside the
+    inclusive interval `[0, 1]` intentionally extrapolate beyond the endpoints.
 
     Args:
         start (Coord): The starting coordinate of the line.
         end (Coord): The ending coordinate of the line.
-        t (float): The distance factor between the start and end coordinates.
+        t (float): The unrestricted linear interpolation parameter.
 
     Returns:
-        Coord: The coordinate on the line corresponding to the given parameter value.
+        Coord: The rounded coordinate at `t`.
 
     """
     x = (1 - t) * start.column + t * end.column
@@ -361,7 +376,9 @@ def find_coord_on_line(start: Coord, end: Coord, t: float) -> Coord:
     return Coord(round(x), round(y))
 
 
-find_coord_on_line = functools.wraps(find_coord_on_line)(functools.lru_cache(maxsize=16384)(find_coord_on_line))
+interpolate_coord = functools.wraps(interpolate_coord)(functools.lru_cache(maxsize=16384)(interpolate_coord))
+find_coord_on_line = interpolate_coord
+"""Compatibility alias for `interpolate_coord`."""
 
 
 def find_length_of_bezier_curve(
@@ -371,20 +388,21 @@ def find_length_of_bezier_curve(
     *,
     terminal_adjusted: bool = True,
 ) -> float:
-    """Approximate the length of a bezier curve.
+    """Approximate the length of a Bézier curve of any degree.
 
     The curve length is calculated from unrounded floating-point points using adaptive
-    subdivision. By default, row distances are scaled according to the terminal character
-    aspect ratio.
+    subdivision. A single `Coord` or a tuple of control points is accepted, matching
+    `find_coord_on_bezier_curve`; an empty tuple describes a linear Bézier curve. By
+    default, row distances are scaled according to the terminal character aspect ratio.
 
     Args:
         start (Coord): The starting coordinate of the curve.
-        control (tuple[Coord, ...] | Coord): The control point(s) of the curve.
+        control (tuple[Coord, ...] | Coord): A single control point or tuple of control points.
         end (Coord): The ending coordinate of the curve.
         terminal_adjusted (bool): Whether distance accounts for terminal cell height. Defaults to True.
 
     Returns:
-        float: The length of the bezier curve.
+        float: The approximate length of the Bézier curve.
 
     """
     if isinstance(control, Coord):

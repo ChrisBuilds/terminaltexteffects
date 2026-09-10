@@ -115,6 +115,8 @@
   ray calculations. Pass `terminal_adjusted=False` to use Cartesian grid distance.
 * Geometry - Degenerate circle and rectangle helpers now collapse to a center point or one-dimensional perimeter
   instead of returning no coordinates.
+* Geometry - Added `interpolate_coord()` as the canonical linear interpolation API while preserving
+  `find_coord_on_line` as an alias, and aligned the Bézier evaluator and length helper control-point contracts.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
 * ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does
