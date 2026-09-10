@@ -113,6 +113,8 @@
   terminal-adjusted extents, while preserving the established visual sizes of affected effects.
 * Geometry - Centralized terminal row scaling and made terminal-adjusted distance the default for line, Bézier, and
   ray calculations. Pass `terminal_adjusted=False` to use Cartesian grid distance.
+* Geometry - Degenerate circle and rectangle helpers now collapse to a center point or one-dimensional perimeter
+  instead of returning no coordinates.
 * ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
   duplicate `extend()` entries, preventing one character from being checked out concurrently.
 * ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does

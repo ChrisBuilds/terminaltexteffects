@@ -37,9 +37,9 @@ def test_find_coords_on_circle_coords_limit(coord: geometry.Coord) -> None:
 
 
 def test_find_coords_on_circle_zero_radius(coord: geometry.Coord) -> None:
-    """Test that the function returns an empty list when the radius is zero."""
+    """Test that a zero-radius circle collapses to its origin."""
     coords = geometry.find_coords_on_circle(coord, 0, 5, unique=False)
-    assert len(coords) == 0
+    assert coords == [coord]
 
 
 def test_find_coords_on_circle_unique(coord: geometry.Coord) -> None:
@@ -140,9 +140,9 @@ def test_find_coords_in_circle_terminal_adjusted_bounds() -> None:
 
 
 def test_find_coords_in_circle_zero_radius(coord: geometry.Coord) -> None:
-    """Test that the function returns an empty list when the radius is zero."""
+    """Test that a zero-radius filled circle collapses to its center."""
     coords = geometry.find_coords_in_circle(coord, radius=0)
-    assert len(coords) == 0
+    assert coords == [coord]
 
 
 def test_find_coords_in_rect(coord: geometry.Coord) -> None:
@@ -151,10 +151,10 @@ def test_find_coords_in_rect(coord: geometry.Coord) -> None:
     assert len(coords) > 0
 
 
-def test_find_coords_in_rect_zero_width(coord: geometry.Coord) -> None:
-    """Test that the function returns an empty list when the width is zero."""
+def test_find_coords_in_rect_zero_distance(coord: geometry.Coord) -> None:
+    """Test that a zero-distance filled rectangle collapses to its origin."""
     coords = geometry.find_coords_in_rect(coord, 0)
-    assert len(coords) == 0
+    assert coords == [coord]
 
 
 def test_find_coords_on_rect_perimeter_and_bounds() -> None:
@@ -176,10 +176,21 @@ def test_find_coords_on_rect_perimeter_and_bounds() -> None:
     assert len(coords) == len(set(coords))
 
 
-def test_find_coords_on_rect_zero_dimensions() -> None:
-    """Test that the function returns an empty list when the half width or half height is zero."""
-    assert geometry.find_coords_on_rect(geometry.Coord(0, 0), 0, 3) == []
-    assert geometry.find_coords_on_rect(geometry.Coord(0, 0), 3, 0) == []
+@pytest.mark.parametrize(
+    ("half_width", "half_height", "expected"),
+    [
+        (0, 0, [geometry.Coord(2, 3)]),
+        (0, 2, [geometry.Coord(2, row) for row in range(1, 6)]),
+        (2, 0, [geometry.Coord(column, 3) for column in range(5)]),
+    ],
+)
+def test_find_coords_on_rect_degenerate_dimensions(
+    half_width: int,
+    half_height: int,
+    expected: list[geometry.Coord],
+) -> None:
+    """Test that degenerate rectangle perimeters collapse to a point or line."""
+    assert geometry.find_coords_on_rect(geometry.Coord(2, 3), half_width, half_height) == expected
 
 
 def test_find_coords_on_rect_small_exact_points() -> None:

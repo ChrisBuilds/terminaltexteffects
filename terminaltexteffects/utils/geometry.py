@@ -98,7 +98,8 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, 
 
     The generated coordinate-space ellipse has a horizontal radius of `radius` columns and a
     vertical radius of `radius // TERMINAL_ROW_SCALE` rows. With terminal cells approximately
-    `TERMINAL_ROW_SCALE` times as tall as they are wide, this ellipse appears circular.
+    `TERMINAL_ROW_SCALE` times as tall as they are wide, this ellipse appears circular. A radius
+    of `0` returns only `origin`.
 
     Args:
         origin (Coord): origin of the circle
@@ -117,7 +118,7 @@ def find_coords_on_circle(origin: Coord, radius: int, coords_limit: int = 0, *, 
     _validate_nonnegative_dimensions(radius=radius, coords_limit=coords_limit)
     points: list[Coord] = []
     if not radius:
-        return points
+        return [origin]
     seen_points = set()
     if not coords_limit:
         coords_limit = round(2 * math.pi * radius)
@@ -146,7 +147,8 @@ def find_coords_in_circle(center: Coord, radius: int) -> list[Coord]:
 
     The generated coordinate-space ellipse has a horizontal radius of `radius` columns and a
     vertical radius of `radius / TERMINAL_ROW_SCALE` rows. With terminal cells approximately
-    `TERMINAL_ROW_SCALE` times as tall as they are wide, this ellipse appears circular.
+    `TERMINAL_ROW_SCALE` times as tall as they are wide, this ellipse appears circular. A radius
+    of `0` returns only `center`.
 
     Args:
         center (Coord): The center coordinate of the circle.
@@ -163,7 +165,7 @@ def find_coords_in_circle(center: Coord, radius: int) -> list[Coord]:
     h, k = center.column, center.row
     coords_in_ellipse: list[Coord] = []
     if not radius:
-        return coords_in_ellipse
+        return [center]
 
     a_squared = radius**2
     b_squared = (radius / TERMINAL_ROW_SCALE) ** 2
@@ -184,8 +186,8 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
     """Find coords that fall within a rectangle.
 
     Distance specifies the number of units in each direction from the origin.
-    For positive distances, the resulting rectangle has width and height
-    `2 * distance + 1`. A distance of `0` returns an empty list.
+    The resulting rectangle has width and height `2 * distance + 1`, so a distance
+    of `0` returns only `origin`.
 
     Args:
         origin (Coord): center of the rectangle
@@ -203,9 +205,9 @@ def find_coords_in_rect(origin: Coord, distance: int) -> list[Coord]:
     right_boundary = origin.column + distance
     top_boundary = origin.row - distance
     bottom_boundary = origin.row + distance
-    coords: list[Coord] = []
     if not distance:
-        return coords
+        return [origin]
+    coords: list[Coord] = []
     for column in range(left_boundary, right_boundary + 1):
         for row in range(top_boundary, bottom_boundary + 1):
             coords.append(Coord(column, row))  # noqa: PERF401
@@ -221,7 +223,8 @@ def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> lis
 
     Half width and half height specify the distance in each direction from the origin.
     Returns coordinates that fall on the perimeter (edges) of the rectangle only.
-    If either `half_width` or `half_height` is `0`, an empty list is returned.
+    If one half-dimension is `0`, the rectangle collapses to a vertical or horizontal
+    line. If both are `0`, only `origin` is returned.
 
     Args:
         origin (Coord): center of the rectangle
@@ -236,9 +239,17 @@ def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> lis
 
     """
     _validate_nonnegative_dimensions(half_width=half_width, half_height=half_height)
+    if not half_width:
+        return [
+            Coord(origin.column, row)
+            for row in range(origin.row - half_height, origin.row + half_height + 1)
+        ]
+    if not half_height:
+        return [
+            Coord(column, origin.row)
+            for column in range(origin.column - half_width, origin.column + half_width + 1)
+        ]
     coords: list[Coord] = []
-    if not half_width or not half_height:
-        return coords
     for column in range(origin.column - half_width, origin.column + half_width + 1):
         if column == origin.column - half_width or column == origin.column + half_width:
             for row in range(origin.row - half_height, origin.row + half_height + 1):
