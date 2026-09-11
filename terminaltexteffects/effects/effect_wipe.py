@@ -141,6 +141,11 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
             self.terminal.canvas.text_right,
             self.config.final_gradient_direction,
         )
+        final_transition_steps = (
+            self.config.final_gradient_steps[0]
+            if isinstance(self.config.final_gradient_steps, tuple)
+            else self.config.final_gradient_steps
+        )
         for character in self.terminal.get_characters():
             if self.terminal.config.existing_color_handling == "dynamic":
                 self.character_final_color_map[character] = ColorPair(
@@ -171,7 +176,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
                 wipe_gradient = Gradient(
                     final_gradient.spectrum[0],
                     final_fg_color,
-                    steps=self.config.final_gradient_steps,
+                    steps=final_transition_steps,
                 )
                 wipe_scn.apply_gradient_to_symbols(
                     character.input_symbol,

@@ -208,6 +208,11 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             self.terminal.canvas.text_right,
             self.config.final_gradient_direction,
         )
+        final_transition_steps = (
+            self.config.final_gradient_steps[0]
+            if isinstance(self.config.final_gradient_steps, tuple)
+            else self.config.final_gradient_steps
+        )
         wave_gradient = Gradient(*self.config.wave_gradient_stops, steps=self.config.wave_gradient_steps)
         for character in self.terminal.get_characters():
             if self.terminal.config.existing_color_handling == "dynamic":
@@ -242,7 +247,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                             Gradient(
                                 wave_gradient.spectrum[-1],
                                 final_fg_color,
-                                steps=self.config.final_gradient_steps,
+                                steps=final_transition_steps,
                             )
                             if final_fg_color is not None
                             else None
@@ -251,7 +256,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                             Gradient(
                                 wave_gradient.spectrum[-1],
                                 final_bg_color,
-                                steps=self.config.final_gradient_steps,
+                                steps=final_transition_steps,
                             )
                             if final_bg_color is not None
                             else None
@@ -265,7 +270,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                 for step in Gradient(
                     wave_gradient.spectrum[-1],
                     final_fg_color,
-                    steps=self.config.final_gradient_steps,
+                    steps=final_transition_steps,
                 ):
                     final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(fg=step))
             character.event_handler.register_event(
