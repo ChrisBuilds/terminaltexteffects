@@ -77,7 +77,12 @@ effect output. Keep compatibility aliases or release-note breaking changes where
   - Add equality/hash tests for case variants, equivalent XTerm/RGB values according to the chosen policy, and mutation
     behavior.
 
-- [ ] **6. Make the `Gradient` construction contract internally consistent**
+- [x] **6. Make the `Gradient` construction contract internally consistent**
+  - Decision: steps count transitions between adjacent stops, so a multi-stop spectrum contains
+    `sum(effective_steps) + 1` colors and a single-stop spectrum contains one color. One step value broadcasts to all
+    transitions, shorter tuples repeat their last value, and tuples with unused extra values are rejected for
+    multi-stop gradients. Single-stop gradients validate all step values but ignore tuple cardinality for compatibility
+    with effect configurations. Looping adds a local closing transition without changing the source stops.
   - The general documentation says a spectrum contains `sum(steps) + 1` colors, but a single-stop gradient contains
     exactly `steps` colors. Decide whether `steps` means transitions, output samples, or repetitions, then document and
     test one-stop and multi-stop behavior consistently.

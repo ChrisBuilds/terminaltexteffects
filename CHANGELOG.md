@@ -160,6 +160,10 @@
 * Color - RGB specifications now normalize to lowercase for consistent equality and hashing. `Color` instances are
   immutable, and identity deliberately preserves exact XTerm indices separately from RGB specifications because their
   terminal rendering semantics can differ.
+* Gradient - Defined steps as transition counts between adjacent stops. Single-stop gradients now contain one color,
+  unused tuple step values are rejected when transitions exist, invalid stops fail at construction, and loop
+  generation no longer mutates the stored source stops. Single-stop gradients continue accepting configuration step
+  tuples of any length, with each value validated.
 * Gradient - Fixed invalid step tuples causing empty spectra, accidental `IndexError`s, or silently ignored invalid
   values. Gradient construction now rejects empty, non-integer, and non-positive step counts before generation.
 * Animation - Fixed empty symbol sequences passed to `Scene.apply_gradient_to_symbols()` raising an internal

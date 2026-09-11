@@ -11,7 +11,6 @@ Classes:
 from __future__ import annotations
 
 import functools
-import itertools
 import math
 import random
 import typing
@@ -189,7 +188,8 @@ class Gradient:
 
     The gradient color list is calculated using linear interpolation based on the provided start and end colors
     and the number of steps. Gradients can be iterated over to get the next color in the gradient color list.
-    If there is only one color in the stops list, the gradient will be a list of the same color.
+    If there is only one color in the stops list, the gradient contains that color once because there are no
+    transitions to generate.
 
     If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps for the pair
     based on the order of stops and steps.
@@ -198,11 +198,15 @@ class Gradient:
 
     "fffffff" -> (6 steps) -> "aaaaaa" -> (3 steps) -> "000000"
 
-    The step count includes the stop for each pair. Total number of colors in the resulting gradient spectrum
-    is the sum of the steps between each pair of stops plus 1.
+    A step count is the number of transitions between a pair of adjacent stops. Total number of colors in a
+    multi-stop gradient spectrum is the sum of the effective step counts plus 1. A single integer applies to every
+    transition. A tuple assigns counts in order; if it contains fewer values than transitions, its last value is
+    repeated. When transitions exist, a tuple cannot contain more values than there are transitions. For a single-stop
+    gradient, step values are validated but tuple cardinality does not change the one-color spectrum.
 
     Attributes:
-        spectrum (list[Color]): List (length=sum(steps) + 1) of generated `Color` objects.
+        spectrum (list[Color]): The generated `Color` objects. Multi-stop gradients contain
+            `sum(effective_steps) + 1` colors; single-stop gradients contain one color.
 
     """
 
@@ -218,13 +222,14 @@ class Gradient:
         """Initialize a Gradient object.
 
         Args:
-            stops (Color): One ore more variables of type Color representing the color stops.
-            steps (int | tuple[int, ...], optional): Number of steps or a tuple of step values for generating the
-                spectrum. Defaults to 1.
+            stops (Color): One or more `Color` objects representing the color stops.
+            steps (int | tuple[int, ...], optional): Number of transitions or a tuple of transition counts for
+                generating the spectrum. A single value is repeated for every adjacent stop pair. Defaults to 1.
             loop (bool, optional): Loop the gradient. This causes the final gradient color to transition back to the
                 first gradient color. Defaults to False.
 
         Raises:
+            TypeError: If any stop is not a `Color`.
             ValueError: If no color stops are provided or any step count is invalid.
 
         Attributes:
@@ -233,7 +238,6 @@ class Gradient:
             _loop (bool): Loop the gradient. This causes the final gradient color to transition back to the
                 first gradient color.
             spectrum (list[Color]): List of generated `Color` objects representing the spectrum.
-            _index (int): Current index of the spectrum.
 
         Returns:
             None
@@ -243,15 +247,22 @@ class Gradient:
         if len(self._stops) < 1:
             msg = "At least one stop must be provided."
             raise ValueError(msg)
-        self._validate_steps(steps)
+        if any(not isinstance(stop, Color) for stop in self._stops):
+            msg = "Stops must be Color instances."
+            raise TypeError(msg)
+        step_values = self._validate_steps(steps)
         self._steps = steps
         self._loop = loop
-        self.spectrum: list[Color] = self._generate(self._steps)
-        self._index: int = 0
+        transition_count = len(self._stops) if self._loop and len(self._stops) > 1 else len(self._stops) - 1
+        if transition_count and len(step_values) > transition_count:
+            msg = "A steps tuple cannot contain more values than the gradient has transitions."
+            raise ValueError(msg)
+        effective_steps = step_values + (step_values[-1],) * (transition_count - len(step_values))
+        self.spectrum: list[Color] = self._generate(effective_steps)
 
     @staticmethod
-    def _validate_steps(steps: int | tuple[int, ...]) -> None:
-        """Validate gradient step counts before spectrum generation."""
+    def _validate_steps(steps: int | tuple[int, ...]) -> tuple[int, ...]:
+        """Validate and return gradient transition counts as a tuple."""
         step_values = (steps,) if isinstance(steps, int) and not isinstance(steps, bool) else steps
         if not isinstance(step_values, tuple) or not step_values:
             msg = "Steps must be a positive integer or a non-empty tuple of positive integers."
@@ -259,6 +270,7 @@ class Gradient:
         if any(isinstance(step, bool) or not isinstance(step, int) or step < 1 for step in step_values):
             msg = "Steps must be a positive integer or a non-empty tuple of positive integers."
             raise ValueError(msg)
+        return step_values
 
     def get_color_at_fraction(self, fraction: float) -> Color:
         """Return the precomputed spectrum color corresponding to a normalized fraction.
@@ -290,10 +302,10 @@ class Gradient:
         spectrum_index = round(fraction * (len(self.spectrum) - 1))
         return self.spectrum[spectrum_index]
 
-    def _generate(self, steps: int | tuple[int, ...]) -> list[Color]:
+    def _generate(self, steps: tuple[int, ...]) -> list[Color]:
         """Calculate a gradient of colors between two colors using linear interpolation.
 
-        If there is only one color in the stops tuple, the gradient will be a list of the same color.
+        If there is only one color in the stops tuple, the gradient contains that color once.
 
         If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps
         for the pair based on the order of stops and steps.
@@ -304,46 +316,28 @@ class Gradient:
         Total colors in the gradient spectrum = 10 ("aaaaaa" is not repeated when transitioning from
         "ffffff" to "aaaaaa" and from "aaaaaa" to "000000")
 
-
-        The step count includes the stop for each pair. Total number of colors in the resulting gradient spectrum:
-        sum(steps) + 1
+        A step count is the number of transitions between a pair. Total number of colors in a multi-stop gradient
+        spectrum is `sum(steps) + 1`.
 
         Returns:
-            list[Color]: List (length=sum(steps) + 1) of generated `Color` objects. The first and last
-                colors are the start and end stops, respectively.
+            list[Color]: Generated colors. The first and last colors are the start and end stops, respectively.
 
         """
-        if isinstance(steps, int):
-            steps = (steps,)
-        spectrum: list[Color] = []
         if len(self._stops) == 1:
-            color = self._stops[0]
-            spectrum.extend(color for _ in range(steps[0]))
-            return spectrum
-        if self._loop:
-            self._stops = (*self._stops, self._stops[0])
-        a, b = itertools.tee(self._stops)
-        next(b, None)
-        color_pairs = list(zip(a, b))
-        steps = steps[: len(color_pairs)]
-        if len(steps) < len(color_pairs):
-            steps = steps + (steps[-1],) * (len(color_pairs) - len(steps))
-        color_pair: tuple[Color, Color]
-        for color_pair, step_count in zip(color_pairs, steps):
-            start, end = color_pair
+            return [self._stops[0]]
+        generation_stops = (*self._stops, self._stops[0]) if self._loop else self._stops
+        spectrum = [generation_stops[0]]
+        color_pairs = zip(generation_stops, generation_stops[1:])
+        for (start, end), step_count in zip(color_pairs, steps):
             start_color_ints = start.rgb_ints
             end_color_ints = end.rgb_ints
-            gradient_colors: list[Color] = []
-            range_start = int(len(spectrum) > 0)  # if this is the first pair, add the start color to the spectrum
-            for i in range(range_start, max(step_count, 0)):
+            for i in range(1, step_count):
                 fraction = i / step_count
                 red = round(start_color_ints[0] + ((end_color_ints[0] - start_color_ints[0]) * fraction))
                 green = round(start_color_ints[1] + ((end_color_ints[1] - start_color_ints[1]) * fraction))
                 blue = round(start_color_ints[2] + ((end_color_ints[2] - start_color_ints[2]) * fraction))
-                gradient_colors.append(Color(f"{red:02x}{green:02x}{blue:02x}"))
-            # Add the end color to the gradient colors list
-            gradient_colors.append(end)
-            spectrum.extend(gradient_colors)
+                spectrum.append(Color(f"{red:02x}{green:02x}{blue:02x}"))
+            spectrum.append(end)
         return spectrum
 
     def build_coordinate_color_mapping(

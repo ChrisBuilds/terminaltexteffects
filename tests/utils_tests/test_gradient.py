@@ -79,6 +79,35 @@ def test_gradient_repeats_valid_short_tuple_steps() -> None:
     assert len(gradient.spectrum) == 5
 
 
+@pytest.mark.parametrize(
+    ("stops", "steps"),
+    [
+        ((Color("ffffff"), Color("000000")), (1, 2)),
+        ((Color("ffffff"), Color("000000"), Color("ff0000")), (1, 2, 3)),
+    ],
+)
+def test_gradient_rejects_step_tuples_longer_than_transition_count(
+    stops: tuple[Color, ...],
+    steps: tuple[int, ...],
+) -> None:
+    """Reject tuple entries that would otherwise be silently ignored."""
+    with pytest.raises(ValueError, match="cannot contain more values"):
+        Gradient(*stops, steps=steps)
+
+
+def test_looping_gradient_counts_closing_transition_for_step_tuple() -> None:
+    """Include the transition back to the first stop when validating tuple cardinality."""
+    with pytest.raises(ValueError, match="cannot contain more values"):
+        Gradient(Color("ffffff"), Color("000000"), steps=(1, 2, 3), loop=True)
+
+
+@pytest.mark.parametrize("stop", ["ffffff", 15, None, object()])
+def test_gradient_rejects_non_color_stops(stop: object) -> None:
+    """Validate stops at the public constructor boundary."""
+    with pytest.raises(TypeError, match="Stops must be Color instances"):
+        Gradient(cast("Color", stop))
+
+
 def test_gradient_slice() -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
     assert g[0] == Color("#ffffff")
@@ -117,7 +146,7 @@ def test_gradient_len() -> None:
 
 def test_gradient_length_single_color() -> None:
     g = Gradient(Color("#ffffff"), steps=5)
-    assert len(g.spectrum) == 5
+    assert len(g.spectrum) == 1
 
 
 def test_gradient_length_two_colors() -> None:
@@ -142,7 +171,13 @@ def test_gradient_length_same_color_multiple_times_with_tuple_steps() -> None:
 
 def test_gradient_single_color() -> None:
     g = Gradient(Color("#ffffff"), steps=5)
-    assert all(color == Color("#ffffff") for color in g.spectrum)
+    assert g.spectrum == [Color("#ffffff")]
+
+
+@pytest.mark.parametrize("steps", [(5,), (1, 3), (1, 2, 3)])
+def test_gradient_single_color_accepts_tuple_step_values(steps: tuple[int, ...]) -> None:
+    """Accept configuration tuples of any length when a single stop has no transitions."""
+    assert Gradient(Color("#ffffff"), steps=steps).spectrum == [Color("#ffffff")]
 
 
 def test_gradient_two_colors() -> None:
@@ -166,6 +201,23 @@ def test_gradient_three_colors() -> None:
 def test_gradient_loop() -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4, loop=True)
     assert g.spectrum[-1] == Color("#ffffff")
+
+
+def test_gradient_loop_preserves_source_stops() -> None:
+    """Generate the closing transition without adding it to the stored source stops."""
+    stops = (Color("#ffffff"), Color("#000000"))
+
+    gradient = Gradient(*stops, steps=(2, 3), loop=True)
+
+    assert gradient._stops == stops
+    assert gradient.spectrum == [
+        Color("#ffffff"),
+        Color("#808080"),
+        Color("#000000"),
+        Color("#555555"),
+        Color("#aaaaaa"),
+        Color("#ffffff"),
+    ]
 
 
 def test_gradient_get_color_at_fraction() -> None:
