@@ -152,6 +152,9 @@
   booleans, choices, colors, enums, ranges, and custom easing callables.
 * Color - Fixed malformed RGB hex values being accepted and silently truncated during rendering. RGB colors now require
   exactly six hexadecimal digits with, at most, one leading `#`.
+* Color - Fixed booleans and equal-valued non-integer numerics being accepted as XTerm-256 codes. `Color` now rejects
+  every constructor value other than non-boolean integers and RGB strings, and `is_valid_color()` safely returns
+  `False` for unsupported types.
 * Gradient - Fixed invalid step tuples causing empty spectra, accidental `IndexError`s, or silently ignored invalid
   values. Gradient construction now rejects empty, non-integer, and non-positive step counts before generation.
 * Animation - Fixed empty symbol sequences passed to `Scene.apply_gradient_to_symbols()` raising an internal

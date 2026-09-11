@@ -414,6 +414,19 @@ def test_color_invalid_hex_color() -> None:
         Color("#ffffzz")
 
 
+@pytest.mark.parametrize("color", [True, False, 1.0, b"ffffff", None, object()])
+def test_color_rejects_values_other_than_non_boolean_ints_and_strings(color: object) -> None:
+    """Reject values that could previously pass permissive numeric membership checks."""
+    with pytest.raises(ValueError, match="Invalid color value"):
+        Color(cast("int | str", color))
+
+
+@pytest.mark.parametrize("color", [0, 255])
+def test_color_accepts_xterm_range_endpoints(color: int) -> None:
+    """Accept both inclusive endpoints of the XTerm-256 range."""
+    assert Color(color).xterm_color == color
+
+
 @pytest.mark.parametrize("color", ["1234567", "#1234567", "##123456"])
 def test_color_rejects_malformed_hex_prefix_or_length(color: str) -> None:
     """Reject RGB strings that rendering would otherwise truncate or normalize."""

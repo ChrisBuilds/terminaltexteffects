@@ -322,23 +322,28 @@ def xterm_to_hex(xterm_color: int) -> str:
     return xterm_to_hex_map[xterm_color].strip("#")
 
 
-def is_valid_color(color: int | str) -> bool:
+def is_valid_color(color: object) -> bool:
     """Check if the input is a valid XTerm-256 or RGB hex color code.
 
     Args:
-        color (int | str): X-Term 256 color code or RGB Hex color code, '#' is optional
+        color (object): Candidate XTerm-256 color code or RGB hex color code. RGB strings may include one optional
+            leading `#`.
 
     Returns:
         bool: True if the input is a valid color code
 
     """
-    if isinstance(color, str):
-        color_string = color.removeprefix("#")
-        if len(color_string) != 6:
-            return False
-        try:
-            int(color_string, 16)
-        except ValueError:
-            return False
-        return True
-    return color in range(256)
+    if isinstance(color, bool):
+        return False
+    if isinstance(color, int):
+        return 0 <= color <= 255
+    if not isinstance(color, str):
+        return False
+    color_string = color.removeprefix("#")
+    if len(color_string) != 6:
+        return False
+    try:
+        int(color_string, 16)
+    except ValueError:
+        return False
+    return True

@@ -51,9 +51,10 @@ def test_is_valid_color_valid_hex_color() -> None:
     assert hexterm.is_valid_color("#ffffff") is True
 
 
-def test_is_valid_color_valid_xterm_color() -> None:
-    """Test that a valid xterm color is recognized as valid."""
-    assert hexterm.is_valid_color(255) is True
+@pytest.mark.parametrize("color", [0, 255])
+def test_is_valid_color_valid_xterm_color(color: int) -> None:
+    """Test that both inclusive XTerm range endpoints are recognized as valid."""
+    assert hexterm.is_valid_color(color) is True
 
 
 def test_is_valid_color_invalid_hex_color_chars() -> None:
@@ -75,3 +76,9 @@ def test_is_valid_color_rejects_malformed_hex_prefix_or_length(color: str) -> No
 def test_is_valid_color_invalid_xterm_color() -> None:
     """Test that an invalid xterm color is recognized as invalid."""
     assert hexterm.is_valid_color(256) is False
+
+
+@pytest.mark.parametrize("color", [True, False, 1.0, b"ffffff", None, object()])
+def test_is_valid_color_rejects_unsupported_types(color: object) -> None:
+    """Return false for booleans and values outside the integer-or-string contract."""
+    assert hexterm.is_valid_color(color) is False

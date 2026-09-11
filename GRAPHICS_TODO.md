@@ -38,7 +38,9 @@ effect output. Keep compatibility aliases or release-note breaking changes where
   - Add tests around every sample boundary, just below and above boundaries, `0`, `1`, `NaN`, infinities, and invalid
     types.
 
-- [ ] **3. Validate `Color` inputs by type before value membership checks**
+- [x] **3. Validate `Color` inputs by type before value membership checks**
+  - Decision: public `hexterm.is_valid_color()` accepts any object and returns `False` for unsupported types;
+    `Color` preserves its documented `ValueError` for invalid constructor values.
   - `hexterm.is_valid_color()` uses `color in range(256)` for every non-string. Because `bool` is an `int` subclass
     and numeric equality is permissive, `Color(True)` is accepted as XTerm color 1 and `Color(1.0)` passes validation
     but leaves a float in `rgb_color`, causing delayed failures elsewhere.
