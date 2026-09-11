@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from copy import deepcopy
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, asdict, fields
 from typing import cast
 
 import pytest
@@ -32,6 +32,44 @@ def test_color_pair_init_single_color() -> None:
     cp = ColorPair("#ffffff")
     assert cp.fg_color == Color("#ffffff")
     assert cp.bg_color is None
+
+
+def test_color_pair_canonical_fields() -> None:
+    color_pair = ColorPair(fg="#ffffff", bg=0)
+
+    assert color_pair.fg == Color("#ffffff")
+    assert color_pair.bg == Color(0)
+    assert tuple(field.name for field in fields(color_pair)) == ("fg", "bg")
+    assert set(asdict(color_pair)) == {"fg", "bg"}
+
+
+def test_color_pair_compatibility_aliases() -> None:
+    color_pair = ColorPair(fg="#ffffff", bg=0)
+
+    assert color_pair.fg_color is color_pair.fg
+    assert color_pair.bg_color is color_pair.bg
+
+
+def test_color_pair_declares_canonical_positional_match_fields() -> None:
+    """Expose canonical field order to pattern matching on supported Python versions."""
+    assert ColorPair.__match_args__ == ("fg", "bg")
+
+
+@pytest.mark.parametrize("attribute", ["fg", "bg", "fg_color", "bg_color"])
+def test_color_pair_is_immutable(attribute: str) -> None:
+    color_pair = ColorPair(fg="#ffffff", bg=0)
+
+    with pytest.raises(FrozenInstanceError):
+        setattr(color_pair, attribute, None)
+
+
+def test_color_pair_supports_deepcopy() -> None:
+    color_pair = ColorPair(fg="#ffffff", bg=0)
+
+    copied_pair = deepcopy(color_pair)
+
+    assert copied_pair == color_pair
+    assert copied_pair is not color_pair
 
 
 @pytest.mark.parametrize(

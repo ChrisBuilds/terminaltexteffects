@@ -164,6 +164,9 @@
   unused tuple step values are rejected when transitions exist, invalid stops fail at construction, and loop
   generation no longer mutates the stored source stops. Single-stop gradients continue accepting configuration step
   tuples of any length, with each value validated.
+* ColorPair - Standardized the immutable value object's stored fields, dataclass introspection, serialization, pattern
+  matching, constructor, and representation on `fg` and `bg`. Existing `fg_color` and `bg_color` attribute access
+  remains available through read-only compatibility properties.
 * Gradient - Fixed invalid step tuples causing empty spectra, accidental `IndexError`s, or silently ignored invalid
   values. Gradient construction now rejects empty, non-integer, and non-positive step counts before generation.
 * Animation - Fixed empty symbol sequences passed to `Scene.apply_gradient_to_symbols()` raising an internal

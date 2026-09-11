@@ -95,7 +95,10 @@ effect output. Keep compatibility aliases or release-note breaking changes where
   - Remove the unused `_index` attribute and its documentation unless stateful, single-pass iteration is intentionally
     restored. Current iteration correctly delegates to the spectrum and is restartable.
 
-- [ ] **7. Simplify `ColorPair`'s public shape**
+- [x] **7. Simplify `ColorPair`'s public shape**
+  - Decision: `fg` and `bg` are the canonical immutable dataclass fields, matching construction and representation.
+    The widely used `fg_color` and `bg_color` names remain as read-only compatibility properties. Dataclass
+    introspection, serialization, and positional pattern matching now consistently expose `fg` and `bg`.
   - The dataclass exposes stored fields named `fg_color`/`bg_color` but initializer-only parameters named `fg`/`bg`.
     This produces the broken repr above and makes dataclass introspection, pattern matching, serialization, and IDE
     discovery disagree with normal construction.

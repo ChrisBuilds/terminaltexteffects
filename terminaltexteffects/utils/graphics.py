@@ -14,7 +14,7 @@ import functools
 import math
 import random
 import typing
-from dataclasses import InitVar, dataclass, field
+from dataclasses import dataclass
 from enum import Enum, auto
 
 from terminaltexteffects.utils import ansitools, colorterm, geometry, hexterm
@@ -128,57 +128,58 @@ class Color:
         return iter((self,))
 
 
-@dataclass()
+@dataclass(frozen=True, init=False)
 class ColorPair:
     """Represents a pair of colors to specify a character's foreground and background colors.
 
-    On init, `Color` instances are preserved, non-`Color` non-`None` values are
-    converted to `Color`, and `None` values remain unset.
+    `fg` and `bg` are the canonical immutable fields. On init, `Color` instances are preserved, non-`Color`
+    non-`None` values are converted to `Color`, and `None` values remain unset. The `fg_color` and `bg_color`
+    properties are read-only compatibility aliases.
 
     Attributes:
-        fg_color (Color | None): The foreground color. None if no foreground color is specified.
-        bg_color (Color | None): The background color. None if no background color is specified.
-        fg (InitVar[Color | str | int | None]): The initial foreground color value.
-        bg (InitVar[Color | str | int | None]): The initial background color value.
+        fg (Color | None): The foreground color. None if no foreground color is specified.
+        bg (Color | None): The background color. None if no background color is specified.
 
     """
 
-    fg_color: Color | None = field(init=False, default=None)
-    bg_color: Color | None = field(init=False, default=None)
-    fg: InitVar[Color | str | int | None] = None
-    bg: InitVar[Color | str | int | None] = None
+    fg: Color | None
+    bg: Color | None
+    __match_args__: typing.ClassVar[tuple[str, str]] = ("fg", "bg")
 
-    def __post_init__(self, init_fg_color: Color | str | int | None, init_bg_color: Color | str | int | None) -> None:
-        """Normalize the initial foreground and background values.
+    def __init__(
+        self,
+        fg: Color | str | int | None = None,
+        bg: Color | str | int | None = None,
+    ) -> None:
+        """Initialize and normalize the foreground and background values.
 
         `Color` instances are preserved, non-`Color` non-`None` values are converted to
         `Color`, and `None` values remain unset.
         """
-        if init_fg_color is not None and not isinstance(init_fg_color, Color):
-            self.fg_color = Color(init_fg_color)
-        else:
-            self.fg_color = init_fg_color
+        object.__setattr__(self, "fg", Color(fg) if fg is not None and not isinstance(fg, Color) else fg)
+        object.__setattr__(self, "bg", Color(bg) if bg is not None and not isinstance(bg, Color) else bg)
 
-        if init_bg_color is not None and not isinstance(init_bg_color, Color):
-            self.bg_color = Color(init_bg_color)
-        else:
-            self.bg_color = init_bg_color
+    @property
+    def fg_color(self) -> Color | None:
+        """Return the foreground color as a compatibility alias for `fg`."""
+        return self.fg
 
-    def __repr__(self) -> str:
-        """Return a constructor-compatible representation of the `ColorPair`."""
-        return f"ColorPair(fg={self.fg_color!r}, bg={self.bg_color!r})"
+    @property
+    def bg_color(self) -> Color | None:
+        """Return the background color as a compatibility alias for `bg`."""
+        return self.bg
 
     def __str__(self) -> str:
         """Return a string representation of the ColorPair object."""
         color_block = (
-            f"{colorterm.fg(self.fg_color.rgb_color) if self.fg_color else ''}"
-            f"{colorterm.bg(self.bg_color.rgb_color) if self.bg_color else ''}####{ansitools.reset_all()}"
+            f"{colorterm.fg(self.fg.rgb_color) if self.fg else ''}"
+            f"{colorterm.bg(self.bg.rgb_color) if self.bg else ''}####{ansitools.reset_all()}"
         )
         return (
-            f"Foreground Color Code: {self.fg_color.rgb_color if self.fg_color else ''}"
-            f"{f' | Foreground XTerm Color: {self.fg_color.xterm_color}' if self.fg_color and self.fg_color.xterm_color is not None else ''}\n"  # noqa: E501
-            f"Background Color Code: {self.bg_color.rgb_color if self.bg_color else ''}"
-            f"{f' | Background XTerm Color: {self.bg_color.xterm_color}' if self.bg_color and self.bg_color.xterm_color is not None else ''}"  # noqa: E501
+            f"Foreground Color Code: {self.fg.rgb_color if self.fg else ''}"
+            f"{f' | Foreground XTerm Color: {self.fg.xterm_color}' if self.fg and self.fg.xterm_color is not None else ''}\n"  # noqa: E501
+            f"Background Color Code: {self.bg.rgb_color if self.bg else ''}"
+            f"{f' | Background XTerm Color: {self.bg.xterm_color}' if self.bg and self.bg.xterm_color is not None else ''}"  # noqa: E501
             f"\nColor Appearance: {color_block}"
         )
 
