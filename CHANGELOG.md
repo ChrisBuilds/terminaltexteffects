@@ -157,6 +157,9 @@
   `False` for unsupported types.
 * Color - `repr()` output for XTerm `Color` values and all `ColorPair` combinations now uses valid, reconstructible
   constructor syntax while preserving the original color representation.
+* Color - RGB specifications now normalize to lowercase for consistent equality and hashing. `Color` instances are
+  immutable, and identity deliberately preserves exact XTerm indices separately from RGB specifications because their
+  terminal rendering semantics can differ.
 * Gradient - Fixed invalid step tuples causing empty spectra, accidental `IndexError`s, or silently ignored invalid
   values. Gradient construction now rejects empty, non-integer, and non-positive step counts before generation.
 * Animation - Fixed empty symbol sequences passed to `Scene.apply_gradient_to_symbols()` raising an internal

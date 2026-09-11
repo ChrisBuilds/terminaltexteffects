@@ -24,11 +24,14 @@ if typing.TYPE_CHECKING:
     from collections.abc import Iterator
 
 
+@dataclass(frozen=True, init=False, repr=False, eq=False)
 class Color:
     """Represents a color in the RGB color space.
 
     The color can be initialized with an XTerm-256 color code or an RGB hex color string. Can be printed
-    to display the color code and appearance as a color block.
+    to display the color code and appearance as a color block. RGB specifications are normalized to lowercase without
+    a leading hash. Equality and hashing preserve the normalized specification: equivalent RGB spellings compare
+    equal, while XTerm indices remain distinct from RGB specifications and from other indices. Instances are immutable.
 
     Attributes:
         color_arg (int | str): The color value as an XTerm-256 color code or an RGB hex color string.
@@ -42,6 +45,10 @@ class Color:
         ValueError: If the color value is not a valid XTerm-256 color code or an RGB hex color string.
 
     """
+
+    color_arg: int | str
+    xterm_color: int | None
+    rgb_color: str
 
     def __init__(self, color_value: int | str) -> None:
         """Initialize a Color object.
@@ -63,15 +70,14 @@ class Color:
                 msg,
             )
         if isinstance(color_value, str):
-            color_value = color_value.removeprefix("#")
-        self.color_arg = color_value
-        self.xterm_color: int | None = None
+            color_value = color_value.removeprefix("#").lower()
+        object.__setattr__(self, "color_arg", color_value)
         if isinstance(color_value, int):
-            self.xterm_color = color_value
-            self.rgb_color = hexterm.xterm_to_hex(color_value)
+            object.__setattr__(self, "xterm_color", color_value)
+            object.__setattr__(self, "rgb_color", hexterm.xterm_to_hex(color_value))
         else:
-            self.rgb_color = color_value
-            self.xterm_color = None
+            object.__setattr__(self, "rgb_color", color_value)
+            object.__setattr__(self, "xterm_color", None)
 
     @property
     def rgb_ints(self) -> tuple[int, int, int]:
@@ -97,7 +103,7 @@ class Color:
         )
 
     def __eq__(self, other: object) -> bool:
-        """Return whether this color is equal to another `Color`.
+        """Return whether this color has the same normalized specification as another `Color`.
 
         Returns `NotImplemented` when `other` is not a `Color`.
         """
@@ -115,7 +121,7 @@ class Color:
         return self.color_arg != other.color_arg
 
     def __hash__(self) -> int:
-        """Return the hash value of the Color object."""
+        """Return the hash of this color's normalized specification."""
         return hash(self.color_arg)
 
     def __iter__(self) -> Iterator[Color]:

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import math
+from copy import deepcopy
+from dataclasses import FrozenInstanceError
 from typing import cast
 
 import pytest
@@ -458,6 +460,48 @@ def test_color_not_equal_different_types() -> None:
 def test_color_is_hashable() -> None:
     hash(Color("#ffffff"))
     hash(Color(0))
+
+
+@pytest.mark.parametrize(
+    ("left", "right"),
+    [("FFFFFF", "ffffff"), ("#FFFFFF", "ffffff"), ("#Ab12Cd", "ab12cd")],
+)
+def test_color_normalizes_equivalent_rgb_specifications(left: str, right: str) -> None:
+    left_color = Color(left)
+    right_color = Color(right)
+
+    assert left_color == right_color
+    assert hash(left_color) == hash(right_color)
+    assert left_color.color_arg == right_color.color_arg == right
+
+
+def test_color_identity_preserves_xterm_specification() -> None:
+    xterm_zero = Color(0)
+    xterm_sixteen = Color(16)
+    rgb_black = Color("000000")
+
+    assert xterm_zero.rgb_color == xterm_sixteen.rgb_color == rgb_black.rgb_color
+    assert len({xterm_zero, xterm_sixteen, rgb_black}) == 3
+
+
+@pytest.mark.parametrize(
+    ("attribute", "value"),
+    [("color_arg", "000000"), ("xterm_color", 0), ("rgb_color", "000000")],
+)
+def test_color_is_immutable(attribute: str, value: object) -> None:
+    color = Color("ffffff")
+
+    with pytest.raises(FrozenInstanceError):
+        setattr(color, attribute, value)
+
+
+def test_color_supports_deepcopy() -> None:
+    color = Color("ABCDEF")
+
+    copied_color = deepcopy(color)
+
+    assert copied_color == color
+    assert copied_color is not color
 
 
 def test_color_is_iterable() -> None:

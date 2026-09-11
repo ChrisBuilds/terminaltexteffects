@@ -61,7 +61,10 @@ effect output. Keep compatibility aliases or release-note breaking changes where
 
 ## API coherence and data model
 
-- [ ] **5. Define `Color` identity, normalization, and mutability semantics**
+- [x] **5. Define `Color` identity, normalization, and mutability semantics**
+  - Decision: equality and hashing use normalized specification identity. RGB strings are normalized to lowercase
+    without a leading `#`, while XTerm indices remain distinct from RGB specifications and from other indices because
+    their exact palette codes affect terminal rendering. `Color` instances are immutable value objects.
   - Equality and hashing currently use the original `color_arg`, so `Color("FFFFFF") != Color("ffffff")` even though
     they emit the same RGB color. `Color(0) != Color("000000")` also distinguishes source encoding rather than visual
     color. Decide whether equality means visual RGB identity or specification identity and document the result.
