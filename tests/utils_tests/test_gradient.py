@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import math
+from typing import cast
+
 import pytest
 
 from terminaltexteffects.engine.motion import Coord
@@ -170,10 +173,63 @@ def test_gradient_get_color_at_fraction() -> None:
     assert g.get_color_at_fraction(1) == Color("#000000")
 
 
-def test_gradient_get_color_at_fraction_invalid_float() -> None:
+@pytest.mark.parametrize("fraction", [-0.1, 1.1])
+def test_gradient_get_color_at_fraction_rejects_out_of_range_values(fraction: float) -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
     with pytest.raises(ValueError, match="Fraction must be"):
-        g.get_color_at_fraction(1.1)
+        g.get_color_at_fraction(fraction)
+
+
+@pytest.mark.parametrize(
+    ("fraction", "expected_index"),
+    [
+        (0, 0),
+        (math.nextafter(0.125, 0), 0),
+        (0.125, 0),
+        (math.nextafter(0.125, 1), 1),
+        (math.nextafter(0.375, 0), 1),
+        (0.375, 2),
+        (math.nextafter(0.375, 1), 2),
+        (math.nextafter(0.625, 0), 2),
+        (0.625, 2),
+        (math.nextafter(0.625, 1), 3),
+        (math.nextafter(0.875, 0), 3),
+        (0.875, 4),
+        (math.nextafter(0.875, 1), 4),
+        (1, 4),
+    ],
+)
+def test_gradient_get_color_at_fraction_uses_nearest_sample(fraction: float, expected_index: int) -> None:
+    """Select the nearest spectrum sample on both sides of every boundary."""
+    gradient = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
+
+    assert gradient.get_color_at_fraction(fraction) == gradient[expected_index]
+
+
+@pytest.mark.parametrize("fraction", [math.nan, math.inf, -math.inf])
+def test_gradient_get_color_at_fraction_rejects_non_finite_values(fraction: float) -> None:
+    """Reject non-finite fractions instead of returning a spectrum endpoint."""
+    gradient = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
+
+    with pytest.raises(ValueError, match="Fraction must be finite"):
+        gradient.get_color_at_fraction(fraction)
+
+
+@pytest.mark.parametrize("fraction", [True, False, "0.5", None, object()])
+def test_gradient_get_color_at_fraction_rejects_non_numeric_values(fraction: object) -> None:
+    """Reject values outside the documented integer-or-float input contract."""
+    gradient = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
+
+    with pytest.raises(TypeError, match="Fraction must be an integer or float"):
+        gradient.get_color_at_fraction(cast("float", fraction))
+
+
+@pytest.mark.parametrize("fraction", [0, 0.5, 1])
+def test_gradient_get_color_at_fraction_supports_single_color_spectrum(fraction: float) -> None:
+    """Return the only available color for every valid fraction."""
+    gradient = Gradient(Color("#ffffff"), steps=1)
+
+    assert gradient.get_color_at_fraction(fraction) == Color("#ffffff")
 
 
 @pytest.mark.parametrize(
@@ -298,6 +354,15 @@ def test_gradient_build_coordinate_color_mapping_two_cell_span_uses_both_stops(
 
     assert coordinate_map[Coord(1, 1)] == Color("#000000")
     assert coordinate_map[Coord(max_column, max_row)] == Color("#ffffff")
+
+
+def test_gradient_build_coordinate_color_mapping_samples_entire_spectrum() -> None:
+    """Map evenly spaced coordinates to every precomputed spectrum sample."""
+    gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=4)
+
+    coordinate_map = gradient.build_coordinate_color_mapping(1, 1, 1, 5, Gradient.Direction.HORIZONTAL)
+
+    assert [coordinate_map[Coord(column, 1)] for column in range(1, 6)] == gradient.spectrum
 
 
 @pytest.mark.parametrize(

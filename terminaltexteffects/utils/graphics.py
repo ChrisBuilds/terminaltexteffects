@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import functools
 import itertools
+import math
 import random
 import typing
 from dataclasses import InitVar, dataclass, field
@@ -252,8 +253,9 @@ class Gradient:
     def get_color_at_fraction(self, fraction: float) -> Color:
         """Return the precomputed spectrum color corresponding to a normalized fraction.
 
-        The fraction is matched against the generated spectrum from start to end, so
-        `0` returns the first color and `1` returns the final color.
+        The fraction is matched to the nearest precomputed spectrum color from start
+        to end. Ties use Python's round-to-even behavior. A fraction of `0` returns
+        the first color and `1` returns the final color.
 
         Args:
             fraction (float): The fraction of the gradient to get the color for.
@@ -261,14 +263,22 @@ class Gradient:
         Returns:
             Color: The color at the fraction of the gradient.
 
+        Raises:
+            TypeError: If `fraction` is not an integer or float.
+            ValueError: If `fraction` is not finite or outside the inclusive range from `0` to `1`.
+
         """
+        if isinstance(fraction, bool) or not isinstance(fraction, (int, float)):
+            msg = "Fraction must be an integer or float."
+            raise TypeError(msg)
+        if not math.isfinite(fraction):
+            msg = "Fraction must be finite."
+            raise ValueError(msg)
         if fraction < 0 or fraction > 1:
             msg = "Fraction must be 0 <= fraction <= 1."
             raise ValueError(msg)
-        for i in range(1, len(self.spectrum) + 1):
-            if fraction <= i / len(self.spectrum):
-                return self.spectrum[i - 1]
-        return self.spectrum[-1]
+        spectrum_index = round(fraction * (len(self.spectrum) - 1))
+        return self.spectrum[spectrum_index]
 
     def _generate(self, steps: int | tuple[int, ...]) -> list[Color]:
         """Calculate a gradient of colors between two colors using linear interpolation.

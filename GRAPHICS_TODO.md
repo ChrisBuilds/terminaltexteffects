@@ -24,7 +24,11 @@ effect output. Keep compatibility aliases or release-note breaking changes where
   - Audit representative effects after the change because nearly every effect uses this method for its final color
     map and some existing visuals may have implicitly compensated for the offset.
 
-- [ ] **2. Make fractional lookup mathematically defined and reject non-finite input**
+- [x] **2. Make fractional lookup mathematically defined and reject non-finite input**
+  - Decision: select the nearest spectrum sample with `round(fraction * (len(spectrum) - 1))`, matching engine frame
+    selection. Exact half-sample ties use Python's round-to-even behavior.
+  - Verification: the `synthgrid` generated-input benchmark improved mean build time by 3.53% and mean total time by
+    1.45%; mean render time remained effectively flat at +0.56%, with unchanged frame counts.
   - `get_color_at_fraction()` uses a linear scan over `i / len(spectrum)`. This divides `[0, 1]` into `N` buckets
     instead of mapping the interval to the `N` sample positions from index `0` through `N - 1`; values exactly on a
     bucket boundary are also biased toward the lower bucket.

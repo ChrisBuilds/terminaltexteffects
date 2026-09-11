@@ -131,6 +131,8 @@
 * Gradient - Fixed horizontal, vertical, and diagonal coordinate mappings offsetting their normalized ranges by one
   cell, which could skip the first gradient stop on short spans. Directional mappings now use their exact bounds, and
   single-cell mappings consistently use the first gradient color.
+* Gradient - Fractional color lookup now selects the nearest precomputed spectrum sample in constant time and rejects
+  non-finite or non-numeric fractions instead of silently selecting an endpoint or failing with an incidental error.
 * Geometry - Fixed cached coordinate results being shared as mutable lists. Callers can now reorder or modify returned
   coordinate lists without corrupting later cache hits.
 * Geometry - Fixed Bézier path-length estimation omitting the final segment to the endpoint. Curved motion now uses
