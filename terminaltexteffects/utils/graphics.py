@@ -338,7 +338,10 @@ class Gradient:
 
         For example, a vertical gradient will have the same color for each character in a row. When applied across all
         characters in the canvas, the gradient will be visible as a vertical gradient. The mapping respects the
-        provided row and column bounds for every direction.
+        provided row and column bounds for every direction. Vertical, horizontal, and diagonal mappings assign the
+        first and final gradient colors to the endpoints of each non-degenerate directional span. Radial mappings
+        assign the first color at the center and the final color at the corners. A mapping containing only one
+        coordinate receives the first color in every direction.
 
         Args:
             min_row (int): The minimum row value. Must be greater than 0 and less than or equal to max_row.
@@ -357,18 +360,18 @@ class Gradient:
         if min_row > max_row or min_column > max_column:
             msg = "min_row and min_column must be less than or equal to max_row and max_column."
             raise ValueError(msg)
-        row_offset = min_row - 1
-        column_offset = min_column - 1
+        row_span = max_row - min_row
+        column_span = max_column - min_column
         gradient_mapping: dict[geometry.Coord, Color] = {}
         if direction == Gradient.Direction.VERTICAL:
             for row_value in range(min_row, max_row + 1):
-                fraction = (row_value - row_offset) / (max_row - row_offset)
+                fraction = (row_value - min_row) / row_span if row_span else 0
                 color = self.get_color_at_fraction(fraction)
                 for column_value in range(min_column, max_column + 1):
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
         elif direction == Gradient.Direction.HORIZONTAL:
             for column_value in range(min_column, max_column + 1):
-                fraction = (column_value - column_offset) / (max_column - column_offset)
+                fraction = (column_value - min_column) / column_span if column_span else 0
                 color = self.get_color_at_fraction(fraction)
                 for row_value in range(min_row, max_row + 1):
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
@@ -385,13 +388,13 @@ class Gradient:
                     color = self.get_color_at_fraction(distance_from_center)
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
         elif direction == Gradient.Direction.DIAGONAL:
+            diagonal_span = (row_span * geometry.TERMINAL_ROW_SCALE) + column_span
             for row_value in range(min_row, max_row + 1):
                 for column_value in range(min_column, max_column + 1):
                     fraction = (
-                        ((row_value - row_offset) * geometry.TERMINAL_ROW_SCALE) + (column_value - column_offset)
-                    ) / (
-                        ((max_row - row_offset) * geometry.TERMINAL_ROW_SCALE) + (max_column - column_offset)
+                        ((row_value - min_row) * geometry.TERMINAL_ROW_SCALE) + (column_value - min_column)
                     )
+                    fraction = fraction / diagonal_span if diagonal_span else 0
                     color = self.get_color_at_fraction(fraction)
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color
 

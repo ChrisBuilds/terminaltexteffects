@@ -128,6 +128,9 @@
 * Terminal - Fixed center anchoring for odd-sized text regions. Their center cells now align with the canvas center.
 * Gradient - Fixed fractional RGB interpolation for long and descending gradients. Generated colors now stay within
   their specified stop range and transition smoothly to the end stop.
+* Gradient - Fixed horizontal, vertical, and diagonal coordinate mappings offsetting their normalized ranges by one
+  cell, which could skip the first gradient stop on short spans. Directional mappings now use their exact bounds, and
+  single-cell mappings consistently use the first gradient color.
 * Geometry - Fixed cached coordinate results being shared as mutable lists. Callers can now reorder or modify returned
   coordinate lists without corrupting later cache hits.
 * Geometry - Fixed Bézier path-length estimation omitting the final segment to the endpoint. Curved motion now uses

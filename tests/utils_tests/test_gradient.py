@@ -1,7 +1,14 @@
+"""Tests for color, color-pair, and gradient utilities."""
+
+from __future__ import annotations
+
 import pytest
 
 from terminaltexteffects.engine.motion import Coord
 from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient, random_color, shift_color_towards
+
+# Test names provide the documentation for straightforward single-assertion cases.
+# ruff: noqa: D103
 
 pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
@@ -39,17 +46,17 @@ def test_shift_color_towards_rejects_out_of_range_factor(factor: float) -> None:
 
 
 def test_gradient_zero_stops() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="At least one stop must be provided"):
         Gradient()
 
 
 def test_gradient_zero_steps() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Steps must be"):
         Gradient(Color("#ffffff"), steps=0)
 
 
 def test_gradient_zero_steps_tuple() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Steps must be"):
         Gradient(Color("#ffffff"), Color("#000000"), Color("#ff0000"), steps=(1, 0))
 
 
@@ -135,7 +142,8 @@ def test_gradient_single_color() -> None:
 
 def test_gradient_two_colors() -> None:
     g = Gradient(Color("#000000"), Color("#ffffff"), steps=3)
-    assert g.spectrum[0] == Color("#000000") and g.spectrum[-1] == Color("#ffffff")
+    assert g.spectrum[0] == Color("#000000")
+    assert g.spectrum[-1] == Color("#ffffff")
 
 
 def test_gradient_single_step() -> None:
@@ -145,9 +153,9 @@ def test_gradient_single_step() -> None:
 
 def test_gradient_three_colors() -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), Color("#ffffff"), steps=4)
-    assert (
-        g.spectrum[0] == Color("#ffffff") and g.spectrum[4] == Color("#000000") and g.spectrum[-1] == Color("#ffffff")
-    )
+    assert g.spectrum[0] == Color("#ffffff")
+    assert g.spectrum[4] == Color("#000000")
+    assert g.spectrum[-1] == Color("#ffffff")
 
 
 def test_gradient_loop() -> None:
@@ -164,7 +172,7 @@ def test_gradient_get_color_at_fraction() -> None:
 
 def test_gradient_get_color_at_fraction_invalid_float() -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Fraction must be"):
         g.get_color_at_fraction(1.1)
 
 
@@ -177,7 +185,7 @@ def test_gradient_get_color_at_fraction_invalid_float() -> None:
         Gradient.Direction.RADIAL,
     ],
 )
-def test_gradient_build_coordinate_color_mapping(direction) -> None:
+def test_gradient_build_coordinate_color_mapping(direction: Gradient.Direction) -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
     coordinate_map = g.build_coordinate_color_mapping(1, 10, 1, 10, direction)
     if direction == Gradient.Direction.DIAGONAL:
@@ -208,18 +216,18 @@ def test_gradient_build_coordinate_color_mapping(direction) -> None:
 @pytest.mark.parametrize("min_row", [1, 5])
 @pytest.mark.parametrize("max_row", [5, 10])
 def test_gradient_build_coordinate_color_mapping_no_exceptions(
-    direction,
-    min_column,
-    max_column,
-    min_row,
-    max_row,
+    direction: Gradient.Direction,
+    min_column: int,
+    max_column: int,
+    min_row: int,
+    max_row: int,
 ) -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
     if min_column > max_column or min_row > max_row:
-        with pytest.raises(ValueError):
-            coordinate_map = g.build_coordinate_color_mapping(min_row, max_row, min_column, max_column, direction)
+        with pytest.raises(ValueError, match="must be less than or equal"):
+            g.build_coordinate_color_mapping(min_row, max_row, min_column, max_column, direction)
     else:  # check for exceptions across single row/column and issue that might arise from math calculations
-        coordinate_map = g.build_coordinate_color_mapping(min_row, max_row, min_column, max_column, direction)
+        g.build_coordinate_color_mapping(min_row, max_row, min_column, max_column, direction)
 
 
 def test_gradient_build_coordinate_color_mapping_single_row() -> None:
@@ -247,30 +255,97 @@ def test_gradient_build_coordinate_color_mapping_single_column() -> None:
 def test_gradient_build_coordinate_color_mapping_single_row_column() -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
     coordinate_map = g.build_coordinate_color_mapping(1, 1, 1, 1, Gradient.Direction.HORIZONTAL)
+    assert coordinate_map[Coord(1, 1)] == Color("#ffffff")
+
+
+@pytest.mark.parametrize(
+    "direction",
+    [
+        Gradient.Direction.DIAGONAL,
+        Gradient.Direction.HORIZONTAL,
+        Gradient.Direction.VERTICAL,
+        Gradient.Direction.RADIAL,
+    ],
+)
+def test_gradient_build_coordinate_color_mapping_single_cell_uses_first_color(
+    direction: Gradient.Direction,
+) -> None:
+    """Use the first gradient color when a mapping has no directional span."""
+    gradient = Gradient(Color("#ffffff"), Color("#000000"), steps=10)
+
+    coordinate_map = gradient.build_coordinate_color_mapping(5, 5, 7, 7, direction)
+
+    assert coordinate_map == {Coord(7, 5): Color("#ffffff")}
+
+
+@pytest.mark.parametrize(
+    ("direction", "max_row", "max_column"),
+    [
+        (Gradient.Direction.DIAGONAL, 2, 2),
+        (Gradient.Direction.HORIZONTAL, 1, 2),
+        (Gradient.Direction.VERTICAL, 2, 1),
+    ],
+)
+def test_gradient_build_coordinate_color_mapping_two_cell_span_uses_both_stops(
+    direction: Gradient.Direction,
+    max_row: int,
+    max_column: int,
+) -> None:
+    """Map exact endpoints correctly even when the spectrum is longer than the span."""
+    gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=10)
+
+    coordinate_map = gradient.build_coordinate_color_mapping(1, max_row, 1, max_column, direction)
+
     assert coordinate_map[Coord(1, 1)] == Color("#000000")
+    assert coordinate_map[Coord(max_column, max_row)] == Color("#ffffff")
+
+
+@pytest.mark.parametrize(
+    ("direction", "start", "end"),
+    [
+        (Gradient.Direction.DIAGONAL, Coord(7, 5), Coord(9, 7)),
+        (Gradient.Direction.HORIZONTAL, Coord(7, 5), Coord(9, 5)),
+        (Gradient.Direction.VERTICAL, Coord(7, 5), Coord(7, 7)),
+        (Gradient.Direction.RADIAL, Coord(8, 6), Coord(7, 5)),
+    ],
+)
+@pytest.mark.parametrize("steps", [2, 10])
+def test_gradient_build_coordinate_color_mapping_offset_bounds_use_both_stops(
+    direction: Gradient.Direction,
+    start: Coord,
+    end: Coord,
+    steps: int,
+) -> None:
+    """Map both stops at offset bounds for spectra shorter and longer than the spans."""
+    gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=steps)
+
+    coordinate_map = gradient.build_coordinate_color_mapping(5, 7, 7, 9, direction)
+
+    assert coordinate_map[start] == Color("#000000")
+    assert coordinate_map[end] == Color("#ffffff")
 
 
 def test_gradient_build_coordinate_color_mapping_invalid_row_column() -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be greater than 0"):
         g.build_coordinate_color_mapping(0, 10, 0, 10, Gradient.Direction.HORIZONTAL)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be greater than 0"):
         g.build_coordinate_color_mapping(10, 0, 10, 0, Gradient.Direction.HORIZONTAL)
 
 
 def test_gradient_build_coordinate_color_mapping_max_less_than_min() -> None:
     g = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be less than or equal"):
         g.build_coordinate_color_mapping(10, 1, 10, 1, Gradient.Direction.HORIZONTAL)
 
 
 def test_color_invalid_xterm_color() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid color value"):
         Color(256)
 
 
 def test_color_invalid_hex_color() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid color value"):
         Color("#ffffzz")
 
 
@@ -281,41 +356,41 @@ def test_color_rejects_malformed_hex_prefix_or_length(color: str) -> None:
         Color(color)
 
 
-def test_color_valid_hex_with_hash():
+def test_color_valid_hex_with_hash() -> None:
     assert Color("#ffffff") == Color("#ffffff")
 
 
-def test_color_hex_rgb_ints():
+def test_color_hex_rgb_ints() -> None:
     assert Color("#000000").rgb_ints == (0, 0, 0)
 
 
-def test_color_xterm_rgb_ints():
+def test_color_xterm_rgb_ints() -> None:
     assert Color(0).rgb_ints == (0, 0, 0)
 
 
-def test_color_not_equal():
+def test_color_not_equal() -> None:
     assert Color("#ffffff") != Color("#000000")
 
 
-def test_color_not_equal_different_types():
+def test_color_not_equal_different_types() -> None:
     assert Color("#ffffff") != 0
     assert Color(0) != "ffffff"
 
 
-def test_color_is_hashable():
+def test_color_is_hashable() -> None:
     hash(Color("#ffffff"))
     hash(Color(0))
 
 
-def test_color_is_iterable():
+def test_color_is_iterable() -> None:
     assert list(Color("#ffffff")) == [Color("#ffffff")]
 
 
-def test_color_repr():
+def test_color_repr() -> None:
     assert repr(Color("#ffffff")) == "Color('ffffff')"
 
 
-def test_color_str():
+def test_color_str() -> None:
     assert "Color Code: ffffff" in str(Color("#ffffff"))
 
 
