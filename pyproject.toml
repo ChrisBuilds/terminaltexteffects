@@ -32,6 +32,7 @@ target-version = "py38"
 [tool.ruff.lint]
 ignore = [
     "C90",
+    "CPY001",
     "ANN401",
     "EXE",
     "PLR0912", # too many branches
