@@ -84,8 +84,8 @@ class Color:
         return colorterm._hex_to_int(self.rgb_color)
 
     def __repr__(self) -> str:
-        """Return a string representation of the Color object."""
-        return f"Color('{self.color_arg}')"
+        """Return a constructor-compatible representation of the `Color`."""
+        return f"Color({self.color_arg!r})"
 
     def __str__(self) -> str:
         """Return a string representation of the Color object."""
@@ -158,6 +158,10 @@ class ColorPair:
             self.bg_color = Color(init_bg_color)
         else:
             self.bg_color = init_bg_color
+
+    def __repr__(self) -> str:
+        """Return a constructor-compatible representation of the `ColorPair`."""
+        return f"ColorPair(fg={self.fg_color!r}, bg={self.bg_color!r})"
 
     def __str__(self) -> str:
         """Return a string representation of the ColorPair object."""

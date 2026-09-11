@@ -155,6 +155,8 @@
 * Color - Fixed booleans and equal-valued non-integer numerics being accepted as XTerm-256 codes. `Color` now rejects
   every constructor value other than non-boolean integers and RGB strings, and `is_valid_color()` safely returns
   `False` for unsupported types.
+* Color - `repr()` output for XTerm `Color` values and all `ColorPair` combinations now uses valid, reconstructible
+  constructor syntax while preserving the original color representation.
 * Gradient - Fixed invalid step tuples causing empty spectra, accidental `IndexError`s, or silently ignored invalid
   values. Gradient construction now rejects empty, non-integer, and non-positive step counts before generation.
 * Animation - Fixed empty symbol sequences passed to `Scene.apply_gradient_to_symbols()` raising an internal

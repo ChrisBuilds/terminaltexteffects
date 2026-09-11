@@ -464,8 +464,43 @@ def test_color_is_iterable() -> None:
     assert list(Color("#ffffff")) == [Color("#ffffff")]
 
 
-def test_color_repr() -> None:
-    assert repr(Color("#ffffff")) == "Color('ffffff')"
+@pytest.mark.parametrize(
+    ("color", "expected_repr"),
+    [
+        (Color("#ffffff"), "Color('ffffff')"),
+        (Color(0), "Color(0)"),
+        (Color(255), "Color(255)"),
+    ],
+)
+def test_color_repr_round_trip(color: Color, expected_repr: str) -> None:
+    """Represent RGB and XTerm colors with reconstructible constructor calls."""
+    color_repr = repr(color)
+
+    assert color_repr == expected_repr
+    assert eval(color_repr, {"__builtins__": {}, "Color": Color}) == color  # noqa: S307
+
+
+@pytest.mark.parametrize(
+    ("color_pair", "expected_repr"),
+    [
+        (ColorPair(), "ColorPair(fg=None, bg=None)"),
+        (ColorPair(fg=Color("ffffff")), "ColorPair(fg=Color('ffffff'), bg=None)"),
+        (ColorPair(bg=Color(0)), "ColorPair(fg=None, bg=Color(0))"),
+        (
+            ColorPair(fg=Color(1), bg=Color("abcdef")),
+            "ColorPair(fg=Color(1), bg=Color('abcdef'))",
+        ),
+    ],
+)
+def test_color_pair_repr_round_trip(color_pair: ColorPair, expected_repr: str) -> None:
+    """Represent every foreground/background combination with valid constructor names."""
+    color_pair_repr = repr(color_pair)
+
+    assert color_pair_repr == expected_repr
+    assert eval(  # noqa: S307
+        color_pair_repr,
+        {"__builtins__": {}, "Color": Color, "ColorPair": ColorPair},
+    ) == color_pair
 
 
 def test_color_str() -> None:

@@ -49,7 +49,9 @@ effect output. Keep compatibility aliases or release-note breaking changes where
     since it is independently public.
   - Add direct tests for booleans, floats, bytes, `None`, malformed strings, and both integer endpoints.
 
-- [ ] **4. Fix reconstructible representations**
+- [x] **4. Fix reconstructible representations**
+  - Decision: representations preserve the original RGB-vs-XTerm `Color` argument and always show both `ColorPair`
+    constructor parameters as `fg` and `bg`.
   - `repr(Color(0))` is `Color('0')`, but that string argument is invalid. Render integer `color_arg` values without
     quotes and strings with normal string repr escaping.
   - The dataclass-generated `repr(ColorPair(...))` uses the non-init field names `fg_color` and `bg_color`, while the
