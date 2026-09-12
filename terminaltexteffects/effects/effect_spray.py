@@ -181,13 +181,13 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
                 )
         spray_origin_map = {
             SprayIterator.SprayPosition.CENTER: (self.terminal.canvas.center),
-            SprayIterator.SprayPosition.N: Coord(self.terminal.canvas.right // 2, self.terminal.canvas.top),
+            SprayIterator.SprayPosition.N: Coord(self.terminal.canvas.center_column, self.terminal.canvas.top),
             SprayIterator.SprayPosition.NW: Coord(self.terminal.canvas.left, self.terminal.canvas.top),
-            SprayIterator.SprayPosition.W: Coord(self.terminal.canvas.left, self.terminal.canvas.top // 2),
+            SprayIterator.SprayPosition.W: Coord(self.terminal.canvas.left, self.terminal.canvas.center_row),
             SprayIterator.SprayPosition.SW: Coord(self.terminal.canvas.left, self.terminal.canvas.bottom),
-            SprayIterator.SprayPosition.S: Coord(self.terminal.canvas.right // 2, self.terminal.canvas.bottom),
+            SprayIterator.SprayPosition.S: Coord(self.terminal.canvas.center_column, self.terminal.canvas.bottom),
             SprayIterator.SprayPosition.SE: Coord(self.terminal.canvas.right - 1, self.terminal.canvas.bottom),
-            SprayIterator.SprayPosition.E: Coord(self.terminal.canvas.right - 1, self.terminal.canvas.top // 2),
+            SprayIterator.SprayPosition.E: Coord(self.terminal.canvas.right - 1, self.terminal.canvas.center_row),
             SprayIterator.SprayPosition.NE: Coord(self.terminal.canvas.right - 1, self.terminal.canvas.top),
         }
 

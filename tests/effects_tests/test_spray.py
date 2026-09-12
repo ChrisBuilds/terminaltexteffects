@@ -8,6 +8,7 @@ import pytest
 
 from terminaltexteffects.effects import effect_spray
 from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, ColorPair
 
 
@@ -88,6 +89,28 @@ def test_spray_args(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+@pytest.mark.parametrize(
+    ("spray_position", "expected_origin"),
+    [("n", Coord(3, 5)), ("e", Coord(4, 3)), ("s", Coord(3, 1)), ("w", Coord(1, 3))],
+)
+def test_spray_cardinal_origins_use_canvas_centers(
+    spray_position: Literal["n", "e", "s", "w"],
+    expected_origin: Coord,
+) -> None:
+    """Cardinal spray origins should use the canvas's defined lower center cells."""
+    effect = effect_spray.Spray("A")
+    terminal_config = _make_terminal_config("ignore")
+    terminal_config.ignore_terminal_dimensions = True
+    terminal_config.canvas_width = 5
+    terminal_config.canvas_height = 5
+    effect.terminal_config = terminal_config
+    effect.effect_config.spray_position = spray_position
+
+    iterator = cast("effect_spray.SprayIterator", iter(effect))
+
+    assert iterator.terminal.get_characters()[0].motion.current_coord == expected_origin
 
 
 def test_spray_dynamic_without_preexisting_colors_uses_no_color_in_every_frame() -> None:

@@ -89,6 +89,9 @@
   instead of returning no coordinates.
 * Geometry - Added `interpolate_coord()` as the canonical linear interpolation API while preserving
   `find_coord_on_line` as an alias, and aligned the Bézier evaluator and length helper control-point contracts.
+* Canvas bounds are now validated, positive, inclusive, and immutable. Width, height, centers, text anchoring, random
+  coordinate selection, and terminal center offsets now honor non-default origins and consistently select the lower
+  center cell for even dimensions; Spray's cardinal origins now consume the canonical canvas centers.
 * Color - RGB channel tuples are now parsed once per immutable `Color` and reused by gradient and color-shift
   interpolation. Both APIs use nearest, ties-to-even channel rounding, and the unused global color-shift cache has
   been removed.

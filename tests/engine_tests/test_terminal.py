@@ -48,6 +48,40 @@ def test_canvas_single_col_row() -> None:
     assert canvas.center == Coord(1, 1)
 
 
+def test_canvas_non_default_origin_uses_inclusive_bounds() -> None:
+    canvas = Canvas(top=10, right=20, bottom=5, left=7)
+
+    assert canvas.width == 14
+    assert canvas.height == 6
+    assert canvas.center_row == 7
+    assert canvas.center_column == 13
+    assert canvas.center == Coord(13, 7)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"top": 0, "right": 1},
+        {"top": 1, "right": 0},
+        {"top": 5, "right": 5, "bottom": 0},
+        {"top": 5, "right": 5, "left": 0},
+        {"top": 4, "right": 5, "bottom": 5},
+        {"top": 5, "right": 4, "left": 5},
+    ],
+)
+def test_canvas_rejects_invalid_bounds(kwargs: dict[str, int]) -> None:
+    with pytest.raises(ValueError, match="Canvas"):
+        Canvas(**kwargs)
+
+
+@pytest.mark.parametrize("attribute", ["top", "right", "bottom", "left", "width", "height", "center"])
+def test_canvas_geometry_is_read_only(attribute: str) -> None:
+    canvas = Canvas(10, 10)
+
+    with pytest.raises(AttributeError):
+        setattr(canvas, attribute, 20)
+
+
 @pytest.mark.parametrize("anchor", ["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"])
 def test_canvas_anchor_text(anchor) -> None:
     c0 = EffectCharacter(0, symbol="a", input_column=1, input_row=1)
@@ -73,6 +107,38 @@ def test_canvas_anchor_text(anchor) -> None:
     elif anchor == "c":
         assert chars[0].motion.current_coord == Coord(5, 5)
         assert chars[1].motion.current_coord == Coord(6, 5)
+
+
+@pytest.mark.parametrize(
+    ("anchor", "expected_coords"),
+    [
+        ("sw", [Coord(7, 5), Coord(8, 5)]),
+        ("s", [Coord(13, 5), Coord(14, 5)]),
+        ("se", [Coord(19, 5), Coord(20, 5)]),
+        ("e", [Coord(19, 7), Coord(20, 7)]),
+        ("ne", [Coord(19, 10), Coord(20, 10)]),
+        ("n", [Coord(13, 10), Coord(14, 10)]),
+        ("nw", [Coord(7, 10), Coord(8, 10)]),
+        ("w", [Coord(7, 7), Coord(8, 7)]),
+        ("c", [Coord(13, 7), Coord(14, 7)]),
+    ],
+)
+def test_canvas_anchor_text_with_non_default_origin(anchor: str, expected_coords: list[Coord]) -> None:
+    characters = [
+        EffectCharacter(0, symbol="a", input_column=1, input_row=1),
+        EffectCharacter(1, symbol="b", input_column=2, input_row=1),
+    ]
+    canvas = Canvas(top=10, right=20, bottom=5, left=7)
+
+    anchored_characters = canvas._anchor_text(characters, anchor=cast(Any, anchor))
+
+    assert [character.input_coord for character in anchored_characters] == expected_coords
+    assert canvas.text_left == expected_coords[0].column
+    assert canvas.text_right == expected_coords[-1].column
+    assert canvas.text_bottom == canvas.text_top == expected_coords[0].row
+    for _ in range(10):
+        assert canvas.text_left <= canvas.random_column(within_text_boundary=True) <= canvas.text_right
+        assert canvas.text_bottom <= canvas.random_row(within_text_boundary=True) <= canvas.text_top
 
 
 @pytest.mark.parametrize(
@@ -177,6 +243,20 @@ def test_canvas_random_coord_outside_canvas() -> None:
         assert random_coord.row in {0, 11}
     elif 1 <= random_coord.row <= 10:
         assert random_coord.column in {0, 11}
+
+
+def test_canvas_random_coordinates_honor_non_default_bounds() -> None:
+    canvas = Canvas(top=10, right=20, bottom=5, left=7)
+
+    for _ in range(100):
+        coord = canvas.random_coord()
+        assert canvas.coord_is_in_canvas(coord)
+        outside_coord = canvas.random_coord(outside_scope=True)
+        assert not canvas.coord_is_in_canvas(outside_coord)
+        assert (
+            outside_coord.column in {canvas.left - 1, canvas.right + 1}
+            or outside_coord.row in {canvas.bottom - 1, canvas.top + 1}
+        )
 
 
 def test_terminal_init_no_config() -> None:
@@ -288,11 +368,28 @@ def test_terminal_calc_canvas_offsets(anchor, monkeypatch: pytest.MonkeyPatch) -
     else:
         assert column_offset == 0
     if anchor in ["e", "w", "c"]:
-        assert row_offset == 5
+        assert row_offset == 4
     elif anchor in ["nw", "n", "ne"]:
         assert row_offset == 9
     else:
         assert row_offset == 0
+
+
+def test_terminal_center_canvas_offset_aligns_lower_center_cells(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(Terminal, "_get_terminal_dimensions", lambda _: (10, 10))
+    config = TerminalConfig._build_config()
+    config.canvas_width = 5
+    config.canvas_height = 5
+    config.anchor_canvas = "c"
+
+    terminal = Terminal(input_data="test", config=config)
+
+    assert terminal.canvas_column_offset == 2
+    assert terminal.canvas_row_offset == 2
+    assert Coord(
+        terminal.canvas.center_column + terminal.canvas_column_offset,
+        terminal.canvas.center_row + terminal.canvas_row_offset,
+    ) == Coord(5, 5)
 
 
 def test_terminal_get_canvas_dimensions_exact(monkeypatch: pytest.MonkeyPatch) -> None:
