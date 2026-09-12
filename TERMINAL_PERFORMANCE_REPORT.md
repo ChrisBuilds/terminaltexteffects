@@ -86,8 +86,20 @@ immutable symbols/visuals or adding an inexpensive ASCII fast path should be eva
 
 Frame counts were identical for every matching effect/input scenario across all revisions and passes.
 
-Output-character totals were not fully stable, including between separate processes running the same revision. Fixing
-`PYTHONHASHSEED` did not remove every difference because same-layer collision ordering currently depends on set/object
-iteration order. That is the separately identified deterministic-collision issue. Output-byte differences therefore
-cannot be attributed reliably to this commit series until that issue is resolved; they do not coincide with frame-count
-changes.
+Output-character totals were not fully stable, including between separate processes running the same historical
+revision. Fixing `PYTHONHASHSEED` did not remove every difference because same-layer collision ordering depended on
+set/object iteration order at the time of this commit-series measurement. Issue 7 subsequently established stable
+`(layer, character_id)` painter semantics; its candidate benchmark produced identical output counts across repeated
+processes, so future comparisons can use exact output counts as a behavioral check.
+
+## Issue 7 Deterministic Painter Order
+
+Issue 7 was measured separately against the issue-6 working tree across Wipe, Expand, and Spray with medium, tall, and
+generated inputs. Each scenario used two order-balanced process runs with 3 warmups and 21 timed samples per run.
+
+An initial `(layer, character_id)` tuple key was rejected because it increased aggregate render time by 20.5%. The
+accepted implementation maintains a character-ID-ordered visibility list when membership changes, then relies on
+Python's stable sort with a cached C-level layer key in the frame loop. It measured +0.60% build, -1.20% render, and
+-0.50% total time; the corresponding median scenario deltas were +0.42%, -0.55%, and +0.15%. These results are within
+normal run variation and show no meaningful frame-loop regression. Frame counts were unchanged, and candidate output
+counts were identical across repeated processes.

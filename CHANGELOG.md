@@ -71,6 +71,10 @@
   while fill characters continue to represent unstyled spaces on the canvas.
 * ANSI input parsing now rejects unsupported SGR styles and colon-form colors, validates color ranges and cursor
   command arity, reports malformed numeric parameters consistently, and bounds cursor-created virtual layouts.
+* `Terminal.get_input_colors()` now derives color frequencies from retained input characters after cursor overwrites
+  and canvas clipping instead of counting discarded parser intermediates.
+* Rendering collisions now use a deterministic painter order: higher layers win, followed by higher character IDs
+  when layers are equal.
 * Column character grouping now buckets selected characters in one pass instead of rescanning every character for every
   canvas column, reducing grouping work for wide canvases.
 * Outside/middle character sorting now interleaves sorted characters with indexes instead of repeated front-pops,

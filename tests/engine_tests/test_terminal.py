@@ -556,6 +556,68 @@ def test_terminal_add_character() -> None:
     assert terminal._added_characters[0].input_symbol == "a"
 
 
+def test_terminal_same_layer_collision_prefers_higher_character_id() -> None:
+    """The newer input character should win a same-layer moving-character collision."""
+    config = TerminalConfig._build_config()
+    config.ignore_terminal_dimensions = True
+    terminal = Terminal(input_data="AB", config=config)
+    first_character, second_character = terminal.get_characters()
+    first_character.motion.set_coordinate(Coord(1, 1))
+    second_character.motion.set_coordinate(Coord(1, 1))
+    terminal.set_character_visibility(second_character, is_visible=True)
+    terminal.set_character_visibility(first_character, is_visible=True)
+
+    assert second_character.character_id > first_character.character_id
+    assert terminal.get_formatted_output_string() == "B "
+
+
+def test_terminal_same_layer_collision_order_survives_membership_churn() -> None:
+    """Removing and restoring visibility should not alter the character-ID painter order."""
+    config = TerminalConfig._build_config()
+    config.ignore_terminal_dimensions = True
+    terminal = Terminal(input_data="A", config=config)
+    input_character = terminal.get_characters()[0]
+    helper = terminal.add_character("B", input_character.input_coord)
+    terminal.set_character_visibility(helper, is_visible=True)
+    terminal.set_character_visibility(input_character, is_visible=True)
+    terminal.set_character_visibility(helper, is_visible=False)
+    terminal.set_character_visibility(helper, is_visible=True)
+
+    assert helper.character_id > input_character.character_id
+    assert terminal.get_formatted_output_string() == "B"
+
+
+def test_terminal_same_layer_added_character_paints_over_fill_character() -> None:
+    """A higher-ID helper should paint over a same-layer fill character."""
+    config = TerminalConfig._build_config()
+    config.canvas_width = 2
+    config.ignore_terminal_dimensions = True
+    terminal = Terminal(input_data="A", config=config)
+    fill_character = terminal.get_character_by_input_coord(Coord(2, 1))
+    assert fill_character is not None
+    helper = terminal.add_character("B", Coord(2, 1))
+    terminal.set_character_visibility(helper, is_visible=True)
+    terminal.set_character_visibility(fill_character, is_visible=True)
+
+    assert helper.character_id > fill_character.character_id
+    assert terminal.get_formatted_output_string() == " B"
+
+
+def test_terminal_layer_precedence_overrides_character_id_order() -> None:
+    """A higher layer should win even when its character has the lower ID."""
+    config = TerminalConfig._build_config()
+    config.ignore_terminal_dimensions = True
+    terminal = Terminal(input_data="A", config=config)
+    input_character = terminal.get_characters()[0]
+    helper = terminal.add_character("B", input_character.input_coord)
+    input_character.layer = 1
+    terminal.set_character_visibility(input_character, is_visible=True)
+    terminal.set_character_visibility(helper, is_visible=True)
+
+    assert helper.character_id > input_character.character_id
+    assert terminal.get_formatted_output_string() == "A"
+
+
 def test_terminal_input_character_uses_input_preexisting_colors() -> None:
     config = TerminalConfig._build_config()
     config.existing_color_handling = "always"

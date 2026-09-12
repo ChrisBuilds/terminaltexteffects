@@ -404,7 +404,8 @@ class EffectCharacter:
         animation (animation.Animation): The animation object that controls the character's appearance.
         motion (motion.Motion): The motion object that controls the character's movement.
         event_handler (EventHandler): The event handler object that handles events related to the character.
-        layer (int): The layer of the character. The layer determines the order in which characters are printed.
+        layer (int): The layer of the character. Lower layers are painted first. When characters on the same layer
+            collide, the character with the higher `character_id` is painted last and wins the collision.
         is_fill_character (bool): Whether the character is a fill character. Fill characters are used to fill
             the empty cells of the Canvas.
         uses_input_preexisting_colors (bool): Whether engine-level `existing_color_handling="always"` should treat

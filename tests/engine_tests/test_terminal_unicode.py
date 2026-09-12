@@ -110,6 +110,19 @@ def test_single_cell_helper_overwrites_entire_lower_layer_wide_symbol() -> None:
     assert terminal.get_formatted_output_string() == " X"
 
 
+def test_same_layer_single_cell_helper_overwrites_entire_wide_symbol() -> None:
+    """A higher-ID same-layer helper should clear the complete lower-ID wide footprint."""
+    terminal = _make_terminal("界A")
+    _show_input_characters(terminal)
+    wide_character = terminal.get_characters()[0]
+    helper = terminal.add_character("B", Coord(2, 1))
+    terminal.set_character_visibility(helper, is_visible=True)
+    terminal.set_character_visibility(wide_character, is_visible=True)
+
+    assert helper.character_id > wide_character.character_id
+    assert terminal.get_formatted_output_string() == " BA"
+
+
 @pytest.mark.parametrize("symbol", ["", "AB", "e\u0301", "👩‍💻"])
 def test_terminal_add_character_rejects_unsupported_symbols(symbol: str) -> None:
     """Helper characters should enforce the shared symbol contract."""

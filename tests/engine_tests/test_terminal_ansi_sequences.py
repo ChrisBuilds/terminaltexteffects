@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Literal
 import pytest
 
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
+from terminaltexteffects.utils.argutils import ColorSort
 from terminaltexteffects.utils.exceptions import UnsupportedAnsiSequenceError
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
@@ -421,6 +422,57 @@ def test_terminal_keeps_colored_spaces_as_sparse_input_characters() -> None:
     assert terminal.get_characters()[0].animation.input_fg_color == Color(1)
     assert terminal.get_characters()[1].animation.input_bg_color == Color(4)
     assert terminal.get_character_by_input_coord(Coord(2, 1)).is_fill_character is True  # type: ignore[union-attr]
+
+
+def test_terminal_input_colors_exclude_overwritten_characters() -> None:
+    """Color frequencies should reflect only the final character occupying each virtual cell."""
+    terminal = _make_terminal("\x1b[31mA\x1b[1G\x1b[32mB")
+
+    assert terminal.get_input_colors() == [Color(2)]
+
+
+def test_terminal_input_colors_exclude_colors_erased_by_unstyled_overwrite() -> None:
+    """An unstyled overwrite should remove the previous cell's color from the frequency map."""
+    terminal = _make_terminal("\x1b[31mA\x1b[1G\x1b[39mB")
+
+    assert terminal.get_input_colors() == []
+
+
+def test_terminal_input_color_frequency_counts_foreground_and_background_channels() -> None:
+    """Foreground and background occurrences should each contribute to color frequency."""
+    terminal = _make_terminal("\x1b[31;44mA\x1b[39mB")
+
+    assert terminal.get_input_colors() == [Color(4), Color(1)]
+    assert terminal.get_input_colors(sort=ColorSort.LEAST_TO_MOST) == [Color(1), Color(4)]
+
+
+def test_terminal_input_color_frequency_ties_preserve_first_appearance() -> None:
+    """Stable frequency sorting should resolve ties by retained first appearance."""
+    terminal = _make_terminal("\x1b[31mA\x1b[32mB")
+
+    assert terminal.get_input_colors() == [Color(1), Color(2)]
+    assert terminal.get_input_colors(sort=ColorSort.LEAST_TO_MOST) == [Color(1), Color(2)]
+
+
+def test_terminal_input_colors_exclude_characters_clipped_from_canvas() -> None:
+    """Colors used only outside the configured canvas should not be exposed to effects."""
+    config = TerminalConfig._build_config()
+    config.canvas_width = 1
+    config.canvas_height = 1
+    config.ignore_terminal_dimensions = True
+    terminal = Terminal("A\x1b[31mB", config)
+
+    assert [character.input_symbol for character in terminal.get_characters()] == ["A"]
+    assert terminal.get_input_colors() == []
+
+
+def test_terminal_reprocessing_does_not_accumulate_input_color_frequency() -> None:
+    """Private parsing alone should not mutate colors derived from installed input characters."""
+    terminal = _make_terminal("\x1b[31mA")
+
+    terminal._preprocess_input_data("\x1b[32mB")
+
+    assert terminal.get_input_colors() == [Color(1)]
 
 
 def test_terminal_mixed_layout_style_fixture_preserves_sparse_layout_and_ids() -> None:

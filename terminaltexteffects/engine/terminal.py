@@ -15,7 +15,9 @@ import shutil
 import sys
 import time
 import typing
+from bisect import bisect_left
 from dataclasses import dataclass
+from operator import attrgetter
 from typing import Literal
 
 from terminaltexteffects.engine.base_character import EffectCharacter
@@ -31,6 +33,9 @@ from terminaltexteffects.utils.exceptions import (
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
 from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
+
+_CHARACTER_ID_KEY = attrgetter("_character_id")
+_LAYER_KEY = attrgetter("layer")
 
 
 @dataclass
@@ -661,7 +666,6 @@ class Terminal:
         if not input_data:
             input_data = "No Input."
         self._next_character_id = 0
-        self._input_colors_frequency: dict[Color, int] = {}
         self._preprocessed_character_columns: dict[EffectCharacter, int] = {}
         self._preprocessed_line_widths: list[int] = []
         self._preprocessed_character_lines = self._preprocess_input_data(input_data)
@@ -690,6 +694,11 @@ class Terminal:
             for character in self._setup_input_characters()
             if character.input_coord.row <= self.canvas.top and character.input_coord.column <= self.canvas.right
         ]
+        self._input_colors_frequency: dict[Color, int] = {}
+        for character in self._input_characters:
+            for color in (character.animation.input_fg_color, character.animation.input_bg_color):
+                if color is not None:
+                    self._input_colors_frequency[color] = self._input_colors_frequency.get(color, 0) + 1
         self._added_characters: list[EffectCharacter] = []
         self.character_by_input_coord: dict[Coord, EffectCharacter] = {
             (character.input_coord): character for character in self._input_characters
@@ -704,6 +713,7 @@ class Terminal:
         self._character_by_occupied_coord.update(self._input_character_continuations)
         self._setup_character_neighbors()
         self._visible_characters: set[EffectCharacter] = set()
+        self._visible_characters_by_id: list[EffectCharacter] = []
         self._frame_rate = self.config.frame_rate
         self._last_time_printed = time.monotonic()
         self._update_terminal_state()
@@ -903,7 +913,6 @@ class Terminal:
                 color = active_colors[sequence_type]
                 if sequence and color:
                     character._input_ansi_sequences[sequence_type] = sequence
-                    self._input_colors_frequency[color] = self._input_colors_frequency.get(color, 0) + 1
                     if sequence_type == "fg_color":
                         character.animation.input_fg_color = color
                     else:
@@ -1321,7 +1330,11 @@ class Terminal:
         return character
 
     def get_input_colors(self, sort: ColorSort = ColorSort.MOST_TO_LEAST) -> list[Color]:
-        """Get colors derived from supported input color sequences with an optional sort.
+        """Get colors used by retained input characters with an optional sort.
+
+        Foreground and background occurrences are counted separately after cursor
+        overwrites, text anchoring, and canvas clipping. Equal-frequency colors retain
+        their first-appearance order unless random sorting is requested.
 
         Args:
             sort (ColorSort, optional): Sort order for the colors.
@@ -1331,7 +1344,7 @@ class Terminal:
             InvalidColorSortError: If an invalid sort option is provided.
 
         Returns:
-            list[Color]: Input colors tracked during preprocessing.
+            list[Color]: Colors used by input characters retained within the canvas.
 
         """
         if sort == ColorSort.MOST_TO_LEAST:
@@ -1602,9 +1615,22 @@ class Terminal:
         """
         character._is_visible = is_visible
         if is_visible:
-            self._visible_characters.add(character)
-        else:
-            self._visible_characters.discard(character)
+            if character not in self._visible_characters:
+                self._visible_characters.add(character)
+                insertion_index = bisect_left(
+                    self._visible_characters_by_id,
+                    character._character_id,
+                    key=_CHARACTER_ID_KEY,
+                )
+                self._visible_characters_by_id.insert(insertion_index, character)
+        elif character in self._visible_characters:
+            self._visible_characters.remove(character)
+            character_index = bisect_left(
+                self._visible_characters_by_id,
+                character._character_id,
+                key=_CHARACTER_ID_KEY,
+            )
+            self._visible_characters_by_id.pop(character_index)
 
     def get_formatted_output_string(self) -> str:
         """Get the formatted output string based on the current terminal state.
@@ -1623,12 +1649,13 @@ class Terminal:
         """Rebuild the internal representation of the visible terminal state.
 
         A blank buffer covering the visible terminal area is created, then visible
-        characters are rendered into it in ascending layer order using their current
-        motion coordinates adjusted by the canvas offsets. Characters outside the visible
-        bounds are skipped.
+        characters are rendered using their current motion coordinates adjusted by the
+        canvas offsets. Lower layers are painted first; characters on the same layer are
+        painted in ascending character-ID order, so the highest ID wins a collision.
+        Characters outside the visible bounds are skipped.
         """
         rows = [[" " for _ in range(self.visible_right)] for _ in range(self.visible_top)]
-        visible_characters = sorted(self._visible_characters, key=lambda c: c.layer)
+        visible_characters = sorted(self._visible_characters_by_id, key=_LAYER_KEY)
         if all(character.animation.current_character_visual.cell_width == 1 for character in visible_characters):
             for character in visible_characters:
                 row = character.motion.current_coord.row + self.canvas_row_offset
