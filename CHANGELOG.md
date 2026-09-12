@@ -90,6 +90,9 @@
 * Color - RGB channel tuples are now parsed once per immutable `Color` and reused by gradient and color-shift
   interpolation. Both APIs use nearest, ties-to-even channel rounding, and the unused global color-shift cache has
   been removed.
+* Graphics documentation now reflects `Color` specification-based equality, canonical `ColorPair` fields, `Gradient`
+  iteration and transition-count semantics, loop closure, fractional lookup, coordinate endpoints, and validation
+  errors, with examples for single-channel color pairs and coordinate mappings.
 
 #### Effects Changes (0.16.0)
 

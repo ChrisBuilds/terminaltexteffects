@@ -201,23 +201,21 @@ def _interpolate_rgb(
 class Gradient:
     """A Gradient is a list of `Color` objects transitioning from one color stop to another.
 
-    The gradient color list is calculated using linear interpolation based on the provided start and end colors
-    and the number of steps. Gradients can be iterated over to get the next color in the gradient color list.
-    If there is only one color in the stops list, the gradient contains that color once because there are no
-    transitions to generate.
-
-    If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps for the pair
-    based on the order of stops and steps.
+    The spectrum is calculated using linear interpolation between adjacent stops. Iteration and indexing return
+    `Color` objects. If there is only one stop, the gradient contains that color once because there are no transitions.
 
     Ex: stops = ("ffffff", "aaaaaa", "000000"), steps = (6, 3)
 
-    "fffffff" -> (6 steps) -> "aaaaaa" -> (3 steps) -> "000000"
+    "ffffff" -> (6 transitions) -> "aaaaaa" -> (3 transitions) -> "000000"
 
     A step count is the number of transitions between a pair of adjacent stops. Total number of colors in a
     multi-stop gradient spectrum is the sum of the effective step counts plus 1. A single integer applies to every
     transition. A tuple assigns counts in order; if it contains fewer values than transitions, its last value is
     repeated. When transitions exist, a tuple cannot contain more values than there are transitions. For a single-stop
     gradient, step values are validated but tuple cardinality does not change the one-color spectrum.
+
+    With `loop=True` and multiple stops, a closing transition is generated from the last stop back to the first, and
+    the first stop is repeated as the final spectrum color.
 
     Attributes:
         spectrum (list[Color]): The generated `Color` objects. Multi-stop gradients contain
@@ -240,18 +238,19 @@ class Gradient:
             stops (Color): One or more `Color` objects representing the color stops.
             steps (int | tuple[int, ...], optional): Number of transitions or a tuple of transition counts for
                 generating the spectrum. A single value is repeated for every adjacent stop pair. Defaults to 1.
-            loop (bool, optional): Loop the gradient. This causes the final gradient color to transition back to the
-                first gradient color. Defaults to False.
+            loop (bool, optional): Add a closing transition from the final stop back to the first when multiple stops
+                are present. The first stop is repeated as the final spectrum color. Defaults to False.
 
         Raises:
             TypeError: If any stop is not a `Color`.
-            ValueError: If no color stops are provided or any step count is invalid.
+            ValueError: If no color stops are provided, a step count is invalid, or a steps tuple has more entries
+                than the gradient has transitions.
 
         Attributes:
             _stops (tuple[Color]): Tuple of Color objects representing the color stops.
-            _steps (int | tuple[int, ...]): Number of steps or a tuple of step values for generating the spectrum.
-            _loop (bool): Loop the gradient. This causes the final gradient color to transition back to the
-                first gradient color.
+            _steps (int | tuple[int, ...]): Transition count or tuple of transition counts used to generate the
+                spectrum.
+            _loop (bool): Whether to generate a closing transition back to the first stop.
             spectrum (list[Color]): List of generated `Color` objects representing the spectrum.
 
         Returns:
@@ -318,21 +317,15 @@ class Gradient:
         return self.spectrum[spectrum_index]
 
     def _generate(self, steps: tuple[int, ...]) -> list[Color]:
-        """Calculate a gradient of colors between two colors using linear interpolation.
+        """Generate the spectrum by interpolating between adjacent stops.
 
-        If there is only one color in the stops tuple, the gradient contains that color once.
+        If there is only one stop, the spectrum contains that color once. Otherwise, each value in `steps` is the
+        number of transitions for its corresponding adjacent stop pair. Looping gradients include the closing pair
+        from the final stop back to the first.
 
-        If multiple steps are given, the gradient between pairs of colors will be equal to the number of steps
-        for the pair based on the order of stops and steps.
-
-        Ex: stops = ("ffffff", "aaaaaa", "000000"), steps = (6, 3)
-        Distance from "ffffff" to "aaaaaa" = 6 steps (7 colors including start and end)
-        Distance from "aaaaaa" to "000000" = 3 steps (4 colors including start and end)
-        Total colors in the gradient spectrum = 10 ("aaaaaa" is not repeated when transitioning from
-        "ffffff" to "aaaaaa" and from "aaaaaa" to "000000")
-
-        A step count is the number of transitions between a pair. Total number of colors in a multi-stop gradient
-        spectrum is `sum(steps) + 1`.
+        For example, stops `("ffffff", "aaaaaa", "000000")` with effective transition counts `(6, 3)` produce ten
+        colors: seven across the first pair and four across the second, with the shared `"aaaaaa"` stop included once.
+        In general, a multi-stop spectrum contains `sum(steps) + 1` colors.
 
         Returns:
             list[Color]: Generated colors. The first and last colors are the start and end stops, respectively.
@@ -478,7 +471,8 @@ def shift_color_towards(color: Color, target_color: Color, factor: float) -> Col
     """Shift one color towards another by a given factor.
 
     A factor of `0` returns the original color and a factor of `1` returns the
-    target color. The factor must be between `0` and `1`, inclusive.
+    target color. The factor must be finite and between `0` and `1`, inclusive. RGB channels use nearest,
+    ties-to-even rounding, matching `Gradient` generation.
 
     Args:
         color (Color): The original color.
@@ -489,7 +483,7 @@ def shift_color_towards(color: Color, target_color: Color, factor: float) -> Col
         Color: The resulting color after shifting.
 
     Raises:
-        ValueError: If `factor` is outside the inclusive range from `0` to `1`.
+        ValueError: If `factor` is non-finite or outside the inclusive range from `0` to `1`.
 
     """
     if not 0 <= factor <= 1:
