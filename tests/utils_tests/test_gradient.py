@@ -10,6 +10,7 @@ from typing import cast
 import pytest
 
 from terminaltexteffects.engine.motion import Coord
+from terminaltexteffects.utils import geometry
 from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient, random_color, shift_color_towards
 
 # Test names provide the documentation for straightforward single-assertion cases.
@@ -455,6 +456,61 @@ def test_gradient_build_coordinate_color_mapping_samples_entire_spectrum() -> No
     coordinate_map = gradient.build_coordinate_color_mapping(1, 1, 1, 5, Gradient.Direction.HORIZONTAL)
 
     assert [coordinate_map[Coord(column, 1)] for column in range(1, 6)] == gradient.spectrum
+
+
+@pytest.mark.parametrize(
+    ("direction", "expected_lookups"),
+    [
+        (Gradient.Direction.HORIZONTAL, 6),
+        (Gradient.Direction.VERTICAL, 4),
+        (Gradient.Direction.DIAGONAL, 24),
+        (Gradient.Direction.RADIAL, 24),
+    ],
+)
+def test_gradient_coordinate_mapping_lookup_count_does_not_scale_with_spectrum_length(
+    monkeypatch: pytest.MonkeyPatch,
+    direction: Gradient.Direction,
+    expected_lookups: int,
+) -> None:
+    """Perform one constant-time color lookup per axis position or output coordinate."""
+    gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=4096)
+    original_lookup = gradient.get_color_at_fraction
+    lookup_count = 0
+
+    def counted_lookup(fraction: float) -> Color:
+        nonlocal lookup_count
+        lookup_count += 1
+        return original_lookup(fraction)
+
+    monkeypatch.setattr(gradient, "get_color_at_fraction", counted_lookup)
+
+    coordinate_map = gradient.build_coordinate_color_mapping(1, 4, 1, 6, direction)
+
+    assert len(coordinate_map) == 24
+    assert lookup_count == expected_lookups
+
+
+@pytest.mark.parametrize("direction", [Gradient.Direction.DIAGONAL, Gradient.Direction.RADIAL])
+def test_gradient_per_cell_mapping_matches_direct_spectrum_quantization(direction: Gradient.Direction) -> None:
+    """Map every radial and diagonal cell to the nearest precomputed spectrum sample."""
+    gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=128)
+    bounds = (3, 7, 5, 11)
+    min_row, max_row, min_column, max_column = bounds
+
+    coordinate_map = gradient.build_coordinate_color_mapping(*bounds, direction)
+
+    for coord, color in coordinate_map.items():
+        if direction is Gradient.Direction.RADIAL:
+            fraction = geometry.find_normalized_distance_from_center(*bounds, coord)
+        else:
+            row_span = max_row - min_row
+            column_span = max_column - min_column
+            diagonal_span = (row_span * geometry.TERMINAL_ROW_SCALE) + column_span
+            fraction = (
+                ((coord.row - min_row) * geometry.TERMINAL_ROW_SCALE) + (coord.column - min_column)
+            ) / diagonal_span
+        expected_index = round(fraction * (len(gradient.spectrum) - 1))
+        assert color == gradient.spectrum[expected_index]
 
 
 @pytest.mark.parametrize(
