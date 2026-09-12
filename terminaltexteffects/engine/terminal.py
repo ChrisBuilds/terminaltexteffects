@@ -505,7 +505,18 @@ class Canvas:
             bool: whether the coordinate is within the text boundary
 
         """
-        return self.text_left <= coord.column <= self.text_right and self.text_bottom <= coord.row <= self.text_top
+        return (
+            self.text_width > 0
+            and self.text_height > 0
+            and self.text_left <= coord.column <= self.text_right
+            and self.text_bottom <= coord.row <= self.text_top
+        )
+
+    def _require_nonempty_text_boundary(self) -> None:
+        """Raise `ValueError` if the canvas has no text boundary."""
+        if not self.text_width or not self.text_height:
+            msg = "Cannot select a random position from an empty text boundary."
+            raise ValueError(msg)
 
     def random_column(self, *, within_text_boundary: bool = False) -> int:
         """Get a random column position within the canvas.
@@ -517,8 +528,12 @@ class Canvas:
         Returns:
             int: a random column position within the canvas
 
+        Raises:
+            ValueError: If `within_text_boundary` is `True` and the text boundary is empty.
+
         """
         if within_text_boundary:
+            self._require_nonempty_text_boundary()
             return random.randint(self.text_left, self.text_right)
         return random.randint(self.left, self.right)
 
@@ -532,8 +547,12 @@ class Canvas:
         Returns:
             int: a random row position within the canvas
 
+        Raises:
+            ValueError: If `within_text_boundary` is `True` and the text boundary is empty.
+
         """
         if within_text_boundary:
+            self._require_nonempty_text_boundary()
             return random.randint(self.text_bottom, self.text_top)
         return random.randint(self.bottom, self.top)
 
@@ -559,6 +578,9 @@ class Canvas:
 
         Returns:
             Coord: A random coordinate. The coordinate is within the canvas unless `outside_scope` is `True`.
+
+        Raises:
+            ValueError: If `within_text_boundary` is `True`, `outside_scope` is `False`, and the text boundary is empty.
 
         """
         if outside_scope is True:

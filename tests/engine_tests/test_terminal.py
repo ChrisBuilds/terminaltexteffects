@@ -194,6 +194,7 @@ def test_canvas_anchor_empty_text_resets_bounds() -> None:
     assert canvas._anchor_text([], anchor="sw") == []
     assert (canvas.text_left, canvas.text_right, canvas.text_bottom, canvas.text_top) == (0, 0, 0, 0)
     assert (canvas.text_width, canvas.text_height, canvas.text_center) == (0, 0, Coord(0, 0))
+    assert not canvas.coord_is_in_text(Coord(0, 0))
 
 
 def test_canvas_coord_is_in_canvas() -> None:
@@ -280,6 +281,7 @@ def test_terminal_init_empty_text_region(input_data: str) -> None:
     assert (terminal.canvas.text_left, terminal.canvas.text_right) == (0, 0)
     assert (terminal.canvas.text_bottom, terminal.canvas.text_top) == (0, 0)
     assert not terminal.canvas.coord_is_in_text(Coord(1, 1))
+    assert not terminal.canvas.coord_is_in_text(Coord(0, 0))
 
 
 def test_terminal_init_fully_clipped_text_region() -> None:
@@ -290,6 +292,33 @@ def test_terminal_init_fully_clipped_text_region() -> None:
 
     assert terminal.get_characters() == []
     assert (terminal.canvas.text_width, terminal.canvas.text_height) == (0, 0)
+    assert not terminal.canvas.coord_is_in_text(Coord(0, 0))
+
+
+@pytest.mark.parametrize("method_name", ["random_column", "random_row", "random_coord"])
+@pytest.mark.parametrize(
+    ("input_data", "canvas_width"),
+    [("   ", -1), ("\x1b[0m", -1), ("   X", 1)],
+)
+def test_empty_text_boundary_rejects_random_selection(
+    method_name: str,
+    input_data: str,
+    canvas_width: int,
+) -> None:
+    config = TerminalConfig._build_config()
+    config.canvas_width = canvas_width
+    terminal = Terminal(input_data, config=config)
+
+    with pytest.raises(ValueError, match="empty text boundary"):
+        getattr(terminal.canvas, method_name)(within_text_boundary=True)
+
+
+def test_empty_text_boundary_does_not_affect_random_outside_selection() -> None:
+    canvas = Canvas(10, 10)
+
+    coord = canvas.random_coord(outside_scope=True, within_text_boundary=True)
+
+    assert not canvas.coord_is_in_canvas(coord)
 
 
 def test_terminal_init_no_input() -> None:

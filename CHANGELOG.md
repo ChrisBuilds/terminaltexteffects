@@ -112,6 +112,8 @@
 
 ---
 
+* Canvas empty text regions no longer contain the sentinel coordinate `(0, 0)`, and random text-boundary selection now
+  raises `ValueError` instead of returning an off-canvas coordinate.
 * Animation and terminal symbol entry points now consistently reject empty, multi-code-point, combining-only, and
   non-printable symbols with `InvalidSymbolError` instead of allowing malformed frames or applying inconsistent checks.
 * Terminal - Raw C0 controls other than tab, newline, and carriage return, plus DEL and C1 controls, are now rejected
