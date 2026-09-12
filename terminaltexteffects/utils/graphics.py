@@ -357,9 +357,21 @@ class Gradient:
         Returns:
             dict[geometry.Coord, Color]: A mapping of coordinates to `Color` objects.
 
+        Raises:
+            TypeError: If `direction` is not a `Gradient.Direction` or any coordinate bound is not a non-boolean
+                integer.
+            ValueError: If any coordinate bound is less than one or a minimum bound exceeds its maximum.
+
         """
-        if any(value < 1 for value in (max_row, max_column, min_row, min_column)):
-            msg = "max_row and max_column must be greater than 0."
+        if not isinstance(direction, Gradient.Direction):
+            msg = "direction must be a Gradient.Direction."
+            raise TypeError(msg)
+        bounds = (min_row, max_row, min_column, max_column)
+        if any(isinstance(value, bool) or not isinstance(value, int) for value in bounds):
+            msg = "Coordinate bounds must be non-boolean integers."
+            raise TypeError(msg)
+        if any(value < 1 for value in bounds):
+            msg = "Coordinate bounds must be greater than 0."
             raise ValueError(msg)
         if min_row > max_row or min_column > max_column:
             msg = "min_row and min_column must be less than or equal to max_row and max_column."

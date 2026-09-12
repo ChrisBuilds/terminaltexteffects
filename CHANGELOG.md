@@ -164,6 +164,8 @@
   unused tuple step values are rejected when transitions exist, invalid stops fail at construction, and loop
   generation no longer mutates the stored source stops. Single-stop gradients continue accepting configuration step
   tuples of any length, with each value validated.
+* Gradient - Coordinate color mapping now rejects unsupported directions and non-integer or boolean bounds with clear
+  `TypeError`s instead of returning an empty map or failing through incidental arithmetic behavior.
 * ColorPair - Standardized the immutable value object's stored fields, dataclass introspection, serialization, pattern
   matching, constructor, and representation on `fg` and `bg`. The incoherent `fg_color` and `bg_color` attributes were
   removed; callers should use `fg` and `bg`.

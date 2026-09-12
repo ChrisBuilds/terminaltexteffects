@@ -496,6 +496,48 @@ def test_gradient_build_coordinate_color_mapping_max_less_than_min() -> None:
         g.build_coordinate_color_mapping(10, 1, 10, 1, Gradient.Direction.HORIZONTAL)
 
 
+@pytest.mark.parametrize("direction", [None, "horizontal", 1, True, object()])
+def test_gradient_build_coordinate_color_mapping_rejects_invalid_direction(direction: object) -> None:
+    gradient = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
+
+    with pytest.raises(TypeError, match=r"direction must be a Gradient\.Direction"):
+        gradient.build_coordinate_color_mapping(
+            1,
+            2,
+            1,
+            2,
+            cast("Gradient.Direction", direction),
+        )
+
+
+@pytest.mark.parametrize(
+    ("min_row", "max_row", "min_column", "max_column"),
+    [
+        (True, 2, 1, 2),
+        (1, False, 1, 2),
+        (1, 2.0, 1, 2),
+        (1, 2, "1", 2),
+        (1, 2, 1, None),
+    ],
+)
+def test_gradient_build_coordinate_color_mapping_rejects_invalid_bound_types(
+    min_row: object,
+    max_row: object,
+    min_column: object,
+    max_column: object,
+) -> None:
+    gradient = Gradient(Color("#ffffff"), Color("#000000"), steps=4)
+
+    with pytest.raises(TypeError, match="Coordinate bounds must be non-boolean integers"):
+        gradient.build_coordinate_color_mapping(
+            cast("int", min_row),
+            cast("int", max_row),
+            cast("int", min_column),
+            cast("int", max_column),
+            Gradient.Direction.HORIZONTAL,
+        )
+
+
 def test_color_invalid_xterm_color() -> None:
     with pytest.raises(ValueError, match="Invalid color value"):
         Color(256)
