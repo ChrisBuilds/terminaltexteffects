@@ -69,6 +69,8 @@
 * Terminal input preprocessing now keeps unstyled gaps sparse instead of materializing temporary blank
   `EffectCharacter` instances. Logical columns, wrapping, styled spaces, and character ID progression are preserved,
   while fill characters continue to represent unstyled spaces on the canvas.
+* ANSI input parsing now rejects unsupported SGR styles and colon-form colors, validates color ranges and cursor
+  command arity, reports malformed numeric parameters consistently, and bounds cursor-created virtual layouts.
 * Column character grouping now buckets selected characters in one pass instead of rescanning every character for every
   canvas column, reducing grouping work for wide canvases.
 * Outside/middle character sorting now interleaves sorted characters with indexes instead of repeated front-pops,

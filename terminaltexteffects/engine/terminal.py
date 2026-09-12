@@ -642,6 +642,9 @@ class Terminal:
         r"(?:\x1b\][^\x07]*(?:\x07|\x1b\\))|(?:\x1b\[[0-?]*[ -/]*[@-~])|(?:\x1b.)",
     )
     csi_sequence_pattern: typing.ClassVar[re.Pattern[str]] = re.compile(r"\x1b\[([0-?]*)([ -/]*)([@-~])")
+    _MAX_CSI_PARAMETER = 9_999_999
+    _MAX_VIRTUAL_SCREEN_DIMENSION = 100_000
+    _MAX_VIRTUAL_SCREEN_CELLS = 1_000_000
 
     def __init__(self, input_data: str, config: TerminalConfig | None = None) -> None:
         """Initialize the Terminal.
@@ -727,14 +730,20 @@ class Terminal:
             color_ints = [int(color_code[index : index + 2], 16) for index in range(0, 6, 2)]
             return f"\x1b[{sequence_type};2;{color_ints[0]};{color_ints[1]};{color_ints[2]}m"
 
-        def parse_csi_parameters(parameters: str) -> list[int]:
-            """Parse CSI parameters, treating omitted values as zero."""
+        def parse_csi_parameters(parameters: str, sequence: str) -> list[int]:
+            """Parse bounded CSI parameters, treating omitted values as zero."""
             if any(char not in "0123456789;" for char in parameters):
-                msg = f"\x1b[{parameters}"
-                raise UnsupportedAnsiSequenceError(msg)
+                raise UnsupportedAnsiSequenceError(sequence)
             if not parameters:
                 return []
-            return [int(parameter) if parameter else 0 for parameter in parameters.split(";")]
+            parameter_fields = parameters.split(";")
+            max_parameter_digits = len(str(self._MAX_CSI_PARAMETER))
+            if any(len(parameter) > max_parameter_digits for parameter in parameter_fields):
+                raise UnsupportedAnsiSequenceError(sequence)
+            parsed_parameters = [int(parameter) if parameter else 0 for parameter in parameter_fields]
+            if any(parameter > self._MAX_CSI_PARAMETER for parameter in parsed_parameters):
+                raise UnsupportedAnsiSequenceError(sequence)
+            return parsed_parameters
 
         def apply_sgr_sequence(  # noqa: PLR0915
             sequence: str,
@@ -744,7 +753,7 @@ class Terminal:
             standard_fg_parameter: dict[str, int | None],
         ) -> None:
             """Apply supported SGR color parameters to the active input color state."""
-            parameters = parse_csi_parameters(sequence[2:-1])
+            parameters = parse_csi_parameters(sequence[2:-1], sequence)
             if not parameters:
                 parameters = [0]
             param_index = 0
@@ -798,12 +807,17 @@ class Terminal:
                         if param_index + 2 >= len(parameters):
                             raise UnsupportedAnsiSequenceError(sequence)
                         color_code: int | str = parameters[param_index + 2]
+                        if color_code > 255:
+                            raise UnsupportedAnsiSequenceError(sequence)
                         color = Color(color_code)
                         param_index += 2
                     elif color_mode == 2:  # SGR ...;2;r;g;b: 24-bit RGB color
                         if param_index + 4 >= len(parameters):
                             raise UnsupportedAnsiSequenceError(sequence)
-                        color_code = "".join(f"{parameters[param_index + offset]:02X}" for offset in range(2, 5))
+                        color_channels = parameters[param_index + 2 : param_index + 5]
+                        if any(channel > 255 for channel in color_channels):
+                            raise UnsupportedAnsiSequenceError(sequence)
+                        color_code = "".join(f"{channel:02X}" for channel in color_channels)
                         color = Color(color_code)
                         param_index += 4
                     else:
@@ -812,6 +826,8 @@ class Terminal:
                     active_colors[sequence_type] = color
                     if sequence_type == "fg_color":
                         standard_fg_parameter["fg_color"] = None
+                else:
+                    raise UnsupportedAnsiSequenceError(sequence)
                 param_index += 1
 
         def default_parameter(parameters: list[int]) -> int:
@@ -834,24 +850,40 @@ class Terminal:
                 raise UnsupportedAnsiSequenceError(sequence)
             if parameters_text.startswith("?"):
                 raise UnsupportedAnsiSequenceError(sequence)
-            parameters = parse_csi_parameters(parameters_text)
+            parameters = parse_csi_parameters(parameters_text, sequence)
             if final_byte == "A":  # CSI A: cursor up
+                if len(parameters) > 1:
+                    raise UnsupportedAnsiSequenceError(sequence)
                 row -= default_parameter(parameters)
             elif final_byte == "B":  # CSI B: cursor down
+                if len(parameters) > 1:
+                    raise UnsupportedAnsiSequenceError(sequence)
                 row += default_parameter(parameters)
             elif final_byte == "C":  # CSI C: cursor forward
+                if len(parameters) > 1:
+                    raise UnsupportedAnsiSequenceError(sequence)
                 column += default_parameter(parameters)
             elif final_byte == "D":  # CSI D: cursor back
+                if len(parameters) > 1:
+                    raise UnsupportedAnsiSequenceError(sequence)
                 column -= default_parameter(parameters)
             elif final_byte == "E":  # CSI E: cursor next line
+                if len(parameters) > 1:
+                    raise UnsupportedAnsiSequenceError(sequence)
                 row += default_parameter(parameters)
                 column = 0
             elif final_byte == "F":  # CSI F: cursor previous line
+                if len(parameters) > 1:
+                    raise UnsupportedAnsiSequenceError(sequence)
                 row -= default_parameter(parameters)
                 column = 0
             elif final_byte == "G":  # CSI G: cursor horizontal absolute
+                if len(parameters) > 1:
+                    raise UnsupportedAnsiSequenceError(sequence)
                 column = default_parameter(parameters) - 1
             elif final_byte in ("H", "f"):  # CSI H/f: cursor position / horizontal-vertical position
+                if len(parameters) > 2:
+                    raise UnsupportedAnsiSequenceError(sequence)
                 row = default_parameter(parameters) - 1
                 column = (parameters[1] if len(parameters) > 1 and parameters[1] else 1) - 1
             else:
@@ -917,8 +949,17 @@ class Terminal:
                         pass
                     else:
                         row, column = apply_cursor_sequence(sequence, row, column)
-                        max_row = max(max_row, row)
-                        max_column = max(max_column, column)
+                        prospective_max_row = max(max_row, row)
+                        prospective_max_column = max(max_column, column)
+                        if (
+                            prospective_max_row >= self._MAX_VIRTUAL_SCREEN_DIMENSION
+                            or prospective_max_column >= self._MAX_VIRTUAL_SCREEN_DIMENSION
+                            or (prospective_max_row + 1) * (prospective_max_column + 1)
+                            > self._MAX_VIRTUAL_SCREEN_CELLS
+                        ):
+                            raise UnsupportedAnsiSequenceError(sequence)
+                        max_row = prospective_max_row
+                        max_column = prospective_max_column
                 else:
                     raise UnsupportedAnsiSequenceError(sequence)
                 char_index = sequence_match.end()

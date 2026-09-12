@@ -179,6 +179,86 @@ def test_terminal_allows_supported_color_sequences() -> None:
 
 
 @pytest.mark.parametrize(
+    "sequence",
+    [
+        "\x1b[3m",
+        "\x1b[4m",
+        "\x1b[31;3m",
+        "\x1b[38:2::255:0:0m",
+        "\x1b[38;5;256m",
+        "\x1b[48;5;256m",
+        "\x1b[38;2;300;0;0m",
+        "\x1b[48;2;0;256;0m",
+        "\x1b[38m",
+        "\x1b[38;5m",
+        "\x1b[38;2;1;2m",
+    ],
+)
+def test_terminal_rejects_unsupported_or_malformed_sgr_sequences(sequence: str) -> None:
+    """Unsupported styles, forms, ranges, and truncated colors should use the terminal parser error."""
+    with pytest.raises(UnsupportedAnsiSequenceError) as exc_info:
+        _make_terminal(f"{sequence}A")
+
+    assert exc_info.value.sequence == sequence
+
+
+@pytest.mark.parametrize(
+    "sequence",
+    [
+        "\x1b[2;99A",
+        "\x1b[2;99B",
+        "\x1b[2;99C",
+        "\x1b[2;99D",
+        "\x1b[2;99E",
+        "\x1b[2;99F",
+        "\x1b[2;99G",
+        "\x1b[1;2;3H",
+        "\x1b[1;2;3f",
+    ],
+)
+def test_terminal_rejects_excess_cursor_parameters(sequence: str) -> None:
+    """Cursor commands should reject parameters beyond their defined arity."""
+    with pytest.raises(UnsupportedAnsiSequenceError) as exc_info:
+        _make_terminal(f"A{sequence}B")
+
+    assert exc_info.value.sequence == sequence
+
+
+def test_terminal_rejects_overlong_csi_parameter_with_parser_error() -> None:
+    """Very long numeric fields should not leak Python integer conversion errors."""
+    sequence = f"\x1b[{'9' * 5_000}C"
+
+    with pytest.raises(UnsupportedAnsiSequenceError) as exc_info:
+        _make_terminal(sequence)
+
+    assert exc_info.value.sequence == sequence
+
+
+@pytest.mark.parametrize(
+    "sequence",
+    [
+        "\x1b[100000C",
+        "\x1b[100000B",
+        "\x1b[100001G",
+        "\x1b[1001;1001H",
+    ],
+)
+def test_terminal_rejects_cursor_sequences_that_create_excessive_virtual_screens(sequence: str) -> None:
+    """Cursor movement should not be able to create impractically large virtual layouts."""
+    with pytest.raises(UnsupportedAnsiSequenceError) as exc_info:
+        _make_terminal(sequence)
+
+    assert exc_info.value.sequence == sequence
+
+
+def test_terminal_allows_large_cursor_movement_that_clamps_to_origin() -> None:
+    """Large backward and upward movement should remain safe because it cannot grow the screen."""
+    terminal = _make_terminal("AB\x1b[9999999D\x1b[9999999AX")
+
+    assert _line_symbols(terminal) == ["XB"]
+
+
+@pytest.mark.parametrize(
     ("sequence", "expected_fg", "expected_bg"),
     [
         ("\x1b[30ma", Color(0), None),
