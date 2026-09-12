@@ -846,6 +846,9 @@ class Terminal:
                 char_index += 1
             else:
                 symbol = input_data[char_index]
+                codepoint = ord(symbol)
+                if symbol != "\t" and (codepoint < 0x20 or 0x7F <= codepoint <= 0x9F):
+                    raise UnsupportedAnsiSequenceError(symbol)
                 if symbol == "\t":
                     symbol = " "
                     spaces_to_next_tab = self.config.tab_width - (column % self.config.tab_width)

@@ -17,6 +17,12 @@ if TYPE_CHECKING:
 
 pytestmark = [pytest.mark.engine, pytest.mark.terminal, pytest.mark.smoke]
 
+UNSUPPORTED_CONTROL_CODEPOINTS = tuple(
+    codepoint
+    for codepoint in (*range(0x20), 0x7F, *range(0x80, 0xA0))
+    if codepoint not in (ord("\t"), ord("\n"), ord("\r"))
+)
+
 
 def _make_terminal(
     input_data: str,
@@ -69,6 +75,42 @@ def test_terminal_rejects_unsupported_ansi_sequences(input_data: str) -> None:
 
     with pytest.raises(UnsupportedAnsiSequenceError):
         Terminal(input_data=input_data, config=config)
+
+
+@pytest.mark.parametrize(
+    "codepoint",
+    [pytest.param(codepoint, id=f"U+{codepoint:04X}") for codepoint in UNSUPPORTED_CONTROL_CODEPOINTS],
+)
+def test_terminal_rejects_raw_control_characters(codepoint: int) -> None:
+    """Raw C0, DEL, and C1 controls should fail before they can become input characters."""
+    control = chr(codepoint)
+
+    with pytest.raises(UnsupportedAnsiSequenceError) as exc_info:
+        _make_terminal(f"A{control}")
+
+    assert exc_info.value.sequence == control
+
+
+@pytest.mark.parametrize(
+    "input_data",
+    [
+        pytest.param("\x00\x1b[31mA", id="control-before-sgr"),
+        pytest.param("\x1b[31mA\x07", id="control-after-sgr"),
+        pytest.param("\x1b[31mA\x1b[0m\x7f", id="control-after-reset"),
+        pytest.param("\x1b[31m\x9bA", id="c1-csi-after-sgr"),
+    ],
+)
+def test_terminal_rejects_raw_controls_around_valid_sgr_sequences(input_data: str) -> None:
+    """Valid SGR state should not allow adjacent raw control characters into input."""
+    with pytest.raises(UnsupportedAnsiSequenceError):
+        _make_terminal(input_data)
+
+
+def test_terminal_preserves_supported_structural_controls() -> None:
+    """Tab, newline, and carriage return should retain their deliberate layout behavior."""
+    terminal = _make_terminal("A\tB\nC\rD")
+
+    assert _line_symbols(terminal) == ["A   B", "D"]
 
 
 @pytest.mark.parametrize("sequence", ["\x1b[?25l", "\x1b[?25h", "\x1b[?7l", "\x1b[?7h"])

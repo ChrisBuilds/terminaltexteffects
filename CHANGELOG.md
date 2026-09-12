@@ -107,6 +107,8 @@
 
 ---
 
+* Terminal - Raw C0 controls other than tab, newline, and carriage return, plus DEL and C1 controls, are now rejected
+  before character creation so unsupported control bytes cannot reach rendered frames.
 * Configuration - Fixed CLI help displaying Python representations for defaults such as colors, enums, gradients,
   easing functions, and ranges. Defaults now use their valid command-line syntax and enum arguments list all accepted
   options.
