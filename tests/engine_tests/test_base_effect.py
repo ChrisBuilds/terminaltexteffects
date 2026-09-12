@@ -34,6 +34,7 @@ class _TestEffect(BaseEffect[BaseConfig]):
 @pytest.mark.parametrize(
     ("input_data", "canvas_width"),
     [
+        pytest.param("", None, id="empty"),
         pytest.param("   ", None, id="whitespace-only"),
         pytest.param("\x1b[0m", None, id="ansi-only"),
         pytest.param("   X", 1, id="fully-clipped"),

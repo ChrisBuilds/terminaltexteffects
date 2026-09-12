@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 import pytest
 
 from terminaltexteffects.effects import effect_colorshift, effect_matrix, effect_thunderstorm
+from terminaltexteffects.utils.exceptions import EmptyInputError
 
 if TYPE_CHECKING:
     from terminaltexteffects.engine.base_effect import BaseEffect
@@ -38,7 +39,7 @@ def _print_visual_test_parameters(test_name: str, **parameters: str) -> None:
 @pytest.mark.effects
 @pytest.mark.parametrize(
     "input_data",
-    ["empty", "single_char", "single_column", "single_row", "medium", "tabs", "color_sequences"],
+    ["single_char", "single_column", "single_row", "medium", "tabs", "color_sequences"],
     indirect=True,
 )
 def test_effect(
@@ -58,6 +59,14 @@ def test_effect(
     with effect_instance.terminal_output() as terminal:
         for frame in effect_instance:
             terminal.print(frame)
+
+
+@pytest.mark.smoke
+@pytest.mark.effects
+def test_effect_rejects_empty_input(effect: type[BaseEffect[Any]]) -> None:
+    """Every effect should expose the library's consistent empty-input error."""
+    with pytest.raises(EmptyInputError, match="no visible characters"):
+        iter(effect(""))
 
 
 @pytest.mark.smoke

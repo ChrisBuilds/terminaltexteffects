@@ -206,6 +206,23 @@ def test_main_unsupported_ansi_sequence_exits_with_error(
     assert "\\x1b[2J" in captured.err
 
 
+@pytest.mark.parametrize("input_data", ["", " \t\n"])
+def test_main_empty_input_is_silent_success(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    input_data: str,
+) -> None:
+    """Empty and whitespace-only input should exit before rendering without output."""
+    monkeypatch.setattr(__main__.sys, "argv", ["tte", "rain"])
+    monkeypatch.setattr(__main__.Terminal, "get_piped_input", lambda: input_data)
+
+    __main__.main()
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
+
+
 @pytest.mark.parametrize(
     ("arguments", "input_data"),
     [

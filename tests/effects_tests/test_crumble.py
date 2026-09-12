@@ -13,7 +13,7 @@ def _make_terminal_config(existing_color_handling: str) -> TerminalConfig:
 
 
 @pytest.mark.parametrize(
-    "input_data", ["empty", "single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
+    "input_data", ["single_char", "single_column", "single_row", "medium", "tabs"], indirect=True
 )
 def test_crumble_effect(input_data, terminal_config_default_no_framerate) -> None:
     effect = effect_crumble.Crumble(input_data)

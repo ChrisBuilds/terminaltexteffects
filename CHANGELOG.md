@@ -75,6 +75,9 @@
   and canvas clipping instead of counting discarded parser intermediates.
 * Rendering collisions now use a deterministic painter order: higher layers win, followed by higher character IDs
   when layers are equal.
+* Empty terminal input no longer expands to the placeholder text `No Input.`. `Terminal` now exposes an empty text
+  region on its minimal one-cell canvas, while trailing unstyled spaces, blank lines, and cursor-only gaps are
+  deliberately excluded from automatic input geometry; leading/internal gaps and styled spaces remain significant.
 * Column character grouping now buckets selected characters in one pass instead of rescanning every character for every
   canvas column, reducing grouping work for wide canvases.
 * Outside/middle character sorting now interleaves sorted characters with indexes instead of repeated front-pops,
@@ -120,6 +123,8 @@
 
 * Canvas empty text regions no longer contain the sentinel coordinate `(0, 0)`, and random text-boundary selection now
   raises `ValueError` instead of returning an off-canvas coordinate.
+* The CLI now treats empty and whitespace-only input as a successful no-op, emitting no status text or terminal
+  control sequences.
 * Animation and terminal symbol entry points now consistently reject empty, multi-code-point, combining-only, and
   non-printable symbols with `InvalidSymbolError` instead of allowing malformed frames or applying inconsistent checks.
 * Terminal - Raw C0 controls other than tab, newline, and carriage return, plus DEL and C1 controls, are now rejected

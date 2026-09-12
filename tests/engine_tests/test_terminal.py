@@ -272,7 +272,7 @@ def test_terminal_init_with_config() -> None:
     assert terminal.config.frame_rate == 10
 
 
-@pytest.mark.parametrize("input_data", ["   ", "\x1b[0m"])
+@pytest.mark.parametrize("input_data", ["", "   ", "\x1b[0m", "\x1b[31m"])
 def test_terminal_init_empty_text_region(input_data: str) -> None:
     """Verify Terminal supports text that produces no visible input characters."""
     terminal = Terminal(input_data)
@@ -321,9 +321,94 @@ def test_empty_text_boundary_does_not_affect_random_outside_selection() -> None:
     assert not canvas.coord_is_in_canvas(coord)
 
 
-def test_terminal_init_no_input() -> None:
+def test_terminal_empty_input_uses_minimal_canvas_without_placeholder_text() -> None:
     terminal = Terminal(input_data="")
-    assert len(terminal.get_characters()) == 8
+
+    assert terminal.get_characters() == []
+    assert (terminal.canvas.width, terminal.canvas.height) == (1, 1)
+    assert (terminal.canvas.text_width, terminal.canvas.text_height) == (0, 0)
+
+
+def test_terminal_trims_trailing_unstyled_whitespace_from_geometry() -> None:
+    config = TerminalConfig._build_config()
+    config.ignore_terminal_dimensions = True
+
+    terminal = Terminal("A   \n\n", config=config)
+
+    assert (terminal.canvas.width, terminal.canvas.height) == (1, 1)
+    assert [(character.input_symbol, character.input_coord) for character in terminal.get_characters()] == [
+        ("A", Coord(1, 1)),
+    ]
+
+
+def test_terminal_preserves_leading_and_internal_unstyled_whitespace() -> None:
+    config = TerminalConfig._build_config()
+    config.ignore_terminal_dimensions = True
+
+    terminal = Terminal(" A B   \n\n", config=config)
+
+    assert (terminal.canvas.width, terminal.canvas.height) == (4, 1)
+    assert [(character.input_symbol, character.input_coord) for character in terminal.get_characters()] == [
+        ("A", Coord(2, 1)),
+        ("B", Coord(4, 1)),
+    ]
+
+
+def test_terminal_preserves_styled_trailing_space() -> None:
+    config = TerminalConfig._build_config()
+    config.ignore_terminal_dimensions = True
+
+    terminal = Terminal("A\x1b[41m ", config=config)
+
+    assert (terminal.canvas.width, terminal.canvas.height) == (2, 1)
+    assert [(character.input_symbol, character.input_coord) for character in terminal.get_characters()] == [
+        ("A", Coord(1, 1)),
+        (" ", Coord(2, 1)),
+    ]
+
+
+def test_terminal_preserves_styled_space_on_trailing_row() -> None:
+    config = TerminalConfig._build_config()
+    config.ignore_terminal_dimensions = True
+
+    terminal = Terminal("A\n\x1b[41m ", config=config)
+
+    assert (terminal.canvas.width, terminal.canvas.height) == (1, 2)
+    assert [(character.input_symbol, character.input_coord) for character in terminal.get_characters()] == [
+        ("A", Coord(1, 2)),
+        (" ", Coord(1, 1)),
+    ]
+
+
+def test_terminal_trims_trailing_cursor_movement_but_preserves_internal_gap() -> None:
+    config = TerminalConfig._build_config()
+    config.ignore_terminal_dimensions = True
+
+    trailing_movement = Terminal("A\x1b[3C", config=config)
+    internal_movement = Terminal("A\x1b[3CB", config=config)
+
+    assert (trailing_movement.canvas.width, trailing_movement.canvas.height) == (1, 1)
+    assert (internal_movement.canvas.width, internal_movement.canvas.height) == (5, 1)
+    assert [(character.input_symbol, character.input_coord) for character in internal_movement.get_characters()] == [
+        ("A", Coord(1, 1)),
+        ("B", Coord(5, 1)),
+    ]
+
+
+def test_terminal_wrap_and_anchor_use_trimmed_input_geometry() -> None:
+    config = TerminalConfig._build_config()
+    config.canvas_width = 3
+    config.canvas_height = 3
+    config.wrap_text = True
+    config.anchor_text = "ne"
+    config.ignore_terminal_dimensions = True
+
+    terminal = Terminal("AB   \n\n", config=config)
+
+    assert [(character.input_symbol, character.input_coord) for character in terminal.get_characters()] == [
+        ("A", Coord(2, 3)),
+        ("B", Coord(3, 3)),
+    ]
 
 
 def test_terminal_init_ignore_terminal_dimensions() -> None:

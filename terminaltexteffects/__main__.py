@@ -180,9 +180,9 @@ def main() -> None:
     """Run the terminaltexteffects command line interface.
 
     Parse CLI arguments, load input text, choose and configure the requested effect,
-    and stream rendered frames to the terminal. The process exits with status `1`
-    for missing input, invalid effect selection, input file read failures, or
-    keyboard interruption.
+    and stream rendered frames to the terminal. Empty or whitespace-only input is
+    a successful no-op. The process exits with status `1` for invalid effect
+    selection, input file read failures, or keyboard interruption.
     """
     args, effect_resource_map = build_parsers_and_parse_args()
     if args.print_completion is not None:
@@ -205,8 +205,7 @@ def main() -> None:
     else:
         input_data = Terminal.get_piped_input()
     if not input_data.strip():
-        print("NO INPUT.")
-        sys.exit(1)
+        return
 
     if args.random_effect:
         if args.include_effects:

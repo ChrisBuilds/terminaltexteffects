@@ -19,7 +19,7 @@ _shtab_tte_commands() {
     colorshift:'Display a gradient that shifts colors across the terminal.'
     crumble:'crumble | Characters lose color and crumble into dust, vacuumed up, and reformed.'
     decrypt:'decrypt | Movie style decryption effect.'
-    dev:effect_description
+    dev:'dev | Demonstrate thin and supercover line rasterization.'
     errorcorrect:'errorcorrect | Some characters start in the wrong position and are corrected in sequence.'
     expand:'expand | Expands the text from a single point.'
     fireworks:'fireworks | Characters explode like fireworks and fall into place.'
@@ -214,13 +214,6 @@ _shtab_tte_decrypt_defaults_added=0
 
 _shtab_tte_dev_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--color-single[Color for the ___.]:color_single:"
-  "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
-  "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
-  "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"
-  "--final-gradient-direction[Direction of the final gradient.]:final_gradient_direction:(diagonal horizontal vertical radial)"
-  "--movement-speed[Speed of the ___.]:movement_speed:"
-  "--easing[Easing function to use for character movement.]:easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
 )
 
 # guard to ensure default positional specs are added only once per session

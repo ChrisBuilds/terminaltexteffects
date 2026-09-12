@@ -655,7 +655,8 @@ class Terminal:
         """Initialize the Terminal.
 
         Args:
-            input_data (str): The input data to be displayed in the terminal.
+            input_data (str): The input data to be displayed in the terminal. Empty input produces an empty text
+                region on a minimal one-cell canvas.
             config (TerminalConfig, optional): Configuration for the terminal. Defaults to None.
 
         """
@@ -663,8 +664,6 @@ class Terminal:
             self.config = TerminalConfig._build_config()
         else:
             self.config = config
-        if not input_data:
-            input_data = "No Input."
         self._next_character_id = 0
         self._preprocessed_character_columns: dict[EffectCharacter, int] = {}
         self._preprocessed_line_widths: list[int] = []
@@ -724,6 +723,8 @@ class Terminal:
         Input is decomposed into `EffectCharacter` rows while tracking supported
         SGR foreground/background color sequences and fetch-style cursor movement
         sequences. Unsupported ANSI/control sequences raise `UnsupportedAnsiSequenceError`.
+        Trailing unstyled spaces, blank rows, and cursor-only gaps do not extend the
+        automatic input geometry. Leading/internal gaps and styled spaces do.
 
         Args:
             input_data (str): The input data to be displayed in the terminal.
@@ -1020,10 +1021,9 @@ class Terminal:
         self._next_character_id += rectangle_size - len(occupied_coords)
 
         if not screen:
-            fallback_character = build_character(" ", active_sequences, active_colors, active_styles)
-            self._preprocessed_character_columns = {fallback_character: 0}
+            self._preprocessed_character_columns = {}
             self._preprocessed_line_widths = [1]
-            return [[fallback_character]]
+            return [[]]
 
         last_character_row = max(screen_row for screen_row, _ in screen)
         characters: list[list[EffectCharacter]] = []

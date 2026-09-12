@@ -27,7 +27,7 @@ def _make_terminal_config(
 
 @pytest.mark.parametrize(
     "input_data",
-    ["empty", "single_char", "single_column", "single_row", "medium", "tabs"],
+    ["single_char", "single_column", "single_row", "medium", "tabs"],
     indirect=True,
 )
 def test_wipe_effect(input_data: str, terminal_config_default_no_framerate: TerminalConfig) -> None:
