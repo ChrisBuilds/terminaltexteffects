@@ -10,11 +10,10 @@ Classes:
 
 from __future__ import annotations
 
-import functools
 import math
 import random
 import typing
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 
 from terminaltexteffects.utils import ansitools, colorterm, geometry, hexterm
@@ -48,6 +47,7 @@ class Color:
     color_arg: int | str
     xterm_color: int | None
     rgb_color: str
+    _rgb_ints: tuple[int, int, int] = field(init=False, repr=False, compare=False)
 
     def __init__(self, color_value: int | str) -> None:
         """Initialize a Color object.
@@ -77,6 +77,18 @@ class Color:
         else:
             object.__setattr__(self, "rgb_color", color_value)
             object.__setattr__(self, "xterm_color", None)
+        object.__setattr__(self, "_rgb_ints", colorterm._hex_to_int(self.rgb_color))
+
+    @classmethod
+    def _from_rgb_ints(cls, rgb_ints: tuple[int, int, int]) -> Color:
+        """Create an RGB `Color` from channels already validated by internal calculations."""
+        color = cls.__new__(cls)
+        rgb_color = f"{rgb_ints[0]:02x}{rgb_ints[1]:02x}{rgb_ints[2]:02x}"
+        object.__setattr__(color, "color_arg", rgb_color)
+        object.__setattr__(color, "xterm_color", None)
+        object.__setattr__(color, "rgb_color", rgb_color)
+        object.__setattr__(color, "_rgb_ints", rgb_ints)
+        return color
 
     @property
     def rgb_ints(self) -> tuple[int, int, int]:
@@ -86,7 +98,7 @@ class Color:
             tuple[int, int, int]: The RGB values as a tuple of integers.
 
         """
-        return colorterm._hex_to_int(self.rgb_color)
+        return self._rgb_ints
 
     def __repr__(self) -> str:
         """Return a constructor-compatible representation of the `Color`."""
@@ -171,6 +183,19 @@ class ColorPair:
             f"{f' | Background XTerm Color: {self.bg.xterm_color}' if self.bg and self.bg.xterm_color is not None else ''}"  # noqa: E501
             f"\nColor Appearance: {color_block}"
         )
+
+
+def _interpolate_rgb(
+    start: tuple[int, int, int],
+    end: tuple[int, int, int],
+    factor: float,
+) -> tuple[int, int, int]:
+    """Interpolate RGB channels using nearest, ties-to-even rounding."""
+    return (
+        round(start[0] + ((end[0] - start[0]) * factor)),
+        round(start[1] + ((end[1] - start[1]) * factor)),
+        round(start[2] + ((end[2] - start[2]) * factor)),
+    )
 
 
 class Gradient:
@@ -323,10 +348,7 @@ class Gradient:
             end_color_ints = end.rgb_ints
             for i in range(1, step_count):
                 fraction = i / step_count
-                red = round(start_color_ints[0] + ((end_color_ints[0] - start_color_ints[0]) * fraction))
-                green = round(start_color_ints[1] + ((end_color_ints[1] - start_color_ints[1]) * fraction))
-                blue = round(start_color_ints[2] + ((end_color_ints[2] - start_color_ints[2]) * fraction))
-                spectrum.append(Color(f"{red:02x}{green:02x}{blue:02x}"))
+                spectrum.append(Color._from_rgb_ints(_interpolate_rgb(start_color_ints, end_color_ints, fraction)))
             spectrum.append(end)
         return spectrum
 
@@ -474,27 +496,4 @@ def shift_color_towards(color: Color, target_color: Color, factor: float) -> Col
         msg = "Factor must be between 0 and 1, inclusive."
         raise ValueError(msg)
 
-    def interpolate(start: float, end: float, factor: float) -> float:
-        """Interpolate between two values by a given factor."""
-        return start + (end - start) * factor
-
-    # Normalize RGB values
-    color_red = int(color.rgb_color[0:2], 16) / 255
-    color_green = int(color.rgb_color[2:4], 16) / 255
-    color_blue = int(color.rgb_color[4:6], 16) / 255
-
-    target_red = int(target_color.rgb_color[0:2], 16) / 255
-    target_green = int(target_color.rgb_color[2:4], 16) / 255
-    target_blue = int(target_color.rgb_color[4:6], 16) / 255
-
-    # Interpolate RGB values
-    new_red = interpolate(color_red, target_red, factor)
-    new_green = interpolate(color_green, target_green, factor)
-    new_blue = interpolate(color_blue, target_blue, factor)
-
-    # Convert back to hex
-    shifted_color = f"{int(new_red * 255):02x}{int(new_green * 255):02x}{int(new_blue * 255):02x}"
-    return Color(shifted_color)
-
-
-shift_color_towards = functools.wraps(shift_color_towards)(functools.lru_cache(maxsize=8192)(shift_color_towards))
+    return Color._from_rgb_ints(_interpolate_rgb(color.rgb_ints, target_color.rgb_ints, factor))

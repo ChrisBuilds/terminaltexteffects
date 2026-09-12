@@ -75,7 +75,7 @@ def test_color_pair_supports_deepcopy() -> None:
 
 @pytest.mark.parametrize(
     ("factor", "expected"),
-    [(0, Color("#000000")), (0.5, Color("#7f7f7f")), (1, Color("#ffffff"))],
+    [(0, Color("#000000")), (0.5, Color("#808080")), (1, Color("#ffffff"))],
 )
 def test_shift_color_towards_interpolates_within_unit_interval(factor: float, expected: Color) -> None:
     """Shift colors only across the valid interpolation interval."""
@@ -87,6 +87,24 @@ def test_shift_color_towards_rejects_out_of_range_factor(factor: float) -> None:
     """Reject extrapolation factors before they can create invalid RGB channels."""
     with pytest.raises(ValueError, match="Factor must be between 0 and 1"):
         shift_color_towards(Color("#000000"), Color("#ffffff"), factor)
+
+
+@pytest.mark.parametrize(
+    ("start", "end", "expected"),
+    [
+        (Color("000000"), Color("ffffff"), Color("808080")),
+        (Color("000000"), Color("010101"), Color("000000")),
+        (Color("010101"), Color("000000"), Color("000000")),
+    ],
+)
+def test_shift_color_towards_matches_gradient_midpoint_rounding(
+    start: Color,
+    end: Color,
+    expected: Color,
+) -> None:
+    """Use the gradient's nearest, ties-to-even RGB interpolation contract."""
+    assert shift_color_towards(start, end, 0.5) == expected
+    assert Gradient(start, end, steps=2)[1] == expected
 
 
 def test_gradient_zero_stops() -> None:
@@ -629,7 +647,10 @@ def test_color_valid_hex_with_hash() -> None:
 
 
 def test_color_hex_rgb_ints() -> None:
-    assert Color("#000000").rgb_ints == (0, 0, 0)
+    color = Color("#000000")
+
+    assert color.rgb_ints == (0, 0, 0)
+    assert color.rgb_ints is color.rgb_ints
 
 
 def test_color_xterm_rgb_ints() -> None:

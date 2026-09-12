@@ -87,6 +87,9 @@
   instead of returning no coordinates.
 * Geometry - Added `interpolate_coord()` as the canonical linear interpolation API while preserving
   `find_coord_on_line` as an alias, and aligned the Bézier evaluator and length helper control-point contracts.
+* Color - RGB channel tuples are now parsed once per immutable `Color` and reused by gradient and color-shift
+  interpolation. Both APIs use nearest, ties-to-even channel rounding, and the unused global color-shift cache has
+  been removed.
 
 #### Effects Changes (0.16.0)
 
