@@ -11,6 +11,7 @@ from terminaltexteffects.utils.exceptions.base_character_exceptions import (
     DuplicateEventRegistrationError,
     EventRegistrationCallerError,
     EventRegistrationTargetError,
+    InvalidSymbolError,
 )
 from terminaltexteffects.utils.exceptions.motion_exceptions import (
     ActivateEmptyPathError,

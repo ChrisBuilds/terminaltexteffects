@@ -10,6 +10,7 @@ from terminaltexteffects.utils.exceptions import (
     AnimationSceneError,
     DuplicateSceneIDError,
     FrameDurationError,
+    InvalidSymbolError,
     SceneNotFoundError,
 )
 from terminaltexteffects.utils.geometry import Coord
@@ -637,11 +638,11 @@ def test_scene_apply_gradient_to_symbols_both_gradients_empty(character: EffectC
 
 
 def test_scene_apply_gradient_to_symbols_invalid_symbols(character: EffectCharacter) -> None:
-    """Test that an ApplyGradientToSymbolsInvalidSymbolError is raised when a symbol with length > 1 is passed."""
+    """Gradient symbols should use the shared display-cell symbol contract."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     gradient = Gradient(Color("#000000"), Color("#ffffff"), steps=2)
     symbols = ["aa", "b", "c"]
-    with pytest.raises(AnimationSceneError):
+    with pytest.raises(InvalidSymbolError):
         new_scene.apply_gradient_to_symbols(symbols, duration=1, fg_gradient=gradient)
 
 

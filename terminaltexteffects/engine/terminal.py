@@ -30,6 +30,7 @@ from terminaltexteffects.utils.exceptions import (
 )
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
+from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 
 @dataclass
@@ -375,7 +376,10 @@ class Canvas:
             return []
 
         # translate coordinate based on anchor within the canvas
-        input_width = max([character._input_coord.column for character in characters])
+        input_width = max(
+            character._input_coord.column + character.animation.current_character_visual.cell_width - 1
+            for character in characters
+        )
         input_height = max([character._input_coord.row for character in characters])
 
         column_delta = row_delta = 0
@@ -403,7 +407,12 @@ class Canvas:
             character._input_coord = anchored_coord
             character.motion.set_coordinate(anchored_coord)
 
-        characters = [character for character in characters if self.coord_is_in_canvas(character.input_coord)]
+        characters = [
+            character
+            for character in characters
+            if self.coord_is_in_canvas(character.input_coord)
+            and character.input_coord.column + character.animation.current_character_visual.cell_width - 1 <= self.right
+        ]
 
         if not characters:
             self._reset_text_bounds()
@@ -411,7 +420,10 @@ class Canvas:
 
         # get text dimensions, centers, and extents
         self.text_left = min([character.input_coord.column for character in characters])
-        self.text_right = max([character.input_coord.column for character in characters])
+        self.text_right = max(
+            character.input_coord.column + character.animation.current_character_visual.cell_width - 1
+            for character in characters
+        )
         self.text_top = max([character.input_coord.row for character in characters])
         self.text_bottom = min([character.input_coord.row for character in characters])
         self.text_width = max(self.text_right - self.text_left + 1, 1)
@@ -530,8 +542,9 @@ class Terminal:
     Attributes:
         config (TerminalConfig): Configuration for the terminal.
         canvas (Canvas): The canvas in the terminal.
-        character_by_input_coord (dict[Coord, EffectCharacter]): Mapping of input and fill characters keyed by
-            canvas coordinates. Characters created with `add_character()` are tracked separately.
+        character_by_input_coord (dict[Coord, EffectCharacter]): Mapping of input-character leading coordinates and
+            fill characters keyed by canvas coordinates. Characters created with `add_character()` are tracked
+            separately.
         terminal_state (list[str]): Internal row-by-row representation of the currently visible terminal output.
         visible_top (int): Top visible row within the terminal after canvas anchoring is applied.
         visible_bottom (int): Bottom visible row within the terminal after canvas anchoring is applied.
@@ -587,6 +600,7 @@ class Terminal:
         self._preprocessed_character_lines = self._preprocess_input_data(input_data)
         self._wrapped_character_lines: list[list[EffectCharacter]] | None = None
         self._wrapped_character_line_widths: list[int] | None = None
+        self._wrapped_character_columns: dict[EffectCharacter, int] = {}
         self._wrapped_character_lines_width: int | None = None
         self._terminal_width, self._terminal_height = self._get_terminal_dimensions()
         self.canvas = Canvas(*self._get_canvas_dimensions())
@@ -613,7 +627,14 @@ class Terminal:
         self.character_by_input_coord: dict[Coord, EffectCharacter] = {
             (character.input_coord): character for character in self._input_characters
         }
+        self._input_character_continuations: dict[Coord, EffectCharacter] = {
+            Coord(character.input_coord.column + offset, character.input_coord.row): character
+            for character in self._input_characters
+            for offset in range(1, character.animation.current_character_visual.cell_width)
+        }
         self._inner_fill_characters, self._outer_fill_characters = self._make_fill_characters()
+        self._character_by_occupied_coord = dict(self.character_by_input_coord)
+        self._character_by_occupied_coord.update(self._input_character_continuations)
         self._setup_character_neighbors()
         self._visible_characters: set[EffectCharacter] = set()
         self._frame_rate = self.config.frame_rate
@@ -801,6 +822,7 @@ class Terminal:
             return character
 
         screen: dict[tuple[int, int], EffectCharacter] = {}
+        screen_cell_owners: dict[tuple[int, int], tuple[int, int]] = {}
         occupied_coords: set[tuple[int, int]] = set()
         active_sequences = {"fg_color": "", "bg_color": ""}
         active_colors: dict[str, Color | None] = {"fg_color": None, "bg_color": None}
@@ -851,20 +873,31 @@ class Terminal:
                     raise UnsupportedAnsiSequenceError(symbol)
                 if symbol == "\t":
                     symbol = " "
-                    spaces_to_next_tab = self.config.tab_width - (column % self.config.tab_width)
+                    symbol_width = 1
+                    symbol_repetitions = self.config.tab_width - (column % self.config.tab_width)
                 else:
-                    spaces_to_next_tab = 1
-                for _ in range(spaces_to_next_tab):
-                    coord = (row, column)
-                    occupied_coords.add(coord)
+                    symbol_width = get_symbol_cell_width(symbol)
+                    symbol_repetitions = 1
+                for _ in range(symbol_repetitions):
+                    symbol_coords = [(row, column + offset) for offset in range(symbol_width)]
+                    for symbol_coord in symbol_coords:
+                        previous_owner = screen_cell_owners.get(symbol_coord)
+                        if previous_owner is not None:
+                            previous_character = screen.pop(previous_owner)
+                            previous_width = previous_character.animation.current_character_visual.cell_width
+                            for offset in range(previous_width):
+                                screen_cell_owners.pop((previous_owner[0], previous_owner[1] + offset), None)
+                    coord = symbol_coords[0]
+                    occupied_coords.update(symbol_coords)
                     if symbol != " " or any(active_colors.values()):
-                        screen[coord] = build_character(symbol, active_sequences, active_colors, active_styles)
+                        character = build_character(symbol, active_sequences, active_colors, active_styles)
+                        screen[coord] = character
+                        screen_cell_owners.update(dict.fromkeys(symbol_coords, coord))
                     else:
-                        screen.pop(coord, None)
                         self._next_character_id += 1
                     max_row = max(max_row, row)
-                    max_column = max(max_column, column)
-                    column += 1
+                    max_column = max(max_column, column + symbol_width - 1)
+                    column += symbol_width
                 char_index += 1
 
         # Preserve the ID progression of the former dense rectangle without allocating
@@ -889,7 +922,15 @@ class Terminal:
             line_entries = sorted(entries_by_row.get(screen_row, []), key=lambda entry: entry[0])
             character_line = [character for _, character in line_entries]
             characters.append(character_line)
-            line_widths.append(line_entries[-1][0] + 1 if line_entries else 0)
+            line_widths.append(
+                max(
+                    (
+                        screen_column + character.animation.current_character_visual.cell_width
+                        for screen_column, character in line_entries
+                    ),
+                    default=0,
+                ),
+            )
             character_columns.update({character: screen_column for screen_column, character in line_entries})
 
         self._preprocessed_character_columns = character_columns
@@ -1009,21 +1050,44 @@ class Terminal:
             self._preprocessed_line_widths
             if lines is self._preprocessed_character_lines
             else [
-                max((self._preprocessed_character_columns[character] for character in line), default=-1) + 1
+                max(
+                    (
+                        self._preprocessed_character_columns[character]
+                        + character.animation.current_character_visual.cell_width
+                        for character in line
+                    ),
+                    default=0,
+                )
                 for line in lines
             ]
         )
+        wrapped_character_columns: dict[EffectCharacter, int] = {}
         for line, line_width in zip(lines, line_widths):
-            wrapped_line_count = max((line_width + width - 1) // width, 1)
-            line_chunks = [[] for _ in range(wrapped_line_count)]
+            placements: list[tuple[int, int, EffectCharacter]] = []
+            inserted_padding = 0
             for character in line:
                 logical_column = self._preprocessed_character_columns[character]
-                line_chunks[logical_column // width].append(character)
+                adjusted_column = logical_column + inserted_padding
+                character_width = character.animation.current_character_visual.cell_width
+                column_in_chunk = adjusted_column % width
+                if character_width <= width and column_in_chunk + character_width > width:
+                    inserted_padding += width - column_in_chunk
+                    adjusted_column = logical_column + inserted_padding
+                    column_in_chunk = 0
+                chunk_index = adjusted_column // width
+                placements.append((chunk_index, column_in_chunk, character))
+                wrapped_character_columns[character] = column_in_chunk
+            adjusted_line_width = line_width + inserted_padding
+            wrapped_line_count = max((adjusted_line_width + width - 1) // width, 1)
+            line_chunks = [[] for _ in range(wrapped_line_count)]
+            for chunk_index, _, character in placements:
+                line_chunks[chunk_index].append(character)
             wrapped_lines.extend(line_chunks)
             wrapped_line_widths.extend(
-                min(width, max(line_width - (chunk_index * width), 0))
+                min(width, max(adjusted_line_width - (chunk_index * width), 0))
                 for chunk_index in range(wrapped_line_count)
             )
+        self._wrapped_character_columns = wrapped_character_columns
         self._wrapped_character_line_widths = wrapped_line_widths
         return wrapped_lines
 
@@ -1058,7 +1122,11 @@ class Terminal:
         for row, line in enumerate(formatted_lines):
             for character in line:
                 logical_column = self._preprocessed_character_columns[character]
-                column = logical_column % self.canvas.right + 1 if self.config.wrap_text else logical_column + 1
+                column = (
+                    self._wrapped_character_columns[character] + 1
+                    if self.config.wrap_text
+                    else logical_column + 1
+                )
                 character._input_coord = Coord(column, input_height - row)
                 if character._input_symbol != " " or any(
                     (character.animation.input_fg_color, character.animation.input_bg_color),
@@ -1086,7 +1154,7 @@ class Terminal:
         for row in range(1, self.canvas.top + 1):
             for column in range(1, self.canvas.right + 1):
                 coord = Coord(column, row)
-                if coord not in self.character_by_input_coord:
+                if coord not in self.character_by_input_coord and coord not in self._input_character_continuations:
                     fill_char = EffectCharacter(self._next_character_id, " ", column, row)
                     fill_char.is_fill_character = True
                     fill_char.animation.no_color = self.config.no_color
@@ -1106,11 +1174,16 @@ class Terminal:
 
     def _setup_character_neighbors(self) -> None:
         """Create the neighbor map for characters tracked in `character_by_input_coord`."""
-        delta_map = {"north": (0, 1), "east": (1, 0), "south": (0, -1), "west": (-1, 0)}
+        delta_map = {"north": (0, 1), "south": (0, -1), "west": (-1, 0)}
         for coord, char in self.character_by_input_coord.items():
             for direction, delta in delta_map.items():
                 neighbor_coord = Coord(column=coord.column + delta[0], row=coord.row + delta[1])
-                char.neighbors[direction] = self.character_by_input_coord.get(neighbor_coord)
+                char.neighbors[direction] = self._character_by_occupied_coord.get(neighbor_coord)
+            east_coord = Coord(
+                column=coord.column + char.animation.current_character_visual.cell_width,
+                row=coord.row,
+            )
+            char.neighbors["east"] = self._character_by_occupied_coord.get(east_coord)
 
     def add_character(self, symbol: str, coord: Coord) -> EffectCharacter:
         """Add a character to the terminal for printing.
@@ -1127,6 +1200,9 @@ class Terminal:
 
         Returns:
             EffectCharacter: the character that was added
+
+        Raises:
+            InvalidSymbolError: If `symbol` does not contain one independently printable Unicode code point.
 
         """
         character = EffectCharacter(self._next_character_id, symbol, coord.column, coord.row)
@@ -1395,9 +1471,9 @@ class Terminal:
     def get_character_by_input_coord(self, coord: Coord) -> EffectCharacter | None:
         """Get an EffectCharacter by its input coordinates.
 
-        Lookup is limited to characters stored in `character_by_input_coord`, which
-        includes input and fill characters but not characters added through
-        `add_character()`.
+        Lookup includes input and fill characters but not characters added through
+        `add_character()`. A coordinate occupied by the continuation cell of a wide
+        input symbol returns the owning `EffectCharacter`.
 
         Args:
             coord (Coord): input coordinates of the character
@@ -1406,7 +1482,7 @@ class Terminal:
             EffectCharacter | None: the character at the specified coordinates, or None if no character is found
 
         """
-        return self.character_by_input_coord.get(coord, None)
+        return self._character_by_occupied_coord.get(coord, None)
 
     def set_character_visibility(self, character: EffectCharacter, is_visible: bool) -> None:  # noqa: FBT001
         """Set whether a character participates in terminal rendering.
@@ -1447,11 +1523,49 @@ class Terminal:
         bounds are skipped.
         """
         rows = [[" " for _ in range(self.visible_right)] for _ in range(self.visible_top)]
-        for character in sorted(self._visible_characters, key=lambda c: c.layer):
+        visible_characters = sorted(self._visible_characters, key=lambda c: c.layer)
+        if all(character.animation.current_character_visual.cell_width == 1 for character in visible_characters):
+            for character in visible_characters:
+                row = character.motion.current_coord.row + self.canvas_row_offset
+                column = character.motion.current_coord.column + self.canvas_column_offset
+                if self.visible_bottom <= row <= self.visible_top and self.visible_left <= column <= self.visible_right:
+                    rows[row - 1][column - 1] = character.animation.current_character_visual.formatted_symbol
+            self.terminal_state = ["".join(row) for row in rows]
+            return
+
+        owners: list[list[EffectCharacter | None]] = [
+            [None for _ in range(self.visible_right)] for _ in range(self.visible_top)
+        ]
+        footprints: dict[EffectCharacter, tuple[int, int, int]] = {}
+        for character in visible_characters:
             row = character.motion.current_coord.row + self.canvas_row_offset
             column = character.motion.current_coord.column + self.canvas_column_offset
-            if self.visible_bottom <= row <= self.visible_top and self.visible_left <= column <= self.visible_right:
-                rows[row - 1][column - 1] = character.animation.current_character_visual.formatted_symbol
+            visual = character.animation.current_character_visual
+            right_column = column + visual.cell_width - 1
+            if (
+                self.visible_bottom <= row <= self.visible_top
+                and self.visible_left <= column
+                and right_column <= self.visible_right
+            ):
+                row_index = row - 1
+                column_index = column - 1
+                overwritten_characters = {
+                    owner
+                    for owner in owners[row_index][column_index:right_column]
+                    if owner is not None
+                }
+                for overwritten_character in overwritten_characters:
+                    old_row, old_column, old_width = footprints.pop(overwritten_character)
+                    for old_column_index in range(old_column, old_column + old_width):
+                        if owners[old_row][old_column_index] is overwritten_character:
+                            owners[old_row][old_column_index] = None
+                            rows[old_row][old_column_index] = " "
+                rows[row_index][column_index] = visual.formatted_symbol
+                owners[row_index][column_index] = character
+                for continuation_column in range(column_index + 1, column_index + visual.cell_width):
+                    rows[row_index][continuation_column] = ""
+                    owners[row_index][continuation_column] = character
+                footprints[character] = (row_index, column_index, visual.cell_width)
         terminal_state = ["".join(row) for row in rows]
         self.terminal_state = terminal_state
 

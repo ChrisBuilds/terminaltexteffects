@@ -31,6 +31,8 @@
   `on_emit`, and reclaiming particles directly or from character events.
 * Geometry - Added ordered, reversible Bresenham and supercover line rasterization helpers for thin drawing and
   complete terminal-cell coverage.
+* Terminal symbols now support printable single-code-point wide characters as one `EffectCharacter` spanning two
+  display cells, including width-aware input layout, wrapping, text bounds, neighbor lookup, and layered rendering.
 
 #### Application Features (0.16.0)
 
@@ -107,6 +109,8 @@
 
 ---
 
+* Animation and terminal symbol entry points now consistently reject empty, multi-code-point, combining-only, and
+  non-printable symbols with `InvalidSymbolError` instead of allowing malformed frames or applying inconsistent checks.
 * Terminal - Raw C0 controls other than tab, newline, and carriage return, plus DEL and C1 controls, are now rejected
   before character creation so unsupported control bytes cannot reach rendered frames.
 * Configuration - Fixed CLI help displaying Python representations for defaults such as colors, enums, gradients,

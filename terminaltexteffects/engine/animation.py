@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import typing
 from bisect import bisect_right
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 
 from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, hexterm
@@ -23,6 +23,7 @@ from terminaltexteffects.utils.exceptions import (
     FrameDurationError,
     SceneNotFoundError,
 )
+from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character, motion  # pragma: no cover
@@ -48,6 +49,7 @@ class CharacterVisual:
 
     Attributes:
         formatted_symbol (str): The current symbol with all ANSI sequences applied.
+        cell_width (int): Number of terminal cells occupied by `symbol`.
 
     Methods:
         format_symbol: Formats the symbol for printing by applying ANSI sequences for supported active modes and color.
@@ -68,9 +70,11 @@ class CharacterVisual:
     # config args these are used by colorterm to produce the ansi sequences
     _fg_color_code: str | int | None = None
     _bg_color_code: str | int | None = None
+    cell_width: int = field(init=False)
 
     def __post_init__(self) -> None:
         """Create the formatted symbol by applying ANSI sequences for any active modes and color."""
+        self.cell_width = get_symbol_cell_width(self.symbol)
         self.formatted_symbol = self.format_symbol()
 
     def format_symbol(self) -> str:
@@ -265,6 +269,7 @@ class Scene:
 
         Raises:
             FrameDurationError: if the frame duration is less than 1
+            InvalidSymbolError: if `symbol` does not contain one independently printable Unicode code point
 
         """
         # override fg and bg colors if they are set in the Scene due to existing color handling = always
@@ -366,7 +371,8 @@ class Scene:
             None
 
         Raises:
-            AnimationSceneError: if gradients are invalid or symbols are invalid
+            AnimationSceneError: if gradients are invalid
+            InvalidSymbolError: if a symbol does not contain one independently printable Unicode code point
 
         """
         T = typing.TypeVar("T")
@@ -426,9 +432,7 @@ class Scene:
             message = "At least one symbol must be provided."
             raise AnimationSceneError(message)
         for symbol in symbols:
-            if len(symbol) > 1:
-                message = f"Symbol must be a string with a length of 1. Received: `{symbol}`."
-                raise AnimationSceneError(message)
+            get_symbol_cell_width(symbol)
         color_pairs: list[graphics.ColorPair] = []
         if fg_gradient and fg_gradient.spectrum and bg_gradient and bg_gradient.spectrum:
             if len(fg_gradient.spectrum) >= len(bg_gradient.spectrum):
@@ -673,6 +677,9 @@ class Animation:
         Args:
             symbol (str | None): The symbol to apply.
             colors (graphics.ColorPair | None): The colors to apply.
+
+        Raises:
+            InvalidSymbolError: If `symbol` does not contain one independently printable Unicode code point.
 
         """
         if symbol is None:

@@ -10,6 +10,24 @@ if TYPE_CHECKING:
     from terminaltexteffects import Coord, EventHandler, Path, Scene, Waypoint
 
 
+class InvalidSymbolError(TerminalTextEffectsError):
+    """Raised when a character or visual symbol violates the display-cell contract."""
+
+    def __init__(self, symbol: str) -> None:
+        """Initialize an `InvalidSymbolError`.
+
+        Args:
+            symbol (str): Invalid symbol supplied by the caller or input stream.
+
+        """
+        self.symbol = symbol
+        self.message = (
+            "Symbols must contain exactly one printable Unicode code point with a terminal width of one or two cells. "
+            f"Received: {symbol!r}."
+        )
+        super().__init__(self.message)
+
+
 class EventRegistrationCallerError(TerminalTextEffectsError):
     """Raised when an event is registered with an invalid event -> caller relationship.
 
@@ -116,7 +134,8 @@ class DuplicateEventRegistrationError(TerminalTextEffectsError):
             event (EventHandler.Event): The event that was already registered.
             caller (Scene | Waypoint | Path): The caller object that was already registered.
             action (EventHandler.Action): The action that was already registered.
-            target (Scene | Path | int | Coord | EventHandler.Callback | str | None): The target that was already registered.
+            target (Scene | Path | int | Coord | EventHandler.Callback | str | None): The target that was already
+                registered.
 
         """
         self.event = event
