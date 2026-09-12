@@ -356,8 +356,8 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                 fg_gradient=beam_gradient,
             )
             fg_fade_gradient = bg_fade_gradient = fg_brighten_gradient = bg_brighten_gradient = None
-            char_fg_color = self.character_final_color_map[character].fg_color
-            char_bg_color = self.character_final_color_map[character].bg_color
+            char_fg_color = self.character_final_color_map[character].fg
+            char_bg_color = self.character_final_color_map[character].bg
             if char_fg_color:
                 faded_fg_color = character.animation.adjust_color_brightness(char_fg_color, 0.3)
                 fg_fade_gradient = tte.Gradient(char_fg_color, faded_fg_color, steps=10)

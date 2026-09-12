@@ -132,9 +132,8 @@ class Color:
 class ColorPair:
     """Represents a pair of colors to specify a character's foreground and background colors.
 
-    `fg` and `bg` are the canonical immutable fields. On init, `Color` instances are preserved, non-`Color`
-    non-`None` values are converted to `Color`, and `None` values remain unset. The `fg_color` and `bg_color`
-    properties are read-only compatibility aliases.
+    `fg` and `bg` are the immutable fields. On init, `Color` instances are preserved, non-`Color` non-`None` values
+    are converted to `Color`, and `None` values remain unset.
 
     Attributes:
         fg (Color | None): The foreground color. None if no foreground color is specified.
@@ -158,16 +157,6 @@ class ColorPair:
         """
         object.__setattr__(self, "fg", Color(fg) if fg is not None and not isinstance(fg, Color) else fg)
         object.__setattr__(self, "bg", Color(bg) if bg is not None and not isinstance(bg, Color) else bg)
-
-    @property
-    def fg_color(self) -> Color | None:
-        """Return the foreground color as a compatibility alias for `fg`."""
-        return self.fg
-
-    @property
-    def bg_color(self) -> Color | None:
-        """Return the background color as a compatibility alias for `bg`."""
-        return self.bg
 
     def __str__(self) -> str:
         """Return a string representation of the ColorPair object."""

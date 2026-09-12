@@ -224,8 +224,8 @@ class PourIterator(BaseEffectIterator[PourConfig]):
 
                 pour_scn = character.animation.new_scene()
                 if self.terminal.config.existing_color_handling == "dynamic":
-                    final_fg_color = self.character_final_color_map[character].fg_color
-                    final_bg_color = self.character_final_color_map[character].bg_color
+                    final_fg_color = self.character_final_color_map[character].fg
+                    final_bg_color = self.character_final_color_map[character].bg
                     fg_gradient = (
                         Gradient(self.config.starting_color, final_fg_color, steps=10)
                         if final_fg_color
@@ -250,7 +250,7 @@ class PourIterator(BaseEffectIterator[PourConfig]):
                             colors=ColorPair(),
                         )
                 else:
-                    final_fg_color = self.character_final_color_map[character].fg_color
+                    final_fg_color = self.character_final_color_map[character].fg
                     assert final_fg_color is not None
                     pour_gradient = Gradient(
                         self.config.starting_color,

@@ -275,8 +275,8 @@ class Scene:
 
         # get the color code for the fg and bg colors
         if colors:
-            char_vis_fg_color = self._get_color_code(colors.fg_color)
-            char_vis_bg_color = self._get_color_code(colors.bg_color)
+            char_vis_fg_color = self._get_color_code(colors.fg)
+            char_vis_bg_color = self._get_color_code(colors.bg)
         else:
             char_vis_fg_color = None
             char_vis_bg_color = None
@@ -686,8 +686,8 @@ class Animation:
             colors = graphics.ColorPair(fg=self.input_fg_color, bg=self.input_bg_color)
             bold = self.input_bold
 
-        char_vis_fg_color: str | int | None = self._get_color_code(colors.fg_color)
-        char_vis_bg_color: str | int | None = self._get_color_code(colors.bg_color)
+        char_vis_fg_color: str | int | None = self._get_color_code(colors.fg)
+        char_vis_bg_color: str | int | None = self._get_color_code(colors.bg)
 
         self.current_character_visual = CharacterVisual(
             symbol,

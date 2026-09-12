@@ -24,14 +24,14 @@ def test_random_color() -> None:
 
 def test_color_pair_init() -> None:
     cp = ColorPair("#ffffff", "#000000")
-    assert cp.fg_color == Color("#ffffff")
-    assert cp.bg_color == Color("#000000")
+    assert cp.fg == Color("#ffffff")
+    assert cp.bg == Color("#000000")
 
 
 def test_color_pair_init_single_color() -> None:
     cp = ColorPair("#ffffff")
-    assert cp.fg_color == Color("#ffffff")
-    assert cp.bg_color is None
+    assert cp.fg == Color("#ffffff")
+    assert cp.bg is None
 
 
 def test_color_pair_canonical_fields() -> None:
@@ -43,11 +43,11 @@ def test_color_pair_canonical_fields() -> None:
     assert set(asdict(color_pair)) == {"fg", "bg"}
 
 
-def test_color_pair_compatibility_aliases() -> None:
+def test_color_pair_has_no_legacy_field_aliases() -> None:
     color_pair = ColorPair(fg="#ffffff", bg=0)
 
-    assert color_pair.fg_color is color_pair.fg
-    assert color_pair.bg_color is color_pair.bg
+    assert not hasattr(color_pair, "fg_color")
+    assert not hasattr(color_pair, "bg_color")
 
 
 def test_color_pair_declares_canonical_positional_match_fields() -> None:
@@ -55,7 +55,7 @@ def test_color_pair_declares_canonical_positional_match_fields() -> None:
     assert ColorPair.__match_args__ == ("fg", "bg")
 
 
-@pytest.mark.parametrize("attribute", ["fg", "bg", "fg_color", "bg_color"])
+@pytest.mark.parametrize("attribute", ["fg", "bg"])
 def test_color_pair_is_immutable(attribute: str) -> None:
     color_pair = ColorPair(fg="#ffffff", bg=0)
 

@@ -169,7 +169,7 @@ def test_fireworks_ignore_with_preexisting_colors_uses_effect_gradient() -> None
     iterator = cast("effect_fireworks.FireworksIterator", iter(effect))
     character = iterator.terminal.get_characters()[0]
     fall_scene = character.animation.scenes["fall_scn"]
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert final_color is not None
     final_frame = fall_scene.frames[-1].character_visual

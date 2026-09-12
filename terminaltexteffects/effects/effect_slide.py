@@ -261,7 +261,7 @@ class SlideIterator(BaseEffectIterator[SlideConfig]):
                         colors=self.character_final_color_map[character],
                     )
                 else:
-                    final_fg_color = self.character_final_color_map[character].fg_color
+                    final_fg_color = self.character_final_color_map[character].fg
                     assert final_fg_color is not None
                     char_gradient = Gradient(
                         self.config.final_gradient_stops[0],

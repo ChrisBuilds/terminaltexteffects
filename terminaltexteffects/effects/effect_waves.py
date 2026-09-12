@@ -235,11 +235,11 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             final_scn = character.animation.new_scene()
             if self.terminal.config.existing_color_handling == "dynamic":
                 final_colors = self.character_final_color_map[character]
-                if final_colors.fg_color is None and final_colors.bg_color is None:
+                if final_colors.fg is None and final_colors.bg is None:
                     final_scn.add_frame(character.input_symbol, 10, colors=ColorPair())
                 else:
-                    final_fg_color = final_colors.fg_color
-                    final_bg_color = final_colors.bg_color
+                    final_fg_color = final_colors.fg
+                    final_bg_color = final_colors.bg
                     final_scn.apply_gradient_to_symbols(
                         character.input_symbol,
                         duration=10,
@@ -265,7 +265,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                     if final_fg_color is None:
                         final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(bg=final_bg_color))
             else:
-                final_fg_color = self.character_final_color_map[character].fg_color
+                final_fg_color = self.character_final_color_map[character].fg
                 assert final_fg_color is not None
                 for step in Gradient(
                     wave_gradient.spectrum[-1],

@@ -264,8 +264,8 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
 
         for character in self.terminal.get_characters():
             collapse_scn = character.animation.new_scene(ease=tte.easing.in_quad, scene_id="collapse_scn")
-            final_fg_color = self.character_final_color_map[character].fg_color
-            final_bg_color = self.character_final_color_map[character].bg_color
+            final_fg_color = self.character_final_color_map[character].fg
+            final_bg_color = self.character_final_color_map[character].bg
             dim_fg_color = (
                 character.animation.adjust_color_brightness(final_fg_color, 0.5)
                 if final_fg_color

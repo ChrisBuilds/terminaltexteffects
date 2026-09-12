@@ -195,7 +195,7 @@ def test_spotlights_ignore_with_preexisting_colors_starts_with_effect_dim_color(
 
     assert current_visual.symbol == "A"
     assert current_visual.colors == dim_pair
-    assert current_visual._fg_color_code == (dim_pair.fg_color.rgb_color if dim_pair.fg_color else None)
+    assert current_visual._fg_color_code == (dim_pair.fg.rgb_color if dim_pair.fg else None)
     assert current_visual._bg_color_code is None
 
 

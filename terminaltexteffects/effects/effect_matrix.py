@@ -375,7 +375,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                     # highlight color from being replaced before appropriate
                     if (
                         self.visible_characters[-1].animation.current_character_visual.colors
-                        and self.visible_characters[-1].animation.current_character_visual.colors.fg_color
+                        and self.visible_characters[-1].animation.current_character_visual.colors.fg
                         == self.config.highlight_color
                     ):
                         self.visible_characters[-1].animation.set_appearance(
@@ -408,7 +408,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 if random.random() < self.config.color_swap_chance:
                     next_color = random.choice(self.rain_colors)
                 elif character.animation.current_character_visual.colors:
-                    next_color = character.animation.current_character_visual.colors.fg_color
+                    next_color = character.animation.current_character_visual.colors.fg
                 else:
                     next_color = None
                 character.animation.set_appearance(next_symbol, colors=ColorPair(fg=next_color))
@@ -453,8 +453,8 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 self.character_final_color_map[character] = ColorPair(
                     fg=final_gradient_mapping[character.input_coord],
                 )
-            final_fg_color = self.character_final_color_map[character].fg_color
-            final_bg_color = self.character_final_color_map[character].bg_color
+            final_fg_color = self.character_final_color_map[character].fg
+            final_bg_color = self.character_final_color_map[character].bg
             resolve_scn = character.animation.new_scene(scene_id="resolve")
             if self.terminal.config.existing_color_handling == "dynamic":
                 fg_gradient = (

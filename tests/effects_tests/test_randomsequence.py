@@ -182,7 +182,7 @@ def test_randomsequence_ignore_with_preexisting_colors_uses_effect_gradient() ->
     iterator = cast("effect_random_sequence.RandomSequenceIterator", iter(effect))
     character = iterator.terminal.get_characters()[0]
     final_scene = character.animation.active_scene
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert final_scene is not None
     assert final_color is not None

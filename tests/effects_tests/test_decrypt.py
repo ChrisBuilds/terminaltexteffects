@@ -160,7 +160,7 @@ def test_decrypt_ignore_with_preexisting_colors_uses_effect_gradient() -> None:
     final_frame = final_scene.frames[-1].character_visual
 
     assert final_frame.symbol == "A"
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert final_frame.colors == effect_decrypt.ColorPair(fg=final_color)
     assert final_color is not None

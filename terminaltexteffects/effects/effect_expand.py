@@ -185,7 +185,7 @@ class ExpandIterator(BaseEffectIterator[ExpandConfig]):
             else:
                 gradient = Gradient(
                     final_gradient.spectrum[0],
-                    cast("Color", self.character_final_color_map[character].fg_color),
+                    cast("Color", self.character_final_color_map[character].fg),
                     steps=10,
                 )
                 gradient_scn.apply_gradient_to_symbols(

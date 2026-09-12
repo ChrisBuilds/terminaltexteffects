@@ -217,7 +217,7 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
             final_scene = character.animation.new_scene()
             char_final_gradient = Gradient(
                 self.config.correct_color,
-                cast("Color", self.character_final_color_map[character].fg_color),
+                cast("Color", self.character_final_color_map[character].fg),
                 steps=10,
             )
             final_scene.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=char_final_gradient)

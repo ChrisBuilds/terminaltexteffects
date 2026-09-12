@@ -234,7 +234,7 @@ def test_synthgrid_ignore_with_preexisting_colors_uses_effect_gradient() -> None
     iterator = cast("effect_synthgrid.SynthGridIterator", iter(effect))
     character = _get_first_nonspace_character(iterator)
     dissolve_scene = character.animation.active_scene
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert dissolve_scene is not None
     assert final_color is not None

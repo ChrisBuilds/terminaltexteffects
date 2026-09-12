@@ -299,7 +299,7 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
                 else:
                     fall_gradient = Gradient(
                         shell_color,
-                        cast("Color", self.character_final_color_map[character].fg_color),
+                        cast("Color", self.character_final_color_map[character].fg),
                         steps=15,
                     )
                     fall_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=fall_gradient)

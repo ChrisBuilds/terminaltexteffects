@@ -181,8 +181,8 @@ class RainIterator(BaseEffectIterator[RainConfig]):
             rain_scn.add_frame(random.choice(self.config.rain_symbols), 1, colors=ColorPair(fg=raindrop_color))
             fade_scn = character.animation.new_scene()
             if self.terminal.config.existing_color_handling == "dynamic":
-                final_fg_color = self.character_final_color_map[character].fg_color
-                final_bg_color = self.character_final_color_map[character].bg_color
+                final_fg_color = self.character_final_color_map[character].fg
+                final_bg_color = self.character_final_color_map[character].bg
                 fg_gradient = Gradient(raindrop_color, final_fg_color, steps=7) if final_fg_color else None
                 bg_gradient = Gradient(raindrop_color, final_bg_color, steps=7) if final_bg_color else None
                 if fg_gradient or bg_gradient:
@@ -195,7 +195,7 @@ class RainIterator(BaseEffectIterator[RainConfig]):
                 else:
                     fade_scn.add_frame(character.input_symbol, 3, colors=ColorPair())
             else:
-                final_fg_color = self.character_final_color_map[character].fg_color
+                final_fg_color = self.character_final_color_map[character].fg
                 assert final_fg_color is not None
                 raindrop_gradient = Gradient(raindrop_color, final_fg_color, steps=7)
                 fade_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=raindrop_gradient)

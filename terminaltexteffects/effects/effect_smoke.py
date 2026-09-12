@@ -174,7 +174,7 @@ class SmokeIterator(BaseEffectIterator[SmokeConfig]):
             if self.terminal.config.existing_color_handling == "dynamic":
                 paint_scn.add_frame(character.input_symbol, 5, colors=self.character_final_color_map[character])
             else:
-                final_fg_color = self.character_final_color_map[character].fg_color
+                final_fg_color = self.character_final_color_map[character].fg
                 assert final_fg_color is not None
                 paint_gradient = tte.Gradient(
                     *self.config.final_gradient_stops,

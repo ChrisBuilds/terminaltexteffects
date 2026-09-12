@@ -207,13 +207,13 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
     def _adjust_color_pair_brightness(colors: tte.ColorPair, brightness: float) -> tte.ColorPair:
         return tte.ColorPair(
             fg=(
-                tte.Animation.adjust_color_brightness(colors.fg_color, brightness)
-                if colors.fg_color is not None
+                tte.Animation.adjust_color_brightness(colors.fg, brightness)
+                if colors.fg is not None
                 else None
             ),
             bg=(
-                tte.Animation.adjust_color_brightness(colors.bg_color, brightness)
-                if colors.bg_color is not None
+                tte.Animation.adjust_color_brightness(colors.bg, brightness)
+                if colors.bg is not None
                 else None
             ),
         )
@@ -231,24 +231,24 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         fg_steps = (
             list(
                 tte.Gradient(
-                    typing.cast("tte.Color", start_colors.fg_color),
-                    typing.cast("tte.Color", end_colors.fg_color),
+                    typing.cast("tte.Color", start_colors.fg),
+                    typing.cast("tte.Color", end_colors.fg),
                     steps=steps,
                 ),
             )
-            if start_colors.fg_color is not None and end_colors.fg_color is not None
-            else [end_colors.fg_color if end_colors.fg_color is not None else start_colors.fg_color] * steps
+            if start_colors.fg is not None and end_colors.fg is not None
+            else [end_colors.fg if end_colors.fg is not None else start_colors.fg] * steps
         )
         bg_steps = (
             list(
                 tte.Gradient(
-                    typing.cast("tte.Color", start_colors.bg_color),
-                    typing.cast("tte.Color", end_colors.bg_color),
+                    typing.cast("tte.Color", start_colors.bg),
+                    typing.cast("tte.Color", end_colors.bg),
                     steps=steps,
                 ),
             )
-            if start_colors.bg_color is not None and end_colors.bg_color is not None
-            else [end_colors.bg_color if end_colors.bg_color is not None else start_colors.bg_color] * steps
+            if start_colors.bg is not None and end_colors.bg is not None
+            else [end_colors.bg if end_colors.bg is not None else start_colors.bg] * steps
         )
         for index in range(steps):
             scene.add_frame(
@@ -302,13 +302,13 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             glow_scn = text_char.animation.new_scene(scene_id="glow")
             glow_fg_gradient = tte.Gradient(
                 self.config.glowing_text_color,
-                typing.cast("tte.Color", storm_colors.fg_color),
+                typing.cast("tte.Color", storm_colors.fg),
                 steps=7,
             )
             for color in glow_fg_gradient:
                 glow_scn.add_frame(
                     symbol=text_char.input_symbol,
-                    colors=tte.ColorPair(fg=color, bg=storm_colors.bg_color),
+                    colors=tte.ColorPair(fg=color, bg=storm_colors.bg),
                     duration=self.config.text_glow_time,
                 )
             if self.terminal.config.existing_color_handling == "dynamic":
@@ -332,8 +332,8 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 fade_scn.add_frame(symbol=text_char.input_symbol, colors=storm_colors, duration=12)
             else:
                 fade_gradient = tte.Gradient(
-                    typing.cast("tte.Color", visible_colors.fg_color),
-                    typing.cast("tte.Color", storm_colors.fg_color),
+                    typing.cast("tte.Color", visible_colors.fg),
+                    typing.cast("tte.Color", storm_colors.fg),
                     steps=7,
                 )
                 for color in fade_gradient:
@@ -355,8 +355,8 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             else:
                 unfade_gradient = list(
                     tte.Gradient(
-                        typing.cast("tte.Color", visible_colors.fg_color),
-                        typing.cast("tte.Color", storm_colors.fg_color),
+                        typing.cast("tte.Color", visible_colors.fg),
+                        typing.cast("tte.Color", storm_colors.fg),
                         steps=7,
                     ),
                 )[::-1]
@@ -365,12 +365,12 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
 
             # lightning flash scene
             lightning_flash_color = tte.Animation.adjust_color_brightness(
-                typing.cast("tte.Color", visible_colors.fg_color),
+                typing.cast("tte.Color", visible_colors.fg),
                 brightness=1.7,
             )
             strike_scn = text_char.animation.new_scene(scene_id="flash")
             flash_gradient = tte.Gradient(
-                typing.cast("tte.Color", storm_colors.fg_color),
+                typing.cast("tte.Color", storm_colors.fg),
                 lightning_flash_color,
                 steps=7,
                 loop=True,
@@ -378,7 +378,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
             for color in flash_gradient:
                 strike_scn.add_frame(
                     symbol=text_char.input_symbol,
-                    colors=tte.ColorPair(fg=color, bg=storm_colors.bg_color),
+                    colors=tte.ColorPair(fg=color, bg=storm_colors.bg),
                     duration=6,
                 )
 

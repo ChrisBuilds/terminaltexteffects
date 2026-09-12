@@ -181,7 +181,7 @@ class DecryptIterator(BaseEffectIterator[DecryptConfig]):
         else:
             discovered_gradient = Gradient(
                 Color("#ffffff"),
-                cast("Color", self.character_final_color_map[character].fg_color),
+                cast("Color", self.character_final_color_map[character].fg),
                 steps=10,
             )
             discovered_scene.apply_gradient_to_symbols(character.input_symbol, 5, fg_gradient=discovered_gradient)

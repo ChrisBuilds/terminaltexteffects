@@ -296,8 +296,8 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 input_scn = character.animation.new_scene()
                 if self.terminal.config.existing_color_handling == "dynamic":
                     if (
-                        self.character_final_color_map[character].fg_color is None
-                        and self.character_final_color_map[character].bg_color is None
+                        self.character_final_color_map[character].fg is None
+                        and self.character_final_color_map[character].bg is None
                     ):
                         clear_gradient = Gradient(self.config.flash_color, self.DYNAMIC_CLEAR_COLOR, steps=10)
                         for step in clear_gradient:
@@ -310,26 +310,26 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                             fg_gradient=(
                                 Gradient(
                                     self.config.flash_color,
-                                    typing.cast("Color", self.character_final_color_map[character].fg_color),
+                                    typing.cast("Color", self.character_final_color_map[character].fg),
                                     steps=10,
                                 )
-                                if self.character_final_color_map[character].fg_color
+                                if self.character_final_color_map[character].fg
                                 else None
                             ),
                             bg_gradient=(
                                 Gradient(
                                     self.config.flash_color,
-                                    typing.cast("Color", self.character_final_color_map[character].bg_color),
+                                    typing.cast("Color", self.character_final_color_map[character].bg),
                                     steps=10,
                                 )
-                                if self.character_final_color_map[character].bg_color
+                                if self.character_final_color_map[character].bg
                                 else None
                             ),
                         )
                 else:
                     for step in Gradient(
                         self.config.flash_color,
-                        typing.cast("Color", self.character_final_color_map[character].fg_color),
+                        typing.cast("Color", self.character_final_color_map[character].fg),
                         steps=10,
                     ):
                         input_scn.add_frame(character.input_symbol, 3, colors=ColorPair(fg=step))

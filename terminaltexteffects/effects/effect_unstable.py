@@ -201,8 +201,8 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
             reassembly_path.new_waypoint(character.input_coord)
             rumble_scn = character.animation.new_scene(scene_id="rumble")
             if self.terminal.config.existing_color_handling == "dynamic":
-                start_fg_color = self.character_start_color_map[character].fg_color or self.DYNAMIC_NEUTRAL_GRAY
-                start_bg_color = self.character_start_color_map[character].bg_color
+                start_fg_color = self.character_start_color_map[character].fg or self.DYNAMIC_NEUTRAL_GRAY
+                start_bg_color = self.character_start_color_map[character].bg
                 rumble_scn.apply_gradient_to_symbols(
                     character.input_symbol,
                     10,
@@ -222,7 +222,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                     ),
                 )
             else:
-                final_fg_color = self.character_final_color_map[character].fg_color or self.DYNAMIC_NEUTRAL_GRAY
+                final_fg_color = self.character_final_color_map[character].fg or self.DYNAMIC_NEUTRAL_GRAY
                 unstable_gradient = Gradient(
                     final_fg_color,
                     self.config.unstable_color,
@@ -231,8 +231,8 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                 rumble_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=unstable_gradient)
             final_scn = character.animation.new_scene(scene_id="final")
             if self.terminal.config.existing_color_handling == "dynamic":
-                final_fg_color = self.character_final_color_map[character].fg_color
-                final_bg_color = self.character_final_color_map[character].bg_color
+                final_fg_color = self.character_final_color_map[character].fg
+                final_bg_color = self.character_final_color_map[character].bg
                 if (
                     final_fg_color is None
                     and final_bg_color is None
@@ -277,7 +277,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
                             colors=ColorPair(bg=final_bg_color),
                         )
             else:
-                final_fg_color = self.character_final_color_map[character].fg_color or self.DYNAMIC_NEUTRAL_GRAY
+                final_fg_color = self.character_final_color_map[character].fg or self.DYNAMIC_NEUTRAL_GRAY
                 final_color = Gradient(
                     self.config.unstable_color,
                     final_fg_color,

@@ -205,7 +205,7 @@ def test_unstable_ignore_with_preexisting_colors_uses_effect_gradient_behavior()
     character = iterator.terminal.get_characters()[0]
     rumble_scene = character.animation.query_scene("rumble")
     final_scene = character.animation.query_scene("final")
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert final_color is not None
     assert rumble_scene is not None

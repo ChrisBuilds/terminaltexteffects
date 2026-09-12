@@ -138,8 +138,8 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
             self.terminal.set_character_visibility(character, is_visible=False)
             gradient_scn = character.animation.new_scene()
             if self.terminal.config.existing_color_handling == "dynamic":
-                final_fg_color = self.character_final_color_map[character].fg_color
-                final_bg_color = self.character_final_color_map[character].bg_color
+                final_fg_color = self.character_final_color_map[character].fg
+                final_bg_color = self.character_final_color_map[character].bg
                 if final_fg_color or final_bg_color:
                     fg_gradient = (
                         Gradient(terminal_background_color, final_fg_color, steps=7) if final_fg_color else None
@@ -165,7 +165,7 @@ class RandomSequenceIterator(BaseEffectIterator[RandomSequenceConfig]):
                         colors=ColorPair(),
                     )
             else:
-                final_fg_color = self.character_final_color_map[character].fg_color
+                final_fg_color = self.character_final_color_map[character].fg
                 assert final_fg_color is not None
                 gradient = Gradient(terminal_background_color, final_fg_color, steps=7)
                 gradient_scn.apply_gradient_to_symbols(

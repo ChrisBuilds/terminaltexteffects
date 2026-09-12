@@ -166,7 +166,7 @@ def test_sweep_ignore_with_preexisting_colors_uses_effect_gradient() -> None:
     iterator = cast("effect_sweep.SweepIterator", iter(effect))
     character = next(char for char in iterator.terminal.get_characters() if not char.is_fill_character)
     second_sweep_scene = character.animation.query_scene("second_sweep")
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert second_sweep_scene is not None
     assert final_color is not None

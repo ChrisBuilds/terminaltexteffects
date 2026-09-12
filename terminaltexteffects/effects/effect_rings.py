@@ -199,7 +199,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             if self.existing_color_handling == "dynamic":
                 gradient_scn.add_frame(character.input_symbol, 1, colors=self.character_color_map[character])
             else:
-                final_fg_color = self.character_color_map[character].fg_color
+                final_fg_color = self.character_color_map[character].fg
                 assert final_fg_color is not None
                 char_gradient = Gradient(final_fg_color, self.ring_color, steps=8)
                 gradient_scn.apply_gradient_to_symbols(character.input_symbol, 3, fg_gradient=char_gradient)
@@ -218,7 +218,7 @@ class RingsIterator(BaseEffectIterator[RingsConfig]):
             if self.existing_color_handling == "dynamic":
                 disperse_scn.add_frame(character.input_symbol, 1, colors=self.character_color_map[character])
             else:
-                final_fg_color = self.character_color_map[character].fg_color
+                final_fg_color = self.character_color_map[character].fg
                 assert final_fg_color is not None
                 disperse_gradient = Gradient(self.ring_color, final_fg_color, steps=8)
                 disperse_scn.apply_gradient_to_symbols(character.input_symbol, 10, fg_gradient=disperse_gradient)

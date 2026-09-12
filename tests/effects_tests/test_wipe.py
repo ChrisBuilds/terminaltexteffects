@@ -175,7 +175,7 @@ def test_wipe_ignore_with_preexisting_colors_uses_effect_gradient_behavior() -> 
     iterator = cast("effect_wipe.WipeIterator", iter(effect))
     character = iterator.terminal.get_characters()[0]
     wipe_scene = character.animation.query_scene("wipe")
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert final_color is not None
     assert wipe_scene is not None

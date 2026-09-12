@@ -217,7 +217,7 @@ class SprayIterator(BaseEffectIterator[SprayConfig]):
             else:
                 spray_gradient = Gradient(
                     random.choice(final_gradient.spectrum),
-                    typing.cast("Color", self.character_final_color_map[character].fg_color),
+                    typing.cast("Color", self.character_final_color_map[character].fg),
                     steps=7,
                 )
                 droplet_scn.apply_gradient_to_symbols(character.input_symbol, 20, fg_gradient=spray_gradient)

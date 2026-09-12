@@ -144,8 +144,8 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                 character.motion.set_coordinate(Coord(character.input_coord.column, 1))
                 typed_animation = character.animation.new_scene()
                 if existing_color_handling == "dynamic":
-                    final_fg_color = character_final_color_map[character].fg_color
-                    final_bg_color = character_final_color_map[character].bg_color
+                    final_fg_color = character_final_color_map[character].fg
+                    final_bg_color = character_final_color_map[character].bg
                     fg_gradient = Gradient(typing_head_color, final_fg_color, steps=5) if final_fg_color else None
                     bg_gradient = Gradient(typing_head_color, final_bg_color, steps=5) if final_bg_color else None
                     if fg_gradient or bg_gradient:
@@ -163,7 +163,7 @@ class PrintIterator(BaseEffectIterator[PrintConfig]):
                         )
                         typed_animation.add_frame(character.input_symbol, 3, colors=ColorPair())
                 else:
-                    final_fg_color = character_final_color_map[character].fg_color
+                    final_fg_color = character_final_color_map[character].fg
                     assert final_fg_color is not None
                     color_gradient = Gradient(typing_head_color, final_fg_color, steps=5)
                     typed_animation.apply_gradient_to_symbols(

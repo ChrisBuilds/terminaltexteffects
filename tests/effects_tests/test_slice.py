@@ -155,7 +155,7 @@ def test_slice_ignore_with_preexisting_colors_uses_effect_gradient_color() -> No
     iterator = cast("effect_slice.SliceIterator", iter(effect))
     character = iterator.terminal.get_characters()[0]
     current_visual = character.animation.current_character_visual
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert final_color is not None
     assert current_visual.symbol == "A"

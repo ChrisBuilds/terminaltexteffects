@@ -202,7 +202,7 @@ def test_rings_ignore_with_preexisting_colors_uses_effect_colors() -> None:
     character = _get_ring_character(iterator)
     start_scene = character.animation.active_scene
     gradient_scene = character.animation.query_scene("gradient")
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert start_scene is not None
     assert gradient_scene is not None

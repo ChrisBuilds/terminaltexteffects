@@ -276,7 +276,7 @@ def test_errorcorrect_ignore_with_preexisting_colors_uses_effect_gradient() -> N
     character = iterator.terminal.get_characters()[0]
     assert character.animation.active_scene is not None
     initial_frame = character.animation.active_scene.frames[-1].character_visual
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert final_color is not None
     assert initial_frame.colors == effect_errorcorrect.ColorPair(fg=final_color)

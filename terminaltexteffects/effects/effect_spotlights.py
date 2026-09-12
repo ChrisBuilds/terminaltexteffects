@@ -168,13 +168,13 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
     def _adjust_color_pair_brightness(colors: ColorPair, brightness_factor: float) -> ColorPair:
         return ColorPair(
             fg=(
-                animation.Animation.adjust_color_brightness(colors.fg_color, brightness_factor)
-                if colors.fg_color
+                animation.Animation.adjust_color_brightness(colors.fg, brightness_factor)
+                if colors.fg
                 else None
             ),
             bg=(
-                animation.Animation.adjust_color_brightness(colors.bg_color, brightness_factor)
-                if colors.bg_color
+                animation.Animation.adjust_color_brightness(colors.bg, brightness_factor)
+                if colors.bg
                 else None
             ),
         )

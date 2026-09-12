@@ -359,8 +359,8 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                     fg=character.animation.input_fg_color,
                     bg=character.animation.input_bg_color,
                 )
-                final_fg_color = self.character_final_color_map[character].fg_color
-                final_bg_color = self.character_final_color_map[character].bg_color
+                final_fg_color = self.character_final_color_map[character].fg
+                final_bg_color = self.character_final_color_map[character].bg
                 cool_gradient = tte.Gradient(
                     *self.config.cool_gradient_stops,
                     steps=8,
@@ -369,8 +369,8 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                 self.character_final_color_map[character] = tte.ColorPair(
                     fg=final_gradient_mapping[character.input_coord],
                 )
-                final_fg_color = self.character_final_color_map[character].fg_color
-                final_bg_color = self.character_final_color_map[character].bg_color
+                final_fg_color = self.character_final_color_map[character].fg
+                final_bg_color = self.character_final_color_map[character].bg
                 cool_gradient = tte.Gradient(
                     *self.config.cool_gradient_stops,
                     final_gradient_mapping[character.input_coord],

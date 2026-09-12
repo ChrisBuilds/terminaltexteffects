@@ -171,7 +171,7 @@ class ScatteredIterator(BaseEffectIterator[ScatteredConfig]):
                     colors=self.character_final_color_map[character],
                 )
             else:
-                final_fg_color = self.character_final_color_map[character].fg_color
+                final_fg_color = self.character_final_color_map[character].fg
                 assert final_fg_color is not None
                 char_gradient = Gradient(final_gradient.spectrum[0], final_fg_color, steps=10)
                 gradient_scn.apply_gradient_to_symbols(

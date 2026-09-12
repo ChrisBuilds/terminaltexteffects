@@ -197,7 +197,7 @@ def test_vhstape_ignore_with_preexisting_colors_uses_effect_gradient_behavior() 
     character = iterator.terminal.get_characters()[0]
     base_scene = character.animation.query_scene("base")
     final_redraw_scene = character.animation.query_scene("final_redraw")
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert final_color is not None
     assert base_scene is not None

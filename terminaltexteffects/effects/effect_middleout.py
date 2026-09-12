@@ -197,8 +197,8 @@ class MiddleOutIterator(BaseEffectIterator[MiddleOutConfig]):
 
             # setup scenes
             full_scene = character.animation.new_scene(scene_id="full")
-            final_fg_color = self.character_final_color_map[character].fg_color
-            final_bg_color = self.character_final_color_map[character].bg_color
+            final_fg_color = self.character_final_color_map[character].fg
+            final_bg_color = self.character_final_color_map[character].bg
             if self.terminal.config.existing_color_handling == "dynamic":
                 fg_gradient = Gradient(self.config.starting_color, final_fg_color, steps=10) if final_fg_color else None
                 bg_gradient = Gradient(self.config.starting_color, final_bg_color, steps=10) if final_bg_color else None

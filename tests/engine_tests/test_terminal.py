@@ -1,3 +1,5 @@
+# ruff: noqa: ANN001, D100, D103, E501, ERA001, TC006
+
 from __future__ import annotations
 
 import shutil
@@ -266,8 +268,8 @@ def test_terminal_preprocess_input_data_existing_color() -> None:
     chars = terminal._preprocess_input_data(input_data)[0]
     test_char_colors = chars[0].animation.current_character_visual.colors
     assert test_char_colors is not None
-    assert test_char_colors.bg_color is None
-    assert test_char_colors.fg_color == Color("#FF0000")
+    assert test_char_colors.bg is None
+    assert test_char_colors.fg == Color("#FF0000")
 
 
 @pytest.mark.parametrize("anchor", ["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"])

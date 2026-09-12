@@ -178,7 +178,7 @@ def test_slide_ignore_with_preexisting_colors_uses_effect_gradient() -> None:
     iterator = cast("effect_slide.SlideIterator", iter(effect))
     character = iterator.terminal.get_characters()[0]
     active_scene = character.animation.active_scene
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert active_scene is not None
     assert final_color is not None

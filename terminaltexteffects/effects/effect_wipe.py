@@ -171,7 +171,7 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
                         colors=final_colors,
                     )
             else:
-                final_fg_color = self.character_final_color_map[character].fg_color
+                final_fg_color = self.character_final_color_map[character].fg
                 assert final_fg_color is not None
                 wipe_gradient = Gradient(
                     final_gradient.spectrum[0],

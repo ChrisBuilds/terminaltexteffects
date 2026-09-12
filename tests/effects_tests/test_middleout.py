@@ -180,7 +180,7 @@ def test_middleout_ignore_with_preexisting_colors_uses_effect_gradient() -> None
     iterator = cast("effect_middleout.MiddleOutIterator", iter(effect))
     character = iterator.terminal.get_characters()[0]
     full_scene = character.animation.scenes["full"]
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
 
     assert final_color is not None
     final_frame = full_scene.frames[-1].character_visual

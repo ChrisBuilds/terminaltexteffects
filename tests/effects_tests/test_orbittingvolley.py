@@ -197,7 +197,7 @@ def test_orbittingvolley_ignore_with_preexisting_colors_uses_effect_gradient() -
 
     iterator = cast("effect_orbittingvolley.OrbittingVolleyIterator", iter(effect))
     character = iterator.terminal.get_characters()[0]
-    final_color = iterator.character_final_color_map[character].fg_color
+    final_color = iterator.character_final_color_map[character].fg
     current_visual = character.animation.current_character_visual
 
     assert final_color is not None
