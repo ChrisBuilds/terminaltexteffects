@@ -23,6 +23,7 @@
   `docs/performance.md`.
 * Added a `--lifecycle terminal-output` benchmark mode for measuring context setup, iterator construction, in-memory
   frame printing, and cursor restoration without writing to the real terminal.
+* Added a sparse 80-by-24 input preset and optional build/total peak-memory measurements to the performance harness.
 
 #### Engine Features (0.16.0)
 
@@ -57,6 +58,9 @@
 * `BaseEffect.terminal_output()` and the associated effect iterator now share one `Terminal` graph regardless of
   whether the iterator or output context is created first. Nested and repeated contexts remain isolated, and every
   `iter(effect)` call still creates a fresh iterator.
+* Terminal fill characters and cardinal neighbor graphs are now materialized only when requested. Empty-coordinate
+  lookup can create one fill cell, public full-map access retains its complete-canvas behavior, and spanning-tree
+  algorithms explicitly prepare the dense graph they require. Reserved IDs preserve helper/fill painter ordering.
 * `BaseEffectIterator.update()` now ticks a snapshot of `active_characters`, allowing character events and callbacks to
   add or remove active characters during an update without mutating the set being iterated.
 * `Motion.move()` now reuses the current immutable `Coord` object when preserving `previous_coord` instead of

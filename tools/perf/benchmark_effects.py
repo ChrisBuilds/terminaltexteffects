@@ -15,6 +15,7 @@ import random
 import statistics
 import sys
 import time
+import tracemalloc
 from contextlib import redirect_stdout
 from dataclasses import dataclass
 from pathlib import Path
@@ -62,6 +63,7 @@ INPUT_PRESETS = {
         "\x1b[38;5;180mggggggg \x1b[38;5;146m:gggggg; "
         "\x1b[38;5;64mggggggg \x1b[38;5;182mggggggg"
     ),
+    "sparse": "A\x1b[24;80HB",
 }
 
 
@@ -74,6 +76,8 @@ class IterationResult:
     total_seconds: float
     frames: int
     output_characters: int
+    build_peak_memory_bytes: int | None = None
+    peak_memory_bytes: int | None = None
 
 
 def _effect_classes() -> dict[str, type[BaseEffect[Any]]]:
@@ -119,11 +123,15 @@ def run_iteration(
     input_data: str,
     seed: int,
     lifecycle: Literal["iterator", "terminal-output"] = "iterator",
+    *,
+    measure_memory: bool = False,
 ) -> IterationResult:
     """Run one effect iteration and return timing details."""
     if lifecycle not in ("iterator", "terminal-output"):
         message = f"Unknown benchmark lifecycle: {lifecycle}"
         raise ValueError(message)
+    if measure_memory:
+        tracemalloc.start()
     random.seed(seed)
     effect_instance = effect_class(input_data)
     effect_instance.terminal_config = _make_terminal_config()
@@ -131,12 +139,15 @@ def run_iteration(
 
     frames = 0
     output_characters = 0
+    build_peak_memory_bytes: int | None = None
     build_start = time.perf_counter()
     if lifecycle == "terminal-output":
         captured_output = io.StringIO()
         with redirect_stdout(captured_output), effect_instance.terminal_output() as terminal:
             effect_iterator = iter(effect_instance)
             build_seconds = time.perf_counter() - build_start
+            if measure_memory:
+                _, build_peak_memory_bytes = tracemalloc.get_traced_memory()
             render_start = time.perf_counter()
             for frame in effect_iterator:
                 frames += 1
@@ -146,11 +157,18 @@ def run_iteration(
     else:
         effect_iterator = iter(effect_instance)
         build_seconds = time.perf_counter() - build_start
+        if measure_memory:
+            _, build_peak_memory_bytes = tracemalloc.get_traced_memory()
         render_start = time.perf_counter()
         for frame in effect_iterator:
             frames += 1
             output_characters += len(frame)
         render_seconds = time.perf_counter() - render_start
+
+    peak_memory_bytes: int | None = None
+    if measure_memory:
+        _, peak_memory_bytes = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
 
     return IterationResult(
         build_seconds=build_seconds,
@@ -158,6 +176,8 @@ def run_iteration(
         total_seconds=build_seconds + render_seconds,
         frames=frames,
         output_characters=output_characters,
+        build_peak_memory_bytes=build_peak_memory_bytes,
+        peak_memory_bytes=peak_memory_bytes,
     )
 
 
@@ -181,7 +201,7 @@ def summarize_iterations(results: Sequence[IterationResult]) -> dict[str, Any]:
         msg = "Cannot summarize zero benchmark iterations"
         raise ValueError(msg)
     first_result = results[0]
-    return {
+    summary = {
         "build_seconds": _stats([result.build_seconds for result in results]),
         "render_seconds": _stats([result.render_seconds for result in results]),
         "total_seconds": _stats([result.total_seconds for result in results]),
@@ -190,6 +210,13 @@ def summarize_iterations(results: Sequence[IterationResult]) -> dict[str, Any]:
         "frame_counts": [result.frames for result in results],
         "output_character_counts": [result.output_characters for result in results],
     }
+    peak_memory_values = [result.peak_memory_bytes for result in results if result.peak_memory_bytes is not None]
+    build_peak_memory_values = [
+        result.build_peak_memory_bytes for result in results if result.build_peak_memory_bytes is not None
+    ]
+    summary["build_peak_memory_bytes"] = _stats(build_peak_memory_values) if build_peak_memory_values else None
+    summary["peak_memory_bytes"] = _stats(peak_memory_values) if peak_memory_values else None
+    return summary
 
 
 def run_benchmark(
@@ -201,19 +228,33 @@ def run_benchmark(
     warmups: int,
     seed: int,
     lifecycle: Literal["iterator", "terminal-output"] = "iterator",
+    measure_memory: bool = False,
 ) -> dict[str, Any]:
     """Run warmups and timed samples for one effect scenario."""
     input_data = _make_input_data(input_preset)
     for warmup_index in range(warmups):
-        run_iteration(effect_class, input_data, seed + warmup_index, lifecycle)
+        run_iteration(
+            effect_class,
+            input_data,
+            seed + warmup_index,
+            lifecycle,
+            measure_memory=measure_memory,
+        )
     sample_results = [
-        run_iteration(effect_class, input_data, seed + warmups + sample_index, lifecycle)
+        run_iteration(
+            effect_class,
+            input_data,
+            seed + warmups + sample_index,
+            lifecycle,
+            measure_memory=measure_memory,
+        )
         for sample_index in range(samples)
     ]
     return {
         "effect": effect_name,
         "input_preset": input_preset,
         "lifecycle": lifecycle,
+        "measure_memory": measure_memory,
         "samples": samples,
         "warmups": warmups,
         "seed": seed,
@@ -243,7 +284,7 @@ def build_report(results: Sequence[dict[str, Any]]) -> dict[str, Any]:
     """Wrap scenario results with report metadata."""
     return {
         "tool": "tools/perf/benchmark_effects.py",
-        "schema_version": 2,
+        "schema_version": 3,
         "python": sys.version.split()[0],
         "results": list(results),
     }
@@ -291,6 +332,18 @@ def compare_reports(baseline_report: dict[str, Any], candidate_report: dict[str,
             lines.append(
                 f"{key[0]},{key[1]},{key[2]},{metric},{baseline_mean:.9f},{candidate_mean:.9f},{delta_text}",
             )
+        for memory_metric in ("build_peak_memory_bytes", "peak_memory_bytes"):
+            baseline_memory = baseline_result["summary"].get(memory_metric)
+            candidate_memory = candidate_result["summary"].get(memory_metric)
+            if isinstance(baseline_memory, dict) and isinstance(candidate_memory, dict):
+                baseline_mean = float(baseline_memory["mean"])
+                candidate_mean = float(candidate_memory["mean"])
+                delta = _percent_delta(baseline_mean, candidate_mean)
+                delta_text = "n/a" if delta is None else f"{delta:+.2f}"
+                lines.append(
+                    f"{key[0]},{key[1]},{key[2]},{memory_metric},"
+                    f"{baseline_mean:.0f},{candidate_mean:.0f},{delta_text}",
+                )
         baseline_frames = baseline_result["summary"]["frames"]
         candidate_frames = candidate_result["summary"]["frames"]
         frame_delta = candidate_frames - baseline_frames
@@ -342,6 +395,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default="iterator",
         help="Measure iterator-only rendering or the complete terminal-output context lifecycle.",
     )
+    parser.add_argument(
+        "--memory",
+        action="store_true",
+        help="Measure peak traced Python memory; compare timings only with other memory-enabled runs.",
+    )
     parser.add_argument("--profile", action="store_true", help="Print cProfile output for the first selected effect.")
     parser.add_argument("--json-out", type=Path, help="Write benchmark report JSON to this path.")
     parser.add_argument(
@@ -383,6 +441,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             warmups=args.warmups,
             seed=args.seed,
             lifecycle=args.lifecycle,
+            measure_memory=args.memory,
         )
         for effect_name, effect_class in selected_effects
     ]

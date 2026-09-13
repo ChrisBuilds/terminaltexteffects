@@ -283,3 +283,43 @@ Frame counts and output-character counts matched in every baseline/candidate pai
 records one `Terminal.__init__()` call for the complete output lifecycle. Tests additionally verify object identity for
 both context-before-iterator and iterator-before-context orderings, fresh repeated iterators, nested and repeated
 contexts, exception cleanup, and a single detected terminal-dimension snapshot.
+
+## Issue 11: Lazy Fill Characters and Neighbor Graphs
+
+### Method
+
+The benchmark harness gained a `sparse` preset that creates an 80-by-24 virtual canvas with two visible input
+characters, plus opt-in `tracemalloc` reporting for peak memory at iterator-build completion and full-run completion.
+Baselines were captured after the harness change but before the terminal implementation changed. Candidate runs used
+identical seeds and arguments.
+
+Timing scenarios used 11 samples and three warmups for Wipe, Expand, and Spray on sparse input and Wipe on dense
+generated 80-by-24 input. Smoke/medium used seven samples and two warmups as a control that intentionally requests the
+complete fill and neighbor graph. Memory scenarios used five samples and one warmup with `--memory`; their timings are
+compared only against other memory-enabled runs because tracing adds substantial overhead.
+
+### Results
+
+| Effect/input | Build delta | Render delta | Total delta |
+|---|---:|---:|---:|
+| Wipe/sparse 80 x 24 | -92.22% | +0.02% | -71.38% |
+| Expand/sparse 80 x 24 | -92.23% | -0.69% | -70.92% |
+| Spray/sparse 80 x 24 | -91.95% | -1.20% | -68.53% |
+| Wipe/generated 80 x 24 | -17.88% | +3.73% | -10.85% |
+| Smoke/medium, graph consumer | +0.11% | +1.99% | +0.85% |
+
+| Memory scenario | Build peak | Full-run peak |
+|---|---:|---:|
+| Wipe/sparse 80 x 24 | -93.59% | -93.59% |
+| Wipe/generated 80 x 24 | -5.27% | -5.27% |
+
+Sparse Wipe build peak fell from 4,353,414 bytes to 279,157 bytes. Dense generated Wipe fell from 21,487,877 bytes to
+20,354,438 bytes because it avoids eagerly allocating four-entry neighbor dictionaries even though there are no fill
+cells to omit. Smoke remains effectively unchanged because its spanning-tree generators deliberately request the
+complete graph during effect construction.
+
+Frame and output-character counts matched for every scenario. Fill IDs retain their historical row-major values even
+when an added helper is created before a fill is materialized, preserving deterministic same-layer collision order.
+Public `character_by_input_coord` access still exposes a complete canvas mapping, while a single empty-coordinate lookup
+creates only the requested fill. Direct `EffectCharacter.neighbors` access transparently prepares the graph, and all
+spanning-tree generators now request it explicitly.

@@ -22,6 +22,13 @@ from terminaltexteffects.utils.exceptions import (
 from terminaltexteffects.utils.geometry import Coord
 
 
+class _CharacterOwner(typing.Protocol):
+    """Terminal capability used to lazily prepare character neighbors."""
+
+    def prepare_character_graph(self) -> None:
+        """Materialize fill characters and neighbor relationships."""
+
+
 class EventHandler:
     """Register and handle events related to a character.
 
@@ -413,7 +420,8 @@ class EffectCharacter:
             pair, even when that pair is empty.
         links (set[EffectCharacter]): Linked neighboring characters used by spanning-tree algorithms.
         neighbors (dict[str, EffectCharacter | None]): Adjacent characters keyed by direction
-            (`"north"`, `"east"`, `"south"`, `"west"`).
+            (`"north"`, `"east"`, `"south"`, `"west"`). Reading this property on a terminal-owned character lazily
+            prepares the terminal's complete fill-character and neighbor graph.
 
     """
 
@@ -432,7 +440,7 @@ class EffectCharacter:
         self._input_coord: Coord = Coord(input_column, input_row)
         self._input_ansi_sequences: dict[str, str | None] = {"fg_color": None, "bg_color": None}
         self._is_visible: bool = False
-        self._terminal_owner_token: object | None = None
+        self._terminal_owner_token: typing.Callable[[], _CharacterOwner | None] | None = None
         self.animation: animation.Animation = animation.Animation(self)
         self.motion: motion.Motion = motion.Motion(self)
         self.event_handler: EventHandler = EventHandler(self)
@@ -440,7 +448,22 @@ class EffectCharacter:
         self.is_fill_character = False
         self.uses_input_preexisting_colors = False
         self.links: set[EffectCharacter] = set()
-        self.neighbors: dict[str, EffectCharacter | None] = {}
+        self._neighbors: dict[str, EffectCharacter | None] | None = None
+
+    @property
+    def neighbors(self) -> dict[str, EffectCharacter | None]:
+        """Adjacent characters keyed by cardinal direction.
+
+        Terminal-owned characters prepare their terminal's complete character graph
+        on first access. Standalone characters receive an independent empty mapping.
+        """
+        if self._neighbors is None:
+            owner = self._terminal_owner_token() if self._terminal_owner_token is not None else None
+            if owner is not None:
+                owner.prepare_character_graph()
+            if self._neighbors is None:
+                self._neighbors = {}
+        return self._neighbors
 
     @property
     def input_symbol(self) -> str:

@@ -625,14 +625,22 @@ def test_terminal_wrap_lines() -> None:
 def test_terminal_make_inner_fill_characters() -> None:
     config = TerminalConfig._build_config()
     terminal = Terminal(input_data="test test test", config=config)
-    assert len(terminal._inner_fill_characters) == 2
+    assert terminal._inner_fill_characters == []
+
+    inner_fill_characters = terminal.get_characters(input_chars=False, inner_fill_chars=True)
+
+    assert len(inner_fill_characters) == 2
 
 
 def test_terminal_make_outer_fill_characters() -> None:
     config = TerminalConfig._build_config()
     config.canvas_width = 16
     terminal = Terminal(input_data="test test test", config=config)
-    assert len(terminal._outer_fill_characters) == 2
+    assert terminal._outer_fill_characters == []
+
+    outer_fill_characters = terminal.get_characters(input_chars=False, outer_fill_chars=True)
+
+    assert len(outer_fill_characters) == 2
 
 
 def test_terminal_add_character() -> None:
@@ -730,7 +738,9 @@ def test_terminal_fill_character_does_not_use_input_preexisting_colors() -> None
     config.canvas_height = 2
     config.existing_color_handling = "always"
     terminal = Terminal(input_data="abcd\nef gh", config=config)
-    assert terminal._inner_fill_characters[0].uses_input_preexisting_colors is False
+    fill_characters = terminal.get_characters(input_chars=False, inner_fill_chars=True)
+
+    assert fill_characters[0].uses_input_preexisting_colors is False
 
 
 def test_terminal_added_character_does_not_use_input_preexisting_colors() -> None:

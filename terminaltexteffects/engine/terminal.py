@@ -15,6 +15,7 @@ import shutil
 import sys
 import time
 import typing
+import weakref
 from bisect import bisect_left
 from dataclasses import dataclass
 from operator import attrgetter
@@ -615,8 +616,8 @@ class Terminal:
         config (TerminalConfig): Configuration for the terminal.
         canvas (Canvas): The canvas in the terminal.
         character_by_input_coord (dict[Coord, EffectCharacter]): Mapping of input-character leading coordinates and
-            fill characters keyed by canvas coordinates. Characters created with `add_character()` are tracked
-            separately.
+            fill characters keyed by canvas coordinates. Accessing the mapping materializes any deferred fill
+            characters. Characters created with `add_character()` are tracked separately.
         terminal_state (list[str]): Internal row-by-row representation of the currently visible terminal output.
         visible_top (int): Top visible row within the terminal after canvas anchoring is applied.
         visible_bottom (int): Bottom visible row within the terminal after canvas anchoring is applied.
@@ -636,6 +637,8 @@ class Terminal:
             Get a list of all EffectCharacters grouped by the specified CharacterGroup grouping.
         get_character_by_input_coord:
             Get an EffectCharacter by its input coordinates.
+        prepare_character_graph:
+            Materialize fill characters and cardinal neighbor relationships.
         set_character_visibility:
             Set the visibility of a character.
         get_formatted_output_string:
@@ -667,7 +670,7 @@ class Terminal:
             self.config = TerminalConfig._build_config()
         else:
             self.config = config
-        self._character_ownership_token = object()
+        self._character_ownership_token = weakref.ref(self)
         self._next_character_id = 0
         self._preprocessed_character_columns: dict[EffectCharacter, int] = {}
         self._preprocessed_line_widths: list[int] = []
@@ -703,7 +706,7 @@ class Terminal:
                 if color is not None:
                     self._input_colors_frequency[color] = self._input_colors_frequency.get(color, 0) + 1
         self._added_characters: list[EffectCharacter] = []
-        self.character_by_input_coord: dict[Coord, EffectCharacter] = {
+        self._character_by_input_coord: dict[Coord, EffectCharacter] = {
             (character.input_coord): character for character in self._input_characters
         }
         self._input_character_continuations: dict[Coord, EffectCharacter] = {
@@ -711,10 +714,20 @@ class Terminal:
             for character in self._input_characters
             for offset in range(1, character.animation.current_character_visual.cell_width)
         }
-        self._inner_fill_characters, self._outer_fill_characters = self._make_fill_characters()
-        self._character_by_occupied_coord = dict(self.character_by_input_coord)
+        self._inner_fill_characters: list[EffectCharacter] = []
+        self._outer_fill_characters: list[EffectCharacter] = []
+        self._fill_characters_materialized = False
+        self._character_neighbors_initialized = False
+        self._character_by_occupied_coord = dict(self._character_by_input_coord)
         self._character_by_occupied_coord.update(self._input_character_continuations)
-        self._setup_character_neighbors()
+        occupied_cell_indexes = [
+            (coord.row - self.canvas.bottom) * self.canvas.width + (coord.column - self.canvas.left)
+            for coord in self._character_by_occupied_coord
+            if self.canvas.coord_is_in_canvas(coord)
+        ]
+        self._input_occupied_cell_indexes = tuple(sorted(occupied_cell_indexes))
+        self._fill_character_id_start = self._next_character_id
+        self._next_character_id += self.canvas.width * self.canvas.height - len(self._input_occupied_cell_indexes)
         self._visible_characters: set[EffectCharacter] = set()
         self._visible_characters_by_id: list[EffectCharacter] = []
         self._frame_rate = self.config.frame_rate
@@ -1255,55 +1268,71 @@ class Terminal:
         anchored_characters = self.canvas._anchor_text(input_characters, self.config.anchor_text)
         return [char for char in anchored_characters if self.canvas.coord_is_in_canvas(char._input_coord)]
 
-    def _make_fill_characters(self) -> tuple[list[EffectCharacter], list[EffectCharacter]]:
-        """Create fill characters for unoccupied canvas coordinates.
+    @property
+    def character_by_input_coord(self) -> dict[Coord, EffectCharacter]:
+        """Map input and fill coordinates to characters, materializing fills on access."""
+        self._ensure_fill_characters()
+        return self._character_by_input_coord
+
+    def _get_or_create_fill_character(self, coord: Coord) -> EffectCharacter | None:
+        """Return the character occupying `coord`, creating its fill character if needed."""
+        if character := self._character_by_occupied_coord.get(coord):
+            return character
+        if not self.canvas.coord_is_in_canvas(coord):
+            return None
+
+        cell_index = (coord.row - self.canvas.bottom) * self.canvas.width + (coord.column - self.canvas.left)
+        occupied_before = bisect_left(self._input_occupied_cell_indexes, cell_index)
+        character_id = self._fill_character_id_start + cell_index - occupied_before
+        fill_char = EffectCharacter(character_id, " ", coord.column, coord.row)
+        fill_char._terminal_owner_token = self._character_ownership_token
+        fill_char.is_fill_character = True
+        fill_char.animation.no_color = self.config.no_color
+        fill_char.animation.use_xterm_colors = self.config.xterm_colors
+        fill_char.animation.existing_color_handling = self.config.existing_color_handling
+        fill_char.uses_input_preexisting_colors = False
+        self._character_by_input_coord[coord] = fill_char
+        self._character_by_occupied_coord[coord] = fill_char
+        if self.canvas.coord_is_in_text(coord):
+            self._inner_fill_characters.append(fill_char)
+        else:
+            self._outer_fill_characters.append(fill_char)
+        return fill_char
+
+    def _ensure_fill_characters(self) -> None:
+        """Materialize all fill characters in stable row-major ID order.
 
         Fill characters use a space as `input_symbol` and are inserted into
         `character_by_input_coord` for any canvas coordinate not already occupied by an
         input character. They are split into inner and outer fill characters based on
         whether the coordinate falls within the anchored text bounds.
-
-        Returns:
-            tuple[list[EffectCharacter], list[EffectCharacter]]: Lists of inner and outer
-                fill characters.
-
         """
-        inner_fill_characters = []
-        outer_fill_characters = []
-        for row in range(1, self.canvas.top + 1):
-            for column in range(1, self.canvas.right + 1):
+        if self._fill_characters_materialized:
+            return
+        for row in range(self.canvas.bottom, self.canvas.top + 1):
+            for column in range(self.canvas.left, self.canvas.right + 1):
                 coord = Coord(column, row)
-                if coord not in self.character_by_input_coord and coord not in self._input_character_continuations:
-                    fill_char = EffectCharacter(self._next_character_id, " ", column, row)
-                    fill_char._terminal_owner_token = self._character_ownership_token
-                    fill_char.is_fill_character = True
-                    fill_char.animation.no_color = self.config.no_color
-                    fill_char.animation.use_xterm_colors = self.config.xterm_colors
-                    fill_char.animation.existing_color_handling = self.config.existing_color_handling
-                    fill_char.uses_input_preexisting_colors = False
-                    self.character_by_input_coord[coord] = fill_char
-                    self._next_character_id += 1
-                    if (
-                        self.canvas.text_left <= column <= self.canvas.text_right
-                        and self.canvas.text_bottom <= row <= self.canvas.text_top
-                    ):
-                        inner_fill_characters.append(fill_char)
-                    else:
-                        outer_fill_characters.append(fill_char)
-        return inner_fill_characters, outer_fill_characters
+                self._get_or_create_fill_character(coord)
+        self._fill_characters_materialized = True
 
-    def _setup_character_neighbors(self) -> None:
-        """Create the neighbor map for characters tracked in `character_by_input_coord`."""
+    def prepare_character_graph(self) -> None:
+        """Materialize fill characters and cardinal neighbor relationships on demand."""
+        if self._character_neighbors_initialized:
+            return
+        self._ensure_fill_characters()
         delta_map = {"north": (0, 1), "south": (0, -1), "west": (-1, 0)}
-        for coord, char in self.character_by_input_coord.items():
+        for coord, char in self._character_by_input_coord.items():
+            neighbors: dict[str, EffectCharacter | None] = {}
             for direction, delta in delta_map.items():
                 neighbor_coord = Coord(column=coord.column + delta[0], row=coord.row + delta[1])
-                char.neighbors[direction] = self._character_by_occupied_coord.get(neighbor_coord)
+                neighbors[direction] = self._character_by_occupied_coord.get(neighbor_coord)
             east_coord = Coord(
                 column=coord.column + char.animation.current_character_visual.cell_width,
                 row=coord.row,
             )
-            char.neighbors["east"] = self._character_by_occupied_coord.get(east_coord)
+            neighbors["east"] = self._character_by_occupied_coord.get(east_coord)
+            char._neighbors = neighbors
+        self._character_neighbors_initialized = True
 
     def add_character(self, symbol: str, coord: Coord) -> EffectCharacter:
         """Add a character to the terminal for printing.
@@ -1375,6 +1404,28 @@ class Terminal:
             )
         raise InvalidColorSortError(sort)
 
+    def _get_selected_characters(
+        self,
+        *,
+        input_chars: bool,
+        inner_fill_chars: bool,
+        outer_fill_chars: bool,
+        added_chars: bool,
+    ) -> list[EffectCharacter]:
+        """Collect requested character categories, materializing fills only when selected."""
+        if inner_fill_chars or outer_fill_chars:
+            self._ensure_fill_characters()
+        all_characters: list[EffectCharacter] = []
+        if input_chars:
+            all_characters.extend(self._input_characters)
+        if inner_fill_chars:
+            all_characters.extend(self._inner_fill_characters)
+        if outer_fill_chars:
+            all_characters.extend(self._outer_fill_characters)
+        if added_chars:
+            all_characters.extend(self._added_characters)
+        return all_characters
+
     def get_characters(
         self,
         *,
@@ -1405,15 +1456,12 @@ class Terminal:
             InvalidCharacterSortError: If an invalid sort option is provided.
 
         """
-        all_characters: list[EffectCharacter] = []
-        if input_chars:
-            all_characters.extend(self._input_characters)
-        if inner_fill_chars:
-            all_characters.extend(self._inner_fill_characters)
-        if outer_fill_chars:
-            all_characters.extend(self._outer_fill_characters)
-        if added_chars:
-            all_characters.extend(self._added_characters)
+        all_characters = self._get_selected_characters(
+            input_chars=input_chars,
+            inner_fill_chars=inner_fill_chars,
+            outer_fill_chars=outer_fill_chars,
+            added_chars=added_chars,
+        )
 
         # default sort TOP_TO_BOTTOM_LEFT_TO_RIGHT
         all_characters.sort(
@@ -1487,15 +1535,12 @@ class Terminal:
             InvalidCharacterGroupError: If an invalid grouping option is provided.
 
         """
-        all_characters: list[EffectCharacter] = []
-        if input_chars:
-            all_characters.extend(self._input_characters)
-        if inner_fill_chars:
-            all_characters.extend(self._inner_fill_characters)
-        if outer_fill_chars:
-            all_characters.extend(self._outer_fill_characters)
-        if added_chars:
-            all_characters.extend(self._added_characters)
+        all_characters = self._get_selected_characters(
+            input_chars=input_chars,
+            inner_fill_chars=inner_fill_chars,
+            outer_fill_chars=outer_fill_chars,
+            added_chars=added_chars,
+        )
 
         all_characters = [
             character
@@ -1602,7 +1647,8 @@ class Terminal:
 
         Lookup includes input and fill characters but not characters added through
         `add_character()`. A coordinate occupied by the continuation cell of a wide
-        input symbol returns the owning `EffectCharacter`.
+        input symbol returns the owning `EffectCharacter`. Looking up an otherwise
+        empty canvas coordinate materializes only that coordinate's fill character.
 
         Args:
             coord (Coord): input coordinates of the character
@@ -1611,7 +1657,7 @@ class Terminal:
             EffectCharacter | None: the character at the specified coordinates, or None if no character is found
 
         """
-        return self._character_by_occupied_coord.get(coord, None)
+        return self._get_or_create_fill_character(coord)
 
     def set_character_visibility(self, character: EffectCharacter, is_visible: bool) -> None:  # noqa: FBT001
         """Set whether a character participates in terminal rendering.

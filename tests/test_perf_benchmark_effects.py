@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 def _report(effect: str, render_mean: float, lifecycle: str = "iterator") -> dict[str, Any]:
     """Build a minimal benchmark report for comparison tests."""
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "results": [
             {
                 "effect": effect,
@@ -49,6 +49,7 @@ def test_run_benchmark_returns_stable_summary_keys() -> None:
     assert result["effect"] == "wipe"
     assert result["input_preset"] == "small"
     assert result["lifecycle"] == "iterator"
+    assert result["measure_memory"] is False
     assert result["samples"] == 1
     assert result["warmups"] == 0
     summary = result["summary"]
@@ -60,12 +61,33 @@ def test_run_benchmark_returns_stable_summary_keys() -> None:
         "output_characters",
         "frame_counts",
         "output_character_counts",
+        "build_peak_memory_bytes",
+        "peak_memory_bytes",
     }
     assert summary["frames"] > 0
     assert summary["output_characters"] > 0
     assert summary["build_seconds"]["mean"] >= 0
     assert summary["render_seconds"]["mean"] >= 0
     assert summary["total_seconds"]["mean"] >= summary["render_seconds"]["mean"]
+    assert summary["build_peak_memory_bytes"] is None
+    assert summary["peak_memory_bytes"] is None
+
+
+def test_run_benchmark_measures_peak_memory() -> None:
+    """Memory-enabled runs should report build and complete-iteration peaks."""
+    result = benchmark_effects.run_benchmark(
+        effect_name="wipe",
+        effect_class=Wipe,
+        input_preset="sparse",
+        samples=1,
+        warmups=0,
+        seed=123,
+        measure_memory=True,
+    )
+
+    assert result["measure_memory"] is True
+    assert result["summary"]["build_peak_memory_bytes"]["mean"] > 0
+    assert result["summary"]["peak_memory_bytes"]["mean"] > 0
 
 
 def test_run_benchmark_supports_terminal_output_lifecycle() -> None:
@@ -130,6 +152,7 @@ def test_main_writes_json_report(tmp_path: Path) -> None:
             "0",
             "--lifecycle",
             "terminal-output",
+            "--memory",
             "--json-out",
             str(output_path),
         ],
@@ -137,7 +160,8 @@ def test_main_writes_json_report(tmp_path: Path) -> None:
 
     assert exit_code == 0
     report = json.loads(output_path.read_text(encoding="utf-8"))
-    assert report["schema_version"] == 2
+    assert report["schema_version"] == 3
     assert report["tool"] == "tools/perf/benchmark_effects.py"
     assert report["results"][0]["effect"] == "wipe"
     assert report["results"][0]["lifecycle"] == "terminal-output"
+    assert report["results"][0]["measure_memory"] is True
