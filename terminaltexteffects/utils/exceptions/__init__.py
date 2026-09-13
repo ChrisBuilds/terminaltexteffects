@@ -23,8 +23,11 @@ from terminaltexteffects.utils.exceptions.motion_exceptions import (
 )
 from terminaltexteffects.utils.exceptions.terminal_exceptions import (
     EmptyInputError,
+    InvalidCharacterCoordinateError,
+    InvalidCharacterError,
     InvalidCharacterGroupError,
     InvalidCharacterSortError,
+    InvalidCharacterVisibilityError,
     InvalidColorSortError,
     UnsupportedAnsiSequenceError,
 )

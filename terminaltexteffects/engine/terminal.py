@@ -25,8 +25,11 @@ from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.utils import ansitools, argutils
 from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
 from terminaltexteffects.utils.exceptions import (
+    InvalidCharacterCoordinateError,
+    InvalidCharacterError,
     InvalidCharacterGroupError,
     InvalidCharacterSortError,
+    InvalidCharacterVisibilityError,
     InvalidColorSortError,
     UnsupportedAnsiSequenceError,
 )
@@ -664,6 +667,7 @@ class Terminal:
             self.config = TerminalConfig._build_config()
         else:
             self.config = config
+        self._character_ownership_token = object()
         self._next_character_id = 0
         self._preprocessed_character_columns: dict[EffectCharacter, int] = {}
         self._preprocessed_line_widths: list[int] = []
@@ -909,6 +913,7 @@ class Terminal:
         ) -> EffectCharacter:
             """Build an input character with the current terminal configuration and input colors."""
             character = EffectCharacter(self._next_character_id, symbol, 0, 0)
+            character._terminal_owner_token = self._character_ownership_token
             self._next_character_id += 1
             for sequence_type, sequence in active_sequences.items():
                 color = active_colors[sequence_type]
@@ -1270,6 +1275,7 @@ class Terminal:
                 coord = Coord(column, row)
                 if coord not in self.character_by_input_coord and coord not in self._input_character_continuations:
                     fill_char = EffectCharacter(self._next_character_id, " ", column, row)
+                    fill_char._terminal_owner_token = self._character_ownership_token
                     fill_char.is_fill_character = True
                     fill_char.animation.no_color = self.config.no_color
                     fill_char.animation.use_xterm_colors = self.config.xterm_colors
@@ -1316,10 +1322,15 @@ class Terminal:
             EffectCharacter: the character that was added
 
         Raises:
+            InvalidCharacterCoordinateError: If `coord` is not a `Coord` containing integer values.
             InvalidSymbolError: If `symbol` does not contain one independently printable Unicode code point.
 
         """
+        get_symbol_cell_width(symbol)
+        if not isinstance(coord, Coord) or type(coord.column) is not int or type(coord.row) is not int:
+            raise InvalidCharacterCoordinateError(coord)
         character = EffectCharacter(self._next_character_id, symbol, coord.column, coord.row)
+        character._terminal_owner_token = self._character_ownership_token
         character.animation.no_color = self.config.no_color
         character.animation.use_xterm_colors = self.config.xterm_colors
         character.animation.existing_color_handling = self.config.existing_color_handling
@@ -1612,7 +1623,18 @@ class Terminal:
             character (EffectCharacter): Character whose visibility should be updated.
             is_visible (bool): Whether the character should be visible.
 
+        Raises:
+            InvalidCharacterError: If `character` is not owned by this terminal.
+            InvalidCharacterVisibilityError: If `is_visible` is not a boolean.
+
         """
+        if (
+            not isinstance(character, EffectCharacter)
+            or character._terminal_owner_token is not self._character_ownership_token
+        ):
+            raise InvalidCharacterError(character)
+        if not isinstance(is_visible, bool):
+            raise InvalidCharacterVisibilityError(is_visible)
         character._is_visible = is_visible
         if is_visible:
             if character not in self._visible_characters:

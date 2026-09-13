@@ -10,6 +10,54 @@ if TYPE_CHECKING:
     from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
 
 
+class InvalidCharacterError(TerminalTextEffectsError):
+    """Raised when a character is not owned by the receiving terminal."""
+
+    def __init__(self, character: object) -> None:
+        """Initialize an `InvalidCharacterError`.
+
+        Args:
+            character (object): Character supplied to the terminal.
+
+        """
+        self.character = character
+        self.message = f"Character is not owned by this Terminal: {character!r}."
+        super().__init__(self.message)
+
+
+class InvalidCharacterVisibilityError(TerminalTextEffectsError):
+    """Raised when a character visibility value is not a boolean."""
+
+    def __init__(self, visibility: object) -> None:
+        """Initialize an `InvalidCharacterVisibilityError`.
+
+        Args:
+            visibility (object): Visibility value supplied to the terminal.
+
+        """
+        self.visibility = visibility
+        self.message = f"Character visibility must be a bool. Received: {visibility!r}."
+        super().__init__(self.message)
+
+
+class InvalidCharacterCoordinateError(TerminalTextEffectsError):
+    """Raised when an added character is given an invalid coordinate."""
+
+    def __init__(self, coord: object) -> None:
+        """Initialize an `InvalidCharacterCoordinateError`.
+
+        Args:
+            coord (Coord | object): Coordinate supplied to the terminal.
+
+        """
+        self.coord = coord
+        self.message = (
+            "Character coordinates must be a Coord containing integer column and row values. "
+            f"Received: {coord!r}."
+        )
+        super().__init__(self.message)
+
+
 class InvalidCharacterGroupError(TerminalTextEffectsError):
     """Raised when an invalid character group is provided to a Terminal method.
 

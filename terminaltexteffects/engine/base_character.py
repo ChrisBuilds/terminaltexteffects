@@ -432,6 +432,7 @@ class EffectCharacter:
         self._input_coord: Coord = Coord(input_column, input_row)
         self._input_ansi_sequences: dict[str, str | None] = {"fg_color": None, "bg_color": None}
         self._is_visible: bool = False
+        self._terminal_owner_token: object | None = None
         self.animation: animation.Animation = animation.Animation(self)
         self.motion: motion.Motion = motion.Motion(self)
         self.event_handler: EventHandler = EventHandler(self)

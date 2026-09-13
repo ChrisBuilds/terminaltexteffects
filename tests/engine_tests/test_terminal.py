@@ -11,8 +11,11 @@ from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.terminal import Canvas, Terminal, TerminalConfig
 from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
 from terminaltexteffects.utils.exceptions import (
+    InvalidCharacterCoordinateError,
+    InvalidCharacterError,
     InvalidCharacterGroupError,
     InvalidCharacterSortError,
+    InvalidCharacterVisibilityError,
     InvalidColorSortError,
 )
 from terminaltexteffects.utils.geometry import Coord
@@ -641,6 +644,17 @@ def test_terminal_add_character() -> None:
     assert terminal._added_characters[0].input_symbol == "a"
 
 
+@pytest.mark.parametrize("coord", [(1, 1), None, Coord(column=True, row=1), Coord(1, cast(Any, 1.5))])
+def test_terminal_add_character_rejects_invalid_coordinates(coord: object) -> None:
+    """Added characters require a `Coord` containing actual integer values."""
+    terminal = Terminal(input_data="test", config=TerminalConfig._build_config())
+
+    with pytest.raises(InvalidCharacterCoordinateError):
+        terminal.add_character("a", coord)  # type: ignore[arg-type]
+
+    assert terminal.get_characters(input_chars=False, added_chars=True) == []
+
+
 def test_terminal_same_layer_collision_prefers_higher_character_id() -> None:
     """The newer input character should win a same-layer moving-character collision."""
     config = TerminalConfig._build_config()
@@ -1017,6 +1031,65 @@ def test_terminal_set_character_visibility(visiblity) -> None:
         assert len(terminal._visible_characters) == 1
     else:
         assert len(terminal._visible_characters) == 0
+
+
+def test_terminal_set_character_visibility_is_idempotent() -> None:
+    """Repeated visibility changes keep both visibility indexes consistent."""
+    terminal = Terminal(input_data="a", config=TerminalConfig._build_config())
+    character = terminal.get_characters()[0]
+
+    terminal.set_character_visibility(character, is_visible=True)
+    terminal.set_character_visibility(character, is_visible=True)
+
+    assert terminal._visible_characters == {character}
+    assert terminal._visible_characters_by_id == [character]
+    assert character.is_visible
+
+    terminal.set_character_visibility(character, is_visible=False)
+    terminal.set_character_visibility(character, is_visible=False)
+
+    assert terminal._visible_characters == set()
+    assert terminal._visible_characters_by_id == []
+    assert not character.is_visible
+
+
+def test_terminal_set_character_visibility_rejects_foreign_character() -> None:
+    """A terminal must not adopt another terminal's character into its render state."""
+    terminal = Terminal(input_data="a", config=TerminalConfig._build_config())
+    foreign_terminal = Terminal(input_data="b", config=TerminalConfig._build_config())
+    foreign_character = foreign_terminal.get_characters()[0]
+
+    with pytest.raises(InvalidCharacterError):
+        terminal.set_character_visibility(foreign_character, is_visible=True)
+
+    assert not foreign_character.is_visible
+    assert not terminal._visible_characters
+    assert not terminal._visible_characters_by_id
+
+
+def test_terminal_set_character_visibility_rejects_unregistered_character() -> None:
+    """Directly constructed characters are not implicitly registered with a terminal."""
+    terminal = Terminal(input_data="a", config=TerminalConfig._build_config())
+    unregistered_character = EffectCharacter(0, "a", 1, 1)
+
+    with pytest.raises(InvalidCharacterError):
+        terminal.set_character_visibility(unregistered_character, is_visible=True)
+
+    assert not unregistered_character.is_visible
+
+
+@pytest.mark.parametrize("visibility", [1, 0, "yes", None, object()])
+def test_terminal_set_character_visibility_rejects_non_boolean_values(visibility: object) -> None:
+    """Visibility accepts only booleans, not merely truthy or falsey values."""
+    terminal = Terminal(input_data="a", config=TerminalConfig._build_config())
+    character = terminal.get_characters()[0]
+
+    with pytest.raises(InvalidCharacterVisibilityError):
+        terminal.set_character_visibility(character, visibility)  # type: ignore[arg-type]
+
+    assert not character.is_visible
+    assert not terminal._visible_characters
+    assert not terminal._visible_characters_by_id
 
 
 def test_terminal_get_formatted_output_string() -> None:

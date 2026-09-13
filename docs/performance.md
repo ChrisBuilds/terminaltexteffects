@@ -17,6 +17,11 @@ Run a baseline before changing performance-sensitive code:
 Use `--effect all` for a broader pass, and use `--input-preset small|medium|large|wide|tall|color|generated` to
 select the input shape. Defaults are `--samples 7`, `--warmups 2`, and `--seed 1337`.
 
+The default `--lifecycle iterator` mode measures iterator construction and frame generation without output. Use
+`--lifecycle terminal-output` to include the complete public context-manager workflow: terminal preparation, iterator
+construction, frame generation, in-memory calls to `Terminal.print()`, and cursor restoration. This mode is useful for
+finding duplicated setup or output-lifecycle regressions without writing control sequences to the real terminal.
+
 ## Candidate
 
 After making a focused change and running the relevant functional checks, rerun the same benchmark arguments:
@@ -25,6 +30,7 @@ After making a focused change and running the relevant functional checks, rerun 
 ./.venv/bin/python tools/perf/benchmark_effects.py \
   --effect wipe \
   --input-preset medium \
+  --lifecycle terminal-output \
   --json-out /tmp/tte-candidate.json
 ```
 

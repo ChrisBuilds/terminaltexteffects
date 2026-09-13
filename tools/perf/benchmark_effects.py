@@ -15,9 +15,10 @@ import random
 import statistics
 import sys
 import time
+from contextlib import redirect_stdout
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from terminaltexteffects import __main__ as tte_main
 from terminaltexteffects.effects import effect_colorshift, effect_matrix, effect_thunderstorm
@@ -113,24 +114,43 @@ def _shorten_long_running_effect(effect_instance: BaseEffect[Any]) -> None:
         effect_instance.effect_config.cycles = 2
 
 
-def run_iteration(effect_class: type[BaseEffect[Any]], input_data: str, seed: int) -> IterationResult:
+def run_iteration(
+    effect_class: type[BaseEffect[Any]],
+    input_data: str,
+    seed: int,
+    lifecycle: Literal["iterator", "terminal-output"] = "iterator",
+) -> IterationResult:
     """Run one effect iteration and return timing details."""
+    if lifecycle not in ("iterator", "terminal-output"):
+        message = f"Unknown benchmark lifecycle: {lifecycle}"
+        raise ValueError(message)
     random.seed(seed)
     effect_instance = effect_class(input_data)
     effect_instance.terminal_config = _make_terminal_config()
     _shorten_long_running_effect(effect_instance)
 
-    build_start = time.perf_counter()
-    effect_iterator = iter(effect_instance)
-    build_seconds = time.perf_counter() - build_start
-
     frames = 0
     output_characters = 0
-    render_start = time.perf_counter()
-    for frame in effect_iterator:
-        frames += 1
-        output_characters += len(frame)
-    render_seconds = time.perf_counter() - render_start
+    build_start = time.perf_counter()
+    if lifecycle == "terminal-output":
+        captured_output = io.StringIO()
+        with redirect_stdout(captured_output), effect_instance.terminal_output() as terminal:
+            effect_iterator = iter(effect_instance)
+            build_seconds = time.perf_counter() - build_start
+            render_start = time.perf_counter()
+            for frame in effect_iterator:
+                frames += 1
+                output_characters += len(frame)
+                terminal.print(frame)
+        render_seconds = time.perf_counter() - render_start
+    else:
+        effect_iterator = iter(effect_instance)
+        build_seconds = time.perf_counter() - build_start
+        render_start = time.perf_counter()
+        for frame in effect_iterator:
+            frames += 1
+            output_characters += len(frame)
+        render_seconds = time.perf_counter() - render_start
 
     return IterationResult(
         build_seconds=build_seconds,
@@ -180,17 +200,20 @@ def run_benchmark(
     samples: int,
     warmups: int,
     seed: int,
+    lifecycle: Literal["iterator", "terminal-output"] = "iterator",
 ) -> dict[str, Any]:
     """Run warmups and timed samples for one effect scenario."""
     input_data = _make_input_data(input_preset)
     for warmup_index in range(warmups):
-        run_iteration(effect_class, input_data, seed + warmup_index)
+        run_iteration(effect_class, input_data, seed + warmup_index, lifecycle)
     sample_results = [
-        run_iteration(effect_class, input_data, seed + warmups + sample_index) for sample_index in range(samples)
+        run_iteration(effect_class, input_data, seed + warmups + sample_index, lifecycle)
+        for sample_index in range(samples)
     ]
     return {
         "effect": effect_name,
         "input_preset": input_preset,
+        "lifecycle": lifecycle,
         "samples": samples,
         "warmups": warmups,
         "seed": seed,
@@ -198,12 +221,17 @@ def run_benchmark(
     }
 
 
-def run_profile(effect_class: type[BaseEffect[Any]], input_preset: str, seed: int) -> str:
+def run_profile(
+    effect_class: type[BaseEffect[Any]],
+    input_preset: str,
+    seed: int,
+    lifecycle: Literal["iterator", "terminal-output"] = "iterator",
+) -> str:
     """Profile one benchmark iteration and return a compact pstats report."""
     input_data = _make_input_data(input_preset)
     profiler = cProfile.Profile()
     profiler.enable()
-    run_iteration(effect_class, input_data, seed)
+    run_iteration(effect_class, input_data, seed, lifecycle)
     profiler.disable()
     stream = io.StringIO()
     stats = pstats.Stats(profiler, stream=stream).strip_dirs().sort_stats("cumtime")
@@ -215,7 +243,7 @@ def build_report(results: Sequence[dict[str, Any]]) -> dict[str, Any]:
     """Wrap scenario results with report metadata."""
     return {
         "tool": "tools/perf/benchmark_effects.py",
-        "schema_version": 1,
+        "schema_version": 2,
         "python": sys.version.split()[0],
         "results": list(results),
     }
@@ -241,14 +269,19 @@ def _percent_delta(baseline: float, candidate: float) -> float | None:
 def compare_reports(baseline_report: dict[str, Any], candidate_report: dict[str, Any]) -> str:
     """Return a human-readable comparison between two benchmark reports."""
     candidate_by_key = {
-        (result["effect"], result["input_preset"]): result for result in candidate_report.get("results", [])
+        (result["effect"], result["input_preset"], result.get("lifecycle", "iterator")): result
+        for result in candidate_report.get("results", [])
     }
-    lines = ["effect,input,metric,baseline,candidate,delta_percent"]
+    lines = ["effect,input,lifecycle,metric,baseline,candidate,delta_percent"]
     for baseline_result in baseline_report.get("results", []):
-        key = (baseline_result["effect"], baseline_result["input_preset"])
+        key = (
+            baseline_result["effect"],
+            baseline_result["input_preset"],
+            baseline_result.get("lifecycle", "iterator"),
+        )
         candidate_result = candidate_by_key.get(key)
         if candidate_result is None:
-            lines.append(f"{key[0]},{key[1]},missing_candidate,,,,")
+            lines.append(f"{key[0]},{key[1]},{key[2]},missing_candidate,,,,")
             continue
         for metric in ("build_seconds", "render_seconds", "total_seconds"):
             baseline_mean = float(baseline_result["summary"][metric]["mean"])
@@ -256,16 +289,19 @@ def compare_reports(baseline_report: dict[str, Any], candidate_report: dict[str,
             delta = _percent_delta(baseline_mean, candidate_mean)
             delta_text = "n/a" if delta is None else f"{delta:+.2f}"
             lines.append(
-                f"{key[0]},{key[1]},{metric},{baseline_mean:.9f},{candidate_mean:.9f},{delta_text}",
+                f"{key[0]},{key[1]},{key[2]},{metric},{baseline_mean:.9f},{candidate_mean:.9f},{delta_text}",
             )
         baseline_frames = baseline_result["summary"]["frames"]
         candidate_frames = candidate_result["summary"]["frames"]
         frame_delta = candidate_frames - baseline_frames
-        lines.append(f"{key[0]},{key[1]},frames,{baseline_frames},{candidate_frames},{frame_delta}")
+        lines.append(f"{key[0]},{key[1]},{key[2]},frames,{baseline_frames},{candidate_frames},{frame_delta}")
         baseline_chars = baseline_result["summary"]["output_characters"]
         candidate_chars = candidate_result["summary"]["output_characters"]
         output_character_delta = candidate_chars - baseline_chars
-        lines.append(f"{key[0]},{key[1]},output_characters,{baseline_chars},{candidate_chars},{output_character_delta}")
+        lines.append(
+            f"{key[0]},{key[1]},{key[2]},output_characters,"
+            f"{baseline_chars},{candidate_chars},{output_character_delta}",
+        )
     return "\n".join(lines)
 
 
@@ -300,6 +336,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--samples", type=_positive_int, default=DEFAULT_SAMPLES, help="Timed samples to run.")
     parser.add_argument("--warmups", type=_non_negative_int, default=DEFAULT_WARMUPS, help="Warmup iterations to run.")
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Base random seed.")
+    parser.add_argument(
+        "--lifecycle",
+        choices=("iterator", "terminal-output"),
+        default="iterator",
+        help="Measure iterator-only rendering or the complete terminal-output context lifecycle.",
+    )
     parser.add_argument("--profile", action="store_true", help="Print cProfile output for the first selected effect.")
     parser.add_argument("--json-out", type=Path, help="Write benchmark report JSON to this path.")
     parser.add_argument(
@@ -340,6 +382,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             samples=args.samples,
             warmups=args.warmups,
             seed=args.seed,
+            lifecycle=args.lifecycle,
         )
         for effect_name, effect_class in selected_effects
     ]
@@ -353,8 +396,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.profile:
         effect_name, effect_class = selected_effects[0]
-        print(f"\nProfile for {effect_name}/{args.input_preset}:")
-        print(run_profile(effect_class, args.input_preset, args.seed))
+        print(f"\nProfile for {effect_name}/{args.input_preset}/{args.lifecycle}:")
+        print(run_profile(effect_class, args.input_preset, args.seed, args.lifecycle))
 
     return 0
 

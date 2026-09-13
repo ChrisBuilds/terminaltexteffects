@@ -17,7 +17,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Generic, TypeVar
+from weakref import ReferenceType, ref
 
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
@@ -29,6 +31,18 @@ if TYPE_CHECKING:
     from terminaltexteffects.engine.base_character import EffectCharacter
 
 T = TypeVar("T", bound=BaseConfig)
+
+
+@dataclass
+class _TerminalOutputContext:
+    """Track a terminal staged for one active output context.
+
+    The first iterator created inside the context consumes `terminal`. Further
+    iterators remain fresh and build their own terminal graphs.
+    """
+
+    terminal: Terminal
+    available_to_iterator: bool
 
 
 class BaseEffectIterator(ABC, Generic[T]):
@@ -64,7 +78,7 @@ class BaseEffectIterator(ABC, Generic[T]):
 
         """
         self.config: T = deepcopy(effect.effect_config)
-        self.terminal = Terminal(effect.input_data, deepcopy(effect.terminal_config))
+        self.terminal = effect._acquire_terminal()
         if not self.terminal.get_characters():
             raise EmptyInputError
         self.active_characters: set[EffectCharacter] = set()
@@ -167,6 +181,27 @@ class BaseEffect(ABC, Generic[T]):
         self.input_data = input_data
         self.effect_config: T = effect_config or self._config_cls._build_config()
         self.terminal_config: TerminalConfig = terminal_config or TerminalConfig._build_config()
+        self._terminal_output_contexts: list[_TerminalOutputContext] = []
+        self._pending_terminal_ref: ReferenceType[Terminal] | None = None
+
+    def _build_terminal(self) -> Terminal:
+        """Build a fresh terminal from the effect's current input and configuration."""
+        return Terminal(self.input_data, deepcopy(self.terminal_config))
+
+    def _acquire_terminal(self) -> Terminal:
+        """Return a staged output terminal when available, otherwise build a fresh one.
+
+        A newly built terminal is retained weakly so a following `terminal_output()`
+        context can use the same graph without extending the iterator's lifetime.
+        """
+        if self._terminal_output_contexts:
+            output_context = self._terminal_output_contexts[-1]
+            if output_context.available_to_iterator:
+                output_context.available_to_iterator = False
+                return output_context.terminal
+        terminal = self._build_terminal()
+        self._pending_terminal_ref = ref(terminal)
+        return terminal
 
     def __iter__(self) -> BaseEffectIterator:
         """Create and return a new iterator for the effect.
@@ -179,7 +214,13 @@ class BaseEffect(ABC, Generic[T]):
 
     @contextmanager
     def terminal_output(self, end_symbol: str = "\n") -> Generator[Terminal, None, None]:
-        """Context manager for terminal output. Prepares the terminal for output and restores it after.
+        """Prepare a shared iterator terminal for output and restore it afterward.
+
+        When called before iteration, the context stages its terminal for the first
+        iterator created inside it. When an iterator was created immediately before
+        the context, that iterator's terminal is reused instead. Every call to
+        `iter(effect)` still creates a fresh iterator, and only one iterator consumes
+        each context-staged terminal.
 
         Args:
             end_symbol (str, optional): Symbol to print after the effect has completed. Defaults to newline.
@@ -192,10 +233,19 @@ class BaseEffect(ABC, Generic[T]):
                 after the terminal state is restored.
 
         """
-        terminal = Terminal(self.input_data, self.terminal_config)
+        pending_terminal = self._pending_terminal_ref() if self._pending_terminal_ref is not None else None
+        if pending_terminal is None:
+            terminal = self._build_terminal()
+            output_context = _TerminalOutputContext(terminal, available_to_iterator=True)
+        else:
+            terminal = pending_terminal
+            output_context = _TerminalOutputContext(terminal, available_to_iterator=False)
+        self._pending_terminal_ref = None
+        self._terminal_output_contexts.append(output_context)
         try:
             terminal.prep_canvas()
             yield terminal
 
         finally:
+            self._terminal_output_contexts.pop()
             terminal.restore_cursor(end_symbol)

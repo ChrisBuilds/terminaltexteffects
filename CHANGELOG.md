@@ -21,6 +21,8 @@
   input presets, and optional `cProfile` output for investigating performance changes.
 * Added focused tests for the benchmark harness and documented the recommended performance optimization workflow in
   `docs/performance.md`.
+* Added a `--lifecycle terminal-output` benchmark mode for measuring context setup, iterator construction, in-memory
+  frame printing, and cursor restoration without writing to the real terminal.
 
 #### Engine Features (0.16.0)
 
@@ -52,6 +54,9 @@
 
 ---
 
+* `BaseEffect.terminal_output()` and the associated effect iterator now share one `Terminal` graph regardless of
+  whether the iterator or output context is created first. Nested and repeated contexts remain isolated, and every
+  `iter(effect)` call still creates a fresh iterator.
 * `BaseEffectIterator.update()` now ticks a snapshot of `active_characters`, allowing character events and callbacks to
   add or remove active characters during an update without mutating the set being iterated.
 * `Motion.move()` now reuses the current immutable `Coord` object when preserving `previous_coord` instead of
@@ -127,6 +132,8 @@
   control sequences.
 * Animation and terminal symbol entry points now consistently reject empty, multi-code-point, combining-only, and
   non-printable symbols with `InvalidSymbolError` instead of allowing malformed frames or applying inconsistent checks.
+* Terminal character mutation APIs now reject foreign or unregistered characters, non-boolean visibility values, and
+  malformed helper coordinates with stable terminal-specific exceptions.
 * Terminal - Raw C0 controls other than tab, newline, and carriage return, plus DEL and C1 controls, are now rejected
   before character creation so unsupported control bytes cannot reach rendered frames.
 * Configuration - Fixed CLI help displaying Python representations for defaults such as colors, enums, gradients,
