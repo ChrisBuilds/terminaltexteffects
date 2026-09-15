@@ -58,6 +58,8 @@
 
 ---
 
+* `Terminal` now owns an immutable construction-time snapshot of `TerminalConfig`. Mutating the caller's configuration
+  after construction no longer changes output behavior, and attempts to mutate `terminal.config` fail explicitly.
 * `BaseEffect.terminal_output()` and the associated effect iterator now share one `Terminal` graph regardless of
   whether the iterator or output context is created first. Nested and repeated contexts remain isolated, and every
   `iter(effect)` call still creates a fresh iterator.

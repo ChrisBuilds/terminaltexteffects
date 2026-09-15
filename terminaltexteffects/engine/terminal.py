@@ -17,7 +17,8 @@ import time
 import typing
 import weakref
 from bisect import bisect_left
-from dataclasses import dataclass
+from copy import deepcopy
+from dataclasses import FrozenInstanceError, dataclass
 from operator import attrgetter
 from typing import Literal
 
@@ -79,6 +80,19 @@ class TerminalConfig(BaseConfig):
         no_restore_cursor (bool): Do not restore cursor visibility when an effect animation completes.
 
     """
+
+    _is_frozen: typing.ClassVar[bool] = False
+
+    def __setattr__(self, name: str, value: typing.Any) -> None:
+        """Normalize assignments until this config becomes a terminal snapshot."""
+        if self._is_frozen:
+            message = f"cannot assign to field {name!r} on a terminal configuration snapshot"
+            raise FrozenInstanceError(message)
+        super().__setattr__(name, value)
+
+    def _freeze(self) -> None:
+        """Prevent mutation after the configuration is installed on a `Terminal`."""
+        object.__setattr__(self, "_is_frozen", True)
 
     tab_width: int = argutils.ArgSpec(
         name="--tab-width",
@@ -613,7 +627,8 @@ class Terminal:
     currently visible rendered state for the active canvas.
 
     Attributes:
-        config (TerminalConfig): Configuration for the terminal.
+        config (TerminalConfig): Immutable construction-time configuration snapshot. To apply different settings,
+            construct a new `Terminal` from a mutable `TerminalConfig`.
         canvas (Canvas): The canvas in the terminal.
         character_by_input_coord (dict[Coord, EffectCharacter]): Mapping of input-character leading coordinates and
             fill characters keyed by canvas coordinates. Accessing the mapping materializes any deferred fill
@@ -663,13 +678,12 @@ class Terminal:
         Args:
             input_data (str): The input data to be displayed in the terminal. Empty input produces an empty text
                 region on a minimal one-cell canvas.
-            config (TerminalConfig, optional): Configuration for the terminal. Defaults to None.
+            config (TerminalConfig, optional): Configuration copied into an immutable construction-time snapshot.
+                Later mutations to the caller's configuration do not affect this terminal. Defaults to None.
 
         """
-        if config is None:
-            self.config = TerminalConfig._build_config()
-        else:
-            self.config = config
+        self.config = deepcopy(config) if config is not None else TerminalConfig._build_config()
+        self.config._freeze()
         self._character_ownership_token = weakref.ref(self)
         self._next_character_id = 0
         self._preprocessed_character_columns: dict[EffectCharacter, int] = {}

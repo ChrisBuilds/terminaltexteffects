@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+from dataclasses import FrozenInstanceError
 from typing import Any, NoReturn, cast
 
 import pytest
@@ -273,6 +274,44 @@ def test_terminal_init_with_config() -> None:
     config.frame_rate = 10
     terminal = Terminal("test", config=config)
     assert terminal.config.frame_rate == 10
+
+
+@pytest.mark.parametrize(
+    ("field_name", "initial_value", "later_value"),
+    [
+        ("tab_width", 2, 8),
+        ("xterm_colors", True, False),
+        ("no_color", True, False),
+        ("terminal_background_color", Color("ffffff"), Color("000000")),
+        ("existing_color_handling", "dynamic", "ignore"),
+        ("wrap_text", True, False),
+        ("frame_rate", 30, 0),
+        ("canvas_width", 10, 20),
+        ("canvas_height", 5, 10),
+        ("anchor_canvas", "n", "s"),
+        ("anchor_text", "e", "w"),
+        ("ignore_terminal_dimensions", True, False),
+        ("reuse_canvas", True, False),
+        ("no_eol", True, False),
+        ("no_restore_cursor", True, False),
+    ],
+)
+def test_terminal_config_is_an_immutable_construction_snapshot(
+    field_name: str,
+    initial_value: object,
+    later_value: object,
+) -> None:
+    """Every terminal option is copied at construction and immutable afterward."""
+    config = TerminalConfig._build_config()
+    setattr(config, field_name, initial_value)
+
+    terminal = Terminal("A", config=config)
+    setattr(config, field_name, later_value)
+
+    assert terminal.config is not config
+    assert getattr(terminal.config, field_name) == initial_value
+    with pytest.raises(FrozenInstanceError, match=field_name):
+        setattr(terminal.config, field_name, later_value)
 
 
 @pytest.mark.parametrize("input_data", ["", "   ", "\x1b[0m", "\x1b[31m"])

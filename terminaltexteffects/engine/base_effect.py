@@ -186,7 +186,7 @@ class BaseEffect(ABC, Generic[T]):
 
     def _build_terminal(self) -> Terminal:
         """Build a fresh terminal from the effect's current input and configuration."""
-        return Terminal(self.input_data, deepcopy(self.terminal_config))
+        return Terminal(self.input_data, self.terminal_config)
 
     def _acquire_terminal(self) -> Terminal:
         """Return a staged output terminal when available, otherwise build a fresh one.
