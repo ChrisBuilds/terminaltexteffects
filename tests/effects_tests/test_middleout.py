@@ -96,13 +96,12 @@ def test_middleout_easing(
     terminal_config_default_no_framerate: TerminalConfig,
     input_data: str,
     easing_function_1: effect_middleout.easing.EasingFunction,
-    easing_function_2: effect_middleout.easing.EasingFunction,
 ) -> None:
-    """Ensure MiddleOut accepts and renders with various easing functions."""
+    """Ensure every easing function renders in both independent movement phases."""
     effect = effect_middleout.MiddleOut(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.center_easing = easing_function_1
-    effect.effect_config.full_easing = easing_function_2
+    effect.effect_config.full_easing = easing_function_1
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)

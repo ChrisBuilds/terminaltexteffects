@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from collections import defaultdict
+from itertools import combinations
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import pytest
 
@@ -223,6 +225,117 @@ EASING_FUNCTIONS = [
 ]
 
 ANCHORS = ["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"]
+
+# These tests only assert that complete animations accept their configuration.
+# Pairwise selection covers every individual value and every two-option interaction
+# without repeatedly rendering the full Cartesian product.
+PAIRWISE_EFFECT_TESTS = frozenset(
+    {
+        ("test_beams.py", "test_beams_effect_args"),
+        ("test_bouncyballs.py", "test_bouncyballs_args"),
+        ("test_bubbles.py", "test_bubbles_args"),
+        ("test_colorshift.py", "test_colorshift_args"),
+        ("test_expand.py", "test_expand_args"),
+        ("test_fireworks.py", "test_fireworks_args"),
+        ("test_matrix.py", "test_matrix_args"),
+        ("test_middleout.py", "test_middleout_args"),
+        ("test_orbittingvolley.py", "test_orbittingvolley_args"),
+        ("test_orbittingvolley.py", "test_orbittingvolley_easing"),
+        ("test_pour.py", "test_pour_args"),
+        ("test_print.py", "test_print_args"),
+        ("test_rain.py", "test_rain_args"),
+        ("test_rings.py", "test_rings_args"),
+        ("test_scattered.py", "test_scattered_args"),
+        ("test_slice.py", "test_slice_args"),
+        ("test_slide.py", "test_slide_args"),
+        ("test_spray.py", "test_spray_args"),
+        ("test_synthgrid.py", "test_synthgrid_gradients"),
+        ("test_thunderstorm.py", "test_thunderstorm_args"),
+        ("test_unstable.py", "test_unstable_args"),
+        ("test_vhstape.py", "test_vhstape_args"),
+        ("test_waves.py", "test_waves_args"),
+    },
+)
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Register options controlling the cost of effect configuration tests."""
+    parser.addoption(
+        "--exhaustive-effect-args",
+        action="store_true",
+        default=False,
+        help="Run every Cartesian combination in effect configuration tests.",
+    )
+
+
+def _parameter_key(value: object) -> object:
+    """Return a hashable identity for a parametrized value."""
+    try:
+        hash(value)
+    except TypeError:
+        return repr(value)
+    return value
+
+
+def _pairwise_coverage(item: pytest.Item, parameter_names: list[str]) -> set[tuple[object, ...]]:
+    """Return the value and value-pair coverage tokens for one test item."""
+    callspec = cast("Any", item).callspec
+    parameter_values = {name: _parameter_key(callspec.params[name]) for name in parameter_names}
+    coverage: set[tuple[object, ...]] = {
+        ("value", name, value) for name, value in parameter_values.items()
+    }
+    coverage.update(
+        ("pair", first_name, parameter_values[first_name], second_name, parameter_values[second_name])
+        for first_name, second_name in combinations(parameter_names, 2)
+    )
+    return coverage
+
+
+def _select_pairwise_items(items: list[pytest.Item]) -> set[pytest.Item]:
+    """Select a deterministic greedy set covering every value and pair of values."""
+    callspecs: list[Any] = [cast("Any", item).callspec for item in items]
+    parameter_names = sorted(
+        name
+        for name in callspecs[0].params
+        if len({_parameter_key(callspec.params[name]) for callspec in callspecs}) > 1
+    )
+    coverage_by_item = {item: _pairwise_coverage(item, parameter_names) for item in items}
+    uncovered = set().union(*coverage_by_item.values())
+    remaining = list(items)
+    selected: set[pytest.Item] = set()
+
+    while uncovered:
+        best_item = max(remaining, key=lambda item: len(coverage_by_item[item] & uncovered))
+        selected.add(best_item)
+        uncovered.difference_update(coverage_by_item[best_item])
+        remaining.remove(best_item)
+
+    return selected
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Reduce selected Cartesian products to pairwise coverage unless explicitly requested."""
+    if config.getoption("--exhaustive-effect-args"):
+        return
+
+    grouped_items: dict[tuple[str, str], list[pytest.Item]] = defaultdict(list)
+    selected_items: set[pytest.Item] = set()
+    for item in items:
+        test_id = (item.path.name, getattr(item, "originalname", None) or item.name)
+        if test_id not in PAIRWISE_EFFECT_TESTS:
+            selected_items.add(item)
+            continue
+        grouped_items[test_id].append(item)
+
+    deselected_items: list[pytest.Item] = []
+    for grouped_test_items in grouped_items.values():
+        selected_group_items = _select_pairwise_items(grouped_test_items)
+        selected_items.update(selected_group_items)
+        deselected_items.extend(item for item in grouped_test_items if item not in selected_group_items)
+
+    if deselected_items:
+        config.hook.pytest_deselected(items=deselected_items)
+    items[:] = [item for item in items if item in selected_items]
 
 
 @pytest.fixture(autouse=True)

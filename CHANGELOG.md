@@ -24,6 +24,9 @@
 * Added a `--lifecycle terminal-output` benchmark mode for measuring context setup, iterator construction, in-memory
   frame printing, and cursor restoration without writing to the real terminal.
 * Added a sparse 80-by-24 input preset and optional build/total peak-memory measurements to the performance harness.
+* Reduced the default test-suite runtime by excluding manual visual renders and selecting deterministic pairwise
+  coverage for large effect-configuration matrices. Pass `--exhaustive-effect-args` to restore every Cartesian
+  configuration combination, and select the `manual` or `visual` markers explicitly to run visual checks.
 
 #### Engine Features (0.16.0)
 

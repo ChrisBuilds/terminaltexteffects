@@ -60,7 +60,7 @@ typing-extensions = false
 [tool.pytest.ini_options]
 console_output_style = "progress"
 minversion = "6.0"
-addopts = ["--capture=sys", "--strict-markers", "--strict-config", "-ra"]
+addopts = ["--capture=sys", "--strict-markers", "--strict-config", "-ra", "-m", "not manual and not visual"]
 markers = [
     "manual: subset to run manually",
     "visual: visually inspect effects",
