@@ -19,7 +19,7 @@ from terminaltexteffects.utils.exceptions import (
     InvalidColorSortError,
 )
 from terminaltexteffects.utils.geometry import Coord
-from terminaltexteffects.utils.graphics import Color
+from terminaltexteffects.utils.graphics import Color, ColorPair
 
 pytestmark = [pytest.mark.engine, pytest.mark.terminal, pytest.mark.smoke]
 
@@ -723,6 +723,76 @@ def test_terminal_layer_precedence_overrides_character_id_order() -> None:
 
     assert helper.character_id > input_character.character_id
     assert terminal.get_formatted_output_string() == "A"
+
+
+def test_terminal_direct_layer_change_invalidates_cached_painter_order() -> None:
+    """Changing a visible character's layer should reorder the next and subsequent frames."""
+    config = TerminalConfig._build_config()
+    config.ignore_terminal_dimensions = True
+    terminal = Terminal(input_data="A", config=config)
+    input_character = terminal.get_characters()[0]
+    helper = terminal.add_character("B", input_character.input_coord)
+    input_character.layer = 1
+    terminal.set_character_visibility(input_character, is_visible=True)
+    terminal.set_character_visibility(helper, is_visible=True)
+
+    assert terminal.get_formatted_output_string() == "A"
+    assert terminal._visible_character_order_dirty is False
+
+    helper.layer = 2
+
+    assert terminal._visible_character_order_dirty is True
+    assert terminal.get_formatted_output_string() == "B"
+    assert terminal.get_formatted_output_string() == "B"
+
+
+def test_terminal_moved_character_clears_its_previous_rendered_cell() -> None:
+    """Sparse row construction should not retain a character's previous frame position."""
+    config = TerminalConfig._build_config()
+    config.canvas_width = 3
+    config.canvas_height = 2
+    config.ignore_terminal_dimensions = True
+    terminal = Terminal(input_data="A", config=config)
+    character = terminal.get_characters()[0]
+    terminal.set_character_visibility(character, is_visible=True)
+
+    assert terminal.get_formatted_output_string() == "   \nA  "
+
+    character.motion.set_coordinate(Coord(3, 2))
+
+    assert terminal.get_formatted_output_string() == "  A\n   "
+
+
+@pytest.mark.parametrize("anchor", ["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"])
+def test_terminal_sparse_rendering_preserves_canvas_anchor_offsets(
+    anchor: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Sparse output should retain exact blank padding for every canvas anchor."""
+    monkeypatch.setattr(Terminal, "_get_terminal_dimensions", lambda _: (10, 10))
+    config = TerminalConfig._build_config()
+    config.canvas_width = 3
+    config.canvas_height = 2
+    config.anchor_canvas = cast(Any, anchor)
+    terminal = Terminal(input_data="A", config=config)
+    character = terminal.get_characters()[0]
+    terminal.set_character_visibility(character, is_visible=True)
+    row = character.motion.current_coord.row + terminal.canvas_row_offset
+    column = character.motion.current_coord.column + terminal.canvas_column_offset
+    expected_rows = [" " * terminal.visible_right for _ in range(terminal.visible_top)]
+    expected_rows[row - 1] = f"{' ' * (column - 1)}A{' ' * (terminal.visible_right - column)}"
+
+    assert terminal.get_formatted_output_string() == "\n".join(expected_rows[::-1])
+
+
+def test_terminal_sparse_rendering_preserves_ansi_reset_sequences() -> None:
+    """Sparse row reuse should retain each visual's complete formatted symbol."""
+    terminal = Terminal(input_data="A", config=TerminalConfig._build_config())
+    character = terminal.get_characters()[0]
+    character.animation.set_appearance(colors=ColorPair(fg=Color("ff0000")))
+    terminal.set_character_visibility(character, is_visible=True)
+
+    assert terminal.get_formatted_output_string() == "\x1b[38;2;255;0;0mA\x1b[0m"
 
 
 def test_terminal_input_character_uses_input_preexisting_colors() -> None:

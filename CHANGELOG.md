@@ -90,6 +90,9 @@
 * Character grouping now buckets selected characters in one pass and orders only populated row, column, diagonal, or
   distance keys. This removes repeated full-list scans and empty-span traversal while preserving group direction and
   within-group ordering.
+* Terminal frame rendering now reuses blank row strings for sparse frames, retains direct dense-buffer rendering once
+  visibility crosses a canvas-aware threshold, and caches multi-layer painter ordering until visibility or a character
+  layer changes. Direct `EffectCharacter.layer` assignment continues to update collision ordering immediately.
 * Outside/middle character sorting now interleaves sorted characters with indexes instead of repeated front-pops,
   reducing the ordering pass from quadratic to linear work.
 * Event dispatch now branches directly on registered actions instead of allocating an action map and callback lambdas

@@ -361,3 +361,54 @@ milliseconds.
 Frame counts and output-character counts matched in all 50 baseline/candidate pairs. Tests additionally exercise all
 ten group directions on a canvas whose bounds begin at column 12 and row 11, checking the complete nested symbol order
 rather than only endpoints.
+
+## Issue 13: Sparse Frame Buffers and Cached Painter Ordering
+
+### Method
+
+Baselines were captured from commit `a55e9a6` before changing the renderer. Final comparisons used 11 timed samples,
+three warmups, and seed 1337 for Wipe, Expand, and Spray on sparse 80-by-24 and generated dense 80-by-24 inputs, plus
+Rings and Blackhole on medium input. Expand/generated received a 21-sample confirmation because the first pass showed
+a small positive render movement. Every comparison used the iterator lifecycle and identical arguments in the clean
+baseline checkout and candidate tree.
+
+Call profiling compared Wipe on sparse, dense generated, and the true-wide
+`tests/testinput/wide_characters_and_emoji.txt` fixture. Dense Expand was also profiled to investigate its wall-clock
+movement. Instrumented cProfile values are attribution data rather than ordinary wall-clock latency.
+
+### Implementation
+
+The renderer now keeps one immutable blank-row string and constructs mutable cell lists only for rows touched by a
+sparse frame. A canvas-aware crossover retains the simpler dense nested-list path when enough characters are visible,
+avoiding per-character sparse-row branching in dense moving effects. The width-aware collision path similarly creates
+cell-owner rows only where a visible character is actually painted.
+
+`EffectCharacter.layer` is now a property that notifies its owning `Terminal` when a visible character changes layer.
+The terminal tracks visible layer counts, bypasses sorting entirely when only one layer is present, and caches the
+multi-layer painter order until visibility or layer membership changes. The internal sort reads the backing integer
+directly so cache rebuilds do not pay Python property-access overhead.
+
+### Results
+
+| Effect/input | Build delta | Render delta | Total delta |
+|---|---:|---:|---:|
+| Wipe/sparse 80 x 24 | +0.94% | -88.46% | -70.10% |
+| Expand/sparse 80 x 24 | +0.63% | -79.19% | -62.93% |
+| Spray/sparse 80 x 24 | +0.07% | -83.71% | -68.83% |
+| Wipe/generated 80 x 24 | -4.12% | -5.24% | -4.55% |
+| Expand/generated 80 x 24, 21 samples | +0.30% | +0.85% | +0.69% |
+| Spray/generated 80 x 24 | +0.75% | +0.16% | +0.29% |
+| Rings/medium | +0.38% | -0.68% | -0.59% |
+| Blackhole/medium | -0.52% | -2.54% | -2.28% |
+
+Sparse improvements come from avoiding complete blank cell matrices on every frame. Dense Wipe also benefits, while
+Spray and Rings are effectively unchanged within run-to-run noise. Expand's follow-up movement narrowed to less than
+1%; its terminal-state cProfile remained exactly 98 ms before and after, so the measured movement was not localized to
+the changed renderer.
+
+Across 139 Wipe state rebuilds, cProfile cumulative time changed from 5 ms to 1 ms for sparse input and from 63 ms to
+57 ms for dense generated input. The true-wide fixture remained 6 ms before and after. Frame counts and
+output-character counts matched in every benchmark pair.
+
+Tests verify exact output for all canvas anchors, moved-character clearing, ANSI reset placement, single- and
+double-cell collisions, direct layer changes after a cached frame, and visibility membership churn.

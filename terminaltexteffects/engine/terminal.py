@@ -39,7 +39,7 @@ from terminaltexteffects.utils.graphics import Color
 from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 _CHARACTER_ID_KEY = attrgetter("_character_id")
-_LAYER_KEY = attrgetter("layer")
+_LAYER_KEY = attrgetter("_layer")
 
 
 @dataclass
@@ -728,11 +728,20 @@ class Terminal:
         self._input_occupied_cell_indexes = tuple(sorted(occupied_cell_indexes))
         self._fill_character_id_start = self._next_character_id
         self._next_character_id += self.canvas.width * self.canvas.height - len(self._input_occupied_cell_indexes)
-        self._visible_characters: set[EffectCharacter] = set()
-        self._visible_characters_by_id: list[EffectCharacter] = []
+        self._initialize_render_state()
         self._frame_rate = self.config.frame_rate
         self._last_time_printed = time.monotonic()
         self._update_terminal_state()
+
+    def _initialize_render_state(self) -> None:
+        """Initialize visible-character ordering and reusable blank output rows."""
+        self._visible_characters: set[EffectCharacter] = set()
+        self._visible_characters_by_id: list[EffectCharacter] = []
+        self._visible_character_layer_counts: dict[int, int] = {}
+        self._visible_characters_by_layer: list[EffectCharacter] = []
+        self._visible_character_order_dirty = False
+        self._blank_row = " " * self.visible_right
+        self._blank_terminal_state = [self._blank_row] * self.visible_top
 
     def _preprocess_input_data(self, input_data: str) -> list[list[EffectCharacter]]:  # noqa: PLR0915
         """Preprocess the input data.
@@ -1677,6 +1686,10 @@ class Terminal:
                     key=_CHARACTER_ID_KEY,
                 )
                 self._visible_characters_by_id.insert(insertion_index, character)
+                self._visible_character_layer_counts[character.layer] = (
+                    self._visible_character_layer_counts.get(character.layer, 0) + 1
+                )
+                self._visible_character_order_dirty = True
         elif character in self._visible_characters:
             self._visible_characters.remove(character)
             character_index = bisect_left(
@@ -1685,6 +1698,35 @@ class Terminal:
                 key=_CHARACTER_ID_KEY,
             )
             self._visible_characters_by_id.pop(character_index)
+            layer_count = self._visible_character_layer_counts[character.layer] - 1
+            if layer_count:
+                self._visible_character_layer_counts[character.layer] = layer_count
+            else:
+                del self._visible_character_layer_counts[character.layer]
+            self._visible_character_order_dirty = True
+
+    def _notify_character_layer_changed(self, character: EffectCharacter, previous_layer: int) -> None:
+        """Update visible-layer counts after an owned character's layer changes."""
+        if character not in self._visible_characters:
+            return
+        previous_layer_count = self._visible_character_layer_counts[previous_layer] - 1
+        if previous_layer_count:
+            self._visible_character_layer_counts[previous_layer] = previous_layer_count
+        else:
+            del self._visible_character_layer_counts[previous_layer]
+        self._visible_character_layer_counts[character.layer] = (
+            self._visible_character_layer_counts.get(character.layer, 0) + 1
+        )
+        self._visible_character_order_dirty = True
+
+    def _get_visible_characters_in_painter_order(self) -> list[EffectCharacter]:
+        """Return visible characters ordered by layer and then character ID."""
+        if len(self._visible_character_layer_counts) <= 1:
+            return self._visible_characters_by_id
+        if self._visible_character_order_dirty:
+            self._visible_characters_by_layer = sorted(self._visible_characters_by_id, key=_LAYER_KEY)
+            self._visible_character_order_dirty = False
+        return self._visible_characters_by_layer
 
     def get_formatted_output_string(self) -> str:
         """Get the formatted output string based on the current terminal state.
@@ -1699,29 +1741,41 @@ class Terminal:
         self._update_terminal_state()
         return "\n".join(self.terminal_state[::-1])
 
-    def _update_terminal_state(self) -> None:
-        """Rebuild the internal representation of the visible terminal state.
-
-        A blank buffer covering the visible terminal area is created, then visible
-        characters are rendered using their current motion coordinates adjusted by the
-        canvas offsets. Lower layers are painted first; characters on the same layer are
-        painted in ascending character-ID order, so the highest ID wins a collision.
-        Characters outside the visible bounds are skipped.
-        """
-        rows = [[" " for _ in range(self.visible_right)] for _ in range(self.visible_top)]
-        visible_characters = sorted(self._visible_characters_by_id, key=_LAYER_KEY)
-        if all(character.animation.current_character_visual.cell_width == 1 for character in visible_characters):
+    def _render_single_cell_characters(self, visible_characters: list[EffectCharacter]) -> list[str]:
+        """Render single-cell characters through dense or sparse row buffers."""
+        dense_threshold = max(
+            1,
+            min(
+                (self.visible_top * self.visible_right) // 4,
+                max(16, self.visible_top * 2),
+            ),
+        )
+        if len(visible_characters) >= dense_threshold:
+            dense_rows = [list(self._blank_row) for _ in range(self.visible_top)]
             for character in visible_characters:
                 row = character.motion.current_coord.row + self.canvas_row_offset
                 column = character.motion.current_coord.column + self.canvas_column_offset
                 if self.visible_bottom <= row <= self.visible_top and self.visible_left <= column <= self.visible_right:
-                    rows[row - 1][column - 1] = character.animation.current_character_visual.formatted_symbol
-            self.terminal_state = ["".join(row) for row in rows]
-            return
+                    dense_rows[row - 1][column - 1] = character.animation.current_character_visual.formatted_symbol
+            return ["".join(row) for row in dense_rows]
 
-        owners: list[list[EffectCharacter | None]] = [
-            [None for _ in range(self.visible_right)] for _ in range(self.visible_top)
-        ]
+        rows: list[list[str] | None] = [None] * self.visible_top
+        for character in visible_characters:
+            row = character.motion.current_coord.row + self.canvas_row_offset
+            column = character.motion.current_coord.column + self.canvas_column_offset
+            if self.visible_bottom <= row <= self.visible_top and self.visible_left <= column <= self.visible_right:
+                row_index = row - 1
+                row_cells = rows[row_index]
+                if row_cells is None:
+                    row_cells = list(self._blank_row)
+                    rows[row_index] = row_cells
+                row_cells[column - 1] = character.animation.current_character_visual.formatted_symbol
+        return [self._blank_row if row is None else "".join(row) for row in rows]
+
+    def _render_width_aware_characters(self, visible_characters: list[EffectCharacter]) -> list[str]:
+        """Render characters while resolving overlapping double-cell footprints."""
+        rows: list[list[str] | None] = [None] * self.visible_top
+        owners: list[list[EffectCharacter | None] | None] = [None] * self.visible_top
         footprints: dict[EffectCharacter, tuple[int, int, int]] = {}
         for character in visible_characters:
             row = character.motion.current_coord.row + self.canvas_row_offset
@@ -1735,25 +1789,54 @@ class Terminal:
             ):
                 row_index = row - 1
                 column_index = column - 1
+                row_cells = rows[row_index]
+                if row_cells is None:
+                    row_cells = list(self._blank_row)
+                    rows[row_index] = row_cells
+                existing_row_owners = owners[row_index]
+                row_owners: list[EffectCharacter | None]
+                if existing_row_owners is None:
+                    row_owners = [None] * self.visible_right
+                    owners[row_index] = row_owners
+                else:
+                    row_owners = existing_row_owners
                 overwritten_characters = {
                     owner
-                    for owner in owners[row_index][column_index:right_column]
+                    for owner in row_owners[column_index:right_column]
                     if owner is not None
                 }
                 for overwritten_character in overwritten_characters:
                     old_row, old_column, old_width = footprints.pop(overwritten_character)
+                    old_row_owners = owners[old_row]
+                    old_row_cells = rows[old_row]
+                    if old_row_owners is None or old_row_cells is None:
+                        msg = "Rendered wide-character footprint has no backing row."
+                        raise RuntimeError(msg)
                     for old_column_index in range(old_column, old_column + old_width):
-                        if owners[old_row][old_column_index] is overwritten_character:
-                            owners[old_row][old_column_index] = None
-                            rows[old_row][old_column_index] = " "
-                rows[row_index][column_index] = visual.formatted_symbol
-                owners[row_index][column_index] = character
+                        if old_row_owners[old_column_index] is overwritten_character:
+                            old_row_owners[old_column_index] = None
+                            old_row_cells[old_column_index] = " "
+                row_cells[column_index] = visual.formatted_symbol
+                row_owners[column_index] = character
                 for continuation_column in range(column_index + 1, column_index + visual.cell_width):
-                    rows[row_index][continuation_column] = ""
-                    owners[row_index][continuation_column] = character
+                    row_cells[continuation_column] = ""
+                    row_owners[continuation_column] = character
                 footprints[character] = (row_index, column_index, visual.cell_width)
-        terminal_state = ["".join(row) for row in rows]
-        self.terminal_state = terminal_state
+        return [self._blank_row if row is None else "".join(row) for row in rows]
+
+    def _update_terminal_state(self) -> None:
+        """Rebuild the internal representation of the visible terminal state.
+
+        Visible characters are rendered using current motion coordinates adjusted by
+        canvas offsets. Lower layers are painted first; characters on the same layer
+        are painted in ascending character-ID order, so the highest ID wins a
+        collision. Characters outside the visible bounds are skipped.
+        """
+        visible_characters = self._get_visible_characters_in_painter_order()
+        if all(character.animation.current_character_visual.cell_width == 1 for character in visible_characters):
+            self.terminal_state = self._render_single_cell_characters(visible_characters)
+        else:
+            self.terminal_state = self._render_width_aware_characters(visible_characters)
 
     def prep_canvas(self) -> None:
         """Prepare the terminal for the effect.
