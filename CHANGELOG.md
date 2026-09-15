@@ -87,8 +87,9 @@
 * Empty terminal input no longer expands to the placeholder text `No Input.`. `Terminal` now exposes an empty text
   region on its minimal one-cell canvas, while trailing unstyled spaces, blank lines, and cursor-only gaps are
   deliberately excluded from automatic input geometry; leading/internal gaps and styled spaces remain significant.
-* Column character grouping now buckets selected characters in one pass instead of rescanning every character for every
-  canvas column, reducing grouping work for wide canvases.
+* Character grouping now buckets selected characters in one pass and orders only populated row, column, diagonal, or
+  distance keys. This removes repeated full-list scans and empty-span traversal while preserving group direction and
+  within-group ordering.
 * Outside/middle character sorting now interleaves sorted characters with indexes instead of repeated front-pops,
   reducing the ordering pass from quadratic to linear work.
 * Event dispatch now branches directly on registered actions instead of allocating an action map and callback lambdas

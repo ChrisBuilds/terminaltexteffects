@@ -1562,66 +1562,52 @@ class Terminal:
             characters_by_column: dict[int, list[EffectCharacter]] = {}
             for character in all_characters:
                 column_index = character.input_coord.column
-                if 0 <= column_index <= self.canvas.right:
-                    characters_by_column.setdefault(column_index, []).append(character)
-            columns = [
-                characters_by_column[column_index]
-                for column_index in range(self.canvas.right + 1)
-                if column_index in characters_by_column
-            ]
-            if grouping == CharacterGroup.COLUMN_RIGHT_TO_LEFT:
-                columns.reverse()
-            return columns
+                characters_by_column.setdefault(column_index, []).append(character)
+            ordered_columns = sorted(
+                characters_by_column,
+                reverse=grouping is CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            )
+            return [characters_by_column[column_index] for column_index in ordered_columns]
 
         if grouping in (
             CharacterGroup.ROW_BOTTOM_TO_TOP,
             CharacterGroup.ROW_TOP_TO_BOTTOM,
         ):
-            rows = []
-            for row_index in range(self.canvas.top + 1):
-                characters_in_row = [
-                    character for character in all_characters if character.input_coord.row == row_index
-                ]
-                if characters_in_row:
-                    rows.append(characters_in_row)
-            if grouping == CharacterGroup.ROW_TOP_TO_BOTTOM:
-                rows.reverse()
-            return rows
+            characters_by_row: dict[int, list[EffectCharacter]] = {}
+            for character in all_characters:
+                row_index = character.input_coord.row
+                characters_by_row.setdefault(row_index, []).append(character)
+            ordered_rows = sorted(
+                characters_by_row,
+                reverse=grouping is CharacterGroup.ROW_TOP_TO_BOTTOM,
+            )
+            return [characters_by_row[row_index] for row_index in ordered_rows]
         if grouping in (
             CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
             CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
         ):
-            diagonals = []
-            for diagonal_index in range(self.canvas.top + self.canvas.right + 1):
-                characters_in_diagonal = [
-                    character
-                    for character in all_characters
-                    if character.input_coord.row + character.input_coord.column == diagonal_index
-                ]
-                if characters_in_diagonal:
-                    diagonals.append(characters_in_diagonal)
-            if grouping == CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT:
-                diagonals.reverse()
-            return diagonals
+            characters_by_diagonal: dict[int, list[EffectCharacter]] = {}
+            for character in all_characters:
+                diagonal_index = character.input_coord.row + character.input_coord.column
+                characters_by_diagonal.setdefault(diagonal_index, []).append(character)
+            ordered_diagonals = sorted(
+                characters_by_diagonal,
+                reverse=grouping is CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+            )
+            return [characters_by_diagonal[diagonal_index] for diagonal_index in ordered_diagonals]
         if grouping in (
             CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
             CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         ):
-            diagonals = []
-            for diagonal_index in range(
-                self.canvas.left - self.canvas.top,
-                self.canvas.right - self.canvas.bottom + 1,
-            ):
-                characters_in_diagonal = [
-                    character
-                    for character in all_characters
-                    if character.input_coord.column - character.input_coord.row == diagonal_index
-                ]
-                if characters_in_diagonal:
-                    diagonals.append(characters_in_diagonal)
-            if grouping == CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT:
-                diagonals.reverse()
-            return diagonals
+            characters_by_diagonal = {}
+            for character in all_characters:
+                diagonal_index = character.input_coord.column - character.input_coord.row
+                characters_by_diagonal.setdefault(diagonal_index, []).append(character)
+            ordered_diagonals = sorted(
+                characters_by_diagonal,
+                reverse=grouping is CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+            )
+            return [characters_by_diagonal[diagonal_index] for diagonal_index in ordered_diagonals]
         if grouping in (
             CharacterGroup.CENTER_TO_OUTSIDE,
             CharacterGroup.OUTSIDE_TO_CENTER,

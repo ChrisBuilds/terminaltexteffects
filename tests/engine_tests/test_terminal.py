@@ -994,6 +994,35 @@ def test_terminal_get_characters_grouped_columns_preserve_order_and_canvas_bound
     assert [[character.input_symbol for character in group] for group in groups] == expected_groups
 
 
+@pytest.mark.parametrize(
+    ("grouping", "expected_groups"),
+    [
+        (CharacterGroup.COLUMN_LEFT_TO_RIGHT, [["d", "a"], ["e", "b"], ["f", "c"]]),
+        (CharacterGroup.COLUMN_RIGHT_TO_LEFT, [["f", "c"], ["e", "b"], ["d", "a"]]),
+        (CharacterGroup.ROW_TOP_TO_BOTTOM, [["a", "b", "c"], ["d", "e", "f"]]),
+        (CharacterGroup.ROW_BOTTOM_TO_TOP, [["d", "e", "f"], ["a", "b", "c"]]),
+        (CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT, [["d"], ["e", "a"], ["f", "b"], ["c"]]),
+        (CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT, [["c"], ["f", "b"], ["e", "a"], ["d"]]),
+        (CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT, [["a"], ["d", "b"], ["e", "c"], ["f"]]),
+        (CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT, [["f"], ["e", "c"], ["d", "b"], ["a"]]),
+        (CharacterGroup.CENTER_TO_OUTSIDE, [["e"], ["d", "f", "b"], ["a", "c"]]),
+        (CharacterGroup.OUTSIDE_TO_CENTER, [["a", "c"], ["d", "f", "b"], ["e"]]),
+    ],
+)
+def test_terminal_get_characters_grouped_preserves_order_with_offset_canvas_bounds(
+    grouping: CharacterGroup,
+    expected_groups: list[list[str]],
+) -> None:
+    """Every grouping honors populated keys and ordering when canvas bounds do not start at one."""
+    terminal = Terminal(input_data="abc\ndef", config=TerminalConfig._build_config())
+    terminal.canvas = Canvas(top=14, right=16, bottom=11, left=12)
+    terminal._input_characters = terminal.canvas._anchor_text(terminal._input_characters, "sw")
+
+    groups = terminal.get_characters_grouped(grouping)
+
+    assert [[character.input_symbol for character in group] for group in groups] == expected_groups
+
+
 @pytest.mark.parametrize("grouping", list(CharacterGroup))
 def test_terminal_get_characters_grouped_excludes_off_canvas_added_characters(grouping: CharacterGroup) -> None:
     """Every grouping excludes selected added characters outside the visible canvas."""

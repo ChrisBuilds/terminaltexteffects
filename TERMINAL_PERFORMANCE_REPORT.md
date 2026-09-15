@@ -323,3 +323,41 @@ when an added helper is created before a fill is materialized, preserving determ
 Public `character_by_input_coord` access still exposes a complete canvas mapping, while a single empty-coordinate lookup
 creates only the requested fill. Direct `EffectCharacter.neighbors` access transparently prepares the graph, and all
 spanning-tree generators now request it explicitly.
+
+## Issue 12: One-Pass Character Grouping
+
+### Method
+
+The existing effect benchmark harness was used with Wipe subclasses fixed to each of the ten `CharacterGroup` values.
+Five timed samples and two warmups were captured before and after the change for generated dense 80-by-24, sparse
+80-by-24, wide, tall, and large inputs: 50 matched scenarios in total. The same seed and iterator lifecycle were used
+for both runs.
+
+Call profiling separately measured the default generated-input diagonal and all ten grouping modes on a dense
+80-by-24 canvas translated to non-default `left` and `bottom` bounds. The baseline came from a clean checkout of
+`6a1a257`; the candidate used the working implementation. Instrumented cProfile times are useful for attribution but
+should not be interpreted as ordinary wall-clock latency.
+
+### Results
+
+`get_characters_grouped()` now sorts the selected characters once, buckets them by the requested row, column,
+diagonal, or center-distance key in one traversal, and sorts only populated keys. The existing sorted-character order
+continues to define ordering inside each bucket, while reverse modes reverse the group-key order only.
+
+| Profile scenario | Baseline | Candidate | Delta |
+|---|---:|---:|---:|
+| Generated 80 x 24, default diagonal | 54 ms | 4 ms | -92.6% |
+| Offset-bound dense 80 x 24, all ten groupings | 342 ms | 56 ms | -83.6% |
+
+The offset-bound profile dropped from 2,158,617 calls to 245,825 calls, an 88.6% reduction. This directly captures
+the removed repeated list scans and comparisons.
+
+Regular, uninstrumented generated-input Wipe build time improved by 4.68% to 6.43% across the four diagonal
+directions. Total iterator time improved by 2.86% to 3.50%. Row, column, and center-distance modes were already linear
+in character count, so their small positive and negative movements were within run-to-run noise. Sparse cases also
+remain too short for stable percentage interpretation; their absolute build times were roughly one to four
+milliseconds.
+
+Frame counts and output-character counts matched in all 50 baseline/candidate pairs. Tests additionally exercise all
+ten group directions on a canvas whose bounds begin at column 12 and row 11, checking the complete nested symbol order
+rather than only endpoints.
