@@ -60,6 +60,9 @@
 
 * `Terminal` now owns an immutable construction-time snapshot of `TerminalConfig`. Mutating the caller's configuration
   after construction no longer changes output behavior, and attempts to mutate `terminal.config` fail explicitly.
+* Terminal output now tracks canvas preparation and cursor restoration explicitly. Setup and cleanup are idempotent,
+  cleanup always flushes stdout, cursor-relative printing requires preparation, and overlapping output contexts are
+  rejected before they can overwrite the terminal-global DEC saved cursor position.
 * `BaseEffect.terminal_output()` and the associated effect iterator now share one `Terminal` graph regardless of
   whether the iterator or output context is created first. Nested and repeated contexts remain isolated, and every
   `iter(effect)` call still creates a fresh iterator.

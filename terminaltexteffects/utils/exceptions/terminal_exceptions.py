@@ -58,6 +58,30 @@ class InvalidCharacterCoordinateError(TerminalTextEffectsError):
         super().__init__(self.message)
 
 
+class TerminalOutputNotPreparedError(TerminalTextEffectsError):
+    """Raised when cursor-relative output is attempted before canvas preparation."""
+
+    def __init__(self, operation: str) -> None:
+        """Initialize a `TerminalOutputNotPreparedError`.
+
+        Args:
+            operation (str): Output operation attempted before preparation.
+
+        """
+        self.operation = operation
+        self.message = f"Terminal output must be prepared before calling `{operation}()`."
+        super().__init__(self.message)
+
+
+class TerminalOutputActiveError(TerminalTextEffectsError):
+    """Raised when a second terminal attempts to use the global saved cursor position."""
+
+    def __init__(self) -> None:
+        """Initialize a `TerminalOutputActiveError`."""
+        self.message = "Another Terminal already owns the active stdout cursor lifecycle."
+        super().__init__(self.message)
+
+
 class InvalidCharacterGroupError(TerminalTextEffectsError):
     """Raised when an invalid character group is provided to a Terminal method.
 

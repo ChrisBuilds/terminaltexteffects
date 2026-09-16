@@ -29,5 +29,7 @@ from terminaltexteffects.utils.exceptions.terminal_exceptions import (
     InvalidCharacterSortError,
     InvalidCharacterVisibilityError,
     InvalidColorSortError,
+    TerminalOutputActiveError,
+    TerminalOutputNotPreparedError,
     UnsupportedAnsiSequenceError,
 )

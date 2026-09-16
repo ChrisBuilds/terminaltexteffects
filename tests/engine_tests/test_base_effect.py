@@ -7,7 +7,7 @@ import pytest
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.utils.exceptions import EmptyInputError
+from terminaltexteffects.utils.exceptions import EmptyInputError, TerminalOutputActiveError
 
 pytestmark = [pytest.mark.engine, pytest.mark.smoke]
 
@@ -104,18 +104,15 @@ def test_repeated_terminal_output_contexts_use_fresh_terminals() -> None:
     assert second_terminal is not first_terminal
 
 
-def test_nested_terminal_output_contexts_pair_with_nearest_iterator() -> None:
-    """Nested contexts independently stage terminals in last-in-first-out order."""
+def test_nested_terminal_output_contexts_restore_outer_terminal_before_raising() -> None:
+    """Nested output is rejected without leaving the outer cursor lifecycle active."""
     effect = _TestEffect("A")
 
-    with effect.terminal_output() as outer_terminal:
-        with effect.terminal_output() as inner_terminal:
-            inner_iterator = iter(effect)
-        outer_iterator = iter(effect)
+    with pytest.raises(TerminalOutputActiveError), effect.terminal_output() as outer_terminal:  # noqa: SIM117
+        with effect.terminal_output():
+            pytest.fail("nested output context unexpectedly entered")
 
-    assert inner_iterator.terminal is inner_terminal
-    assert outer_iterator.terminal is outer_terminal
-    assert inner_terminal is not outer_terminal
+    assert not outer_terminal._output_prepared
 
 
 def test_terminal_output_restores_its_terminal_after_body_exception(capsys: pytest.CaptureFixture[str]) -> None:

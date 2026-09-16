@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import sys
 from dataclasses import FrozenInstanceError
 from typing import Any, NoReturn, cast
 
@@ -18,6 +19,8 @@ from terminaltexteffects.utils.exceptions import (
     InvalidCharacterSortError,
     InvalidCharacterVisibilityError,
     InvalidColorSortError,
+    TerminalOutputActiveError,
+    TerminalOutputNotPreparedError,
 )
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, ColorPair
@@ -1271,6 +1274,8 @@ def test_terminal_prep_canvas(capsys) -> None:
 def test_terminal_restore_cursor(capsys) -> None:
     config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
+    terminal.prep_canvas()
+    capsys.readouterr()
     terminal.restore_cursor()
     captured = capsys.readouterr()
     assert captured.out == "\x1b[?25h\n"
@@ -1279,6 +1284,8 @@ def test_terminal_restore_cursor(capsys) -> None:
 def test_terminal_restore_cursor_end_symbol(capsys) -> None:
     config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
+    terminal.prep_canvas()
+    capsys.readouterr()
     terminal.restore_cursor(end_symbol="test")
     captured = capsys.readouterr()
     assert captured.out == "\x1b[?25htest"
@@ -1288,6 +1295,8 @@ def test_terminal_restore_cursor_end_symbol_no_eol(capsys) -> None:
     config = TerminalConfig._build_config()
     config.no_eol = True
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
+    terminal.prep_canvas()
+    capsys.readouterr()
     terminal.restore_cursor()
     captured = capsys.readouterr()
     assert captured.out == "\x1b[?25h"
@@ -1296,6 +1305,8 @@ def test_terminal_restore_cursor_end_symbol_no_eol(capsys) -> None:
 def test_terminal_print(capsys) -> None:
     config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
+    terminal.prep_canvas()
+    capsys.readouterr()
     terminal.print("abcd\nefgh\nijkl")
     captured = capsys.readouterr()
     assert captured.out == "\x1b8\x1b7\x1b[3Aabcd\nefgh\nijkl"
@@ -1304,6 +1315,101 @@ def test_terminal_print(capsys) -> None:
 def test_terminal_move_cursor_to_top(capsys) -> None:
     config = TerminalConfig._build_config()
     terminal = Terminal(input_data="abcd\nefgh\nijkl", config=config)
+    terminal.prep_canvas()
+    capsys.readouterr()
     terminal.move_cursor_to_top()
     captured = capsys.readouterr()
     assert captured.out == "\x1b8\x1b7\x1b[3A"
+
+
+@pytest.mark.parametrize("method_name", ["print", "move_cursor_to_top"])
+def test_terminal_cursor_output_requires_preparation(method_name: str) -> None:
+    """Cursor-relative output cannot consume an unknown terminal-global saved position."""
+    terminal = Terminal("A")
+
+    if method_name == "print":
+        with pytest.raises(TerminalOutputNotPreparedError, match=method_name):
+            terminal.print("A")
+    else:
+        with pytest.raises(TerminalOutputNotPreparedError, match=method_name):
+            terminal.move_cursor_to_top()
+
+
+def test_terminal_prepare_and_restore_are_idempotent(capsys: pytest.CaptureFixture[str]) -> None:
+    """Repeated lifecycle calls emit each setup and cleanup sequence only once."""
+    terminal = Terminal("A")
+
+    terminal.prep_canvas()
+    terminal.prep_canvas()
+    terminal.restore_cursor()
+    terminal.restore_cursor()
+
+    assert capsys.readouterr().out == "\x1b[?25l \n\x1b7\x1b[?25h\n"
+
+
+def test_terminal_can_prepare_again_after_restoration(capsys: pytest.CaptureFixture[str]) -> None:
+    """A terminal may start a new lifecycle after completing the previous one."""
+    terminal = Terminal("A")
+
+    terminal.prep_canvas()
+    terminal.restore_cursor()
+    terminal.prep_canvas()
+    terminal.restore_cursor()
+
+    lifecycle_output = "\x1b[?25l \n\x1b7\x1b[?25h\n"
+    assert capsys.readouterr().out == lifecycle_output * 2
+
+
+def test_terminal_restore_flushes_without_eol_or_cursor_sequence(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Cleanup flushes stdout even when both configurable writes are suppressed."""
+    config = TerminalConfig._build_config()
+    config.no_eol = True
+    config.no_restore_cursor = True
+    terminal = Terminal("A", config=config)
+    flush_calls = 0
+
+    def track_flush() -> None:
+        nonlocal flush_calls
+        flush_calls += 1
+
+    terminal.prep_canvas()
+    monkeypatch.setattr(sys.stdout, "flush", track_flush)
+    terminal.restore_cursor()
+
+    assert flush_calls == 1
+
+
+def test_terminal_rejects_overlapping_stdout_lifecycles() -> None:
+    """Two terminals cannot overwrite the one terminal-global DEC saved cursor position."""
+    first_terminal = Terminal("A")
+    second_terminal = Terminal("B")
+
+    first_terminal.prep_canvas()
+    try:
+        with pytest.raises(TerminalOutputActiveError):
+            second_terminal.prep_canvas()
+    finally:
+        first_terminal.restore_cursor()
+
+
+def test_terminal_preparation_failure_releases_stdout_lifecycle(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A partial preparation failure does not block later terminal output."""
+    terminal = Terminal("A")
+
+    class FailingStdout:
+        def write(self, _value: str) -> NoReturn:
+            message = "stdout write failed"
+            raise OSError(message)
+
+        def flush(self) -> None:
+            pass
+
+    with monkeypatch.context() as patch_context:
+        patch_context.setattr(sys, "stdout", FailingStdout())
+        with pytest.raises(OSError, match="stdout write failed"):
+            terminal.prep_canvas()
+
+    assert not terminal._output_prepared
+    replacement_terminal = Terminal("B")
+    replacement_terminal.prep_canvas()
+    replacement_terminal.restore_cursor()

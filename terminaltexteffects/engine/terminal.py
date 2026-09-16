@@ -17,6 +17,7 @@ import time
 import typing
 import weakref
 from bisect import bisect_left
+from contextlib import suppress
 from copy import deepcopy
 from dataclasses import FrozenInstanceError, dataclass
 from operator import attrgetter
@@ -33,6 +34,8 @@ from terminaltexteffects.utils.exceptions import (
     InvalidCharacterSortError,
     InvalidCharacterVisibilityError,
     InvalidColorSortError,
+    TerminalOutputActiveError,
+    TerminalOutputNotPreparedError,
     UnsupportedAnsiSequenceError,
 )
 from terminaltexteffects.utils.geometry import Coord
@@ -671,6 +674,7 @@ class Terminal:
     _MAX_CSI_PARAMETER = 9_999_999
     _MAX_VIRTUAL_SCREEN_DIMENSION = 100_000
     _MAX_VIRTUAL_SCREEN_CELLS = 1_000_000
+    _active_output_terminal: typing.ClassVar[weakref.ReferenceType[Terminal] | None] = None
 
     def __init__(self, input_data: str, config: TerminalConfig | None = None) -> None:
         """Initialize the Terminal.
@@ -685,6 +689,7 @@ class Terminal:
         self.config = deepcopy(config) if config is not None else TerminalConfig._build_config()
         self.config._freeze()
         self._character_ownership_token = weakref.ref(self)
+        self._output_prepared = False
         self._next_character_id = 0
         self._preprocessed_character_columns: dict[EffectCharacter, int] = {}
         self._preprocessed_line_widths: list[int] = []
@@ -1864,13 +1869,47 @@ class Terminal:
 
         Note: Use of `config.reuse_canvas` is less predictable if other canvas dimension
         options differ between the last run and the current run.
+
+        Repeated calls during the same output lifecycle are no-ops. A second terminal
+        cannot prepare output until the active terminal has restored the cursor because
+        DEC save/restore position state is terminal-global and does not support nesting.
+
+        Raises:
+            TerminalOutputActiveError: If another terminal currently owns stdout cursor state.
+
         """
-        sys.stdout.write(ansitools.hide_cursor())
-        if self.config.reuse_canvas:
-            self.move_cursor_to_top()
-        for _ in range(self.visible_top):
-            sys.stdout.write((" " * self.visible_right) + "\n")
-        sys.stdout.write(ansitools.dec_save_cursor_position())
+        if self._output_prepared:
+            return
+        active_terminal = (
+            self._active_output_terminal() if self._active_output_terminal is not None else None
+        )
+        if active_terminal is not None:
+            raise TerminalOutputActiveError
+        self._output_prepared = True
+        type(self)._active_output_terminal = weakref.ref(self)
+        try:
+            sys.stdout.write(ansitools.hide_cursor())
+            if self.config.reuse_canvas:
+                self.move_cursor_to_top()
+            for _ in range(self.visible_top):
+                sys.stdout.write((" " * self.visible_right) + "\n")
+            sys.stdout.write(ansitools.dec_save_cursor_position())
+        except BaseException:
+            self._release_output_ownership()
+            with suppress(Exception):
+                if not self.config.no_restore_cursor:
+                    sys.stdout.write(ansitools.show_cursor())
+                sys.stdout.flush()
+            raise
+
+    def _release_output_ownership(self) -> None:
+        """Mark output inactive and release this terminal's global cursor ownership."""
+        self._output_prepared = False
+        active_terminal = (
+            self._active_output_terminal() if self._active_output_terminal is not None else None
+        )
+        if active_terminal is self:
+            type(self)._active_output_terminal = None
 
     def restore_cursor(self, end_symbol: str = "\n") -> None:
         """Restore cursor visibility when enabled and write the configured end symbol.
@@ -1883,11 +1922,15 @@ class Terminal:
                 Defaults to a newline.
 
         """
+        if not self._output_prepared:
+            return
+        self._release_output_ownership()
         if self.config.no_eol:
             end_symbol = ""
         if not self.config.no_restore_cursor:
             sys.stdout.write(ansitools.show_cursor())
         sys.stdout.write(end_symbol)
+        sys.stdout.flush()
 
     def print(self, output_string: str) -> None:
         """Print the provided output string at the top of the current canvas.
@@ -1898,7 +1941,13 @@ class Terminal:
         Args:
             output_string (str): The string to print.
 
+        Raises:
+            TerminalOutputNotPreparedError: If `prep_canvas()` has not started an output lifecycle.
+
         """
+        if not self._output_prepared:
+            operation = "print"
+            raise TerminalOutputNotPreparedError(operation)
         self.move_cursor_to_top()
         sys.stdout.write(output_string)
         sys.stdout.flush()
@@ -1921,7 +1970,14 @@ class Terminal:
 
         The saved cursor position is restored, immediately saved again as the current
         canvas origin, and then the cursor is moved up by the visible canvas height.
+
+        Raises:
+            TerminalOutputNotPreparedError: If `prep_canvas()` has not started an output lifecycle.
+
         """
+        if not self._output_prepared:
+            operation = "move_cursor_to_top"
+            raise TerminalOutputNotPreparedError(operation)
         sys.stdout.write(ansitools.dec_restore_cursor_position())
         sys.stdout.write(ansitools.dec_save_cursor_position())
         sys.stdout.write(ansitools.move_cursor_up(self.visible_top))
