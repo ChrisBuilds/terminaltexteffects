@@ -945,13 +945,13 @@ def test_terminal_get_characters_with_character_sort(sort) -> None:
         assert chars[-1].input_symbol == "e"
     elif sort == CharacterSort.OUTSIDE_ROW_TO_MIDDLE:
         assert chars[0].input_symbol == "a"
-        assert chars[-1].input_symbol == "h"
+        assert chars[-1].input_symbol == "j"
     elif sort == CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT:
         assert chars[0].input_symbol == "o"
         assert chars[-1].input_symbol == "a"
     elif sort == CharacterSort.MIDDLE_ROW_TO_OUTSIDE:
-        assert chars[0].input_symbol == "h"
-        assert chars[-1].input_symbol == "a"
+        assert chars[0].input_symbol == "f"
+        assert chars[-1].input_symbol == "o"
     elif sort == CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT:
         assert chars[0].input_symbol == "a"
         assert chars[-1].input_symbol == "o"
@@ -965,21 +965,47 @@ def test_terminal_get_characters_with_character_sort(sort) -> None:
 @pytest.mark.parametrize(
     ("input_data", "sort", "expected_symbols"),
     [
-        ("abcde", CharacterSort.OUTSIDE_ROW_TO_MIDDLE, "aebdc"),
-        ("abcde", CharacterSort.MIDDLE_ROW_TO_OUTSIDE, "cdbea"),
-        ("abcd", CharacterSort.OUTSIDE_ROW_TO_MIDDLE, "adbc"),
-        ("abcd", CharacterSort.MIDDLE_ROW_TO_OUTSIDE, "cbda"),
+        ("abcde", CharacterSort.OUTSIDE_ROW_TO_MIDDLE, "abcde"),
+        ("abcde", CharacterSort.MIDDLE_ROW_TO_OUTSIDE, "abcde"),
+        ("abc\ndef\nghi", CharacterSort.OUTSIDE_ROW_TO_MIDDLE, "abcghidef"),
+        ("abc\ndef\nghi", CharacterSort.MIDDLE_ROW_TO_OUTSIDE, "defabcghi"),
+        ("abc\ndef\nghi\njkl", CharacterSort.OUTSIDE_ROW_TO_MIDDLE, "abcjkldefghi"),
+        ("abc\ndef\nghi\njkl", CharacterSort.MIDDLE_ROW_TO_OUTSIDE, "defghiabcjkl"),
     ],
 )
-def test_terminal_outside_middle_sorts_preserve_full_order(
+def test_terminal_outside_middle_sorts_order_complete_rows(
     input_data: str,
     sort: CharacterSort,
     expected_symbols: str,
 ) -> None:
-    """Outside/middle sorts alternate sequence ends for odd and even lengths."""
+    """Outside/middle sorts preserve row contents for odd and even row counts."""
     terminal = Terminal(input_data=input_data, config=TerminalConfig._build_config())
 
     assert "".join(character.input_symbol for character in terminal.get_characters(sort=sort)) == expected_symbols
+
+
+def test_terminal_spatial_sort_uses_input_coordinates_after_motion() -> None:
+    """Moving a character does not change its position in an input-coordinate sort."""
+    terminal = Terminal(input_data="abc\ndef\nghi", config=TerminalConfig._build_config())
+    first_character = terminal.get_characters()[0]
+    first_character.motion.set_coordinate(Coord(100, 100))
+
+    sorted_characters = terminal.get_characters(sort=CharacterSort.MIDDLE_ROW_TO_OUTSIDE)
+
+    assert "".join(character.input_symbol for character in sorted_characters) == "defabcghi"
+
+
+def test_terminal_spatial_grouping_uses_input_coordinates_after_motion() -> None:
+    """Moving a character does not change its input-coordinate spatial group."""
+    terminal = Terminal(input_data="abc\ndef", config=TerminalConfig._build_config())
+    first_character = terminal.get_characters()[0]
+    first_character.motion.set_coordinate(Coord(100, 100))
+
+    grouped_characters = terminal.get_characters_grouped(CharacterGroup.ROW_TOP_TO_BOTTOM)
+
+    assert [
+        "".join(character.input_symbol for character in group) for group in grouped_characters
+    ] == ["abc", "def"]
 
 
 def test_terminal_get_characters_invalid_character_sort() -> None:
@@ -1147,6 +1173,14 @@ def test_terminal_get_characters_grouped_excludes_off_canvas_added_characters(gr
     groups = terminal.get_characters_grouped(grouping, added_chars=True)
 
     assert all(character is not off_canvas_character for group in groups for character in group)
+
+
+def test_terminal_ungrouped_inventory_includes_off_canvas_added_characters() -> None:
+    """Ungrouped retrieval retains helpers that spatial grouping intentionally omits."""
+    terminal = Terminal(input_data="abc", config=TerminalConfig._build_config())
+    off_canvas_character = terminal.add_character("z", Coord(terminal.canvas.right + 1, terminal.canvas.bottom))
+
+    assert off_canvas_character in terminal.get_characters(input_chars=False, added_chars=True)
 
 
 def test_terminal_get_characters_grouped_invalid_grouping() -> None:

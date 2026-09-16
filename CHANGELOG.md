@@ -63,6 +63,9 @@
 * Terminal output now tracks canvas preparation and cursor restoration explicitly. Setup and cleanup are idempotent,
   cleanup always flushes stdout, cursor-relative printing requires preparation, and overlapping output contexts are
   rejected before they can overwrite the terminal-global DEC saved cursor position.
+* `CharacterSort.OUTSIDE_ROW_TO_MIDDLE` and `MIDDLE_ROW_TO_OUTSIDE` now order complete rows by distance from the
+  selected rows' vertical midpoint while preserving left-to-right order within each row. Character retrieval now
+  documents its input-coordinate semantics and the visible-canvas scope of grouped retrieval.
 * `BaseEffect.terminal_output()` and the associated effect iterator now share one `Terminal` graph regardless of
   whether the iterator or output context is created first. Nested and repeated contexts remain isolated, and every
   `iter(effect)` call still creates a fresh iterator.

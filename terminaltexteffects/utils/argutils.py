@@ -226,7 +226,12 @@ class CharacterGroupArg:
 
 
 class CharacterSort(Enum):
-    """An enum for specifying character sorts."""
+    """Specify character ordering based on immutable input coordinates.
+
+    The outside/middle options order complete rows by distance from the selected
+    rows' vertical midpoint, retain left-to-right order within a row, and place the
+    top row first when two rows are equally distant from the midpoint.
+    """
 
     RANDOM = auto()
     TOP_TO_BOTTOM_LEFT_TO_RIGHT = auto()

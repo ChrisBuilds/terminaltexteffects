@@ -1463,11 +1463,15 @@ class Terminal:
         added_chars: bool = False,
         sort: CharacterSort = CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT,
     ) -> list[EffectCharacter]:
-        """Get a list of all EffectCharacters in the terminal with an optional sort.
+        """Get all selected `EffectCharacter` instances with an optional sort.
 
-        Sorting is based on character input coordinates. The row-based "outside/middle"
-        sort options interleave characters from the beginning and end of the default
-        top-to-bottom, left-to-right ordering.
+        Sorting uses each character's immutable input coordinate, not its current motion
+        coordinate. Unlike `get_characters_grouped()`, this inventory includes selected
+        added characters whose input coordinates are outside the canvas.
+
+        The row-based outside/middle sorts order complete rows by their distance from
+        the vertical midpoint of the selected rows. Rows equidistant from the midpoint
+        are ordered top-first, and characters within each row remain left-to-right.
 
         Args:
             input_chars (bool, optional): whether to include input characters. Defaults to True.
@@ -1520,18 +1524,20 @@ class Terminal:
             CharacterSort.OUTSIDE_ROW_TO_MIDDLE,
             CharacterSort.MIDDLE_ROW_TO_OUTSIDE,
         ):
-            outside_to_middle: list[EffectCharacter] = []
-            left_index = 0
-            right_index = len(all_characters) - 1
-            while left_index <= right_index:
-                outside_to_middle.append(all_characters[left_index])
-                left_index += 1
-                if left_index <= right_index:
-                    outside_to_middle.append(all_characters[right_index])
-                    right_index -= 1
-            all_characters = outside_to_middle
-            if sort is CharacterSort.MIDDLE_ROW_TO_OUTSIDE:
-                all_characters.reverse()
+            characters_by_row: dict[int, list[EffectCharacter]] = {}
+            for character in all_characters:
+                characters_by_row.setdefault(character.input_coord.row, []).append(character)
+            if characters_by_row:
+                row_midpoint_sum = min(characters_by_row) + max(characters_by_row)
+                distance_sign = -1 if sort is CharacterSort.OUTSIDE_ROW_TO_MIDDLE else 1
+                ordered_rows = sorted(
+                    characters_by_row,
+                    key=lambda row: (
+                        distance_sign * abs((2 * row) - row_midpoint_sum),
+                        -row,
+                    ),
+                )
+                all_characters = [character for row in ordered_rows for character in characters_by_row[row]]
         else:
             raise InvalidCharacterSortError(sort)
 
@@ -1547,6 +1553,12 @@ class Terminal:
         added_chars: bool = False,
     ) -> list[list[EffectCharacter]]:
         """Get visible-canvas EffectCharacters grouped by the specified `CharacterGroup` grouping.
+
+        Grouping uses each character's immutable input coordinate, not its current
+        motion coordinate. Because the groups represent spatial regions of the canvas,
+        selected added characters with input coordinates outside the canvas are omitted.
+        Use `get_characters()` when a complete inventory, including off-canvas added
+        characters, is required.
 
         Args:
             grouping (CharacterGroup, optional): order to group the characters. Defaults to ROW_TOP_TO_BOTTOM.
