@@ -2,4 +2,4 @@
 
 *Module*: `terminaltexteffects.engine.terminal`
 
-::: terminaltexteffects.engine.terminal.Canvas
+::: terminaltexteffects.engine.canvas.Canvas

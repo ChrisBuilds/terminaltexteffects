@@ -69,6 +69,7 @@
 * Terminal input parsing now uses a reusable virtual-screen parser with explicit style, cursor, screen, ID, and color
   frequency state. Parsing is independently testable and produces immutable records before `Terminal` allocates
   characters; unused stored ANSI-sequence metadata was removed from `EffectCharacter` and Overflow.
+* `Canvas` now lives in `terminaltexteffects.engine.canvas` with dedicated tests and documentation.
 * `BaseEffect.terminal_output()` and the associated effect iterator now share one `Terminal` graph regardless of
   whether the iterator or output context is created first. Nested and repeated contexts remain isolated, and every
   `iter(effect)` call still creates a fresh iterator.
