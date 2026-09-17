@@ -1,5 +1,5 @@
 # Canvas
 
-*Module*: `terminaltexteffects.engine.terminal`
+*Module*: `terminaltexteffects.engine.canvas`
 
 ::: terminaltexteffects.engine.canvas.Canvas

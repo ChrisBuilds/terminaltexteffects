@@ -952,7 +952,17 @@ def test_terminal_get_characters_grouped_preserves_order_with_offset_canvas_boun
     """Every grouping honors populated keys and ordering when canvas bounds do not start at one."""
     terminal = Terminal(input_data="abc\ndef", config=TerminalConfig._build_config())
     terminal.canvas = Canvas(top=14, right=16, bottom=11, left=12)
-    terminal._input_characters = terminal.canvas._anchor_text(terminal._input_characters, "sw")
+    layout = terminal.canvas.layout_text(
+        [
+            (character.input_coord, character.animation.current_character_visual.cell_width)
+            for character in terminal._input_characters
+        ],
+        "sw",
+    )
+    source_characters = terminal._input_characters
+    terminal._input_characters = [source_characters[item.source_index] for item in layout.placements]
+    for character, placement in zip(terminal._input_characters, layout.placements, strict=True):
+        character._set_input_coord(placement.coord)
 
     groups = terminal.get_characters_grouped(grouping)
 

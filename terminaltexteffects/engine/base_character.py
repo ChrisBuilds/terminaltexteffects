@@ -477,6 +477,11 @@ class EffectCharacter:
         """The coordinate of the character in the input data."""
         return self._input_coord
 
+    def _set_input_coord(self, coord: Coord) -> None:
+        """Set the input coordinate and synchronize the character's current position."""
+        self._input_coord = coord
+        self.motion.set_coordinate(coord)
+
     @property
     def is_visible(self) -> bool:
         """Whether the character is currently visible and should be printed to the terminal."""

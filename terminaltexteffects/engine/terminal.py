@@ -632,6 +632,7 @@ class Terminal:
         )
         input_height = len(formatted_lines)
         input_characters: list[EffectCharacter] = []
+        input_cells: list[tuple[Coord, int]] = []
         for row, line in enumerate(formatted_lines):
             for character in line:
                 logical_column = self._preprocessed_character_columns[character]
@@ -640,14 +641,24 @@ class Terminal:
                     if self.config.wrap_text
                     else logical_column + 1
                 )
-                character._input_coord = Coord(column, input_height - row)
                 if character._input_symbol != " " or any(
                     (character.animation.input_fg_color, character.animation.input_bg_color),
                 ):
                     input_characters.append(character)
+                    input_cells.append(
+                        (
+                            Coord(column, input_height - row),
+                            character.animation.current_character_visual.cell_width,
+                        ),
+                    )
 
-        anchored_characters = self.canvas._anchor_text(input_characters, self.config.anchor_text)
-        return [char for char in anchored_characters if self.canvas.coord_is_in_canvas(char._input_coord)]
+        layout = self.canvas.layout_text(input_cells, self.config.anchor_text)
+        anchored_characters: list[EffectCharacter] = []
+        for placement in layout.placements:
+            character = input_characters[placement.source_index]
+            character._set_input_coord(placement.coord)
+            anchored_characters.append(character)
+        return anchored_characters
 
     @property
     def character_by_input_coord(self) -> dict[Coord, EffectCharacter]:

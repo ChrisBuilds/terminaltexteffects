@@ -358,6 +358,16 @@ def test_effectcharacter_repr(effectcharacter: EffectCharacter) -> None:
     assert repr(effectcharacter) == "EffectCharacter(character_id=0, symbol='a', input_column=1, input_row=1)"
 
 
+def test_effectcharacter_set_input_coord_synchronizes_motion(effectcharacter: EffectCharacter) -> None:
+    """Changing the layout coordinate also changes the character's current position."""
+    coord = Coord(4, 3)
+
+    effectcharacter._set_input_coord(coord)
+
+    assert effectcharacter.input_coord == coord
+    assert effectcharacter.motion.current_coord == coord
+
+
 def test_effectcharacter_hash_consistency(effectcharacter: EffectCharacter) -> None:
     """Test the consistency of the __hash__ method of EffectCharacter."""
     assert hash(effectcharacter) == hash(effectcharacter)

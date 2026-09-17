@@ -7,7 +7,6 @@ from typing import Any, cast
 
 import pytest
 
-from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.canvas import Canvas
 from terminaltexteffects.utils.geometry import Coord
 
@@ -76,30 +75,28 @@ def test_canvas_geometry_is_read_only(attribute: str) -> None:
 
 
 @pytest.mark.parametrize("anchor", ["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"])
-def test_canvas_anchor_text(anchor: str) -> None:
-    c0 = EffectCharacter(0, symbol="a", input_column=1, input_row=1)
-    c1 = EffectCharacter(1, symbol="b", input_column=2, input_row=1)
+def test_canvas_layout_text(anchor: str) -> None:
     canvas = Canvas(10, 10)
-    chars = canvas._anchor_text([c0, c1], anchor=cast(Any, anchor))
+    layout = canvas.layout_text([(Coord(1, 1), 1), (Coord(2, 1), 1)], anchor=cast(Any, anchor))
+    coords = [placement.coord for placement in layout.placements]
     if anchor == "sw":
-        assert chars[0].motion.current_coord == Coord(1, 1)
+        assert coords[0] == Coord(1, 1)
     elif anchor == "s":
-        assert chars[0].motion.current_coord == Coord(5, 1)
+        assert coords[0] == Coord(5, 1)
     elif anchor == "se":
-        assert chars[1].motion.current_coord == Coord(10, 1)
+        assert coords[1] == Coord(10, 1)
     elif anchor == "e":
-        assert chars[1].motion.current_coord == Coord(10, 5)
+        assert coords[1] == Coord(10, 5)
     elif anchor == "ne":
-        assert chars[1].motion.current_coord == Coord(10, 10)
+        assert coords[1] == Coord(10, 10)
     elif anchor == "n":
-        assert chars[0].motion.current_coord == Coord(5, 10)
+        assert coords[0] == Coord(5, 10)
     elif anchor == "nw":
-        assert chars[0].motion.current_coord == Coord(1, 10)
+        assert coords[0] == Coord(1, 10)
     elif anchor == "w":
-        assert chars[0].motion.current_coord == Coord(1, 5)
+        assert coords[0] == Coord(1, 5)
     elif anchor == "c":
-        assert chars[0].motion.current_coord == Coord(5, 5)
-        assert chars[1].motion.current_coord == Coord(6, 5)
+        assert coords == [Coord(5, 5), Coord(6, 5)]
 
 
 @pytest.mark.parametrize(
@@ -116,16 +113,12 @@ def test_canvas_anchor_text(anchor: str) -> None:
         ("c", [Coord(13, 7), Coord(14, 7)]),
     ],
 )
-def test_canvas_anchor_text_with_non_default_origin(anchor: str, expected_coords: list[Coord]) -> None:
-    characters = [
-        EffectCharacter(0, symbol="a", input_column=1, input_row=1),
-        EffectCharacter(1, symbol="b", input_column=2, input_row=1),
-    ]
+def test_canvas_layout_text_with_non_default_origin(anchor: str, expected_coords: list[Coord]) -> None:
     canvas = Canvas(top=10, right=20, bottom=5, left=7)
 
-    anchored_characters = canvas._anchor_text(characters, anchor=cast(Any, anchor))
+    layout = canvas.layout_text([(Coord(1, 1), 1), (Coord(2, 1), 1)], anchor=cast(Any, anchor))
 
-    assert [character.input_coord for character in anchored_characters] == expected_coords
+    assert [placement.coord for placement in layout.placements] == expected_coords
     assert canvas.text_left == expected_coords[0].column
     assert canvas.text_right == expected_coords[-1].column
     assert canvas.text_bottom == canvas.text_top == expected_coords[0].row
@@ -137,13 +130,51 @@ def test_canvas_anchor_text_with_non_default_origin(anchor: str, expected_coords
 def test_canvas_anchor_empty_text_resets_bounds() -> None:
     """Verify anchoring an empty text region clears any prior text bounds."""
     canvas = Canvas(10, 10)
-    character = EffectCharacter(0, symbol="a", input_column=1, input_row=1)
-    canvas._anchor_text([character], anchor="sw")
+    canvas.layout_text([(Coord(1, 1), 1)], anchor="sw")
 
-    assert canvas._anchor_text([], anchor="sw") == []
+    assert canvas.layout_text([], anchor="sw").placements == ()
     assert (canvas.text_left, canvas.text_right, canvas.text_bottom, canvas.text_top) == (0, 0, 0, 0)
     assert (canvas.text_width, canvas.text_height, canvas.text_center) == (0, 0, Coord(0, 0))
     assert not canvas.coord_is_in_text(Coord(0, 0))
+
+
+def test_canvas_layout_text_clips_a_partially_visible_wide_cell() -> None:
+    canvas = Canvas(1, 1)
+
+    layout = canvas.layout_text([(Coord(1, 1), 2)], anchor="sw")
+
+    assert layout.placements == ()
+    assert layout.bounds.width == layout.bounds.height == 0
+    assert (canvas.text_width, canvas.text_height) == (0, 0)
+
+
+def test_canvas_layout_result_is_immutable() -> None:
+    canvas = Canvas(1, 1)
+    layout = canvas.layout_text([(Coord(1, 1), 1)], anchor="sw")
+
+    with pytest.raises(AttributeError):
+        cast(Any, layout).placements = ()
+
+
+def test_canvas_layout_text_rejects_non_positive_cell_width() -> None:
+    canvas = Canvas(1, 1)
+
+    with pytest.raises(ValueError, match="widths must be positive"):
+        canvas.layout_text([(Coord(1, 1), 0)], anchor="sw")
+
+
+def test_canvas_layout_text_preserves_source_indexes_when_clipping() -> None:
+    canvas = Canvas(1, 2)
+
+    layout = canvas.layout_text(
+        [(Coord(1, 1), 1), (Coord(10, 1), 1), (Coord(2, 1), 1)],
+        anchor="sw",
+    )
+
+    assert [(placement.source_index, placement.coord) for placement in layout.placements] == [
+        (0, Coord(1, 1)),
+        (2, Coord(2, 1)),
+    ]
 
 
 def test_canvas_coord_is_in_canvas() -> None:

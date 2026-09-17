@@ -10,12 +10,99 @@ from __future__ import annotations
 
 import random
 import typing
+from dataclasses import dataclass
 from typing import Literal
 
 from terminaltexteffects.utils.geometry import Coord
 
 if typing.TYPE_CHECKING:
-    from terminaltexteffects.engine.base_character import EffectCharacter
+    from collections.abc import Sequence
+
+
+@dataclass(frozen=True, slots=True)
+class TextPlacement:
+    """Describe the retained placement of one source text cell.
+
+    A placement is created only when the complete display width of the source
+    cell fits within the canvas after anchoring. `Terminal` uses `source_index`
+    to associate the geometry-only result with its original `EffectCharacter`.
+
+    Attributes:
+        source_index (int): Zero-based position of the cell in the sequence passed
+            to `Canvas.layout_text`.
+        coord (Coord): Anchored coordinate of the cell's leftmost display column.
+
+    """
+
+    source_index: int
+    coord: Coord
+
+
+@dataclass(frozen=True, slots=True)
+class TextBounds:
+    """Describe the inclusive bounds of text retained within a canvas.
+
+    The horizontal bounds include every display column occupied by wide cells,
+    not only each cell's starting coordinate. An empty text region uses zero for
+    all stored bounds and derived dimensions and centers.
+
+    Attributes:
+        left (int): Leftmost occupied column, or zero when the region is empty.
+        right (int): Rightmost occupied column, or zero when the region is empty.
+        top (int): Highest occupied row, or zero when the region is empty.
+        bottom (int): Lowest occupied row, or zero when the region is empty.
+        width (int): Number of columns in the inclusive bounds, or zero when empty.
+        height (int): Number of rows in the inclusive bounds, or zero when empty.
+        center_row (int): Lower central row of the bounds, or zero when empty.
+        center_column (int): Lower central column of the bounds, or zero when empty.
+
+    """
+
+    left: int = 0
+    right: int = 0
+    top: int = 0
+    bottom: int = 0
+
+    @property
+    def width(self) -> int:
+        """Return the width, or zero for an empty text region."""
+        return self.right - self.left + 1 if self.left else 0
+
+    @property
+    def height(self) -> int:
+        """Return the height, or zero for an empty text region."""
+        return self.top - self.bottom + 1 if self.bottom else 0
+
+    @property
+    def center_row(self) -> int:
+        """Return the lower central row, or zero for an empty text region."""
+        return self.bottom + ((self.top - self.bottom) // 2) if self.bottom else 0
+
+    @property
+    def center_column(self) -> int:
+        """Return the lower central column, or zero for an empty text region."""
+        return self.left + ((self.right - self.left) // 2) if self.left else 0
+
+
+@dataclass(frozen=True, slots=True)
+class TextLayout:
+    """Contain the immutable result of laying out text cells on a canvas.
+
+    The result separates Canvas geometry from character mutation. `Canvas`
+    calculates anchoring, clipping, and bounds, while `Terminal` applies each
+    retained placement to the corresponding character.
+
+    Attributes:
+        placements (tuple[TextPlacement, ...]): Retained cells in source order.
+            Each placement records its original sequence index and anchored
+            coordinate; cells clipped from the canvas are omitted.
+        bounds (TextBounds): Inclusive bounds occupied by the retained placements.
+            The value represents an empty region when `placements` is empty.
+
+    """
+
+    placements: tuple[TextPlacement, ...]
+    bounds: TextBounds
 
 
 class Canvas:
@@ -64,6 +151,8 @@ class Canvas:
         text_center (Coord): coordinate of the center of the text within the canvas
 
     Methods:
+        layout_text:
+            Anchor coordinate-and-width pairs within the canvas and return their retained placements.
         coord_is_in_canvas:
             Checks whether a coordinate is within the canvas.
         coord_is_in_text:
@@ -156,36 +245,83 @@ class Canvas:
         """Return the constructor-style representation used by the former dataclass API."""
         return f"Canvas(top={self.top}, right={self.right}, bottom={self.bottom}, left={self.left})"
 
-    def _anchor_text(
+    @property
+    def text_left(self) -> int:
+        """Return the left column of the retained text region."""
+        return self._text_bounds.left
+
+    @property
+    def text_right(self) -> int:
+        """Return the right column of the retained text region."""
+        return self._text_bounds.right
+
+    @property
+    def text_top(self) -> int:
+        """Return the top row of the retained text region."""
+        return self._text_bounds.top
+
+    @property
+    def text_bottom(self) -> int:
+        """Return the bottom row of the retained text region."""
+        return self._text_bounds.bottom
+
+    @property
+    def text_width(self) -> int:
+        """Return the width of the retained text region."""
+        return self._text_bounds.width
+
+    @property
+    def text_height(self) -> int:
+        """Return the height of the retained text region."""
+        return self._text_bounds.height
+
+    @property
+    def text_center_row(self) -> int:
+        """Return the lower central row of the retained text region."""
+        return self._text_bounds.center_row
+
+    @property
+    def text_center_column(self) -> int:
+        """Return the lower central column of the retained text region."""
+        return self._text_bounds.center_column
+
+    @property
+    def text_center(self) -> Coord:
+        """Return the lower central coordinate of the retained text region."""
+        return Coord(self.text_center_column, self.text_center_row)
+
+    def layout_text(
         self,
-        characters: list[EffectCharacter],
+        cells: Sequence[tuple[Coord, int]],
         anchor: Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"],
-    ) -> list[EffectCharacter]:
-        """Anchors the text within the canvas based on the specified anchor point.
+    ) -> TextLayout:
+        """Anchor text cells and clip placements that do not fit in the canvas.
 
         Args:
-            characters (list[EffectCharacter]): Characters to reposition within the canvas. An empty list produces
-                an empty text region.
+            cells (Sequence[tuple[Coord, int]]): Source coordinates paired with their positive terminal cell widths.
+                An empty sequence produces an empty text region.
             anchor (Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "c"]): Anchor point for the text
-                within the Canvas.
+                within the canvas.
 
         Returns:
-            list[EffectCharacter]: List of characters anchored within the canvas. Only returns characters with
-                coordinates within the canvas after anchoring.
+            TextLayout: Immutable placements for cells that fully fit in the canvas and their collective bounds.
+
+        Raises:
+            ValueError: If any terminal cell width is not positive.
 
         """
-        if not characters:
+        if not cells:
             self._reset_text_bounds()
-            return []
+            return TextLayout((), self._text_bounds)
+        if any(cell_width < 1 for _, cell_width in cells):
+            msg = "Text cell widths must be positive."
+            raise ValueError(msg)
 
         # translate coordinate based on anchor within the canvas
         input_left = 1
-        input_right = max(
-            character._input_coord.column + character.animation.current_character_visual.cell_width - 1
-            for character in characters
-        )
+        input_right = max(coord.column + cell_width - 1 for coord, cell_width in cells)
         input_bottom = 1
-        input_top = max(character._input_coord.row for character in characters)
+        input_top = max(coord.row for coord, _ in cells)
         input_center_column = input_left + ((input_right - input_left) // 2)
         input_center_row = input_bottom + ((input_top - input_bottom) // 2)
 
@@ -202,54 +338,36 @@ class Canvas:
         else:
             row_delta = self.bottom - input_bottom
 
-        for character in characters:
-            current_coord = character.input_coord
+        placements: list[TextPlacement] = []
+        text_left = text_right = text_top = text_bottom = 0
+        for source_index, (current_coord, cell_width) in enumerate(cells):
             anchored_coord = Coord(
                 current_coord.column + column_delta,
                 current_coord.row + row_delta,
             )
-            character._input_coord = anchored_coord
-            character.motion.set_coordinate(anchored_coord)
+            if self.coord_is_in_canvas(anchored_coord) and anchored_coord.column + cell_width - 1 <= self.right:
+                placements.append(TextPlacement(source_index, anchored_coord))
+                cell_right = anchored_coord.column + cell_width - 1
+                if len(placements) == 1:
+                    text_left = anchored_coord.column
+                    text_right = cell_right
+                    text_top = text_bottom = anchored_coord.row
+                else:
+                    text_left = min(text_left, anchored_coord.column)
+                    text_right = max(text_right, cell_right)
+                    text_top = max(text_top, anchored_coord.row)
+                    text_bottom = min(text_bottom, anchored_coord.row)
 
-        characters = [
-            character
-            for character in characters
-            if self.coord_is_in_canvas(character.input_coord)
-            and character.input_coord.column + character.animation.current_character_visual.cell_width - 1 <= self.right
-        ]
-
-        if not characters:
+        if not placements:
             self._reset_text_bounds()
-            return []
+            return TextLayout((), self._text_bounds)
 
-        # get text dimensions, centers, and extents
-        text_left = min(character.input_coord.column for character in characters)
-        text_right = max(
-            character.input_coord.column + character.animation.current_character_visual.cell_width - 1
-            for character in characters
-        )
-        text_top = max(character.input_coord.row for character in characters)
-        text_bottom = min(character.input_coord.row for character in characters)
-        text_center_row = text_bottom + ((text_top - text_bottom) // 2)
-        text_center_column = text_left + ((text_right - text_left) // 2)
-        self.text_left = text_left
-        self.text_right = text_right
-        self.text_top = text_top
-        self.text_bottom = text_bottom
-        self.text_width = text_right - text_left + 1
-        self.text_height = text_top - text_bottom + 1
-        self.text_center_row = text_center_row
-        self.text_center_column = text_center_column
-        self.text_center = Coord(text_center_column, text_center_row)
-        return characters
+        self._text_bounds = TextBounds(left=text_left, right=text_right, top=text_top, bottom=text_bottom)
+        return TextLayout(tuple(placements), self._text_bounds)
 
     def _reset_text_bounds(self) -> None:
         """Set the text bounds to the empty-region sentinel values."""
-        self.text_left = self.text_right = 0
-        self.text_top = self.text_bottom = 0
-        self.text_width = self.text_height = 0
-        self.text_center_row = self.text_center_column = 0
-        self.text_center = Coord(0, 0)
+        self._text_bounds = TextBounds()
 
     def coord_is_in_canvas(self, coord: Coord) -> bool:
         """Check whether a coordinate is within the canvas.
