@@ -10,7 +10,6 @@ Classes:
 from __future__ import annotations
 
 import random
-import re
 import shutil
 import sys
 import time
@@ -25,6 +24,7 @@ from typing import Literal
 
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_config import BaseConfig
+from terminaltexteffects.engine.terminal_input import ParsedCharacter, VirtualScreenParser
 from terminaltexteffects.utils import ansitools, argutils
 from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
 from terminaltexteffects.utils.exceptions import (
@@ -36,7 +36,6 @@ from terminaltexteffects.utils.exceptions import (
     InvalidColorSortError,
     TerminalOutputActiveError,
     TerminalOutputNotPreparedError,
-    UnsupportedAnsiSequenceError,
 )
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
@@ -666,14 +665,6 @@ class Terminal:
 
     """
 
-    ansi_sequence_color_map: typing.ClassVar[dict[str, Color]] = {}
-    ansi_escape_sequence_pattern: typing.ClassVar[re.Pattern[str]] = re.compile(
-        r"(?:\x1b\][^\x07]*(?:\x07|\x1b\\))|(?:\x1b\[[0-?]*[ -/]*[@-~])|(?:\x1b.)",
-    )
-    csi_sequence_pattern: typing.ClassVar[re.Pattern[str]] = re.compile(r"\x1b\[([0-?]*)([ -/]*)([@-~])")
-    _MAX_CSI_PARAMETER = 9_999_999
-    _MAX_VIRTUAL_SCREEN_DIMENSION = 100_000
-    _MAX_VIRTUAL_SCREEN_CELLS = 1_000_000
     _active_output_terminal: typing.ClassVar[weakref.ReferenceType[Terminal] | None] = None
 
     def __init__(self, input_data: str, config: TerminalConfig | None = None) -> None:
@@ -691,6 +682,7 @@ class Terminal:
         self._character_ownership_token = weakref.ref(self)
         self._output_prepared = False
         self._next_character_id = 0
+        self._input_parser = VirtualScreenParser(tab_width=self.config.tab_width)
         self._preprocessed_character_columns: dict[EffectCharacter, int] = {}
         self._preprocessed_line_widths: list[int] = []
         self._preprocessed_character_lines = self._preprocess_input_data(input_data)
@@ -762,340 +754,44 @@ class Terminal:
         self._blank_row = " " * self.visible_right
         self._blank_terminal_state = [self._blank_row] * self.visible_top
 
-    def _preprocess_input_data(self, input_data: str) -> list[list[EffectCharacter]]:  # noqa: PLR0915
-        """Preprocess the input data.
+    def _build_input_character(self, parsed_character: ParsedCharacter, character_id_offset: int) -> EffectCharacter:
+        """Allocate one terminal-owned character from parser output."""
+        character = EffectCharacter(
+            character_id_offset + parsed_character.character_id,
+            parsed_character.symbol,
+            0,
+            0,
+        )
+        character._terminal_owner_token = self._character_ownership_token
+        character.animation.input_fg_color = parsed_character.fg_color
+        character.animation.input_bg_color = parsed_character.bg_color
+        character.animation.input_bold = parsed_character.bold
+        character.animation.no_color = self.config.no_color
+        character.animation.use_xterm_colors = self.config.xterm_colors
+        character.animation.existing_color_handling = self.config.existing_color_handling
+        character.uses_input_preexisting_colors = True
+        if character.animation.existing_color_handling == "always":
+            character.animation.set_appearance(character.input_symbol)
+        return character
 
-        Input is decomposed into `EffectCharacter` rows while tracking supported
-        SGR foreground/background color sequences and fetch-style cursor movement
-        sequences. Unsupported ANSI/control sequences raise `UnsupportedAnsiSequenceError`.
-        Trailing unstyled spaces, blank rows, and cursor-only gaps do not extend the
-        automatic input geometry. Leading/internal gaps and styled spaces do.
-
-        Args:
-            input_data (str): The input data to be displayed in the terminal.
-
-        Returns:
-            list[list[EffectCharacter]]: Input characters decomposed into rows.
-
-        """
-
-        def build_color_sequence(color_code: int | str, sequence_type: str) -> str:
-            """Build a normalized supported color SGR sequence."""
-            if isinstance(color_code, int):
-                return f"\x1b[{sequence_type};5;{color_code}m"
-            color_ints = [int(color_code[index : index + 2], 16) for index in range(0, 6, 2)]
-            return f"\x1b[{sequence_type};2;{color_ints[0]};{color_ints[1]};{color_ints[2]}m"
-
-        def parse_csi_parameters(parameters: str, sequence: str) -> list[int]:
-            """Parse bounded CSI parameters, treating omitted values as zero."""
-            if any(char not in "0123456789;" for char in parameters):
-                raise UnsupportedAnsiSequenceError(sequence)
-            if not parameters:
-                return []
-            parameter_fields = parameters.split(";")
-            max_parameter_digits = len(str(self._MAX_CSI_PARAMETER))
-            if any(len(parameter) > max_parameter_digits for parameter in parameter_fields):
-                raise UnsupportedAnsiSequenceError(sequence)
-            parsed_parameters = [int(parameter) if parameter else 0 for parameter in parameter_fields]
-            if any(parameter > self._MAX_CSI_PARAMETER for parameter in parsed_parameters):
-                raise UnsupportedAnsiSequenceError(sequence)
-            return parsed_parameters
-
-        def apply_sgr_sequence(  # noqa: PLR0915
-            sequence: str,
-            active_sequences: dict[str, str],
-            active_colors: dict[str, Color | None],
-            active_styles: dict[str, bool],
-            standard_fg_parameter: dict[str, int | None],
-        ) -> None:
-            """Apply supported SGR color parameters to the active input color state."""
-            parameters = parse_csi_parameters(sequence[2:-1], sequence)
-            if not parameters:
-                parameters = [0]
-            param_index = 0
-            while param_index < len(parameters):
-                parameter = parameters[param_index]
-                if parameter == 0:  # SGR 0: reset all attributes
-                    active_sequences["fg_color"] = active_sequences["bg_color"] = ""
-                    active_colors["fg_color"] = active_colors["bg_color"] = None
-                    active_styles["bold"] = False
-                    standard_fg_parameter["fg_color"] = None
-                elif parameter == 1:  # SGR 1: bold / increased intensity
-                    active_styles["bold"] = True
-                    if standard_fg_parameter["fg_color"] is not None:
-                        active_colors["fg_color"] = Color(standard_fg_parameter["fg_color"] - 30 + 8)
-                elif parameter == 22:  # SGR 22: normal intensity (not bold)
-                    active_styles["bold"] = False
-                    if standard_fg_parameter["fg_color"] is not None:
-                        active_colors["fg_color"] = Color(standard_fg_parameter["fg_color"] - 30)
-                elif parameter == 39:  # SGR 39: default foreground color
-                    active_sequences["fg_color"] = ""
-                    active_colors["fg_color"] = None
-                    standard_fg_parameter["fg_color"] = None
-                elif parameter == 49:  # SGR 49: default background color
-                    active_sequences["bg_color"] = ""
-                    active_colors["bg_color"] = None
-                elif 30 <= parameter <= 37:  # SGR 30-37: standard foreground colors
-                    color = Color(parameter - 30 + (8 if active_styles["bold"] else 0))
-                    active_sequences["fg_color"] = f"\x1b[{parameter}m"
-                    active_colors["fg_color"] = color
-                    standard_fg_parameter["fg_color"] = parameter
-                elif 90 <= parameter <= 97:  # SGR 90-97: bright foreground colors
-                    color = Color(parameter - 90 + 8)
-                    active_sequences["fg_color"] = f"\x1b[{parameter}m"
-                    active_colors["fg_color"] = color
-                    standard_fg_parameter["fg_color"] = None
-                elif 40 <= parameter <= 47:  # SGR 40-47: standard background colors
-                    color = Color(parameter - 40)
-                    active_sequences["bg_color"] = f"\x1b[{parameter}m"
-                    active_colors["bg_color"] = color
-                elif 100 <= parameter <= 107:  # SGR 100-107: bright background colors
-                    color = Color(parameter - 100 + 8)
-                    active_sequences["bg_color"] = f"\x1b[{parameter}m"
-                    active_colors["bg_color"] = color
-                elif parameter in (38, 48):  # SGR 38/48: extended foreground/background color
-                    if param_index + 1 >= len(parameters):
-                        raise UnsupportedAnsiSequenceError(sequence)
-                    sequence_type = "fg_color" if parameter == 38 else "bg_color"
-                    color_sequence_type = str(parameter)
-                    color_mode = parameters[param_index + 1]
-                    if color_mode == 5:  # SGR ...;5;n: 8-bit indexed color
-                        if param_index + 2 >= len(parameters):
-                            raise UnsupportedAnsiSequenceError(sequence)
-                        color_code: int | str = parameters[param_index + 2]
-                        if color_code > 255:
-                            raise UnsupportedAnsiSequenceError(sequence)
-                        color = Color(color_code)
-                        param_index += 2
-                    elif color_mode == 2:  # SGR ...;2;r;g;b: 24-bit RGB color
-                        if param_index + 4 >= len(parameters):
-                            raise UnsupportedAnsiSequenceError(sequence)
-                        color_channels = parameters[param_index + 2 : param_index + 5]
-                        if any(channel > 255 for channel in color_channels):
-                            raise UnsupportedAnsiSequenceError(sequence)
-                        color_code = "".join(f"{channel:02X}" for channel in color_channels)
-                        color = Color(color_code)
-                        param_index += 4
-                    else:
-                        raise UnsupportedAnsiSequenceError(sequence)
-                    active_sequences[sequence_type] = build_color_sequence(color_code, color_sequence_type)
-                    active_colors[sequence_type] = color
-                    if sequence_type == "fg_color":
-                        standard_fg_parameter["fg_color"] = None
-                else:
-                    raise UnsupportedAnsiSequenceError(sequence)
-                param_index += 1
-
-        def default_parameter(parameters: list[int]) -> int:
-            """Return the first CSI parameter, defaulting zero/omitted values to one."""
-            if not parameters:
-                return 1
-            return max(parameters[0], 1)
-
-        def is_supported_private_mode_sequence(sequence: str) -> bool:
-            """Return whether a CSI private mode sequence is safe to ignore while parsing input."""
-            return sequence in {"\x1b[?25h", "\x1b[?25l", "\x1b[?7h", "\x1b[?7l"}
-
-        def apply_cursor_sequence(sequence: str, row: int, column: int) -> tuple[int, int]:
-            """Apply a supported cursor movement sequence and return the new cursor position."""
-            csi_match = self.csi_sequence_pattern.fullmatch(sequence)
-            if not csi_match:
-                raise UnsupportedAnsiSequenceError(sequence)
-            parameters_text, intermediates, final_byte = csi_match.groups()
-            if intermediates:
-                raise UnsupportedAnsiSequenceError(sequence)
-            if parameters_text.startswith("?"):
-                raise UnsupportedAnsiSequenceError(sequence)
-            parameters = parse_csi_parameters(parameters_text, sequence)
-            if final_byte == "A":  # CSI A: cursor up
-                if len(parameters) > 1:
-                    raise UnsupportedAnsiSequenceError(sequence)
-                row -= default_parameter(parameters)
-            elif final_byte == "B":  # CSI B: cursor down
-                if len(parameters) > 1:
-                    raise UnsupportedAnsiSequenceError(sequence)
-                row += default_parameter(parameters)
-            elif final_byte == "C":  # CSI C: cursor forward
-                if len(parameters) > 1:
-                    raise UnsupportedAnsiSequenceError(sequence)
-                column += default_parameter(parameters)
-            elif final_byte == "D":  # CSI D: cursor back
-                if len(parameters) > 1:
-                    raise UnsupportedAnsiSequenceError(sequence)
-                column -= default_parameter(parameters)
-            elif final_byte == "E":  # CSI E: cursor next line
-                if len(parameters) > 1:
-                    raise UnsupportedAnsiSequenceError(sequence)
-                row += default_parameter(parameters)
-                column = 0
-            elif final_byte == "F":  # CSI F: cursor previous line
-                if len(parameters) > 1:
-                    raise UnsupportedAnsiSequenceError(sequence)
-                row -= default_parameter(parameters)
-                column = 0
-            elif final_byte == "G":  # CSI G: cursor horizontal absolute
-                if len(parameters) > 1:
-                    raise UnsupportedAnsiSequenceError(sequence)
-                column = default_parameter(parameters) - 1
-            elif final_byte in ("H", "f"):  # CSI H/f: cursor position / horizontal-vertical position
-                if len(parameters) > 2:
-                    raise UnsupportedAnsiSequenceError(sequence)
-                row = default_parameter(parameters) - 1
-                column = (parameters[1] if len(parameters) > 1 and parameters[1] else 1) - 1
-            else:
-                raise UnsupportedAnsiSequenceError(sequence)
-            return max(row, 0), max(column, 0)
-
-        def build_character(
-            symbol: str,
-            active_sequences: dict[str, str],
-            active_colors: dict[str, Color | None],
-            active_styles: dict[str, bool],
-        ) -> EffectCharacter:
-            """Build an input character with the current terminal configuration and input colors."""
-            character = EffectCharacter(self._next_character_id, symbol, 0, 0)
-            character._terminal_owner_token = self._character_ownership_token
-            self._next_character_id += 1
-            for sequence_type, sequence in active_sequences.items():
-                color = active_colors[sequence_type]
-                if sequence and color:
-                    character._input_ansi_sequences[sequence_type] = sequence
-                    if sequence_type == "fg_color":
-                        character.animation.input_fg_color = color
-                    else:
-                        character.animation.input_bg_color = color
-            character.animation.input_bold = active_styles["bold"]
-            character.animation.no_color = self.config.no_color
-            character.animation.use_xterm_colors = self.config.xterm_colors
-            character.animation.existing_color_handling = self.config.existing_color_handling
-            character.uses_input_preexisting_colors = True
-            if character.animation.existing_color_handling == "always":
-                character.animation.set_appearance(character.input_symbol)
-            return character
-
-        screen: dict[tuple[int, int], EffectCharacter] = {}
-        screen_cell_owners: dict[tuple[int, int], tuple[int, int]] = {}
-        occupied_coords: set[tuple[int, int]] = set()
-        active_sequences = {"fg_color": "", "bg_color": ""}
-        active_colors: dict[str, Color | None] = {"fg_color": None, "bg_color": None}
-        active_styles = {"bold": False}
-        standard_fg_parameter: dict[str, int | None] = {"fg_color": None}
-        row = column = 0
-        char_index = max_row = max_column = 0
-        while char_index < len(input_data):
-            if input_data[char_index] == "\x1b":
-                sequence_match = self.ansi_escape_sequence_pattern.match(input_data, char_index)
-                if not sequence_match:
-                    raise UnsupportedAnsiSequenceError(input_data[char_index])
-                sequence = sequence_match.group(0)
-                if sequence.startswith("\x1b["):
-                    csi_match = self.csi_sequence_pattern.fullmatch(sequence)
-                    if not csi_match:
-                        raise UnsupportedAnsiSequenceError(sequence)
-                    final_byte = csi_match.group(3)
-                    if final_byte == "m":
-                        apply_sgr_sequence(
-                            sequence,
-                            active_sequences,
-                            active_colors,
-                            active_styles,
-                            standard_fg_parameter,
-                        )
-                    elif is_supported_private_mode_sequence(sequence):
-                        pass
-                    else:
-                        row, column = apply_cursor_sequence(sequence, row, column)
-                        prospective_max_row = max(max_row, row)
-                        prospective_max_column = max(max_column, column)
-                        if (
-                            prospective_max_row >= self._MAX_VIRTUAL_SCREEN_DIMENSION
-                            or prospective_max_column >= self._MAX_VIRTUAL_SCREEN_DIMENSION
-                            or (prospective_max_row + 1) * (prospective_max_column + 1)
-                            > self._MAX_VIRTUAL_SCREEN_CELLS
-                        ):
-                            raise UnsupportedAnsiSequenceError(sequence)
-                        max_row = prospective_max_row
-                        max_column = prospective_max_column
-                else:
-                    raise UnsupportedAnsiSequenceError(sequence)
-                char_index = sequence_match.end()
-            elif input_data[char_index] == "\n":
-                row += 1
-                column = 0
-                max_row = max(max_row, row)
-                char_index += 1
-            elif input_data[char_index] == "\r":
-                column = 0
-                char_index += 1
-            else:
-                symbol = input_data[char_index]
-                codepoint = ord(symbol)
-                if symbol != "\t" and (codepoint < 0x20 or 0x7F <= codepoint <= 0x9F):
-                    raise UnsupportedAnsiSequenceError(symbol)
-                if symbol == "\t":
-                    symbol = " "
-                    symbol_width = 1
-                    symbol_repetitions = self.config.tab_width - (column % self.config.tab_width)
-                else:
-                    symbol_width = get_symbol_cell_width(symbol)
-                    symbol_repetitions = 1
-                for _ in range(symbol_repetitions):
-                    symbol_coords = [(row, column + offset) for offset in range(symbol_width)]
-                    for symbol_coord in symbol_coords:
-                        previous_owner = screen_cell_owners.get(symbol_coord)
-                        if previous_owner is not None:
-                            previous_character = screen.pop(previous_owner)
-                            previous_width = previous_character.animation.current_character_visual.cell_width
-                            for offset in range(previous_width):
-                                screen_cell_owners.pop((previous_owner[0], previous_owner[1] + offset), None)
-                    coord = symbol_coords[0]
-                    occupied_coords.update(symbol_coords)
-                    if symbol != " " or any(active_colors.values()):
-                        character = build_character(symbol, active_sequences, active_colors, active_styles)
-                        screen[coord] = character
-                        screen_cell_owners.update(dict.fromkeys(symbol_coords, coord))
-                    else:
-                        self._next_character_id += 1
-                    max_row = max(max_row, row)
-                    max_column = max(max_column, column + symbol_width - 1)
-                    column += symbol_width
-                char_index += 1
-
-        # Preserve the ID progression of the former dense rectangle without allocating
-        # temporary characters for coordinates that will become fill characters.
-        rectangle_size = (max_row + 1) * (max_column + 1)
-        self._next_character_id += rectangle_size - len(occupied_coords)
-
-        if not screen:
-            self._preprocessed_character_columns = {}
-            self._preprocessed_line_widths = [1]
-            return [[]]
-
-        last_character_row = max(screen_row for screen_row, _ in screen)
-        characters: list[list[EffectCharacter]] = []
+    def _preprocess_input_data(self, input_data: str) -> list[list[EffectCharacter]]:
+        """Parse input and allocate the retained terminal-owned characters."""
+        parsed_input = self._input_parser.parse(input_data)
+        character_id_offset = self._next_character_id
+        character_lines: list[list[EffectCharacter]] = []
         character_columns: dict[EffectCharacter, int] = {}
-        line_widths: list[int] = []
-        entries_by_row: dict[int, list[tuple[int, EffectCharacter]]] = {}
-        for (screen_row, screen_column), character in screen.items():
-            entries_by_row.setdefault(screen_row, []).append((screen_column, character))
-        for screen_row in range(last_character_row + 1):
-            line_entries = sorted(entries_by_row.get(screen_row, []), key=lambda entry: entry[0])
-            character_line = [character for _, character in line_entries]
-            characters.append(character_line)
-            line_widths.append(
-                max(
-                    (
-                        screen_column + character.animation.current_character_visual.cell_width
-                        for screen_column, character in line_entries
-                    ),
-                    default=0,
-                ),
-            )
-            character_columns.update({character: screen_column for screen_column, character in line_entries})
+        for parsed_row in parsed_input.character_rows:
+            character_line: list[EffectCharacter] = []
+            for parsed_character in parsed_row:
+                character = self._build_input_character(parsed_character, character_id_offset)
+                character_line.append(character)
+                character_columns[character] = parsed_character.column
+            character_lines.append(character_line)
 
+        self._next_character_id += parsed_input.character_id_count
         self._preprocessed_character_columns = character_columns
-        self._preprocessed_line_widths = line_widths
-        return characters
+        self._preprocessed_line_widths = list(parsed_input.line_widths)
+        return character_lines
 
     def _calc_canvas_offsets(self) -> tuple[int, int]:
         """Calculate terminal-space offsets for the anchored canvas.

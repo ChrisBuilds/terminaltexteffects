@@ -184,7 +184,6 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
                         character_copy = self.terminal.add_character(character.input_symbol, character.input_coord)
                         character_copy.animation.existing_color_handling = self.terminal.config.existing_color_handling
                         character_copy.uses_input_preexisting_colors = True
-                        character_copy._input_ansi_sequences = character._input_ansi_sequences
                         character_copy.animation.no_color = character.animation.no_color
                         character_copy.animation.use_xterm_colors = character.animation.use_xterm_colors
                         character_copy.animation.input_fg_color = character.animation.input_fg_color

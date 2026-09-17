@@ -348,7 +348,6 @@ def test_effectcharacter_init(effectcharacter: EffectCharacter) -> None:
     assert effectcharacter.character_id == 0
     assert effectcharacter._input_symbol == "a"
     assert effectcharacter._input_coord == Coord(1, 1)
-    assert effectcharacter._input_ansi_sequences == {"fg_color": None, "bg_color": None}
     assert effectcharacter._is_visible is False
     assert effectcharacter.layer == 0
     assert effectcharacter.is_fill_character is False

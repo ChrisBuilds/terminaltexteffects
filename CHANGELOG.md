@@ -66,6 +66,9 @@
 * `CharacterSort.OUTSIDE_ROW_TO_MIDDLE` and `MIDDLE_ROW_TO_OUTSIDE` now order complete rows by distance from the
   selected rows' vertical midpoint while preserving left-to-right order within each row. Character retrieval now
   documents its input-coordinate semantics and the visible-canvas scope of grouped retrieval.
+* Terminal input parsing now uses a reusable virtual-screen parser with explicit style, cursor, screen, ID, and color
+  frequency state. Parsing is independently testable and produces immutable records before `Terminal` allocates
+  characters; unused stored ANSI-sequence metadata was removed from `EffectCharacter` and Overflow.
 * `BaseEffect.terminal_output()` and the associated effect iterator now share one `Terminal` graph regardless of
   whether the iterator or output context is created first. Nested and repeated contexts remain isolated, and every
   `iter(effect)` call still creates a fresh iterator.
