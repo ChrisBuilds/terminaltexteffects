@@ -40,25 +40,37 @@ def parse_ansi_color_sequence(sequence: str) -> int | str:
     Returns:
         int | str: 8-bit color int or 24-bit color str
 
+    Raises:
+        ValueError: If the sequence has an invalid color value or number of color fields.
+
     """
+    invalid_sequence_message = "Invalid ANSI color sequence"
     # Remove escape characters
     sequence = re.sub(r"(\033\[|\x1b\[)", "", sequence).strip("m")
     # detect 24-bit colors
     if re.match(r"^(38;2|48;2)", sequence):
         sequence = re.sub(r"^(38;2;|48;2;)", "", sequence)
-        colors = []
-        for color in sequence.split(";"):
-            if color:
-                colors.append(int(color))
-            else:
-                colors.append(0)  # default to 0 if no value in field (e.g. 38;2;;0m)
+        color_fields = sequence.split(";")
+        if len(color_fields) != 3:
+            raise ValueError(invalid_sequence_message)
+        try:
+            colors = [int(color) if color else 0 for color in color_fields]
+        except ValueError:
+            raise ValueError(invalid_sequence_message) from None
+        if any(color not in range(256) for color in colors):
+            raise ValueError(invalid_sequence_message)
         return "".join(f"{color:02X}" for color in colors)
     # detect 8-bit colors
     if re.match(r"^(38;5|48;5)", sequence):
         sequence = re.sub(r"^(38;5;|48;5;)", "", sequence)
-        return int(sequence)
-    msg = "Invalid ANSI color sequence"
-    raise ValueError(msg)
+        try:
+            color = int(sequence)
+        except ValueError:
+            raise ValueError(invalid_sequence_message) from None
+        if color not in range(256):
+            raise ValueError(invalid_sequence_message)
+        return color
+    raise ValueError(invalid_sequence_message)
 
 
 def dec_save_cursor_position() -> str:

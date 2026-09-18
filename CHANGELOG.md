@@ -156,6 +156,8 @@
 
 ---
 
+* ANSI color-sequence parsing now requires exactly one indexed color value or three RGB channels, validates every
+  value is between 0 and 255, and reports malformed values consistently with `ValueError`.
 * Canvas empty text regions no longer contain the sentinel coordinate `(0, 0)`, and random text-boundary selection now
   raises `ValueError` instead of returning an off-canvas coordinate.
 * The CLI now treats empty and whitespace-only input as a successful no-op, emitting no status text or terminal
