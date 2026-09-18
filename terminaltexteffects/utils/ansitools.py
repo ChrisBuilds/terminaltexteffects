@@ -116,13 +116,27 @@ def show_cursor() -> str:
 def move_cursor_up(y: int) -> str:
     """Move the cursor up by a relative number of rows.
 
+    A distance of `0` is a no-op and returns an empty string.
+
     Args:
         y (int): Number of rows to move upward from the current cursor position.
 
     Returns:
         str: ANSI escape code
 
+    Raises:
+        TypeError: If `y` is not a non-boolean integer.
+        ValueError: If `y` is negative.
+
     """
+    if isinstance(y, bool) or not isinstance(y, int):
+        msg = "y must be a non-boolean integer"
+        raise TypeError(msg)
+    if y < 0:
+        msg = "y must be non-negative"
+        raise ValueError(msg)
+    if y == 0:
+        return ""
     return f"\033[{y}A"
 
 
@@ -135,7 +149,17 @@ def move_cursor_to_column(x: int) -> str:
     Returns:
         str: ANSI escape code
 
+    Raises:
+        TypeError: If `x` is not a non-boolean integer.
+        ValueError: If `x` is not positive.
+
     """
+    if isinstance(x, bool) or not isinstance(x, int):
+        msg = "x must be a non-boolean integer"
+        raise TypeError(msg)
+    if x < 1:
+        msg = "x must be positive"
+        raise ValueError(msg)
     return f"\033[{x}G"
 
 

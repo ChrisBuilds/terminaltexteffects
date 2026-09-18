@@ -101,9 +101,41 @@ def test_move_cursor_up() -> None:
     assert ansitools.move_cursor_up(5) == "\033[5A"
 
 
+def test_move_cursor_up_zero_is_no_op() -> None:
+    """Avoid encoding zero, which terminals commonly interpret as one row."""
+    assert ansitools.move_cursor_up(0) == ""
+
+
+def test_move_cursor_up_rejects_negative_distance() -> None:
+    """Reject negative relative cursor movement."""
+    with pytest.raises(ValueError, match=r"^y must be non-negative$"):
+        ansitools.move_cursor_up(-1)
+
+
+@pytest.mark.parametrize("value", [True, False, 1.5, "1", None])
+def test_move_cursor_up_rejects_non_integer_values(value: object) -> None:
+    """Reject booleans and non-integer cursor distances."""
+    with pytest.raises(TypeError, match=r"^y must be a non-boolean integer$"):
+        ansitools.move_cursor_up(value)  # pyright: ignore[reportArgumentType]
+
+
 def test_move_cursor_to_column() -> None:
     """Return an absolute cursor-column sequence."""
     assert ansitools.move_cursor_to_column(5) == "\033[5G"
+
+
+@pytest.mark.parametrize("value", [0, -1])
+def test_move_cursor_to_column_rejects_non_positive_values(value: int) -> None:
+    """Enforce the helper's 1-based absolute-column contract."""
+    with pytest.raises(ValueError, match=r"^x must be positive$"):
+        ansitools.move_cursor_to_column(value)
+
+
+@pytest.mark.parametrize("value", [True, False, 1.5, "1", None])
+def test_move_cursor_to_column_rejects_non_integer_values(value: object) -> None:
+    """Reject booleans and non-integer absolute columns."""
+    with pytest.raises(TypeError, match=r"^x must be a non-boolean integer$"):
+        ansitools.move_cursor_to_column(value)  # pyright: ignore[reportArgumentType]
 
 
 def test_reset_all() -> None:
