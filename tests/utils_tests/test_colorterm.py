@@ -25,10 +25,21 @@ def test_fg_valid_color_codes(color_code: str | int, expected_sequence: str) -> 
     assert colorterm.fg(color_code) == expected_sequence
 
 
-def test_fg_invalid_hex() -> None:
+@pytest.mark.parametrize(
+    "color_code",
+    [
+        pytest.param("fgffff", id="non-hex-character"),
+        pytest.param("fffff", id="too-short"),
+        pytest.param("ffffff0", id="too-long"),
+        pytest.param("#ffffffjunk", id="trailing-text"),
+        pytest.param("ffffff#", id="trailing-hash"),
+        pytest.param("##ffffff##", id="multiple-hashes"),
+    ],
+)
+def test_fg_invalid_hex(color_code: str) -> None:
     """Rejects malformed foreground hex color strings."""
-    with pytest.raises(ValueError, match="invalid literal for int\\(\\) with base 16"):
-        colorterm.fg("fgffff")
+    with pytest.raises(ValueError, match="Invalid RGB hex color code"):
+        colorterm.fg(color_code)
 
 
 @pytest.mark.parametrize("color_code", [pytest.param(256, id="above-max"), pytest.param(-1, id="below-min")])
@@ -50,6 +61,16 @@ def test_fg_invalid_type() -> None:
         colorterm.fg(3.14)  # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize("color_code", [True, False])
+def test_fg_invalid_bool(color_code: bool) -> None:  # noqa: FBT001
+    """Rejects boolean foreground color indexes."""
+    with pytest.raises(
+        TypeError,
+        match=r"Color must be either hex string #000000 -> #FFFFFF or int xterm color code 0 <= n <= 255",
+    ):
+        colorterm.fg(color_code)
+
+
 @pytest.mark.parametrize(
     ("color_code", "expected_sequence"),
     [
@@ -66,10 +87,21 @@ def test_bg_valid_color_codes(color_code: str | int, expected_sequence: str) -> 
     assert colorterm.bg(color_code) == expected_sequence
 
 
-def test_bg_invalid_hex() -> None:
+@pytest.mark.parametrize(
+    "color_code",
+    [
+        pytest.param("fgffff", id="non-hex-character"),
+        pytest.param("fffff", id="too-short"),
+        pytest.param("ffffff0", id="too-long"),
+        pytest.param("#ffffffjunk", id="trailing-text"),
+        pytest.param("ffffff#", id="trailing-hash"),
+        pytest.param("##ffffff##", id="multiple-hashes"),
+    ],
+)
+def test_bg_invalid_hex(color_code: str) -> None:
     """Rejects malformed background hex color strings."""
-    with pytest.raises(ValueError, match="invalid literal for int\\(\\) with base 16"):
-        colorterm.bg("fgffff")
+    with pytest.raises(ValueError, match="Invalid RGB hex color code"):
+        colorterm.bg(color_code)
 
 
 @pytest.mark.parametrize("color_code", [pytest.param(256, id="above-max"), pytest.param(-1, id="below-min")])
@@ -89,3 +121,13 @@ def test_bg_invalid_type() -> None:
         match=r"Color must be either hex string #000000 -> #FFFFFF or int xterm color code 0 <= n <= 255",
     ):
         colorterm.bg(3.14)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("color_code", [True, False])
+def test_bg_invalid_bool(color_code: bool) -> None:  # noqa: FBT001
+    """Rejects boolean background color indexes."""
+    with pytest.raises(
+        TypeError,
+        match=r"Color must be either hex string #000000 -> #FFFFFF or int xterm color code 0 <= n <= 255",
+    ):
+        colorterm.bg(color_code)

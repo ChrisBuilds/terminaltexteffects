@@ -1,8 +1,8 @@
 """Convert XTerm 256 color codes and RGB hex colors into ANSI escape sequences.
 
 Functions:
-    fg(color_code: str | int) -> str: Set the foreground color using an XTerm code or RGB hex string.
-    bg(color_code: str | int) -> str: Set the background color using an XTerm code or RGB hex string.
+    `fg`: Set the foreground color using an XTerm code or RGB hex string.
+    `bg`: Set the background color using an XTerm code or RGB hex string.
 """
 
 from __future__ import annotations
@@ -12,21 +12,31 @@ def _hex_to_int(hex_color: str) -> tuple[int, int, int]:
     """Convert a hex color string into an RGB integer tuple.
 
     Args:
-        hex_color (str): Hex color string in the range 000000 -> FFFFFF. '#' is optional.
+        hex_color (str): Exactly six hexadecimal digits with an optional single leading `#`.
 
     Returns:
         tuple[int, int, int]: A tuple of integers (red, green, blue) representing the color.
 
+    Raises:
+        ValueError: If `hex_color` is not exactly six hexadecimal digits with at most one leading `#`.
+
     """
-    hex_color = hex_color.strip("#")
-    ints = [int(hex_color[i : i + 2], 16) for i in range(0, 6, 2)]
+    color_string = hex_color[1:] if hex_color.startswith("#") else hex_color
+    if len(color_string) != 6:
+        msg = f"Invalid RGB hex color code: {hex_color}"
+        raise ValueError(msg)
+    try:
+        ints = [int(color_string[i : i + 2], 16) for i in range(0, 6, 2)]
+    except ValueError:
+        msg = f"Invalid RGB hex color code: {hex_color}"
+        raise ValueError(msg) from None
     return ints[0], ints[1], ints[2]
 
 
 def _color(color_code: str | int, location: int) -> str:
     """Return an ANSI escape sequence to color the foreground/background of text.
 
-    This is a helper function for fg() and bg().
+    This is a helper function for `fg` and `bg`.
 
     Args:
         color_code (str | int): The color code to be converted.
@@ -37,13 +47,15 @@ def _color(color_code: str | int, location: int) -> str:
         str: The ANSI escape sequence for the color.
 
     Raises:
-        ValueError: If the color code is not in the range 000000 -> FFFFFF or 0 -> 255.
+        TypeError: If `color_code` is not a string or non-boolean integer.
+        ValueError: If `color_code` is not exactly six hexadecimal digits with at most one leading `#`, or an integer
+            from 0 through 255.
 
     """
     if isinstance(color_code, str):
         color_ints = _hex_to_int(color_code)
         sequence = f"\x1b[{location};2;{color_ints[0]};{color_ints[1]};{color_ints[2]}m"
-    elif isinstance(color_code, int):
+    elif isinstance(color_code, int) and not isinstance(color_code, bool):
         if color_code not in range(256):
             msg = f"Got color code ({color_code}): xterm color codes must be an integer: 0 <= n <= 255"
             raise ValueError(msg)
@@ -69,6 +81,11 @@ def fg(color_code: str | int) -> str:
     Returns:
         str: The ANSI escape sequence to set the foreground color.
 
+    Raises:
+        TypeError: If `color_code` is not a string or non-boolean integer.
+        ValueError: If `color_code` is not exactly six hexadecimal digits with at most one leading `#`, or an integer
+            from 0 through 255.
+
     """
     return _color(color_code, 38)
 
@@ -82,6 +99,11 @@ def bg(color_code: str | int) -> str:
 
     Returns:
         str: The ANSI escape sequence to set the background color.
+
+    Raises:
+        TypeError: If `color_code` is not a string or non-boolean integer.
+        ValueError: If `color_code` is not exactly six hexadecimal digits with at most one leading `#`, or an integer
+            from 0 through 255.
 
     """
     return _color(color_code, 48)
