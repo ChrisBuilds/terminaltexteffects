@@ -3,14 +3,11 @@
 These escape codes can be used to modify the appearance of text in a terminal.
 
 Functions:
-    parse_ansi_color_sequence(sequence: str) -> int | str: Parse an 8-bit or 24-bit ANSI color
-        sequence, normalizing empty 24-bit channels to 0.
     dec_save_cursor_position() -> str: Save the cursor position using DEC sequence.
     dec_restore_cursor_position() -> str: Restore the cursor position using DEC sequence.
     hide_cursor() -> str: Hide the cursor.
     show_cursor() -> str: Show the cursor.
     move_cursor_up(y: int) -> str: Move the cursor up y lines.
-    move_cursor_to_column(x: int) -> str: Move the cursor to the specified column.
     reset_all() -> str: Reset all formatting.
     apply_bold() -> str: Apply bold formatting.
     apply_dim() -> str: Apply dim formatting.
@@ -23,54 +20,6 @@ Functions:
 """
 
 from __future__ import annotations
-
-import re
-
-_ANSI_COLOR_SEQUENCE_PATTERN = re.compile(r"\x1b\[(?:38|48);(?P<color_mode>[25]);(?P<color_values>[0-9;]*)m")
-
-
-def parse_ansi_color_sequence(sequence: str) -> int | str:
-    """Parse a complete 8-bit or 24-bit ANSI SGR color sequence.
-
-    Returns the color code as an integer, in the case of 8-bit, or a hex string in the case of 24-bit.
-    For 24-bit color sequences, empty channel fields are normalized to `0` before
-    the RGB value is returned. The sequence must include the CSI escape prefix and
-    terminating `m` byte.
-
-    Args:
-        sequence (str): ANSI color sequence
-
-    Returns:
-        int | str: 8-bit color int or 24-bit color str
-
-    Raises:
-        ValueError: If the sequence has an invalid color value or number of color fields.
-
-    """
-    invalid_sequence_message = "Invalid ANSI color sequence"
-    sequence_match = _ANSI_COLOR_SEQUENCE_PATTERN.fullmatch(sequence)
-    if sequence_match is None:
-        raise ValueError(invalid_sequence_message)
-    color_mode = sequence_match.group("color_mode")
-    color_values = sequence_match.group("color_values")
-    if color_mode == "2":
-        color_fields = color_values.split(";")
-        if len(color_fields) != 3:
-            raise ValueError(invalid_sequence_message)
-        try:
-            colors = [int(color) if color else 0 for color in color_fields]
-        except ValueError:
-            raise ValueError(invalid_sequence_message) from None
-        if any(color not in range(256) for color in colors):
-            raise ValueError(invalid_sequence_message)
-        return "".join(f"{color:02X}" for color in colors)
-    try:
-        color = int(color_values)
-    except ValueError:
-        raise ValueError(invalid_sequence_message) from None
-    if color not in range(256):
-        raise ValueError(invalid_sequence_message)
-    return color
 
 
 def dec_save_cursor_position() -> str:
@@ -138,29 +87,6 @@ def move_cursor_up(y: int) -> str:
     if y == 0:
         return ""
     return f"\033[{y}A"
-
-
-def move_cursor_to_column(x: int) -> str:
-    """Move the cursor to the specified 1-based column.
-
-    Args:
-        x (int): Destination column number, using ANSI's 1-based column indexing.
-
-    Returns:
-        str: ANSI escape code
-
-    Raises:
-        TypeError: If `x` is not a non-boolean integer.
-        ValueError: If `x` is not positive.
-
-    """
-    if isinstance(x, bool) or not isinstance(x, int):
-        msg = "x must be a non-boolean integer"
-        raise TypeError(msg)
-    if x < 1:
-        msg = "x must be positive"
-        raise ValueError(msg)
-    return f"\033[{x}G"
 
 
 def reset_all() -> str:

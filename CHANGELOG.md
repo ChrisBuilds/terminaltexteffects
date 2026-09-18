@@ -69,6 +69,8 @@
 * Terminal input parsing now uses a reusable virtual-screen parser with explicit style, cursor, screen, ID, and color
   frequency state. Parsing is independently testable and produces immutable records before `Terminal` allocates
   characters; unused stored ANSI-sequence metadata was removed from `EffectCharacter` and Overflow.
+* Removed the unused `utils.ansitools.parse_ansi_color_sequence()` and `move_cursor_to_column()` APIs. Extended-color
+  decoding now has one implementation in the virtual-screen parser that consumes it.
 * `Canvas` now lives in `terminaltexteffects.engine.canvas` with dedicated tests and documentation.
 * Canvas text anchoring now operates on coordinates and cell widths and returns immutable layout results. `Terminal`
   applies those placements to characters through a single coordinate operation that keeps motion state synchronized.
@@ -156,12 +158,8 @@
 
 ---
 
-* ANSI color-sequence parsing now requires exactly one indexed color value or three RGB channels, validates every
-  value is between 0 and 255, and reports malformed values consistently with `ValueError`.
-* ANSI color-sequence parsing now requires one complete SGR sequence, including the CSI escape prefix and terminating
-  `m`, and rejects surrounding text, repeated terminators, and embedded escape sequences.
-* ANSI cursor helpers now reject booleans, non-integer values, and invalid ranges before emitting control sequences;
-  zero-row relative movement is treated as a no-op, and absolute columns enforce 1-based indexing.
+* The ANSI cursor-up helper now rejects booleans, non-integer values, and negative distances before emitting a control
+  sequence, while zero-row relative movement is treated as a no-op.
 * Canvas empty text regions no longer contain the sentinel coordinate `(0, 0)`, and random text-boundary selection now
   raises `ValueError` instead of returning an off-canvas coordinate.
 * The CLI now treats empty and whitespace-only input as a successful no-op, emitting no status text or terminal
