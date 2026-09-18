@@ -26,13 +26,16 @@ from __future__ import annotations
 
 import re
 
+_ANSI_COLOR_SEQUENCE_PATTERN = re.compile(r"\x1b\[(?:38|48);(?P<color_mode>[25]);(?P<color_values>[0-9;]*)m")
+
 
 def parse_ansi_color_sequence(sequence: str) -> int | str:
-    """Parse an 8-bit or 24-bit ANSI color sequence.
+    """Parse a complete 8-bit or 24-bit ANSI SGR color sequence.
 
     Returns the color code as an integer, in the case of 8-bit, or a hex string in the case of 24-bit.
     For 24-bit color sequences, empty channel fields are normalized to `0` before
-    the RGB value is returned.
+    the RGB value is returned. The sequence must include the CSI escape prefix and
+    terminating `m` byte.
 
     Args:
         sequence (str): ANSI color sequence
@@ -45,12 +48,13 @@ def parse_ansi_color_sequence(sequence: str) -> int | str:
 
     """
     invalid_sequence_message = "Invalid ANSI color sequence"
-    # Remove escape characters
-    sequence = re.sub(r"(\033\[|\x1b\[)", "", sequence).strip("m")
-    # detect 24-bit colors
-    if re.match(r"^(38;2|48;2)", sequence):
-        sequence = re.sub(r"^(38;2;|48;2;)", "", sequence)
-        color_fields = sequence.split(";")
+    sequence_match = _ANSI_COLOR_SEQUENCE_PATTERN.fullmatch(sequence)
+    if sequence_match is None:
+        raise ValueError(invalid_sequence_message)
+    color_mode = sequence_match.group("color_mode")
+    color_values = sequence_match.group("color_values")
+    if color_mode == "2":
+        color_fields = color_values.split(";")
         if len(color_fields) != 3:
             raise ValueError(invalid_sequence_message)
         try:
@@ -60,17 +64,13 @@ def parse_ansi_color_sequence(sequence: str) -> int | str:
         if any(color not in range(256) for color in colors):
             raise ValueError(invalid_sequence_message)
         return "".join(f"{color:02X}" for color in colors)
-    # detect 8-bit colors
-    if re.match(r"^(38;5|48;5)", sequence):
-        sequence = re.sub(r"^(38;5;|48;5;)", "", sequence)
-        try:
-            color = int(sequence)
-        except ValueError:
-            raise ValueError(invalid_sequence_message) from None
-        if color not in range(256):
-            raise ValueError(invalid_sequence_message)
-        return color
-    raise ValueError(invalid_sequence_message)
+    try:
+        color = int(color_values)
+    except ValueError:
+        raise ValueError(invalid_sequence_message) from None
+    if color not in range(256):
+        raise ValueError(invalid_sequence_message)
+    return color
 
 
 def dec_save_cursor_position() -> str:

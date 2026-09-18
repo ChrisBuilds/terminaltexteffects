@@ -20,7 +20,7 @@ def test_parse_ansi_color_sequence_8_bit(position: str) -> None:
     """Parse valid foreground and background 8-bit colors."""
     assert ansitools.parse_ansi_color_sequence(f"\x1b[{position};0m") == 0
     assert ansitools.parse_ansi_color_sequence(f"\x1b[{position};255m") == 255
-    assert ansitools.parse_ansi_color_sequence(f"\x1b[{position};128") == 128
+    assert ansitools.parse_ansi_color_sequence(f"\x1b[{position};128m") == 128
 
 
 @pytest.mark.parametrize("position", ["38;2", "48;2"])
@@ -56,6 +56,24 @@ def test_parse_ansi_color_sequence_invalid(escape: str, position: str) -> None:
     """Reject unsupported escape prefixes and color selectors."""
     with pytest.raises(ValueError, match=r"^Invalid ANSI color sequence$"):
         ansitools.parse_ansi_color_sequence(f"{escape}{position};255;255;255m")
+
+
+@pytest.mark.parametrize(
+    "sequence",
+    [
+        "38;5;1m",
+        "\x1b[38;5;1",
+        "prefix\x1b[38;5;1m",
+        "\x1b[38;5;1msuffix",
+        "\x1b[38;5;1mm",
+        "m\x1b[38;5;1m",
+        "\x1b[38;5;\x1b[1m",
+    ],
+)
+def test_parse_ansi_color_sequence_rejects_incomplete_or_embedded_sequences(sequence: str) -> None:
+    """Reject strings that are not exactly one complete ANSI color sequence."""
+    with pytest.raises(ValueError, match=r"^Invalid ANSI color sequence$"):
+        ansitools.parse_ansi_color_sequence(sequence)
 
 
 def test_dec_save_cursor_position() -> None:
