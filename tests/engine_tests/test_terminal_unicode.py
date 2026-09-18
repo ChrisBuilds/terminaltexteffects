@@ -67,6 +67,46 @@ def test_terminal_lays_out_and_renders_wide_input_symbols() -> None:
     assert terminal.get_formatted_output_string() == "A界B"
 
 
+def test_visible_wide_character_count_tracks_visual_and_visibility_changes() -> None:
+    """Renderer selection should follow visible characters as their visual widths change."""
+    terminal = _make_terminal("A", canvas_width=2)
+    character = terminal.get_characters()[0]
+
+    terminal.set_character_visibility(character, is_visible=True)
+    assert terminal._visible_wide_character_count == 0
+
+    character.animation.set_appearance("界")
+    assert terminal._visible_wide_character_count == 1
+    assert terminal.get_formatted_output_string() == "界"
+
+    character.animation.set_appearance("A")
+    assert terminal._visible_wide_character_count == 0
+    assert terminal.get_formatted_output_string() == "A "
+
+    character.animation.set_appearance("界")
+    terminal.set_character_visibility(character, is_visible=False)
+    assert terminal._visible_wide_character_count == 0
+
+
+def test_activating_external_scene_registers_all_visual_widths() -> None:
+    """An externally constructed scene should register wide frames before playback."""
+    terminal = _make_terminal("A", canvas_width=2)
+    character = terminal.get_characters()[0]
+    scene = Scene("external")
+    scene.add_frame("A", 1)
+    scene.add_frame("界", 1)
+
+    character.animation.activate_scene(scene)
+
+    terminal.set_character_visibility(character, is_visible=True)
+    assert terminal._visible_wide_character_count == 0
+
+    character.tick()
+    character.tick()
+
+    assert terminal._visible_wide_character_count == 1
+
+
 def test_terminal_wraps_wide_symbols_without_splitting_them() -> None:
     """A wide symbol that cannot fit at line end should move wholly to the next row."""
     terminal = _make_terminal("A界B", canvas_width=2)

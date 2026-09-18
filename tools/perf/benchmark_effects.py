@@ -64,6 +64,14 @@ INPUT_PRESETS = {
         "\x1b[38;5;64mggggggg \x1b[38;5;182mggggggg"
     ),
     "sparse": "A\x1b[24;80HB",
+    "unicode": (
+        "ASCII + WIDE\n"
+        "Hello, 世界!\n"
+        "終端文字効果\n"
+        "😀 🚀 🔥 🌈 🎉\n"
+        "ＡＢＣ１２３！？\n"  # noqa: RUF001 - deliberate full-width benchmark symbols
+        "Mix: A界B😀C"
+    ),
 }
 
 

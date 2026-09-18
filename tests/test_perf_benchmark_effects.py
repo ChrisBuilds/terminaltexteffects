@@ -90,6 +90,14 @@ def test_run_benchmark_measures_peak_memory() -> None:
     assert result["summary"]["peak_memory_bytes"]["mean"] > 0
 
 
+def test_unicode_input_preset_contains_double_cell_symbols() -> None:
+    """The Unicode preset should exercise true double-cell rendering."""
+    input_data = benchmark_effects._make_input_data("unicode")
+
+    assert "界" in input_data
+    assert "😀" in input_data
+
+
 def test_run_benchmark_supports_terminal_output_lifecycle() -> None:
     """The end-to-end mode should exercise the output context without writing to stdout."""
     result = benchmark_effects.run_benchmark(

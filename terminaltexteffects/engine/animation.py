@@ -206,6 +206,8 @@ class Scene:
         self.easing_current_step: int = 0
         self.preexisting_colors: graphics.ColorPair | None = None
         self.preexisting_bold: bool = False
+        self._frame_added_callback: typing.Callable[[CharacterVisual], None] | None = None
+        self._visual_width_mask: int = 0
 
     def _get_color_code(self, color: graphics.Color | None) -> str | int | None:
         """Get the color code for the given color.
@@ -302,6 +304,11 @@ class Scene:
             _fg_color_code=char_vis_fg_color,
             _bg_color_code=char_vis_bg_color,
         )
+        width_bit = 1 << (char_vis.cell_width - 1)
+        if not self._visual_width_mask & width_bit:
+            self._visual_width_mask |= width_bit
+            if self._frame_added_callback is not None:
+                self._frame_added_callback(char_vis)
         frame = Frame(char_vis, duration)
         self.frames.append(frame)
         self.easing_total_steps += frame.duration
@@ -537,7 +544,12 @@ class Animation:
         self.xterm_color_map: dict[str, int] = {}
         # Future: review whether `active_scene_current_step` should be removed or implemented for real scene tracking.
         self.active_scene_current_step: int = 0
-        self.current_character_visual: CharacterVisual = CharacterVisual(character.input_symbol)
+        self.current_character_visual = CharacterVisual(character.input_symbol)
+        self._visual_width_mask = 1 << (self.current_character_visual.cell_width - 1)
+
+    def _record_visual_width(self, visual: CharacterVisual) -> None:
+        """Record a visual width for selective playback transition tracking."""
+        self._visual_width_mask |= 1 << (visual.cell_width - 1)
 
     def _get_color_code(self, color: graphics.Color | None) -> str | int | None:
         """Get the color code for the given color.
@@ -618,6 +630,7 @@ class Animation:
             no_color=self.no_color,
             use_xterm_colors=self.use_xterm_colors,
         )
+        new_scene._frame_added_callback = self._record_visual_width
         new_scene.preexisting_colors = preexisting_colors
         new_scene.preexisting_bold = preexisting_bold
         self.scenes[scene_id] = new_scene
@@ -696,13 +709,18 @@ class Animation:
         char_vis_fg_color: str | int | None = self._get_color_code(colors.fg)
         char_vis_bg_color: str | int | None = self._get_color_code(colors.bg)
 
-        self.current_character_visual = CharacterVisual(
+        previous_width = self.current_character_visual.cell_width
+        visual = CharacterVisual(
             symbol,
             bold=bold,
             colors=colors,
             _fg_color_code=char_vis_fg_color,
             _bg_color_code=char_vis_bg_color,
         )
+        self._record_visual_width(visual)
+        self.current_character_visual = visual
+        if previous_width != visual.cell_width:
+            self.character._notify_current_visual_width_changed(previous_width)
 
     @staticmethod
     def adjust_color_brightness(color: graphics.Color, brightness: float) -> graphics.Color:
@@ -828,6 +846,7 @@ class Animation:
         scene = self.active_scene
         if scene is None or not scene.frames:
             return
+        previous_width = self.current_character_visual.cell_width if self._visual_width_mask == 0b11 else 0
 
         if scene.sync:
             self._step_synced_scene(scene)
@@ -836,6 +855,8 @@ class Animation:
         else:
             self.current_character_visual = scene.get_next_visual()
 
+        if previous_width and previous_width != self.current_character_visual.cell_width:
+            self.character._notify_current_visual_width_changed(previous_width)
         self._complete_scene_if_finished(scene)
 
     def _step_synced_scene(self, scene: Scene) -> None:
@@ -921,9 +942,16 @@ class Animation:
                 raise SceneNotFoundError(scene)
         else:
             found_scene = scene
+        found_scene._frame_added_callback = self._record_visual_width
+        self._visual_width_mask |= found_scene._visual_width_mask
         self.active_scene = found_scene
         self.active_scene_current_step = 0
-        self.current_character_visual = self.active_scene.activate()
+        previous_width = self.current_character_visual.cell_width
+        visual = self.active_scene.activate()
+        self._record_visual_width(visual)
+        self.current_character_visual = visual
+        if previous_width != visual.cell_width:
+            self.character._notify_current_visual_width_changed(previous_width)
         self.character.event_handler._handle_event(self.character.event_handler.Event.SCENE_ACTIVATED, found_scene)
 
     @typing.overload

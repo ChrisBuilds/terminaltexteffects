@@ -31,6 +31,9 @@ class _CharacterOwner(typing.Protocol):
     def _notify_character_layer_changed(self, character: EffectCharacter, previous_layer: int) -> None:
         """Notify the terminal that an owned character's layer changed."""
 
+    def _notify_character_cell_width_changed(self, character: EffectCharacter, previous_width: int) -> None:
+        """Notify the terminal that an owned character's current visual width changed."""
+
 
 class EventHandler:
     """Register and handle events related to a character.
@@ -481,6 +484,12 @@ class EffectCharacter:
         """Set the input coordinate and synchronize the character's current position."""
         self._input_coord = coord
         self.motion.set_coordinate(coord)
+
+    def _notify_current_visual_width_changed(self, previous_width: int) -> None:
+        """Notify the owning terminal when the current visual changes display width."""
+        owner = self._terminal_owner_token() if self._terminal_owner_token is not None else None
+        if owner is not None:
+            owner._notify_character_cell_width_changed(self, previous_width)
 
     @property
     def is_visible(self) -> bool:

@@ -110,6 +110,9 @@
 * Terminal frame rendering now reuses blank row strings for sparse frames, retains direct dense-buffer rendering once
   visibility crosses a canvas-aware threshold, and caches multi-layer painter ordering until visibility or a character
   layer changes. Direct `EffectCharacter.layer` assignment continues to update collision ordering immediately.
+* Printable ASCII symbols now bypass Unicode metadata lookups, while validated non-ASCII display widths use a bounded
+  cache. Terminal rendering tracks visible double-cell visuals as animation widths change, avoiding a full visible-
+  character width scan on ordinary single-cell frames without weakening wide-character collision handling.
 * Outside/middle character sorting now interleaves sorted characters with indexes instead of repeated front-pops,
   reducing the ordering pass from quadratic to linear work.
 * Event dispatch now branches directly on registered actions instead of allocating an action map and callback lambdas

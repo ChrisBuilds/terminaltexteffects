@@ -408,6 +408,7 @@ class Terminal:
         self._visible_character_layer_counts: dict[int, int] = {}
         self._visible_characters_by_layer: list[EffectCharacter] = []
         self._visible_character_order_dirty = False
+        self._visible_wide_character_count = 0
         self._blank_row = " " * self.visible_right
         self._blank_terminal_state = [self._blank_row] * self.visible_top
 
@@ -1084,6 +1085,8 @@ class Terminal:
                 self._visible_character_layer_counts[character.layer] = (
                     self._visible_character_layer_counts.get(character.layer, 0) + 1
                 )
+                if character.animation.current_character_visual.cell_width > 1:
+                    self._visible_wide_character_count += 1
                 self._visible_character_order_dirty = True
         elif character in self._visible_characters:
             self._visible_characters.remove(character)
@@ -1098,6 +1101,8 @@ class Terminal:
                 self._visible_character_layer_counts[character.layer] = layer_count
             else:
                 del self._visible_character_layer_counts[character.layer]
+            if character.animation.current_character_visual.cell_width > 1:
+                self._visible_wide_character_count -= 1
             self._visible_character_order_dirty = True
 
     def _notify_character_layer_changed(self, character: EffectCharacter, previous_layer: int) -> None:
@@ -1113,6 +1118,15 @@ class Terminal:
             self._visible_character_layer_counts.get(character.layer, 0) + 1
         )
         self._visible_character_order_dirty = True
+
+    def _notify_character_cell_width_changed(self, character: EffectCharacter, previous_width: int) -> None:
+        """Update the visible wide-character count after a visual-width transition."""
+        if character not in self._visible_characters:
+            return
+        if previous_width > 1:
+            self._visible_wide_character_count -= 1
+        else:
+            self._visible_wide_character_count += 1
 
     def _get_visible_characters_in_painter_order(self) -> list[EffectCharacter]:
         """Return visible characters ordered by layer and then character ID."""
@@ -1228,10 +1242,10 @@ class Terminal:
         collision. Characters outside the visible bounds are skipped.
         """
         visible_characters = self._get_visible_characters_in_painter_order()
-        if all(character.animation.current_character_visual.cell_width == 1 for character in visible_characters):
-            self.terminal_state = self._render_single_cell_characters(visible_characters)
-        else:
+        if self._visible_wide_character_count:
             self.terminal_state = self._render_width_aware_characters(visible_characters)
+        else:
+            self.terminal_state = self._render_single_cell_characters(visible_characters)
 
     def prep_canvas(self) -> None:
         """Prepare the terminal for the effect.
