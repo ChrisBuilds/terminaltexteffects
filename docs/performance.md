@@ -15,11 +15,14 @@ Run a baseline before changing performance-sensitive code:
 ```
 
 Use `--effect all` for a broader pass, and use
-`--input-preset small|medium|large|wide|tall|color|sparse|generated` to
+`--input-preset small|medium|large|wide|tall|color|sparse|unicode|generated` to
 select the input shape. Defaults are `--samples 7`, `--warmups 2`, and `--seed 1337`.
 
 The `sparse` preset creates an 80-by-24 virtual canvas containing only two input characters. It is intended to expose
 costs that scale with canvas area instead of visible character count; `generated` provides a dense 80-by-24 control.
+The `unicode` preset combines ASCII with CJK, full-width, and single-code-point emoji symbols to exercise double-cell
+layout and rendering. The `wide` preset remains a long row of single-cell ASCII and measures input shape, not glyph
+display width.
 
 Pass `--memory` to record peak traced Python memory for iterator construction and for the complete iteration. Memory
 tracking adds substantial runtime overhead, so compare timing results only with another `--memory` report. Report

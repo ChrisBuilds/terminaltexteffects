@@ -174,3 +174,4 @@ lib_tests/*
 dev_notes/*
 38_venv/*
 .DS_Store
+terminaltexteffects.code-workspace
