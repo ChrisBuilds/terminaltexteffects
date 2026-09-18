@@ -7,7 +7,14 @@ Functions:
 
 from __future__ import annotations
 
+from functools import lru_cache
 
+_XTERM_COLOR_SEQUENCES = {
+    location: tuple(f"\x1b[{location};5;{color_code}m" for color_code in range(256)) for location in (38, 48)
+}
+
+
+@lru_cache(maxsize=1024)
 def _hex_to_int(hex_color: str) -> tuple[int, int, int]:
     """Convert a hex color string into an RGB integer tuple.
 
@@ -26,11 +33,14 @@ def _hex_to_int(hex_color: str) -> tuple[int, int, int]:
         msg = f"Invalid RGB hex color code: {hex_color}"
         raise ValueError(msg)
     try:
-        ints = [int(color_string[i : i + 2], 16) for i in range(0, 6, 2)]
+        return (
+            int(color_string[0:2], 16),
+            int(color_string[2:4], 16),
+            int(color_string[4:6], 16),
+        )
     except ValueError:
         msg = f"Invalid RGB hex color code: {hex_color}"
         raise ValueError(msg) from None
-    return ints[0], ints[1], ints[2]
 
 
 def _color(color_code: str | int, location: int) -> str:
@@ -59,7 +69,10 @@ def _color(color_code: str | int, location: int) -> str:
         if color_code not in range(256):
             msg = f"Got color code ({color_code}): xterm color codes must be an integer: 0 <= n <= 255"
             raise ValueError(msg)
-        sequence = f"\x1b[{location};5;{color_code}m"
+        try:
+            sequence = _XTERM_COLOR_SEQUENCES[location][color_code]
+        except KeyError:
+            sequence = f"\x1b[{location};5;{color_code}m"
     else:
         msg = (
             f"Got color code ({color_code}): Color must be either hex string #000000 -> #FFFFFF or"

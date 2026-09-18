@@ -137,6 +137,8 @@
 * Color - RGB channel tuples are now parsed once per immutable `Color` and reused by gradient and color-shift
   interpolation. Both APIs use nearest, ties-to-even channel rounding, and the unused global color-shift cache has
   been removed.
+* Color - Terminal escape generation now constructs RGB tuples without an intermediate list, retains conversions in a
+  bounded 1,024-entry cache, and reuses precomputed foreground/background sequences for the finite XTerm-256 palette.
 * Graphics documentation now reflects `Color` specification-based equality, canonical `ColorPair` fields, `Gradient`
   iteration and transition-count semantics, loop closure, fractional lookup, coordinate endpoints, and validation
   errors, with examples for single-channel color pairs and coordinate mappings.
@@ -218,7 +220,8 @@
   exactly six hexadecimal digits with, at most, one leading `#`.
 * Color - Fixed booleans and equal-valued non-integer numerics being accepted as XTerm-256 codes. `Color` now rejects
   every constructor value other than non-boolean integers and RGB strings, and `is_valid_color()` safely returns
-  `False` for unsupported types.
+  `False` for unsupported types. The `colorterm.fg()` and `colorterm.bg()` helpers now reject booleans instead of
+  emitting malformed ANSI sequences.
 * Color - `repr()` output for XTerm `Color` values and all `ColorPair` combinations now uses valid, reconstructible
   constructor syntax while preserving the original color representation.
 * Color - RGB specifications now normalize to lowercase for consistent equality and hashing. `Color` instances are
