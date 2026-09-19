@@ -160,6 +160,8 @@
 
 * The ANSI cursor-up helper now rejects booleans, non-integer values, and negative distances before emitting a control
   sequence, while zero-row relative movement is treated as a no-op.
+* `CharacterVisual.dim` now emits the ANSI dim sequence when formatting rendered symbols, matching the behavior of
+  the other supported visual-mode flags.
 * Canvas empty text regions no longer contain the sentinel coordinate `(0, 0)`, and random text-boundary selection now
   raises `ValueError` instead of returning an off-canvas coordinate.
 * The CLI now treats empty and whitespace-only input as a successful no-op, emitting no status text or terminal

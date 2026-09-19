@@ -78,14 +78,12 @@ class CharacterVisual:
         self.formatted_symbol = self.format_symbol()
 
     def format_symbol(self) -> str:
-        """Format the symbol for printing by applying ANSI sequences for supported active modes and color.
-
-        The `dim` attribute is stored on the visual but is not currently emitted as an ANSI sequence.
-        """
+        """Format the symbol for printing by applying ANSI sequences for active modes and color."""
         formatting_string = ""
         if self.bold:
             formatting_string += ansitools.apply_bold()
-        # Future: review the dim ANSI sequence and decide whether CharacterVisual should emit it.
+        if self.dim:
+            formatting_string += ansitools.apply_dim()
         if self.italic:
             formatting_string += ansitools.apply_italic()
         if self.underline:

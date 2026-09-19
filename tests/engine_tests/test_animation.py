@@ -66,13 +66,21 @@ def test_character_visual_init(character_visual_all_modes_enabled: CharacterVisu
     """Test that the formatted_symbol of character_visual_all_modes_enabled is correctly initialized."""
     assert (
         character_visual_all_modes_enabled.formatted_symbol
-        == "\x1b[1m\x1b[3m\x1b[4m\x1b[5m\x1b[7m\x1b[8m\x1b[9m\x1b[38;2;255;255;255m\x1b[48;2;255;255;255ma\x1b[0m"
+        == "\x1b[1m\x1b[2m\x1b[3m\x1b[4m\x1b[5m\x1b[7m\x1b[8m\x1b[9m"
+        "\x1b[38;2;255;255;255m\x1b[48;2;255;255;255ma\x1b[0m"
     )
 
 
 def test_character_visual_init_default(character_visual_default: CharacterVisual) -> None:
     """Test that the default formatted symbol is 'a'."""
     assert character_visual_default.formatted_symbol == "a"
+
+
+def test_character_visual_dim_formats_symbol() -> None:
+    """Emit the dim SGR mode when the visual enables `dim`."""
+    visual = CharacterVisual(symbol="a", dim=True)
+
+    assert visual.formatted_symbol == "\x1b[2ma\x1b[0m"
 
 
 def test_frame_init(character_visual_default: CharacterVisual) -> None:
