@@ -162,6 +162,9 @@
 
 ---
 
+* `PositiveFloatRange` now rejects native tuples and lists with nonpositive endpoints, so direct effect configuration
+  construction and assignment enforce the same positive-range contract as CLI input. Clarified the validator docstring
+  and added focused parser and effect-config regression tests.
 * The ANSI cursor-up helper now rejects booleans, non-integer values, and negative distances before emitting a control
   sequence, while zero-row relative movement is treated as a no-op.
 * `CharacterVisual.dim` now emits the ANSI dim sequence when formatting rendered symbols, matching the behavior of

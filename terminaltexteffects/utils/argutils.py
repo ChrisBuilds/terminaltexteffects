@@ -550,7 +550,7 @@ class NonNegativeFloat:
 
 
 class PositiveFloatRange:
-    """Validate argument is a nondecreasing, nonzero float range.
+    """Validate argument is a nondecreasing range of positive floats.
 
     Float ranges are expressed as two floats separated by a hyphen, for example
     `0.1-1.0`.
@@ -584,13 +584,13 @@ class PositiveFloatRange:
                 start, end = map(float, arg)
             else:
                 start, end = map(float, arg.split("-"))
-            if start > end:
-                msg = f"invalid range: '{arg}' is not a valid range of floats. Must be start <= end. Ex: 0.1-1.0"
+            if start <= 0 or end <= 0:
+                msg = f"invalid range: '{arg}' is not a valid range of floats. Must be start > 0. Ex: 0.1-1.0"
                 raise argparse.ArgumentTypeError(
                     msg,
                 )
-            if start == 0 or end == 0:
-                msg = f"invalid range: '{arg}' is not a valid range of floats. Must be start > 0. Ex: 0.1-1.0"
+            if start > end:
+                msg = f"invalid range: '{arg}' is not a valid range of floats. Must be start <= end. Ex: 0.1-1.0"
                 raise argparse.ArgumentTypeError(
                     msg,
                 )
