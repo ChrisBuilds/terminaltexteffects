@@ -60,6 +60,8 @@
 
 ---
 
+* Updated the `argutils` documentation example to use the current `BaseConfig` and `ArgSpec` API, with runnable direct
+  construction and CLI parsing examples.
 * `Terminal` now owns an immutable construction-time snapshot of `TerminalConfig`. Mutating the caller's configuration
   after construction no longer changes output behavior, and attempts to mutate `terminal.config` fail explicitly.
 * Terminal output now tracks canvas preparation and cursor restoration explicitly. Setup and cleanup are idempotent,
