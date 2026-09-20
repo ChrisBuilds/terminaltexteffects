@@ -141,6 +141,8 @@
   been removed.
 * Color - Terminal escape generation now constructs RGB tuples without an intermediate list, retains conversions in a
   bounded 1,024-entry cache, and reuses precomputed foreground/background sequences for the finite XTerm-256 palette.
+* Color - Repeated RGB foreground and background escape sequences now reuse completed strings from a bounded cache,
+  reducing animation build time when colors recur across frames.
 * Graphics documentation now reflects `Color` specification-based equality, canonical `ColorPair` fields, `Gradient`
   iteration and transition-count semantics, loop closure, fractional lookup, coordinate endpoints, and validation
   errors, with examples for single-channel color pairs and coordinate mappings.

@@ -25,6 +25,14 @@ def test_fg_valid_color_codes(color_code: str | int, expected_sequence: str) -> 
     assert colorterm.fg(color_code) == expected_sequence
 
 
+@pytest.mark.parametrize("color_code", ["#12aBcD", "12abcd"])
+def test_repeated_truecolor_sequences_are_reused(color_code: str) -> None:
+    """Reuse completed foreground and background RGB sequences independently."""
+    assert colorterm.fg(color_code) is colorterm.fg(color_code)
+    assert colorterm.bg(color_code) is colorterm.bg(color_code)
+    assert colorterm.fg(color_code) != colorterm.bg(color_code)
+
+
 @pytest.mark.parametrize(
     "color_code",
     [

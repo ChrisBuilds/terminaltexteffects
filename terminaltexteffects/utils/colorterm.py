@@ -41,6 +41,13 @@ def _hex_to_int(hex_color: str) -> tuple[int, int, int]:
     )
 
 
+@lru_cache(maxsize=1024)
+def _truecolor_sequence(hex_color: str, location: int) -> str:
+    """Return a cached ANSI RGB sequence for one color and SGR location."""
+    red, green, blue = _hex_to_int(hex_color)
+    return f"\x1b[{location};2;{red};{green};{blue}m"
+
+
 def _color(color_code: str | int, location: int) -> str:
     """Return an ANSI escape sequence to color the foreground/background of text.
 
@@ -61,8 +68,7 @@ def _color(color_code: str | int, location: int) -> str:
 
     """
     if isinstance(color_code, str):
-        color_ints = _hex_to_int(color_code)
-        sequence = f"\x1b[{location};2;{color_ints[0]};{color_ints[1]};{color_ints[2]}m"
+        sequence = _truecolor_sequence(color_code, location)
     elif isinstance(color_code, int) and not isinstance(color_code, bool):
         if color_code not in range(256):
             msg = f"Got color code ({color_code}): xterm color codes must be an integer: 0 <= n <= 255"
