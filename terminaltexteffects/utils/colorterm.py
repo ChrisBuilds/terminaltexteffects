@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from terminaltexteffects.utils import hexterm
+
 _XTERM_COLOR_SEQUENCES = {
     location: tuple(f"\x1b[{location};5;{color_code}m" for color_code in range(256)) for location in (38, 48)
 }
@@ -29,18 +31,14 @@ def _hex_to_int(hex_color: str) -> tuple[int, int, int]:
 
     """
     color_string = hex_color[1:] if hex_color.startswith("#") else hex_color
-    if len(color_string) != 6:
+    if not hexterm.is_valid_color(hex_color):
         msg = f"Invalid RGB hex color code: {hex_color}"
         raise ValueError(msg)
-    try:
-        return (
-            int(color_string[0:2], 16),
-            int(color_string[2:4], 16),
-            int(color_string[4:6], 16),
-        )
-    except ValueError:
-        msg = f"Invalid RGB hex color code: {hex_color}"
-        raise ValueError(msg) from None
+    return (
+        int(color_string[0:2], 16),
+        int(color_string[2:4], 16),
+        int(color_string[4:6], 16),
+    )
 
 
 def _color(color_code: str | int, location: int) -> str:

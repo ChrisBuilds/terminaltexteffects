@@ -20,6 +20,7 @@ Tests are marked with 'utils' and 'smoke' pytest markers to classify them approp
 import pytest
 
 from terminaltexteffects.utils import hexterm
+from terminaltexteffects.utils.graphics import Color
 
 pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
@@ -51,6 +52,13 @@ def test_is_valid_color_valid_hex_color() -> None:
     assert hexterm.is_valid_color("#ffffff") is True
 
 
+@pytest.mark.parametrize("color", ["aB12cD", "#aB12cD"])
+def test_ascii_hex_color_remains_valid(color: str) -> None:
+    """Accept mixed-case ASCII digits with an optional hash."""
+    assert hexterm.is_valid_color(color) is True
+    assert Color(color).rgb_ints == (171, 18, 205)
+
+
 @pytest.mark.parametrize("color", [0, 255])
 def test_is_valid_color_valid_xterm_color(color: int) -> None:
     """Test that both inclusive XTerm range endpoints are recognized as valid."""
@@ -71,6 +79,14 @@ def test_is_valid_color_invalid_hex_length() -> None:
 def test_is_valid_color_rejects_malformed_hex_prefix_or_length(color: str) -> None:
     """Only six digits with at most one leading '#' form a valid RGB color."""
     assert hexterm.is_valid_color(color) is False
+
+
+@pytest.mark.parametrize("color", ["+12345", "-12345", "\uff11\uff12\uff13\uff14\uff15\uff16", "0x1234", "1_2345"])
+def test_is_valid_color_rejects_non_ascii_hex_forms(color: str) -> None:
+    """Reject numeric syntax and Unicode digits outside the RGB hex format."""
+    assert hexterm.is_valid_color(color) is False
+    with pytest.raises(ValueError, match="Invalid color value"):
+        Color(color)
 
 
 def test_is_valid_color_invalid_xterm_color() -> None:

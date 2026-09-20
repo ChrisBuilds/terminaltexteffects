@@ -34,6 +34,9 @@ def test_fg_valid_color_codes(color_code: str | int, expected_sequence: str) -> 
         pytest.param("#ffffffjunk", id="trailing-text"),
         pytest.param("ffffff#", id="trailing-hash"),
         pytest.param("##ffffff##", id="multiple-hashes"),
+        pytest.param("+12345", id="leading-plus"),
+        pytest.param("-12345", id="leading-minus"),
+        pytest.param("\uff11\uff12\uff13\uff14\uff15\uff16", id="unicode-digits"),
     ],
 )
 def test_fg_invalid_hex(color_code: str) -> None:
@@ -96,6 +99,9 @@ def test_bg_valid_color_codes(color_code: str | int, expected_sequence: str) -> 
         pytest.param("#ffffffjunk", id="trailing-text"),
         pytest.param("ffffff#", id="trailing-hash"),
         pytest.param("##ffffff##", id="multiple-hashes"),
+        pytest.param("+12345", id="leading-plus"),
+        pytest.param("-12345", id="leading-minus"),
+        pytest.param("\uff11\uff12\uff13\uff14\uff15\uff16", id="unicode-digits"),
     ],
 )
 def test_bg_invalid_hex(color_code: str) -> None:

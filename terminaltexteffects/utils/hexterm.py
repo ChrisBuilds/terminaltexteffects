@@ -8,6 +8,8 @@ Functions:
 
 from __future__ import annotations
 
+_HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
+
 xterm_to_hex_map = {
     0: "#000000",
     1: "#800000",
@@ -340,10 +342,4 @@ def is_valid_color(color: object) -> bool:
     if not isinstance(color, str):
         return False
     color_string = color.removeprefix("#")
-    if len(color_string) != 6:
-        return False
-    try:
-        int(color_string, 16)
-    except ValueError:
-        return False
-    return True
+    return len(color_string) == 6 and all(character in _HEX_DIGITS for character in color_string)

@@ -224,6 +224,9 @@
   booleans, choices, colors, enums, ranges, and custom easing callables.
 * Color - Fixed malformed RGB hex values being accepted and silently truncated during rendering. RGB colors now require
   exactly six hexadecimal digits with, at most, one leading `#`.
+* Color - RGB hex validation now requires ASCII hexadecimal digits. `Color`, `is_valid_color()`, `hex_to_xterm()`, and
+  `colorterm.fg()`/`bg()` consistently reject signed values, Unicode digits, `0x` prefixes, and underscores instead of
+  accepting malformed colors or emitting invalid RGB escape sequences.
 * Color - Fixed booleans and equal-valued non-integer numerics being accepted as XTerm-256 codes. `Color` now rejects
   every constructor value other than non-boolean integers and RGB strings, and `is_valid_color()` safely returns
   `False` for unsupported types. The `colorterm.fg()` and `colorterm.bg()` helpers now reject booleans instead of
