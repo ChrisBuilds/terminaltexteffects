@@ -713,7 +713,7 @@ class SequenceEaser(typing.Generic[_T]):
             typing.Sequence[_T]: The elements added in the current step.
 
         """
-        previous_eased = self.easing_tracker.eased_value
+        previous_length = len(self.total)
         eased_value = self.easing_tracker.step()
         seq_len = len(self.sequence)
         if seq_len == 0:
@@ -723,7 +723,9 @@ class SequenceEaser(typing.Generic[_T]):
             return self.added
 
         length = int(eased_value * seq_len)
-        previous_length = int(previous_eased * seq_len)
+        # Endpoint rounding can otherwise leave the last element unselected.
+        if self.easing_tracker.is_complete() and math.isclose(eased_value, 1.0, rel_tol=0.0, abs_tol=1e-12):
+            length = seq_len
 
         if length > previous_length:
             self.added = self.sequence[previous_length:length]

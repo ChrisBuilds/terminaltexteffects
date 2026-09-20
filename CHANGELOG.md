@@ -164,6 +164,9 @@
 
 ---
 
+* `SequenceEaser` now includes the final sequence element when an easing function's endpoint rounds just below one,
+  and repeated steps after completion do not report that element as newly added again. Added focused coverage for
+  affected and ordinary easing functions, sequence lengths, and intentionally partial final values.
 * `ArgSpec.normalize()` now rejects empty explicit lists and tuples for `TupleAction` arguments declared with
   `nargs="+"`. Direct effect configs now catch missing gradient stops and other required multi-value options when
   constructed or assigned; scalar values and optional tuple arguments retain their existing behavior. Added focused
