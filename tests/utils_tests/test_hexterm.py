@@ -59,6 +59,16 @@ def test_ascii_hex_color_remains_valid(color: str) -> None:
     assert Color(color).rgb_ints == (171, 18, 205)
 
 
+def test_valid_hex_colors_construct_consistently() -> None:
+    """Every sampled channel value accepted by the validator constructs a matching `Color`."""
+    for red in range(256):
+        expected_rgb = (red, 255 - red, red ^ 0x5A)
+        hex_color = "".join(f"{channel:02x}" for channel in expected_rgb)
+        for color in (hex_color, f"#{hex_color.upper()}"):
+            assert hexterm.is_valid_color(color) is True
+            assert Color(color).rgb_ints == expected_rgb
+
+
 @pytest.mark.parametrize("color", [0, 255])
 def test_is_valid_color_valid_xterm_color(color: int) -> None:
     """Test that both inclusive XTerm range endpoints are recognized as valid."""
