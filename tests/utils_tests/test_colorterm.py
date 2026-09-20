@@ -145,3 +145,13 @@ def test_bg_invalid_bool(color_code: bool) -> None:  # noqa: FBT001
         match=r"Color must be either hex string #000000 -> #FFFFFF or int xterm color code 0 <= n <= 255",
     ):
         colorterm.bg(color_code)
+
+
+def test_reset_fg() -> None:
+    """Restore the default foreground with a selective SGR sequence."""
+    assert colorterm.reset_fg() == "\x1b[39m"
+
+
+def test_reset_bg() -> None:
+    """Restore the default background with a selective SGR sequence."""
+    assert colorterm.reset_bg() == "\x1b[49m"

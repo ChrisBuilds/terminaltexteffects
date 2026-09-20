@@ -3,6 +3,8 @@
 Functions:
     `fg`: Set the foreground color using an XTerm code or RGB hex string.
     `bg`: Set the background color using an XTerm code or RGB hex string.
+    `reset_fg`: Restore the default foreground color without clearing other formatting.
+    `reset_bg`: Restore the default background color without clearing other formatting.
 """
 
 from __future__ import annotations
@@ -124,3 +126,13 @@ def bg(color_code: str | int) -> str:
 
     """
     return _color(color_code, 48)
+
+
+def reset_fg() -> str:
+    """Restore the terminal's default foreground color without clearing other SGR attributes."""
+    return "\x1b[39m"
+
+
+def reset_bg() -> str:
+    """Restore the terminal's default background color without clearing other SGR attributes."""
+    return "\x1b[49m"

@@ -32,6 +32,8 @@
 
 ---
 
+* Color - Added `colorterm.reset_fg()` and `reset_bg()` helpers to restore one default color without clearing the other
+  color or text attributes.
 * Added `engine.effect_support.particles`, a reusable particle helper for effect-owned helper characters. The helper
   provides `ParticlePool` and `ParticleReset` for pooling transient characters, applying per-emission setup with
   `on_emit`, and reclaiming particles directly or from character events.
