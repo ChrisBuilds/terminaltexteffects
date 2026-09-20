@@ -162,6 +162,10 @@
 
 ---
 
+* `ArgSpec.normalize()` now rejects empty explicit lists and tuples for `TupleAction` arguments declared with
+  `nargs="+"`. Direct effect configs now catch missing gradient stops and other required multi-value options when
+  constructed or assigned; scalar values and optional tuple arguments retain their existing behavior. Added focused
+  regression tests for direct config and CLI behavior.
 * `PositiveFloatRange` now rejects native tuples and lists with nonpositive endpoints, so direct effect configuration
   construction and assignment enforce the same positive-range contract as CLI input. Clarified the validator docstring
   and added focused parser and effect-config regression tests.

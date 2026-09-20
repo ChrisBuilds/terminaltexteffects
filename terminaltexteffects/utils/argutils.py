@@ -141,7 +141,11 @@ class ArgSpec:
     default_formatter: typing.Callable[[typing.Any], str] = _MISSING  # type: ignore[assignment]
 
     def normalize(self, value: typing.Any) -> typing.Any:
-        """Normalize and validate a configuration value described by this spec."""
+        """Normalize and validate a configuration value described by this spec.
+
+        Explicit sequences for a `TupleAction` with `nargs="+"` must contain
+        at least one value. Scalar values remain valid for library callers.
+        """
         if self.action == "store_true":
             if not isinstance(value, bool):
                 msg = f"invalid value: '{value}' must be a boolean."
@@ -150,6 +154,9 @@ class ArgSpec:
 
         values = value if self.action is TupleAction and isinstance(value, (list, tuple)) else (value,)
         if self.action is TupleAction:
+            if self.nargs == "+" and not values:
+                msg = f"invalid value: '{value}' must contain at least one value."
+                raise argparse.ArgumentTypeError(msg)
             return tuple(self._normalize_scalar(item) for item in values)
         return self._normalize_scalar(value)
 
