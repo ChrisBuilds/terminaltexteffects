@@ -601,7 +601,7 @@ class EasingTracker:
 
     Attributes:
         easing_function (EasingFunction): The easing function being tracked.
-        total_steps (int): The total number of steps for the easing function.
+        total_steps (int): Positive number of steps for the easing function.
         clamp (bool): Whether eased values should be clamped to the range `[0, 1]`
             after each step. Changes to this setting affect subsequent steps.
         current_step (int): The current step in the easing progression.
@@ -620,7 +620,15 @@ class EasingTracker:
     clamp: bool = False
 
     def __post_init__(self) -> None:
-        """Initialize the EasingTracker's progression state."""
+        """Validate the step count and initialize progression state.
+
+        Raises:
+            ValueError: If `total_steps` is not a positive non-boolean integer.
+
+        """
+        if isinstance(self.total_steps, bool) or not isinstance(self.total_steps, int) or self.total_steps < 1:
+            msg = "total_steps must be a positive integer"
+            raise ValueError(msg)
         self.current_step: int = 0
         self.progress_ratio: float = 0.0
         self.step_delta: float = 0.0
@@ -692,7 +700,7 @@ class SequenceEaser(typing.Generic[_T]):
     Attributes:
         sequence (Sequence[_T]): The sequence to ease over.
         easing_function (EasingFunction): The easing function to use.
-        total_steps (int): The total number of steps for the easing function.
+        total_steps (int): Positive number of steps for the easing function.
         added (Sequence[_T]): Contiguous slice of newly included elements from the current step.
         removed (Sequence[_T]): Contiguous slice of elements removed from the previous step.
         total (Sequence[_T]): Current leading slice of `sequence` selected by eased progress.

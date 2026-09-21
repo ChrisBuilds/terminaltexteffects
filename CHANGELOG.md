@@ -167,6 +167,8 @@
 
 ---
 
+* `EasingTracker` and `SequenceEaser` now reject zero, negative, noninteger, and boolean `total_steps` at construction
+  instead of silently starting complete or failing later. Added tests for invalid counts and a valid one-step ease.
 * `EasingTracker.clamp` is now a public dataclass field that reports the active setting and controls subsequent
   steps when changed. Added regression tests for lower and upper clamping with both settings.
 * Cubic Bezier easing now validates finite horizontal control points in `[0, 1]` and uses a bracketed Newton solver

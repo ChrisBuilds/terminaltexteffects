@@ -91,6 +91,28 @@ def test_easing_tracker_clamp_matches_public_setting(*, clamp: bool, raw_value: 
     assert tracker.step() == (raw_value if clamp else min(1.0, max(0.0, raw_value)))
 
 
+@pytest.mark.parametrize("total_steps", [0, -1, 1.5, 2.0, True, False, "2", None])
+@pytest.mark.parametrize("kind", ["tracker", "sequence"])
+def test_easers_reject_invalid_step_counts(kind: str, total_steps: object) -> None:
+    """Both public easers require a positive non-boolean integer step count."""
+    if kind == "tracker":
+        with pytest.raises(ValueError, match="total_steps must be a positive integer"):
+            easing.EasingTracker(easing.linear, total_steps=total_steps)  # type: ignore[arg-type]
+    else:
+        with pytest.raises(ValueError, match="total_steps must be a positive integer"):
+            easing.SequenceEaser([1, 2], easing.linear, total_steps=total_steps)  # type: ignore[arg-type]
+
+
+def test_easers_accept_single_step() -> None:
+    """A one-step easing completes and includes the entire sequence."""
+    tracker = easing.EasingTracker(easing.linear, total_steps=1)
+    sequence_easer = easing.SequenceEaser([1, 2], easing.linear, total_steps=1)
+
+    assert list(tracker) == [1.0]
+    assert sequence_easer.step() == [1, 2]
+    assert sequence_easer.is_complete()
+
+
 @pytest.mark.parametrize("easing_function", [easing.in_sine, easing.in_back, easing.linear, easing.out_bounce])
 @pytest.mark.parametrize("sequence_length", [1, 10, 100])
 def test_sequence_easer_includes_final_element(easing_function: easing.EasingFunction, sequence_length: int) -> None:
