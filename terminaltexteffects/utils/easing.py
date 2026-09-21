@@ -45,7 +45,7 @@ from __future__ import annotations
 import functools
 import math
 import typing
-from dataclasses import InitVar, dataclass, field
+from dataclasses import dataclass, field
 
 # EasingFunction is a type alias for a function that takes a float between 0 and 1 and returns a float between 0 and 1.
 EasingFunction = typing.Callable[[float], float]
@@ -603,7 +603,7 @@ class EasingTracker:
         easing_function (EasingFunction): The easing function being tracked.
         total_steps (int): The total number of steps for the easing function.
         clamp (bool): Whether eased values should be clamped to the range `[0, 1]`
-            after each step.
+            after each step. Changes to this setting affect subsequent steps.
         current_step (int): The current step in the easing progression.
         progress_ratio (float): The ratio of the current step to the total steps.
         step_delta (float): The change in eased value from the last step to the current step.
@@ -617,16 +617,10 @@ class EasingTracker:
 
     easing_function: EasingFunction
     total_steps: int = 100
-    clamp: InitVar[bool] = field(default=False)
+    clamp: bool = False
 
-    def __post_init__(self, clamp: bool) -> None:
-        """Initialize the EasingTracker.
-
-        Args:
-            clamp (bool, optional): If True, clamp the eased value between 0 and 1. Defaults to False.
-
-        """
-        self._clamp = clamp
+    def __post_init__(self) -> None:
+        """Initialize the EasingTracker's progression state."""
         self.current_step: int = 0
         self.progress_ratio: float = 0.0
         self.step_delta: float = 0.0
@@ -650,7 +644,7 @@ class EasingTracker:
             self.current_step += 1
             self.progress_ratio = self.current_step / self.total_steps
             self.eased_value = self.easing_function(self.progress_ratio)
-            if self._clamp:
+            if self.clamp:
                 self.eased_value = max(0.0, min(self.eased_value, 1.0))
             self.step_delta = self.eased_value - self._last_eased_value
             self._last_eased_value = self.eased_value

@@ -78,6 +78,19 @@ def test_make_easing_allows_vertical_overshoot() -> None:
     assert curve(0.5) > 1
 
 
+@pytest.mark.parametrize("clamp", [False, True])
+@pytest.mark.parametrize("raw_value", [-0.5, 1.5])
+def test_easing_tracker_clamp_matches_public_setting(*, clamp: bool, raw_value: float) -> None:
+    """The public clamp setting controls current and subsequent steps."""
+    tracker = easing.EasingTracker(lambda _: raw_value, total_steps=2, clamp=clamp)
+
+    assert tracker.clamp is clamp
+    assert tracker.step() == (min(1.0, max(0.0, raw_value)) if clamp else raw_value)
+
+    tracker.clamp = not clamp
+    assert tracker.step() == (raw_value if clamp else min(1.0, max(0.0, raw_value)))
+
+
 @pytest.mark.parametrize("easing_function", [easing.in_sine, easing.in_back, easing.linear, easing.out_bounce])
 @pytest.mark.parametrize("sequence_length", [1, 10, 100])
 def test_sequence_easer_includes_final_element(easing_function: easing.EasingFunction, sequence_length: int) -> None:
