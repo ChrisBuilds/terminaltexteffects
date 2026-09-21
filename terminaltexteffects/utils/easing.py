@@ -513,20 +513,21 @@ def in_out_bounce(progress_ratio: float) -> float:
 def make_easing(x1: float, y1: float, x2: float, y2: float) -> EasingFunction:
     """Create a cubic Bezier easing function using the provided control points.
 
-    The easing function maps an input progress ratio (0 to 1) to an output value (0 to 1)
-    according to a cubic Bezier curve defined by four points:
+    The easing function maps an input progress ratio (0 to 1) to an output value
+    according to a cubic Bezier curve defined by four points. Vertical control
+    points may produce values outside 0 to 1:
       - Start point: (0, 0)
       - First control point: (x1, y1)
       - Second control point: (x2, y2)
       - End point: (1, 1)
 
     Args:
-      x1 (float): Determines the horizontal position of the first control point. Smaller values make the
-          curve start off steeper, while larger values delay the initial acceleration.
+      x1 (float): Horizontal position of the first control point, between 0 and 1.
+          Smaller values make the curve start off steeper, while larger values delay the initial acceleration.
       y1 (float): Determines the vertical position of the first control point. Smaller values create a
           gentler ease-in effect; larger values increase the initial acceleration.
-      x2 (float): Determines the horizontal position of the second control point. Larger values extend
-          the period of change, affecting how late the acceleration or deceleration begins.
+      x2 (float): Horizontal position of the second control point, between 0 and 1.
+          Larger values extend the period of change, affecting how late the acceleration or deceleration begins.
       y2 (float): Determines the vertical position of the second control point. Larger values can create a
           more abrupt ease-out effect; smaller values result in a smoother finish.
 
@@ -536,7 +537,16 @@ def make_easing(x1: float, y1: float, x2: float, y2: float) -> EasingFunction:
         EasingFunction: A function that takes a progress_ratio (0 <= progress_ratio <= 1) and returns
         the eased value computed from the cubic Bezier curve.
 
+    Raises:
+        ValueError: If `x1` or `x2` is non-finite or outside 0 to 1.
+
     """
+    if not math.isfinite(x1) or not 0 <= x1 <= 1:
+        msg = "x1 must be finite and between 0 and 1"
+        raise ValueError(msg)
+    if not math.isfinite(x2) or not 0 <= x2 <= 1:
+        msg = "x2 must be finite and between 0 and 1"
+        raise ValueError(msg)
 
     # Compute Bezier curve x for a given parameter t.
     def sample_curve_x(t: float) -> float:
@@ -557,17 +567,26 @@ def make_easing(x1: float, y1: float, x2: float, y2: float) -> EasingFunction:
         if progress >= 1:
             return 1
 
-        # Find t such that sample_curve_x(t) is close to progress.
-        t = progress  # initial guess
-        for _ in range(20):
+        # Keep Newton's method inside a bracket so flat derivatives cannot
+        # send t outside the curve or leave an unconverged endpoint result.
+        lower, upper = 0.0, 1.0
+        t = progress
+        for _ in range(50):
             x_est = sample_curve_x(t)
-            dx = x_est - progress
-            if abs(dx) < 1e-5:
+            if x_est == progress:
                 break
-            d = sample_curve_derivative_x(t)
-            if abs(d) < 1e-6:
+            if x_est < progress:
+                lower = t
+            else:
+                upper = t
+            derivative = sample_curve_derivative_x(t)
+            candidate = t - (x_est - progress) / derivative if derivative > 0 else -1.0
+            if not lower < candidate < upper:
+                candidate = (lower + upper) / 2
+            if abs(candidate - t) <= 1e-12:
+                t = candidate
                 break
-            t -= dx / d
+            t = candidate
         return sample_curve_y(t)
 
     return functools.wraps(bezier_easing)(functools.lru_cache(maxsize=8192)(bezier_easing))

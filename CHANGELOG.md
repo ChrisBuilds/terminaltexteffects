@@ -167,6 +167,9 @@
 
 ---
 
+* Cubic Bezier easing now validates finite horizontal control points in `[0, 1]` and uses a bracketed Newton solver
+  with bisection fallback, so flat endpoint curves converge accurately without reversing or leaving the curve domain.
+  Vertical control points may still overshoot. Added reference-based endpoint, monotonicity, and validation tests.
 * `SequenceEaser` now includes the final sequence element when an easing function's endpoint rounds just below one,
   and repeated steps after completion do not report that element as newly added again. Added focused coverage for
   affected and ordinary easing functions, sequence lengths, and intentionally partial final values.
