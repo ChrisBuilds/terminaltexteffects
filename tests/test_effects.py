@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from itertools import count
 from pathlib import Path
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Literal
 
 import pytest
@@ -17,6 +19,15 @@ if TYPE_CHECKING:
 TEST_INPUT_DIR = Path(__file__).parent / "testinput"
 MIXED_COLOR_SEQUENCE_INPUT = TEST_INPUT_DIR / "mixed_color_sequence_test.txt"
 MIXED_LAYOUT_STYLE_SEQUENCE_INPUT = TEST_INPUT_DIR / "mixed_layout_style_sequence_test.txt"
+
+
+@pytest.fixture
+def advance_timed_effect_clocks(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Advance timed effects by a frame per clock read during smoke tests."""
+    matrix_ticks = count()
+    thunderstorm_ticks = count()
+    monkeypatch.setattr(effect_matrix, "time", SimpleNamespace(time=lambda: next(matrix_ticks) / 20))
+    monkeypatch.setattr(effect_thunderstorm, "time", SimpleNamespace(monotonic=lambda: next(thunderstorm_ticks) / 20))
 
 
 def _shorten_visual_effect(effect_instance: BaseEffect[Any]) -> None:
@@ -37,6 +48,7 @@ def _print_visual_test_parameters(test_name: str, **parameters: str) -> None:
 
 @pytest.mark.smoke
 @pytest.mark.effects
+@pytest.mark.usefixtures("advance_timed_effect_clocks")
 @pytest.mark.parametrize(
     "input_data",
     ["single_char", "single_column", "single_row", "medium", "tabs", "color_sequences"],
@@ -71,6 +83,7 @@ def test_effect_rejects_empty_input(effect: type[BaseEffect[Any]]) -> None:
 
 @pytest.mark.smoke
 @pytest.mark.effects
+@pytest.mark.usefixtures("advance_timed_effect_clocks")
 @pytest.mark.parametrize("input_data", ["medium", "color_sequences"], indirect=True)
 @pytest.mark.parametrize("existing_color_handling", ["always", "dynamic", "ignore"])
 def test_effect_color_sequence_handling(

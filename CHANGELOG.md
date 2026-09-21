@@ -27,6 +27,9 @@
 * Reduced the default test-suite runtime by excluding manual visual renders and selecting deterministic pairwise
   coverage for large effect-configuration matrices. Pass `--exhaustive-effect-args` to restore every Cartesian
   configuration combination, and select the `manual` or `visual` markers explicitly to run visual checks.
+* Matrix render tests and the generic Matrix and Thunderstorm smoke tests now advance effect clocks deterministically
+  while retaining their configured timed phases. This removes real-time waits from those tests; the default parallel
+  suite took 54 seconds locally, compared with 80 seconds before the change.
 
 #### Engine Features (0.16.0)
 
