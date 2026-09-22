@@ -31,6 +31,39 @@ class _TestEffect(BaseEffect[BaseConfig]):
         return _TestEffectIterator
 
 
+class _FalseyBaseConfig(BaseConfig):
+    """Valid effect configuration whose truth value is false."""
+
+    def __bool__(self) -> bool:
+        return False
+
+
+class _FalseyTerminalConfig(TerminalConfig):
+    """Valid terminal configuration whose truth value is false."""
+
+    def __bool__(self) -> bool:
+        return False
+
+
+def test_effect_preserves_explicit_falsey_configs() -> None:
+    """Explicit configurations are not replaced based on their truth value."""
+    effect_config = _FalseyBaseConfig()
+    terminal_config = _FalseyTerminalConfig._build_config()
+
+    effect = _TestEffect("A", effect_config=effect_config, terminal_config=terminal_config)
+
+    assert effect.effect_config is effect_config
+    assert effect.terminal_config is terminal_config
+
+
+def test_effect_builds_default_configs_when_none() -> None:
+    """Omitted configurations retain the documented default-building behavior."""
+    effect = _TestEffect("A")
+
+    assert type(effect.effect_config) is BaseConfig
+    assert type(effect.terminal_config) is TerminalConfig
+
+
 @pytest.mark.parametrize(
     ("input_data", "canvas_width"),
     [

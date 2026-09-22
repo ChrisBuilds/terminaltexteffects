@@ -61,7 +61,7 @@ class BaseEffectIterator(ABC, Generic[T]):
         frame (str): Current frame of the effect.
 
     Methods:
-        update: Run the tick method for all active characters and remove inactive characters from the active list.
+        update: Run the tick method for all active characters and remove inactive characters from the active set.
         __iter__: Return the iterator object.
         __next__: Return the next frame of the effect.
 
@@ -129,9 +129,6 @@ class BaseEffectIterator(ABC, Generic[T]):
         Perform any necessary updates to the effect to progress
         the effect logic and return the next frame.
 
-        Raises:
-            NotImplementedError: This method must be implemented by the subclass.
-
         Returns:
             str: Next frame of the effect.
 
@@ -153,12 +150,12 @@ class BaseEffect(ABC, Generic[T]):
     @property
     @abstractmethod
     def _config_cls(self) -> type[T]:
-        """Effect configuration class as a subclass of ArgsDataClass."""
+        """`BaseConfig` subclass for this effect."""
 
     @property
     @abstractmethod
     def _iterator_cls(self) -> type[BaseEffectIterator]:
-        """Effect iterator class as a subclass of BaseEffectIterator."""
+        """`BaseEffectIterator` subclass for this effect."""
 
     def __init__(
         self,
@@ -179,8 +176,10 @@ class BaseEffect(ABC, Generic[T]):
 
         """
         self.input_data = input_data
-        self.effect_config: T = effect_config or self._config_cls._build_config()
-        self.terminal_config: TerminalConfig = terminal_config or TerminalConfig._build_config()
+        self.effect_config: T = effect_config if effect_config is not None else self._config_cls._build_config()
+        self.terminal_config: TerminalConfig = (
+            terminal_config if terminal_config is not None else TerminalConfig._build_config()
+        )
         self._terminal_output_contexts: list[_TerminalOutputContext] = []
         self._pending_terminal_ref: ReferenceType[Terminal] | None = None
 

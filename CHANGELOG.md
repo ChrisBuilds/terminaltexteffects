@@ -63,6 +63,7 @@
 
 ---
 
+* Base effect extension docstrings now reference the current configuration and active-set APIs.
 * Easing documentation now describes progress input ranges, intentional back/elastic and custom Bezier overshoot,
   horizontal control-point limits, and the different clamping behavior of `EasingTracker` and `SequenceEaser`.
 * Custom Bezier easing no longer retains every generated curve in a global 8,192-entry factory cache. Each returned
@@ -171,6 +172,8 @@
 
 ---
 
+* `BaseEffect` now preserves explicitly supplied effect and terminal configuration objects whose truth value is false;
+  only `None` requests a default configuration.
 * `BaseConfig` now validates declared `ArgSpec` defaults, rejects argument-specification objects used as runtime
   values, preserves explicitly parsed canonical values that compare equal to differently typed defaults, and applies
   ordinary dataclass defaults and factories when building from partial namespaces.
