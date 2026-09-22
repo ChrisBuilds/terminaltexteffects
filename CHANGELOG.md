@@ -65,6 +65,8 @@
 
 * Easing documentation now describes progress input ranges, intentional back/elastic and custom Bezier overshoot,
   horizontal control-point limits, and the different clamping behavior of `EasingTracker` and `SequenceEaser`.
+* Custom Bezier easing no longer retains every generated curve in a global 8,192-entry factory cache. Each returned
+  curve still caches repeated progress values, while one-off and randomized curves can be reclaimed normally.
 * Updated the `argutils` documentation example to use the current `BaseConfig` and `ArgSpec` API, with runnable direct
   construction and CLI parsing examples.
 * `Terminal` now owns an immutable construction-time snapshot of `TerminalConfig`. Mutating the caller's configuration

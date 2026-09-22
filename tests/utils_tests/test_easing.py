@@ -78,6 +78,15 @@ def test_make_easing_allows_vertical_overshoot() -> None:
     assert curve(0.5) > 1
 
 
+def test_make_easing_caches_evaluated_progress() -> None:
+    """A returned curve reuses results for repeated progress values."""
+    curve = easing.make_easing(0.25, 0.1, 0.75, 0.9)
+
+    expected = curve(0.5)
+    assert curve(0.5) == expected
+    assert curve.cache_info().hits == 1  # type: ignore[attr-defined]
+
+
 @pytest.mark.parametrize("clamp", [False, True])
 @pytest.mark.parametrize("raw_value", [-0.5, 1.5])
 def test_easing_tracker_clamp_matches_public_setting(*, clamp: bool, raw_value: float) -> None:

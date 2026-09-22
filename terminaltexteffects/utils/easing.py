@@ -596,9 +596,6 @@ def make_easing(x1: float, y1: float, x2: float, y2: float) -> EasingFunction:
     return functools.wraps(bezier_easing)(functools.lru_cache(maxsize=8192)(bezier_easing))
 
 
-make_easing = functools.wraps(make_easing)(functools.lru_cache(maxsize=8192)(make_easing))
-
-
 @dataclass
 class EasingTracker:
     """Describe the progression of items as an easing function is applied over a sequence.
