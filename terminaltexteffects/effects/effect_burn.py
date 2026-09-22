@@ -25,6 +25,9 @@ from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import ColorPair
 from terminaltexteffects.utils.spanningtree.algo.primssimple import PrimsSimple
 
+_SMOKE_PARTICLE_POOL_SIZE = 2000
+_SMOKE_PARTICLE_SYMBOLS = (".", ",", "'", "`", "#", "*")
+
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
     """Get the command, effect class, and configuration class for the effect.
@@ -128,6 +131,7 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.algo = PrimsSimple(self.terminal, limit_to_text_boundary=True)
+        self._smoke_particle_symbols: tuple[str, ...]
         self.smoke_particles = self._make_smoke_pool()
         self.build()
 
@@ -141,6 +145,12 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
         )
 
     def _make_smoke_pool(self) -> ParticlePool:
+        # Preserve the eager pool's shared RNG sequence and LIFO symbol order
+        # without constructing unused particles or their animation scenes.
+        self._smoke_particle_symbols = tuple(
+            random.choice(_SMOKE_PARTICLE_SYMBOLS) for _ in range(_SMOKE_PARTICLE_POOL_SIZE)
+        )
+
         def initialize_smoke(new_char: EffectCharacter) -> None:
             smoke_scn = new_char.animation.new_scene(scene_id="smoke")
             for color in Gradient(Color("#504F4F"), Color("#C7C7C7"), steps=9):
@@ -149,14 +159,16 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
                     10,
                     colors=ColorPair(fg=color),
                 )
-            new_char.layer = 2
+            # Reverse layer order preserves the eager pool's LIFO painter order
+            # as lazily created characters receive IDs in emission order.
+            new_char.layer = _SMOKE_PARTICLE_POOL_SIZE + 2 - len(self.smoke_particles.particles)
 
         return ParticlePool(
             self.terminal,
             self.active_characters,
-            (".", ",", "'", "`", "#", "*"),
-            initial_count=2000,
-            max_size=2000,
+            _SMOKE_PARTICLE_SYMBOLS,
+            initial_count=0,
+            max_size=_SMOKE_PARTICLE_POOL_SIZE,
             initializer=initialize_smoke,
         )
 
@@ -188,9 +200,14 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             next_particle.animation.activate_scene(smoke_scn)
             self.smoke_particles.reclaim_on_event(next_particle, caller=next_particle.animation.query_scene("smoke"))
 
+        particle_symbol = None
+        if not self.smoke_particles.available and len(self.smoke_particles.particles) < _SMOKE_PARTICLE_POOL_SIZE:
+            particle_symbol = self._smoke_particle_symbols[-len(self.smoke_particles.particles) - 1]
+
         self.smoke_particles.emit(
             origin,
             on_emit_smoke,
+            symbol=particle_symbol,
             reset=ParticleReset(clear_paths=True, deactivate_path=True, deactivate_scene=True),
         )
 

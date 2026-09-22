@@ -179,6 +179,7 @@
 * Smoke's breadth-first fill traversal now uses an efficient queue and constant-time discovery tracking, reducing
   traversal overhead on wide or densely linked character graphs.
 * Burn smoke now uses `ParticlePool` for pooled helper characters and event-based reclaim behavior.
+* Burn now creates its capped smoke-particle pool on demand instead of eagerly constructing all 2,000 particles.
 * LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 
 ### Bug Fixes (0.16.0)
