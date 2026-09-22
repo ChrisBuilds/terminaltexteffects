@@ -63,6 +63,8 @@
 
 ---
 
+* Spanning-tree generator construction now preserves lazy character-graph initialization. Link-only breadth-first
+  traversal no longer materializes every fill character and cardinal-neighbor mapping on the canvas.
 * Base effect extension docstrings now reference the current configuration and active-set APIs.
 * Easing documentation now describes progress input ranges, intentional back/elastic and custom Bezier overshoot,
   horizontal control-point limits, and the different clamping behavior of `EasingTracker` and `SequenceEaser`.

@@ -22,8 +22,6 @@ class SpanningTreeGenerator(ABC):
 
         """
         self.terminal = terminal
-        # Spanning-tree algorithms require the dense character graph; ordinary effects do not.
-        self.terminal.prepare_character_graph()
 
     def get_neighbors(
         self,

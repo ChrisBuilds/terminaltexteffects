@@ -46,6 +46,8 @@ def test_breadth_first_init_uses_explicit_starting_character() -> None:
     assert generator.explored_last_step == []
     assert generator.char_explore_order == []
     assert generator.complete is False
+    assert terminal._outer_fill_characters == []
+    assert terminal._character_neighbors_initialized is False
 
 
 def test_breadth_first_init_selects_random_starting_character_when_not_provided(

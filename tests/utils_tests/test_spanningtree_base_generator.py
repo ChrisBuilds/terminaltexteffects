@@ -68,6 +68,28 @@ def test_spanning_tree_generator_init_stores_terminal_reference() -> None:
     assert generator.terminal is terminal
 
 
+def test_spanning_tree_generator_init_preserves_lazy_character_graph() -> None:
+    """Verify construction does not materialize the terminal's dense character graph."""
+    terminal = make_terminal()
+
+    DummySpanningTreeGenerator(terminal)
+
+    assert terminal._outer_fill_characters == []
+    assert terminal._character_neighbors_initialized is False
+
+
+def test_get_neighbors_prepares_character_graph_on_demand() -> None:
+    """Verify neighbor access materializes the terminal's dense character graph when needed."""
+    terminal = make_terminal()
+    generator = DummySpanningTreeGenerator(terminal)
+    subject = get_char(terminal, 1, 2)
+
+    generator.get_neighbors(subject)
+
+    assert len(terminal._outer_fill_characters) == 5
+    assert terminal._character_neighbors_initialized is True
+
+
 def test_get_neighbors_ignores_none_entries_and_returns_unlinked_neighbors_by_default() -> None:
     """Verify neighbor lookup ignores ``None`` entries and returns unlinked neighbors by default."""
     terminal = make_terminal()
