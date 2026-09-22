@@ -74,8 +74,9 @@ def test_aldous_broder_init_selects_random_starting_character_when_not_provided(
     terminal = make_terminal()
     random_start = get_char(terminal, 2, 1)
 
-    def fake_random_coord() -> Coord:
+    def fake_random_coord(*, within_text_boundary: bool = False) -> Coord:
         """Return a deterministic coordinate for random start lookup."""
+        assert within_text_boundary is False
         return Coord(2, 1)
 
     monkeypatch.setattr(terminal.canvas, "random_coord", fake_random_coord)
@@ -93,8 +94,9 @@ def test_aldous_broder_init_raises_value_error_when_no_starting_character_is_fou
     """Verify initialization fails when a starting character cannot be resolved."""
     terminal = make_terminal()
 
-    def fake_random_coord() -> Coord:
+    def fake_random_coord(*, within_text_boundary: bool = False) -> Coord:
         """Return a coordinate that does not resolve to a terminal character."""
+        assert within_text_boundary is False
         return Coord(9, 9)
 
     def fake_get_character_by_input_coord(coord: Coord) -> None:
@@ -151,6 +153,7 @@ def test_aldous_broder_step_records_already_linked_neighbor_as_last_visited(
     linked_neighbor = get_char(terminal, 1, 2)
     linked_neighbor._link(get_char(terminal, 1, 1))
     generator = AldousBroder(terminal, starting_char=starting_char)
+    generator._unlinked_chars.remove(linked_neighbor)
 
     set_neighbors(starting_char, west=linked_neighbor)
 
@@ -170,6 +173,35 @@ def test_aldous_broder_step_records_already_linked_neighbor_as_last_visited(
     assert generator.char_last_linked is None
     assert generator.linked_char_last_visited is linked_neighbor
     assert generator.char_link_order == [starting_char]
+
+
+def test_aldous_broder_init_rejects_prelinked_starting_character() -> None:
+    """Verify generation rejects state left by an earlier tree-generation run."""
+    terminal = make_terminal()
+    starting_char = get_char(terminal, 2, 2)
+    starting_char._link(get_char(terminal, 1, 2))
+
+    with pytest.raises(ValueError, match="Cannot generate a spanning tree from pre-linked character"):
+        AldousBroder(terminal, starting_char=starting_char)
+
+
+def test_aldous_broder_step_rejects_prelinked_unvisited_neighbor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify the walk rejects a pre-linked character not visited by the current run."""
+    terminal = make_terminal()
+    starting_char = get_char(terminal, 2, 2)
+    prelinked_neighbor = get_char(terminal, 1, 2)
+    generator = AldousBroder(terminal, starting_char=starting_char)
+    prelinked_neighbor._link(get_char(terminal, 1, 1))
+    set_neighbors(starting_char, west=prelinked_neighbor)
+    monkeypatch.setattr(
+        "terminaltexteffects.utils.spanningtree.algo.aldousbroder.random.choice",
+        lambda neighbors: neighbors[0],
+    )
+
+    with pytest.raises(ValueError, match="Cannot generate a spanning tree from pre-linked character"):
+        generator.step()
 
 
 def test_aldous_broder_step_grows_link_order_across_multiple_walk_steps(
@@ -236,3 +268,71 @@ def test_aldous_broder_step_returns_immediately_when_all_characters_are_linked(
     assert generator._current_char is starting_char
     assert generator.char_last_linked is None
     assert generator.linked_char_last_visited is None
+
+
+def test_aldous_broder_limit_to_text_boundary_limits_random_start_and_tracked_characters(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify boundary-limited construction selects and tracks only text-region characters."""
+    terminal = make_terminal()
+
+    def fake_random_coord(*, within_text_boundary: bool = False) -> Coord:
+        """Return a deterministic coordinate and verify boundary forwarding."""
+        assert within_text_boundary is True
+        return Coord(2, 2)
+
+    monkeypatch.setattr(terminal.canvas, "random_coord", fake_random_coord)
+
+    generator = AldousBroder(terminal, limit_to_text_boundary=True)
+
+    assert generator.limit_to_text_boundary is True
+    assert len(generator._unlinked_chars) == 3
+    assert all(terminal.canvas.coord_is_in_text(char.input_coord) for char in generator._unlinked_chars)
+
+
+def test_aldous_broder_limit_to_text_boundary_blocks_outer_fill_neighbors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify a boundary-limited walk cannot select an outer-fill neighbor."""
+    terminal = make_terminal()
+    starting_char = get_char(terminal, 2, 2)
+    in_text_neighbor = get_char(terminal, 1, 2)
+    outer_fill_neighbor = get_char(terminal, 3, 2)
+    generator = AldousBroder(terminal, starting_char=starting_char, limit_to_text_boundary=True)
+    set_neighbors(starting_char, west=in_text_neighbor, east=outer_fill_neighbor)
+
+    def fake_choice(neighbors: list[EffectCharacter]) -> EffectCharacter:
+        """Select the sole neighbor remaining after boundary filtering."""
+        assert neighbors == [in_text_neighbor]
+        return neighbors[0]
+
+    monkeypatch.setattr(
+        "terminaltexteffects.utils.spanningtree.algo.aldousbroder.random.choice",
+        fake_choice,
+    )
+
+    generator.step()
+
+    assert generator.char_last_linked is in_text_neighbor
+    assert outer_fill_neighbor not in generator._unlinked_chars
+
+
+def test_aldous_broder_limit_to_text_boundary_rejects_explicit_outer_fill_start() -> None:
+    """Verify an explicit start must belong to the selected text-region graph."""
+    terminal = make_terminal()
+    outer_fill_char = get_char(terminal, 3, 2)
+
+    with pytest.raises(ValueError, match="Starting character must be within the selected spanning-tree boundary"):
+        AldousBroder(terminal, starting_char=outer_fill_char, limit_to_text_boundary=True)
+
+
+def test_aldous_broder_limit_to_text_boundary_rejects_empty_text() -> None:
+    """Verify random selection reports an empty text boundary clearly."""
+    config = TerminalConfig._build_config()
+    config.ignore_terminal_dimensions = True
+    config.canvas_width = 3
+    config.canvas_height = 3
+    terminal = Terminal(input_data="", config=config)
+
+    with pytest.raises(ValueError, match="Cannot select a random position from an empty text boundary"):
+        AldousBroder(terminal, limit_to_text_boundary=True)

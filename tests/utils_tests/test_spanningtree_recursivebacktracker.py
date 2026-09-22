@@ -66,6 +66,7 @@ def test_recursive_backtracker_init_uses_explicit_starting_character() -> None:
     assert generator.stack == [starting_char]
     assert generator.stack_last_popped is None
     assert generator.complete is False
+    assert generator._visited_chars == {starting_char}
 
 
 def test_recursive_backtracker_init_selects_random_starting_character_when_not_provided(
@@ -109,6 +110,16 @@ def test_recursive_backtracker_init_raises_value_error_when_no_starting_characte
 
     with pytest.raises(ValueError, match=r"Unable to find a starting character\."):
         RecursiveBacktracker(terminal)
+
+
+def test_recursive_backtracker_init_rejects_prelinked_starting_character() -> None:
+    """Verify generation rejects state left by an earlier tree-generation run."""
+    terminal = make_terminal()
+    starting_char = get_char(terminal, 2, 2)
+    starting_char._link(get_char(terminal, 1, 2))
+
+    with pytest.raises(ValueError, match="Cannot generate a spanning tree from pre-linked character"):
+        RecursiveBacktracker(terminal, starting_char=starting_char)
 
 
 def test_recursive_backtracker_step_links_an_unvisited_neighbor(
@@ -155,6 +166,7 @@ def test_recursive_backtracker_step_backtracks_when_current_character_has_no_unv
     generator = RecursiveBacktracker(terminal, starting_char=root_char)
     generator.stack.append(current_char)
     generator._current_char = current_char
+    generator._visited_chars.update((current_char, linked_neighbor))
 
     set_neighbors(current_char, south=linked_neighbor)
 
@@ -165,6 +177,19 @@ def test_recursive_backtracker_step_backtracks_when_current_character_has_no_unv
     assert generator.stack == [root_char]
     assert generator.stack_last_popped is current_char
     assert generator.complete is False
+
+
+def test_recursive_backtracker_step_rejects_prelinked_unvisited_neighbor() -> None:
+    """Verify traversal rejects a pre-linked character not visited by the current run."""
+    terminal = make_terminal()
+    starting_char = get_char(terminal, 2, 2)
+    prelinked_neighbor = get_char(terminal, 1, 2)
+    generator = RecursiveBacktracker(terminal, starting_char=starting_char)
+    prelinked_neighbor._link(get_char(terminal, 1, 1))
+    set_neighbors(starting_char, west=prelinked_neighbor)
+
+    with pytest.raises(ValueError, match="Cannot generate a spanning tree from pre-linked character"):
+        generator.step()
 
 
 def test_recursive_backtracker_step_marks_complete_when_stack_is_empty() -> None:

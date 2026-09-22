@@ -67,6 +67,7 @@ def test_prims_simple_init_uses_explicit_starting_character() -> None:
     assert generator.edge_last_added is starting_char
     assert generator.edge_last_popped is None
     assert generator.complete is False
+    assert generator._visited_chars == {starting_char}
 
 
 def test_prims_simple_init_selects_random_starting_character_when_not_provided(
@@ -110,6 +111,16 @@ def test_prims_simple_init_raises_value_error_when_no_starting_character_is_foun
 
     with pytest.raises(ValueError, match=r"Unable to find a starting character\."):
         PrimsSimple(terminal)
+
+
+def test_prims_simple_init_rejects_prelinked_starting_character() -> None:
+    """Verify generation rejects state left by an earlier tree-generation run."""
+    terminal = make_terminal()
+    starting_char = get_char(terminal, 2, 2)
+    starting_char._link(get_char(terminal, 1, 2))
+
+    with pytest.raises(ValueError, match="Cannot generate a spanning tree from pre-linked character"):
+        PrimsSimple(terminal, starting_char=starting_char)
 
 
 def test_prims_simple_step_links_neighbor_and_updates_edge_bookkeeping(
@@ -158,6 +169,7 @@ def test_prims_simple_step_leaves_link_state_unchanged_when_popped_edge_has_no_u
     linked_neighbor = get_char(terminal, 1, 2)
     linked_neighbor._link(get_char(terminal, 1, 1))
     generator = PrimsSimple(terminal, starting_char=starting_char)
+    generator._visited_chars.add(linked_neighbor)
 
     set_neighbors(starting_char, west=linked_neighbor)
 
@@ -178,6 +190,19 @@ def test_prims_simple_step_leaves_link_state_unchanged_when_popped_edge_has_no_u
     assert generator.edge_last_added is starting_char
     assert generator.edge_chars == []
     assert generator.complete is False
+
+
+def test_prims_simple_step_rejects_prelinked_unvisited_neighbor() -> None:
+    """Verify an edge rejects a pre-linked character not visited by the current run."""
+    terminal = make_terminal()
+    starting_char = get_char(terminal, 2, 2)
+    prelinked_neighbor = get_char(terminal, 1, 2)
+    generator = PrimsSimple(terminal, starting_char=starting_char)
+    prelinked_neighbor._link(get_char(terminal, 1, 1))
+    set_neighbors(starting_char, west=prelinked_neighbor)
+
+    with pytest.raises(ValueError, match="Cannot generate a spanning tree from pre-linked character"):
+        generator.step()
 
 
 def test_prims_simple_step_marks_complete_when_no_edge_characters_remain() -> None:

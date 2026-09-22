@@ -78,7 +78,8 @@ class PrimsWeighted(SpanningTreeGenerator):
                 boundary, and random starting-character selection is limited to the text boundary.
 
         Raises:
-            ValueError: Unable to find a starting character.
+            ValueError: Unable to find a starting character, the starting character is pre-linked,
+                or an eligible neighbor contains pre-existing links.
 
         """
         super().__init__(terminal)
@@ -89,9 +90,13 @@ class PrimsWeighted(SpanningTreeGenerator):
         if starting_char is None:
             msg = "Unable to find a starting character."
             raise ValueError(msg)
+        self._require_unlinked(starting_char)
         self._char_weights: dict[EffectCharacter, int] = {}
         for char in self.terminal.get_characters(inner_fill_chars=True, outer_fill_chars=True):
-            self._char_weights[char] = random.randint(0, 99)
+            weight = random.randint(0, 99)
+            if not limit_to_text_boundary or self.terminal.canvas.coord_is_in_text(char.input_coord):
+                self._char_weights[char] = weight
+        self._char_weights.pop(starting_char, None)
         self._current_char = starting_char
         self.char_last_linked: EffectCharacter | None = self._current_char
         self.char_link_order: list[EffectCharacter] = [self._current_char]
@@ -106,9 +111,19 @@ class PrimsWeighted(SpanningTreeGenerator):
         Args:
             char (EffectCharacter): Character for which weighted links are added.
 
+        Raises:
+            ValueError: An unvisited neighbor contains pre-existing links.
+
         """
         self.neighbors_last_added.clear()
-        for neighbor in self.get_neighbors(char, limit_to_text_boundary=self.limit_to_text_boundary):
+        for neighbor in self.get_neighbors(
+            char,
+            unlinked_only=False,
+            limit_to_text_boundary=self.limit_to_text_boundary,
+        ):
+            if neighbor not in self._char_weights:
+                continue
+            self._require_unlinked(neighbor)
             self.neighbors_last_added.append(neighbor)
             self._pending_weighted_links[self._char_weights[neighbor]].append(
                 WeightedLink(char, neighbor, self._char_weights[neighbor]),
@@ -130,8 +145,10 @@ class PrimsWeighted(SpanningTreeGenerator):
             link = links_at_weight.pop(random.randrange(len(links_at_weight)))
             if not links_at_weight:
                 self._pending_weighted_links.pop(lowest_weight)
-            if not link.char_b.links:
-                return link
+            if link.char_b not in self._char_weights:
+                continue
+            self._require_unlinked(link.char_b)
+            return link
         return None
 
     def step(self) -> None:
@@ -158,6 +175,7 @@ class PrimsWeighted(SpanningTreeGenerator):
                 self.complete = True
                 return
             next_link.char_a._link(next_link.char_b)
+            self._char_weights.pop(next_link.char_b)
             self.char_last_linked = next_link.char_b
             self.char_link_order.append(next_link.char_b)
             self.add_weighted_links(next_link.char_b)

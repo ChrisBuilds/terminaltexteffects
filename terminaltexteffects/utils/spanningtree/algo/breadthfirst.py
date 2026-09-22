@@ -7,7 +7,6 @@ instead of generating a new spanning tree.
 
 from __future__ import annotations
 
-from collections import deque
 from typing import TYPE_CHECKING
 
 from terminaltexteffects.utils.spanningtree.base_generator import SpanningTreeGenerator
@@ -85,15 +84,12 @@ class BreadthFirst(SpanningTreeGenerator):
         if not self._frontier:
             self.complete = True
             return
-        frontier = deque(self._frontier)
-        discovered = set(self._explored)
+        frontier = self._frontier
         new_edges: list[EffectCharacter] = []
-        while frontier:
-            position = frontier.popleft()
+        for position in frontier:
             for character in position.links:
-                if character in discovered:
+                if character in self._explored:
                     continue
-                discovered.add(character)
                 self._explored[character] = position
                 self.explored_last_step.append(character)
                 self.char_explore_order.append(character)

@@ -61,7 +61,7 @@ class PrimsSimple(SpanningTreeGenerator):
                 boundary.
 
         Raises:
-            ValueError: Unable to find a starting character.
+            ValueError: Unable to find a starting character or the starting character is pre-linked.
 
         """
         super().__init__(terminal)
@@ -71,8 +71,10 @@ class PrimsSimple(SpanningTreeGenerator):
         if starting_char is None:
             msg = "Unable to find a starting character."
             raise ValueError(msg)
+        self._require_unlinked(starting_char)
         self.limit_to_text_boundary = limit_to_text_boundary
         self._current_char = starting_char
+        self._visited_chars = {starting_char}
         self.char_last_linked: EffectCharacter | None = self._current_char
         self.char_link_order: list[EffectCharacter] = [self._current_char]
         self.edge_chars = [self._current_char]
@@ -95,24 +97,30 @@ class PrimsSimple(SpanningTreeGenerator):
             links nothing, the generator ends that call with an empty edge list
             and `complete` still set to `False`.
 
+        Raises:
+            ValueError: An unvisited neighbor contains pre-existing links.
+
         """
         if self.edge_chars:
             self._current_char = self.edge_chars.pop(random.randrange(len(self.edge_chars)))
             self.edge_last_popped = self._current_char
-            unlinked_neighbors = self.get_neighbors(
+            unlinked_neighbors = self._get_unvisited_neighbors(
                 self._current_char,
+                self._visited_chars,
                 limit_to_text_boundary=self.limit_to_text_boundary,
             )
 
             if unlinked_neighbors:
                 next_char = unlinked_neighbors.pop(random.randrange(len(unlinked_neighbors)))
                 self._current_char._link(next_char)
+                self._visited_chars.add(next_char)
                 self.char_link_order.append(next_char)
                 self.char_last_linked = next_char
                 if unlinked_neighbors:
                     self.edge_chars.append(self._current_char)
-                unlinked_neighbors = self.get_neighbors(
+                unlinked_neighbors = self._get_unvisited_neighbors(
                     next_char,
+                    self._visited_chars,
                     limit_to_text_boundary=self.limit_to_text_boundary,
                 )
                 if unlinked_neighbors:

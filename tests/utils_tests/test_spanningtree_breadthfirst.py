@@ -11,6 +11,8 @@ from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.spanningtree.algo.breadthfirst import BreadthFirst
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from terminaltexteffects.engine.base_character import EffectCharacter
 
 pytestmark = [pytest.mark.utils, pytest.mark.smoke]
@@ -130,3 +132,26 @@ def test_breadth_first_step_marks_complete_when_frontier_is_empty() -> None:
 
     assert generator.complete is True
     assert generator.explored_last_step == []
+
+
+def test_breadth_first_step_does_not_iterate_over_all_explored_characters() -> None:
+    """Verify advancing a layer does not copy the complete explored collection."""
+
+    class MembershipOnlyDict(dict["EffectCharacter", "EffectCharacter"]):
+        """Mapping that permits membership and writes but rejects full iteration."""
+
+        def __iter__(self) -> Iterator[EffectCharacter]:
+            """Fail if traversal attempts to copy every explored key."""
+            msg = "BreadthFirst.step() must not iterate over all explored characters"
+            raise AssertionError(msg)
+
+    terminal = make_terminal()
+    starting_char = get_char(terminal, 2, 2)
+    neighbor = get_char(terminal, 1, 2)
+    starting_char._link(neighbor)
+    generator = BreadthFirst(terminal, starting_char=starting_char)
+    generator._explored = MembershipOnlyDict(generator._explored)
+
+    generator.step()
+
+    assert generator.explored_last_step == [neighbor]

@@ -53,6 +53,38 @@ class SpanningTreeGenerator(ABC):
             neighbors = [neighbor for neighbor in neighbors if not neighbor.links]
         return neighbors
 
+    @staticmethod
+    def _require_unlinked(character: EffectCharacter) -> None:
+        """Reject character state left by an earlier tree-generation run."""
+        if character.links:
+            msg = f"Cannot generate a spanning tree from pre-linked character {character!r}."
+            raise ValueError(msg)
+
+    def _get_unvisited_neighbors(
+        self,
+        character: EffectCharacter,
+        visited_chars: set[EffectCharacter],
+        *,
+        limit_to_text_boundary: bool = False,
+    ) -> list[EffectCharacter]:
+        """Return eligible neighbors using generator-owned visitation state.
+
+        Raises:
+            ValueError: An unvisited neighbor contains links from an earlier tree-generation run.
+
+        """
+        unvisited_neighbors: list[EffectCharacter] = []
+        for neighbor in self.get_neighbors(
+            character,
+            unlinked_only=False,
+            limit_to_text_boundary=limit_to_text_boundary,
+        ):
+            if neighbor in visited_chars:
+                continue
+            self._require_unlinked(neighbor)
+            unvisited_neighbors.append(neighbor)
+        return unvisited_neighbors
+
     @abstractmethod
     def step(self) -> None:
         """Progress the algorithm by one step."""

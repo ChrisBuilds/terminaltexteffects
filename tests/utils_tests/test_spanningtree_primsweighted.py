@@ -88,6 +88,7 @@ def test_prims_weighted_init_uses_explicit_starting_character() -> None:
     assert generator.neighbors_last_added
     assert generator.complete is False
     assert generator._pending_weighted_links
+    assert starting_char not in generator._char_weights
 
 
 def test_prims_weighted_init_selects_random_starting_character_when_not_provided(
@@ -141,6 +142,16 @@ def test_prims_weighted_init_raises_value_error_when_no_starting_character_is_fo
         PrimsWeighted(terminal)
 
 
+def test_prims_weighted_init_rejects_prelinked_starting_character() -> None:
+    """Verify generation rejects state left by an earlier tree-generation run."""
+    terminal = make_terminal()
+    starting_char = get_char(terminal, 2, 2)
+    starting_char._link(get_char(terminal, 1, 2))
+
+    with pytest.raises(ValueError, match="Cannot generate a spanning tree from pre-linked character"):
+        make_generator(terminal, starting_char)
+
+
 def test_add_weighted_links_tracks_neighbors_and_buckets_links_by_weight() -> None:
     """Verify weighted-link creation records neighbors and stores links by the target weight."""
     terminal = make_terminal()
@@ -171,8 +182,9 @@ def test_get_lowest_weight_link_skips_stale_links_and_returns_next_lowest_valid_
     starting_char = get_char(terminal, 2, 2)
     stale_target = get_char(terminal, 1, 2)
     fresh_target = get_char(terminal, 2, 1)
-    stale_target._link(get_char(terminal, 1, 1))
     generator = make_generator(terminal, starting_char)
+    stale_target._link(get_char(terminal, 1, 1))
+    generator._char_weights.pop(stale_target)
     generator._pending_weighted_links = defaultdict(
         list,
         {
@@ -195,6 +207,22 @@ def test_get_lowest_weight_link_skips_stale_links_and_returns_next_lowest_valid_
 
     assert link == WeightedLink(starting_char, fresh_target, 2)
     assert generator._pending_weighted_links == {}
+
+
+def test_get_lowest_weight_link_rejects_prelinked_unvisited_target() -> None:
+    """Verify pending links reject pre-linked targets not visited by the current run."""
+    terminal = make_terminal()
+    starting_char = get_char(terminal, 2, 2)
+    prelinked_target = get_char(terminal, 1, 2)
+    generator = make_generator(terminal, starting_char)
+    prelinked_target._link(get_char(terminal, 1, 1))
+    generator._pending_weighted_links = defaultdict(
+        list,
+        {1: [WeightedLink(starting_char, prelinked_target, 1)]},
+    )
+
+    with pytest.raises(ValueError, match="Cannot generate a spanning tree from pre-linked character"):
+        generator.get_lowest_weight_link()
 
 
 def test_prims_weighted_step_links_lowest_weight_neighbor_and_adds_new_candidates(
@@ -246,8 +274,9 @@ def test_prims_weighted_step_marks_complete_when_only_stale_pending_links_remain
     terminal = make_terminal()
     starting_char = get_char(terminal, 2, 2)
     stale_target = get_char(terminal, 1, 2)
-    stale_target._link(get_char(terminal, 1, 1))
     generator = make_generator(terminal, starting_char)
+    stale_target._link(get_char(terminal, 1, 1))
+    generator._char_weights.pop(stale_target)
     generator._pending_weighted_links = defaultdict(
         list,
         {
@@ -305,3 +334,16 @@ def test_prims_weighted_limit_to_text_boundary_blocks_outer_fill_neighbors() -> 
 
     assert generator.neighbors_last_added == [in_text_neighbor]
     assert list(generator._pending_weighted_links) == [2]
+
+
+def test_prims_weighted_limit_to_text_boundary_assigns_weights_only_to_eligible_characters() -> None:
+    """Verify boundary-limited construction omits outer-fill characters from the weight table."""
+    terminal = make_terminal()
+    starting_char = get_char(terminal, 2, 2)
+    outer_fill_char = get_char(terminal, 3, 2)
+
+    generator = make_generator(terminal, starting_char, limit_to_text_boundary=True)
+    eligible_chars = set(terminal.get_characters(inner_fill_chars=True, outer_fill_chars=False))
+
+    assert set(generator._char_weights) == eligible_chars - {starting_char}
+    assert outer_fill_char not in generator._char_weights

@@ -63,6 +63,13 @@
 
 ---
 
+* Spanning-tree generators now track their own visitation state and reject pre-linked character graphs instead of
+  silently producing partial traversal orders or leaving Aldous-Broder unable to complete.
+* Smoke's breadth-first traversal no longer copies its complete explored set for every layer, preserving linear work
+  on deep linked trees.
+* Boundary-limited weighted Prim generation now retains weights only for eligible text-region characters while
+  preserving the existing seeded random sequence.
+* Aldous-Broder now supports limiting random starts, traversal, and completion tracking to the text boundary.
 * Spanning-tree generator construction now preserves lazy character-graph initialization. Link-only breadth-first
   traversal no longer materializes every fill character and cardinal-neighbor mapping on the canvas.
 * Base effect extension docstrings now reference the current configuration and active-set APIs.

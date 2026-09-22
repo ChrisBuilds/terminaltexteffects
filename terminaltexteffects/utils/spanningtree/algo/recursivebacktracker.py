@@ -61,7 +61,7 @@ class RecursiveBacktracker(SpanningTreeGenerator):
                 boundary.
 
         Raises:
-            ValueError: Unable to find a starting character.
+            ValueError: Unable to find a starting character or the starting character is pre-linked.
 
         """
         super().__init__(terminal)
@@ -72,7 +72,9 @@ class RecursiveBacktracker(SpanningTreeGenerator):
         if starting_char is None:
             msg = "Unable to find a starting character."
             raise ValueError(msg)
+        self._require_unlinked(starting_char)
         self._current_char = starting_char
+        self._visited_chars = {starting_char}
         self.char_last_linked: EffectCharacter | None = self._current_char
         self.char_link_order: list[EffectCharacter] = [self._current_char]
         self.stack: list[EffectCharacter] = [self._current_char]
@@ -92,17 +94,22 @@ class RecursiveBacktracker(SpanningTreeGenerator):
             during this call, the generator ends the step with an empty
             stack and `complete` still set to `False`.
 
+        Raises:
+            ValueError: An unvisited neighbor contains pre-existing links.
+
         """
         self.char_last_linked = None
         self.stack_last_popped = None
         if self.stack:
-            unvisited_neighbors = self.get_neighbors(
+            unvisited_neighbors = self._get_unvisited_neighbors(
                 self._current_char,
+                self._visited_chars,
                 limit_to_text_boundary=self.limit_to_text_boundary,
             )
             if unvisited_neighbors:
                 next_char = random.choice(unvisited_neighbors)
                 self._current_char._link(next_char)
+                self._visited_chars.add(next_char)
                 self.char_link_order.append(next_char)
                 self.char_last_linked = next_char
                 self.stack.append(next_char)

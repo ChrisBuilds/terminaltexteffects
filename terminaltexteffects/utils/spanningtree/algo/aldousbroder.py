@@ -41,7 +41,13 @@ class AldousBroder(SpanningTreeGenerator):
 
     """
 
-    def __init__(self, terminal: Terminal, starting_char: EffectCharacter | None = None) -> None:
+    def __init__(
+        self,
+        terminal: Terminal,
+        starting_char: EffectCharacter | None = None,
+        *,
+        limit_to_text_boundary: bool = False,
+    ) -> None:
         """Initialize the algorithm.
 
         Args:
@@ -49,17 +55,33 @@ class AldousBroder(SpanningTreeGenerator):
             starting_char (EffectCharacter | None, optional): Starting character for the random
                 walk. When `None`, a character is selected by resolving a random canvas
                 coordinate to a terminal character.
+            limit_to_text_boundary (bool, optional): If True, the walk, tracked characters,
+                and random starting-character selection are limited to the text boundary.
 
         Raises:
-            ValueError: No starting character could be resolved.
+            ValueError: No starting character could be resolved, the explicit starting character
+                is outside the requested text boundary, or the starting character is pre-linked.
 
         """
         super().__init__(terminal)
-        starting_char = starting_char or terminal.get_character_by_input_coord(terminal.canvas.random_coord())
+        self.limit_to_text_boundary = limit_to_text_boundary
+        starting_char = starting_char or terminal.get_character_by_input_coord(
+            terminal.canvas.random_coord(within_text_boundary=limit_to_text_boundary),
+        )
         if starting_char is None:
             msg = "Unable to find a starting character."
             raise ValueError(msg)
-        self._unlinked_chars = set(self.terminal.get_characters(inner_fill_chars=True, outer_fill_chars=True))
+        eligible_chars = set(
+            self.terminal.get_characters(
+                inner_fill_chars=True,
+                outer_fill_chars=not limit_to_text_boundary,
+            ),
+        )
+        if starting_char not in eligible_chars:
+            msg = "Starting character must be within the selected spanning-tree boundary."
+            raise ValueError(msg)
+        self._require_unlinked(starting_char)
+        self._unlinked_chars = eligible_chars
         self._unlinked_chars.remove(starting_char)
         self._current_char = starting_char
         self.char_last_linked: EffectCharacter | None = self._current_char
@@ -80,13 +102,23 @@ class AldousBroder(SpanningTreeGenerator):
             `complete` to `True` and returns immediately without advancing
             the walk.
 
+        Raises:
+            ValueError: The walk reaches an unvisited character containing pre-existing links.
+
         """
         self.linked_char_last_visited = self.char_last_linked = None
         if not self._unlinked_chars:
             self.complete = True
             return
-        next_char = random.choice([n for n in self._current_char.neighbors.values() if n])
-        if not next_char.links:
+        next_char = random.choice(
+            self.get_neighbors(
+                self._current_char,
+                unlinked_only=False,
+                limit_to_text_boundary=self.limit_to_text_boundary,
+            ),
+        )
+        if next_char in self._unlinked_chars:
+            self._require_unlinked(next_char)
             self._current_char._link(next_char)
             self._unlinked_chars.remove(next_char)
             self.char_last_linked = next_char
