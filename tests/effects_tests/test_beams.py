@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import pytest
 
@@ -11,11 +11,10 @@ from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color
 
 if TYPE_CHECKING:
-    from terminaltexteffects import Color, Gradient
-    from terminaltexteffects.engine.terminal import TerminalConfig
+    from terminaltexteffects import Gradient
 
 
-def _make_terminal_config(existing_color_handling: str) -> TerminalConfig:
+def _make_terminal_config(existing_color_handling: Literal["always", "dynamic", "ignore"]) -> TerminalConfig:
     terminal_config = TerminalConfig._build_config()
     terminal_config.frame_rate = 0
     terminal_config.existing_color_handling = existing_color_handling
@@ -103,6 +102,7 @@ def test_beams_effect_args(
 
 
 def test_beams_dynamic_without_preexisting_colors_has_uncolored_final_frame() -> None:
+    """Dynamic mode should leave an uncolored input on the terminal default color."""
     effect = effect_beams.Beams("A")
     effect.terminal_config = _make_terminal_config("dynamic")
 
@@ -118,6 +118,7 @@ def test_beams_dynamic_without_preexisting_colors_has_uncolored_final_frame() ->
 
 
 def test_beams_dynamic_with_preexisting_fg_uses_input_fg_color() -> None:
+    """Dynamic mode should restore an input foreground color in the final scene."""
     effect = effect_beams.Beams("\x1b[38;5;196mA\x1b[0m")
     effect.terminal_config = _make_terminal_config("dynamic")
 
@@ -130,3 +131,17 @@ def test_beams_dynamic_with_preexisting_fg_uses_input_fg_color() -> None:
     assert final_frame.colors == effect_beams.tte.ColorPair(fg=Color(196))
     assert final_frame._fg_color_code == Color(196).rgb_color
     assert final_frame._bg_color_code is None
+
+
+def test_beams_dynamic_with_preexisting_fg_and_bg_uses_both_input_colors() -> None:
+    """Dynamic mode should restore both input color channels in the final scene."""
+    effect = effect_beams.Beams("\x1b[38;5;196;48;5;21mA\x1b[0m")
+    effect.terminal_config = _make_terminal_config("dynamic")
+
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    final_frame = character.animation.scenes["brighten"].frames[-1].character_visual
+
+    assert final_frame.colors == effect_beams.tte.ColorPair(fg=Color(196), bg=Color(21))
+    assert final_frame._fg_color_code == Color(196).rgb_color
+    assert final_frame._bg_color_code == Color(21).rgb_color

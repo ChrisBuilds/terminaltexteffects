@@ -172,6 +172,10 @@
 
 ---
 
+* Beams now releases its build-only final-color mapping after scene construction and consumes character, pending-group,
+  and final-wipe queues in constant time instead of repeatedly shifting lists from the front.
+* Beams configuration documentation now identifies beam-gradient step pairing, explains that beam speed ranges use
+  tenths of a character per frame, and accurately describes the scalar-or-tuple final-gradient step contract.
 * Smoke's breadth-first fill traversal now uses an efficient queue and constant-time discovery tracking, reducing
   traversal overhead on wide or densely linked character graphs.
 * Burn smoke now uses `ParticlePool` for pooled helper characters and event-based reclaim behavior.
@@ -181,6 +185,8 @@
 
 ---
 
+* Beams now emits a character as soon as a group accumulates one whole unit of progress instead of waiting for more
+  than one unit and releasing characters in unintended bursts.
 * `BaseEffect` now preserves explicitly supplied effect and terminal configuration objects whose truth value is false;
   only `None` requests a default configuration.
 * `BaseConfig` now validates declared `ArgSpec` defaults, rejects argument-specification objects used as runtime

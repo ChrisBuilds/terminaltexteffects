@@ -9,6 +9,7 @@ Classes:
 from __future__ import annotations
 
 import random
+from collections import deque
 from dataclasses import dataclass
 
 import terminaltexteffects as tte
@@ -44,18 +45,19 @@ class BeamsConfig(BaseConfig):
             Strings will be used in sequence to create an animation.
         beam_delay (int): Number of frames to wait before adding the next group of beams. Beams are added in groups
             of size random(1, 5). Valid values are n > 0.
-        beam_row_speed_range (tuple[int, int]): Speed range of the beam when moving along a row. Valid values are n > 0.
+        beam_row_speed_range (tuple[int, int]): Speed range of the beam when moving along a row, expressed in tenths
+            of a character per frame. Valid values are n > 0.
         beam_column_speed_range (tuple[int, int]): Speed range of the beam when moving along a column.
-            Valid values are n > 0.
+            Values are expressed in tenths of a character per frame. Valid values are n > 0.
         beam_gradient_stops (tuple[tte.Color, ...]): Tuple of colors for the beam, a gradient will be created between
             the colors.
         beam_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will
-            create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
+            create a smoother and longer gradient animation. Steps are paired with the colors in beam-gradient-stops.
             Valid values are n > 0.
         beam_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the gradient
             animation. Valid values are n > 0.
         final_gradient_stops (tuple[tte.Color, ...]): Tuple of colors for the wipe gradient.
-        final_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will
+        final_gradient_steps (tuple[int, ...] | int): Number of gradient steps to use. More steps will
             create a smoother and longer gradient animation. Steps are paired with the colors in final-gradient-stops.
             Valid values are n > 0.
         final_gradient_frames (int): Number of frames to display each gradient step. Increase to slow down the
@@ -133,18 +135,18 @@ class BeamsConfig(BaseConfig):
         type=argutils.PositiveIntRange.type_parser,
         default=(15, 60),
         metavar=argutils.PositiveIntRange.METAVAR,
-        help="Speed range of the beam when moving along a row.",
+        help="Speed range of the beam when moving along a row, in tenths of a character per frame.",
     )  # pyright: ignore[reportAssignmentType]
-    "tuple[int, int] : Speed range of the beam when moving along a row."
+    "tuple[int, int] : Row beam speed range, in tenths of a character per frame."
 
     beam_column_speed_range: tuple[int, int] = argutils.ArgSpec(
         name="--beam-column-speed-range",
         type=argutils.PositiveIntRange.type_parser,
         default=(9, 15),
         metavar=argutils.PositiveIntRange.METAVAR,
-        help="Speed range of the beam when moving along a column.",
+        help="Speed range of the beam when moving along a column, in tenths of a character per frame.",
     )  # pyright: ignore[reportAssignmentType]
-    "tuple[int, int] : Speed range of the beam when moving along a column."
+    "tuple[int, int] : Column beam speed range, in tenths of a character per frame."
 
     beam_gradient_stops: tuple[tte.Color, ...] = argutils.ArgSpec(
         name="--beam-gradient-stops",
@@ -165,15 +167,15 @@ class BeamsConfig(BaseConfig):
         default=(2, 6),
         metavar=argutils.PositiveInt.METAVAR,
         help=(
-            "Space separated, unquoted, numbers for the of gradient steps to use. "
+            "Space separated, unquoted, numbers for the gradient steps to use. "
             "More steps will create a smoother and longer gradient animation. "
-            "Steps are paired with the colors in final-gradient-stops."
+            "Steps are paired with the colors in beam-gradient-stops."
         ),
     )  # pyright: ignore[reportAssignmentType]
     (
         "tuple[int, ...]: Int or Tuple of ints for the number of gradient steps to use. "
         "More steps will create a smoother and longer gradient animation. "
-        "Steps are paired with the colors in final-gradient-stops."
+        "Steps are paired with the colors in beam-gradient-stops."
     )
 
     beam_gradient_frames: int = argutils.ArgSpec(
@@ -191,11 +193,11 @@ class BeamsConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[tte.Color, ...]: Tuple of colors for the wipe gradient."
 
-    final_gradient_steps: tuple[int, ...] = FinalGradientStepsArg(
+    final_gradient_steps: tuple[int, ...] | int = FinalGradientStepsArg(
         default=12,
     )  # pyright: ignore[reportAssignmentType]
     (
-        "tuple[int, ...]: Int or Tuple of ints for the number of gradient steps to use. "
+        "tuple[int, ...] | int: Int or Tuple of ints for the number of gradient steps to use. "
         "More steps will create a smoother and longer gradient animation. "
         "Steps are paired with the colors in final-gradient-stops."
     )
@@ -235,6 +237,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
         ) -> None:
             """Initialize the Group."""
             self.characters = characters
+            self._next_character_index = 0
             self.direction: str = direction
             self.terminal = terminal
             direction_speed_range = {
@@ -244,11 +247,11 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
             self.speed = random.randint(direction_speed_range[direction][0], direction_speed_range[direction][1]) * 0.1
             self.next_character_counter: float = 0
             if self.direction == "row":
-                self.characters.sort(key=lambda character: character.input_coord.column)
+                characters.sort(key=lambda character: character.input_coord.column)
             elif self.direction == "column":
-                self.characters.sort(key=lambda character: character.input_coord.row)
+                characters.sort(key=lambda character: character.input_coord.row)
             if random.choice([True, False]):
-                self.characters.reverse()
+                characters.reverse()
 
         def increment_next_character_counter(self) -> None:
             """Increment the counter for the next character."""
@@ -267,7 +270,8 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
 
             """
             self.next_character_counter -= 1
-            next_character = self.characters.pop(0)
+            next_character = self.characters[self._next_character_index]
+            self._next_character_index += 1
             if next_character.animation.active_scene:
                 next_character.animation.active_scene.reset_scene()
                 return_value = None
@@ -284,7 +288,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                 bool: True if the group is complete, False otherwise.
 
             """
-            return not self.characters
+            return self._next_character_index == len(self.characters)
 
     def __init__(self, effect: Beams) -> None:
         """Initialize the BeamsIterator.
@@ -294,13 +298,14 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
 
         """
         super().__init__(effect)
-        self.pending_groups: list[BeamsIterator.Group] = []
-        self.character_final_color_map: dict[tte.EffectCharacter, tte.ColorPair] = {}
+        self.pending_groups: deque[BeamsIterator.Group] = deque()
         self.active_groups: list[BeamsIterator.Group] = []
         self.delay = 0
         self.phase = "beams"
-        self.final_wipe_groups = self.terminal.get_characters_grouped(
-            argutils.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+        self.final_wipe_groups = deque(
+            self.terminal.get_characters_grouped(
+                argutils.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            ),
         )
         self.build()
 
@@ -314,19 +319,6 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
             self.terminal.canvas.text_right,
             self.config.final_gradient_direction,
         )
-        for character in self.terminal.get_characters(outer_fill_chars=True, inner_fill_chars=True):
-            if character.is_fill_character:
-                self.character_final_color_map[character] = tte.ColorPair(fg="#000000")
-                continue
-            if self.terminal.config.existing_color_handling == "dynamic":
-                fg_color = character.animation.input_fg_color
-                bg_color = character.animation.input_bg_color
-                self.character_final_color_map[character] = tte.ColorPair(fg=fg_color, bg=bg_color)
-            else:
-                self.character_final_color_map[character] = tte.ColorPair(
-                    fg=final_gradient_mapping[character.input_coord],
-                )
-
         beam_gradient = tte.Gradient(*self.config.beam_gradient_stops, steps=self.config.beam_gradient_steps)
         groups: list[BeamsIterator.Group] = []
         for row in self.terminal.get_characters_grouped(
@@ -356,8 +348,17 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                 fg_gradient=beam_gradient,
             )
             fg_fade_gradient = bg_fade_gradient = fg_brighten_gradient = bg_brighten_gradient = None
-            char_fg_color = self.character_final_color_map[character].fg
-            char_bg_color = self.character_final_color_map[character].bg
+            if character.is_fill_character:
+                final_colors = tte.ColorPair(fg="#000000")
+            elif self.terminal.config.existing_color_handling == "dynamic":
+                final_colors = tte.ColorPair(
+                    fg=character.animation.input_fg_color,
+                    bg=character.animation.input_bg_color,
+                )
+            else:
+                final_colors = tte.ColorPair(fg=final_gradient_mapping[character.input_coord])
+            char_fg_color = final_colors.fg
+            char_bg_color = final_colors.bg
             if char_fg_color:
                 faded_fg_color = character.animation.adjust_color_brightness(char_fg_color, 0.3)
                 fg_fade_gradient = tte.Gradient(char_fg_color, faded_fg_color, steps=10)
@@ -398,8 +399,8 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                     colors=tte.ColorPair(),
                 )
 
-        self.pending_groups = groups
-        random.shuffle(self.pending_groups)
+        random.shuffle(groups)
+        self.pending_groups.extend(groups)
 
     def __next__(self) -> str:
         """Return the next frame in the effect."""
@@ -409,18 +410,17 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                     if self.pending_groups:
                         for _ in range(random.randint(1, 5)):
                             if self.pending_groups:
-                                self.active_groups.append(self.pending_groups.pop(0))
+                                self.active_groups.append(self.pending_groups.popleft())
                     self.delay = self.config.beam_delay
                 else:
                     self.delay -= 1
                 for group in self.active_groups:
                     group.increment_next_character_counter()
-                    if int(group.next_character_counter) > 1:
-                        for _ in range(int(group.next_character_counter)):
-                            if not group.complete():
-                                next_char = group.get_next_character()
-                                if next_char:
-                                    self.active_characters.add(next_char)
+                    for _ in range(int(group.next_character_counter)):
+                        if not group.complete():
+                            next_char = group.get_next_character()
+                            if next_char:
+                                self.active_characters.add(next_char)
                 self.active_groups = [group for group in self.active_groups if not group.complete()]
                 if not self.pending_groups and not self.active_groups and not self.active_characters:
                     self.phase = "final_wipe"
@@ -429,7 +429,7 @@ class BeamsIterator(BaseEffectIterator[BeamsConfig]):
                     for _ in range(self.config.final_wipe_speed):
                         if not self.final_wipe_groups:
                             break
-                        next_group = self.final_wipe_groups.pop(0)
+                        next_group = self.final_wipe_groups.popleft()
                         for character in next_group:
                             character.animation.activate_scene("brighten")
                             self.terminal.set_character_visibility(character, is_visible=True)
