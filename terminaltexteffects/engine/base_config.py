@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import argparse
 import typing
-from dataclasses import dataclass, fields
+from dataclasses import MISSING, dataclass, fields
 
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.graphics import Color, Gradient
@@ -79,24 +79,34 @@ class BaseConfig:
     This class serves as a base for all effect configurations, providing a common
     interface for argument parser population and configuration building. Effect config
     classes are created via `_build_config`, which reads values from a parsed
-    `argparse.Namespace` and falls back to `argutils.ArgSpec` defaults for fields
-    defined with `ArgSpec` instances. Any config class intended to be used to populate
-    a subparser must define a `parser_spec` attribute with type `argutils.ParserSpec`.
+    `argparse.Namespace` and falls back to their declared dataclass defaults. Any config
+    class intended to be used to populate a subparser must define a `parser_spec`
+    attribute with type `argutils.ParserSpec`.
     """
 
     def __setattr__(self, name: str, value: typing.Any) -> None:
         """Normalize values assigned to `ArgSpec`-backed configuration fields."""
         field = getattr(type(self), "__dataclass_fields__", {}).get(name)
         spec = field.default if field is not None else None
-        if not isinstance(spec, argutils.ArgSpec) or isinstance(value, argutils.ArgSpec):
+        if not isinstance(spec, argutils.ArgSpec):
             object.__setattr__(self, name, value)
             return
+        if value is spec and name not in self.__dict__:
+            object.__setattr__(self, name, value)
+            return
+        if isinstance(value, argutils.ArgSpec):
+            msg = f"Invalid value for '{name}': an ArgSpec cannot be used as a configuration value."
+            raise ValueError(msg)  # noqa: TRY004
+        object.__setattr__(self, name, self._normalize_value(name, spec, value))
+
+    @staticmethod
+    def _normalize_value(name: str, spec: argutils.ArgSpec, value: typing.Any) -> typing.Any:
+        """Normalize one field value and convert parser errors to configuration errors."""
         try:
-            normalized = spec.normalize(value)
+            return spec.normalize(value)
         except (argparse.ArgumentTypeError, TypeError, ValueError) as error:
             msg = f"Invalid value for '{name}': {error}"
             raise ValueError(msg) from error
-        object.__setattr__(self, name, normalized)
 
     def __post_init__(self) -> None:
         """Replace unprovided `ArgSpec` field values with their defaults.
@@ -105,9 +115,11 @@ class BaseConfig:
         while preserving `ArgSpec` values on the class for parser generation.
         """
         for field in fields(self):
+            spec = field.default
             value = getattr(self, field.name)
-            if isinstance(value, argutils.ArgSpec):
-                object.__setattr__(self, field.name, value.default)
+            if isinstance(spec, argutils.ArgSpec) and value is spec:
+                self._normalize_value(field.name, spec, spec.default)
+                object.__setattr__(self, field.name, spec.default)
 
     @classmethod
     def _populate_parser(cls, parser: argparse.ArgumentParser | argparse._SubParsersAction) -> None:
@@ -153,7 +165,7 @@ class BaseConfig:
 
         Raises:
             AttributeError: If a required config field is missing from `parsed_args` and
-                does not define an `ArgSpec` default.
+                has no dataclass default or default factory.
 
         Returns:
             CONFIG: A populated config instance.
@@ -166,10 +178,14 @@ class BaseConfig:
                     continue
                 if hasattr(parsed_args, field.name):
                     value = getattr(parsed_args, field.name)
-                    if isinstance(field.default, argutils.ArgSpec) and value == field.default.default:
+                    if isinstance(field.default, argutils.ArgSpec) and value is field.default.default:
                         continue
                     config_args[field.name] = value
-                elif isinstance(field.default, argutils.ArgSpec):
+                elif (
+                    isinstance(field.default, argutils.ArgSpec)
+                    or field.default is not MISSING
+                    or field.default_factory is not MISSING
+                ):
                     continue
                 else:
                     msg = f"Missing required config field '{field.name}' for {cls.__name__} in parsed arguments."

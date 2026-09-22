@@ -171,6 +171,10 @@
 
 ---
 
+* `BaseConfig` now validates declared `ArgSpec` defaults, rejects argument-specification objects used as runtime
+  values, preserves explicitly parsed canonical values that compare equal to differently typed defaults, and applies
+  ordinary dataclass defaults and factories when building from partial namespaces.
+* Removed an unmatched code fence from the `ArgSpec` and `BaseConfig` documentation example.
 * `EasingTracker` and `SequenceEaser` now reject zero, negative, noninteger, and boolean `total_steps` at construction
   instead of silently starting complete or failing later. Added tests for invalid counts and a valid one-step ease.
 * `EasingTracker.clamp` is now a public dataclass field that reports the active setting and controls subsequent

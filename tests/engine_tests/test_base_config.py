@@ -5,7 +5,8 @@ from __future__ import annotations
 import argparse
 import importlib
 import pkgutil
-from dataclasses import dataclass
+from dataclasses import dataclass, field, fields
+from enum import IntEnum
 
 import pytest
 
@@ -35,7 +36,7 @@ class ExampleConfig(BaseConfig):
 
 @dataclass
 class ExampleStrictConfig(BaseConfig):
-    """Config model including a non-ArgSpec field for strict missing-field checks."""
+    """Config model including an ordinary dataclass default."""
 
     parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="strict",
@@ -45,6 +46,20 @@ class ExampleStrictConfig(BaseConfig):
     )
     alpha: int = argutils.ArgSpec(name="--alpha", default=10, type=int)  # pyright: ignore[reportAssignmentType]
     gamma: int = 42
+
+
+@dataclass
+class FactoryDefaultConfig(BaseConfig):
+    """Config model including a field with a default factory."""
+
+    labels: list[str] = field(default_factory=lambda: ["default"])
+
+
+@dataclass
+class RequiredConfig(BaseConfig):
+    """Config model including a required field."""
+
+    required: int
 
 
 @dataclass
@@ -84,6 +99,40 @@ class FormattedDefaultConfig(BaseConfig):
         type=str,
         help="Custom formatter test option.",
         default_formatter=lambda value: f"cli-{value}",
+    )
+
+
+class ParsedMode(IntEnum):
+    """Canonical values that intentionally compare equal to integer CLI defaults."""
+
+    ONE = 1
+
+
+def _parse_mode(value: str | int | ParsedMode) -> ParsedMode:
+    """Parse an integer spelling as a canonical mode."""
+    return ParsedMode(int(value))
+
+
+@dataclass
+class EqualDefaultConfig(BaseConfig):
+    """Config whose parsed value compares equal to its differently typed default."""
+
+    parser_spec: argutils.ParserSpec = ExampleConfig.parser_spec
+    mode: int | ParsedMode = argutils.ArgSpec(  # pyright: ignore[reportAssignmentType]
+        name="--mode",
+        default=1,
+        type=_parse_mode,
+    )
+
+
+@dataclass
+class InvalidDefaultConfig(BaseConfig):
+    """Config with a declared default that violates its choices."""
+
+    choice: str = argutils.ArgSpec(  # pyright: ignore[reportAssignmentType]
+        name="--choice",
+        default="invalid",
+        choices=["valid"],
     )
 
 
@@ -134,11 +183,25 @@ def test_build_config_ignores_parser_spec_attribute_on_namespace() -> None:
     assert config.beta == "y"
 
 
-def test_build_config_missing_non_argspec_field_raises_attribute_error() -> None:
-    """Raise a clear error when a non-ArgSpec field is absent in parsed args."""
+def test_build_config_partial_namespace_uses_ordinary_dataclass_default() -> None:
+    """Use an ordinary dataclass default when a partial namespace omits the field."""
     parsed_args: argparse.Namespace = argparse.Namespace(alpha=12)
-    with pytest.raises(AttributeError, match="Missing required config field 'gamma' for ExampleStrictConfig"):
-        ExampleStrictConfig._build_config(parsed_args)
+    assert ExampleStrictConfig._build_config(parsed_args).gamma == 42
+
+
+def test_build_config_partial_namespace_uses_default_factory() -> None:
+    """Use a dataclass default factory when a partial namespace omits the field."""
+    first = FactoryDefaultConfig._build_config(argparse.Namespace())
+    second = FactoryDefaultConfig._build_config(argparse.Namespace())
+
+    assert first.labels == ["default"]
+    assert first.labels is not second.labels
+
+
+def test_build_config_missing_required_field_raises_attribute_error() -> None:
+    """Raise a clear error when a partial namespace omits a required field."""
+    with pytest.raises(AttributeError, match="Missing required config field 'required' for RequiredConfig"):
+        RequiredConfig._build_config(argparse.Namespace())
 
 
 def test_direct_config_normalizes_and_validates_values() -> None:
@@ -169,6 +232,24 @@ def test_config_assignment_validates_values(field: str, value: object) -> None:
         setattr(config, field, value)
 
 
+def test_config_rejects_foreign_argspec_values() -> None:
+    """Do not mistake caller-supplied argument specs for internal default sentinels."""
+    foreign_spec = argutils.ArgSpec(name="--other", default=-9, type=int)
+
+    with pytest.raises(ValueError, match=r"count.*ArgSpec"):
+        NormalizedConfig(count=foreign_spec)  # pyright: ignore[reportArgumentType]
+
+    config = NormalizedConfig()
+    with pytest.raises(ValueError, match=r"count.*ArgSpec"):
+        config.count = foreign_spec  # pyright: ignore[reportAttributeAccessIssue]
+
+
+def test_config_rejects_invalid_declared_default() -> None:
+    """Validate an `ArgSpec` default before exposing it as a configuration value."""
+    with pytest.raises(ValueError, match=r"choice.*invalid choice"):
+        InvalidDefaultConfig()
+
+
 def test_tuple_action_accepts_scalar_and_custom_ease() -> None:
     """Tuple fields canonicalize scalars while easing fields preserve custom callables."""
     custom_ease = lambda value: value  # noqa: E731
@@ -189,6 +270,18 @@ def test_build_config_preserves_omitted_tuple_action_default_representation() ->
     LaserEtchConfig._populate_parser(parser)
 
     assert LaserEtchConfig._build_config(parser.parse_args([])).final_gradient_steps == 8
+
+
+def test_build_config_preserves_explicit_value_equal_to_default() -> None:
+    """Keep a parsed canonical value even when it compares equal to the raw default."""
+    parser = argparse.ArgumentParser()
+    EqualDefaultConfig._populate_parser(parser)
+
+    omitted = EqualDefaultConfig._build_config(parser.parse_args([]))
+    explicit = EqualDefaultConfig._build_config(parser.parse_args(["--mode", "1"]))
+
+    assert type(omitted.mode) is int
+    assert explicit.mode is ParsedMode.ONE
 
 
 def test_default_formatter_only_changes_help_output() -> None:
@@ -212,5 +305,12 @@ def _builtin_config_types() -> list[type[BaseConfig]]:
 
 @pytest.mark.parametrize("config_type", _builtin_config_types())
 def test_all_builtin_configs_construct_from_defaults(config_type: type[BaseConfig]) -> None:
-    """All built-in declarations satisfy the shared normalization contract."""
-    config_type()
+    """All built-in declarations have valid defaults whose representations are retained."""
+    config = config_type()
+
+    for config_field in fields(config):
+        spec = config_field.default
+        if isinstance(spec, argutils.ArgSpec):
+            value = getattr(config, config_field.name)
+            assert value == spec.default
+            assert type(value) is type(spec.default)

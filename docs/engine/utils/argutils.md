@@ -42,5 +42,3 @@ SpeedConfig._populate_parser(parser)
 config = SpeedConfig._build_config(parser.parse_args(["--speed", "0.01"]))
 assert config.speed == 0.01
 ```
-
-```
