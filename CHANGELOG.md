@@ -63,6 +63,8 @@
 
 ---
 
+* Easing documentation now describes progress input ranges, intentional back/elastic and custom Bezier overshoot,
+  horizontal control-point limits, and the different clamping behavior of `EasingTracker` and `SequenceEaser`.
 * Updated the `argutils` documentation example to use the current `BaseConfig` and `ArgSpec` API, with runnable direct
   construction and CLI parsing examples.
 * `Terminal` now owns an immutable construction-time snapshot of `TerminalConfig`. Mutating the caller's configuration
