@@ -87,3 +87,18 @@ def test_blackhole_args(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+def test_blackhole_explosion_uses_configured_star_colors() -> None:
+    """Test that explosion scenes use the configured star color palette."""
+    star_color = Color("#123456")
+    effect = effect_blackhole.Blackhole("A")
+    effect.effect_config.star_colors = (star_color,)
+
+    iterator = effect_blackhole.BlackholeIterator(effect)
+    iterator.explode_singularity()
+
+    for character in iterator.terminal.get_characters():
+        assert character.animation.active_scene is not None
+        explosion_frame = character.animation.active_scene.frames[0].character_visual
+        assert explosion_frame._fg_color_code == star_color.rgb_color

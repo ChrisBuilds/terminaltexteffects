@@ -89,13 +89,18 @@ Creates a blackhole in a starfield, consumes the stars, explodes the input data 
     --blackhole-color (XTerm [0-255] OR RGB Hex [000000-ffffff])
                         Color for the stars that comprise the blackhole border. (default: ffffff)
     --star-colors (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
-                        List of colors from which character colors will be chosen and applied after the explosion, but before the cooldown to final color. (default: ('ffcc0d', 'ff7326', 'ff194d', 'bf2669',
-                        '702a8c', '049dbf'))
+                        Colors used for the collapse point and to color
+                        characters during the explosion before they cool to
+                        their final color. (default: ffcc0d ff7326 ff194d
+                        bf2669 702a8c 049dbf)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.
                         (default: ('8A008A', '00D1FF', 'ffffff'))
     --final-gradient-steps (int > 0) [(int > 0) ...]
-                        Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
+                        Number of transitions used between final gradient
+                        stops to create color levels across the canvas. More
+                        transitions add spatial color detail but do not change
+                        animation duration. (default: 9)
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.DIAGONAL)
 

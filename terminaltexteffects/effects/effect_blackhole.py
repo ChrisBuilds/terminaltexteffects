@@ -40,12 +40,13 @@ class BlackholeConfig(BaseConfig):
 
     Attributes:
         blackhole_color (Color): Color for the stars that comprise the blackhole border.
-        star_colors (tuple[Color, ...]): Tuple of colors from which character colors will be chosen and applied
-            after the explosion, but before the cooldown to final color.
+        star_colors (tuple[Color, ...]): Colors used for the collapse point and to color characters during the
+            explosion before they cool to their final color.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the character gradient. If only one color is
             provided, the characters will be displayed in that color.
-        final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
-            create a smoother and longer gradient animation. Valid values are n > 0.
+        final_gradient_steps (tuple[int, ...] | int): Number of transitions used between final gradient stops to
+            create color levels across the canvas. More transitions add spatial color detail but do not change
+            animation duration. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
     """
@@ -83,12 +84,12 @@ class BlackholeConfig(BaseConfig):
             Color("#049dbf"),
         ),
         metavar=argutils.ColorArg.METAVAR,
-        help="List of colors from which character colors will be chosen and applied after the explosion, but before "
-        "the cooldown to final color.",
+        help="Colors used for the collapse point and to color characters during the explosion before they cool to "
+        "their final color.",
     )  # pyright: ignore[reportAssignmentType]
     (
-        "tuple[Color, ...] : Tuple of colors from which character colors will be chosen and applied after the "
-        "explosion, but before the cooldown to final color."
+        "tuple[Color, ...] : Colors used for the collapse point and to color characters during the explosion "
+        "before they cool to their final color."
     )
 
     final_gradient_stops: tuple[Color, ...] = FinalGradientStopsArg(
@@ -101,10 +102,14 @@ class BlackholeConfig(BaseConfig):
 
     final_gradient_steps: tuple[int, ...] | int = FinalGradientStepsArg(
         default=9,
+        help=(
+            "Number of transitions used between final gradient stops to create color levels across the canvas. More "
+            "transitions add spatial color detail but do not change animation duration."
+        ),
     )  # pyright: ignore[reportAssignmentType]
     (
-        "tuple[int, ...] | int : Int or Tuple of ints for the number of gradient steps to use. More steps will create "
-        "a smoother and longer gradient animation."
+        "tuple[int, ...] | int : Number of transitions used between final gradient stops to create color levels "
+        "across the canvas. More transitions add spatial color detail but do not change animation duration."
     )
 
     final_gradient_direction: Gradient.Direction = FinalGradientDirectionArg(
@@ -264,14 +269,6 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
 
     def explode_singularity(self) -> None:
         """Explode the singularity characters."""
-        star_colors = [
-            Color("#ffcc0d"),
-            Color("#ff7326"),
-            Color("#ff194d"),
-            Color("#bf2669"),
-            Color("#702a8c"),
-            Color("#049dbf"),
-        ]
         for character in self.terminal.get_characters():
             nearby_coord = geometry.find_coords_on_circle(
                 character.input_coord,
@@ -283,7 +280,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             input_path = character.motion.new_path(speed=random.randint(4, 6) / 100, ease=easing.in_cubic)
             input_path.new_waypoint(character.input_coord)
             explode_scn = character.animation.new_scene()
-            explode_star_color = random.choice(star_colors)
+            explode_star_color = random.choice(self.config.star_colors)
             explode_scn.add_frame(character.input_symbol, 1, colors=ColorPair(fg=explode_star_color))
             cooling_scn = character.animation.new_scene()
             if self.terminal.config.existing_color_handling == "dynamic" and self.preexisting_colors_present:

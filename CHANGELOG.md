@@ -183,11 +183,14 @@
 * Burn releases its build-only per-character final-color references after constructing the animation scenes.
 * Burn's showroom options now match the configured default smoke chance.
 * LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
+* Blackhole now documents final-gradient steps as color transition counts for its spatial gradient, not as an
+  animation-duration setting.
 
 ### Bug Fixes (0.16.0)
 
 ---
 
+* Blackhole now uses its configured `star_colors` palette for explosion characters and documents its collapse-point use.
 * Beams now emits a character as soon as a group accumulates one whole unit of progress instead of waiting for more
   than one unit and releasing characters in unintended bursts.
 * `BaseEffect` now preserves explicitly supplied effect and terminal configuration objects whose truth value is false;
