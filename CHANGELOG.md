@@ -172,6 +172,8 @@
 
 ---
 
+* Blackhole now uses a border-character set for membership checks during starfield construction and consumption,
+  while retaining the ordered list for ring movement.
 * Beams now releases its build-only final-color mapping after scene construction and consumes character, pending-group,
   and final-wipe queues in constant time instead of repeatedly shifting lists from the front.
 * Beams configuration documentation now identifies beam-gradient step pairing, explains that beam speed ranges use
@@ -190,6 +192,8 @@
 
 ---
 
+* Blackhole now keeps input stars available for consumption on short text, uses helper border stars when necessary,
+  fits the border inside compact canvases, and hides helpers before restoring the final text.
 * Blackhole now uses its configured `star_colors` palette for explosion characters and documents its collapse-point use.
 * Beams now emits a character as soon as a group accumulates one whole unit of progress instead of waiting for more
   than one unit and releasing characters in unintended bursts.

@@ -102,3 +102,38 @@ def test_blackhole_explosion_uses_configured_star_colors() -> None:
         assert character.animation.active_scene is not None
         explosion_frame = character.animation.active_scene.frames[0].character_visual
         assert explosion_frame._fg_color_code == star_color.rgb_color
+
+
+@pytest.mark.parametrize("input_data", ["A", "ABCD", "ABCDEFGHI", "ABCDEFGHIJ", "AB\nCD"])
+def test_blackhole_short_input_has_visible_border_and_consumed_stars(input_data: str) -> None:
+    """Keep the border visible and consume input stars on compact canvases."""
+    terminal_config = TerminalConfig._build_config()
+    terminal_config.frame_rate = 0
+    terminal_config.no_color = True
+    terminal_config.ignore_terminal_dimensions = True
+    effect = effect_blackhole.Blackhole(input_data)
+    effect.terminal_config = terminal_config
+
+    iterator = effect_blackhole.BlackholeIterator(effect)
+    assert iterator.awaiting_consumption_chars
+    assert all(iterator.terminal.canvas.coord_is_in_canvas(coord) for coord in iterator.blackhole_ring_positions)
+    saw_visible_border = False
+    saw_consuming = False
+    final_frame = ""
+    for frame in iterator:
+        final_frame = frame
+        if iterator.phase == "consuming":
+            saw_consuming = True
+            saw_visible_border |= "*" in frame and any(
+                character.is_visible
+                and iterator.terminal.canvas.coord_is_in_canvas(character.motion.current_coord)
+                and character.animation.current_character_visual.symbol == "*"
+                for character in iterator.blackhole_chars
+            )
+
+    assert saw_consuming
+    assert saw_visible_border
+    assert final_frame == input_data
+    assert all(not character.is_visible for character in iterator.helper_blackhole_chars)
+    if len(input_data.replace("\n", "")) == 1:
+        assert iterator.helper_blackhole_chars

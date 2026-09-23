@@ -131,12 +131,16 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         super().__init__(effect)
         self.pending_chars: list[EffectCharacter] = []
         self.blackhole_chars: list[EffectCharacter] = []
+        self.blackhole_char_set: set[EffectCharacter] = set()
+        self.helper_blackhole_chars: list[EffectCharacter] = []
         self.awaiting_consumption_chars: list[EffectCharacter] = []
         self.blackhole_radius = geometry.TERMINAL_ROW_SCALE * max(
             min(round(self.terminal.canvas.width * 0.3), round(self.terminal.canvas.height * 0.20)),
             3,
         )
         self.blackhole_character_count = self.blackhole_radius * 3 // geometry.TERMINAL_ROW_SCALE
+        self.compact_layout = False
+        self.blackhole_ring_positions: list[geometry.Coord] = []
         self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.preexisting_colors_present = any(
             any((character.animation.input_fg_color, character.animation.input_bg_color))
@@ -151,16 +155,41 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
         gradient_map = {}
         for color in starfield_colors:
             gradient_map[color] = Gradient(color, Color("#000000"), steps=10)
-        available_chars = list(self.terminal._input_characters)
-        while len(self.blackhole_chars) < self.blackhole_character_count and available_chars:
-            self.blackhole_chars.append(available_chars.pop(random.randrange(0, len(available_chars))))
-        black_hole_ring_positions = geometry.find_coords_on_circle(
-            self.terminal.canvas.center,
-            radius=self.blackhole_radius,
-            coords_limit=len(self.blackhole_chars),
+        canvas = self.terminal.canvas
+        radius = min(
+            self.blackhole_radius,
+            (canvas.width - 1) // 2,
+            (canvas.height - 1) // 2 * geometry.TERMINAL_ROW_SCALE,
         )
+        self.compact_layout = radius < self.blackhole_radius
+        if radius >= geometry.TERMINAL_ROW_SCALE:
+            ring_positions = geometry.find_coords_on_circle(
+                canvas.center,
+                radius=radius,
+                coords_limit=self.blackhole_character_count,
+            )
+        else:
+            ring_positions = geometry.find_coords_on_rect(
+                canvas.center,
+                (canvas.width - 1) // 2,
+                (canvas.height - 1) // 2,
+            )
+        ring_count = min(len(ring_positions), self.blackhole_character_count)
+        self.blackhole_ring_positions = [
+            ring_positions[index * len(ring_positions) // ring_count] for index in range(ring_count)
+        ]
+        available_chars = list(self.terminal._input_characters)
+        if len(available_chars) <= len(self.blackhole_ring_positions):
+            for _ in self.blackhole_ring_positions:
+                character = self.terminal.add_character("*", canvas.center)
+                self.helper_blackhole_chars.append(character)
+                self.blackhole_chars.append(character)
+        else:
+            while len(self.blackhole_chars) < len(self.blackhole_ring_positions):
+                self.blackhole_chars.append(available_chars.pop(random.randrange(len(available_chars))))
+        self.blackhole_char_set = set(self.blackhole_chars)
         for position_index, character in enumerate(self.blackhole_chars):
-            starting_pos = black_hole_ring_positions[position_index]
+            starting_pos = self.blackhole_ring_positions[position_index]
             blackhole_path = character.motion.new_path(path_id="blackhole", speed=0.7, ease=easing.in_out_sine)
             blackhole_path.new_waypoint(starting_pos)
             blackhole_scn = character.animation.new_scene(scene_id="blackhole")
@@ -173,7 +202,9 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             )
             # make rotation waypoints
             blackhole_rotation_path = character.motion.new_path(path_id="blackhole_rotation", speed=0.45, loop=True)
-            for coord in black_hole_ring_positions[position_index:] + black_hole_ring_positions[:position_index]:
+            for coord in (
+                self.blackhole_ring_positions[position_index:] + self.blackhole_ring_positions[:position_index]
+            ):
                 blackhole_rotation_path.new_waypoint(coord, waypoint_id=str(len(blackhole_rotation_path.waypoints)))
         for character in self.terminal.get_characters():
             self.terminal.set_character_visibility(character, is_visible=True)
@@ -182,7 +213,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
             star_color = random.choice(starfield_colors)
             starting_scn.add_frame(star_symbol, 1, colors=ColorPair(fg=star_color))
             character.animation.activate_scene(starting_scn)
-            if character not in self.blackhole_chars:
+            if character not in self.blackhole_char_set:
                 starfield_coord = self.terminal.canvas.random_coord()
                 character.motion.set_coordinate(starfield_coord)
 
@@ -220,17 +251,18 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
 
     def collapse_blackhole(self) -> None:
         """Collapse the blackhole characters."""
-        black_hole_ring_positions = list(
-            geometry.find_coords_on_circle(
+        black_hole_ring_positions = (
+            self.blackhole_ring_positions
+            if self.compact_layout
+            else geometry.find_coords_on_circle(
                 self.terminal.canvas.center,
                 radius=self.blackhole_radius + (3 * geometry.TERMINAL_ROW_SCALE),
                 coords_limit=len(self.blackhole_chars),
-            ),
+            )
         )
         unstable_symbols = ["◦", "◎", "◉", "●", "◉", "◎", "◦"]
         point_char_made = False
-        for character in self.blackhole_chars:
-            next_pos = black_hole_ring_positions.pop(0)
+        for character, next_pos in zip(self.blackhole_chars, black_hole_ring_positions):
             expand_path = character.motion.new_path(speed=0.2, ease=easing.in_expo)
             expand_path.new_waypoint(next_pos)
             collapse_path = character.motion.new_path(speed=0.3, ease=easing.in_expo)
@@ -269,6 +301,8 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
 
     def explode_singularity(self) -> None:
         """Explode the singularity characters."""
+        for character in self.helper_blackhole_chars:
+            self.terminal.set_character_visibility(character, is_visible=False)
         for character in self.terminal.get_characters():
             nearby_coord = geometry.find_coords_on_circle(
                 character.input_coord,
@@ -353,6 +387,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                         next_char = self.awaiting_blackhole_chars.pop(0)
                         next_char.motion.activate_path("blackhole")
                         next_char.animation.activate_scene("blackhole")
+                        self.terminal.set_character_visibility(next_char, is_visible=True)
                         self.active_characters.add(next_char)
                         self.f_delay = self.formation_delay
                     else:
@@ -368,7 +403,7 @@ class BlackholeIterator(BaseEffectIterator[BlackholeConfig]):
                         self.active_characters.add(char)
                     self.awaiting_consumption_chars.clear()
 
-                elif all(character in self.blackhole_chars for character in self.active_characters):
+                elif self.active_characters <= self.blackhole_char_set:
                     self.phase = "collapsing"
 
             elif self.phase == "collapsing":
