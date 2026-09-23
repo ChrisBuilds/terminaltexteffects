@@ -238,7 +238,7 @@ Characters are ignited and burn up the screen.
                         Colors transitioned through as the characters burn. (default: (Color('ffffff'),
                         Color('fff75d'), Color('fe650d'), Color('8A003C'), Color('510100')))
     --smoke-chance (0 <= float(n) <= 1)
-                        Chance a given character will produce smoke while burning. Use 0 for no smoke. (default: 0.2)
+                        Chance a given character will produce smoke while burning. Use 0 for no smoke. (default: 0.5)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the character gradient (applied across the
                         canvas). If only one color is provided, the characters will be displayed in that color.
@@ -249,7 +249,7 @@ Characters are ignited and burn up the screen.
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
 
-    Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --smoke-chance 0.2 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12
+    Example: terminaltexteffects burn --starting-color 837373 --burn-colors ffffff fff75d fe650d 8a003c 510100 --smoke-chance 0.5 --final-gradient-stops 00c3ff ffff1c --final-gradient-steps 12
     ```
 ---
 

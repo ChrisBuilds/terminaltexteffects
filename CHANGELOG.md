@@ -180,6 +180,8 @@
   traversal overhead on wide or densely linked character graphs.
 * Burn smoke now uses `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 * Burn now creates its capped smoke-particle pool on demand instead of eagerly constructing all 2,000 particles.
+* Burn releases its build-only per-character final-color references after constructing the animation scenes.
+* Burn's showroom options now match the configured default smoke chance.
 * LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 
 ### Bug Fixes (0.16.0)

@@ -128,8 +128,6 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
 
         """
         super().__init__(effect)
-        self.pending_chars: list[EffectCharacter] = []
-        self.character_final_color_map: dict[EffectCharacter, Color] = {}
         self.algo = PrimsSimple(self.terminal, limit_to_text_boundary=True)
         self._smoke_particle_symbols: tuple[str, ...]
         self.smoke_particles = self._make_smoke_pool()
@@ -232,8 +230,6 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
             self.terminal.canvas.text_right,
             self.config.final_gradient_direction,
         )
-        for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
         fire_gradient = Gradient(*self.config.burn_colors, steps=10)
 
         while not self.algo.complete:
@@ -269,7 +265,11 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
                 else:
                     final_color_scn.add_frame(char.input_symbol, 4, colors=ColorPair())
             else:
-                for color in Gradient(fire_gradient.spectrum[-1], self.character_final_color_map[char], steps=8):
+                for color in Gradient(
+                    fire_gradient.spectrum[-1],
+                    final_gradient_mapping[char.input_coord],
+                    steps=8,
+                ):
                     final_color_scn.add_frame(char.input_symbol, 4, colors=ColorPair(fg=color))
             char.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
@@ -283,8 +283,6 @@ class BurnIterator(BaseEffectIterator[BurnConfig]):
                 EventHandler.Action.CALLBACK,
                 EventHandler.Callback(lambda c: self._emit_smoke(c.input_coord, self.config.smoke_chance)),
             )
-
-            self.pending_chars.append(char)
 
     def __next__(self) -> str:
         """Return the next frame in the animation."""

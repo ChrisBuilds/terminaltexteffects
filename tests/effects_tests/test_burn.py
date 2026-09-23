@@ -209,10 +209,20 @@ def test_burn_ignore_with_preexisting_colors_uses_effect_gradient() -> None:
     character = iterator.terminal.get_characters()[0]
     final_scene = character.animation.scenes["1"]
     final_frame = final_scene.frames[-1].character_visual
+    expected_final_color = Gradient(
+        *iterator.config.final_gradient_stops,
+        steps=iterator.config.final_gradient_steps,
+    ).build_coordinate_color_mapping(
+        iterator.terminal.canvas.text_bottom,
+        iterator.terminal.canvas.text_top,
+        iterator.terminal.canvas.text_left,
+        iterator.terminal.canvas.text_right,
+        iterator.config.final_gradient_direction,
+    )[character.input_coord]
 
     assert final_frame.symbol == "A"
-    assert final_frame.colors == effect_burn.ColorPair(fg=iterator.character_final_color_map[character])
-    assert final_frame._fg_color_code == iterator.character_final_color_map[character].rgb_color
+    assert final_frame.colors == effect_burn.ColorPair(fg=expected_final_color)
+    assert final_frame._fg_color_code == expected_final_color.rgb_color
     assert final_frame._bg_color_code is None
 
 
