@@ -8,6 +8,7 @@ Classes:
 
 from __future__ import annotations
 
+import argparse
 import random
 from dataclasses import dataclass
 
@@ -20,6 +21,28 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
+
+
+def _overflow_cycles_range_type_parser(value: str | tuple[int, int] | list[int]) -> tuple[int, int]:
+    """Validate a hyphen-separated range of non-negative overflow cycle counts."""
+    if isinstance(value, str):
+        parts = value.split("-")
+        if len(parts) != 2:
+            msg = f"invalid range: '{value}' must be a non-negative start-end range."
+            raise argparse.ArgumentTypeError(msg)
+        start_value, end_value = parts
+    elif isinstance(value, (tuple, list)) and len(value) == 2:
+        start_value, end_value = value
+    else:
+        msg = f"invalid range: '{value}' must be a non-negative start-end range."
+        raise argparse.ArgumentTypeError(msg)
+
+    start = argutils.NonNegativeInt.type_parser(start_value)
+    end = argutils.NonNegativeInt.type_parser(end_value)
+    if start > end:
+        msg = f"invalid range: '{value}' must have a start less than or equal to its end."
+        raise argparse.ArgumentTypeError(msg)
+    return start, end
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -38,8 +61,8 @@ class OverflowConfig(BaseConfig):
 
     Attributes:
         overflow_gradient_stops (tuple[Color, ...]): Tuple of colors for the overflow gradient.
-        overflow_cycles_range (tuple[int, int]): Lower and upper range of the number of cycles to overflow the text. "
-            "Valid values are n >= 0.
+        overflow_cycles_range (tuple[int, int]): Inclusive lower and upper bounds for the number of overflow cycles.
+            Valid values are `0 <= start <= end`. A range of `0-0` disables overflow cycles.
         overflow_speed (int): Speed of the overflow effect. Valid values are n > 0.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color "
             "is provided, the characters will be displayed in that color.
@@ -73,10 +96,10 @@ class OverflowConfig(BaseConfig):
 
     overflow_cycles_range: tuple[int, int] = argutils.ArgSpec(
         name="--overflow-cycles-range",
-        type=argutils.PositiveIntRange.type_parser,
+        type=_overflow_cycles_range_type_parser,
         default=(2, 4),
-        metavar=argutils.PositiveIntRange.METAVAR,
-        help="Number of cycles to overflow the text.",
+        metavar="(hyphen separated non-negative int range e.g. '0-4')",
+        help="Inclusive range of overflow cycle counts. Use 0-0 to disable overflow cycles.",
     )  # pyright: ignore[reportAssignmentType]
     "tuple[int, int] : Lower and upper range of the number of cycles to overflow the text."
 

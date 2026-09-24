@@ -6,6 +6,7 @@ from typing import Literal, cast
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_overflow
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair
@@ -86,6 +87,25 @@ def test_overflow_args(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+def test_overflow_cycles_range_accepts_zero_and_positive_boundaries() -> None:
+    """Verify CLI and direct configs accept zero to disable cycles and positive ranges to add copies."""
+    parser, _ = build_parser(include_user_effects=False)
+    zero_arguments = parser.parse_args(["overflow", "--overflow-cycles-range", "0-0"])
+    positive_arguments = parser.parse_args(["overflow", "--overflow-cycles-range", "1-1"])
+    assert zero_arguments.overflow_cycles_range == (0, 0)
+    assert positive_arguments.overflow_cycles_range == (1, 1)
+
+    zero_config = effect_overflow.OverflowConfig(overflow_cycles_range=(0, 0))
+    zero_iterator = effect_overflow.OverflowIterator(effect_overflow.Overflow("A", effect_config=zero_config))
+    positive_config = effect_overflow.OverflowConfig(overflow_cycles_range=(1, 1))
+    positive_iterator = effect_overflow.OverflowIterator(
+        effect_overflow.Overflow("A", effect_config=positive_config),
+    )
+
+    assert len(zero_iterator.pending_rows) == 1
+    assert len(positive_iterator.pending_rows) == 2
 
 
 def test_overflow_dynamic_without_preexisting_colors_has_uncolored_final_row_visual() -> None:
