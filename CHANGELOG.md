@@ -190,6 +190,7 @@
 * Burn releases its build-only per-character final-color references after constructing the animation scenes.
 * Burn's showroom options now match the configured default smoke chance.
 * LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
+* LaserEtch configuration docs now identify `etch_pattern` and list the supported character-ordering patterns.
 * Blackhole now documents final-gradient steps as color transition counts for its spatial gradient, not as an
   animation-duration setting.
 * BouncyBalls now documents that `ball_delay=0` removes the delay between ball-drop batches.
