@@ -8,6 +8,7 @@ from typing import Literal, cast
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_matrix
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair
@@ -110,6 +111,43 @@ def test_matrix_args(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+def test_matrix_swap_chance_boundaries_and_zero_behavior(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify swap probabilities accept [0, 1], reject values above 1, and zero disables both swaps."""
+    parser, _ = build_parser(include_user_effects=False)
+    zero_and_one = parser.parse_args(
+        ["matrix", "--symbol-swap-chance", "0", "--color-swap-chance", "1"],
+    )
+    assert zero_and_one.symbol_swap_chance == 0
+    assert zero_and_one.color_swap_chance == 1
+
+    both_one = parser.parse_args(["matrix", "--symbol-swap-chance", "1", "--color-swap-chance", "1"])
+    assert both_one.symbol_swap_chance == 1
+    assert both_one.color_swap_chance == 1
+
+    for option in ("--symbol-swap-chance", "--color-swap-chance"):
+        with pytest.raises(SystemExit):
+            parser.parse_args(["matrix", option, "1.01"])
+
+    effect_config = effect_matrix.MatrixConfig(symbol_swap_chance=0, color_swap_chance=0)
+    iterator = effect_matrix.MatrixIterator(effect_matrix.Matrix("A", effect_config=effect_config))
+    column = iterator.pending_columns[0]
+    character = column.pending_characters[0]
+    random_choices: list[tuple[str, ...] | list[Color]] = []
+
+    monkeypatch.setattr(effect_matrix.random, "random", lambda: 0.0)
+
+    def choose_first(values: tuple[str, ...] | list[Color]) -> str | Color:
+        random_choices.append(values)
+        return values[0]
+
+    monkeypatch.setattr(effect_matrix.random, "choice", choose_first)
+    column.tick()
+
+    assert random_choices == [column.matrix_symbols]
+    assert character.animation.current_character_visual.colors is not None
+    assert character.animation.current_character_visual.colors.fg == effect_config.highlight_color
 
 
 def test_matrix_dynamic_without_preexisting_colors_has_uncolored_resolve_scene_final_frame() -> None:

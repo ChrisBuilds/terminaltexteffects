@@ -197,21 +197,21 @@ class MatrixConfig(BaseConfig):
 
     symbol_swap_chance: float = argutils.ArgSpec(
         name="--symbol-swap-chance",
-        type=argutils.PositiveFloat.type_parser,
+        type=argutils.NonNegativeRatio.type_parser,
         default=0.005,
-        metavar=argutils.PositiveFloat.METAVAR,
-        help="Chance of swapping a character's symbol on each tick.",
+        metavar=argutils.NonNegativeRatio.METAVAR,
+        help="Probability of swapping a character's symbol on each tick, from 0 to 1. Set to 0 to disable.",
     )  # pyright: ignore[reportAssignmentType]
-    "float : Chance of swapping a character's symbol on each tick."
+    "float : Probability of swapping a character's symbol on each tick, from 0 to 1. Set to 0 to disable."
 
     color_swap_chance: float = argutils.ArgSpec(
         name="--color-swap-chance",
-        type=argutils.PositiveFloat.type_parser,
+        type=argutils.NonNegativeRatio.type_parser,
         default=0.001,
-        metavar=argutils.PositiveFloat.METAVAR,
-        help="Chance of swapping a character's color on each tick.",
+        metavar=argutils.NonNegativeRatio.METAVAR,
+        help="Probability of swapping a character's color on each tick, from 0 to 1. Set to 0 to disable.",
     )  # pyright: ignore[reportAssignmentType]
-    "float : Chance of swapping a character's color on each tick."
+    "float : Probability of swapping a character's color on each tick, from 0 to 1. Set to 0 to disable."
 
     resolve_delay: int = argutils.ArgSpec(
         name="--resolve-delay",
