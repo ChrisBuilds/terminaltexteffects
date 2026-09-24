@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Literal
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_binarypath
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color
@@ -48,6 +49,89 @@ def test_binarypath_effect_terminal_color_options(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+def test_binarypath_iterator_does_not_retain_build_only_state() -> None:
+    """Verify build-only color maps and the unused pending queue are not retained."""
+    iterator = iter(effect_binarypath.BinaryPath("A"))
+
+    assert not hasattr(iterator, "character_final_color_map")
+    assert not hasattr(iterator, "pending_chars")
+
+
+def test_binarypath_routes_have_no_zero_distance_or_diagonal_segments() -> None:
+    """Verify generated routes move through distinct, axis-aligned waypoints to the input coordinate."""
+    iterator = effect_binarypath.BinaryPathIterator(effect_binarypath.BinaryPath("A"))
+    binary_representation = iterator.pending_binary_representations[0]
+    binary_character = binary_representation.binary_characters[0]
+    path = binary_character.motion.active_path
+
+    assert path is not None
+    assert path.origin_segment is not None
+    assert path.origin_segment.start.coord == binary_character.motion.current_coord
+    assert path.origin_segment.start.coord != path.origin_segment.end.coord
+    assert path.waypoints[0].coord != path.origin_segment.start.coord
+    assert sum(waypoint.coord == binary_representation.input_coord for waypoint in path.waypoints) == 1
+    assert path.waypoints[-1].coord == binary_representation.input_coord
+    for segment in path.segments:
+        assert segment.start.coord != segment.end.coord
+        assert (
+            segment.start.coord.column == segment.end.coord.column
+            or segment.start.coord.row == segment.end.coord.row
+        )
+
+
+def test_binarypath_completes_with_very_high_movement_speed() -> None:
+    """Verify short paths still complete when movement speed exceeds their length."""
+    effect = effect_binarypath.BinaryPath("A")
+    effect.effect_config.movement_speed = 10_000
+
+    iterator = effect_binarypath.BinaryPathIterator(effect)
+    frames = list(iterator)
+
+    assert frames
+    assert iterator.complete
+
+
+def test_binarypath_binary_characters_use_static_colored_appearance() -> None:
+    """Verify binary characters keep their configured color without allocating animation scenes."""
+    effect = effect_binarypath.BinaryPath("A")
+    iterator = effect_binarypath.BinaryPathIterator(effect)
+    binary_representation = iterator.pending_binary_representations[0]
+
+    for character, symbol in zip(binary_representation.binary_characters, format(ord("A"), "08b"), strict=True):
+        visual = character.animation.current_character_visual
+        assert visual.symbol == symbol
+        assert visual.colors is not None
+        assert visual.colors.fg in effect.effect_config.binary_colors
+        assert character.animation.scenes == {}
+        assert character.motion.active_path is not None
+
+
+def test_binarypath_cli_help_describes_gradient_and_group_fraction(capsys: pytest.CaptureFixture[str]) -> None:
+    """Verify the CLI describes the spatial gradient and the zero-value group minimum."""
+    parser, _ = build_parser(include_user_effects=False)
+
+    with pytest.raises(SystemExit) as exit_info:
+        parser.parse_args(["binarypath", "--help"])
+
+    assert exit_info.value.code == 0
+    help_text = " ".join(capsys.readouterr().out.split())
+    assert "color-transition steps used for the spatial final-color gradient" in help_text
+    assert "Maximum fraction of binary groups active at once" in help_text
+    assert "0 still activates one group" in help_text
+
+
+def test_binarypath_zero_active_group_fraction_still_runs_one_group() -> None:
+    """Verify zero parses through the CLI and the iterator keeps its one-group minimum."""
+    parser, _ = build_parser(include_user_effects=False)
+    arguments = parser.parse_args(["binarypath", "--active-binary-groups", "0"])
+    effect = effect_binarypath.BinaryPath("A")
+    effect.effect_config.active_binary_groups = arguments.active_binary_groups
+    iterator = effect_binarypath.BinaryPathIterator(effect)
+
+    assert iterator.config.active_binary_groups == 0
+    assert iterator.max_active_binary_groups == 1
 
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)

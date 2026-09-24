@@ -11,7 +11,7 @@ fi
 _shtab_tte_commands() {
   local _commands=(
     beams:'beams | Create beams which travel over the canvas illuminating the characters behind them.'
-    binarypath:'binarypath | Binary representations of each character move through the terminal towards the home coordinate of the character.'
+    binarypath:'binarypath | Characters are encoded as binary and move from outside the canvas toward their input coordinates along right-angle paths.'
     blackhole:'blackhole | Characters are consumed by a black hole and explode outwards.'
     bouncyballs:'bouncyballs | Characters are bouncy balls falling from the top of the canvas.'
     bubbles:'bubbles | Characters are formed into bubbles that float down and pop.'
@@ -104,11 +104,11 @@ _shtab_tte_beams_defaults_added=0
 _shtab_tte_binarypath_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
-  "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
+  "--final-gradient-steps[Number of color-transition steps used for the spatial final-color gradient.]:final_gradient_steps:"
   "--final-gradient-direction[Direction of the final gradient across the text.]:final_gradient_direction:(diagonal horizontal vertical radial)"
   "--binary-colors[Space separated, unquoted, list of colors for the binary characters. Character color is randomly assigned from this list.]:binary_colors:"
-  "--movement-speed[Speed of the binary groups as they travel around the terminal.]:movement_speed:"
-  "--active-binary-groups[Maximum number of binary groups that are active at any given time as a percentage of the total number of binary groups. Lower this to improve performance.]:active_binary_groups:"
+  "--movement-speed[Speed of the binary groups along right-angle paths from outside the canvas toward their input coordinates.]:movement_speed:"
+  "--active-binary-groups[Maximum fraction of binary groups active at once. Values range from 0 to 1\; 0 still activates one group.]:active_binary_groups:"
 )
 
 # guard to ensure default positional specs are added only once per session
