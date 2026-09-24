@@ -180,7 +180,7 @@ _shtab_tte_colorshift_options=(
   "--travel-direction[Direction the gradient travels across the canvas.]:travel_direction:(diagonal horizontal vertical radial)"
   "--reverse-travel-direction[Reverse the gradient travel direction.]"
   "--no-loop[Do not loop the gradient. If not set, the gradient generation will loop the final gradient color back to the first gradient color.]"
-  "--cycles[Number of times to cycle the gradient.]:cycles:"
+  "--cycles[Number of times to cycle the gradient. Use 0 for infinite cycling.]:cycles:"
   "--skip-final-gradient[Skip the final gradient.]"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"

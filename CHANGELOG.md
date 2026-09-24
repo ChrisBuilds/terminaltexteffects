@@ -201,6 +201,7 @@
 * Blackhole now keeps input stars available for consumption on short text, uses helper border stars when necessary,
   fits the border inside compact canvases, and hides helpers before restoring the final text.
 * Blackhole now uses its configured `star_colors` palette for explosion characters and documents its collapse-point use.
+* ColorShift now accepts `--cycles 0` for infinite gradient cycling, matching its runtime behavior.
 * Beams now emits a character as soon as a group accumulates one whole unit of progress instead of waiting for more
   than one unit and releasing characters in unintended bursts.
 * `BaseEffect` now preserves explicitly supplied effect and terminal configuration objects whose truth value is false;

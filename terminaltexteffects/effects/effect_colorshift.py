@@ -155,10 +155,10 @@ class ColorShiftConfig(BaseConfig):
 
     cycles: int = argutils.ArgSpec(
         name="--cycles",
-        type=argutils.PositiveInt.type_parser,
+        type=argutils.NonNegativeInt.type_parser,
         default=3,
-        metavar=argutils.PositiveInt.METAVAR,
-        help="Number of times to cycle the gradient.",
+        metavar=argutils.NonNegativeInt.METAVAR,
+        help="Number of times to cycle the gradient. Use 0 for infinite cycling.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of times to cycle the gradient. Use 0 for infinite."
 

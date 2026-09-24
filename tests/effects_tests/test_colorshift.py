@@ -1,11 +1,14 @@
+from typing import Literal
+
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_colorshift
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color
 
 
-def _make_terminal_config(existing_color_handling: str) -> TerminalConfig:
+def _make_terminal_config(existing_color_handling: Literal["always", "dynamic", "ignore"]) -> TerminalConfig:
     terminal_config = TerminalConfig._build_config()
     terminal_config.frame_rate = 0
     terminal_config.existing_color_handling = existing_color_handling
@@ -87,6 +90,21 @@ def test_colorshift_args(
             terminal.print(frame)
 
 
+def test_colorshift_zero_cycles_parses_and_keeps_gradient_looping() -> None:
+    """Verify zero cycles is accepted by the CLI and keeps reactivating the gradient scene."""
+    parser, _ = build_parser(include_user_effects=False)
+    arguments = parser.parse_args(["colorshift", "--cycles", "0"])
+    config = effect_colorshift.ColorShiftConfig(cycles=arguments.cycles)
+    effect = effect_colorshift.ColorShift("A", effect_config=config)
+    iterator = effect_colorshift.ColorShiftIterator(effect)
+    character = iterator.terminal.get_characters()[0]
+
+    for completed_cycles in (1, 2):
+        iterator.loop_tracker(character)
+        assert character.animation.active_scene is character.animation.scenes["gradient"]
+        assert iterator.loop_tracker_map[character] == completed_cycles
+
+
 def test_colorshift_dynamic_without_preexisting_colors_has_uncolored_final_frame() -> None:
     effect = effect_colorshift.ColorShift("A")
     effect.terminal_config = _make_terminal_config("dynamic")
@@ -151,7 +169,7 @@ def test_colorshift_ignore_with_preexisting_colors_uses_effect_gradient() -> Non
     effect = effect_colorshift.ColorShift("\x1b[38;5;196mA\x1b[0m")
     effect.terminal_config = _make_terminal_config("ignore")
 
-    iterator = iter(effect)
+    iterator = effect_colorshift.ColorShiftIterator(effect)
     character = iterator.terminal.get_characters()[0]
     final_scene = character.animation.scenes["final_gradient"]
     final_frame = final_scene.frames[-1].character_visual
