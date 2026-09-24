@@ -191,6 +191,7 @@
 * Burn's showroom options now match the configured default smoke chance.
 * LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 * LaserEtch configuration docs now identify `etch_pattern` and list the supported character-ordering patterns.
+* Rain API documentation now identifies `RainConfig` as the effect configuration type.
 * Blackhole now documents final-gradient steps as color transition counts for its spatial gradient, not as an
   animation-duration setting.
 * BouncyBalls now documents that `ball_delay=0` removes the delay between ball-drop batches.

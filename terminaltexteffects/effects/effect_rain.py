@@ -244,7 +244,7 @@ class Rain(BaseEffect[RainConfig]):
     """Rain characters from the top of the canvas.
 
     Attributes:
-        effect_config (PourConfig): Configuration for the effect.
+        effect_config (RainConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
 
     """
