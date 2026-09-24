@@ -130,7 +130,7 @@ _shtab_tte_bouncyballs_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--ball-colors[Space separated list of colors from which ball colors will be randomly selected. If no colors are provided, the colors are random.]:ball_colors:"
   "--ball-symbols[Space separated list of symbols to use for the balls.]:ball_symbols:"
-  "--ball-delay[Number of frames between ball drops, increase to reduce ball drop rate.]:ball_delay:"
+  "--ball-delay[Number of frames between ball-drop batches\; 0 removes the delay between batches.]:ball_delay:"
   "--movement-speed[Movement speed of the characters. ]:movement_speed:"
   "--movement-easing[Easing function to use for character movement.]:movement_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"

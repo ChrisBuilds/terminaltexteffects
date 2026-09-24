@@ -187,6 +187,7 @@
 * LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 * Blackhole now documents final-gradient steps as color transition counts for its spatial gradient, not as an
   animation-duration setting.
+* BouncyBalls now documents that `ball_delay=0` removes the delay between ball-drop batches.
 
 ### Bug Fixes (0.16.0)
 

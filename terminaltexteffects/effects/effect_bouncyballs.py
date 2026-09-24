@@ -48,7 +48,7 @@ class BouncyBallsConfig(BaseConfig):
             will create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
         ball_delay (int): Number of frames between ball drops, increase to reduce ball drop rate.
-            Valid values are n > 0.
+            Valid values are n >= 0. A value of 0 removes the delay between drop batches.
         movement_speed (float): Movement speed of the characters.  Valid values are n > 0.
         easing (easing.EasingFunction): Easing function to use for character movement.
 
@@ -92,9 +92,9 @@ class BouncyBallsConfig(BaseConfig):
         type=argutils.NonNegativeInt.type_parser,
         default=4,
         metavar=argutils.NonNegativeInt.METAVAR,
-        help="Number of frames between ball drops, increase to reduce ball drop rate.",
+        help="Number of frames between ball-drop batches; 0 removes the delay between batches.",
     )  # pyright: ignore[reportAssignmentType]
-    "int : Number of frames between ball drops, increase to reduce ball drop rate."
+    "int : Number of frames between ball-drop batches; 0 removes the delay between batches."
 
     movement_speed: float = argutils.ArgSpec(
         name="--movement-speed",
