@@ -39,8 +39,10 @@ class ErrorCorrectConfig(BaseConfig):
     """Configuration for the ErrorCorrect effect.
 
     Attributes:
-        error_pairs (float): Percent of characters that are in the wrong position. This is a float between 0 and
-            1.0. 0.2 means 20 percent of the characters will be in the wrong position. Valid values are 0 <= n <= 1.0.
+        error_pairs (float): Fraction of characters that are in the wrong position. This is a float between 0 and
+            1.0. The desired displaced-character count is rounded to the nearest whole pair, with half pairs rounded
+            up. A positive fraction schedules at least one pair when possible, and an odd input cannot have every
+            character displaced. Valid values are 0 <= n <= 1.0.
         swap_delay (int): Number of frames between swaps. Valid values are n >= 0.
         error_color (Color): Color for the characters that are in the wrong position.
         correct_color (Color): Color for the characters once corrected, this is a gradient from error-color and
@@ -70,20 +72,22 @@ class ErrorCorrectConfig(BaseConfig):
         type=argutils.NonNegativeRatio.type_parser,
         default=0.1,
         metavar=argutils.NonNegativeRatio.METAVAR,
-        help="Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means "
-        "20 percent of the characters will be in the wrong position.",
+        help="Fraction of characters that are in the wrong position, from 0 to 1.0. The displaced-character count "
+        "is rounded to the nearest whole pair, with half pairs rounded up; positive fractions schedule at least one "
+        "pair when possible.",
     )  # pyright: ignore[reportAssignmentType]
     (
-        "float : Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 "
-        "means 20 percent of the characters will be in the wrong position."
+        "float : Fraction of characters that are in the wrong position. This is a float between 0 and 1.0. The "
+        "displaced-character count is rounded to the nearest whole pair, with half pairs rounded up; a positive "
+        "fraction schedules at least one pair when possible."
     )
 
     swap_delay: int = argutils.ArgSpec(
         name="--swap-delay",
-        type=argutils.PositiveInt.type_parser,
+        type=argutils.NonNegativeInt.type_parser,
         default=6,
-        metavar="(int > 0)",
-        help="Number of frames between swaps.",
+        metavar="(int >= 0)",
+        help="Number of frames between swaps. Use 0 to swap pairs without a delay.",
     )  # pyright: ignore[reportAssignmentType]
     "int : Number of frames between swaps."
 
@@ -300,8 +304,9 @@ class ErrorCorrectIterator(BaseEffectIterator[ErrorCorrectConfig]):
         correcting_gradient = Gradient(self.config.error_color, self.config.correct_color, steps=10)
         block_wipe_start = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
         block_wipe_end = ("▇", "▆", "▅", "▄", "▃", "▂", "▁")
-        pair_count = int(self.config.error_pairs * len(all_characters))
-        if self.config.error_pairs and len(all_characters) >= 2:
+        max_pair_count = len(all_characters) // 2
+        pair_count = min(max_pair_count, int(self.config.error_pairs * len(all_characters) / 2 + 0.5))
+        if self.config.error_pairs and max_pair_count:
             pair_count = max(1, pair_count)
         for _ in range(pair_count):
             if len(all_characters) < 2:

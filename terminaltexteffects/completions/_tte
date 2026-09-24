@@ -221,8 +221,8 @@ _shtab_tte_dev_defaults_added=0
 
 _shtab_tte_errorcorrect_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--error-pairs[Percent of characters that are in the wrong position. This is a float between 0 and 1.0. 0.2 means 20 percent of the characters will be in the wrong position.]:error_pairs:"
-  "--swap-delay[Number of frames between swaps.]:swap_delay:"
+  "--error-pairs[Fraction of characters that are in the wrong position, from 0 to 1.0. The displaced-character count is rounded to the nearest whole pair, with half pairs rounded up\; positive fractions schedule at least one pair when possible.]:error_pairs:"
+  "--swap-delay[Number of frames between swaps. Use 0 to swap pairs without a delay.]:swap_delay:"
   "--error-color[Color for the characters that are in the wrong position.]:error_color:"
   "--correct-color[Color for the characters once corrected, this is a gradient from error-color and fades to final-color.]:correct_color:"
   "--movement-speed[Speed of the characters while moving to the correct position. ]:movement_speed:"

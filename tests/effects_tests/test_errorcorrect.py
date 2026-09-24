@@ -6,6 +6,7 @@ from typing import Literal, cast
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_errorcorrect
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color
@@ -114,6 +115,45 @@ def test_errorcorrect_positive_ratio_schedules_at_least_one_pair() -> None:
     iterator = cast("effect_errorcorrect.ErrorCorrectIterator", iter(effect))
 
     assert len(iterator.swapped) == 1
+
+
+@pytest.mark.parametrize(
+    ("input_data", "error_pairs", "expected_displaced_characters"),
+    [
+        ("ABCDEFGH", 0.25, 2),
+        ("ABCDEF", 0.5, 4),
+        ("ABCDE", 0.4, 2),
+        ("ABCDE", 1, 4),
+    ],
+)
+def test_errorcorrect_pair_count_tracks_displaced_character_fraction(
+    input_data: str,
+    error_pairs: float,
+    expected_displaced_characters: int,
+) -> None:
+    """Verify whole-pair rounding keeps displaced counts close to the configured character fraction."""
+    effect = effect_errorcorrect.ErrorCorrect(input_data)
+    effect.effect_config.error_pairs = error_pairs
+
+    iterator = cast("effect_errorcorrect.ErrorCorrectIterator", iter(effect))
+
+    assert sum(len(pair) for pair in iterator.swapped) == expected_displaced_characters
+
+
+def test_errorcorrect_zero_swap_delay_parses_and_schedules_next_pair_immediately() -> None:
+    """Verify zero swap delay is accepted and the next pair activates on the next frame."""
+    parser, _ = build_parser(include_user_effects=False)
+    arguments = parser.parse_args(["errorcorrect", "--swap-delay", "0", "--error-pairs", "1"])
+    config = effect_errorcorrect.ErrorCorrectConfig(swap_delay=arguments.swap_delay, error_pairs=arguments.error_pairs)
+    iterator = effect_errorcorrect.ErrorCorrectIterator(effect_errorcorrect.ErrorCorrect("ABCD", effect_config=config))
+
+    next(iterator)
+    assert len(iterator.active_characters) == 2
+    assert len(iterator.swapped) == 1
+
+    next(iterator)
+    assert len(iterator.active_characters) == 4
+    assert not iterator.swapped
 
 
 def test_errorcorrect_dynamic_unswapped_with_preexisting_fg_uses_input_fg_from_start() -> None:
