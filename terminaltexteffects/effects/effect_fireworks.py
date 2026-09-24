@@ -52,11 +52,13 @@ class FireworksConfig(BaseConfig):
             above highest settled row of text.
         firework_colors (tuple[Color, ...]): Tuple of colors from which firework colors will be randomly selected.
         firework_symbol (str): Symbol to use for the firework shell.
-        firework_volume (float): Percent of total characters in each firework shell. Valid values are 0 < n <= 1.
+        firework_volume (float): Fraction of input characters in each firework shell. Valid values are 0 <= n <= 1.
+            A value of 0 produces the minimum shell size of one character.
         launch_delay (int): Number of frames to wait between launching each firework shell. +/- 0-50 percent
             randomness is applied to this value. Valid values are n >= 0.
         explode_distance (float): Maximum distance from the firework shell origin to the explode waypoint as a
-            percentage of the total canvas width. Valid values are 0 < n <= 1.
+            fraction of the total canvas width. Valid values are 0 <= n <= 1. A value of 0 produces a minimum
+            distance of one cell.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color
             is provided, the characters will be displayed in that color.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
@@ -114,9 +116,9 @@ class FireworksConfig(BaseConfig):
         type=argutils.NonNegativeRatio.type_parser,
         default=0.05,
         metavar=argutils.NonNegativeRatio.METAVAR,
-        help="Percent of total characters in each firework shell.",
+        help="Fraction of input characters in each firework shell. 0 produces the minimum shell size of one character.",
     )  # pyright: ignore[reportAssignmentType]
-    "float : Percent of total characters in each firework shell."
+    "float : Fraction of input characters in each firework shell. 0 produces the minimum shell size of one character."
 
     launch_delay: int = argutils.ArgSpec(
         name="--launch-delay",
@@ -136,12 +138,12 @@ class FireworksConfig(BaseConfig):
         default=0.2,
         type=argutils.NonNegativeRatio.type_parser,
         metavar=argutils.NonNegativeRatio.METAVAR,
-        help="Maximum distance from the firework shell origin to the explode waypoint as a percentage of the "
-        "total canvas width.",
+        help="Maximum distance from the firework shell origin to the explode waypoint as a fraction of the total "
+        "canvas width. 0 produces a minimum distance of one cell.",
     )  # pyright: ignore[reportAssignmentType]
     (
-        "float : Maximum distance from the firework shell origin to the explode waypoint as a percentage of "
-        "the total canvas width."
+        "float : Maximum distance from the firework shell origin to the explode waypoint as a fraction of "
+        "the total canvas width. 0 produces a minimum distance of one cell."
     )
 
     final_gradient_stops: tuple[Color, ...] = FinalGradientStopsArg(
@@ -190,8 +192,9 @@ class FireworksIterator(BaseEffectIterator[FireworksConfig]):
         firework_shell: list[EffectCharacter] = []
         for character in self.terminal.get_characters():
             if len(firework_shell) == self.firework_volume or not firework_shell:
-                origin_x = random.randrange(0, self.terminal.canvas.right)
-                self.shells.append(firework_shell)
+                origin_x = random.randrange(self.terminal.canvas.left, self.terminal.canvas.right + 1)
+                if firework_shell:
+                    self.shells.append(firework_shell)
                 firework_shell = []
                 min_row = character.input_coord.row if not self.config.explode_anywhere else self.terminal.canvas.bottom
                 origin_y = random.randrange(min_row, self.terminal.canvas.top + 1)

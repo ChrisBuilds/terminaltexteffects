@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import random
 from typing import Literal, cast
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_fireworks
+from terminaltexteffects.engine.canvas import Canvas
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color
 
@@ -95,6 +98,78 @@ def test_fireworks_args(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+def test_fireworks_shells_skip_initial_empty_group(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify seeded shell preparation queues only populated groups and launches them without an empty delay."""
+    monkeypatch.setattr(effect_fireworks, "random", random.Random(1234))
+    effect = effect_fireworks.Fireworks("ABCD")
+    effect.effect_config.firework_volume = 0.5
+    effect.effect_config.launch_delay = 0
+
+    iterator = cast("effect_fireworks.FireworksIterator", iter(effect))
+
+    assert len(iterator.shells) == 2
+    assert all(iterator.shells)
+
+    next(iterator)
+    assert len(iterator.shells) == 1
+    next(iterator)
+    assert not iterator.shells
+    list(iterator)
+
+
+@pytest.mark.parametrize(("canvas_width", "canvas_left"), [(1, 1), (3, 5)])
+def test_fireworks_origins_use_inclusive_canvas_columns(
+    monkeypatch: pytest.MonkeyPatch,
+    canvas_width: int,
+    canvas_left: int,
+) -> None:
+    """Verify firework origins include both horizontal bounds on one-column and shifted canvases."""
+    if canvas_left != 1:
+        original_init = Canvas.__init__
+
+        def shifted_canvas_init(self: Canvas, top: int, right: int, bottom: int = 1, left: int = 1) -> None:
+            original_init(self, top + 4, right + 4, bottom + 4, left + 4)
+
+        monkeypatch.setattr(Canvas, "__init__", shifted_canvas_init)
+
+    random_range_calls: list[tuple[int, int]] = []
+
+    def pick_inclusive_upper_bound(start: int, stop: int) -> int:
+        random_range_calls.append((start, stop))
+        return stop - 1
+
+    monkeypatch.setattr(effect_fireworks.random, "randrange", pick_inclusive_upper_bound)
+    terminal_config = TerminalConfig._build_config()
+    terminal_config.ignore_terminal_dimensions = True
+    terminal_config.canvas_width = canvas_width
+    terminal_config.canvas_height = 5
+    effect = effect_fireworks.Fireworks("A", terminal_config=terminal_config)
+    iterator = cast("effect_fireworks.FireworksIterator", iter(effect))
+    character = iterator.terminal.get_characters()[0]
+    origin_column = character.motion.paths["apex_pth"].waypoints[0].coord.column
+
+    assert iterator.terminal.canvas.left == canvas_left
+    assert iterator.terminal.canvas.left <= origin_column <= iterator.terminal.canvas.right
+    assert origin_column == iterator.terminal.canvas.right
+    assert random_range_calls[0] == (iterator.terminal.canvas.left, iterator.terminal.canvas.right + 1)
+
+
+def test_fireworks_zero_volume_and_explode_distance_keep_minimums() -> None:
+    """Verify the CLI accepts zero ratios and direct configs clamp them to documented minimums."""
+    parser, _ = build_parser(include_user_effects=False)
+    arguments = parser.parse_args(
+        ["fireworks", "--firework-volume", "0", "--explode-distance", "0"],
+    )
+    assert arguments.firework_volume == 0
+    assert arguments.explode_distance == 0
+
+    effect_config = effect_fireworks.FireworksConfig(firework_volume=0, explode_distance=0)
+    iterator = effect_fireworks.FireworksIterator(effect_fireworks.Fireworks("AB", effect_config=effect_config))
+
+    assert iterator.firework_volume == 1
+    assert iterator.explode_distance == 1
 
 
 def test_fireworks_dynamic_without_preexisting_colors_has_uncolored_fall_scene_final_frame() -> None:
