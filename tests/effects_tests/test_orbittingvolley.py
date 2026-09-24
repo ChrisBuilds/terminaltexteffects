@@ -6,6 +6,7 @@ from typing import Literal, cast
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_orbittingvolley
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair
@@ -101,6 +102,24 @@ def test_orbittingvolley_args(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+def test_orbittingvolley_zero_size_parses_and_launches_minimum_character() -> None:
+    """Verify zero volley size is accepted and launches the one available input character."""
+    parser, _ = build_parser(include_user_effects=False)
+    arguments = parser.parse_args(["orbittingvolley", "--volley-size", "0"])
+    assert arguments.volley_size == 0
+
+    effect_config = effect_orbittingvolley.OrbittingVolleyConfig(volley_size=arguments.volley_size)
+    iterator = effect_orbittingvolley.OrbittingVolleyIterator(
+        effect_orbittingvolley.OrbittingVolley("A", effect_config=effect_config),
+    )
+    input_character = iterator.terminal._input_characters[0]
+
+    next(iterator)
+
+    assert not any(input_character in launcher.magazine for launcher in iterator._launchers)
+    assert input_character.is_visible
 
 
 @pytest.mark.parametrize("launcher_movement_speed", [0.1, 2.0])

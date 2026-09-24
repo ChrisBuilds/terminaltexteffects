@@ -44,8 +44,8 @@ class OrbittingVolleyConfig(BaseConfig):
         left_launcher_symbol (str): Symbol for the left launcher.
         launcher_movement_speed (float): Orbitting speed of the launchers. Valid values are n > 0.
         character_movement_speed (float): Speed of the launched characters. Valid values are n > 0.
-        volley_size (float): Percent of total input characters each launcher will fire per volley. Lower limit of "
-            "one character. Valid values are 0 < n <= 1.
+        volley_size (float): Fraction of input characters each launcher will fire per volley. Valid values are
+            0 <= n <= 1. A value of 0 still fires a minimum volley of one character when available.
         launch_delay (int): Number of animation ticks to wait between volleys of characters. Valid values are n >= 0.
         character_easing (easing.EasingFunction): Easing function to use for launched character movement.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one "
@@ -133,9 +133,11 @@ class OrbittingVolleyConfig(BaseConfig):
         type=argutils.NonNegativeRatio.type_parser,
         default=0.03,
         metavar=argutils.NonNegativeRatio.METAVAR,
-        help="Percent of total input characters each launcher will fire per volley. Lower limit of one character.",
+        help="Fraction of input characters each launcher will fire per volley, from 0 to 1. A value of 0 still "
+        "fires a minimum volley of one character when available.",
     )  # pyright: ignore[reportAssignmentType]
-    "float : Percent of total input characters each launcher will fire per volley. Lower limit of one character."
+    "float : Fraction of input characters each launcher will fire per volley. A value of 0 still fires a minimum "
+    "volley of one character when available."
 
     launch_delay: int = argutils.ArgSpec(
         name="--launch-delay",

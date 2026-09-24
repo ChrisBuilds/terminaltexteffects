@@ -203,6 +203,7 @@
 * ErrorCorrect now rounds its target displaced-character count to a whole pair, with half pairs rounded up.
 * Fireworks now documents zero `firework_volume` and `explode_distance` as selecting their one-character and one-cell minimums.
 * Matrix now treats symbol and color swap chances as probabilities from 0 to 1, with 0 disabling swaps.
+* OrbittingVolley now documents that a zero volley size still launches one available input character.
 * Blackhole now keeps input stars available for consumption on short text, uses helper border stars when necessary,
   fits the border inside compact canvases, and hides helpers before restoring the final text.
 * Blackhole now uses its configured `star_colors` palette for explosion characters and documents its collapse-point use.

@@ -337,7 +337,7 @@ _shtab_tte_orbittingvolley_options=(
   "--left-launcher-symbol[Symbol for the left launcher.]:left_launcher_symbol:"
   "--launcher-movement-speed[Orbitting speed of the launchers.]:launcher_movement_speed:"
   "--character-movement-speed[Speed of the launched characters.]:character_movement_speed:"
-  "--volley-size[Percent of total input characters each launcher will fire per volley. Lower limit of one character.]:volley_size:"
+  "--volley-size[Fraction of input characters each launcher will fire per volley, from 0 to 1. A value of 0 still fires a minimum volley of one character when available.]:volley_size:"
   "--launch-delay[Number of animation ticks to wait between volleys of characters.]:launch_delay:"
   "--character-easing[Easing function to use for launched character movement.]:character_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
