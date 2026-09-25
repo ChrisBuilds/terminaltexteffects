@@ -6,6 +6,7 @@ from typing import Literal, cast
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_swarm
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair
@@ -92,6 +93,55 @@ def test_swarm_args(
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)
+
+
+@pytest.mark.parametrize(("coordination", "expected_follower_area"), [(0, "9_swarm_area"), (1, "10_swarm_area")])
+def test_swarm_coordination_advances_past_area_nine(coordination: float, expected_follower_area: str) -> None:
+    """Verify coordination compares complete area indices and honors its ratio."""
+    effect = effect_swarm.Swarm("AB")
+    effect.effect_config.swarm_size = 1
+    effect.effect_config.swarm_coordination = coordination
+    effect.effect_config.swarm_area_count_range = (12, 12)
+    effect.terminal_config = _make_terminal_config("ignore")
+    effect.terminal_config.canvas_width = 40
+    effect.terminal_config.canvas_height = 40
+    iterator = cast("effect_swarm.SwarmIterator", iter(effect))
+
+    next(iterator)
+    first_character, second_character = iterator.current_swarm
+    assert "10_swarm_area" in first_character.motion.paths
+    assert "10_swarm_area" in second_character.motion.paths
+
+    first_character.motion.activate_path("10_swarm_area")
+    second_character.motion.activate_path("9_swarm_area")
+    iterator.active_swarm_area = "9_swarm_area"
+    next(iterator)
+
+    assert iterator.active_swarm_area == "10_swarm_area"
+    assert second_character.motion.active_path is not None
+    assert second_character.motion.active_path.path_id == expected_follower_area
+
+
+def test_swarm_zero_ratio_boundaries_and_runtime_behavior() -> None:
+    """Verify zero and one ratio boundaries and the documented zero behavior."""
+    parser, _ = build_parser(include_user_effects=False)
+    zero_values = parser.parse_args(["swarm", "--swarm-size", "0", "--swarm-coordination", "0"])
+    one_values = parser.parse_args(["swarm", "--swarm-size", "1", "--swarm-coordination", "1"])
+    assert zero_values.swarm_size == 0
+    assert zero_values.swarm_coordination == 0
+    assert one_values.swarm_size == 1
+    assert one_values.swarm_coordination == 1
+
+    config = effect_swarm.SwarmConfig(swarm_size=0, swarm_coordination=0)
+    assert config.swarm_size == 0
+    assert config.swarm_coordination == 0
+    one_config = effect_swarm.SwarmConfig(swarm_size=1, swarm_coordination=1)
+    assert one_config.swarm_size == 1
+    assert one_config.swarm_coordination == 1
+
+    effect = effect_swarm.Swarm("ABCD", effect_config=config)
+    iterator = cast("effect_swarm.SwarmIterator", iter(effect))
+    assert [len(swarm) for swarm in iterator.swarms] == [1, 1, 1, 1]
 
 
 def test_swarm_dynamic_without_preexisting_colors_ends_input_scene_uncolored() -> None:

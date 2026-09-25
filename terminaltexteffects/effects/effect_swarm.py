@@ -51,8 +51,10 @@ class SwarmConfig(BaseConfig):
     Attributes:
         base_color (tuple[Color, ...]): Tuple of colors for the swarms.
         flash_color (Color): Color for the character flash. Characters flash when moving.
-        swarm_size (float): Percent of total characters in each swarm. Valid values are 0 < n <= 1.
-        swarm_coordination (float): Percent of characters in a swarm that move as a group. Valid values are 0 < n <= 1.
+        swarm_size (float): Percent of total characters in each swarm. Valid values are 0 <= n <= 1. Zero uses one
+            character per swarm.
+        swarm_coordination (float): Percent of characters in a swarm that move as a group. Valid values are
+            0 <= n <= 1. Zero disables coordinated followers.
         swarm_area_count_range (tuple[int, int]): Range of the number of areas where characters will swarm. Valid
             values are n > 0.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
@@ -100,18 +102,24 @@ class SwarmConfig(BaseConfig):
         type=argutils.NonNegativeRatio.type_parser,
         metavar=argutils.NonNegativeRatio.METAVAR,
         default=0.1,
-        help="Percent of total characters in each swarm.",
+        help="Percent of total characters in each swarm. Zero uses one character per swarm.",
     )  # pyright: ignore[reportAssignmentType]
-    "float : Percent of total characters in each swarm."
+    (
+        "float : Percent of total characters in each swarm. Valid values are 0 <= n <= 1. "
+        "Zero uses one character per swarm."
+    )
 
     swarm_coordination: float = argutils.ArgSpec(
         name="--swarm-coordination",
         type=argutils.NonNegativeRatio.type_parser,
         metavar=argutils.NonNegativeRatio.METAVAR,
         default=0.80,
-        help="Percent of characters in a swarm that move as a group.",
+        help="Percent of characters in a swarm that move as a group. Zero disables coordinated followers.",
     )  # pyright: ignore[reportAssignmentType]
-    "float : Percent of characters in a swarm that move as a group."
+    (
+        "float : Percent of characters in a swarm that move as a group. Valid values are 0 <= n <= 1. "
+        "Zero disables coordinated followers."
+    )
 
     swarm_area_count_range: tuple[int, int] = argutils.ArgSpec(
         name="--swarm-area-count-range",
@@ -374,7 +382,8 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                         character.motion.active_path
                         and character.motion.active_path.path_id != self.active_swarm_area
                         and "swarm_area" in character.motion.active_path.path_id
-                        and int(character.motion.active_path.path_id[0]) > int(self.active_swarm_area[0])
+                        and int(character.motion.active_path.path_id.partition("_swarm_area")[0])
+                        > int(self.active_swarm_area.partition("_swarm_area")[0])
                     ):
                         self.active_swarm_area = character.motion.active_path.path_id
                         for other in self.current_swarm:

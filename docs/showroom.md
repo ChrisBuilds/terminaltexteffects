@@ -1355,9 +1355,9 @@ Characters are grouped into swarms and move around the terminal before settling 
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.HORIZONTAL)
     --swarm-size (0 <= float(n) <= 1)
-                        Percent of total characters in each swarm. (default: 0.1)
+                        Percent of total characters in each swarm. Zero uses one character per swarm. (default: 0.1)
     --swarm-coordination (0 <= float(n) <= 1)
-                        Percent of characters in a swarm that move as a group. (default: 0.8)
+                        Percent of characters in a swarm that move as a group. Zero disables coordinated followers. (default: 0.8)
     --swarm-area-count (hyphen separated int range e.g. '1-10')
                         Range of the number of areas where characters will swarm. (default: (2, 4))
 
