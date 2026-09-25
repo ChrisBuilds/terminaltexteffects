@@ -148,6 +148,45 @@ def test_matrix_swap_chance_boundaries_and_zero_behavior(monkeypatch: pytest.Mon
     assert random_choices == [column.matrix_symbols]
     assert character.animation.current_character_visual.colors is not None
     assert character.animation.current_character_visual.colors.fg == effect_config.highlight_color
+    visual = character.animation.current_character_visual
+    column.tick()
+    assert character.animation.current_character_visual is visual
+
+
+def test_matrix_fill_registers_each_full_column_once() -> None:
+    """Each filled column enters the resolve phase once."""
+    effect = effect_matrix.Matrix("ABC\nDEF")
+    effect.effect_config.rain_time = 1
+    effect.terminal_config = _make_terminal_config("ignore")
+    iterator = cast("effect_matrix.MatrixIterator", iter(effect))
+
+    for _ in iterator:
+        if iterator.phase == "resolve":
+            break
+
+    assert len(iterator.full_columns) == 3
+    assert len(set(iterator.full_columns)) == 3
+    assert all(column.is_full for column in iterator.full_columns)
+
+
+def test_matrix_drop_column_hides_all_characters_below_canvas() -> None:
+    """A drop keeps the surviving characters in their original order."""
+    iterator = effect_matrix.MatrixIterator(effect_matrix.Matrix("A\nB\nC"))
+    column = iterator.pending_columns[0]
+    first, second, third = column.characters
+    bottom = iterator.terminal.canvas.bottom
+    column.visible_characters = column.characters.copy()
+    for character, row in zip(column.characters, (bottom, bottom, bottom + 1), strict=True):
+        character.motion.current_coord = effect_matrix.Coord(character.input_coord.column, row)
+        iterator.terminal.set_character_visibility(character, is_visible=True)
+
+    column.drop_column()
+
+    assert column.visible_characters == [third]
+    assert not first.is_visible
+    assert not second.is_visible
+    assert third.is_visible
+    assert third.motion.current_coord.row == bottom
 
 
 def test_matrix_dynamic_without_preexisting_colors_has_uncolored_resolve_scene_final_frame() -> None:

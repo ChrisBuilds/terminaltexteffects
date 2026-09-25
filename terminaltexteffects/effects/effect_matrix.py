@@ -280,6 +280,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             """Set up the rain column for the specified phase."""
             self.pending_characters.clear()
             self.phase = phase
+            self.is_full = False
             for character in self.characters:
                 self.terminal.set_character_visibility(character, is_visible=False)
                 self.pending_characters.append(character)
@@ -315,16 +316,18 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
 
         def drop_column(self) -> None:
             """Drop the rain column."""
-            out_of_canvas = []
+            remaining_characters = []
             for character in self.visible_characters:
-                character.motion.current_coord = Coord(
+                next_coord = Coord(
                     character.motion.current_coord.column,
                     character.motion.current_coord.row - 1,
                 )
-                if character.motion.current_coord.row < self.terminal.canvas.bottom:
+                character.motion.current_coord = next_coord
+                if next_coord.row < self.terminal.canvas.bottom:
                     self.terminal.set_character_visibility(character, is_visible=False)
-                    out_of_canvas.append(character)
-            self.visible_characters = [char for char in self.visible_characters if char not in out_of_canvas]
+                else:
+                    remaining_characters.append(character)
+            self.visible_characters = remaining_characters
 
         def fade_last_character(self) -> None:
             """Fade the last character in the rain column."""
@@ -401,17 +404,20 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             # randomly change the symbol and/or color of the characters
             next_color: Color | None
             for character in self.visible_characters:
+                current_visual = character.animation.current_character_visual
                 if random.random() < self.config.symbol_swap_chance:
                     next_symbol = random.choice(self.matrix_symbols)
                 else:
-                    next_symbol = character.animation.current_character_visual.symbol
+                    next_symbol = current_visual.symbol
                 if random.random() < self.config.color_swap_chance:
                     next_color = random.choice(self.rain_colors)
-                elif character.animation.current_character_visual.colors:
-                    next_color = character.animation.current_character_visual.colors.fg
+                elif current_visual.colors:
+                    next_color = current_visual.colors.fg
                 else:
                     next_color = None
-                character.animation.set_appearance(next_symbol, colors=ColorPair(fg=next_color))
+                current_color = current_visual.colors.fg if current_visual.colors else None
+                if next_symbol != current_visual.symbol or next_color != current_color:
+                    character.animation.set_appearance(next_symbol, colors=ColorPair(fg=next_color))
 
     def __init__(self, effect: Matrix) -> None:
         """Initialize the Matrix effect iterator."""
@@ -528,8 +534,9 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                 column.tick()
 
                 if not column.pending_characters:
-                    if column.phase == "fill" and column not in self.full_columns:
+                    if column.phase == "fill" and not column.is_full:
                         self.full_columns.append(column)
+                        column.is_full = True
                     elif not column.visible_characters:
                         column.setup_column(self.phase)
                         self.pending_columns.append(column)

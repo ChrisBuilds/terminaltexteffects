@@ -172,6 +172,11 @@
 
 ---
 
+* Matrix skips rebuilding rain-character visuals when their symbol and color stay the same, while preserving swap draws
+  and rendered frames. With a fixed effect clock, seven-sample iterator benchmarks measured mean render time falling
+  from 1.879 to 0.513 seconds (72.7%) on generated 80-by-24 input and from 0.0157 to 0.00610 seconds (61.2%) on medium
+  input. Frame counts and output lengths matched for each seed; these timings exclude terminal printing.
+* Matrix tracks completed fill columns without list scans and retains dropped characters in one pass.
 * Blackhole now uses a border-character set for membership checks during starfield construction and consumption,
   while retaining the ordered list for ring movement.
 * Beams now releases its build-only final-color mapping after scene construction and consumes character, pending-group,
