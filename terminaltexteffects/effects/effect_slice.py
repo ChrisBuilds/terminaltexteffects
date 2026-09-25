@@ -54,7 +54,7 @@ class SliceConfig(BaseConfig):
         description="slice | Slices the input in half and slides it into place from opposite directions.",
         epilog=(
             f"{argutils.EASING_EPILOG} Example: terminaltexteffects slice --final-gradient-stops 8A008A 00D1FF "
-            "FFFFFF --final-gradient-steps 12 --slice-direction vertical--movement-speed 0.15 "
+            "FFFFFF --final-gradient-steps 12 --slice-direction vertical --movement-speed 0.15 "
             "--movement-easing IN_OUT_EXPO"
         ),
     )

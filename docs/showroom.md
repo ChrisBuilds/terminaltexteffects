@@ -1121,7 +1121,7 @@ Slices the input in half and slides it into place from opposite directions.
 
 
     Example: terminaltexteffects slice --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12
-    --slice-direction vertical--movement-speed 0.15 --movement-easing IN_OUT_EXPO
+    --slice-direction vertical --movement-speed 0.15 --movement-easing IN_OUT_EXPO
     ```
 ---
 
