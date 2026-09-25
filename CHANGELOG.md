@@ -212,6 +212,7 @@
 * Slice's copyable CLI example now separates `--slice-direction` and `--movement-speed` correctly.
 * Spotlights now rejects `beam_falloff` values above 1, matching its documented percentage range.
 * Swarm now compares complete area indices and documents the zero behavior of `swarm_size` and `swarm_coordination`.
+* VHSTape glitch-wave paths now animate with the configured `glitch_wave_colors` palette.
 * Blackhole now keeps input stars available for consumption on short text, uses helper border stars when necessary,
   fits the border inside compact canvases, and hides helpers before restoring the final text.
 * Blackhole now uses its configured `star_colors` palette for explosion characters and documents its collapse-point use.

@@ -244,6 +244,12 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                 )
                 for color in glitch_line_colors[::-1]:
                     glitch_scn_backward.add_frame(character.input_symbol, duration=1, colors=ColorPair(fg=color))
+                glitch_wave_scn = character.animation.new_scene(
+                    scene_id="rgb_glitch_wave",
+                    sync=Scene.SyncMetric.STEP,
+                )
+                for color in self.args.glitch_wave_colors:
+                    glitch_wave_scn.add_frame(character.input_symbol, duration=1, colors=ColorPair(fg=color))
                 snow_scn = character.animation.new_scene(scene_id="snow")
                 for _ in range(25):
                     snow_scn.add_frame(
@@ -294,13 +300,13 @@ class VHSTapeIterator(BaseEffectIterator[VHSTapeConfig]):
                     EventHandler.Event.PATH_ACTIVATED,
                     glitch_wave_mid_path,
                     EventHandler.Action.ACTIVATE_SCENE,
-                    glitch_scn_forward,
+                    glitch_wave_scn,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.PATH_ACTIVATED,
                     glitch_wave_end_path,
                     EventHandler.Action.ACTIVATE_SCENE,
-                    glitch_scn_forward,
+                    glitch_wave_scn,
                 )
                 character.event_handler.register_event(
                     EventHandler.Event.SCENE_COMPLETE,

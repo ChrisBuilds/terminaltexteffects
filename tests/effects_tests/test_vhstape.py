@@ -227,12 +227,14 @@ def test_vhstape_dynamic_keeps_glitch_noise_and_white_redraw_effect_colored() ->
     effect = effect_vhstape.VHSTape("\x1b[38;5;196mA\x1b[0m")
     effect.terminal_config = _make_terminal_config("dynamic")
     effect.effect_config.glitch_line_colors = (Color("#ff00ff"), Color("#00ff00"))
+    effect.effect_config.glitch_wave_colors = (Color("#0000ff"), Color("#ffff00"))
     effect.effect_config.noise_colors = (Color("#111111"), Color("#222222"))
 
     iterator = cast("effect_vhstape.VHSTapeIterator", iter(effect))
     character = iterator.terminal.get_characters()[0]
     glitch_forward_scene = character.animation.query_scene("rgb_glitch_fwd")
     glitch_backward_scene = character.animation.query_scene("rgb_glitch_bwd")
+    glitch_wave_scene = character.animation.query_scene("rgb_glitch_wave")
     snow_scene = character.animation.query_scene("snow")
     final_redraw_scene = character.animation.query_scene("final_redraw")
 
@@ -246,6 +248,15 @@ def test_vhstape_dynamic_keeps_glitch_noise_and_white_redraw_effect_colored() ->
         Color("#00ff00").rgb_color,
         Color("#ff00ff").rgb_color,
     ]
+    assert glitch_wave_scene is not None
+    assert [frame.character_visual._fg_color_code for frame in glitch_wave_scene.frames] == [
+        Color("#0000ff").rgb_color,
+        Color("#ffff00").rgb_color,
+    ]
+    character.motion.activate_path("glitch_wave_mid")
+    assert character.animation.active_scene is glitch_wave_scene
+    character.motion.activate_path("glitch_wave_end")
+    assert character.animation.active_scene is glitch_wave_scene
     assert snow_scene is not None
     assert {
         frame.character_visual._fg_color_code for frame in snow_scene.frames[:-1]
