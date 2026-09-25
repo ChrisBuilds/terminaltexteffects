@@ -192,6 +192,7 @@
 * LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
 * LaserEtch configuration docs now identify `etch_pattern` and list the supported character-ordering patterns.
 * Rain API documentation now identifies `RainConfig` as the effect configuration type.
+* RandomSequence API documentation now identifies `RandomSequenceConfig` as the effect configuration type.
 * Blackhole now documents final-gradient steps as color transition counts for its spatial gradient, not as an
   animation-duration setting.
 * BouncyBalls now documents that `ball_delay=0` removes the delay between ball-drop batches.
@@ -206,6 +207,7 @@
 * Matrix now treats symbol and color swap chances as probabilities from 0 to 1, with 0 disabling swaps.
 * OrbittingVolley now documents that a zero volley size still launches one available input character.
 * Overflow now accepts `--overflow-cycles-range 0-0` to disable overflow cycles, matching its documented range.
+* RandomSequence now enforces its documented `0 < speed <= 1` range.
 * Blackhole now keeps input stars available for consumption on short text, uses helper border stars when necessary,
   fits the border inside compact canvases, and hides helpers before restoring the final text.
 * Blackhole now uses its configured `star_colors` palette for explosion characters and documents its collapse-point use.

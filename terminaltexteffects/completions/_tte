@@ -407,7 +407,7 @@ _shtab_tte_rain_defaults_added=0
 
 _shtab_tte_randomsequence_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--speed[Speed of the animation as a percentage of the total number of characters to reveal in each tick.]:speed:"
+  "--speed[Fraction of input characters to reveal per tick. Values must be greater than 0 and at most 1.]:speed:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"
   "--final-gradient-frames[Number of frames to display each gradient step. Increase to slow down the gradient animation.]:final_gradient_frames:"

@@ -62,12 +62,12 @@ class RandomSequenceConfig(BaseConfig):
 
     speed: float = argutils.ArgSpec(
         name="--speed",
-        type=argutils.PositiveFloat.type_parser,
+        type=argutils.PositiveRatio.type_parser,
         default=0.007,
-        metavar=argutils.PositiveFloat.METAVAR,
-        help="Speed of the animation as a percentage of the total number of characters to reveal in each tick.",
+        metavar=argutils.PositiveRatio.METAVAR,
+        help="Fraction of input characters to reveal per tick. Values must be greater than 0 and at most 1.",
     )  # pyright: ignore[reportAssignmentType]
-    "float : Speed of the animation as a percentage of the total number of characters to reveal in each tick."
+    "float : Fraction of input characters to reveal per tick. Values must be greater than 0 and at most 1."
 
     final_gradient_stops: tuple[Color, ...] = FinalGradientStopsArg(
         default=(Color("#8A008A"), Color("#00D1FF"), Color("#FFFFFF")),
@@ -194,7 +194,7 @@ class RandomSequence(BaseEffect[RandomSequenceConfig]):
     """Prints the input data in a random sequence, one character at a time.
 
     Attributes:
-        effect_config (PourConfig): Configuration for the effect.
+        effect_config (RandomSequenceConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
 
     """

@@ -6,9 +6,31 @@ from typing import Literal, cast
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_random_sequence
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair
+
+
+def test_randomsequence_speed_enforces_positive_ratio_boundaries() -> None:
+    """Verify speed accepts one, rejects zero and values above one through CLI and direct config."""
+    parser, _ = build_parser(include_user_effects=False)
+    arguments = parser.parse_args(["randomsequence", "--speed", "1"])
+    assert arguments.speed == 1
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["randomsequence", "--speed", "0"])
+    with pytest.raises(SystemExit):
+        parser.parse_args(["randomsequence", "--speed", "1.01"])
+
+    config = effect_random_sequence.RandomSequenceConfig(speed=1)
+    iterator = effect_random_sequence.RandomSequenceIterator(effect_random_sequence.RandomSequence("ABC", config))
+    assert iterator.characters_per_tick == 3
+
+    with pytest.raises(ValueError, match="Invalid value for 'speed'"):
+        effect_random_sequence.RandomSequenceConfig(speed=0)
+    with pytest.raises(ValueError, match="Invalid value for 'speed'"):
+        effect_random_sequence.RandomSequenceConfig(speed=1.01)
 
 
 def _make_terminal_config(
