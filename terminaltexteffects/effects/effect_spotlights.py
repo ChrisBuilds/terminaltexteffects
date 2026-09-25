@@ -82,15 +82,15 @@ class SpotlightsConfig(BaseConfig):
 
     beam_falloff: float = argutils.ArgSpec(
         name="--beam-falloff",
-        type=argutils.NonNegativeFloat.type_parser,
+        type=argutils.NonNegativeRatio.type_parser,
         default=0.3,
-        metavar=argutils.NonNegativeFloat.METAVAR,
+        metavar=argutils.NonNegativeRatio.METAVAR,
         help="Distance from the edge of the beam where the brightness begins to fall off, as a percentage of "
-        "total beam width.",
+        "total beam width. Valid values are 0 <= n <= 1.",
     )  # pyright: ignore[reportAssignmentType]
     (
         "float : Distance from the edge of the beam where the brightness begins to fall off, as a percentage "
-        "of total beam width."
+        "of total beam width. Valid values are 0 <= n <= 1."
     )
 
     search_duration: int = argutils.ArgSpec(

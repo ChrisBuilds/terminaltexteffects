@@ -493,7 +493,7 @@ _shtab_tte_smoke_defaults_added=0
 _shtab_tte_spotlights_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--beam-width-ratio[Width of the beam of light as min(width, height) \/\/ n of the input text. Values less than 1 are raised to 1.]:beam_width_ratio:"
-  "--beam-falloff[Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width.]:beam_falloff:"
+  "--beam-falloff[Distance from the edge of the beam where the brightness begins to fall off, as a percentage of total beam width. Valid values are 0 \<\= n \<\= 1.]:beam_falloff:"
   "--search-duration[Duration of the search phase, in frames, before the spotlights converge in the center.]:search_duration:"
   "--search-speed-range[Range of speeds for the spotlights during the search phase. The speed is a random value between the two provided values.]:search_speed_range:"
   "--spotlight-count[Number of spotlights to use.]:spotlight_count:"

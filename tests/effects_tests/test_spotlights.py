@@ -6,10 +6,27 @@ from typing import Literal, cast
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_spotlights
 from terminaltexteffects.engine import animation
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair
+
+
+def test_spotlights_beam_falloff_boundaries() -> None:
+    """Verify CLI and direct config validation matches the documented ratio range."""
+    parser, _ = build_parser(include_user_effects=False)
+    assert parser.parse_args(["spotlights", "--beam-falloff", "0"]).beam_falloff == 0
+    assert parser.parse_args(["spotlights", "--beam-falloff", "1"]).beam_falloff == 1
+    with pytest.raises(SystemExit):
+        parser.parse_args(["spotlights", "--beam-falloff", "1.01"])
+
+    for value in (0, 1):
+        config = effect_spotlights.SpotlightsConfig(beam_falloff=value)
+        assert config.beam_falloff == value
+    config = effect_spotlights.SpotlightsConfig()
+    with pytest.raises(ValueError, match="Invalid value for 'beam_falloff'"):
+        config.beam_falloff = 1.01
 
 
 def _make_terminal_config(
@@ -84,7 +101,7 @@ def test_spotlights_final_gradient(
 
 
 @pytest.mark.parametrize("beam_width_ratio", [0.01, 3])
-@pytest.mark.parametrize("beam_falloff", [0, 3.0])
+@pytest.mark.parametrize("beam_falloff", [0, 1])
 @pytest.mark.parametrize("search_duration", [1, 5])
 @pytest.mark.parametrize("search_speed_range", [(0.01, 1), (2, 4)])
 @pytest.mark.parametrize("spotlight_count", [1, 10])
