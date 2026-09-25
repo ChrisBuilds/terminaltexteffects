@@ -42,13 +42,13 @@ class RingsConfig(BaseConfig):
 
     Attributes:
         ring_colors (tuple[Color, ...]): Tuple of colors for the rings.
-        ring_gap (float): Distance between rings as a percent of the smallest canvas dimension. "
+        `ring_gap` (float): Distance between rings as a fraction of the smallest canvas dimension. "
             "Valid values are 0 < n <= 1.
         spin_duration (int): Number of frames for each cycle of the spin phase. Valid values are n >= 0.
         spin_speed (tuple[float, float]): Range of speeds for the rotation of the rings. The speed is randomly "
             "selected from this range for each ring. Valid values are n > 0.
-        disperse_duration (int): Number of frames spent in the dispersed state between spinning cycles. "
-            "Valid values are n >= 0.
+        `disperse_duration` (int): Number of frames to hold the dispersed state between spinning cycles. "
+            "Valid values are n >= 0; 0 adds no hold.
         spin_disperse_cycles (int): Number of times the animation will cycle between spinning rings and "
             "dispersed characters. Valid values are n > 0.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color "
@@ -82,11 +82,12 @@ class RingsConfig(BaseConfig):
 
     ring_gap: float = argutils.ArgSpec(
         name="--ring-gap",
-        type=argutils.PositiveFloat.type_parser,
+        type=argutils.PositiveRatio.type_parser,
         default=0.1,
-        help="Distance between rings as a percent of the smallest canvas dimension.",
+        metavar=argutils.PositiveRatio.METAVAR,
+        help="Distance between rings as a fraction of the smallest canvas dimension, greater than 0 and at most 1.",
     )  # pyright: ignore[reportAssignmentType]
-    "float : Distance between rings as a percent of the smallest canvas dimension."
+    "float : Fraction of the smallest canvas dimension between rings, greater than 0 and at most 1."
     spin_duration: int = argutils.ArgSpec(
         name="--spin-duration",
         type=argutils.NonNegativeInt.type_parser,
@@ -111,11 +112,12 @@ class RingsConfig(BaseConfig):
 
     disperse_duration: int = argutils.ArgSpec(
         name="--disperse-duration",
-        type=argutils.PositiveInt.type_parser,
+        type=argutils.NonNegativeInt.type_parser,
         default=200,
-        help="Number of frames spent in the dispersed state between spinning cycles.",
+        metavar=argutils.NonNegativeInt.METAVAR,
+        help="Number of frames to hold the dispersed state between spinning cycles. Use 0 for no added hold.",
     )  # pyright: ignore[reportAssignmentType]
-    "int : Number of frames spent in the dispersed state between spinning cycles."
+    "int : Number of frames to hold the dispersed state between spinning cycles. Zero adds no hold."
 
     spin_disperse_cycles: int = argutils.ArgSpec(
         name="--spin-disperse-cycles",

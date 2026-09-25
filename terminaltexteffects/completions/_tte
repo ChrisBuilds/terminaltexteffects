@@ -420,10 +420,10 @@ _shtab_tte_randomsequence_defaults_added=0
 _shtab_tte_rings_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--ring-colors[Space separated, unquoted, list of colors for the rings.]:ring_colors:"
-  "--ring-gap[Distance between rings as a percent of the smallest canvas dimension.]:ring_gap:"
+  "--ring-gap[Distance between rings as a fraction of the smallest canvas dimension, greater than 0 and at most 1.]:ring_gap:"
   "--spin-duration[Number of frames for each cycle of the spin phase.]:spin_duration:"
   "--spin-speed[Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring.]:spin_speed:"
-  "--disperse-duration[Number of frames spent in the dispersed state between spinning cycles.]:disperse_duration:"
+  "--disperse-duration[Number of frames to hold the dispersed state between spinning cycles. Use 0 for no added hold.]:disperse_duration:"
   "--spin-disperse-cycles[Number of times the animation will cycles between spinning rings and dispersed characters.]:spin_disperse_cycles:"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
   "--final-gradient-steps[Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation.]:final_gradient_steps:"

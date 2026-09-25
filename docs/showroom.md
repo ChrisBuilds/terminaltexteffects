@@ -1001,13 +1001,14 @@ Characters are dispersed and form into spinning rings.
                         Space separated, unquoted, list of the number of gradient steps to use. More steps will create a smoother and longer gradient animation. (default: (12,))
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
-    --ring-gap RING_GAP   Distance between rings as a percent of the smallest canvas dimension. (default: 0.1)
+    --ring-gap (0 < float(n) <= 1)
+                        Distance between rings as a fraction of the smallest canvas dimension, greater than 0 and at most 1. (default: 0.1)
     --spin-duration SPIN_DURATION
                         Number of frames for each cycle of the spin phase. (default: 200)
     --spin-speed (hyphen separated float range e.g. '0.25-0.5')
                         Range of speeds for the rotation of the rings. The speed is randomly selected from this range for each ring. (default: (0.25, 1.0))
     --disperse-duration DISPERSE_DURATION
-                        Number of frames spent in the dispersed state between spinning cycles. (default: 200)
+                        Number of frames to hold the dispersed state between spinning cycles. Use 0 for no added hold. (default: 200)
     --spin-disperse-cycles SPIN_DISPERSE_CYCLES
                         Number of times the animation will cycles between spinning rings and dispersed characters. (default: 3)
 

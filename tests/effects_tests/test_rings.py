@@ -6,9 +6,39 @@ from typing import Literal, cast
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_rings
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair
+
+
+def test_rings_gap_and_disperse_duration_boundaries() -> None:
+    """Verify CLI and direct configs enforce ring-gap and disperse-duration contracts."""
+    parser, _ = build_parser(include_user_effects=False)
+    upper_ring_gap = parser.parse_args(["rings", "--ring-gap", "1", "--disperse-duration", "0"])
+    positive_values = parser.parse_args(["rings", "--ring-gap", "0.1", "--disperse-duration", "1"])
+    assert upper_ring_gap.ring_gap == 1
+    assert upper_ring_gap.disperse_duration == 0
+    assert positive_values.ring_gap == 0.1
+    assert positive_values.disperse_duration == 1
+
+    for arguments in (
+        ["rings", "--ring-gap", "0"],
+        ["rings", "--ring-gap", "1.01"],
+        ["rings", "--disperse-duration", "-1"],
+    ):
+        with pytest.raises(SystemExit):
+            parser.parse_args(arguments)
+
+    config = effect_rings.RingsConfig(ring_gap=1, disperse_duration=0)
+    iterator = effect_rings.RingsIterator(effect_rings.Rings("A", effect_config=config))
+    assert iterator.ring_gap == 1
+    assert iterator._disperse_time_remaining == 0
+
+    for field, value in (("ring_gap", 0), ("ring_gap", 1.01), ("disperse_duration", -1)):
+        config = effect_rings.RingsConfig()
+        with pytest.raises(ValueError, match=f"Invalid value for '{field}'"):
+            setattr(config, field, value)
 
 
 def _make_terminal_config(
@@ -75,7 +105,7 @@ def test_rings_final_gradient(
 
 
 @pytest.mark.parametrize("ring_colors", [(Color("#ffffff"),), (Color("#f0f0f0"), Color("#00ff00"))])
-@pytest.mark.parametrize("ring_gap", [0.0001, 0.5, 2])
+@pytest.mark.parametrize("ring_gap", [0.0001, 0.5, 1])
 @pytest.mark.parametrize("spin_duration", [0, 10])
 @pytest.mark.parametrize("spin_speed", [(0.01, 2.0), (1.0, 3.0)])
 @pytest.mark.parametrize("disperse_duration", [1, 10])

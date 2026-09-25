@@ -208,6 +208,7 @@
 * OrbittingVolley now documents that a zero volley size still launches one available input character.
 * Overflow now accepts `--overflow-cycles-range 0-0` to disable overflow cycles, matching its documented range.
 * RandomSequence now enforces its documented `0 < speed <= 1` range.
+* Rings now enforces the documented `ring_gap` range and accepts zero `disperse_duration`.
 * Blackhole now keeps input stars available for consumption on short text, uses helper border stars when necessary,
   fits the border inside compact canvases, and hides helpers before restoring the final text.
 * Blackhole now uses its configured `star_colors` palette for explosion characters and documents its collapse-point use.
