@@ -81,6 +81,8 @@
   curve still caches repeated progress values, while one-off and randomized curves can be reclaimed normally.
 * Scene and animation XTerm color conversion now share a bounded 1,024-entry cache, preventing unbounded retention of
   distinct RGB colors.
+* Removed the unused `Animation.active_scene_current_step` field; scene and motion objects remain the playback progress
+  sources.
 * Updated the `argutils` documentation example to use the current `BaseConfig` and `ArgSpec` API, with runnable direct
   construction and CLI parsing examples.
 * `Terminal` now owns an immutable construction-time snapshot of `TerminalConfig`. Mutating the caller's configuration

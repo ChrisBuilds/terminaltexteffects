@@ -178,7 +178,11 @@ def test_animation_init(character: EffectCharacter) -> None:
     assert character.animation.use_xterm_colors is False
     assert character.animation.no_color is False
     assert character.animation.xterm_color_map is Scene.xterm_color_map
-    assert character.animation.active_scene_current_step == 0
+
+
+def test_animation_does_not_expose_unused_active_scene_step_counter(character: EffectCharacter) -> None:
+    """Scene progress is tracked by Scene and Motion state, not a stale Animation counter."""
+    assert not hasattr(character.animation, "active_scene_current_step")
 
 
 def test_animation_new_scene(character: EffectCharacter) -> None:

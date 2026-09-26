@@ -527,8 +527,6 @@ class Animation:
         input_bg_color (graphics.Color | None): the input background Color
         input_bold (bool): whether the input character was parsed with active bold SGR styling
         xterm_color_map (dict[str, int]): shared bounded mapping of RGB color codes to XTerm-256 color codes
-        active_scene_current_step (int): Reserved for scene-step tracking; currently reset on activation but
-            otherwise unused.
         current_character_visual (CharacterVisual): the current visual of the character
 
     Methods:
@@ -560,8 +558,6 @@ class Animation:
         self.input_bg_color: graphics.Color | None = None
         self.input_bold: bool = False
         self.xterm_color_map = Scene.xterm_color_map
-        # Future: review whether `active_scene_current_step` should be removed or implemented for real scene tracking.
-        self.active_scene_current_step: int = 0
         self.current_character_visual = CharacterVisual(character.input_symbol)
         self._visual_width_mask = 1 << (self.current_character_visual.cell_width - 1)
 
@@ -962,7 +958,6 @@ class Animation:
         found_scene._frame_added_callback = self._record_visual_width
         self._visual_width_mask |= found_scene._visual_width_mask
         self.active_scene = found_scene
-        self.active_scene_current_step = 0
         previous_width = self.current_character_visual.cell_width
         visual = self.active_scene.activate()
         self._record_visual_width(visual)
