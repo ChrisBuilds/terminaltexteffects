@@ -35,6 +35,25 @@ def test_laseretch_etch_pattern_normalizes_cli_and_native_values(value: object, 
     assert config.etch_pattern == expected
 
 
+@pytest.mark.parametrize("pattern", list(argutils.CharacterGroup))
+def test_laseretch_grouped_patterns_schedule_and_reveal_all_input(pattern: argutils.CharacterGroup) -> None:
+    """Every suggested grouping schedules each input character once and renders the complete text."""
+    effect = effect_laseretch.LaserEtch("abcde\nfghij\nklmno")
+    effect.terminal_config = _make_terminal_config("ignore")
+    effect.effect_config.etch_pattern = pattern
+    iterator = cast("effect_laseretch.LaserEtchIterator", iter(effect))
+    characters = iterator.terminal.get_characters()
+
+    assert len(iterator.pending_chars) == len(characters)
+    assert set(iterator.pending_chars) == set(characters)
+    for _ in iterator:
+        pass
+    assert all(character.is_visible for character in characters)
+    assert all(
+        character.animation.current_character_visual.symbol == character.input_symbol for character in characters
+    )
+
+
 @pytest.mark.parametrize(
     "input_data",
     ["single_char", "single_column", "single_row", "medium", "tabs"],

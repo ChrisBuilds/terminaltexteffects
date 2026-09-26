@@ -51,8 +51,8 @@ class LaserEtchConfig(BaseConfig):
         etch_pattern (`argutils.CharacterGroup` | `str`): Character order used to etch the text. Supports `algorithm`,
             `column_left_to_right`, `column_right_to_left`, `row_top_to_bottom`, `row_bottom_to_top`,
             `diagonal_top_left_to_bottom_right`, `diagonal_bottom_left_to_top_right`,
-            `diagonal_top_right_to_bottom_left`, `diagonal_bottom_right_to_top_left`, `center_to_outside`, and
-            `outside_to_center`.
+            `diagonal_top_right_to_bottom_left`, `diagonal_bottom_right_to_top_left`, `center_to_outside`,
+            `outside_to_center`, `circle_center_to_outside`, and `circle_outside_to_center`.
         etch_speed (int): Along with etch_delay, determines the speed at which the characters are etched onto the terminal.
             This value specifies the number of characters to etch simultaneously.
         etch_delay (int): Along with etch_speed, determines the speed at which the characters are etched onto the terminal.
@@ -407,7 +407,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                     )
                     spawn_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair())
             character.animation.activate_scene(spawn_scn)
-        if self.config.etch_pattern in argutils.CharacterGroup._member_names_:
+        if isinstance(self.config.etch_pattern, argutils.CharacterGroup):
             for n, char_list in enumerate(
                 self.terminal.get_characters_grouped(self.config.etch_pattern),
             ):

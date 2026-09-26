@@ -186,6 +186,7 @@
 
 ---
 
+* LaserEtch now schedules grouped etch patterns correctly after configuration normalization, including circular modes.
 * Matrix skips rebuilding rain-character visuals when their symbol and color stay the same, while preserving swap draws
   and rendered frames. With a fixed effect clock, seven-sample iterator benchmarks measured mean render time falling
   from 1.879 to 0.513 seconds (72.7%) on generated 80-by-24 input and from 0.0157 to 0.00610 seconds (61.2%) on medium
