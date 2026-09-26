@@ -387,6 +387,27 @@ printf '%s\\n' "${{COMPREPLY[@]}}"
         parser.parse_args([command, option, choice])
 
 
+def test_waves_completion_suggests_circular_directions() -> None:
+    """Waves advertises both circular directions in completions and accepts them on the CLI."""
+    result = _run_bash(
+        f"""
+eval "$({sys.executable} -m terminaltexteffects --print-completion bash)"
+COMP_WORDS=(tte waves --wave-direction circle_)
+COMP_CWORD=3
+_shtab_tte
+printf '%s\\n' "${{COMPREPLY[@]}}"
+""",
+    )
+    expected = {"circle_center_to_outside", "circle_outside_to_center"}
+    assert set(result.stdout.splitlines()) == expected
+    zsh_completion = get_completion_script("zsh")
+    assert 'outside_to_center circle_center_to_outside circle_outside_to_center)"' in zsh_completion
+    parser, _ = __main__.build_parser(include_user_effects=False)
+    for direction in expected:
+        parsed = parser.parse_args(["waves", "--wave-direction", direction])
+        assert parsed.wave_direction == direction
+
+
 def test_bash_completion_suggests_choice_and_file_values(tmp_path: Path) -> None:
     """Bash completion should offer choice values and file path completions."""
     completion_file = tmp_path / "demo file.txt"

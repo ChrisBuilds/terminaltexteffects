@@ -186,6 +186,8 @@
 
 ---
 
+* Waves supports `circle_center_to_outside` and `circle_outside_to_center` wave directions, including shell completions.
+  The default direction is now `circle_center_to_outside`.
 * LaserEtch now schedules grouped etch patterns correctly after configuration normalization, including circular modes.
 * OrbittingVolley now builds text in expanding circular rings, launching each character from its nearest canvas
   side. Rings launch in order with up to two still in flight; the effect waits for all arrivals before finishing.
@@ -195,6 +197,7 @@
 * OrbittingVolley help and documentation now explain the per-launcher volley limit, active-ring assignment, and
   overlapping arrivals. Showroom defaults and examples now match the actual launcher and character speeds and new
   launch delay.
+* Waves documentation and examples include circular directions and the new default.
 * Matrix skips rebuilding rain-character visuals when their symbol and color stay the same, while preserving swap draws
   and rendered frames. With a fixed effect clock, seven-sample iterator benchmarks measured mean render time falling
   from 1.879 to 0.513 seconds (72.7%) on generated 80-by-24 input and from 0.0157 to 0.00610 seconds (61.2%) on medium

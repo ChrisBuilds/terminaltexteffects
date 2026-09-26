@@ -46,7 +46,7 @@ class WavesConfig(BaseConfig):
         wave_count (int): Number of waves to generate. Valid values are n > 0.
         wave_length (int): The number of frames for each step of the wave. Higher wave-lengths will create a slower
             wave. Valid values are n > 0.
-        wave_direction (typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','center_to_outside','outside_to_center']): Direction of the wave.
+        wave_direction (typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','center_to_outside','outside_to_center','circle_center_to_outside','circle_outside_to_center']): Direction of the wave.
         wave_easing (easing.EasingFunction): Easing function to use for wave travel.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
             provided, the characters will be displayed in that color.
@@ -63,7 +63,7 @@ class WavesConfig(BaseConfig):
         epilog=(
             f"{argutils.EASING_EPILOG} Example: terminaltexteffects waves --wave-symbols ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ "
             "▇ ▆ ▅ ▄ ▃ ▂ ▁ --wave-gradient-stops f0ff65 ffb102 31a0d4 ffb102 f0ff65 --wave-gradient-steps 6 "
-            "--wave-count 7 --wave-length 2 --wave-direction column_left_to_right --wave-easing IN_OUT_SINE "
+            "--wave-count 7 --wave-length 2 --wave-direction circle_center_to_outside --wave-easing IN_OUT_SINE "
             "--final-gradient-stops ffb102 31a0d4 f0ff65 --final-gradient-steps 12 "
             "--final-gradient-direction diagonal"
         ),
@@ -138,9 +138,11 @@ class WavesConfig(BaseConfig):
         "row_bottom_to_top",
         "center_to_outside",
         "outside_to_center",
+        "circle_center_to_outside",
+        "circle_outside_to_center",
     ] = argutils.ArgSpec(
         name="--wave-direction",
-        default="column_left_to_right",
+        default="circle_center_to_outside",
         help="Direction of the wave.",
         choices=[
             "column_left_to_right",
@@ -149,9 +151,11 @@ class WavesConfig(BaseConfig):
             "row_bottom_to_top",
             "center_to_outside",
             "outside_to_center",
+            "circle_center_to_outside",
+            "circle_outside_to_center",
         ],
     )  # pyright: ignore[reportAssignmentType]
-    "typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','center_to_outside','outside_to_center']"
+    "typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','center_to_outside','outside_to_center','circle_center_to_outside','circle_outside_to_center']"
 
     wave_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--wave-easing",
@@ -289,6 +293,8 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             "row_bottom_to_top": argutils.CharacterGroup.ROW_BOTTOM_TO_TOP,
             "center_to_outside": argutils.CharacterGroup.CENTER_TO_OUTSIDE,
             "outside_to_center": argutils.CharacterGroup.OUTSIDE_TO_CENTER,
+            "circle_center_to_outside": argutils.CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE,
+            "circle_outside_to_center": argutils.CharacterGroup.CIRCLE_OUTSIDE_TO_CENTER,
         }
 
         for column in self.terminal.get_characters_grouped(grouping=grouping_map[self.config.wave_direction]):

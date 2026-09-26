@@ -6,6 +6,7 @@ from typing import Literal, cast
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_waves
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair
@@ -17,6 +18,8 @@ WaveDirection = Literal[
     "row_bottom_to_top",
     "center_to_outside",
     "outside_to_center",
+    "circle_center_to_outside",
+    "circle_outside_to_center",
 ]
 
 
@@ -27,6 +30,49 @@ def _make_terminal_config(
     terminal_config.frame_rate = 0
     terminal_config.existing_color_handling = existing_color_handling
     return terminal_config
+
+
+def test_waves_default_direction_matches_cli_and_library() -> None:
+    """The CLI and library default to revealing text in expanding circular rings."""
+    parser, _ = build_parser(include_user_effects=False)
+    assert parser.parse_args(["waves"]).wave_direction == "circle_center_to_outside"
+    assert effect_waves.WavesConfig().wave_direction == "circle_center_to_outside"
+    effect = effect_waves.Waves("abcde\nfghij\nklmno")
+    effect.terminal_config = _make_terminal_config("ignore")
+    assert effect.effect_config.wave_direction == "circle_center_to_outside"
+    iterator = cast("effect_waves.WavesIterator", iter(effect))
+    assert [{character.input_symbol for character in group} for group in iterator.pending_columns] == [
+        set("h"),
+        set("gi"),
+        set("mfjc"),
+        set("klnoabde"),
+    ]
+
+
+@pytest.mark.parametrize("direction", ["circle_center_to_outside", "circle_outside_to_center"])
+def test_waves_circular_directions_reveal_one_ring_per_frame(direction: WaveDirection) -> None:
+    """Circular waves reveal radial bands in order and settle to the input text."""
+    effect = effect_waves.Waves("abcde\nfghij\nklmno")
+    effect.terminal_config = _make_terminal_config("ignore")
+    effect.effect_config.wave_direction = direction
+    iterator = cast("effect_waves.WavesIterator", iter(effect))
+    expected = [set("h"), set("gi"), set("mfjc"), set("klnoabde")]
+    if direction == "circle_outside_to_center":
+        expected.reverse()
+    assert [{character.input_symbol for character in group} for group in iterator.pending_columns] == expected
+
+    visible_symbols: set[str] = set()
+    characters = iterator.terminal.get_characters()
+    for ring in expected:
+        next(iterator)
+        visible_symbols.update(ring)
+        assert {character.input_symbol for character in characters if character.is_visible} == visible_symbols
+    for _ in iterator:
+        pass
+    assert all(character.is_visible for character in characters)
+    assert all(
+        character.animation.current_character_visual.symbol == character.input_symbol for character in characters
+    )
 
 
 @pytest.mark.parametrize(
@@ -92,6 +138,8 @@ def test_waves_final_gradient(
         "row_bottom_to_top",
         "center_to_outside",
         "outside_to_center",
+        "circle_center_to_outside",
+        "circle_outside_to_center",
     ],
 )
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)

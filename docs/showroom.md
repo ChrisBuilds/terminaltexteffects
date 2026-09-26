@@ -1602,8 +1602,8 @@ Waves travel across the terminal leaving behind the characters.
                         Number of waves to generate. n > 0. (default: 7)
     --wave-length (int > 0)
                         The number of frames for each step of the wave. Higher wave-lengths will create a slower wave. (default: 2)
-    --wave-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,center_to_outside,outside_to_center}
-                        Direction of the wave. (default: column_left_to_right)
+    --wave-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,center_to_outside,outside_to_center,circle_center_to_outside,circle_outside_to_center}
+                        Direction of the wave. (default: circle_center_to_outside)
     --wave-easing WAVE_EASING
                         Easing function to use for wave travel. (default: in_out_sine)
 
