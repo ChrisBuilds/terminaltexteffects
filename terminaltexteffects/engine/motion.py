@@ -545,6 +545,7 @@ class Motion:
             self.active_path.segments.insert(0, new_origin_segment)
         self.active_path.origin_segment = new_origin_segment
         self.active_path.current_step = 0
+        self.active_path.last_distance_reached = 0
         self.active_path.hold_time_remaining = self.active_path.hold_time
         self.active_path.max_steps = round(self.active_path.total_distance / self.active_path.speed)
         for segment in self.active_path.segments:

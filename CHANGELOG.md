@@ -63,6 +63,8 @@
 
 ---
 
+* Step- and distance-synced scenes now start at their first frame before motion and reset progress when a path is
+  reactivated.
 * Spanning-tree generators now track their own visitation state and reject pre-linked character graphs instead of
   silently producing partial traversal orders or leaving Aldous-Broder unable to complete.
 * Smoke's breadth-first traversal no longer copies its complete explored set for every layer, preserving linear work

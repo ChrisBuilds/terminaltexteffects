@@ -873,13 +873,19 @@ class Animation:
         """Return the scene frame index for the active path's progress."""
         final_frame_index = len(scene.frames) - 1
         if scene.sync == Scene.SyncMetric.STEP:
-            progress_ratio = max(active_path.current_step, 1) / max(active_path.max_steps, 1)
+            progress_ratio = (
+                active_path.current_step / active_path.max_steps
+                if active_path.max_steps > 0
+                else 0.0
+            )
         else:
-            total_distance = max(active_path.total_distance, 1)
-            remaining_distance = max(active_path.total_distance - active_path.last_distance_reached, 1)
-            distance_reached = max(total_distance - remaining_distance, 1)
-            progress_ratio = distance_reached / total_distance
+            progress_ratio = (
+                active_path.last_distance_reached / active_path.total_distance
+                if active_path.total_distance > 0
+                else 0.0
+            )
 
+        progress_ratio = min(max(progress_ratio, 0.0), 1.0)
         frame_index = round(final_frame_index * progress_ratio)
         return max(min(frame_index, final_frame_index), 0)
 

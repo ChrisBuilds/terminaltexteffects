@@ -407,6 +407,47 @@ def test_animation_step_animation_sync_distance(character: EffectCharacter) -> N
         character.animation.step_animation()
 
 
+@pytest.mark.parametrize("sync_metric", [Scene.SyncMetric.DISTANCE, Scene.SyncMetric.STEP])
+def test_animation_synced_scene_starts_at_first_frame_before_motion(
+    character: EffectCharacter,
+    sync_metric: Scene.SyncMetric,
+) -> None:
+    """A synced scene remains on its first frame until its path makes progress."""
+    path = character.motion.new_path(speed=1)
+    path.new_waypoint(Coord(0, 0))
+    path.new_waypoint(Coord(3, 0))
+    character.motion.activate_path(path)
+    scene = character.animation.new_scene(sync=sync_metric)
+    for symbol in "abcd":
+        scene.add_frame(symbol=symbol, duration=1)
+    character.animation.activate_scene(scene)
+
+    character.animation.step_animation()
+
+    assert character.animation.current_character_visual.symbol == "a"
+
+
+def test_animation_distance_synced_scene_resets_when_path_reactivates(character: EffectCharacter) -> None:
+    """Reactivating a path resets the distance used by its synced scene."""
+    path = character.motion.new_path(speed=1)
+    path.new_waypoint(Coord(0, 0))
+    path.new_waypoint(Coord(4, 0))
+    character.motion.activate_path(path)
+    scene = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
+    for symbol in "abcd":
+        scene.add_frame(symbol=symbol, duration=1)
+    character.animation.activate_scene(scene)
+
+    character.motion.move()
+    assert path.last_distance_reached > 0
+    character.motion.deactivate_path()
+    character.motion.activate_path(path)
+    character.animation.step_animation()
+
+    assert path.last_distance_reached == 0
+    assert character.animation.current_character_visual.symbol == "a"
+
+
 def test_animation_step_animation_sync_waypoint_deactivated(character: EffectCharacter) -> None:
     """Confirm animation stepping behaves when the associated path deactivates."""
     p = character.motion.new_path()
