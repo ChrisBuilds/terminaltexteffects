@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from itertools import islice
 from typing import Literal, cast
 
 import pytest
 
 from terminaltexteffects.effects import effect_synthgrid
-from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.engine.canvas import Canvas
+from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
+from terminaltexteffects.utils import geometry
 from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
 
@@ -24,6 +27,101 @@ def _get_first_nonspace_character(
     iterator: effect_synthgrid.SynthGridIterator,
 ) -> effect_synthgrid.EffectCharacter:
     return next(character for character in iterator.terminal.get_characters() if character.input_symbol != " ")
+
+
+@pytest.mark.parametrize(
+    ("width", "height"),
+    [(1, 1), (1, 20), (20, 1), (2, 2), (3, 3), (17, 7), (80, 24), (81, 25), (200, 3), (3, 200)],
+)
+def test_synthgrid_balanced_cells_cover_input_and_complete(width: int, height: int) -> None:
+    """Small, odd, large, and narrow canvases retain all input and finish cleanly."""
+    effect = effect_synthgrid.SynthGrid("A" if width < 3 else "ABC")
+    effect.terminal_config = _make_terminal_config("ignore")
+    effect.terminal_config.canvas_width = width
+    effect.terminal_config.canvas_height = height
+    effect.terminal_config.anchor_text = "c"
+    iterator = cast("effect_synthgrid.SynthGridIterator", iter(effect))
+    grid = iterator.grid_layout
+    assert grid == geometry.find_balanced_grid(1, 1, width, height)
+    characters = iterator.terminal.get_characters()
+    groups = [group for _, group in iterator.pending_groups]
+    grouped = [character for group in groups for character in group]
+    assert len(grouped) == len(set(grouped))
+    assert set(grouped) == set(characters)
+    expected_groups = iterator.terminal.get_characters_grouped_by_grid(grid)
+    assert {frozenset(group) for group in groups} == {frozenset(group) for group in expected_groups}
+
+    line_chars = [character for line in iterator.grid_lines for character in line.characters]
+    line_coords = [character.motion.current_coord for character in line_chars]
+    assert len(line_coords) == len(set(line_coords))
+    assert all(iterator.terminal.canvas.coord_is_in_canvas(coord) for coord in line_coords)
+    allowed_columns = {*grid.column_boundaries[:-1], grid.column_boundaries[-1] - 1}
+    allowed_rows = {*grid.row_boundaries[:-1], grid.row_boundaries[-1] - 1}
+    for line in iterator.grid_lines:
+        if line.direction == "horizontal":
+            assert line.origin.row in allowed_rows
+        else:
+            assert line.origin.column in allowed_columns
+    for _ in islice(iterator, 2000):
+        pass
+    with pytest.raises(StopIteration):
+        next(iterator)
+    assert iterator._phase == "complete"
+    assert all(character.is_visible for character in characters)
+    assert all(
+        character.animation.current_character_visual.symbol == character.input_symbol for character in characters
+    )
+    assert all(not character.is_visible for character in line_chars)
+
+
+def test_synthgrid_single_character_skips_grid_and_starts_dissolving_immediately() -> None:
+    """A single-character canvas needs neither borders nor grid expansion frames."""
+    effect = effect_synthgrid.SynthGrid("A")
+    effect.terminal_config = _make_terminal_config("ignore")
+    iterator = cast("effect_synthgrid.SynthGridIterator", iter(effect))
+    assert not iterator.grid_lines
+    assert iterator._phase == "add_chars"
+    next(iterator)
+    character = iterator.terminal.get_characters()[0]
+    assert character.is_visible
+    assert character in iterator.active_characters
+
+
+def test_synthgrid_groups_wide_characters_once() -> None:
+    """Wide symbols belong to the cell containing their starting input coordinate."""
+    effect = effect_synthgrid.SynthGrid("abc界de界fg\nhijklmnopq")
+    effect.terminal_config = _make_terminal_config("ignore")
+    iterator = cast("effect_synthgrid.SynthGridIterator", iter(effect))
+    grouped = [character for _, group in iterator.pending_groups for character in group]
+    assert len(grouped) == len(set(grouped))
+    assert set(grouped) == set(iterator.terminal.get_characters())
+
+
+def test_synthgrid_uses_offset_canvas_bounds(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Grouping and grid coloring use the actual canvas origin."""
+    effect = effect_synthgrid.SynthGrid("abcdefgh\nijklmnop\nqrstuvwx\nyzABCDEF")
+    config = _make_terminal_config("ignore")
+    terminal = Terminal(effect.input_data, config=config)
+    terminal.canvas = Canvas(top=14, right=19, bottom=11, left=12)
+    terminal.canvas.layout_text([(character.input_coord, 1) for character in terminal._input_characters], "sw")
+    for character in terminal._input_characters:
+        coord = character.input_coord
+        character._set_input_coord(geometry.Coord(coord.column + 11, coord.row + 10))
+        character.motion.set_coordinate(character.input_coord)
+    monkeypatch.setattr(effect, "_acquire_terminal", lambda: terminal)
+    iterator = cast("effect_synthgrid.SynthGridIterator", iter(effect))
+    assert iterator.grid_layout.column_boundaries[0] == 12
+    assert iterator.grid_layout.row_boundaries[0] == 11
+    grouped = [character for _, group in iterator.pending_groups for character in group]
+    assert set(grouped) == set(terminal.get_characters())
+    assert iterator.grid_lines
+    assert all(
+        terminal.canvas.coord_is_in_canvas(character.motion.current_coord)
+        for line in iterator.grid_lines for character in line.characters
+    )
+    for _ in iterator:
+        pass
+    assert all(character.is_visible for character in terminal.get_characters())
 
 
 def _get_first_space_character(

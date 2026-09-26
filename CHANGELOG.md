@@ -38,6 +38,8 @@
 * Added `CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE` and `CIRCLE_OUTSIDE_TO_CENTER`, which group characters in
   terminal-adjusted circular bands around the text's geometric midpoint. Bands are one column wide, empty bands
   are omitted, and even-sized text is grouped symmetrically.
+* Added `geometry.GridLayout`, `geometry.find_balanced_grid()`, and `Terminal.get_characters_grouped_by_grid()`
+  for reusable rectangular partitions and grouping without enumerating empty canvas coordinates.
 * Color - Added `colorterm.reset_fg()` and `reset_bg()` helpers to restore one default color without clearing the other
   color or text attributes.
 * Added `engine.effect_support.particles`, a reusable particle helper for effect-owned helper characters. The helper
@@ -186,6 +188,10 @@
 
 ---
 
+* SynthGrid now divides the full canvas into balanced cells whose widths and heights differ by at most one position,
+  choosing counts that favor visually square cells. The layout supports odd, narrow, large, and offset canvases.
+  Grid lines share intersection characters and omit decoration on tiny cells; single-cell canvases, including one
+  character, start dissolving immediately. Characters on grid boundaries and wide symbols are grouped exactly once.
 * Waves supports `circle_center_to_outside` and `circle_outside_to_center` wave directions, including shell completions.
   The default direction is now `circle_center_to_outside`.
 * LaserEtch now schedules grouped etch patterns correctly after configuration normalization, including circular modes.

@@ -14,7 +14,7 @@ import sys
 import time
 import typing
 import weakref
-from bisect import bisect_left
+from bisect import bisect_left, bisect_right
 from contextlib import suppress
 from copy import deepcopy
 from dataclasses import FrozenInstanceError, dataclass
@@ -908,6 +908,52 @@ class Terminal:
             raise InvalidCharacterSortError(sort)
 
         return all_characters
+
+    def get_characters_grouped_by_grid(
+        self,
+        grid: geometry.GridLayout,
+        *,
+        input_chars: bool = True,
+        inner_fill_chars: bool = False,
+        outer_fill_chars: bool = False,
+        added_chars: bool = False,
+    ) -> list[list[EffectCharacter]]:
+        """Group selected characters by their input coordinates within `grid`.
+
+        Return populated cells bottom-to-top, then left-to-right, preserving
+        selection order within each cell. Omit characters outside the grid or
+        canvas. Visit selected characters once and locate their cells by binary
+        search; no empty canvas coordinates are enumerated.
+
+        Args:
+            grid (geometry.GridLayout): Cell boundaries, typically from `geometry.find_balanced_grid()`.
+            input_chars (bool): Include input characters. Defaults to True.
+            inner_fill_chars (bool): Include inner fill characters. Defaults to False.
+            outer_fill_chars (bool): Include outer fill characters. Defaults to False.
+            added_chars (bool): Include added characters. Defaults to False.
+
+        Returns:
+            list[list[EffectCharacter]]: Nonempty character groups in grid order.
+
+        """
+        groups: dict[tuple[int, int], list[EffectCharacter]] = {}
+        columns, rows = grid.column_boundaries, grid.row_boundaries
+        for character in self._get_selected_characters(
+            input_chars=input_chars,
+            inner_fill_chars=inner_fill_chars,
+            outer_fill_chars=outer_fill_chars,
+            added_chars=added_chars,
+        ):
+            coord = character.input_coord
+            if (
+                not self.canvas.coord_is_in_canvas(coord)
+                or not columns[0] <= coord.column < columns[-1]
+                or not rows[0] <= coord.row < rows[-1]
+            ):
+                continue
+            key = (bisect_right(rows, coord.row) - 1, bisect_right(columns, coord.column) - 1)
+            groups.setdefault(key, []).append(character)
+        return [groups[key] for key in sorted(groups)]
 
     def get_characters_grouped(
         self,

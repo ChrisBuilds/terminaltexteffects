@@ -180,6 +180,8 @@ class GridLine:
         origin: Coord,
         direction: str,
         grid_gradient_mapping: dict[geometry.Coord, Color],
+        *,
+        occupied_coords: set[Coord] | None = None,
     ) -> None:
         """Initialize the grid line.
 
@@ -189,6 +191,7 @@ class GridLine:
             origin (Coord): Origin coordinate.
             direction (str): Direction of the line.
             grid_gradient_mapping (dict[geometry.Coord, Color]): Mapping of coordinates to colors.
+            occupied_coords (set[Coord] | None): Shared coordinates used to avoid duplicate line characters.
 
         """
         self.terminal = terminal
@@ -200,32 +203,27 @@ class GridLine:
         elif self.direction == "vertical":
             self.grid_symbol = self.args.grid_column_symbol
         self.characters: list[EffectCharacter] = []
+        occupied = occupied_coords if occupied_coords is not None else set()
         if direction == "horizontal":
-            for column_index in range(self.terminal.canvas.left, self.terminal.canvas.right + 1):
-                effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
-                grid_scn = effect_char.animation.new_scene()
-                grid_scn.add_frame(
-                    self.grid_symbol,
-                    1,
-                    colors=ColorPair(fg=grid_gradient_mapping[geometry.Coord(column_index, origin.row)]),
-                )
-                effect_char.animation.activate_scene(grid_scn)
-                effect_char.layer = 2
-                effect_char.motion.set_coordinate(Coord(column_index, origin.row))
-                self.characters.append(effect_char)
-        elif direction == "vertical":
-            for row_index in range(self.terminal.canvas.bottom, self.terminal.canvas.top):
-                effect_char = self.terminal.add_character(self.grid_symbol, Coord(0, 0))
-                grid_scn = effect_char.animation.new_scene()
-                grid_scn.add_frame(
-                    self.grid_symbol,
-                    1,
-                    colors=ColorPair(fg=grid_gradient_mapping[geometry.Coord(origin.column, row_index)]),
-                )
-                effect_char.animation.activate_scene(grid_scn)
-                effect_char.layer = 2
-                effect_char.motion.set_coordinate(Coord(origin.column, row_index))
-                self.characters.append(effect_char)
+            coords = (
+                Coord(column, origin.row)
+                for column in range(self.terminal.canvas.left, self.terminal.canvas.right + 1)
+            )
+        else:
+            coords = (
+                Coord(origin.column, row)
+                for row in range(self.terminal.canvas.bottom, self.terminal.canvas.top + 1)
+            )
+        for coord in coords:
+            if coord in occupied:
+                continue
+            occupied.add(coord)
+            effect_char = self.terminal.add_character(self.grid_symbol, coord)
+            grid_scn = effect_char.animation.new_scene()
+            grid_scn.add_frame(self.grid_symbol, 1, colors=ColorPair(fg=grid_gradient_mapping[coord]))
+            effect_char.animation.activate_scene(grid_scn)
+            effect_char.layer = 2
+            self.characters.append(effect_char)
         self.collapsed_characters = list(self.characters)
         self.extended_characters: list[EffectCharacter] = []
 
@@ -285,31 +283,46 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
         self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()
 
-    def find_even_gap(self, dimension: int) -> int:
-        """Find the closest even gap to 20% of the longest dimension.
+    def _build_grid_lines(self, grid_gradient_mapping: dict[Coord, Color]) -> None:
+        """Draw cell boundaries as overlays, omitting lines that overwhelm tiny cells."""
+        columns = self.grid_layout.column_boundaries
+        rows = self.grid_layout.row_boundaries
+        if len(columns) == len(rows) == 2:
+            return
+        canvas = self.terminal.canvas
+        occupied: set[Coord] = set()
+        min_width = min(right - left for left, right in zip(columns, columns[1:]))
+        min_height = min(top - bottom for bottom, top in zip(rows, rows[1:]))
+        line_origins: list[tuple[Coord, str]] = []
+        if canvas.height >= 3 and min_height >= 2:
+            line_origins.extend(
+                (Coord(canvas.left, row), "horizontal")
+                for row in sorted({rows[0], rows[-1] - 1, *rows[1:-1]})
+            )
+        if canvas.width >= 3 and min_width >= 2:
+            line_origins.extend(
+                (Coord(column, canvas.bottom), "vertical")
+                for column in sorted({columns[0], columns[-1] - 1, *columns[1:-1]})
+            )
+        for origin, direction in line_origins:
+            line = GridLine(
+                self.terminal,
+                self.config,
+                origin,
+                direction,
+                grid_gradient_mapping,
+                occupied_coords=occupied,
+            )
+            if line.characters:
+                self.grid_lines.append(line)
 
-        Args:
-            dimension (int): The longest dimension.
-
-        Returns:
-            int: The gap that is closest to 20% of the dimension length.
-
-        """
-        dimension = dimension - 2
-        if dimension <= 0:
-            return 0
-        potential_gaps: list[int] = [i for i in range(dimension, 4, -1) if dimension % i <= 1]
-        if not potential_gaps:
-            return 4
-        return min(potential_gaps, key=lambda x: abs(x - dimension // 5))
-
-    def build(self) -> None:  # noqa: PLR0915
+    def build(self) -> None:
         """Build the initial state of the effect."""
         grid_gradient = Gradient(*self.config.grid_gradient_stops, steps=self.config.grid_gradient_steps)
         grid_gradient_mapping = grid_gradient.build_coordinate_color_mapping(
-            1,
+            self.terminal.canvas.bottom,
             self.terminal.canvas.top,
-            1,
+            self.terminal.canvas.left,
             self.terminal.canvas.right,
             self.config.grid_gradient_direction,
         )
@@ -334,102 +347,10 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
             else:
                 self.character_final_color_map[character] = ColorPair()
 
-        self.grid_lines.append(
-            GridLine(
-                self.terminal,
-                self.config,
-                Coord(self.terminal.canvas.left, self.terminal.canvas.bottom),
-                "horizontal",
-                grid_gradient_mapping,
-            ),
-        )
-        self.grid_lines.append(
-            GridLine(
-                self.terminal,
-                self.config,
-                Coord(self.terminal.canvas.left, self.terminal.canvas.top),
-                "horizontal",
-                grid_gradient_mapping,
-            ),
-        )
-        self.grid_lines.append(
-            GridLine(
-                self.terminal,
-                self.config,
-                Coord(self.terminal.canvas.left, self.terminal.canvas.bottom),
-                "vertical",
-                grid_gradient_mapping,
-            ),
-        )
-        self.grid_lines.append(
-            GridLine(
-                self.terminal,
-                self.config,
-                Coord(self.terminal.canvas.right, self.terminal.canvas.bottom),
-                "vertical",
-                grid_gradient_mapping,
-            ),
-        )
-        column_indexes: list[int] = []
-        row_indexes: list[int] = []
-        if self.terminal.canvas.top > 2 * self.terminal.canvas.right:
-            row_gap = self.find_even_gap(self.terminal.canvas.top) + 1
-            column_gap = row_gap * 2
-        else:
-            column_gap = self.find_even_gap(self.terminal.canvas.right) + 1
-            row_gap = column_gap // 2
-
-        for row_index in range(self.terminal.canvas.bottom + row_gap, self.terminal.canvas.top, max(row_gap, 1)):
-            if self.terminal.canvas.top - row_index < 2:
-                continue
-            row_indexes.append(row_index)
-            self.grid_lines.append(
-                GridLine(
-                    self.terminal,
-                    self.config,
-                    Coord(self.terminal.canvas.left, row_index),
-                    "horizontal",
-                    grid_gradient_mapping,
-                ),
-            )
-        for column_index in range(
-            self.terminal.canvas.left + column_gap,
-            self.terminal.canvas.right,
-            max(column_gap, 1),
-        ):
-            if self.terminal.canvas.right - column_index < 2:
-                continue
-            column_indexes.append(column_index)
-            self.grid_lines.append(
-                GridLine(
-                    self.terminal,
-                    self.config,
-                    Coord(column_index, self.terminal.canvas.bottom),
-                    "vertical",
-                    grid_gradient_mapping,
-                ),
-            )
-        row_indexes.append(self.terminal.canvas.top + 1)
-        column_indexes.append(self.terminal.canvas.right + 1)
-        prev_row_index = 1
-        for row_index in row_indexes:
-            prev_column_index = 1
-            for column_index in column_indexes:
-                coords_in_block: list[Coord] = []
-                if row_index == self.terminal.canvas.top:  # make sure the top row is included
-                    row_index += 1  # noqa: PLW2901
-                for row in range(prev_row_index, row_index):
-                    for column in range(prev_column_index, column_index):
-                        coords_in_block.append(Coord(column, row))  # noqa: PERF401
-                characters_in_block: list[EffectCharacter] = [
-                    self.terminal.character_by_input_coord[coord]
-                    for coord in coords_in_block
-                    if coord in self.terminal.character_by_input_coord
-                ]
-                if characters_in_block:
-                    self.pending_groups.append((len(self.pending_groups), characters_in_block))
-                prev_column_index = column_index
-            prev_row_index = row_index
+        canvas = self.terminal.canvas
+        self.grid_layout = geometry.find_balanced_grid(canvas.left, canvas.bottom, canvas.right, canvas.top)
+        self._build_grid_lines(grid_gradient_mapping)
+        self.pending_groups = list(enumerate(self.terminal.get_characters_grouped_by_grid(self.grid_layout)))
         for group_number, group in self.pending_groups:
             self.group_tracker[group_number] = 0
             for character in group:
@@ -453,7 +374,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
                     EventHandler.Callback(self.update_group_tracker, group_number),
                 )
         random.shuffle(self.pending_groups)
-        self._phase = "grid_expand"
+        self._phase = "grid_expand" if self.grid_lines else "add_chars"
         self._total_group_count = len(self.pending_groups)
         if not self._total_group_count:
             for character in self.terminal.get_characters():

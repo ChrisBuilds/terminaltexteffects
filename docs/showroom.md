@@ -1402,7 +1402,9 @@ Sweep across the canvas to reveal uncolored text, reverse sweep to color the tex
 
 ## SynthGrid
 
-Create a grid which fills with characters dissolving into the final text.
+Create a grid of balanced, approximately square cells which fill with characters dissolving into the final text.
+Cell sizes differ by at most one position in each dimension. Tiny canvases use fewer cells and omit grid decoration
+where needed, supporting canvases down to a single character.
 
 ![Demo](./img/effects_demos/synthgrid_demo.gif)
 

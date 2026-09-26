@@ -30,6 +30,72 @@ def test_coord_equalities(coord: geometry.Coord) -> None:
     assert coord1 == coord
 
 
+@pytest.mark.parametrize(
+    ("width", "height", "counts"),
+    [(80, 24, (5, 3)), (81, 25, (5, 3)), (1, 1, (1, 1)), (200, 3, (33, 1)), (1000, 500, (5, 5))],
+)
+def test_balanced_grid_selects_terminal_adjusted_cell_counts(
+    width: int, height: int, counts: tuple[int, int],
+) -> None:
+    """Counts favor visually square cells, including large and narrow canvases."""
+    grid = geometry.find_balanced_grid(1, 1, width, height)
+    assert (len(grid.column_boundaries) - 1, len(grid.row_boundaries) - 1) == counts
+
+
+@pytest.mark.parametrize("origin", [geometry.Coord(1, 1), geometry.Coord(12, 11), geometry.Coord(-10, -20)])
+def test_balanced_grid_covers_small_and_odd_rectangles(origin: geometry.Coord) -> None:
+    """Balanced partitions cover every coordinate once and have no empty cells."""
+    for width in range(1, 22):
+        for height in range(1, 14):
+            grid = geometry.find_balanced_grid(
+                origin.column, origin.row, origin.column + width - 1, origin.row + height - 1,
+            )
+            for boundaries, start, length, minimum in (
+                (grid.column_boundaries, origin.column, width, 4),
+                (grid.row_boundaries, origin.row, height, 2),
+            ):
+                sizes = [end - begin for begin, end in zip(boundaries, boundaries[1:])]
+                assert boundaries[0] == start
+                assert boundaries[-1] == start + length
+                assert sum(sizes) == length
+                assert min(sizes) >= min(length, minimum)
+                assert max(sizes) - min(sizes) <= 1
+
+
+def test_balanced_grid_distributes_remainders_and_honors_sizing_options() -> None:
+    """Remainders are spread across the grid rather than collected at the edge."""
+    grid = geometry.find_balanced_grid(1, 1, 81, 25)
+    assert grid.column_boundaries == (1, 17, 33, 49, 65, 82)
+    assert grid.row_boundaries == (1, 9, 17, 26)
+    grid = geometry.find_balanced_grid(1, 1, 80, 24, target_cells=10, min_cell_width=2, min_cell_height=1)
+    assert len(grid.column_boundaries) > 6
+    assert len(grid.row_boundaries) > 4
+
+
+@pytest.mark.parametrize("boundaries", [(), (1,), (1, 1), (2, 1), (1, 3, 2), (1, True), (1, 2.5), [1, 2]])
+def test_grid_layout_rejects_invalid_boundaries(boundaries: tuple[int, ...]) -> None:
+    """Layouts require immutable, strictly increasing integer boundaries."""
+    with pytest.raises(ValueError, match="Grid boundaries"):
+        geometry.GridLayout(boundaries, (1, 2))
+    with pytest.raises(ValueError, match="Grid boundaries"):
+        geometry.GridLayout((1, 2), boundaries)
+
+
+@pytest.mark.parametrize("bounds", [(2, 1, 1, 2), (1, 2, 2, 1), (True, 1, 2, 2), (1, 1, 2.5, 2)])
+def test_balanced_grid_rejects_invalid_bounds(bounds: tuple[int, int, int, int]) -> None:
+    """Inverted and noninteger bounds cannot define a grid."""
+    with pytest.raises(ValueError, match="Grid bounds"):
+        geometry.find_balanced_grid(*bounds)
+
+
+@pytest.mark.parametrize("option", ["target_cells", "min_cell_width", "min_cell_height"])
+@pytest.mark.parametrize("value", [0, -1, True, 1.5])
+def test_balanced_grid_rejects_invalid_sizing_options(option: str, value: int) -> None:
+    """Sizing options must be positive native integers."""
+    with pytest.raises(ValueError, match=option):
+        geometry.find_balanced_grid(1, 1, 80, 24, **{option: value})
+
+
 def test_find_coords_on_circle_coords_limit(coord: geometry.Coord) -> None:
     """Test that the function returns the correct number of coordinates."""
     coords = geometry.find_coords_on_circle(coord, 5, 5, unique=False)

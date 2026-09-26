@@ -12,6 +12,7 @@ import pytest
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.canvas import Canvas
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
+from terminaltexteffects.utils import geometry
 from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
 from terminaltexteffects.utils.exceptions import (
     InvalidCharacterCoordinateError,
@@ -1022,6 +1023,66 @@ def test_terminal_circular_groups_are_symmetric_and_skip_empty_bands(input_data:
             terminal.canvas.text_bottom + terminal.canvas.text_top - coord.row,
         )
         assert ring_by_coord[reflected] == ring
+
+
+def test_terminal_grid_groups_use_input_coordinates_and_skip_empty_cells() -> None:
+    terminal = Terminal("abcd\nefgh", config=TerminalConfig._build_config())
+    grid = geometry.GridLayout((1, 3, 5), (1, 2, 3))
+    for character in terminal.get_characters():
+        character.motion.set_coordinate(Coord(100, 100))
+    groups = terminal.get_characters_grouped_by_grid(grid)
+    assert [[character.input_symbol for character in group] for group in groups] == [
+        ["e", "f"], ["g", "h"], ["a", "b"], ["c", "d"],
+    ]
+    subset_grid = geometry.GridLayout((2, 3, 4), (1, 2))
+    assert [[character.input_symbol for character in group] for group in terminal.get_characters_grouped_by_grid(subset_grid)] == [
+        ["f"], ["g"],
+    ]
+    assert terminal.get_characters_grouped_by_grid(grid, input_chars=False) == []
+
+
+@pytest.mark.parametrize("input_chars", [False, True])
+@pytest.mark.parametrize("inner_fill_chars", [False, True])
+@pytest.mark.parametrize("outer_fill_chars", [False, True])
+@pytest.mark.parametrize("added_chars", [False, True])
+def test_terminal_grid_groups_honor_character_selection(
+    *, input_chars: bool, inner_fill_chars: bool, outer_fill_chars: bool, added_chars: bool,
+) -> None:
+    config = TerminalConfig._build_config()
+    config.canvas_width, config.canvas_height = 8, 4
+    terminal = Terminal("ab\nc", config=config)
+    terminal.add_character("!", Coord(4, 3))
+    terminal.add_character("?", Coord(9, 3))
+    grid = geometry.find_balanced_grid(1, 1, 8, 4)
+    selected = {
+        "input_chars": input_chars, "inner_fill_chars": inner_fill_chars,
+        "outer_fill_chars": outer_fill_chars, "added_chars": added_chars,
+    }
+    groups = terminal.get_characters_grouped_by_grid(grid, **selected)
+    expected = {
+        character for character in terminal.get_characters(
+            input_chars=input_chars, inner_fill_chars=inner_fill_chars,
+            outer_fill_chars=outer_fill_chars, added_chars=added_chars,
+        )
+        if terminal.canvas.coord_is_in_canvas(character.input_coord)
+    }
+    flattened = [character for group in groups for character in group]
+    assert all(groups)
+    assert len(flattened) == len(set(flattened))
+    assert set(flattened) == expected
+
+
+def test_terminal_grid_groups_support_offset_bounds() -> None:
+    terminal = Terminal("abc\ndef", config=TerminalConfig._build_config())
+    terminal.canvas = Canvas(top=12, right=14, bottom=11, left=12)
+    for character in terminal._input_characters:
+        coord = character.input_coord
+        character._set_input_coord(Coord(coord.column + 11, coord.row + 10))
+    grid = geometry.GridLayout((12, 14, 15), (11, 12, 13))
+    groups = terminal.get_characters_grouped_by_grid(grid)
+    assert [[character.input_symbol for character in group] for group in groups] == [
+        ["d", "e"], ["f"], ["a", "b"], ["c"],
+    ]
 
 
 def test_terminal_get_characters_grouped_invalid_grouping() -> None:

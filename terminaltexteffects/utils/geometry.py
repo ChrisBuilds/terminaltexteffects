@@ -4,6 +4,7 @@ The purpose of these functions is to find terminal coordinates that fall within 
 These functions are used by effects to enable more complex animations and movement paths.
 
 Functions:
+    find_balanced_grid: Divides inclusive bounds into nearly square cells of balanced size.
     find_coords_on_circle: Finds points on a circle given the origin, radius, and number of points.
     find_coords_in_circle: Finds coordinates within a terminal-adjusted circle given its center and radius.
     find_coords_in_rect: Finds coordinates within a rectangle given the origin and distance.
@@ -64,6 +65,114 @@ class Coord:
 
     column: int
     row: int
+
+
+@dataclass(frozen=True)
+class GridLayout:
+    """Describe rectangular cells using increasing column and row boundaries.
+
+    Each cell includes its lower boundaries and excludes its upper boundaries.
+    The last boundary is therefore one beyond the inclusive canvas edge.
+
+    Attributes:
+        column_boundaries (tuple[int, ...]): Left-to-right column boundaries.
+        row_boundaries (tuple[int, ...]): Bottom-to-top row boundaries.
+
+    """
+
+    column_boundaries: tuple[int, ...]
+    row_boundaries: tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        """Reject boundaries that would produce empty or overlapping cells."""
+        for boundaries in (self.column_boundaries, self.row_boundaries):
+            if (
+                not isinstance(boundaries, tuple)
+                or len(boundaries) < 2
+                or any(type(boundary) is not int for boundary in boundaries)
+                or any(left >= right for left, right in zip(boundaries, boundaries[1:]))
+            ):
+                msg = "Grid boundaries must be tuples of at least two strictly increasing integers."
+                raise ValueError(msg)
+
+
+def find_balanced_grid(
+    left: int,
+    bottom: int,
+    right: int,
+    top: int,
+    *,
+    target_cells: int = 5,
+    min_cell_width: int = 4,
+    min_cell_height: int = 2,
+) -> GridLayout:
+    """Divide inclusive bounds into balanced, approximately square terminal cells.
+
+    Aim for `target_cells` along the longer visual axis, reducing the target
+    cell size for narrow canvases. Compare nearby row and column counts for
+    squareness and proximity to that size, using `TERMINAL_ROW_SCALE`.
+    Cell widths and heights each differ by at most one position. Minimum sizes
+    limit subdivision; a smaller canvas retains one cell along that axis.
+
+    Args:
+        left (int): Inclusive left column.
+        bottom (int): Inclusive bottom row.
+        right (int): Inclusive right column.
+        top (int): Inclusive top row.
+        target_cells (int): Preferred cell count along the longer visual axis.
+        min_cell_width (int): Minimum columns per cell when space permits.
+        min_cell_height (int): Minimum rows per cell when space permits.
+
+    Returns:
+        GridLayout: Boundaries covering the complete rectangle.
+
+    Raises:
+        ValueError: If bounds are not ordered integers or sizing options are not positive integers.
+
+    """
+    if any(type(bound) is not int for bound in (left, bottom, right, top)) or right < left or top < bottom:
+        msg = "Grid bounds must be ordered integers."
+        raise ValueError(msg)
+    for name, value in (
+        ("target_cells", target_cells),
+        ("min_cell_width", min_cell_width),
+        ("min_cell_height", min_cell_height),
+    ):
+        if type(value) is not int or value <= 0:
+            msg = f"{name} must be a positive integer."
+            raise ValueError(msg)
+    width, height = right - left + 1, top - bottom + 1
+    visual_height = height * TERMINAL_ROW_SCALE
+    target_size = max(
+        min_cell_width,
+        min_cell_height * TERMINAL_ROW_SCALE,
+        min(max(width, visual_height) / target_cells, width, visual_height),
+    )
+
+    def candidates(length: int, visual_length: int, minimum: int) -> set[int]:
+        maximum = max(1, length // minimum)
+        ideal = visual_length / target_size
+        return {max(1, min(maximum, count)) for count in range(math.floor(ideal) - 1, math.ceil(ideal) + 2)}
+
+    def score(counts: tuple[int, int]) -> tuple[float, int, int]:
+        columns, rows = counts
+        cell_width, cell_height = width / columns, visual_height / rows
+        shape_error = abs(math.log(cell_width / cell_height))
+        size_error = abs(math.log(cell_width / target_size)) + abs(math.log(cell_height / target_size))
+        return shape_error + size_error / 4, abs(max(columns, rows) - target_cells), columns * rows
+
+    columns, rows = min(
+        (
+            (columns, rows)
+            for columns in sorted(candidates(width, width, min_cell_width))
+            for rows in sorted(candidates(height, visual_height, min_cell_height))
+        ),
+        key=score,
+    )
+    return GridLayout(
+        tuple(left + index * width // columns for index in range(columns + 1)),
+        tuple(bottom + index * height // rows for index in range(rows + 1)),
+    )
 
 
 def _cache_coordinate_list(
