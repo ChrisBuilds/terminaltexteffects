@@ -694,7 +694,7 @@ Text expands in a single row or column in the middle of the canvas then out.
 
 ## OrbittingVolley
 
-Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.
+Four launchers travel along the canvas edges, firing characters from their nearest canvas side to build the text in expanding circular rings. Rings launch in order with up to two still in flight.
 
 ![Demo](./img/effects_demos/orbittingvolley_demo.gif)
 
@@ -719,13 +719,13 @@ Four launchers orbit the canvas firing volleys of characters inward to build the
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.RADIAL)
     --launcher-movement-speed (float > 0)
-                        Orbitting speed of the launchers. (default: 0.5)
+                        Orbitting speed of the launchers. (default: 0.8)
     --character-movement-speed (float > 0)
-                        Speed of the launched characters. (default: 1)
+                        Speed of the launched characters. (default: 1.5)
     --volley-size (0 <= float(n) <= 1)
-                        Percent of total input characters each launcher will fire per volley. Lower limit of one character. (default: 0.03)
+                        Fraction of input characters used to set the volley limit, divided among four launchers. Each launcher fires at least one character when available, limited to its share of the active circular ring. (default: 0.03)
     --launch-delay (int >= 0)
-                        Number of animation ticks to wait between volleys of characters. (default: 50)
+                        Number of animation ticks to wait between volleys of characters. (default: 1)
     --character-easing (Easing Function)
                         Easing function to use for launched character movement. (default: out_sine)
 
@@ -754,7 +754,7 @@ Four launchers orbit the canvas firing volleys of characters inward to build the
     Visit: https://easings.net/ for visualizations of the easing functions.
 
 
-    Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 --launcher-movement-speed 0.5 --character-movement-speed 1 --volley-size 0.03 --launch-delay 50 --character-easing OUT_SINE
+    Example: terminaltexteffects orbittingvolley --top-launcher-symbol █ --right-launcher-symbol █ --bottom-launcher-symbol █ --left-launcher-symbol █ --final-gradient-stops FFA15C 44D492 --final-gradient-steps 12 --launcher-movement-speed 0.8 --character-movement-speed 1.5 --volley-size 0.03 --launch-delay 1 --character-easing OUT_SINE
     ```
 ---
 

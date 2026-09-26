@@ -27,7 +27,7 @@ _shtab_tte_commands() {
     laseretch:'A laser etches characters onto the terminal.'
     matrix:'matrix | Matrix digital rain effect.'
     middleout:'middleout | Text expands in a single row or column in the middle of the canvas then out.'
-    orbittingvolley:'orbittingvolley | Four launchers orbit the canvas firing volleys of characters inward to build the input text from the center out.'
+    orbittingvolley:'orbittingvolley | Four launchers orbit the canvas firing volleys of characters inward to build the input text in expanding circular rings. Characters fire from their nearest canvas side; up to two rings overlap while their characters arrive.'
     overflow:'overflow | Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.'
     pour:'pour | Pours the characters into position from the given direction.'
     print:'print | Lines are printed one at a time following a print head. Print head performs line feed, carriage return.'
@@ -337,7 +337,7 @@ _shtab_tte_orbittingvolley_options=(
   "--left-launcher-symbol[Symbol for the left launcher.]:left_launcher_symbol:"
   "--launcher-movement-speed[Orbitting speed of the launchers.]:launcher_movement_speed:"
   "--character-movement-speed[Speed of the launched characters.]:character_movement_speed:"
-  "--volley-size[Fraction of input characters each launcher will fire per volley, from 0 to 1. A value of 0 still fires a minimum volley of one character when available.]:volley_size:"
+  "--volley-size[Fraction of input characters used to set the volley limit, divided among four launchers, from 0 to 1. Each launcher fires at least one character when available, limited to its share of the active circular ring.]:volley_size:"
   "--launch-delay[Number of animation ticks to wait between volleys of characters.]:launch_delay:"
   "--character-easing[Easing function to use for launched character movement.]:character_easing:(linear in_sine out_sine in_out_sine in_quad out_quad in_out_quad in_cubic out_cubic in_out_cubic in_quart out_quart in_out_quart in_quint out_quint in_out_quint in_expo out_expo in_out_expo in_circ out_circ in_out_circ in_back out_back in_out_back in_elastic out_elastic in_out_elastic in_bounce out_bounce in_out_bounce)"
   "--final-gradient-stops[Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If only one color is provided, the characters will be displayed in that color.]:final_gradient_stops:"
