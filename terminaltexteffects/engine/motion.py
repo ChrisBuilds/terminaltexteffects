@@ -449,7 +449,7 @@ class Motion:
         return found_path
 
     def movement_is_complete(self) -> bool:
-        """Return whether the character has an active path.
+        """Return whether movement is complete.
 
         Returns:
             bool: True if the character has no active path, False otherwise.

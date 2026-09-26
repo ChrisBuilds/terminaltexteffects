@@ -83,6 +83,7 @@
   distinct RGB colors.
 * Removed the unused `Animation.active_scene_current_step` field; scene and motion objects remain the playback progress
   sources.
+* Corrected `Motion.movement_is_complete()` documentation to match its no-active-path completion result.
 * Updated the `argutils` documentation example to use the current `BaseConfig` and `ArgSpec` API, with runnable direct
   construction and CLI parsing examples.
 * `Terminal` now owns an immutable construction-time snapshot of `TerminalConfig`. Mutating the caller's configuration
