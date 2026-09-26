@@ -13,6 +13,7 @@ import pytest
 
 from terminaltexteffects import __main__
 from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.shell_completion import get_completion_script
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -350,6 +351,40 @@ printf 'easing:%s\\n' "${COMPREPLY[*]}"
     assert "diagonal_top_left_to_bottom_right" in result.stdout
     assert "diagonal_bottom_right_to_top_left" in result.stdout
     assert "easing:in_out_back in_out_bounce" in result.stdout
+
+
+@pytest.mark.parametrize(
+    ("command", "option"),
+    [
+        ("wipe", "--wipe-direction"),
+        ("highlight", "--highlight-direction"),
+        ("sweep", "--first-sweep-direction"),
+        ("sweep", "--second-sweep-direction"),
+        ("laseretch", "--etch-pattern"),
+    ],
+)
+def test_completion_suggests_all_supported_groupings(command: str, option: str) -> None:
+    """Bundled Bash and Zsh choices cover every grouping and are accepted by the runtime parser."""
+    result = _run_bash(
+        f"""
+eval "$({sys.executable} -m terminaltexteffects --print-completion bash)"
+COMP_WORDS=(tte {command} {option} "")
+COMP_CWORD=3
+_shtab_tte
+printf '%s\\n' "${{COMPREPLY[@]}}"
+""",
+    )
+    expected = argutils.CharacterGroupArg.COMPLETION_CHOICES
+    if command == "laseretch":
+        expected = ("algorithm", *expected)
+    assert set(result.stdout.splitlines()) == set(expected)
+    destination = option.removeprefix("--").replace("-", "_")
+    zsh_choices = f"]:{destination}:({' '.join(expected)})\""
+    assert zsh_choices in get_completion_script("zsh")
+
+    parser, _ = __main__.build_parser(include_user_effects=False)
+    for choice in expected:
+        parser.parse_args([command, option, choice])
 
 
 def test_bash_completion_suggests_choice_and_file_values(tmp_path: Path) -> None:

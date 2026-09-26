@@ -184,7 +184,12 @@ class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescri
 
 
 class CharacterGroup(Enum):
-    """An enum specifying character groupings."""
+    """Specify character groupings based on immutable input coordinates.
+
+    `CENTER_TO_OUTSIDE` and `OUTSIDE_TO_CENTER` use Manhattan distance from the
+    text's lower central cell. The `CIRCLE_*` options use one-column-wide radial
+    bands around the text's geometric midpoint, accounting for terminal cell height.
+    """
 
     COLUMN_LEFT_TO_RIGHT = auto()
     COLUMN_RIGHT_TO_LEFT = auto()
@@ -196,6 +201,8 @@ class CharacterGroup(Enum):
     DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT = auto()
     CENTER_TO_OUTSIDE = auto()
     OUTSIDE_TO_CENTER = auto()
+    CIRCLE_CENTER_TO_OUTSIDE = auto()
+    CIRCLE_OUTSIDE_TO_CENTER = auto()
 
 
 class CharacterGroupArg:

@@ -943,6 +943,8 @@ def test_terminal_get_characters_grouped_columns_preserve_order_and_canvas_bound
         (CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT, [["f"], ["e", "c"], ["d", "b"], ["a"]]),
         (CharacterGroup.CENTER_TO_OUTSIDE, [["e"], ["d", "f", "b"], ["a", "c"]]),
         (CharacterGroup.OUTSIDE_TO_CENTER, [["a", "c"], ["d", "f", "b"], ["e"]]),
+        (CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE, [["e", "b"], ["d", "f", "a", "c"]]),
+        (CharacterGroup.CIRCLE_OUTSIDE_TO_CENTER, [["d", "f", "a", "c"], ["e", "b"]]),
     ],
 )
 def test_terminal_get_characters_grouped_preserves_order_with_offset_canvas_bounds(
@@ -989,6 +991,37 @@ def test_terminal_ungrouped_inventory_includes_off_canvas_added_characters() -> 
     off_canvas_character = terminal.add_character("z", Coord(terminal.canvas.right + 1, terminal.canvas.bottom))
 
     assert off_canvas_character in terminal.get_characters(input_chars=False, added_chars=True)
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_terminal_circular_groups_use_terminal_adjusted_radial_bands(*, reverse: bool) -> None:
+    """Circular bands distinguish row height from column width and reverse as whole groups."""
+    terminal = Terminal("abcde\nfghij\nklmno", config=TerminalConfig._build_config())
+    grouping = CharacterGroup.CIRCLE_OUTSIDE_TO_CENTER if reverse else CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE
+    expected = [["h"], ["g", "i"], ["m", "f", "j", "c"], ["k", "l", "n", "o", "a", "b", "d", "e"]]
+
+    groups = terminal.get_characters_grouped(grouping)
+
+    assert [[character.input_symbol for character in group] for group in groups] == (expected[::-1] if reverse else expected)
+
+
+@pytest.mark.parametrize("input_data", ["abcdef", "abcdef\nghijkl", "a\nb\nc\nd", "A"])
+def test_terminal_circular_groups_are_symmetric_and_skip_empty_bands(input_data: str) -> None:
+    """Even dimensions share a geometric midpoint; compact inputs retain every character once."""
+    terminal = Terminal(input_data, config=TerminalConfig._build_config())
+    groups = terminal.get_characters_grouped(CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE)
+    characters = terminal.get_characters()
+    ring_by_coord = {character.input_coord: index for index, group in enumerate(groups) for character in group}
+
+    assert all(groups)
+    assert sum(map(len, groups)) == len(characters)
+    assert len(ring_by_coord) == len(characters)
+    for coord, ring in ring_by_coord.items():
+        reflected = Coord(
+            terminal.canvas.text_left + terminal.canvas.text_right - coord.column,
+            terminal.canvas.text_bottom + terminal.canvas.text_top - coord.row,
+        )
+        assert ring_by_coord[reflected] == ring
 
 
 def test_terminal_get_characters_grouped_invalid_grouping() -> None:

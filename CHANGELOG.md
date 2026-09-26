@@ -35,6 +35,9 @@
 
 ---
 
+* Added `CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE` and `CIRCLE_OUTSIDE_TO_CENTER`, which group characters in
+  terminal-adjusted circular bands around the text's geometric midpoint. Bands are one column wide, empty bands
+  are omitted, and even-sized text is grouped symmetrically.
 * Color - Added `colorterm.reset_fg()` and `reset_bg()` helpers to restore one default color without clearing the other
   color or text attributes.
 * Added `engine.effect_support.particles`, a reusable particle helper for effect-owned helper characters. The helper
@@ -54,6 +57,10 @@
 * Running `tte --print-completion` without a shell argument now prints copy-and-paste setup commands for bash and zsh.
 * Shell completion now suggests valid values for custom enum-like arguments, including gradient directions,
   character grouping modes, and easing functions.
+* LaserEtch pattern completion now includes `algorithm` and every character grouping, including both circular modes,
+  in the bundled Bash and Zsh scripts.
+* Bundled Bash and Zsh completions now include both circular grouping modes for Wipe, Highlight, and both Sweep
+  directions, with regression coverage for completion choices and runtime parser acceptance.
 
 ### Changes (0.16.0)
 

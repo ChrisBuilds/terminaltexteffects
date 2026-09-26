@@ -7,6 +7,7 @@ Classes:
 
 from __future__ import annotations
 
+import math
 import random
 import shutil
 import sys
@@ -24,7 +25,7 @@ from terminaltexteffects.engine import canvas as canvas_module
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.terminal_input import ParsedCharacter, VirtualScreenParser
-from terminaltexteffects.utils import ansitools, argutils
+from terminaltexteffects.utils import ansitools, argutils, geometry
 from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
 from terminaltexteffects.utils.exceptions import (
     InvalidCharacterCoordinateError,
@@ -925,6 +926,10 @@ class Terminal:
         Use `get_characters()` when a complete inventory, including off-canvas added
         characters, is required.
 
+        The `CIRCLE_*` groupings use terminal-adjusted Euclidean distance from
+        the text bounds' geometric midpoint, rounded up to an integer radius.
+        Each group is a one-column-wide radial band; empty bands are omitted.
+
         Args:
             grouping (CharacterGroup, optional): order to group the characters. Defaults to ROW_TOP_TO_BOTTOM.
             input_chars (bool, optional): whether to include input characters. Defaults to True.
@@ -1030,6 +1035,26 @@ class Terminal:
                 reverse=grouping is CharacterGroup.OUTSIDE_TO_CENTER,
             )
             return [distance_map[distance] for distance in ordered_distances]
+
+        if grouping in (
+            CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE,
+            CharacterGroup.CIRCLE_OUTSIDE_TO_CENTER,
+        ):
+            center_column = (self.canvas.text_left + self.canvas.text_right) / 2
+            center_row = (self.canvas.text_bottom + self.canvas.text_top) / 2
+            rings: dict[int, list[EffectCharacter]] = {}
+            for character in all_characters:
+                radius = math.ceil(
+                    math.hypot(
+                        character.input_coord.column - center_column,
+                        (character.input_coord.row - center_row) * geometry.TERMINAL_ROW_SCALE,
+                    ),
+                )
+                rings.setdefault(radius, []).append(character)
+            return [
+                rings[radius]
+                for radius in sorted(rings, reverse=grouping is CharacterGroup.CIRCLE_OUTSIDE_TO_CENTER)
+            ]
 
         raise InvalidCharacterGroupError(grouping)
 

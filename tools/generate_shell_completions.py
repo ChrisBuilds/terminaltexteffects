@@ -9,6 +9,7 @@ from typing import cast
 import shtab
 
 from terminaltexteffects import __main__ as tte_main
+from terminaltexteffects.effects import effect_laseretch
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.shell_completion import SUPPORTED_SHELLS
 
@@ -25,6 +26,7 @@ _COMPLETION_CHOICES_BY_TYPE = {
     argutils.ColorSortArg.type_parser: argutils.ColorSortArg.COMPLETION_CHOICES,
     argutils.GradientDirection.type_parser: argutils.GradientDirection.COMPLETION_CHOICES,
     argutils.Ease.type_parser: argutils.Ease.COMPLETION_CHOICES,
+    effect_laseretch._etch_pattern_type_parser: ("algorithm", *argutils.CharacterGroupArg.COMPLETION_CHOICES),
 }
 
 _BASH_MAPFILE_BLOCK = """  if [[ $pos_only = 0 && "${completing_word}" == -* ]]; then
