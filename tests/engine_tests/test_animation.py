@@ -177,7 +177,7 @@ def test_animation_init(character: EffectCharacter) -> None:
     assert character.animation.active_scene is None
     assert character.animation.use_xterm_colors is False
     assert character.animation.no_color is False
-    assert character.animation.xterm_color_map == {}
+    assert character.animation.xterm_color_map is Scene.xterm_color_map
     assert character.animation.active_scene_current_step == 0
 
 
@@ -254,6 +254,19 @@ def test_animation_get_color_code_use_xterm_colors(character: EffectCharacter) -
     assert character.animation._get_color_code(Color("#ffffff")) == 15
     assert character.animation._get_color_code(Color(0)) == 0
     assert character.animation._get_color_code(Color("#ffffff")) == 15
+
+
+def test_animation_xterm_color_cache_is_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Animation color conversions use the shared bounded cache."""
+    monkeypatch.setattr(Scene, "xterm_color_map", {})
+    animation = EffectCharacter(0, "a", 0, 0).animation
+    animation.use_xterm_colors = True
+    for value in range(1025):
+        animation._get_color_code(Color(f"{value:06x}"))
+
+    assert animation.xterm_color_map is Scene.xterm_color_map
+    assert len(animation.xterm_color_map) == 1024
+    assert "000000" not in animation.xterm_color_map
 
 
 def test_animation_get_color_code_rgb_color(character: EffectCharacter) -> None:
@@ -559,6 +572,18 @@ def test_scene_get_color_code_use_xterm_colors(character: EffectCharacter) -> No
     assert new_scene._get_color_code(Color("#ffffff")) == 15
     assert new_scene._get_color_code(Color(0)) == 0
     assert new_scene._get_color_code(Color("#ffffff")) == 15
+
+
+def test_scene_xterm_color_cache_is_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Scenes share a process-wide cache that retains at most 1,024 RGB values."""
+    monkeypatch.setattr(Scene, "xterm_color_map", {})
+    scene = Scene("test_scene", use_xterm_colors=True)
+
+    for value in range(1025):
+        scene._get_color_code(Color(f"{value:06x}"))
+
+    assert len(Scene.xterm_color_map) == 1024
+    assert "000000" not in Scene.xterm_color_map
 
 
 def test_scene_input_color_from_existing(character: EffectCharacter) -> None:

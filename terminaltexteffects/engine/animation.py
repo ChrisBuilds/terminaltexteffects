@@ -29,6 +29,33 @@ if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character, motion  # pragma: no cover
 
 
+_MAX_XTERM_COLOR_CACHE_SIZE = 1024
+
+
+def _get_color_code(
+    color: graphics.Color | None,
+    *,
+    no_color: bool,
+    use_xterm_colors: bool,
+    xterm_color_map: dict[str, int],
+) -> str | int | None:
+    """Resolve a color for output while keeping the supplied conversion cache bounded."""
+    if color is None or no_color:
+        return None
+    if not use_xterm_colors:
+        return color.rgb_color
+    if color.xterm_color is not None:
+        return color.xterm_color
+    if color.rgb_color in xterm_color_map:
+        return xterm_color_map[color.rgb_color]
+
+    xterm_color = hexterm.hex_to_xterm(color.rgb_color)
+    if len(xterm_color_map) >= _MAX_XTERM_COLOR_CACHE_SIZE:
+        del xterm_color_map[next(iter(xterm_color_map))]
+    xterm_color_map[color.rgb_color] = xterm_color
+    return xterm_color
+
+
 @dataclass
 class CharacterVisual:
     """A class for storing symbol, color, and terminal graphical modes for the character.
@@ -220,19 +247,12 @@ class Scene:
             str | int | None: the color code
 
         """
-        if color:
-            if self.no_color:
-                return None
-            if self.use_xterm_colors:
-                if color.xterm_color is not None:
-                    return color.xterm_color
-                if color.rgb_color in self.xterm_color_map:
-                    return self.xterm_color_map[color.rgb_color]
-                xterm_color = hexterm.hex_to_xterm(color.rgb_color)
-                self.xterm_color_map[color.rgb_color] = xterm_color
-                return xterm_color
-            return color.rgb_color
-        return None
+        return _get_color_code(
+            color,
+            no_color=self.no_color,
+            use_xterm_colors=self.use_xterm_colors,
+            xterm_color_map=self.xterm_color_map,
+        )
 
     def add_frame(
         self,
@@ -506,7 +526,7 @@ class Animation:
         input_fg_color (graphics.Color | None): the input foreground Color
         input_bg_color (graphics.Color | None): the input background Color
         input_bold (bool): whether the input character was parsed with active bold SGR styling
-        xterm_color_map (dict[str, int]): a mapping of RGB color codes to XTerm-256 color codes
+        xterm_color_map (dict[str, int]): shared bounded mapping of RGB color codes to XTerm-256 color codes
         active_scene_current_step (int): Reserved for scene-step tracking; currently reset on activation but
             otherwise unused.
         current_character_visual (CharacterVisual): the current visual of the character
@@ -539,7 +559,7 @@ class Animation:
         self.input_fg_color: graphics.Color | None = None
         self.input_bg_color: graphics.Color | None = None
         self.input_bold: bool = False
-        self.xterm_color_map: dict[str, int] = {}
+        self.xterm_color_map = Scene.xterm_color_map
         # Future: review whether `active_scene_current_step` should be removed or implemented for real scene tracking.
         self.active_scene_current_step: int = 0
         self.current_character_visual = CharacterVisual(character.input_symbol)
@@ -562,19 +582,12 @@ class Animation:
             str | int | None: the color code
 
         """
-        if color:
-            if self.no_color:
-                return None
-            if self.use_xterm_colors:
-                if color.xterm_color is not None:
-                    return color.xterm_color
-                if color.rgb_color in self.xterm_color_map:
-                    return self.xterm_color_map[color.rgb_color]
-                xterm_color = hexterm.hex_to_xterm(color.rgb_color)
-                self.xterm_color_map[color.rgb_color] = xterm_color
-                return xterm_color
-            return color.rgb_color
-        return None
+        return _get_color_code(
+            color,
+            no_color=self.no_color,
+            use_xterm_colors=self.use_xterm_colors,
+            xterm_color_map=self.xterm_color_map,
+        )
 
     def new_scene(
         self,

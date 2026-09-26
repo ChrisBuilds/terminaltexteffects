@@ -79,6 +79,8 @@
   horizontal control-point limits, and the different clamping behavior of `EasingTracker` and `SequenceEaser`.
 * Custom Bezier easing no longer retains every generated curve in a global 8,192-entry factory cache. Each returned
   curve still caches repeated progress values, while one-off and randomized curves can be reclaimed normally.
+* Scene and animation XTerm color conversion now share a bounded 1,024-entry cache, preventing unbounded retention of
+  distinct RGB colors.
 * Updated the `argutils` documentation example to use the current `BaseConfig` and `ArgSpec` API, with runnable direct
   construction and CLI parsing examples.
 * `Terminal` now owns an immutable construction-time snapshot of `TerminalConfig`. Mutating the caller's configuration
