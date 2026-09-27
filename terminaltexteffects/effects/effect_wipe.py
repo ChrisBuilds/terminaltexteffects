@@ -37,9 +37,10 @@ class WipeConfig(BaseConfig):
     """Configuration for the Wipe effect.
 
     Attributes:
-        wipe_direction (CharacterGroup): Direction the text will wipe.
-        wipe_delay (int): Number of frames to wait before adding the next character group. Increase, to
-            slow down the effect. Valid values are n >= 0.
+        wipe_direction (`argutils.CharacterGroup` | `argutils.CharacterSort`): Grouping or character order for the wipe.
+            Sort values reveal characters in the exact sorted order, including spiral patterns.
+        wipe_delay (int): Number of frames to wait between wipe easing steps. Increase to slow down the effect.
+            Valid values are n >= 0.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the wipe gradient.
         final_gradient_steps (tuple[int, ...] | int): Tuple of the number of gradient steps to use. More steps will
             create a smoother and longer gradient animation. Valid values are n > 0.
@@ -61,23 +62,23 @@ class WipeConfig(BaseConfig):
         ),
     )
 
-    wipe_direction: argutils.CharacterGroup = argutils.ArgSpec(
+    wipe_direction: argutils.CharacterGroup | argutils.CharacterSort = argutils.ArgSpec(
         name="--wipe-direction",
         default=argutils.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
-        type=argutils.CharacterGroupArg.type_parser,
-        metavar=" ".join(argutils.CharacterGroupArg.METAVAR),
-        help="Direction the text will wipe.",
+        type=argutils.CharacterGroupOrSortArg.type_parser,
+        metavar=" ".join(argutils.CharacterGroupOrSortArg.METAVAR),
+        help="Grouping or character sort order for the wipe, including spiral patterns.",
     )  # pyright: ignore[reportAssignmentType]
-    "CharacterGroup : Direction the text will wipe."
+    "CharacterGroup | CharacterSort : Grouping or character order for the wipe."
 
     wipe_delay: int = argutils.ArgSpec(
         name="--wipe-delay",
         type=argutils.NonNegativeInt.type_parser,
         default=0,
         metavar=argutils.NonNegativeInt.METAVAR,
-        help="Number of frames to wait before adding the next character group. Increase, to slow down the effect.",
+        help="Number of frames to wait between wipe easing steps. Increase to slow down the effect.",
     )  # pyright: ignore[reportAssignmentType]
-    "int : Number of frames to wait before adding the next character group. Increase, to slow down the effect."
+    "int : Number of frames to wait between wipe easing steps. Increase to slow down the effect."
 
     wipe_ease: easing.EasingFunction = argutils.ArgSpec(
         name="--wipe-ease",
@@ -124,8 +125,12 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
         """
         super().__init__(effect)
         self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
+        if isinstance(self.config.wipe_direction, argutils.CharacterSort):
+            groups = [[character] for character in self.terminal.get_characters(sort=self.config.wipe_direction)]
+        else:
+            groups = self.terminal.get_characters_grouped(self.config.wipe_direction)
         self.easer = easing.SequenceEaser(
-            self.terminal.get_characters_grouped(self.config.wipe_direction),
+            groups,
             easing_function=self.config.wipe_ease,
         )
         self._wipe_delay = self.config.wipe_delay

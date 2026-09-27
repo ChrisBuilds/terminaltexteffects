@@ -68,6 +68,10 @@
   double, and quad spirals, while retaining the `algorithm` default and serpentine character-group patterns.
   The reusable `CharacterGroupOrSortArg` validator supports CLI names and native enum values, and bundled Bash
   and Zsh completions advertise the full pattern set.
+* Wipe's `--wipe-direction` now accepts every `CharacterSort`, including all six spiral patterns, alongside
+  existing character groups. Sorted modes reveal individual characters through the existing easing and delay
+  controls; the default diagonal grouping is unchanged. Bash and Zsh completions include the new choices,
+  with coverage for ordering, non-monotonic easing, and final color restoration.
 * Bundled Bash and Zsh completions now include both circular grouping modes for Wipe, Highlight, and both Sweep
   directions, with regression coverage for completion choices and runtime parser acceptance.
 

@@ -377,6 +377,8 @@ printf '%s\\n' "${{COMPREPLY[@]}}"
     expected = argutils.CharacterGroupArg.COMPLETION_CHOICES
     if command == "laseretch":
         expected = ("algorithm", *argutils.CharacterGroupOrSortArg.COMPLETION_CHOICES)
+    elif command == "wipe":
+        expected = argutils.CharacterGroupOrSortArg.COMPLETION_CHOICES
     assert set(result.stdout.splitlines()) == set(expected)
     destination = option.removeprefix("--").replace("-", "_")
     zsh_choices = f"]:{destination}:({' '.join(expected)})\""
