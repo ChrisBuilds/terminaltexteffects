@@ -72,6 +72,10 @@
   existing character groups. Sorted modes reveal individual characters through the existing easing and delay
   controls; the default diagonal grouping is unchanged. Bash and Zsh completions include the new choices,
   with coverage for ordering, non-monotonic easing, and final color restoration.
+* Highlight's `--highlight-direction` now accepts every `CharacterSort`, including all six spiral patterns,
+  alongside existing character groups. Sorted modes activate highlights in exact character order while keeping
+  the original diagonal default, scene-width behavior, and final colors. Updated Bash/Zsh completions, help,
+  and documentation, with regression coverage for scheduling and color restoration.
 * Bundled Bash and Zsh completions now include both circular grouping modes for Wipe, Highlight, and both Sweep
   directions, with regression coverage for completion choices and runtime parser acceptance.
 

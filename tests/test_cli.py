@@ -377,7 +377,7 @@ printf '%s\\n' "${{COMPREPLY[@]}}"
     expected = argutils.CharacterGroupArg.COMPLETION_CHOICES
     if command == "laseretch":
         expected = ("algorithm", *argutils.CharacterGroupOrSortArg.COMPLETION_CHOICES)
-    elif command == "wipe":
+    elif command in ("wipe", "highlight"):
         expected = argutils.CharacterGroupOrSortArg.COMPLETION_CHOICES
     assert set(result.stdout.splitlines()) == set(expected)
     destination = option.removeprefix("--").replace("-", "_")
