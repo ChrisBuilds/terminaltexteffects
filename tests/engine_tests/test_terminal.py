@@ -29,6 +29,15 @@ from terminaltexteffects.utils.graphics import Color, ColorPair
 
 pytestmark = [pytest.mark.engine, pytest.mark.terminal, pytest.mark.smoke]
 
+SPIRAL_SORTS = (
+    CharacterSort.SPIRAL_CLOCKWISE,
+    CharacterSort.SPIRAL_COUNTER_CLOCKWISE,
+    CharacterSort.SPIRAL_CLOCKWISE_DOUBLE,
+    CharacterSort.SPIRAL_COUNTER_CLOCKWISE_DOUBLE,
+    CharacterSort.SPIRAL_CLOCKWISE_QUAD,
+    CharacterSort.SPIRAL_COUNTER_CLOCKWISE_QUAD,
+)
+
 
 @pytest.mark.parametrize(
     ("input_data", "expected_coords"),
@@ -792,6 +801,130 @@ def test_terminal_spatial_sort_uses_input_coordinates_after_motion() -> None:
     sorted_characters = terminal.get_characters(sort=CharacterSort.MIDDLE_ROW_TO_OUTSIDE)
 
     assert "".join(character.input_symbol for character in sorted_characters) == "defabcghi"
+
+
+@pytest.mark.parametrize(
+    ("sort", "expected_symbols"),
+    [
+        (CharacterSort.SPIRAL_CLOCKWISE, "abcdhlponmiefgkj"),
+        (CharacterSort.SPIRAL_COUNTER_CLOCKWISE, "aeimnoplhdcbfjkg"),
+        (CharacterSort.SPIRAL_CLOCKWISE_DOUBLE, "apbocndmhilefkgj"),
+        (CharacterSort.SPIRAL_COUNTER_CLOCKWISE_DOUBLE, "apelihmdncobfkjg"),
+        (CharacterSort.SPIRAL_CLOCKWISE_QUAD, "adpmbhoiclnefgkj"),
+        (CharacterSort.SPIRAL_COUNTER_CLOCKWISE_QUAD, "adpmeclnibhofgkj"),
+    ],
+)
+def test_terminal_spiral_sorts_order_and_direction(sort: CharacterSort, expected_symbols: str) -> None:
+    """Spiral arms start at the documented corners and wind inward in each direction."""
+    terminal = Terminal("abcd\nefgh\nijkl\nmnop", config=TerminalConfig._build_config())
+    assert "".join(character.input_symbol for character in terminal.get_characters(sort=sort)) == expected_symbols
+
+
+def _walk_spiral_rings(width: int, height: int, sort: CharacterSort) -> list[Coord]:
+    """Build a small test oracle by walking and interleaving complete ring paths."""
+    clockwise = "COUNTER_CLOCKWISE" not in sort.name
+    corners = (0, 2) if sort.name.endswith("DOUBLE") else (0, 1, 2, 3) if sort.name.endswith("QUAD") else (0,)
+    result: list[Coord] = []
+    left, right, bottom, top = 1, width, 1, height
+    while left <= right and bottom <= top:
+        if top == bottom:
+            ring = [Coord(column, top) for column in range(left, right + 1)]
+            arms = [ring if corner in (0, 3) else ring[::-1] for corner in corners]
+        elif left == right:
+            ring = [Coord(left, row) for row in range(top, bottom - 1, -1)]
+            arms = [ring if corner in (0, 1) else ring[::-1] for corner in corners]
+        else:
+            ring = (
+                [Coord(column, top) for column in range(left, right)]
+                + [Coord(right, row) for row in range(top, bottom, -1)]
+                + [Coord(column, bottom) for column in range(right, left, -1)]
+                + [Coord(left, row) for row in range(bottom, top)]
+            )
+            starting_coords = (Coord(left, top), Coord(right, top), Coord(right, bottom), Coord(left, bottom))
+            arms = []
+            for corner in corners:
+                path = ring if clockwise else ring[::-1]
+                start = path.index(starting_coords[corner])
+                arms.append(path[start:] + path[:start])
+        visited: set[Coord] = set()
+        for step in zip(*arms):
+            for coord in step:
+                if coord not in visited:
+                    result.append(coord)
+                    visited.add(coord)
+        left, right, bottom, top = left + 1, right - 1, bottom + 1, top - 1
+    return result
+
+
+@pytest.mark.parametrize("sort", SPIRAL_SORTS)
+@pytest.mark.parametrize(("width", "height"), [(width, height) for width in range(1, 7) for height in range(1, 7)])
+def test_terminal_spiral_sorts_rectangular_coverage(sort: CharacterSort, width: int, height: int) -> None:
+    """Odd, even, rectangular, and degenerate bounds match an independent coordinate walk."""
+    config = TerminalConfig(canvas_width=width, canvas_height=height, ignore_terminal_dimensions=True)
+    terminal = Terminal("\n".join(["X" * width] * height), config=config)
+    characters = terminal.get_characters(sort=sort)
+    assert [character.input_coord for character in characters] == _walk_spiral_rings(width, height, sort)
+    assert len(set(characters)) == width * height
+
+
+@pytest.mark.parametrize("sort", SPIRAL_SORTS)
+@pytest.mark.parametrize("input_chars", [True, False])
+@pytest.mark.parametrize("inner_fill_chars", [True, False])
+@pytest.mark.parametrize("outer_fill_chars", [True, False])
+@pytest.mark.parametrize("added_chars", [True, False])
+def test_terminal_spiral_sorts_selection_and_sparse_bounds(
+    sort: CharacterSort,
+    *,
+    input_chars: bool,
+    inner_fill_chars: bool,
+    outer_fill_chars: bool,
+    added_chars: bool,
+) -> None:
+    """Spirals preserve the selected inventory, including duplicates and off-canvas characters."""
+    terminal = Terminal("a c\ndef", config=TerminalConfig(canvas_width=5, canvas_height=4, anchor_text="c"))
+    terminal.add_character("!", Coord(-2, -1))
+    duplicate = terminal.add_character("?", terminal.get_characters()[0].input_coord)
+    original = terminal.get_characters(
+        input_chars=input_chars,
+        inner_fill_chars=inner_fill_chars,
+        outer_fill_chars=outer_fill_chars,
+        added_chars=added_chars,
+    )
+    for character in original:
+        character.motion.set_coordinate(Coord(100, 100))
+    characters = terminal.get_characters(
+        input_chars=input_chars,
+        inner_fill_chars=inner_fill_chars,
+        outer_fill_chars=outer_fill_chars,
+        added_chars=added_chars,
+        sort=sort,
+    )
+    assert len(characters) == len(original)
+    assert set(characters) == set(original)
+    if not original:
+        assert characters == []
+        return
+    left = min(character.input_coord.column for character in original)
+    bottom = min(character.input_coord.row for character in original)
+    width = max(character.input_coord.column for character in original) - left + 1
+    height = max(character.input_coord.row for character in original) - bottom + 1
+    walk = [Coord(coord.column + left - 1, coord.row + bottom - 1) for coord in _walk_spiral_rings(width, height, sort)]
+    assert characters == sorted(original, key=lambda character: walk.index(character.input_coord))
+    if input_chars and added_chars:
+        assert characters.index(duplicate) > characters.index(terminal.get_characters()[0])
+
+
+@pytest.mark.parametrize("sort", SPIRAL_SORTS)
+def test_terminal_spiral_sorts_wide_characters_and_large_sparse_bounds(sort: CharacterSort) -> None:
+    """Wide symbols are single characters; sparse bounds do not require a dense coordinate walk."""
+    terminal = Terminal("界a\nb界", config=TerminalConfig._build_config())
+    terminal.add_character("!", Coord(-10**9, 10**9))
+    terminal.add_character("?", Coord(10**9, -10**9))
+    original = terminal.get_characters(added_chars=True)
+    characters = terminal.get_characters(added_chars=True, sort=sort)
+    assert len(characters) == 6
+    assert set(characters) == set(original)
+    assert sum(character.input_symbol == "界" for character in characters) == 2
 
 
 def test_terminal_spatial_grouping_uses_input_coordinates_after_motion() -> None:

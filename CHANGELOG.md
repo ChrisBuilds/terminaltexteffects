@@ -35,6 +35,11 @@
 
 ---
 
+* Added clockwise and counterclockwise single, double, and quad spiral `CharacterSort` options for
+  `Terminal.get_characters()`. Spirals wind inward through the selected coordinates' bounding box, with
+  interleaved arms starting at top-left, opposite corners, or all four corners respectively.
+  CLI keys are `spiral_clockwise`, `spiral_clockwise_double`, `spiral_clockwise_quad`,
+  `spiral_counter_clockwise`, `spiral_counter_clockwise_double`, and `spiral_counter_clockwise_quad`.
 * Added `CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE` and `CIRCLE_OUTSIDE_TO_CENTER`, which group characters in
   terminal-adjusted circular bands around the text's geometric midpoint. Bands are one column wide, empty bands
   are omitted, and even-sized text is grouped symmetrically.
@@ -59,8 +64,10 @@
 * Running `tte --print-completion` without a shell argument now prints copy-and-paste setup commands for bash and zsh.
 * Shell completion now suggests valid values for custom enum-like arguments, including gradient directions,
   character grouping modes, and easing functions.
-* LaserEtch pattern completion now includes `algorithm` and every character grouping, including both circular modes,
-  in the bundled Bash and Zsh scripts.
+* LaserEtch's `--etch-pattern` now accepts every `CharacterSort`, including clockwise and counterclockwise single,
+  double, and quad spirals, while retaining the `algorithm` default and serpentine character-group patterns.
+  The reusable `CharacterGroupOrSortArg` validator supports CLI names and native enum values, and bundled Bash
+  and Zsh completions advertise the full pattern set.
 * Bundled Bash and Zsh completions now include both circular grouping modes for Wipe, Highlight, and both Sweep
   directions, with regression coverage for completion choices and runtime parser acceptance.
 

@@ -23,10 +23,11 @@ COMPLETION_PATHS = {
 _COMPLETION_CHOICES_BY_TYPE = {
     argutils.CharacterGroupArg.type_parser: argutils.CharacterGroupArg.COMPLETION_CHOICES,
     argutils.CharacterSortArg.type_parser: argutils.CharacterSortArg.COMPLETION_CHOICES,
+    argutils.CharacterGroupOrSortArg.type_parser: argutils.CharacterGroupOrSortArg.COMPLETION_CHOICES,
     argutils.ColorSortArg.type_parser: argutils.ColorSortArg.COMPLETION_CHOICES,
     argutils.GradientDirection.type_parser: argutils.GradientDirection.COMPLETION_CHOICES,
     argutils.Ease.type_parser: argutils.Ease.COMPLETION_CHOICES,
-    effect_laseretch._etch_pattern_type_parser: ("algorithm", *argutils.CharacterGroupArg.COMPLETION_CHOICES),
+    effect_laseretch._etch_pattern_type_parser: ("algorithm", *argutils.CharacterGroupOrSortArg.COMPLETION_CHOICES),
 }
 
 _BASH_MAPFILE_BLOCK = """  if [[ $pos_only = 0 && "${completing_word}" == -* ]]; then

@@ -12,6 +12,7 @@ from __future__ import annotations
 import random
 from collections import deque
 from dataclasses import dataclass
+from typing import Literal
 
 import terminaltexteffects as tte
 from terminaltexteffects.engine.base_config import (
@@ -36,11 +37,13 @@ def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
     return "laseretch", LaserEtch, LaserEtchConfig
 
 
-def _etch_pattern_type_parser(value: str | argutils.CharacterGroup) -> argutils.CharacterGroup | str:
-    """Normalize the algorithm sentinel or a `CharacterGroup` pattern."""
-    if value == "algorithm":
+def _etch_pattern_type_parser(
+    value: str | argutils.CharacterGroup | argutils.CharacterSort,
+) -> argutils.CharacterGroup | argutils.CharacterSort | Literal["algorithm"]:
+    """Normalize the algorithm sentinel, a `CharacterGroup`, or a `CharacterSort`."""
+    if isinstance(value, str) and value == "algorithm":
         return "algorithm"
-    return argutils.CharacterGroupArg.type_parser(value)
+    return argutils.CharacterGroupOrSortArg.type_parser(value)
 
 
 @dataclass
@@ -48,11 +51,10 @@ class LaserEtchConfig(BaseConfig):
     """LaserEtch effect configuration dataclass.
 
     Attributes:
-        etch_pattern (`argutils.CharacterGroup` | `str`): Character order used to etch the text. Supports `algorithm`,
-            `column_left_to_right`, `column_right_to_left`, `row_top_to_bottom`, `row_bottom_to_top`,
-            `diagonal_top_left_to_bottom_right`, `diagonal_bottom_left_to_top_right`,
-            `diagonal_top_right_to_bottom_left`, `diagonal_bottom_right_to_top_left`, `center_to_outside`,
-            `outside_to_center`, `circle_center_to_outside`, and `circle_outside_to_center`.
+        etch_pattern (`argutils.CharacterGroup` | `argutils.CharacterSort` | `Literal['algorithm']`): Character order used
+            to etch the text. `algorithm` follows a recursive backtracker. `CharacterGroup` patterns reverse
+            alternate groups for serpentine traversal; `CharacterSort` patterns use the exact sorted order,
+            including clockwise and counterclockwise single, double, and quad spirals.
         etch_speed (int): Along with etch_delay, determines the speed at which the characters are etched onto the terminal.
             This value specifies the number of characters to etch simultaneously.
         etch_delay (int): Along with etch_speed, determines the speed at which the characters are etched onto the terminal.
@@ -88,14 +90,14 @@ class LaserEtchConfig(BaseConfig):
         ),
     )
 
-    etch_pattern: argutils.CharacterGroup = argutils.ArgSpec(
+    etch_pattern: argutils.CharacterGroup | argutils.CharacterSort | Literal["algorithm"] = argutils.ArgSpec(
         name="--etch-pattern",
         default="algorithm",
         type=_etch_pattern_type_parser,
-        metavar="algorithm " + " ".join(argutils.CharacterGroupArg.METAVAR),
-        help="Pattern used to etch the text.",
+        metavar="algorithm " + " ".join(argutils.CharacterGroupOrSortArg.METAVAR),
+        help="Pattern used to etch the text: algorithm, serpentine character groups, or exact character sorts.",
     )  # pyright: ignore[reportAssignmentType]
-    "CharacterGroup: Pattern used to etch the text."
+    "CharacterGroup | CharacterSort | Literal['algorithm']: Pattern used to etch the text."
 
     etch_speed: int = argutils.ArgSpec(
         name="--etch-speed",
@@ -415,6 +417,8 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                     self.pending_chars.extend(char_list[::-1])
                 else:
                     self.pending_chars.extend(char_list)
+        elif isinstance(self.config.etch_pattern, argutils.CharacterSort):
+            self.pending_chars = self.terminal.get_characters(sort=self.config.etch_pattern)
         elif self.config.etch_pattern == "algorithm":
             algo = RecursiveBacktracker(self.terminal, limit_to_text_boundary=True)
             while not algo.complete:

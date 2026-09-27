@@ -43,6 +43,14 @@ from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 _CHARACTER_ID_KEY = attrgetter("_character_id")
 _LAYER_KEY = attrgetter("_layer")
+_SPIRAL_SORT_OPTIONS: dict[CharacterSort, tuple[int, tuple[int, ...]]] = {
+    CharacterSort.SPIRAL_CLOCKWISE: (1, (0,)),
+    CharacterSort.SPIRAL_COUNTER_CLOCKWISE: (-1, (0,)),
+    CharacterSort.SPIRAL_CLOCKWISE_DOUBLE: (1, (0, 2)),
+    CharacterSort.SPIRAL_COUNTER_CLOCKWISE_DOUBLE: (-1, (0, 2)),
+    CharacterSort.SPIRAL_CLOCKWISE_QUAD: (1, (0, 1, 2, 3)),
+    CharacterSort.SPIRAL_COUNTER_CLOCKWISE_QUAD: (-1, (0, 1, 2, 3)),
+}
 
 
 @dataclass
@@ -839,6 +847,16 @@ class Terminal:
         the vertical midpoint of the selected rows. Rows equidistant from the midpoint
         are ordered top-first, and characters within each row remain left-to-right.
 
+        Spiral sorts wind inward through rectangular rings of the selected input
+        coordinates' bounding box, skipping unoccupied cells. Single spirals start
+        at top-left; double spirals start at top-left and bottom-right; quad spirals
+        start at top-left, top-right, bottom-right, and bottom-left. Each ring is
+        completed before the next begins. Arms are interleaved by steps along the
+        ring, with ties resolved in the listed corner order. A character reached by
+        multiple arms is returned once; distinct characters sharing a coordinate
+        retain their selection order. On a final single row or column, arms move
+        directly inward from their endpoints in either direction option.
+
         Args:
             input_chars (bool, optional): whether to include input characters. Defaults to True.
             inner_fill_chars (bool, optional): whether to include inner fill characters. Defaults to False.
@@ -904,10 +922,60 @@ class Terminal:
                     ),
                 )
                 all_characters = [character for row in ordered_rows for character in characters_by_row[row]]
+        elif isinstance(sort, CharacterSort) and sort in _SPIRAL_SORT_OPTIONS:
+            direction, corners = _SPIRAL_SORT_OPTIONS[sort]
+            self._sort_characters_in_spiral(all_characters, direction, corners)
         else:
             raise InvalidCharacterSortError(sort)
 
         return all_characters
+
+    @staticmethod
+    def _sort_characters_in_spiral(
+        characters: list[EffectCharacter],
+        direction: int,
+        corners: tuple[int, ...],
+    ) -> None:
+        """Sort occupied coordinates by ring and distance from each starting corner.
+
+        `direction` is 1 for clockwise and -1 for counterclockwise. `corners`
+        indexes top-left, top-right, bottom-right, and bottom-left respectively.
+        Computing a rank per character avoids walking empty bounding-box cells.
+        """
+        if not characters:
+            return
+        left = min(character.input_coord.column for character in characters)
+        right = max(character.input_coord.column for character in characters)
+        bottom = min(character.input_coord.row for character in characters)
+        top = max(character.input_coord.row for character in characters)
+
+        def spiral_key(character: EffectCharacter) -> tuple[int, int, int]:
+            column, row = character.input_coord.column, character.input_coord.row
+            ring = min(column - left, right - column, row - bottom, top - row)
+            width = right - left + 1 - 2 * ring
+            height = top - bottom + 1 - 2 * ring
+            x, y = column - left - ring, top - row - ring
+            if height == 1:
+                distances = tuple(x if corner in (0, 3) else width - 1 - x for corner in corners)
+            elif width == 1:
+                distances = tuple(y if corner in (0, 1) else height - 1 - y for corner in corners)
+            else:
+                # Clockwise perimeter offsets measured from the top-left corner.
+                if y == 0:
+                    offset = x
+                elif x == width - 1:
+                    offset = width - 1 + y
+                elif y == height - 1:
+                    offset = 2 * (width - 1) + height - 1 - x
+                else:
+                    offset = 2 * (width - 1) + 2 * (height - 1) - y
+                perimeter = 2 * (width + height - 2)
+                starts = (0, width - 1, width + height - 2, 2 * width + height - 3)
+                distances = tuple(direction * (offset - starts[corner]) % perimeter for corner in corners)
+            distance, arm = min((distance, arm) for arm, distance in enumerate(distances))
+            return ring, distance, arm
+
+        characters.sort(key=spiral_key)
 
     def get_characters_grouped_by_grid(
         self,

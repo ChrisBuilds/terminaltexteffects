@@ -10,6 +10,7 @@ Classes:
     CharacterGroupArg: Argument type for character groupings.
     CharacterSort: An enum specifying character sorts.
     CharacterSortArg: Argument type for character sorts.
+    CharacterGroupOrSortArg: Argument type accepting character groups or sorts.
     ColorSort: An enum specifying color sorts.
     ColorSortArg: Argument type for color sorts.
     TupleAction: Custom argparse action to convert a list of values into a tuple.
@@ -245,6 +246,11 @@ class CharacterSort(Enum):
     The outside/middle options order complete rows by distance from the selected
     rows' vertical midpoint, retain left-to-right order within a row, and place the
     top row first when two rows are equally distant from the midpoint.
+
+    Spiral options wind inward through rectangular rings of the selected input
+    coordinates' bounding box. Single spirals start at top-left, double spirals
+    at top-left and bottom-right, and quad spirals at all four corners. Multiple
+    arms are interleaved by distance traveled around each ring.
     """
 
     RANDOM = auto()
@@ -254,6 +260,12 @@ class CharacterSort(Enum):
     BOTTOM_TO_TOP_RIGHT_TO_LEFT = auto()
     OUTSIDE_ROW_TO_MIDDLE = auto()
     MIDDLE_ROW_TO_OUTSIDE = auto()
+    SPIRAL_CLOCKWISE = auto()
+    SPIRAL_COUNTER_CLOCKWISE = auto()
+    SPIRAL_CLOCKWISE_DOUBLE = auto()
+    SPIRAL_COUNTER_CLOCKWISE_DOUBLE = auto()
+    SPIRAL_CLOCKWISE_QUAD = auto()
+    SPIRAL_COUNTER_CLOCKWISE_QUAD = auto()
 
 
 class CharacterSortArg:
@@ -288,6 +300,38 @@ class CharacterSortArg:
         except (AttributeError, KeyError):
             msg = f"invalid CharacterSort: '{arg}' is not a valid CharacterSort."
             raise argparse.ArgumentTypeError(msg) from None
+
+
+class CharacterGroupOrSortArg:
+    """Validate a `CharacterGroup` or `CharacterSort` ordering choice."""
+
+    COMPLETION_CHOICES = (*CharacterGroupArg.COMPLETION_CHOICES, *CharacterSortArg.COMPLETION_CHOICES)
+    METAVAR = COMPLETION_CHOICES
+
+    @staticmethod
+    def type_parser(arg: str | CharacterGroup | CharacterSort) -> CharacterGroup | CharacterSort:
+        """Accept case-insensitive CLI names or canonical group/sort enum values.
+
+        Args:
+            arg (str | CharacterGroup | CharacterSort): Ordering choice to normalize.
+
+        Returns:
+            CharacterGroup | CharacterSort: The selected grouping or sorting enum.
+
+        Raises:
+            argparse.ArgumentTypeError: If `arg` is not a valid group or sort.
+
+        """
+        if isinstance(arg, (CharacterGroup, CharacterSort)):
+            return arg
+        if isinstance(arg, str):
+            name = arg.upper()
+            for enum_type in (CharacterGroup, CharacterSort):
+                member = enum_type.__members__.get(name)
+                if member is not None:
+                    return member
+        msg = f"invalid character order: '{arg}' is not a valid CharacterGroup or CharacterSort."
+        raise argparse.ArgumentTypeError(msg)
 
 
 class ColorSort(Enum):
