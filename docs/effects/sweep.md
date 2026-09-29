@@ -35,8 +35,21 @@ Double and quad spirals interleave their arms in the character sequence. Both gr
 modes retain the same easing schedule; several characters may activate in one frame. Each phase
 starts its own sequence, and the final frame restores input symbols and clears the fill characters.
 
+## Travel Speed
+
+`--travel-speed` advances both sweep phases by the specified number of easing steps per frame.
+It accepts a positive integer and defaults to `1`, preserving the original pacing. Higher values
+activate more characters or complete spatial groups per frame while retaining the easing curve,
+selected order, and reversal. The exact activation count varies along the easing curve.
+
+Each phase retains its 100-step schedule, so speed `4` finishes scheduling a phase in 25 frames.
+The second phase starts on the following frame, and active character animations still advance
+once per frame and finish normally. This differs from Waves, where travel speed counts ordered
+entries rather than easing steps.
+
 ```sh
 tte sweep --first-sweep-direction spiral_clockwise --second-sweep-direction spiral_counter_clockwise
+tte sweep --first-sweep-direction spiral_clockwise --second-sweep-direction spiral_counter_clockwise --travel-speed 8
 tte sweep --first-sweep-direction column_right_to_left --second-sweep-direction spiral_clockwise_quad
 ```
 
@@ -60,6 +73,7 @@ from terminaltexteffects import CharacterOrder
 effect = Sweep("YourTextHere")
 effect.effect_config.first_sweep_direction = CharacterOrder.COLUMN_RIGHT_TO_LEFT
 effect.effect_config.second_sweep_direction = CharacterOrder.SPIRAL_CLOCKWISE_DOUBLE
+effect.effect_config.travel_speed = 8
 ```
 
 ::: terminaltexteffects.effects.effect_sweep

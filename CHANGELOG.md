@@ -66,6 +66,10 @@
 
 ---
 
+* Added Sweep's `--travel-speed` option to advance multiple easing steps per frame in both phases.
+  The positive-integer default is `1`, preserving original pacing. Faster sweeps retain every scheduled
+  character/group, the easing curve, direction/reversal, and next-frame phase handoff; animations advance
+  once per frame. Updated documentation and Bash/Zsh completions, with ordering and restoration coverage.
 * Added Waves' `--travel-speed` option to activate multiple ordered entries per frame: individual characters
   for sorts or whole groups for spatial orders. The positive-integer default is `1`, preserving current pacing.
   Partial final batches retain the selected order and reversal, and animations still advance once per frame.

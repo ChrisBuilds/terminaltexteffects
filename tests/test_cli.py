@@ -448,7 +448,7 @@ printf '%s\\n' "${{COMPREPLY[@]}}"
         assert f'"{flag}[' in zsh_completion
 
 
-@pytest.mark.parametrize("command", ["waves"])
+@pytest.mark.parametrize("command", ["waves", "sweep"])
 def test_travel_speed_option_completes_in_bash_and_zsh(command: str) -> None:
     """Both bundled shells advertise the effects' travel-speed arguments."""
     result = _run_bash(

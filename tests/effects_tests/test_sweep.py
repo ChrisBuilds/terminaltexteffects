@@ -7,6 +7,7 @@ from typing import Literal, cast
 
 import pytest
 
+from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_sweep
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils import argutils
@@ -20,6 +21,135 @@ def _make_terminal_config(
     terminal_config.frame_rate = 0
     terminal_config.existing_color_handling = existing_color_handling
     return terminal_config
+
+
+@pytest.mark.parametrize(("value", "expected"), [(1, 1), (4, 4), ("8", 8)])
+def test_sweep_travel_speed_normalizes_cli_and_native_values(value: int | str, expected: int) -> None:
+    """A shared positive-integer speed controls both sweep phases and defaults to original pacing."""
+    parser, _ = build_parser(include_user_effects=False)
+    assert parser.parse_args(["sweep"]).travel_speed == 1
+    assert effect_sweep.SweepConfig().travel_speed == 1
+    assert parser.parse_args(["sweep", "--travel-speed", str(value)]).travel_speed == expected
+    config = effect_sweep.SweepConfig(travel_speed=value)  # pyright: ignore[reportArgumentType]
+    assert config.travel_speed == expected
+    config.travel_speed = value  # pyright: ignore[reportAttributeAccessIssue]
+    assert config.travel_speed == expected
+
+
+@pytest.mark.parametrize("value", [0, -1, "0", "-1", "", "1.5", "true", None, True, False, 1.5, [], {}])
+def test_sweep_travel_speed_rejects_invalid_native_values(value: object) -> None:
+    """Invalid native speeds fail during configuration rather than preventing sweep completion."""
+    with pytest.raises(ValueError, match="travel_speed"):
+        effect_sweep.SweepConfig(travel_speed=value)  # pyright: ignore[reportArgumentType]
+    config = effect_sweep.SweepConfig()
+    with pytest.raises(ValueError, match="travel_speed"):
+        config.travel_speed = value  # pyright: ignore[reportAttributeAccessIssue]
+
+
+@pytest.mark.parametrize("value", ["0", "-1", "", "1.5", "true"])
+def test_sweep_travel_speed_rejects_invalid_cli_values(value: str) -> None:
+    """The CLI rejects malformed and nonpositive travel speeds."""
+    parser, _ = build_parser(include_user_effects=False)
+    with pytest.raises(SystemExit):
+        parser.parse_args(["sweep", "--travel-speed", value])
+
+
+@pytest.mark.parametrize("order", argutils.CharacterOrder)
+@pytest.mark.parametrize("travel_speed", [1, 3, 8, 1_000_000_000])
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize("color_handling", ["ignore", "dynamic", "always"])
+def test_sweep_travel_speed_preserves_eased_prefixes_phase_handoff_and_animation_ticks(
+    order: argutils.CharacterOrder,
+    travel_speed: int,
+    color_handling: Literal["ignore", "dynamic", "always"],
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    reverse: bool,
+) -> None:
+    """Faster scheduling visits every ordered entry, stops at phase boundaries, and updates animations once."""
+    random.seed(918)
+    effect = effect_sweep.Sweep("\x1b[38;5;196m\x1b[48;5;21mabc\nd界f\x1b[0m")
+    effect.terminal_config = TerminalConfig(
+        frame_rate=0, existing_color_handling=color_handling, canvas_width=7, canvas_height=5, anchor_text="c",
+    )
+    effect.effect_config = effect_sweep.SweepConfig(
+        first_sweep_direction=order,
+        second_sweep_direction=(
+            argutils.CharacterOrder.SPIRAL_COUNTER_CLOCKWISE_QUAD if order.is_grouped
+            else argutils.CharacterOrder.CIRCLE_CENTER_TO_OUTSIDE
+        ),
+        reverse_first_sweep_direction=reverse,
+        reverse_second_sweep_direction=not reverse,
+        travel_speed=travel_speed,
+    )
+    iterator = cast("effect_sweep.SweepIterator", iter(effect))
+    inventory = iterator.terminal.get_characters(inner_fill_chars=True, outer_fill_chars=True)
+    groups = {"initial_sweep": iterator.groups_first_sweep, "second_sweep": iterator.groups_second_sweep}
+    expected = {scene: [character for group in sequence for character in group] for scene, sequence in groups.items()}
+    scheduled: dict[str, list[effect_sweep.tte.EffectCharacter]] = {scene: [] for scene in groups}
+    activate_scene = effect_sweep.tte.Animation.activate_scene
+
+    def record_activation(animation: effect_sweep.tte.Animation, scene: effect_sweep.tte.Scene | str) -> None:
+        if isinstance(scene, str) and scene in scheduled:
+            scheduled[scene].append(animation.character)
+        activate_scene(animation, scene)
+
+    monkeypatch.setattr(effect_sweep.tte.Animation, "activate_scene", record_activation)
+    updates = 0
+    update = iterator.update
+
+    def record_update() -> None:
+        nonlocal updates
+        updates += 1
+        update()
+
+    monkeypatch.setattr(iterator, "update", record_update)
+    phase_frames = (100 + travel_speed - 1) // travel_speed
+    for phase_number, scene in enumerate(("initial_sweep", "second_sweep")):
+        sequence = groups[scene]
+        for frame in range(phase_frames):
+            next(iterator)
+            step = min((frame + 1) * travel_speed, 100)
+            group_count = (
+                len(sequence) if step == 100
+                else int(effect_sweep.tte.easing.in_out_circ(step / 100) * len(sequence))
+            )
+            prefix = [character for group in sequence[:group_count] for character in group]
+            assert scheduled[scene] == prefix
+            assert updates == phase_number * phase_frames + frame + 1
+            if scene == "initial_sweep":
+                assert scheduled["second_sweep"] == []
+                assert {character for character in inventory if character.is_visible} == set(prefix)
+        assert scheduled[scene] == expected[scene]
+        assert iterator.phase == "second sweep"
+        if scene == "initial_sweep":
+            assert not iterator.complete
+            assert iterator.easer.easing_tracker.current_step == 0
+        else:
+            assert iterator.complete
+    previous_updates = updates
+    for _ in iterator:
+        assert updates == previous_updates + 1
+        previous_updates = updates
+        assert scheduled == expected
+    assert scheduled == expected
+    assert all(
+        character.is_visible
+        and character.animation.current_character_visual.symbol == character.input_symbol
+        and character.animation.current_character_visual.colors
+        == character.animation.query_scene("second_sweep").frames[-1].character_visual.colors
+        for character in inventory
+    )
+    if color_handling == "dynamic":
+        assert all(
+            character.animation.current_character_visual.colors == ColorPair()
+            for character in inventory if character.is_fill_character
+        )
+        assert all(
+            character.animation.current_character_visual.colors
+            == ColorPair(fg=character.animation.input_fg_color, bg=character.animation.input_bg_color)
+            for character in inventory if not character.is_fill_character
+        )
 
 
 @pytest.mark.parametrize("field", ["first_sweep_direction", "second_sweep_direction"])

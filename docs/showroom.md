@@ -1391,6 +1391,8 @@ Sweep across the canvas to reveal uncolored text, reverse sweep to color the tex
                         Grouping or character sort order for the second sweep, coloring the characters. (default: column_left_to_right)
     --reverse-second-sweep-direction
                         Reverse the complete traversal, preserving group membership. (default: False)
+    --travel-speed (int > 0)
+                        Number of sweep easing steps to advance per frame, for both phases. n > 0. (default: 1)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the character gradient (applied
                         from bottom to top). If only one color is provided, the characters will be

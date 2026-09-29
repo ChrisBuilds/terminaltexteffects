@@ -99,6 +99,15 @@ class SweepConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "bool : Reverse the complete traversal, preserving group membership."
 
+    travel_speed: int = argutils.ArgSpec(
+        name="--travel-speed",
+        type=argutils.PositiveInt.type_parser,
+        default=1,
+        metavar=argutils.PositiveInt.METAVAR,
+        help="Number of sweep easing steps to advance per frame, for both phases. n > 0.",
+    )  # pyright: ignore[reportAssignmentType]
+    "int : Easing steps per frame for both sweeps; animations advance once per frame. Defaults to 1."
+
     final_gradient_stops: tuple[tte.Color, ...] = FinalGradientStopsArg(
         default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#ffffff")),
         help=(
@@ -238,16 +247,19 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
     def __next__(self) -> str:
         """Return the next frame in the effect."""
         while self.active_characters or not self.complete:
-            self.easer.step()
-            group: list[tte.EffectCharacter]
-            for group in self.easer.added:
-                for character in group:
-                    if self.phase == "first sweep":
-                        self.terminal.set_character_visibility(character, is_visible=True)
-                    character.animation.activate_scene(
-                        "initial_sweep" if self.phase == "first sweep" else "second_sweep",
-                    )
-                self.active_characters.update(group)
+            for _ in range(self.config.travel_speed):
+                self.easer.step()
+                group: list[tte.EffectCharacter]
+                for group in self.easer.added:
+                    for character in group:
+                        if self.phase == "first sweep":
+                            self.terminal.set_character_visibility(character, is_visible=True)
+                        character.animation.activate_scene(
+                            "initial_sweep" if self.phase == "first sweep" else "second_sweep",
+                        )
+                    self.active_characters.update(group)
+                if self.easer.is_complete():
+                    break
             if self.easer.is_complete() and self.phase == "first sweep":
                 self.easer.sequence = self.groups_second_sweep
                 self.easer.reset()
