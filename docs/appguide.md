@@ -59,6 +59,20 @@ limit the pool with `--include-effects` and `--exclude-effects`:
 ls | tte --random-effect --seed 123 --include-effects beams decrypt rain
 ```
 
+Use `--repeat COUNT` to replay the selected effect on the same input. The default is one playback;
+`--repeat 3` plays it three times, and `--repeat 0` keeps replaying until you press Ctrl+C.
+Each playback starts a fresh effect iterator, without storing frames. With `--random-effect`, the
+effect is chosen once and that same effect is replayed. Empty input remains a no-op, and an effect
+that produces no frames stops rather than spinning indefinitely.
+
+```bash title="Repeat an animation"
+printf 'Hello!' | tte --repeat 3 wipe
+```
+
+```bash title="Continuous animation until Ctrl+C"
+tte -i banner.txt --repeat 0 beams
+```
+
 Custom effect modules are discovered from `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or
 `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set. Any `.py` file in that directory that
 provides `get_effect_resources()` can register an effect command alongside the built-in effects.

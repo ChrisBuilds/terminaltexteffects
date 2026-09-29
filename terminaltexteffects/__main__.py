@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 import terminaltexteffects.effects
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
+from terminaltexteffects.utils.argutils import NonNegativeInt
 from terminaltexteffects.utils.exceptions import EmptyInputError, UnsupportedAnsiSequenceError
 from terminaltexteffects.utils.shell_completion import (
     get_completion_instructions,
@@ -23,6 +24,7 @@ from terminaltexteffects.utils.shell_completion import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from types import ModuleType
 
     from terminaltexteffects.engine.base_config import BaseConfig
@@ -74,6 +76,13 @@ def build_parser(
         help="Print completion setup commands, or a completion script for the requested shell, and exit.",
     )
     parser.add_argument("--random-effect", "-R", action="store_true", help="Randomly select an effect to apply")
+    parser.add_argument(
+        "--repeat",
+        type=NonNegativeInt.type_parser,
+        default=1,
+        metavar="COUNT",
+        help="Play the selected effect COUNT times; 0 repeats until interrupted (default: 1).",
+    )
     parser.add_argument(
         "--seed",
         type=int,
@@ -176,6 +185,24 @@ def _get_version() -> str:
         return "unknown"
 
 
+def _print_replays(effect: BaseEffect, iterator: Iterator[str], terminal: Terminal, count: int) -> None:
+    """Print fresh playbacks, stopping on empty output or after `count` runs.
+
+    A zero `count` repeats until interrupted. The first iterator is constructed
+    before opening terminal output so input validation remains fail-fast.
+    """
+    completed = 0
+    while True:
+        rendered = False
+        for frame in iterator:
+            terminal.print(frame)
+            rendered = True
+        completed += 1
+        if not rendered or (count and completed >= count):
+            return
+        iterator = iter(effect)
+
+
 def main() -> None:
     """Run the terminaltexteffects command line interface.
 
@@ -230,8 +257,7 @@ def main() -> None:
     try:
         effect_iterator = iter(effect)
         with effect.terminal_output() as terminal:
-            for frame in effect_iterator:
-                terminal.print(frame)
+            _print_replays(effect, effect_iterator, terminal, args.repeat)
     except (EmptyInputError, UnsupportedAnsiSequenceError) as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

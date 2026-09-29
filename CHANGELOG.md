@@ -54,6 +54,8 @@
 
 ---
 
+* Added `--repeat COUNT` to replay the selected CLI effect without buffering frames. The default remains one
+  playback; `--repeat 0` replays until interrupted, and effects that yield no frames stop immediately.
 * Shell completions are now generated with `shtab` during development and bundled with the package. Completion no
   longer imports user effect plugins during generation, and zsh now receives a native completion script.
 * Running `tte --print-completion` without a shell argument now prints copy-and-paste setup commands for bash and zsh.
