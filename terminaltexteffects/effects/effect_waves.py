@@ -8,8 +8,6 @@ Classes:
 
 from __future__ import annotations
 
-import argparse
-import typing
 from dataclasses import dataclass
 
 from terminaltexteffects import Color, ColorPair, EffectCharacter, EventHandler, Gradient, easing
@@ -21,17 +19,6 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-
-
-def _wave_direction_type_parser(value: str) -> str:
-    """Normalize legacy diamond direction names before validating choices."""
-    if not isinstance(value, str):
-        message = "Wave direction must be a string."
-        raise argparse.ArgumentTypeError(message)
-    return {
-        "center_to_outside": "diamonds_center_to_outside",
-        "outside_to_center": "diamonds_outside_to_center",
-    }.get(value, value)
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -58,7 +45,8 @@ class WavesConfig(BaseConfig):
         wave_count (int): Number of waves to generate. Valid values are n > 0.
         wave_length (int): The number of frames for each step of the wave. Higher wave-lengths will create a slower
             wave. Valid values are n > 0.
-        wave_direction (typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','diamonds_center_to_outside','diamonds_outside_to_center','circle_center_to_outside','circle_outside_to_center']): Direction of the wave.
+        reverse_wave_direction (bool): Reverse the complete traversal while preserving group membership.
+        wave_direction (CharacterOrder): Character order for wave activation.
         wave_easing (easing.EasingFunction): Easing function to use for wave travel.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
             provided, the characters will be displayed in that color.
@@ -66,7 +54,7 @@ class WavesConfig(BaseConfig):
             create a smoother and longer gradient animation. Valid values are n > 0.
         final_gradient_direction (Gradient.Direction): Direction of the final gradient.
 
-    """  # noqa: E501
+    """
 
     parser_spec: argutils.ParserSpec = argutils.ParserSpec(
         name="waves",
@@ -143,32 +131,22 @@ class WavesConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : The number of frames for each step of the wave. Higher wave-lengths will create a slower wave."
 
-    wave_direction: typing.Literal[
-        "column_left_to_right",
-        "column_right_to_left",
-        "row_top_to_bottom",
-        "row_bottom_to_top",
-        "diamonds_center_to_outside",
-        "diamonds_outside_to_center",
-        "circle_center_to_outside",
-        "circle_outside_to_center",
-    ] = argutils.ArgSpec(
+    wave_direction: argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort = argutils.ArgSpec(
         name="--wave-direction",
-        type=_wave_direction_type_parser,
-        default="circle_center_to_outside",
-        help="Direction of the wave.",
-        choices=[
-            "column_left_to_right",
-            "column_right_to_left",
-            "row_top_to_bottom",
-            "row_bottom_to_top",
-            "diamonds_center_to_outside",
-            "diamonds_outside_to_center",
-            "circle_center_to_outside",
-            "circle_outside_to_center",
-        ],
+        default=argutils.CharacterOrder.CIRCLE_CENTER_TO_OUTSIDE,
+        type=argutils.CharacterOrderArg.type_parser,
+        metavar=" ".join(argutils.CharacterOrderArg.METAVAR),
+        help="Character order for wave activation; spatial groups or individual characters, including spirals.",
     )  # pyright: ignore[reportAssignmentType]
-    "typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','diamonds_center_to_outside','diamonds_outside_to_center','circle_center_to_outside','circle_outside_to_center']"
+    "CharacterOrder : Character order for wave activation."
+
+    reverse_wave_direction: bool = argutils.ArgSpec(
+        name="--reverse-wave-direction",
+        default=False,
+        action="store_true",
+        help="Reverse the complete wave direction traversal.",
+    )  # pyright: ignore[reportAssignmentType]
+    "bool : Reverse wave activation order, preserving group membership."
 
     wave_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--wave-easing",
@@ -299,19 +277,10 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             character.animation.activate_scene(wave_scn)
             if self.terminal.config.existing_color_handling == "dynamic":
                 character.animation.set_appearance(character.input_symbol, self.character_final_color_map[character])
-        grouping_map = {
-            "column_left_to_right": argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-            "column_right_to_left": argutils.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
-            "row_top_to_bottom": argutils.CharacterGroup.ROW_TOP_TO_BOTTOM,
-            "row_bottom_to_top": argutils.CharacterGroup.ROW_BOTTOM_TO_TOP,
-            "diamonds_center_to_outside": argutils.CharacterGroup.DIAMONDS_CENTER_TO_OUTSIDE,
-            "diamonds_outside_to_center": argutils.CharacterGroup.DIAMONDS_OUTSIDE_TO_CENTER,
-            "circle_center_to_outside": argutils.CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE,
-            "circle_outside_to_center": argutils.CharacterGroup.CIRCLE_OUTSIDE_TO_CENTER,
-        }
-
-        for column in self.terminal.get_characters_grouped(grouping=grouping_map[self.config.wave_direction]):
-            self.pending_columns.append(column)
+        self.pending_columns = self.terminal.get_characters_grouped(
+            order=self.config.wave_direction,
+            reverse=self.config.reverse_wave_direction,
+        )
 
     def __next__(self) -> str:
         """Return the next frame in the animation."""

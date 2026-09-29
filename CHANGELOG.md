@@ -35,6 +35,13 @@
 
 ---
 
+* Added `CharacterOrder` and `CharacterOrderArg` to unify spatial grouping and individual traversal.
+  Both `Terminal.get_characters(order=...)` and `get_characters_grouped(order=...)` accept every order:
+  spatial groups flatten into character sequences, and individual sorts produce singleton groups.
+  Legacy enums and `sort` / `grouping` arguments remain supported. `canvas_only` makes off-canvas selection explicit.
+* Added `reverse=True` to flat, grouped, and grid character retrieval. Grouped reversal reverses both group order
+  and internal character order while preserving membership. Optional `serpentine=True` on order-based retrieval
+  reverses alternate spatial groups before global reversal, without reshuffling random traversals.
 * Added clockwise and counterclockwise single, double, and quad spiral `CharacterSort` options for
   `Terminal.get_characters()`. Spirals wind inward through the selected coordinates' bounding box, with
   interleaved arms starting at top-left, opposite corners, or all four corners respectively.
@@ -59,6 +66,13 @@
 
 ---
 
+* Wipe, Highlight, Sweep, Waves, and LaserEtch now normalize their direction/pattern options to `CharacterOrder`.
+  Waves accepts every order, including diagonals and spirals, while retaining its circular default. Spatial
+  orders activate whole groups and individual orders activate singleton entries through each effect's scheduler.
+* Added `--reverse-wipe-direction`, `--reverse-highlight-direction`, `--reverse-wave-direction`,
+  `--reverse-etch-pattern`, and independent `--reverse-first-sweep-direction` / `--reverse-second-sweep-direction`
+  flags. Defaults remain off; LaserEtch reverses the completed serpentine or algorithm path. Updated help,
+  documentation, and bundled Bash/Zsh completions, with regression coverage for traversal and final appearance.
 * Shell completions are now generated with `shtab` during development and bundled with the package. Completion no
   longer imports user effect plugins during generation, and zsh now receives a native completion script.
 * Running `tte --print-completion` without a shell argument now prints copy-and-paste setup commands for bash and zsh.
@@ -76,6 +90,10 @@
   alongside existing character groups. Sorted modes activate highlights in exact character order while keeping
   the original diagonal default, scene-width behavior, and final colors. Updated Bash/Zsh completions, help,
   and documentation, with regression coverage for scheduling and color restoration.
+* Sweep's `--first-sweep-direction` and `--second-sweep-direction` now independently accept every `CharacterSort`,
+  including all six spiral patterns, alongside existing character groups. Sorted phases preserve full-canvas fill
+  selection, the existing easing schedule, and final text/color restoration. Updated help, docs, and Bash/Zsh
+  completions, with coverage for mixed group/sort phases and opposite spiral directions.
 * Bundled Bash and Zsh completions now include both circular grouping modes for Wipe, Highlight, and both Sweep
   directions, with regression coverage for completion choices and runtime parser acceptance.
 

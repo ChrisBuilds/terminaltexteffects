@@ -82,6 +82,16 @@ class TerminalOutputActiveError(TerminalTextEffectsError):
         super().__init__(self.message)
 
 
+class InvalidCharacterOrderError(TerminalTextEffectsError):
+    """Raised when a terminal receives an invalid character order."""
+
+    def __init__(self, character_order: object) -> None:
+        """Store the invalid `character_order` and describe the expected type."""
+        self.character_order = character_order
+        self.message = f"Invalid character order provided: {character_order!r}. Ref CharacterOrder."
+        super().__init__(self.message)
+
+
 class InvalidCharacterGroupError(TerminalTextEffectsError):
     """Raised when an invalid character group is provided to a Terminal method.
 

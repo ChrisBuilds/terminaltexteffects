@@ -34,11 +34,14 @@ def _make_terminal_config(
 )
 def test_laseretch_etch_pattern_normalizes_cli_and_native_values(value: object, expected: object) -> None:
     """LaserEtch normalizes its sentinel, groups, and sorts on construction and assignment."""
+    canonical = expected if expected == "algorithm" else argutils.CharacterOrderArg.type_parser(
+        cast("argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort | str", expected),
+    )
     config = effect_laseretch.LaserEtchConfig(etch_pattern=value)  # pyright: ignore[reportArgumentType]
-    assert config.etch_pattern == expected
+    assert config.etch_pattern == canonical
     config = effect_laseretch.LaserEtchConfig()
     config.etch_pattern = value  # pyright: ignore[reportAttributeAccessIssue]
-    assert config.etch_pattern == expected
+    assert config.etch_pattern == canonical
 
 
 @pytest.mark.parametrize("value", ["invalid", "", None, True, False, 1, [], {}, argutils.ColorSort.RANDOM])

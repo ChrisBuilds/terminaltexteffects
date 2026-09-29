@@ -18,7 +18,7 @@ with effect.terminal_output() as terminal:
 
 ## Highlight Directions and Sorts
 
-`--highlight-direction` accepts every `CharacterGroup` and `CharacterSort`. Group directions activate
+`--highlight-direction` accepts every `CharacterOrder`. Group directions activate
 whole rows, columns, diagonals, or radial bands. Sort directions activate individual characters in the
 exact order returned by `Terminal.get_characters()`, using their input coordinates. All text remains
 visible while the highlight travels through it.
@@ -41,14 +41,25 @@ tte highlight --highlight-direction spiral_clockwise
 tte highlight --highlight-direction spiral_counter_clockwise_quad --highlight-width 12
 ```
 
+Use `--reverse-highlight-direction` to reverse the complete traversal while preserving group membership.
+The flag defaults to off. Reversed spirals travel outward along the selected path; changing
+clockwise to counterclockwise instead selects a different inward path.
+
+```sh
+tte highlight --highlight-direction spiral_clockwise --reverse-highlight-direction
+```
+
+Configurations normalize to `CharacterOrder`. Existing `CharacterGroup` and `CharacterSort`
+values and their CLI spellings remain accepted as compatibility inputs.
+
 For library use, assign a native enum or its CLI spelling:
 
 ```python
 from terminaltexteffects.effects.effect_highlight import Highlight
-from terminaltexteffects.utils.argutils import CharacterSort
+from terminaltexteffects import CharacterOrder
 
 effect = Highlight("YourTextHere")
-effect.effect_config.highlight_direction = CharacterSort.SPIRAL_CLOCKWISE_DOUBLE
+effect.effect_config.highlight_direction = CharacterOrder.SPIRAL_CLOCKWISE_DOUBLE
 ```
 
 ::: terminaltexteffects.effects.effect_highlight

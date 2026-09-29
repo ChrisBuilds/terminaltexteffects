@@ -9,6 +9,7 @@ import pytest
 from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_waves
 from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.graphics import Color, ColorPair
 
 WaveDirection = Literal[
@@ -35,11 +36,11 @@ def _make_terminal_config(
 def test_waves_default_direction_matches_cli_and_library() -> None:
     """The CLI and library default to revealing text in expanding circular rings."""
     parser, _ = build_parser(include_user_effects=False)
-    assert parser.parse_args(["waves"]).wave_direction == "circle_center_to_outside"
-    assert effect_waves.WavesConfig().wave_direction == "circle_center_to_outside"
+    assert parser.parse_args(["waves"]).wave_direction is argutils.CharacterOrder.CIRCLE_CENTER_TO_OUTSIDE
+    assert effect_waves.WavesConfig().wave_direction is argutils.CharacterOrder.CIRCLE_CENTER_TO_OUTSIDE
     effect = effect_waves.Waves("abcde\nfghij\nklmno")
     effect.terminal_config = _make_terminal_config("ignore")
-    assert effect.effect_config.wave_direction == "circle_center_to_outside"
+    assert effect.effect_config.wave_direction is argutils.CharacterOrder.CIRCLE_CENTER_TO_OUTSIDE
     iterator = cast("effect_waves.WavesIterator", iter(effect))
     assert [{character.input_symbol for character in group} for group in iterator.pending_columns] == [
         set("h"),
@@ -58,12 +59,12 @@ def test_waves_diamond_directions_preserve_groups_and_legacy_names(direction: st
     canonical = direction if direction.startswith("diamonds_") else f"diamonds_{direction}"
     parser, _ = build_parser(include_user_effects=False)
     parsed = parser.parse_args(["waves", "--wave-direction", direction])
-    assert parsed.wave_direction == canonical
+    assert parsed.wave_direction is argutils.CharacterOrder[canonical.upper()]
     effect = effect_waves.Waves("abcde\nfghij\nklmno")
     effect.terminal_config = _make_terminal_config("ignore")
     effect.effect_config.wave_direction = cast("WaveDirection", direction)  # pyright: ignore[reportAttributeAccessIssue]
     iterator = cast("effect_waves.WavesIterator", iter(effect))
-    assert iterator.config.wave_direction == canonical
+    assert iterator.config.wave_direction is argutils.CharacterOrder[canonical.upper()]
     expected = [set("h"), set("gicm"), set("fjbdln"), set("aeko")]
     if canonical == "diamonds_outside_to_center":
         expected.reverse()
@@ -86,7 +87,7 @@ def test_waves_circular_directions_reveal_one_ring_per_frame(direction: WaveDire
     """Circular waves reveal radial bands in order and settle to the input text."""
     effect = effect_waves.Waves("abcde\nfghij\nklmno")
     effect.terminal_config = _make_terminal_config("ignore")
-    effect.effect_config.wave_direction = direction
+    effect.effect_config.wave_direction = direction  # pyright: ignore[reportAttributeAccessIssue]
     iterator = cast("effect_waves.WavesIterator", iter(effect))
     expected = [set("h"), set("gi"), set("mfjc"), set("klnoabde")]
     if direction == "circle_outside_to_center":
@@ -193,7 +194,7 @@ def test_waves_args(
     effect.effect_config.wave_gradient_steps = wave_gradient_steps
     effect.effect_config.wave_count = wave_count
     effect.effect_config.wave_length = wave_length
-    effect.effect_config.wave_direction = wave_direction
+    effect.effect_config.wave_direction = wave_direction  # pyright: ignore[reportAttributeAccessIssue]
     with effect.terminal_output() as terminal:
         for frame in effect:
             terminal.print(frame)

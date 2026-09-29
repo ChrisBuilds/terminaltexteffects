@@ -15,7 +15,7 @@ with effect.terminal_output() as terminal:
 
 ## Wipe Directions and Sorts
 
-`--wipe-direction` accepts every `CharacterGroup` and `CharacterSort`. Group directions reveal whole
+`--wipe-direction` accepts every `CharacterOrder`. Group directions reveal whole
 rows, columns, diagonals, or radial bands. Sort directions reveal individual characters in the exact
 order returned by `Terminal.get_characters()`, using their input coordinates.
 
@@ -38,14 +38,25 @@ tte wipe --wipe-direction spiral_clockwise
 tte wipe --wipe-direction spiral_counter_clockwise_double --wipe-delay 2
 ```
 
+Use `--reverse-wipe-direction` to reverse the complete traversal while preserving group membership.
+The flag defaults to off. Reversed spirals travel outward along the selected path; changing
+clockwise to counterclockwise instead selects a different inward path.
+
+```sh
+tte wipe --wipe-direction spiral_clockwise --reverse-wipe-direction
+```
+
+Configurations normalize to `CharacterOrder`. Existing `CharacterGroup` and `CharacterSort`
+values and their CLI spellings remain accepted as compatibility inputs.
+
 For library use, assign a native enum or its CLI spelling:
 
 ```python
 from terminaltexteffects.effects.effect_wipe import Wipe
-from terminaltexteffects.utils.argutils import CharacterSort
+from terminaltexteffects import CharacterOrder
 
 effect = Wipe("YourTextHere")
-effect.effect_config.wipe_direction = CharacterSort.SPIRAL_CLOCKWISE_QUAD
+effect.effect_config.wipe_direction = CharacterOrder.SPIRAL_CLOCKWISE_QUAD
 ```
 
 ::: terminaltexteffects.effects.effect_wipe

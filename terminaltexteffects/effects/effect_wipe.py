@@ -37,7 +37,8 @@ class WipeConfig(BaseConfig):
     """Configuration for the Wipe effect.
 
     Attributes:
-        wipe_direction (`argutils.CharacterGroup` | `argutils.CharacterSort`): Grouping or character order for the wipe.
+        reverse_wipe_direction (bool): Reverse the complete traversal while preserving group membership.
+        wipe_direction (`CharacterOrder`): Grouping or character order for the wipe.
             Sort values reveal characters in the exact sorted order, including spiral patterns.
         wipe_delay (int): Number of frames to wait between wipe easing steps. Increase to slow down the effect.
             Valid values are n >= 0.
@@ -62,14 +63,22 @@ class WipeConfig(BaseConfig):
         ),
     )
 
-    wipe_direction: argutils.CharacterGroup | argutils.CharacterSort = argutils.ArgSpec(
+    wipe_direction: argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort = argutils.ArgSpec(
         name="--wipe-direction",
-        default=argutils.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
-        type=argutils.CharacterGroupOrSortArg.type_parser,
-        metavar=" ".join(argutils.CharacterGroupOrSortArg.METAVAR),
-        help="Grouping or character sort order for the wipe, including spiral patterns.",
+        default=argutils.CharacterOrder.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+        type=argutils.CharacterOrderArg.type_parser,
+        metavar=" ".join(argutils.CharacterOrderArg.METAVAR),
+        help="Character order for the wipe: spatial groups or individual traversal, including spirals.",
     )  # pyright: ignore[reportAssignmentType]
-    "CharacterGroup | CharacterSort : Grouping or character order for the wipe."
+    "CharacterOrder : Grouping or character order for the wipe."
+
+    reverse_wipe_direction: bool = argutils.ArgSpec(
+        name="--reverse-wipe-direction",
+        default=False,
+        action="store_true",
+        help="Reverse the complete wipe direction traversal.",
+    )  # pyright: ignore[reportAssignmentType]
+    "bool : Reverse the complete traversal, preserving group membership."
 
     wipe_delay: int = argutils.ArgSpec(
         name="--wipe-delay",
@@ -125,10 +134,10 @@ class WipeIterator(BaseEffectIterator[WipeConfig]):
         """
         super().__init__(effect)
         self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
-        if isinstance(self.config.wipe_direction, argutils.CharacterSort):
-            groups = [[character] for character in self.terminal.get_characters(sort=self.config.wipe_direction)]
-        else:
-            groups = self.terminal.get_characters_grouped(self.config.wipe_direction)
+        groups = self.terminal.get_characters_grouped(
+            order=self.config.wipe_direction,
+            reverse=self.config.reverse_wipe_direction,
+        )
         self.easer = easing.SequenceEaser(
             groups,
             easing_function=self.config.wipe_ease,

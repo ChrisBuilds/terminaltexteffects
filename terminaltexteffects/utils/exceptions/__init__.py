@@ -26,6 +26,7 @@ from terminaltexteffects.utils.exceptions.terminal_exceptions import (
     InvalidCharacterCoordinateError,
     InvalidCharacterError,
     InvalidCharacterGroupError,
+    InvalidCharacterOrderError,
     InvalidCharacterSortError,
     InvalidCharacterVisibilityError,
     InvalidColorSortError,

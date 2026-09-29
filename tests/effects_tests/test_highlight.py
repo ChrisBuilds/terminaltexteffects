@@ -34,10 +34,10 @@ def test_highlight_direction_normalizes_groups_and_sorts(
     """CLI spellings and native groups/sorts normalize on construction and assignment."""
     for value in (direction, direction.name.lower(), direction.name):
         config = effect_highlight.HighlightConfig(highlight_direction=value)  # pyright: ignore[reportArgumentType]
-        assert config.highlight_direction is direction
+        assert config.highlight_direction is argutils.CharacterOrder[direction.name]
         config = effect_highlight.HighlightConfig()
         config.highlight_direction = value  # pyright: ignore[reportAttributeAccessIssue]
-        assert config.highlight_direction is direction
+        assert config.highlight_direction is argutils.CharacterOrder[direction.name]
 
 
 @pytest.mark.parametrize("value", ["invalid", "", None, True, False, 1, [], {}, argutils.ColorSort.RANDOM])
@@ -60,7 +60,7 @@ def test_highlight_group_directions_preserve_complete_groups(direction: argutils
     assert iterator.easer.sequence == iterator.terminal.get_characters_grouped(direction)
     assert (
         effect_highlight.HighlightConfig().highlight_direction
-        is argutils.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT
+        is argutils.CharacterOrder.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT
     )
 
 

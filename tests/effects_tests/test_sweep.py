@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import random
 from typing import Literal, cast
 
 import pytest
 
 from terminaltexteffects.effects import effect_sweep
 from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.graphics import Color, ColorPair
 
 
@@ -18,6 +20,148 @@ def _make_terminal_config(
     terminal_config.frame_rate = 0
     terminal_config.existing_color_handling = existing_color_handling
     return terminal_config
+
+
+@pytest.mark.parametrize("field", ["first_sweep_direction", "second_sweep_direction"])
+@pytest.mark.parametrize("direction", [*argutils.CharacterGroup, *argutils.CharacterSort])
+def test_sweep_directions_normalize_groups_and_sorts(
+    field: str,
+    direction: argutils.CharacterGroup | argutils.CharacterSort,
+) -> None:
+    """Both fields accept CLI spellings and native enum values on construction and assignment."""
+    for value in (direction, direction.name.lower(), direction.name):
+        config = effect_sweep.SweepConfig(**{field: value})  # pyright: ignore[reportArgumentType]
+        assert getattr(config, field) is argutils.CharacterOrder[direction.name]
+        config = effect_sweep.SweepConfig()
+        setattr(config, field, value)
+        assert getattr(config, field) is argutils.CharacterOrder[direction.name]
+
+
+@pytest.mark.parametrize("field", ["first_sweep_direction", "second_sweep_direction"])
+@pytest.mark.parametrize("value", ["invalid", "", None, True, False, 1, [], {}, argutils.ColorSort.RANDOM])
+def test_sweep_directions_reject_invalid_values(field: str, value: object) -> None:
+    """Malformed directions fail during configuration normalization for either phase."""
+    with pytest.raises(ValueError, match=field):
+        effect_sweep.SweepConfig(**{field: value})  # pyright: ignore[reportArgumentType]
+    config = effect_sweep.SweepConfig()
+    with pytest.raises(ValueError, match=field):
+        setattr(config, field, value)
+
+
+@pytest.mark.parametrize("direction", argutils.CharacterGroup)
+def test_sweep_group_directions_preserve_fill_and_complete_groups(direction: argutils.CharacterGroup) -> None:
+    """Both grouped phases retain full-canvas spatial groups and their original defaults."""
+    effect = effect_sweep.Sweep("a c\ndef")
+    effect.terminal_config = TerminalConfig(canvas_width=5, canvas_height=4, anchor_text="c", frame_rate=0)
+    effect.effect_config.first_sweep_direction = direction
+    effect.effect_config.second_sweep_direction = direction
+    iterator = cast("effect_sweep.SweepIterator", iter(effect))
+    expected = iterator.terminal.get_characters_grouped(direction, inner_fill_chars=True, outer_fill_chars=True)
+    assert iterator.groups_first_sweep == expected
+    assert iterator.groups_second_sweep == expected
+    defaults = effect_sweep.SweepConfig()
+    assert defaults.first_sweep_direction is argutils.CharacterOrder.COLUMN_RIGHT_TO_LEFT
+    assert defaults.second_sweep_direction is argutils.CharacterOrder.COLUMN_LEFT_TO_RIGHT
+
+
+@pytest.mark.parametrize("direction", argutils.CharacterSort)
+def test_sweep_sorted_directions_schedule_all_canvas_characters(direction: argutils.CharacterSort) -> None:
+    """Both sorted phases include inner/outer fill and schedule singleton entries across the canvas."""
+    random.seed(1337)
+    effect = effect_sweep.Sweep("a c\ndef")
+    effect.terminal_config = TerminalConfig(canvas_width=5, canvas_height=4, anchor_text="c", frame_rate=0)
+    effect.effect_config.first_sweep_direction = direction
+    effect.effect_config.second_sweep_direction = direction
+    iterator = cast("effect_sweep.SweepIterator", iter(effect))
+    inventory = iterator.terminal.get_characters(inner_fill_chars=True, outer_fill_chars=True)
+    assert len(inventory) == 20
+    assert any(character.is_fill_character for character in inventory)
+    for groups in (iterator.groups_first_sweep, iterator.groups_second_sweep):
+        assert all(len(group) == 1 for group in groups)
+        ordered = [group[0] for group in groups]
+        assert len(ordered) == len(inventory)
+        assert set(ordered) == set(inventory)
+        if direction is not argutils.CharacterSort.RANDOM:
+            assert ordered == iterator.terminal.get_characters(
+                sort=direction,
+                inner_fill_chars=True,
+                outer_fill_chars=True,
+            )
+    for _ in iterator:
+        pass
+    assert iterator.complete
+    assert all(character.is_visible for character in inventory)
+
+
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [
+        (argutils.CharacterGroup.COLUMN_RIGHT_TO_LEFT, argutils.CharacterSort.SPIRAL_CLOCKWISE),
+        (argutils.CharacterSort.SPIRAL_COUNTER_CLOCKWISE_QUAD, argutils.CharacterGroup.ROW_TOP_TO_BOTTOM),
+        (argutils.CharacterSort.SPIRAL_CLOCKWISE, argutils.CharacterSort.SPIRAL_COUNTER_CLOCKWISE),
+        (argutils.CharacterSort.SPIRAL_CLOCKWISE_DOUBLE, argutils.CharacterSort.SPIRAL_COUNTER_CLOCKWISE_DOUBLE),
+        (argutils.CharacterSort.SPIRAL_CLOCKWISE_QUAD, argutils.CharacterSort.SPIRAL_COUNTER_CLOCKWISE_QUAD),
+    ],
+)
+@pytest.mark.parametrize(
+    "input_data",
+    ["X", "abcde", "a\nb\nc", "界 a\nb 界", "\x1b[38;5;196m\x1b[48;5;21mab c\nde f\x1b[0m"],
+)
+@pytest.mark.parametrize("color_handling", ["ignore", "dynamic", "always"])
+def test_sweep_mixed_directions_activate_both_phases_in_order_and_restore_canvas(
+    first: argutils.CharacterGroup | argutils.CharacterSort,
+    second: argutils.CharacterGroup | argutils.CharacterSort,
+    input_data: str,
+    color_handling: Literal["ignore", "dynamic", "always"],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Independent group/sort phases reset their scheduler and restore text, colors, and fill cells."""
+    effect = effect_sweep.Sweep(input_data)
+    effect.terminal_config = _make_terminal_config(color_handling)
+    effect.terminal_config.canvas_width = 7
+    effect.terminal_config.canvas_height = 5
+    effect.effect_config.first_sweep_direction = first
+    effect.effect_config.second_sweep_direction = second
+    iterator = cast("effect_sweep.SweepIterator", iter(effect))
+    inventory = iterator.terminal.get_characters(inner_fill_chars=True, outer_fill_chars=True)
+    expected = {
+        "initial_sweep": [character for group in iterator.groups_first_sweep for character in group],
+        "second_sweep": [character for group in iterator.groups_second_sweep for character in group],
+    }
+    scheduled: dict[str, list[effect_sweep.tte.EffectCharacter]] = {"initial_sweep": [], "second_sweep": []}
+    activate_scene = effect_sweep.tte.Animation.activate_scene
+
+    def record_activation(animation: effect_sweep.tte.Animation, scene: effect_sweep.tte.Scene | str) -> None:
+        if isinstance(scene, str) and scene in scheduled:
+            scheduled[scene].append(animation.character)
+        activate_scene(animation, scene)
+
+    monkeypatch.setattr(effect_sweep.tte.Animation, "activate_scene", record_activation)
+    for _ in iterator:
+        for scene, characters in scheduled.items():
+            assert characters == expected[scene][:len(characters)]
+    assert iterator.complete
+    assert iterator.phase == "second sweep"
+    assert scheduled == expected
+    assert len(scheduled["initial_sweep"]) == len(inventory)
+    assert len(scheduled["second_sweep"]) == len(inventory)
+    assert all(
+        character.is_visible
+        and character.animation.current_character_visual.symbol == character.input_symbol
+        and character.animation.current_character_visual.colors
+        == character.animation.query_scene("second_sweep").frames[-1].character_visual.colors
+        for character in inventory
+    )
+    if color_handling == "dynamic":
+        assert all(
+            character.animation.current_character_visual.colors
+            == ColorPair(fg=character.animation.input_fg_color, bg=character.animation.input_bg_color)
+            for character in inventory if not character.is_fill_character
+        )
+        assert all(
+            character.animation.current_character_visual.colors == ColorPair()
+            for character in inventory if character.is_fill_character
+        )
 
 
 @pytest.mark.parametrize(

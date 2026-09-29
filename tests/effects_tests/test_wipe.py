@@ -34,10 +34,10 @@ def test_wipe_direction_normalizes_groups_and_sorts(
     """CLI spellings and native groups/sorts normalize on construction and assignment."""
     for value in (direction, direction.name.lower(), direction.name):
         config = effect_wipe.WipeConfig(wipe_direction=value)  # pyright: ignore[reportArgumentType]
-        assert config.wipe_direction is direction
+        assert config.wipe_direction is argutils.CharacterOrder[direction.name]
         config = effect_wipe.WipeConfig()
         config.wipe_direction = value  # pyright: ignore[reportAttributeAccessIssue]
-        assert config.wipe_direction is direction
+        assert config.wipe_direction is argutils.CharacterOrder[direction.name]
 
 
 @pytest.mark.parametrize("value", ["invalid", "", None, True, False, 1, [], {}, argutils.ColorSort.RANDOM])
@@ -58,7 +58,7 @@ def test_wipe_group_direction_preserves_complete_groups(direction: argutils.Char
     effect.effect_config.wipe_direction = direction
     iterator = cast("effect_wipe.WipeIterator", iter(effect))
     assert iterator.easer.sequence == iterator.terminal.get_characters_grouped(direction)
-    assert effect_wipe.WipeConfig().wipe_direction is argutils.CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
+    assert effect_wipe.WipeConfig().wipe_direction is argutils.CharacterOrder.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT
 
 
 @pytest.mark.parametrize("direction", argutils.CharacterSort)

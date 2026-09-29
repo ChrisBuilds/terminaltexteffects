@@ -38,12 +38,12 @@ def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
 
 
 def _etch_pattern_type_parser(
-    value: str | argutils.CharacterGroup | argutils.CharacterSort,
-) -> argutils.CharacterGroup | argutils.CharacterSort | Literal["algorithm"]:
-    """Normalize the algorithm sentinel, a `CharacterGroup`, or a `CharacterSort`."""
+    value: str | argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort,
+) -> argutils.CharacterOrder | Literal["algorithm"]:
+    """Normalize the algorithm sentinel or a canonical `CharacterOrder`."""
     if isinstance(value, str) and value == "algorithm":
         return "algorithm"
-    return argutils.CharacterGroupOrSortArg.type_parser(value)
+    return argutils.CharacterOrderArg.type_parser(value)
 
 
 @dataclass
@@ -51,9 +51,10 @@ class LaserEtchConfig(BaseConfig):
     """LaserEtch effect configuration dataclass.
 
     Attributes:
-        etch_pattern (`argutils.CharacterGroup` | `argutils.CharacterSort` | `Literal['algorithm']`): Character order used
-            to etch the text. `algorithm` follows a recursive backtracker. `CharacterGroup` patterns reverse
-            alternate groups for serpentine traversal; `CharacterSort` patterns use the exact sorted order,
+        reverse_etch_pattern (bool): Reverse the complete traversal while preserving group membership.
+        etch_pattern (`CharacterOrder` | `Literal['algorithm']`): Character order used
+            to etch the text. `algorithm` follows a recursive backtracker. Spatial patterns reverse
+            alternate groups for serpentine traversal; individual patterns use the exact sorted order,
             including clockwise and counterclockwise single, double, and quad spirals.
         etch_speed (int): Along with etch_delay, determines the speed at which the characters are etched onto the terminal.
             This value specifies the number of characters to etch simultaneously.
@@ -90,14 +91,24 @@ class LaserEtchConfig(BaseConfig):
         ),
     )
 
-    etch_pattern: argutils.CharacterGroup | argutils.CharacterSort | Literal["algorithm"] = argutils.ArgSpec(
-        name="--etch-pattern",
-        default="algorithm",
-        type=_etch_pattern_type_parser,
-        metavar="algorithm " + " ".join(argutils.CharacterGroupOrSortArg.METAVAR),
-        help="Pattern used to etch the text: algorithm, serpentine character groups, or exact character sorts.",
+    etch_pattern: argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort | Literal["algorithm"] = (
+        argutils.ArgSpec(
+            name="--etch-pattern",
+            default="algorithm",
+            type=_etch_pattern_type_parser,
+            metavar="algorithm " + " ".join(argutils.CharacterOrderArg.METAVAR),
+            help="Pattern used to etch the text: algorithm, serpentine character groups, or exact character sorts.",
+        )
     )  # pyright: ignore[reportAssignmentType]
-    "CharacterGroup | CharacterSort | Literal['algorithm']: Pattern used to etch the text."
+    "CharacterOrder | Literal['algorithm']: Pattern used to etch the text."
+
+    reverse_etch_pattern: bool = argutils.ArgSpec(
+        name="--reverse-etch-pattern",
+        default=False,
+        action="store_true",
+        help="Reverse the complete etch pattern traversal.",
+    )  # pyright: ignore[reportAssignmentType]
+    "bool : Reverse the complete traversal, preserving group membership."
 
     etch_speed: int = argutils.ArgSpec(
         name="--etch-speed",
@@ -409,21 +420,19 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
                     )
                     spawn_scn.add_frame(character.input_symbol, 3, colors=tte.ColorPair())
             character.animation.activate_scene(spawn_scn)
-        if isinstance(self.config.etch_pattern, argutils.CharacterGroup):
-            for n, char_list in enumerate(
-                self.terminal.get_characters_grouped(self.config.etch_pattern),
-            ):
-                if n % 2:
-                    self.pending_chars.extend(char_list[::-1])
-                else:
-                    self.pending_chars.extend(char_list)
-        elif isinstance(self.config.etch_pattern, argutils.CharacterSort):
-            self.pending_chars = self.terminal.get_characters(sort=self.config.etch_pattern)
-        elif self.config.etch_pattern == "algorithm":
+        if self.config.etch_pattern == "algorithm":
             algo = RecursiveBacktracker(self.terminal, limit_to_text_boundary=True)
             while not algo.complete:
                 algo.step()
             self.pending_chars = algo.char_link_order
+            if self.config.reverse_etch_pattern:
+                self.pending_chars.reverse()
+        else:
+            self.pending_chars = self.terminal.get_characters(
+                order=self.config.etch_pattern,
+                serpentine=True,
+                reverse=self.config.reverse_etch_pattern,
+            )
 
     def __next__(self) -> str:
         """Return the next frame in the effect."""
