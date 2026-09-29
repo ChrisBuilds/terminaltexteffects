@@ -980,12 +980,12 @@ def test_terminal_get_characters_grouped(input_chars, inner_fill_chars, outer_fi
 @pytest.mark.parametrize(
     "grouping",
     [
-        CharacterGroup.CENTER_TO_OUTSIDE,
+        CharacterGroup.DIAMONDS_CENTER_TO_OUTSIDE,
         CharacterGroup.COLUMN_LEFT_TO_RIGHT,
         CharacterGroup.COLUMN_RIGHT_TO_LEFT,
         CharacterGroup.ROW_TOP_TO_BOTTOM,
         CharacterGroup.ROW_BOTTOM_TO_TOP,
-        CharacterGroup.OUTSIDE_TO_CENTER,
+        CharacterGroup.DIAMONDS_OUTSIDE_TO_CENTER,
         CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
         CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
         CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
@@ -1001,7 +1001,7 @@ def test_terminal_get_characters_grouped_with_grouping(grouping) -> None:
     terminal = Terminal(input_data="abcde\nfghij\nklmno", config=config)
     terminal.add_character("a", Coord(0, 0))
     chars = terminal.get_characters_grouped(grouping=grouping)
-    if grouping == CharacterGroup.CENTER_TO_OUTSIDE:
+    if grouping == CharacterGroup.DIAMONDS_CENTER_TO_OUTSIDE:
         assert chars[0][0].input_symbol == "h"
         assert chars[-1][-1].input_symbol == "e"
     elif grouping == CharacterGroup.COLUMN_LEFT_TO_RIGHT:
@@ -1016,7 +1016,7 @@ def test_terminal_get_characters_grouped_with_grouping(grouping) -> None:
     elif grouping == CharacterGroup.ROW_BOTTOM_TO_TOP:
         assert chars[0][0].input_symbol == "k"
         assert chars[-1][-1].input_symbol == "e"
-    elif grouping == CharacterGroup.OUTSIDE_TO_CENTER:
+    elif grouping == CharacterGroup.DIAMONDS_OUTSIDE_TO_CENTER:
         assert chars[0][0].input_symbol == "k"
         assert chars[-1][-1].input_symbol == "h"
     elif grouping == CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT:
@@ -1075,8 +1075,8 @@ def test_terminal_get_characters_grouped_columns_preserve_order_and_canvas_bound
         (CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT, [["c"], ["f", "b"], ["e", "a"], ["d"]]),
         (CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT, [["a"], ["d", "b"], ["e", "c"], ["f"]]),
         (CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT, [["f"], ["e", "c"], ["d", "b"], ["a"]]),
-        (CharacterGroup.CENTER_TO_OUTSIDE, [["e"], ["d", "f", "b"], ["a", "c"]]),
-        (CharacterGroup.OUTSIDE_TO_CENTER, [["a", "c"], ["d", "f", "b"], ["e"]]),
+        (CharacterGroup.DIAMONDS_CENTER_TO_OUTSIDE, [["e"], ["d", "f", "b"], ["a", "c"]]),
+        (CharacterGroup.DIAMONDS_OUTSIDE_TO_CENTER, [["a", "c"], ["d", "f", "b"], ["e"]]),
         (CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE, [["e", "b"], ["d", "f", "a", "c"]]),
         (CharacterGroup.CIRCLE_OUTSIDE_TO_CENTER, [["d", "f", "a", "c"], ["e", "b"]]),
     ],

@@ -8,6 +8,7 @@ Classes:
 
 from __future__ import annotations
 
+import argparse
 import typing
 from dataclasses import dataclass
 
@@ -20,6 +21,17 @@ from terminaltexteffects.engine.base_config import (
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
+
+
+def _wave_direction_type_parser(value: str) -> str:
+    """Normalize legacy diamond direction names before validating choices."""
+    if not isinstance(value, str):
+        message = "Wave direction must be a string."
+        raise argparse.ArgumentTypeError(message)
+    return {
+        "center_to_outside": "diamonds_center_to_outside",
+        "outside_to_center": "diamonds_outside_to_center",
+    }.get(value, value)
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -46,7 +58,7 @@ class WavesConfig(BaseConfig):
         wave_count (int): Number of waves to generate. Valid values are n > 0.
         wave_length (int): The number of frames for each step of the wave. Higher wave-lengths will create a slower
             wave. Valid values are n > 0.
-        wave_direction (typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','center_to_outside','outside_to_center','circle_center_to_outside','circle_outside_to_center']): Direction of the wave.
+        wave_direction (typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','diamonds_center_to_outside','diamonds_outside_to_center','circle_center_to_outside','circle_outside_to_center']): Direction of the wave.
         wave_easing (easing.EasingFunction): Easing function to use for wave travel.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
             provided, the characters will be displayed in that color.
@@ -136,12 +148,13 @@ class WavesConfig(BaseConfig):
         "column_right_to_left",
         "row_top_to_bottom",
         "row_bottom_to_top",
-        "center_to_outside",
-        "outside_to_center",
+        "diamonds_center_to_outside",
+        "diamonds_outside_to_center",
         "circle_center_to_outside",
         "circle_outside_to_center",
     ] = argutils.ArgSpec(
         name="--wave-direction",
+        type=_wave_direction_type_parser,
         default="circle_center_to_outside",
         help="Direction of the wave.",
         choices=[
@@ -149,13 +162,13 @@ class WavesConfig(BaseConfig):
             "column_right_to_left",
             "row_top_to_bottom",
             "row_bottom_to_top",
-            "center_to_outside",
-            "outside_to_center",
+            "diamonds_center_to_outside",
+            "diamonds_outside_to_center",
             "circle_center_to_outside",
             "circle_outside_to_center",
         ],
     )  # pyright: ignore[reportAssignmentType]
-    "typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','center_to_outside','outside_to_center','circle_center_to_outside','circle_outside_to_center']"
+    "typing.Literal['column_left_to_right','column_right_to_left','row_top_to_bottom','row_bottom_to_top','diamonds_center_to_outside','diamonds_outside_to_center','circle_center_to_outside','circle_outside_to_center']"
 
     wave_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--wave-easing",
@@ -291,8 +304,8 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             "column_right_to_left": argutils.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
             "row_top_to_bottom": argutils.CharacterGroup.ROW_TOP_TO_BOTTOM,
             "row_bottom_to_top": argutils.CharacterGroup.ROW_BOTTOM_TO_TOP,
-            "center_to_outside": argutils.CharacterGroup.CENTER_TO_OUTSIDE,
-            "outside_to_center": argutils.CharacterGroup.OUTSIDE_TO_CENTER,
+            "diamonds_center_to_outside": argutils.CharacterGroup.DIAMONDS_CENTER_TO_OUTSIDE,
+            "diamonds_outside_to_center": argutils.CharacterGroup.DIAMONDS_OUTSIDE_TO_CENTER,
             "circle_center_to_outside": argutils.CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE,
             "circle_outside_to_center": argutils.CharacterGroup.CIRCLE_OUTSIDE_TO_CENTER,
         }

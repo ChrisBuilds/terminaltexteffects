@@ -403,7 +403,7 @@ printf '%s\\n' "${{COMPREPLY[@]}}"
     expected = {"circle_center_to_outside", "circle_outside_to_center"}
     assert set(result.stdout.splitlines()) == expected
     zsh_completion = get_completion_script("zsh")
-    assert 'outside_to_center circle_center_to_outside circle_outside_to_center)"' in zsh_completion
+    assert 'diamonds_outside_to_center circle_center_to_outside circle_outside_to_center)"' in zsh_completion
     parser, _ = __main__.build_parser(include_user_effects=False)
     for direction in expected:
         parsed = parser.parse_args(["waves", "--wave-direction", direction])

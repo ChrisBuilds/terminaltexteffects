@@ -16,8 +16,8 @@ WaveDirection = Literal[
     "column_right_to_left",
     "row_top_to_bottom",
     "row_bottom_to_top",
-    "center_to_outside",
-    "outside_to_center",
+    "diamonds_center_to_outside",
+    "diamonds_outside_to_center",
     "circle_center_to_outside",
     "circle_outside_to_center",
 ]
@@ -47,6 +47,38 @@ def test_waves_default_direction_matches_cli_and_library() -> None:
         set("mfjc"),
         set("klnoabde"),
     ]
+
+
+@pytest.mark.parametrize(
+    "direction",
+    ["diamonds_center_to_outside", "diamonds_outside_to_center", "center_to_outside", "outside_to_center"],
+)
+def test_waves_diamond_directions_preserve_groups_and_legacy_names(direction: str) -> None:
+    """Diamond names and legacy aliases reveal the same Manhattan-distance bands."""
+    canonical = direction if direction.startswith("diamonds_") else f"diamonds_{direction}"
+    parser, _ = build_parser(include_user_effects=False)
+    parsed = parser.parse_args(["waves", "--wave-direction", direction])
+    assert parsed.wave_direction == canonical
+    effect = effect_waves.Waves("abcde\nfghij\nklmno")
+    effect.terminal_config = _make_terminal_config("ignore")
+    effect.effect_config.wave_direction = cast("WaveDirection", direction)  # pyright: ignore[reportAttributeAccessIssue]
+    iterator = cast("effect_waves.WavesIterator", iter(effect))
+    assert iterator.config.wave_direction == canonical
+    expected = [set("h"), set("gicm"), set("fjbdln"), set("aeko")]
+    if canonical == "diamonds_outside_to_center":
+        expected.reverse()
+    assert [{character.input_symbol for character in group} for group in iterator.pending_columns] == expected
+    visible_symbols: set[str] = set()
+    characters = iterator.terminal.get_characters()
+    for band in expected:
+        next(iterator)
+        visible_symbols.update(band)
+        assert {character.input_symbol for character in characters if character.is_visible} == visible_symbols
+    for _ in iterator:
+        pass
+    assert all(
+        character.animation.current_character_visual.symbol == character.input_symbol for character in characters
+    )
 
 
 @pytest.mark.parametrize("direction", ["circle_center_to_outside", "circle_outside_to_center"])
@@ -136,8 +168,8 @@ def test_waves_final_gradient(
         "column_right_to_left",
         "row_top_to_bottom",
         "row_bottom_to_top",
-        "center_to_outside",
-        "outside_to_center",
+        "diamonds_center_to_outside",
+        "diamonds_outside_to_center",
         "circle_center_to_outside",
         "circle_outside_to_center",
     ],

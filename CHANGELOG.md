@@ -87,6 +87,10 @@
 
 ---
 
+* Renamed the diamond-shaped character groups to `DIAMONDS_CENTER_TO_OUTSIDE` and
+  `DIAMONDS_OUTSIDE_TO_CENTER`, with CLI keys `diamonds_center_to_outside` and `diamonds_outside_to_center`.
+  Updated Waves, help, documentation, and Bash/Zsh completions to use the explicit names. The original enum
+  names and CLI spellings remain accepted as compatibility aliases; grouping behavior is unchanged.
 * Step- and distance-synced scenes now start at their first frame before motion and reset progress when a path is
   reactivated.
 * Spanning-tree generators now track their own visitation state and reject pre-linked character graphs instead of

@@ -17,8 +17,9 @@ with effect.terminal_output() as terminal:
 
 The default direction, `circle_center_to_outside`, spreads waves outward in circular rings. Use
 `circle_outside_to_center` for waves that converge on the text center. These directions account for
-terminal character proportions. The existing `center_to_outside` and `outside_to_center` directions
-use diamond-shaped groups.
+terminal character proportions. The existing `diamonds_center_to_outside` and `diamonds_outside_to_center` directions
+use diamond-shaped groups. The former `center_to_outside` and `outside_to_center` spellings remain
+accepted as compatibility aliases.
 
 ```sh
 tte waves --wave-direction circle_center_to_outside

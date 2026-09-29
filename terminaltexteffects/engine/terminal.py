@@ -1133,8 +1133,8 @@ class Terminal:
             )
             return [characters_by_diagonal[diagonal_index] for diagonal_index in ordered_diagonals]
         if grouping in (
-            CharacterGroup.CENTER_TO_OUTSIDE,
-            CharacterGroup.OUTSIDE_TO_CENTER,
+            CharacterGroup.DIAMONDS_CENTER_TO_OUTSIDE,
+            CharacterGroup.DIAMONDS_OUTSIDE_TO_CENTER,
         ):
             distance_map: dict[int, list[EffectCharacter]] = {}
             for character in all_characters:
@@ -1146,7 +1146,7 @@ class Terminal:
                 distance_map[distance].append(character)
             ordered_distances = sorted(
                 distance_map.keys(),
-                reverse=grouping is CharacterGroup.OUTSIDE_TO_CENTER,
+                reverse=grouping is CharacterGroup.DIAMONDS_OUTSIDE_TO_CENTER,
             )
             return [distance_map[distance] for distance in ordered_distances]
 

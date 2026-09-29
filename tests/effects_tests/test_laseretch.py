@@ -200,8 +200,8 @@ def test_laseretch_final_gradient(
         "diagonal_bottom_left_to_top_right",
         "diagonal_top_right_to_bottom_left",
         "diagonal_bottom_right_to_top_left",
-        "outside_to_center",
-        "center_to_outside",
+        "diamonds_outside_to_center",
+        "diamonds_center_to_outside",
     ],
 )
 @pytest.mark.parametrize("etch_speed", [1, 20])
