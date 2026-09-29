@@ -39,7 +39,7 @@ _shtab_tte_synthgrid_option_strings=(-h --help --grid-gradient-stops --grid-grad
 _shtab_tte_thunderstorm_option_strings=(-h --help --lightning-color --glowing-text-color --text-glow-time --raindrop-symbols --spark-symbols --spark-glow-color --spark-glow-time --storm-time --final-gradient-stops --final-gradient-steps --final-gradient-frames --final-gradient-direction)
 _shtab_tte_unstable_option_strings=(-h --help --unstable-color --explosion-ease --explosion-speed --reassembly-ease --reassembly-speed --final-gradient-stops --final-gradient-steps --final-gradient-direction)
 _shtab_tte_vhstape_option_strings=(-h --help --glitch-line-colors --glitch-wave-colors --noise-colors --glitch-line-chance --noise-chance --total-glitch-time --final-gradient-stops --final-gradient-steps --final-gradient-direction)
-_shtab_tte_waves_option_strings=(-h --help --wave-symbols --wave-gradient-stops --wave-gradient-steps --wave-count --wave-length --wave-direction --reverse-wave-direction --wave-easing --final-gradient-stops --final-gradient-steps --final-gradient-direction)
+_shtab_tte_waves_option_strings=(-h --help --wave-symbols --wave-gradient-stops --wave-gradient-steps --wave-count --wave-length --wave-direction --reverse-wave-direction --travel-speed --wave-easing --final-gradient-stops --final-gradient-steps --final-gradient-direction)
 _shtab_tte_wipe_option_strings=(-h --help --wipe-direction --reverse-wipe-direction --wipe-delay --wipe-ease --final-gradient-stops --final-gradient-steps --final-gradient-frames --final-gradient-direction)
 
 _shtab_tte___input_file_COMPGEN=_shtab_compgen_files

@@ -47,6 +47,8 @@ class WavesConfig(BaseConfig):
             wave. Valid values are n > 0.
         reverse_wave_direction (bool): Reverse the complete traversal while preserving group membership.
         wave_direction (CharacterOrder): Character order for wave activation.
+        travel_speed (int): Number of ordered entries to activate per frame. Each entry is a complete spatial
+            group or an individual character. Valid values are n > 0. Defaults to 1.
         wave_easing (easing.EasingFunction): Easing function to use for wave travel.
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
             provided, the characters will be displayed in that color.
@@ -147,6 +149,15 @@ class WavesConfig(BaseConfig):
         help="Reverse the complete wave direction traversal.",
     )  # pyright: ignore[reportAssignmentType]
     "bool : Reverse wave activation order, preserving group membership."
+
+    travel_speed: int = argutils.ArgSpec(
+        name="--travel-speed",
+        type=argutils.PositiveInt.type_parser,
+        default=1,
+        metavar=argutils.PositiveInt.METAVAR,
+        help="Number of ordered entries to activate per frame: whole spatial groups or individual characters. n > 0.",
+    )  # pyright: ignore[reportAssignmentType]
+    "int : Number of ordered groups or individual characters to activate per frame. Defaults to 1."
 
     wave_easing: easing.EasingFunction = argutils.ArgSpec(
         name="--wave-easing",
@@ -285,7 +296,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
     def __next__(self) -> str:
         """Return the next frame in the animation."""
         if self.pending_columns or self.active_characters:
-            if self.pending_columns:
+            for _ in range(min(self.config.travel_speed, len(self.pending_columns))):
                 next_column = self.pending_columns.pop(0)
                 for character in next_column:
                     self.terminal.set_character_visibility(character, is_visible=True)

@@ -1614,6 +1614,8 @@ Waves travel across the terminal leaving behind the characters.
                         Character order for wave activation; spatial groups or individual characters, including spirals. (default: circle_center_to_outside)
     --reverse-wave-direction
                         Reverse the complete traversal, preserving group membership. (default: False)
+    --travel-speed (int > 0)
+                        Number of ordered entries to activate per frame: whole spatial groups or individual characters. n > 0. (default: 1)
     --wave-easing WAVE_EASING
                         Easing function to use for wave travel. (default: in_out_sine)
 

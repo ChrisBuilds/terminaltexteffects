@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from typing import Literal, cast
 
 import pytest
@@ -48,6 +49,115 @@ def test_waves_default_direction_matches_cli_and_library() -> None:
         set("mfjc"),
         set("klnoabde"),
     ]
+
+
+@pytest.mark.parametrize(("value", "expected"), [(1, 1), (4, 4), ("8", 8)])
+def test_waves_travel_speed_normalizes_native_and_cli_values(value: int | str, expected: int) -> None:
+    """Travel speed is a positive integer shared by CLI parsing and native configuration."""
+    parser, _ = build_parser(include_user_effects=False)
+    assert parser.parse_args(["waves"]).travel_speed == 1
+    assert effect_waves.WavesConfig().travel_speed == 1
+    assert parser.parse_args(["waves", "--travel-speed", str(value)]).travel_speed == expected
+    config = effect_waves.WavesConfig(travel_speed=value)  # pyright: ignore[reportArgumentType]
+    assert config.travel_speed == expected
+    config.travel_speed = value  # pyright: ignore[reportAttributeAccessIssue]
+    assert config.travel_speed == expected
+
+
+@pytest.mark.parametrize("value", [0, -1, "0", "-1", "", "1.5", "true", None, True, False, 1.5, [], {}])
+def test_waves_travel_speed_rejects_invalid_native_values(value: object) -> None:
+    """Invalid speed values fail during construction or assignment rather than stalling the iterator."""
+    with pytest.raises(ValueError, match="travel_speed"):
+        effect_waves.WavesConfig(travel_speed=value)  # pyright: ignore[reportArgumentType]
+    config = effect_waves.WavesConfig()
+    with pytest.raises(ValueError, match="travel_speed"):
+        config.travel_speed = value  # pyright: ignore[reportAttributeAccessIssue]
+
+
+@pytest.mark.parametrize("value", ["0", "-1", "", "1.5", "true"])
+def test_waves_travel_speed_rejects_invalid_cli_values(value: str) -> None:
+    """The CLI rejects nonpositive and malformed travel speeds."""
+    parser, _ = build_parser(include_user_effects=False)
+    with pytest.raises(SystemExit):
+        parser.parse_args(["waves", "--travel-speed", value])
+
+
+@pytest.mark.parametrize("order", argutils.CharacterOrder)
+@pytest.mark.parametrize("travel_speed", [1, 2, 4, 1_000_000_000])
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize("color_handling", ["ignore", "dynamic", "always"])
+def test_waves_travel_speed_batches_entries_without_changing_order_or_animation_timing(
+    order: argutils.CharacterOrder,
+    travel_speed: int,
+    color_handling: Literal["ignore", "dynamic", "always"],
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    reverse: bool,
+) -> None:
+    """Each frame reveals the configured ordered batch, advances once, and restores every input character."""
+    random.seed(812)
+    effect = effect_waves.Waves("\x1b[38;5;196m\x1b[48;5;21mabc\nd界f\x1b[0m")
+    effect.terminal_config = _make_terminal_config(color_handling)
+    effect.effect_config.wave_direction = order
+    effect.effect_config.reverse_wave_direction = reverse
+    effect.effect_config.travel_speed = travel_speed
+    effect.effect_config.wave_count = 1
+    effect.effect_config.wave_symbols = ("~", "=")
+    effect.effect_config.wave_gradient_steps = (2,)
+    effect.effect_config.wave_length = 1
+    effect.effect_config.final_gradient_steps = 2
+    iterator = cast("effect_waves.WavesIterator", iter(effect))
+    groups = list(iterator.pending_columns)
+    characters = iterator.terminal.get_characters()
+    expected = [character for group in groups for character in group]
+    activations: list[effect_waves.EffectCharacter] = []
+    set_visibility = iterator.terminal.set_character_visibility
+
+    def record_activation(character: effect_waves.EffectCharacter, *, is_visible: bool = True) -> None:
+        if is_visible:
+            activations.append(character)
+        set_visibility(character, is_visible=is_visible)
+
+    monkeypatch.setattr(iterator.terminal, "set_character_visibility", record_activation)
+    updates = 0
+    update = iterator.update
+
+    def record_update() -> None:
+        nonlocal updates
+        updates += 1
+        update()
+
+    monkeypatch.setattr(iterator, "update", record_update)
+    for first in range(0, len(groups), travel_speed):
+        next(iterator)
+        last = min(first + travel_speed, len(groups))
+        prefix = [character for group in groups[:last] for character in group]
+        assert activations == prefix
+        assert iterator.pending_columns == groups[last:]
+        assert {character for character in characters if character.is_visible} == set(prefix)
+        assert updates == first // travel_speed + 1
+    previous_updates = updates
+    for _ in iterator:
+        assert updates == previous_updates + 1
+        previous_updates = updates
+        assert activations == expected
+    assert activations == expected
+    assert len(activations) == len(characters)
+    assert all(character.is_visible for character in characters)
+    assert all(
+        character.animation.current_character_visual.symbol == character.input_symbol for character in characters
+    )
+    if color_handling == "always":
+        assert all(
+            character.animation.current_character_visual.colors
+            == ColorPair(fg=character.animation.input_fg_color, bg=character.animation.input_bg_color)
+            for character in characters
+        )
+    else:
+        assert all(
+            character.animation.current_character_visual.colors == iterator.character_final_color_map[character]
+            for character in characters
+        )
 
 
 @pytest.mark.parametrize(

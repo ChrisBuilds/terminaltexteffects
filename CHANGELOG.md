@@ -66,6 +66,10 @@
 
 ---
 
+* Added Waves' `--travel-speed` option to activate multiple ordered entries per frame: individual characters
+  for sorts or whole groups for spatial orders. The positive-integer default is `1`, preserving current pacing.
+  Partial final batches retain the selected order and reversal, and animations still advance once per frame.
+  Updated documentation and bundled Bash/Zsh completions, with scheduling and final-appearance coverage.
 * Wipe, Highlight, Sweep, Waves, and LaserEtch now normalize their direction/pattern options to `CharacterOrder`.
   Waves accepts every order, including diagonals and spirals, while retaining its circular default. Spatial
   orders activate whole groups and individual orders activate singleton entries through each effect's scheduler.

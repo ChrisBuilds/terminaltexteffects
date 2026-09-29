@@ -448,6 +448,22 @@ printf '%s\\n' "${{COMPREPLY[@]}}"
         assert f'"{flag}[' in zsh_completion
 
 
+@pytest.mark.parametrize("command", ["waves"])
+def test_travel_speed_option_completes_in_bash_and_zsh(command: str) -> None:
+    """Both bundled shells advertise the effects' travel-speed arguments."""
+    result = _run_bash(
+        f"""
+eval "$({sys.executable} -m terminaltexteffects --print-completion bash)"
+COMP_WORDS=(tte {command} --travel-)
+COMP_CWORD=2
+_shtab_tte
+printf '%s\\n' "${{COMPREPLY[@]}}"
+""",
+    )
+    assert result.stdout.splitlines() == ["--travel-speed"]
+    assert '"--travel-speed[' in get_completion_script("zsh")
+
+
 def test_bash_completion_suggests_choice_and_file_values(tmp_path: Path) -> None:
     """Bash completion should offer choice values and file path completions."""
     completion_file = tmp_path / "demo file.txt"
