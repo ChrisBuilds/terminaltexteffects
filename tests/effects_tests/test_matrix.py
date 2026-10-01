@@ -265,6 +265,51 @@ def test_matrix_drop_column_hides_all_characters_below_canvas() -> None:
     assert third.motion.current_coord.row == bottom
 
 
+@pytest.mark.parametrize("mode", ["ignore", "always", "dynamic"])
+def test_matrix_matching_resolve_gradients_keep_independent_playback(
+    mode: Literal["ignore", "always", "dynamic"],
+) -> None:
+    """Matching color transitions preserve symbols and independent frame playback."""
+    effect = effect_matrix.Matrix("\x1b[38;5;196m\x1b[48;5;196mAB\x1b[0m")
+    effect.terminal_config = _make_terminal_config(mode)
+    effect.effect_config.final_gradient_stops = (Color(196),)
+    iterator = cast("effect_matrix.MatrixIterator", iter(effect))
+    first, second = iterator.terminal.get_characters()
+    first_scene = first.animation.scenes["resolve"]
+    second_scene = second.animation.scenes["resolve"]
+
+    assert len(first_scene.frames) == len(second_scene.frames) == 9
+    for first_frame, second_frame in zip(first_scene.frames, second_scene.frames, strict=True):
+        assert first_frame is not second_frame
+        assert first_frame.character_visual is not second_frame.character_visual
+        assert first_frame.character_visual.symbol == "A"
+        assert second_frame.character_visual.symbol == "B"
+        assert first_frame.character_visual.colors == second_frame.character_visual.colors
+        assert first_frame.duration == second_frame.duration == effect.effect_config.final_gradient_frames
+
+    first.animation.activate_scene(first_scene)
+    first.tick()
+
+    assert first_scene.frames[0].ticks_elapsed == 1
+    assert all(frame.ticks_elapsed == 0 for frame in second_scene.frames)
+    assert second.animation.active_scene is None
+
+
+def test_matrix_dynamic_skips_final_gradient_mapping(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Dynamic resolution uses input colors without constructing a coordinate color mapping."""
+    def reject_mapping(*_args: object, **_kwargs: object) -> dict[effect_matrix.Coord, Color]:
+        pytest.fail("Dynamic mode should not build the unused final-gradient mapping")
+
+    monkeypatch.setattr(effect_matrix.Gradient, "build_coordinate_color_mapping", reject_mapping)
+    effect = effect_matrix.Matrix("\x1b[38;5;196mA\x1b[0mB")
+    effect.terminal_config = _make_terminal_config("dynamic")
+    iterator = cast("effect_matrix.MatrixIterator", iter(effect))
+    colored, uncolored = iterator.terminal.get_characters()
+
+    assert colored.animation.scenes["resolve"].frames[-1].character_visual.colors == ColorPair(fg=Color(196))
+    assert uncolored.animation.scenes["resolve"].frames[-1].character_visual.colors == ColorPair()
+
+
 def test_matrix_dynamic_without_preexisting_colors_has_uncolored_resolve_scene_final_frame() -> None:
     """Verify dynamic mode leaves uncolored input uncolored in the resolve scene."""
     effect = effect_matrix.Matrix("A")

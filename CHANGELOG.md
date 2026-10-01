@@ -258,6 +258,11 @@
   draws and rendered frames while reducing work in the rain, fill, and resolve phases. A seven-sample, fixed-clock
   benchmark on generated 80-by-24 input measured mean render time falling from 484 to 405 ms (16.3%) and total
   iterator time from 555 to 476 ms (14.2%). Frame counts and output lengths matched; terminal printing was excluded.
+* Matrix reuses resolve gradients by endpoint color during scene construction and skips the unused final-gradient
+  mapping in dynamic color mode. Characters retain independent scenes and playback state. A seven-sample,
+  fixed-clock benchmark on generated 80-by-24 input measured mean construction time falling from 95.2 to 71.0 ms
+  (25.3%) and total iterator time from 584 to 550 ms (5.8%), with matching frame counts and output lengths.
+  These timings exclude terminal printing.
 * Blackhole now uses a border-character set for membership checks during starfield construction and consumption,
   while retaining the ordered list for ring movement.
 * Beams now releases its build-only final-color mapping after scene construction and consumes character, pending-group,
