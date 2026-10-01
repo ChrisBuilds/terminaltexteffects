@@ -69,3 +69,15 @@ Use `--profile` when the timing delta needs a call-level explanation:
 ```
 
 The profile reports cumulative time for one scenario and is best used after a benchmark shows a meaningful change.
+
+## Opt-in row caching
+
+An effect can call `self.terminal.enable_row_cache()` to reuse formatted rows until their characters change.
+The engine tracks coordinates, animation visuals, visibility, layers, and direct `formatted_symbol` assignments.
+Wide characters use the existing width-aware renderer; caching resumes when all visible characters are single-cell.
+Existing motion and animation references, paths, and scenes remain valid when caching is enabled.
+
+Measure before enabling caching: tracking and row membership consume extra memory, and frequent changes can reduce
+the benefit. Matrix enables it for canvases with at least four rows and 256 cells, where fixed-clock measurements
+showed a benefit. Smaller canvases retain the default renderer. For repeatable Matrix comparisons, advance its
+wall-clock-based rain phase with the same simulated clock in both runs and verify frame counts and output hashes.

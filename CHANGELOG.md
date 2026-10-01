@@ -35,6 +35,12 @@
 
 ---
 
+* Added opt-in `Terminal.enable_row_cache()` to reuse unchanged single-cell output rows while tracking motion,
+  animation, visibility, layering, and direct formatted-symbol edits. Wide characters retain width-aware rendering.
+  Matrix enables caching on canvases with at least four rows and 256 cells. Fixed-clock dense 80-by-24 benchmarks
+  (seven samples, two warmups, seed 1337) reduced render time from 0.400s to 0.310s (22%) and total time from
+  0.471s to 0.386s (18%), with identical frames and output. A separate traced-memory sample increased peak memory
+  from 14.0 MB to 15.3 MB (9%); small Matrix and uncached Wipe timings were essentially unchanged.
 * Added `CharacterOrder` and `CharacterOrderArg` to unify spatial grouping and individual traversal.
   Both `Terminal.get_characters(order=...)` and `get_characters_grouped(order=...)` accept every order:
   spatial groups flatten into character sequences, and individual sorts produce singleton groups.

@@ -98,11 +98,28 @@ class CharacterVisual:
     _fg_color_code: str | int | None = None
     _bg_color_code: str | int | None = None
     cell_width: int = field(init=False)
+    _format_generation: typing.ClassVar[int] = 0
 
     def __post_init__(self) -> None:
         """Create the formatted symbol by applying ANSI sequences for any active modes and color."""
         self.cell_width = get_symbol_cell_width(self.symbol)
-        self.formatted_symbol = self.format_symbol()
+        formatted_symbol = self.format_symbol()
+        if hasattr(self, "_formatted_symbol"):
+            self.formatted_symbol = formatted_symbol
+        else:
+            self._formatted_symbol = formatted_symbol
+
+    @property
+    def formatted_symbol(self) -> str:
+        """Return the formatted symbol stored for terminal rendering."""
+        return self._formatted_symbol
+
+    @formatted_symbol.setter
+    def formatted_symbol(self, value: str) -> None:
+        """Invalidate cached output following a direct edit, including edits to shared visuals."""
+        if value != self._formatted_symbol:
+            CharacterVisual._format_generation += 1
+        self._formatted_symbol = value
 
     def format_symbol(self) -> str:
         """Format the symbol for printing by applying ANSI sequences for active modes and color."""

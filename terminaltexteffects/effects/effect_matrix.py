@@ -422,6 +422,8 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
     def __init__(self, effect: Matrix) -> None:
         """Initialize the Matrix effect iterator."""
         super().__init__(effect)
+        if self.terminal.visible_top >= 4 and self.terminal.visible_top * self.terminal.visible_right >= 256:
+            self.terminal.enable_row_cache()
         self.pending_columns: list[MatrixIterator.RainColumn] = []
         self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.active_columns: list[MatrixIterator.RainColumn] = []

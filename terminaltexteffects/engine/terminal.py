@@ -23,6 +23,7 @@ from operator import attrgetter
 from typing import Literal
 
 from terminaltexteffects.engine import canvas as canvas_module
+from terminaltexteffects.engine._row_cache import RowCache
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.terminal_input import ParsedCharacter, VirtualScreenParser
@@ -422,6 +423,26 @@ class Terminal:
         self._visible_wide_character_count = 0
         self._blank_row = " " * self.visible_right
         self._blank_terminal_state = [self._blank_row] * self.visible_top
+        self._row_cache: RowCache | None = None
+
+    def enable_row_cache(self) -> None:
+        """Opt into caching unchanged output rows for this terminal.
+
+        Effects should enable this only after measuring a benefit for their input
+        sizes and update patterns. Visibility, motion, animation, layers and direct
+        `CharacterVisual.formatted_symbol` edits invalidate cached output. Wide
+        characters use the existing width-aware renderer.
+        """
+        if self._row_cache is not None:
+            return
+        self._row_cache = RowCache(self)
+        for character in (
+            *self._input_characters,
+            *self._inner_fill_characters,
+            *self._outer_fill_characters,
+            *self._added_characters,
+        ):
+            self._row_cache.track(character)
 
     def _build_input_character(self, parsed_character: ParsedCharacter, character_id_offset: int) -> EffectCharacter:
         """Allocate one terminal-owned character from parser output."""
@@ -701,6 +722,8 @@ class Terminal:
             self._inner_fill_characters.append(fill_char)
         else:
             self._outer_fill_characters.append(fill_char)
+        if self._row_cache is not None:
+            self._row_cache.track(fill_char)
         return fill_char
 
     def _ensure_fill_characters(self) -> None:
@@ -771,6 +794,8 @@ class Terminal:
 
         self._added_characters.append(character)
         self._next_character_id += 1
+        if self._row_cache is not None:
+            self._row_cache.track(character)
         return character
 
     def get_input_colors(self, sort: ColorSort = ColorSort.MOST_TO_LEAST) -> list[Color]:
@@ -1317,6 +1342,7 @@ class Terminal:
             raise InvalidCharacterError(character)
         if not isinstance(is_visible, bool):
             raise InvalidCharacterVisibilityError(is_visible)
+        visibility_changed = character._is_visible != is_visible
         character._is_visible = is_visible
         if is_visible:
             if character not in self._visible_characters:
@@ -1350,6 +1376,9 @@ class Terminal:
                 self._visible_wide_character_count -= 1
             self._visible_character_order_dirty = True
 
+        if visibility_changed and self._row_cache is not None:
+            self._row_cache.visibility_changed(character, visible=is_visible)
+
     def _notify_character_layer_changed(self, character: EffectCharacter, previous_layer: int) -> None:
         """Update visible-layer counts after an owned character's layer changes."""
         if character not in self._visible_characters:
@@ -1363,6 +1392,8 @@ class Terminal:
             self._visible_character_layer_counts.get(character.layer, 0) + 1
         )
         self._visible_character_order_dirty = True
+        if self._row_cache is not None:
+            self._row_cache.layer_changed(character)
 
     def _notify_character_cell_width_changed(self, character: EffectCharacter, previous_width: int) -> None:
         """Update the visible wide-character count after a visual-width transition."""
@@ -1410,7 +1441,7 @@ class Terminal:
                 row = character.motion.current_coord.row + self.canvas_row_offset
                 column = character.motion.current_coord.column + self.canvas_column_offset
                 if self.visible_bottom <= row <= self.visible_top and self.visible_left <= column <= self.visible_right:
-                    dense_rows[row - 1][column - 1] = character.animation.current_character_visual.formatted_symbol
+                    dense_rows[row - 1][column - 1] = character.animation.current_character_visual._formatted_symbol
             return ["".join(row) for row in dense_rows]
 
         rows: list[list[str] | None] = [None] * self.visible_top
@@ -1423,7 +1454,7 @@ class Terminal:
                 if row_cells is None:
                     row_cells = list(self._blank_row)
                     rows[row_index] = row_cells
-                row_cells[column - 1] = character.animation.current_character_visual.formatted_symbol
+                row_cells[column - 1] = character.animation.current_character_visual._formatted_symbol
         return [self._blank_row if row is None else "".join(row) for row in rows]
 
     def _render_width_aware_characters(self, visible_characters: list[EffectCharacter]) -> list[str]:
@@ -1470,7 +1501,7 @@ class Terminal:
                         if old_row_owners[old_column_index] is overwritten_character:
                             old_row_owners[old_column_index] = None
                             old_row_cells[old_column_index] = " "
-                row_cells[column_index] = visual.formatted_symbol
+                row_cells[column_index] = visual._formatted_symbol
                 row_owners[column_index] = character
                 for continuation_column in range(column_index + 1, column_index + visual.cell_width):
                     row_cells[continuation_column] = ""
@@ -1487,6 +1518,11 @@ class Terminal:
         collision. Characters outside the visible bounds are skipped.
         """
         visible_characters = self._get_visible_characters_in_painter_order()
+        if self._row_cache is not None:
+            cached_rows = self._row_cache.render(self)
+            if cached_rows is not None:
+                self.terminal_state = cached_rows
+                return
         if self._visible_wide_character_count:
             self.terminal_state = self._render_width_aware_characters(visible_characters)
         else:
