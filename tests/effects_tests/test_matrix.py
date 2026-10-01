@@ -153,6 +153,82 @@ def test_matrix_swap_chance_boundaries_and_zero_behavior(monkeypatch: pytest.Mon
     assert character.animation.current_character_visual is visual
 
 
+def test_matrix_no_swap_skips_color_comparison(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Unselected swaps retain the visual and consume both random draws without comparing colors."""
+    iterator = effect_matrix.MatrixIterator(effect_matrix.Matrix("A"))
+    column = iterator.pending_columns[0]
+    character = column.pending_characters[0]
+    character.animation.set_appearance("X", colors=ColorPair(fg=Color("123456")))
+    column.visible_characters = [character]
+    column.active_rain_fall_delay = 10
+    visual = character.animation.current_character_visual
+    draws: list[float] = []
+
+    def draw() -> float:
+        draws.append(0.5)
+        return 0.5
+
+    def reject_comparison(_self: Color, _other: object) -> bool:
+        pytest.fail("An unselected color swap should not compare colors")
+
+    monkeypatch.setattr(effect_matrix.random, "random", draw)
+    monkeypatch.setattr(Color, "__ne__", reject_comparison)
+    column.tick()
+
+    assert draws == [0.5, 0.5]
+    assert character.animation.current_character_visual is visual
+
+
+@pytest.mark.parametrize("symbol_swap", [False, True])
+@pytest.mark.parametrize("color_swap", [False, True])
+def test_matrix_swap_draw_order_and_channel_preservation(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    symbol_swap: bool,
+    color_swap: bool,
+) -> None:
+    """Swap decisions and selections retain their order and preserve unswapped channels."""
+    effect = effect_matrix.Matrix("A")
+    effect.effect_config.symbol_swap_chance = float(symbol_swap)
+    effect.effect_config.color_swap_chance = float(color_swap)
+    iterator = effect_matrix.MatrixIterator(effect)
+    column = iterator.pending_columns[0]
+    character = column.pending_characters[0]
+    original_color = Color("123456")
+    swapped_color = Color("654321")
+    character.animation.set_appearance("X", colors=ColorPair(fg=original_color))
+    column.visible_characters = [character]
+    column.active_rain_fall_delay = 10
+    calls: list[str] = []
+
+    def draw() -> float:
+        calls.append("draw")
+        return 0.5
+
+    def choose(values: object) -> str | Color:
+        if values is column.matrix_symbols:
+            calls.append("symbol")
+            return "Y"
+        assert values is column.rain_colors
+        calls.append("color")
+        return swapped_color
+
+    monkeypatch.setattr(effect_matrix.random, "random", draw)
+    monkeypatch.setattr(effect_matrix.random, "choice", choose)
+    column.tick()
+
+    expected_calls = ["draw"]
+    if symbol_swap:
+        expected_calls.append("symbol")
+    expected_calls.append("draw")
+    if color_swap:
+        expected_calls.append("color")
+    assert calls == expected_calls
+    visual = character.animation.current_character_visual
+    assert visual.symbol == ("Y" if symbol_swap else "X")
+    assert visual.colors == ColorPair(fg=swapped_color if color_swap else original_color)
+
+
 def test_matrix_fill_registers_each_full_column_once() -> None:
     """Each filled column enters the resolve phase once."""
     effect = effect_matrix.Matrix("ABC\nDEF")

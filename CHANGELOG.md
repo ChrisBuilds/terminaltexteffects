@@ -254,6 +254,10 @@
   from 1.879 to 0.513 seconds (72.7%) on generated 80-by-24 input and from 0.0157 to 0.00610 seconds (61.2%) on medium
   input. Frame counts and output lengths matched for each seed; these timings exclude terminal printing.
 * Matrix tracks completed fill columns without list scans and retains dropped characters in one pass.
+* Matrix skips visual reads and symbol/color comparisons when neither random swap is selected, preserving random
+  draws and rendered frames while reducing work in the rain, fill, and resolve phases. A seven-sample, fixed-clock
+  benchmark on generated 80-by-24 input measured mean render time falling from 484 to 405 ms (16.3%) and total
+  iterator time from 555 to 476 ms (14.2%). Frame counts and output lengths matched; terminal printing was excluded.
 * Blackhole now uses a border-character set for membership checks during starfield construction and consumption,
   while retaining the ordered list for ring movement.
 * Beams now releases its build-only final-color mapping after scene construction and consumes character, pending-group,

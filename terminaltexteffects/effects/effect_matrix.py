@@ -404,18 +404,18 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             # randomly change the symbol and/or color of the characters
             next_color: Color | None
             for character in self.visible_characters:
+                symbol_swap = random.random() < self.config.symbol_swap_chance
+                next_symbol = random.choice(self.matrix_symbols) if symbol_swap else None
+                color_swap = random.random() < self.config.color_swap_chance
+                next_color = random.choice(self.rain_colors) if color_swap else None
+                if not (symbol_swap or color_swap):
+                    continue
                 current_visual = character.animation.current_character_visual
-                if random.random() < self.config.symbol_swap_chance:
-                    next_symbol = random.choice(self.matrix_symbols)
-                else:
+                if not symbol_swap:
                     next_symbol = current_visual.symbol
-                if random.random() < self.config.color_swap_chance:
-                    next_color = random.choice(self.rain_colors)
-                elif current_visual.colors:
-                    next_color = current_visual.colors.fg
-                else:
-                    next_color = None
                 current_color = current_visual.colors.fg if current_visual.colors else None
+                if not color_swap:
+                    next_color = current_color
                 if next_symbol != current_visual.symbol or next_color != current_color:
                     character.animation.set_appearance(next_symbol, colors=ColorPair(fg=next_color))
 
