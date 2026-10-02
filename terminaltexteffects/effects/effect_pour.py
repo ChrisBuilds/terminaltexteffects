@@ -162,6 +162,19 @@ class PourIterator(BaseEffectIterator[PourConfig]):
 
         """
         super().__init__(effect)
+        # Keep tracking overhead out of input shapes that did not benefit in benchmarks.
+        input_characters = self.terminal.get_characters()
+        text_width = self.terminal.canvas.text_width
+        text_height = self.terminal.canvas.text_height
+        if (
+            self.config.pour_direction in ("up", "down")
+            and 64 <= text_width <= self.terminal.visible_right - self.terminal.visible_left + 1
+            and 12 <= text_height <= self.terminal.visible_top - self.terminal.visible_bottom + 1
+            and len(input_characters) >= 768
+            and len(input_characters) * 4 >= text_width * text_height * 3
+            and all(character.animation.current_character_visual.cell_width == 1 for character in input_characters)
+        ):
+            self.terminal.enable_row_cache()
         self.pending_groups: list[list[EffectCharacter]] = []
         self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.build()

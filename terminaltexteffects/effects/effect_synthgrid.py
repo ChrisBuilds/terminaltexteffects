@@ -277,6 +277,16 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
 
         """
         super().__init__(effect)
+        # Grid helpers make unchanged rows worth caching even with sparse text.
+        if (
+            self.terminal.visible_right - self.terminal.visible_left + 1 >= 8
+            and self.terminal.visible_top - self.terminal.visible_bottom + 1 >= 4
+            and all(
+                character.animation.current_character_visual.cell_width == 1
+                for character in self.terminal.get_characters()
+            )
+        ):
+            self.terminal.enable_row_cache()
         self.pending_groups: list[tuple[int, list[EffectCharacter]]] = []
         self.grid_lines: list[GridLine] = []
         self.group_tracker: dict[int, int] = {}

@@ -41,6 +41,12 @@
   (seven samples, two warmups, seed 1337) reduced render time from 0.400s to 0.310s (22%) and total time from
   0.471s to 0.386s (18%), with identical frames and output. A separate traced-memory sample increased peak memory
   from 14.0 MB to 15.3 MB (9%); small Matrix and uncached Wipe timings were essentially unchanged.
+* Print, Pour, BouncyBalls, ErrorCorrect, SynthGrid, and Rain now enable row caching within measured size,
+  occupancy, and display-width ranges. Horizontal Pour retains ordinary rendering after caching regressed its
+  timing. Seven-sample iterator benchmarks (two warmups, seed 1337, dense 80-by-24 input, no terminal printing)
+  reduced total time by 62.5%, 25.0%, 15.9%, 19.7%, 15.4%, and 10.1%, respectively. All 124 seeded output
+  signatures matched, including color modes, offsets, alternate configurations, and width-aware helper rendering.
+  Added activation-boundary and width-transition tests and documented the effect-specific gates in `docs/performance.md`.
 * Added `CharacterOrder` and `CharacterOrderArg` to unify spatial grouping and individual traversal.
   Both `Terminal.get_characters(order=...)` and `get_characters_grouped(order=...)` accept every order:
   spatial groups flatten into character sequences, and individual sorts produce singleton groups.

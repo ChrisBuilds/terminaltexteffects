@@ -81,3 +81,20 @@ Measure before enabling caching: tracking and row membership consume extra memor
 the benefit. Matrix enables it for canvases with at least four rows and 256 cells, where fixed-clock measurements
 showed a benefit. Smaller canvases retain the default renderer. For repeatable Matrix comparisons, advance its
 wall-clock-based rain phase with the same simulated clock in both runs and verify frame counts and output hashes.
+
+Print, Pour, BouncyBalls, ErrorCorrect, SynthGrid, and Rain also enable caching automatically in measured input ranges:
+
+| Effect | Activation requirements |
+| --- | --- |
+| Print | Text at least 16 columns by 4 rows, with at least 256 input characters. |
+| Pour | Up/down pouring; text at least 64 by 12, with at least 768 characters and three-quarter occupancy. |
+| BouncyBalls | Text at least 64 by 16, with at least 1,024 characters and three-quarter occupancy. |
+| ErrorCorrect | Text at least 8 by 5, with at least 80 input characters. |
+| SynthGrid | Visible canvas at least 8 by 4, including sparse text. |
+| Rain | Text at least 80 by 24, with at least 1,680 characters and seven-eighths occupancy. |
+
+These six effects require single-cell input symbols. The text-based gates also require the text bounds to fit within
+the visible canvas. Occupancy is the input-character count divided by the area of the text bounds; fill and helper
+characters do not contribute. These checks run before effect build and helper allocation. Later wide visual changes
+still use the engine's width-aware fallback. Horizontal Pour and input shapes below these thresholds retain ordinary
+rendering. Cache activation changes rendering work without changing effect options, scheduling, or random decisions.
