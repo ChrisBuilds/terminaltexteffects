@@ -10,6 +10,7 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 from enum import Enum, auto
+from types import MappingProxyType
 
 from terminaltexteffects.engine import animation, motion
 from terminaltexteffects.utils.exceptions import (
@@ -258,26 +259,6 @@ class EventHandler:
                 EventHandler.Action.ACTIVATE_SCENE, some_scene)`
 
         """
-        event_caller_map = {
-            EventHandler.Event.SEGMENT_ENTERED: motion.Waypoint,
-            EventHandler.Event.SEGMENT_EXITED: motion.Waypoint,
-            EventHandler.Event.PATH_ACTIVATED: motion.Path,
-            EventHandler.Event.PATH_COMPLETE: motion.Path,
-            EventHandler.Event.PATH_HOLDING: motion.Path,
-            EventHandler.Event.SCENE_ACTIVATED: animation.Scene,
-            EventHandler.Event.SCENE_COMPLETE: animation.Scene,
-        }
-
-        action_target_map = {
-            EventHandler.Action.ACTIVATE_PATH: motion.Path,
-            EventHandler.Action.ACTIVATE_SCENE: animation.Scene,
-            EventHandler.Action.DEACTIVATE_PATH: motion.Path,
-            EventHandler.Action.DEACTIVATE_SCENE: animation.Scene,
-            EventHandler.Action.RESET_APPEARANCE: type(None),
-            EventHandler.Action.SET_LAYER: int,
-            EventHandler.Action.SET_COORDINATE: Coord,
-            EventHandler.Action.CALLBACK: EventHandler.Callback,
-        }
         # find caller Path when provided path_id
         if event in (EventHandler.Event.PATH_ACTIVATED, EventHandler.Event.PATH_COMPLETE) and isinstance(caller, str):
             if (path_query_result := self.character.motion.query_path(caller)) is None:
@@ -293,8 +274,8 @@ class EventHandler:
                 raise SceneNotFoundError(scene_id=caller)
             caller = scene_query_result
 
-        if event_caller_map[event] != caller.__class__:
-            raise EventRegistrationCallerError(event, caller, event_caller_map[event])
+        if _EVENT_CALLER_TYPES[event] != caller.__class__:
+            raise EventRegistrationCallerError(event, caller, _EVENT_CALLER_TYPES[event])
 
         # find target Path when provided path_id
         if action in (EventHandler.Action.ACTIVATE_PATH, EventHandler.Action.DEACTIVATE_PATH) and isinstance(
@@ -318,9 +299,9 @@ class EventHandler:
             pass
 
         elif (action is EventHandler.Action.RESET_APPEARANCE and target is not None) or (
-            action_target_map[action] != target.__class__
+            _ACTION_TARGET_TYPES[action] != target.__class__
         ):
-            raise EventRegistrationTargetError(action, target, action_target_map[action])
+            raise EventRegistrationTargetError(action, target, _ACTION_TARGET_TYPES[action])
 
         assert isinstance(caller, (motion.Path, animation.Scene, motion.Waypoint))
         new_event = (event, caller)
@@ -397,6 +378,36 @@ class EventHandler:
                 self.character.motion.current_coord = target  # type: ignore[assignment]
             elif action is EventHandler.Action.CALLBACK:
                 target.callback(self.character, *target.args)  # type: ignore[union-attr]
+
+
+# Registration rules are shared; per-character event actions remain independent.
+_EVENT_CALLER_TYPES: typing.Mapping[EventHandler.Event, type[animation.Scene | motion.Waypoint | motion.Path]] = (
+    MappingProxyType(
+        {
+            EventHandler.Event.SEGMENT_ENTERED: motion.Waypoint,
+            EventHandler.Event.SEGMENT_EXITED: motion.Waypoint,
+            EventHandler.Event.PATH_ACTIVATED: motion.Path,
+            EventHandler.Event.PATH_COMPLETE: motion.Path,
+            EventHandler.Event.PATH_HOLDING: motion.Path,
+            EventHandler.Event.SCENE_ACTIVATED: animation.Scene,
+            EventHandler.Event.SCENE_COMPLETE: animation.Scene,
+        },
+    )
+)
+_ACTION_TARGET_TYPES: typing.Mapping[
+    EventHandler.Action, type[animation.Scene | motion.Path | int | Coord | EventHandler.Callback | None],
+] = MappingProxyType(
+    {
+        EventHandler.Action.ACTIVATE_PATH: motion.Path,
+        EventHandler.Action.ACTIVATE_SCENE: animation.Scene,
+        EventHandler.Action.DEACTIVATE_PATH: motion.Path,
+        EventHandler.Action.DEACTIVATE_SCENE: animation.Scene,
+        EventHandler.Action.RESET_APPEARANCE: type(None),
+        EventHandler.Action.SET_LAYER: int,
+        EventHandler.Action.SET_COORDINATE: Coord,
+        EventHandler.Action.CALLBACK: EventHandler.Callback,
+    },
+)
 
 
 class EffectCharacter:

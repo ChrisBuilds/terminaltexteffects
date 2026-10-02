@@ -35,6 +35,11 @@
 
 ---
 
+* Reuse read-only event-registration validation tables across characters instead of rebuilding them for each
+  registration. Caller and target validation, ID resolution, duplicate detection, and per-character actions retain
+  their existing behavior. Added coverage for independent registrations when characters use the same path IDs.
+  Paired dense 80-by-24 Rings benchmarks (seven samples, two warmups, seed 1337, no terminal printing) reduced
+  build time from 0.408s to 0.297s (27.3%) and total time from 2.964s to 2.860s (3.5%), with identical output.
 * Added opt-in `Terminal.enable_row_cache()` to reuse unchanged single-cell output rows while tracking motion,
   animation, visibility, layering, and direct formatted-symbol edits. Wide characters retain width-aware rendering.
   Matrix enables caching on canvases with at least four rows and 256 cells. Fixed-clock dense 80-by-24 benchmarks
