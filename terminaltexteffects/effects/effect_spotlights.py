@@ -319,9 +319,12 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
 
         Snapshot all instance fields, including styles and the formatted symbol, and the
         animation color policy. A changed or replaced visual goes through `set_appearance`
-        again. This preserves restoration behavior without changing the engine API.
+        again. Input-color overrides use the engine helper to compare effective colors.
         """
         anim = character.animation
+        if anim.existing_color_handling == "always":
+            anim.set_appearance_if_changed(character.input_symbol, colors)
+            return
         visual = anim.current_character_visual
         policy = (
             anim.no_color,

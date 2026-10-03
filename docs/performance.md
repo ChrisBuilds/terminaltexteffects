@@ -110,8 +110,10 @@ dim colors and beam falloff use this bounded cache. Factors are not quantized, a
 
 The effect also reuses an unchanged current visual. Its appearance snapshot includes all visual instance fields and
 the animation color policy. Direct style or formatted-symbol edits, visual replacement, and policy changes cause the
-effect to reapply the intended appearance through `Animation.set_appearance()`. Callers should not rely on receiving a
-new visual object each frame. The shared `set_appearance()` method still creates a fresh visual on every call.
+effect to reapply the intended appearance. In `always` input-color mode, Spotlights uses the shared
+`Animation.set_appearance_if_changed()` helper to compare effective colors after input overrides. Other modes retain
+the local appearance cache. Callers should not rely on receiving a new visual object each frame. The shared
+`set_appearance()` method still creates a fresh visual on every call.
 
 Spotlights retains the default terminal renderer. Row caching offered little additional benefit after illumination
 optimization and regressed the tested Unicode input.
@@ -131,3 +133,38 @@ All paired frame-count and output-length arrays matched. Full-frame hashes also 
 and effect-option comparisons. A separate fresh-process `tracemalloc` sample for dense input at seed 1337 reduced peak
 Python allocation from 25.46 MB to 8.27 MB (67.5%); build peak increased from 4.43 MB to 5.12 MB. These are local timing
 and traced-allocation results, not RSS measurements or universal performance guarantees.
+
+## Opt-in appearance reuse
+
+`Animation.set_appearance_if_changed(symbol=None, colors=None)` follows the ordinary setter's symbol defaults,
+color overrides, and width tracking. It reuses its last visual when the effective request, color policy, visual
+identity, and all visual instance fields remain unchanged. Scene stepping, an ordinary setter call, or direct
+style, color-code, width, or formatted-symbol edits force the next helper call to reapply the requested appearance.
+The helper does not stop an active scene from overwriting that appearance on its next step.
+
+The snapshot is allocated lazily for each animation using the helper. It retains one visual and field snapshot;
+visuals are not shared across characters. `Animation.set_appearance()` remains available when callers require a fresh
+visual on every call. Effects should opt in only after measuring their workloads: comparing and retaining snapshots
+can cost more than it saves when effective appearances change frequently.
+
+Overflow row coloring and Spotlights opt in only when `existing_color_handling="always"`. For input-derived
+characters, the helper ignores requested colors in the comparison because parsed input colors override them.
+Helper characters without input-color ownership still compare the requested colors. Other color modes retain their
+previous appearance paths.
+
+Local paired iterator benchmarks used seven samples, two warmups, and seeds 1339–1345 after warmup seeds 1337–1338.
+There was no terminal printing or frame-rate sleeping. Dense `always` mode results were:
+
+| Effect | Before (s) | After (s) | Reduction |
+| --- | ---: | ---: | ---: |
+| Overflow | 0.37166 | 0.25213 | 32.2% |
+| Spotlights | 0.93603 | 0.77500 | 17.2% |
+
+Frame counts and output lengths matched in all eight timing comparisons. Full-frame hashes matched in 100 seeded
+comparisons across medium, Unicode, colored, sparse, and dense input, all color-handling modes, and no-color/XTerm rendering.
+A separate fresh-process dense `always` sample at seed 1337 changed Overflow peak traced Python allocation
+from 16.81 MB to 20.43 MB (+21.6%).
+A separate fresh-process dense `always` sample at seed 1337 changed Spotlights peak traced Python allocation
+from 8.07 MB to 8.01 MB (-0.8%).
+Overflow retains snapshots for moving rows, trading memory for reduced repeated visual construction. These are local
+timings and traced Python allocations, not RSS measurements or universal speed guarantees.

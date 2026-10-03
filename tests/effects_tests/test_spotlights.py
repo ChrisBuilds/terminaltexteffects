@@ -580,3 +580,17 @@ def test_spotlights_reapplies_replaced_visual_and_input_color_ownership() -> Non
     assert character.animation.current_character_visual is not previous
     assert character.animation.current_character_visual.colors == iterator.character_color_map[character][0]
     assert not character.animation.current_character_visual.bold
+
+
+@pytest.mark.parametrize("mode", ["ignore", "dynamic", "always"])
+def test_spotlights_engine_appearance_helper_selection(mode: Literal["ignore", "dynamic", "always"]) -> None:
+    """Use effective-color reuse in always mode and retain the local cache elsewhere."""
+    effect = effect_spotlights.Spotlights("a")
+    effect.terminal_config = _make_terminal_config(mode)
+    iterator = cast("effect_spotlights.SpotlightsIterator", iter(effect))
+    character = iterator.terminal.get_characters()[0]
+    iterator._set_appearance(character, ColorPair("123456"))
+    visual = character.animation.current_character_visual
+    iterator._set_appearance(character, ColorPair("abcdef"))
+    assert (character.animation.current_character_visual is visual) == (mode == "always")
+    assert hasattr(character.animation, "_appearance_state") == (mode == "always")

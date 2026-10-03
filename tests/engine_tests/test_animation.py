@@ -1,5 +1,7 @@
 """Unit tests for the animation functionality within the terminaltexteffects package."""
 
+from typing import Literal
+
 import pytest
 
 from terminaltexteffects.engine.animation import CharacterVisual, Frame, Scene
@@ -870,3 +872,144 @@ def test_scene_equality_incorrect_type(character: EffectCharacter) -> None:
     """Ensure Scene equality checks guard against other object types."""
     new_scene = character.animation.new_scene(scene_id="test_scene")
     assert new_scene != "test_scene"
+
+
+@pytest.mark.parametrize("mode", ["ignore", "dynamic", "always"])
+@pytest.mark.parametrize(("no_color", "xterm"), [(False, False), (True, False), (False, True)])
+@pytest.mark.parametrize(
+    "input_colors",
+    [ColorPair(), ColorPair("123456"), ColorPair(bg="abcdef"), ColorPair("123456", "abcdef")],
+)
+def test_appearance_helper_effective_colors(
+    mode: Literal["ignore", "dynamic", "always"],
+    *,
+    no_color: bool,
+    xterm: bool,
+    input_colors: ColorPair,
+) -> None:
+    """Match ordinary appearance across policies, reusing only unchanged effective output."""
+    character = EffectCharacter(0, "a", 0, 0)
+    animation = character.animation
+    reference = EffectCharacter(1, "a", 0, 0).animation
+    for anim in (animation, reference):
+        anim.character.uses_input_preexisting_colors = True
+        anim.existing_color_handling = mode
+        anim.no_color = no_color
+        anim.use_xterm_colors = xterm
+        anim.input_fg_color = input_colors.fg
+        anim.input_bg_color = input_colors.bg
+        anim.input_bold = True
+    for colors in (None, ColorPair(), ColorPair("ffffff", "000000"), ColorPair("fedcba")):
+        animation.set_appearance_if_changed(colors=colors)
+        reference.set_appearance(colors=colors)
+        assert vars(animation.current_character_visual) == vars(reference.current_character_visual)
+        visual = animation.current_character_visual
+        animation.set_appearance_if_changed(colors=colors)
+        assert animation.current_character_visual is visual
+    if mode == "always":
+        visual = animation.current_character_visual
+        animation.set_appearance_if_changed(colors=ColorPair("000000"))
+        assert animation.current_character_visual is visual
+        character.uses_input_preexisting_colors = False
+        animation.set_appearance_if_changed(colors=ColorPair("000000"))
+        assert animation.current_character_visual is not visual
+        assert animation.current_character_visual.colors == ColorPair("000000")
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("symbol", "z"),
+        ("colors", ColorPair("ffffff")),
+        ("bold", True),
+        ("dim", True),
+        ("italic", True),
+        ("underline", True),
+        ("blink", True),
+        ("reverse", True),
+        ("hidden", True),
+        ("strike", True),
+        ("_fg_color_code", "ffffff"),
+        ("_bg_color_code", "ffffff"),
+        ("cell_width", 2),
+        ("formatted_symbol", "edited"),
+    ],
+)
+def test_appearance_helper_restores_visual_edits(character: EffectCharacter, field: str, value: object) -> None:
+    """A mutable visual cannot make the reuse snapshot stale."""
+    animation = character.animation
+    animation.set_appearance_if_changed()
+    visual = animation.current_character_visual
+    expected = vars(visual).copy()
+    setattr(visual, field, value)
+    animation.set_appearance_if_changed()
+    assert animation.current_character_visual is not visual
+    assert vars(animation.current_character_visual) == expected
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("no_color", True),
+        ("use_xterm_colors", True),
+        ("existing_color_handling", "always"),
+        ("input_fg_color", Color("abcdef")),
+        ("input_bg_color", Color("fedcba")),
+        ("input_bold", True),
+    ],
+)
+def test_appearance_helper_policy_changes(character: EffectCharacter, field: str, value: object) -> None:
+    """Policy edits invalidate the cached request even when the visual is unchanged."""
+    animation = character.animation
+    animation.set_appearance_if_changed(colors=ColorPair("123456"))
+    visual = animation.current_character_visual
+    setattr(animation, field, value)
+    animation.set_appearance_if_changed(colors=ColorPair("123456"))
+    assert animation.current_character_visual is not visual
+    reference = EffectCharacter(1, "a", 0, 0).animation
+    setattr(reference, field, value)
+    reference.set_appearance(colors=ColorPair("123456"))
+    assert vars(animation.current_character_visual) == vars(reference.current_character_visual)
+
+
+def test_appearance_helper_lazy_state_and_replacements(character: EffectCharacter) -> None:
+    """Ordinary setters stay fresh and scene replacement invalidates helper state."""
+    animation = character.animation
+    animation.set_appearance()
+    assert not hasattr(animation, "_appearance_state")
+    animation.set_appearance_if_changed()
+    first = animation.current_character_visual
+    animation.set_appearance()
+    assert animation.current_character_visual is not first
+    ordinary = animation.current_character_visual
+    animation.set_appearance_if_changed()
+    assert animation.current_character_visual is not ordinary
+    scene = animation.new_scene()
+    scene.add_frame("x", 1)
+    scene.add_frame("y", 1)
+    animation.activate_scene(scene)
+    animation.set_appearance_if_changed()
+    assert animation.current_character_visual.symbol == "a"
+    animation.step_animation()
+    assert animation.current_character_visual.symbol == "x"
+    animation.set_appearance_if_changed()
+    assert animation.current_character_visual.symbol == "a"
+    other = EffectCharacter(1, "a", 0, 0).animation
+    other.set_appearance_if_changed()
+    assert other.current_character_visual is not animation.current_character_visual
+
+
+def test_appearance_helper_width_and_errors(character: EffectCharacter, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Record each real width transition once and keep invalid-symbol errors."""
+    changes: list[int] = []
+    monkeypatch.setattr(character, "_notify_current_visual_width_changed", changes.append)
+    animation = character.animation
+    animation.set_appearance_if_changed("界")
+    animation.set_appearance_if_changed("界")
+    animation.set_appearance_if_changed()
+    assert changes == [1, 2]
+    assert animation._visual_width_mask == 3
+    with pytest.raises(InvalidSymbolError):
+        animation.set_appearance_if_changed("invalid")
+    animation.set_appearance_if_changed()
+    assert animation.current_character_visual.symbol == "a"

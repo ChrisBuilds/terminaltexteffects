@@ -35,6 +35,12 @@
 
 ---
 
+* Added opt-in `Animation.set_appearance_if_changed()` to reuse unchanged effective visuals while detecting
+  direct visual edits, scene replacement, color-policy changes, and width transitions. The ordinary appearance
+  setter retains fresh-visual semantics. Overflow row coloring and Spotlights use the helper in `always` input-color
+  mode; other color modes retain their existing appearance paths. Paired dense iterator measurements reduced
+  total time by 32.2% and 17.2%, respectively, with identical output. Overflow peak traced allocation increased
+  21.6%; Spotlights stayed near parity.
 * Reuse read-only event-registration validation tables across characters instead of rebuilding them for each
   registration. Caller and target validation, ID resolution, duplicate detection, and per-character actions retain
   their existing behavior. Added coverage for independent registrations when characters use the same path IDs.

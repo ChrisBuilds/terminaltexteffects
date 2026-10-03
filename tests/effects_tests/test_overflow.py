@@ -220,3 +220,18 @@ def test_overflow_always_without_preexisting_colors_has_uncolored_final_row_visu
     assert current_visual.colors == ColorPair()
     assert current_visual._fg_color_code is None
     assert current_visual._bg_color_code is None
+
+
+@pytest.mark.parametrize("mode", ["ignore", "dynamic", "always"])
+def test_overflow_row_reuses_appearance_only_in_always_mode(mode: Literal["ignore", "dynamic", "always"]) -> None:
+    """Repeated row coloring opts in only for the measured input-color override mode."""
+    effect = effect_overflow.Overflow("a")
+    effect.terminal_config = _make_terminal_config(mode)
+    iterator = iter(effect)
+    character = iterator.terminal.get_characters()[0]
+    row = effect_overflow.OverflowIterator.Row([character])
+    row.set_color(Color("123456"))
+    visual = character.animation.current_character_visual
+    row.set_color(Color("abcdef"))
+    assert (character.animation.current_character_visual is visual) == (mode == "always")
+    assert hasattr(character.animation, "_appearance_state") == (mode == "always")
