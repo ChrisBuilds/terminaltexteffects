@@ -250,6 +250,14 @@
 
 ---
 
+* Spotlights now calculates nearest-beam distances directly and reuses brightness results in a bounded,
+  iterator-owned cache. An occupied-column index preserves the original ellipse spans, colored spaces,
+  and wide continuation cells while avoiding empty-cell enumeration and fill-character allocation.
+  Unchanged visuals are reused within the effect, with direct visual edits and color-policy changes
+  detected before skipping an appearance update. The shared animation API retains its existing behavior.
+  Paired iterator benchmarks (seven samples, two warmups, seed 1337, no terminal printing) reduced dense
+  80-by-24 total time from 2.302s to 0.948s (58.8%) and sparse total time by 93.4%, with identical output.
+  A fresh-process traced-memory sample reduced dense peak allocation from 25.46 MB to 8.27 MB (67.5%).
 * SynthGrid now divides the full canvas into balanced cells whose widths and heights differ by at most one position,
   choosing counts that favor visually square cells. The layout supports odd, narrow, large, and offset canvases.
   Grid lines share intersection characters and omit decoration on tiny cells; single-cell canvases, including one
@@ -319,6 +327,8 @@
 * Rings now enforces the documented `ring_gap` range and accepts zero `disperse_duration`.
 * Slice's copyable CLI example now separates `--slice-direction` and `--movement-speed` correctly.
 * Spotlights now rejects `beam_falloff` values above 1, matching its documented percentage range.
+* Spotlights now handles zero beam falloff when only a wide character's continuation cell is covered,
+  illuminating the character at full brightness instead of dividing by zero.
 * Swarm now compares complete area indices and documents the zero behavior of `swarm_size` and `swarm_coordination`.
 * VHSTape glitch-wave paths now animate with the configured `glitch_wave_colors` palette.
 * Blackhole now keeps input stars available for consumption on short text, uses helper border stars when necessary,

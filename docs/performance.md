@@ -98,3 +98,36 @@ the visible canvas. Occupancy is the input-character count divided by the area o
 characters do not contribute. These checks run before effect build and helper allocation. Later wide visual changes
 still use the engine's width-aware fallback. Horizontal Pour and input shapes below these thresholds retain ordinary
 rendering. Cache activation changes rendering work without changing effect options, scheduling, or random decisions.
+
+## Spotlights illumination
+
+Spotlights indexes authored input cells by column and row. Beam selection uses the original floating ellipse spans,
+including wide continuation cells and input spaces with parsed colors. Empty fill cells are excluded from the index;
+the effect does not need to materialize them. Input coordinates and symbols remain fixed throughout illumination.
+
+Brightness results use exact color-pair and factor keys in a separate 4,096-entry cache for each iterator. Both initial
+dim colors and beam falloff use this bounded cache. Factors are not quantized, and cached colors remain immutable.
+
+The effect also reuses an unchanged current visual. Its appearance snapshot includes all visual instance fields and
+the animation color policy. Direct style or formatted-symbol edits, visual replacement, and policy changes cause the
+effect to reapply the intended appearance through `Animation.set_appearance()`. Callers should not rely on receiving a
+new visual object each frame. The shared `set_appearance()` method still creates a fresh visual on every call.
+
+Spotlights retains the default terminal renderer. Row caching offered little additional benefit after illumination
+optimization and regressed the tested Unicode input.
+
+Local paired iterator measurements against the implementation before these changes used seven samples, two warmups,
+and seed 1337, without terminal printing or frame-rate sleeps. Mean total times (build plus rendering) were:
+
+| Input preset | Before (s) | After (s) | Reduction |
+| --- | ---: | ---: | ---: |
+| medium | 0.08475 | 0.04139 | 51.2% |
+| generated (dense 80-by-24) | 2.30201 | 0.94837 | 58.8% |
+| sparse | 0.29153 | 0.01922 | 93.4% |
+| unicode | 0.10883 | 0.05014 | 53.9% |
+| tall | 1.08830 | 0.37138 | 65.9% |
+
+All paired frame-count and output-length arrays matched. Full-frame hashes also matched across seeded shape, color,
+and effect-option comparisons. A separate fresh-process `tracemalloc` sample for dense input at seed 1337 reduced peak
+Python allocation from 25.46 MB to 8.27 MB (67.5%); build peak increased from 4.43 MB to 5.12 MB. These are local timing
+and traced-allocation results, not RSS measurements or universal performance guarantees.
