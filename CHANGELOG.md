@@ -35,6 +35,11 @@
 
 ---
 
+* Motion path activation now calculates straight-line origin distances directly with terminal-scaled `math.hypot`,
+  avoiding geometry-cache key hashing for this small calculation. Bézier distance caching, fresh origin objects,
+  activation resets, and event behavior are preserved. Added retained-reference and callback-restart regression tests.
+  Paired production Rings iterator benchmarks (seven samples, two warmups) reduced dense total time 2.5%, with
+  identical output; the full shared-engine suite passes.
 * Added opt-in `Animation.set_appearance_if_changed()` to reuse unchanged effective visuals while detecting
   direct visual edits, scene replacement, color-policy changes, and width transitions. The ordinary appearance
   setter retains fresh-visual semantics. Overflow row coloring and Spotlights use the helper in `always` input-color

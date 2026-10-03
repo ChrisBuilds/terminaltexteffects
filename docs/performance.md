@@ -168,3 +168,28 @@ A separate fresh-process dense `always` sample at seed 1337 changed Spotlights p
 from 8.07 MB to 8.01 MB (-0.8%).
 Overflow retains snapshots for moving rows, trading memory for reduced repeated visual construction. These are local
 timings and traced Python allocations, not RSS measurements or universal speed guarantees.
+
+## Motion activation distances
+
+`Motion.activate_path()` calculates straight-line origin distances with the same terminal-scaled `math.hypot`
+arithmetic as the geometry helper, avoiding its coordinate-key hashing. Bézier activation retains the shared
+curve-distance cache. Every activation still constructs a fresh origin waypoint and segment, resets playback,
+and dispatches events in the same order. No per-path distance cache is allocated.
+
+Local production verification on 2026-10-03 used seven paired samples, two warmups, and measured seeds 1339–1345,
+without terminal printing or frame-rate sleeps. The baseline method was snapshotted before editing; all other engine
+and effect code was shared. Geometry caches were cleared before each iteration, then warmed by its own build.
+
+| Rings input | Before total (s) | After total (s) | Reduction |
+| --- | ---: | ---: | ---: |
+| generated | 1.41773 | 1.38221 | 2.5% |
+| medium | 0.10063 | 0.09800 | 2.6% |
+| tall | 0.42941 | 0.41499 | 3.4% |
+| wide | 0.01797 | 0.01755 | 2.3% |
+| sparse | 0.00674 | 0.00657 | 2.4% |
+| unicode | 0.08290 | 0.08093 | 2.4% |
+
+All per-seed frame-count and output-length arrays matched, as did 44 seeded full-frame comparisons across Rings
+shapes, colors, offsets and configurations, and six control effects. Separate dense seed-1337 traced allocation
+samples measured 110.56 MB before and 111.67 MB after (+1.0%).
+These are local iterator timings and traced Python allocations, not RSS measurements or universal speed guarantees.

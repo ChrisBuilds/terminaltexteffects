@@ -9,6 +9,7 @@ Classes:
 
 from __future__ import annotations
 
+import math
 import typing
 from dataclasses import dataclass
 
@@ -527,10 +528,10 @@ class Motion:
                 terminal_adjusted=True,
             )
         else:
-            distance_to_first_waypoint = geometry.find_length_of_line(
-                self.current_coord,
-                first_waypoint.coord,
-                terminal_adjusted=True,
+            # This small calculation is cheaper than hashing coordinates through the geometry cache.
+            distance_to_first_waypoint = math.hypot(
+                first_waypoint.coord.column - self.current_coord.column,
+                (first_waypoint.coord.row - self.current_coord.row) * geometry.TERMINAL_ROW_SCALE,
             )
         new_origin_segment = Segment(
             Waypoint("origin", self.current_coord),
