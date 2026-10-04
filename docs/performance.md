@@ -193,3 +193,39 @@ All per-seed frame-count and output-length arrays matched, as did 44 seeded full
 shapes, colors, offsets and configurations, and six control effects. Separate dense seed-1337 traced allocation
 samples measured 110.56 MB before and 111.67 MB after (+1.0%).
 These are local iterator timings and traced Python allocations, not RSS measurements or universal speed guarantees.
+
+## Opt-in eased-scene schedules
+
+`Animation.new_scene(cache_easing=True)` or `Scene(..., cache_easing=True)` reuses immutable frame-index
+schedules for scenes with matching built-in easing functions and duration boundaries. Frames, visuals,
+playback counters and lifecycle events remain independently owned. Only Waves opts in by default.
+Custom easing callables, scenes beyond the 4096-tick entry limit, and motion-synced scenes retain their
+ordinary playback calculations. The engine keeps at most 32 schedules; weak scene references allow
+entries to be released on eviction and lazily reacquired during playback. Easing changes or appended
+frames select a new schedule; resetting/looping reuses the existing layout.
+
+Use the helper after measuring repeated layouts. Many unique schedules or short/cancelled playback can
+pay for precomputation without enough reuse. Opting in does not cache arbitrary callback results or share
+mutable animation state. Manually changed out-of-range cursors retain ordinary easing/clamping behavior.
+
+Local production comparisons used the repository harness with actual pre-change source in isolated
+workers: seven samples, two warmups, seeds 1339–1345, serial rotating arms, GC before each run and cold
+schedule caches. Defaults, no terminal printing and no frame-rate sleeping were retained. The baseline
+already contains Waves' effect-local construction optimizations. Results measure this engine feature alone.
+
+| Input / color mode | Before total s | After total s | Iteration reduction | Total reduction |
+| --- | ---: | ---: | ---: | ---: |
+| generated / ignore | 1.849471 | 1.644767 | 19.7% | 11.1% |
+| medium / ignore | 0.068867 | 0.061437 | 18.5% | 10.8% |
+| unicode / ignore | 0.042426 | 0.038307 | 15.9% | 9.7% |
+| generated / always | 1.733739 | 1.529323 | 19.4% | 11.8% |
+| generated / dynamic | 1.630213 | 1.423876 | 22.5% | 12.7% |
+| sparse / dynamic | 0.002995 | 0.002934 | 3.6% | 2.1% |
+
+All timing and separate memory frame/output-count arrays matched. All 68 full-frame SHA256/final-state
+comparisons matched across Waves shape/color/easing/configuration cases and BinaryPath/Expand controls.
+A fresh-process dense seed-1339 trace changed peak Python allocation from 154.208 MiB to
+154.402 MiB (+0.126%, about 0.19 MiB). Memory tracing ran outside timing.
+BinaryPath/Expand kept caching disabled; their small total-time variations (+0.9%/-1.8%) did not establish
+a meaningful change. Thunderstorm remains disabled and has no timing claim because its output is not
+reproducible under the existing benchmark. These are local measurements, not universal guarantees or RSS.

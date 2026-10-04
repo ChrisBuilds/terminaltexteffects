@@ -1,11 +1,16 @@
 """Unit tests for the animation functionality within the terminaltexteffects package."""
 
+from __future__ import annotations
+
+import typing
+import weakref
 from typing import Literal
 
 import pytest
 
+from terminaltexteffects.engine import animation
 from terminaltexteffects.engine.animation import CharacterVisual, Frame, Scene
-from terminaltexteffects.engine.base_character import EffectCharacter
+from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.utils import easing
 from terminaltexteffects.utils.exceptions import (
     ActivateEmptySceneError,
@@ -1013,3 +1018,214 @@ def test_appearance_helper_width_and_errors(character: EffectCharacter, monkeypa
         animation.set_appearance_if_changed("invalid")
     animation.set_appearance_if_changed()
     assert animation.current_character_visual.symbol == "a"
+
+
+@pytest.fixture
+def empty_easing_cache() -> typing.Iterator[None]:
+    """Keep schedule cache ownership assertions isolated from other tests."""
+    animation._get_easing_schedule.cache_clear()
+    yield
+    animation._get_easing_schedule.cache_clear()
+
+
+@pytest.mark.parametrize("ease", animation._CACHEABLE_EASING_FUNCTIONS)
+@pytest.mark.parametrize("durations", [(1,), (3,), (1, 1, 1), (2, 2, 2), (2, 3, 2), (2, 1, 3)])
+@pytest.mark.parametrize("loop", [False, True])
+def test_cached_easing_matches_playback_and_completion(
+    ease: easing.EasingFunction,
+    durations: tuple[int, ...],
+    *,
+    loop: bool,
+) -> None:
+    """Schedules preserve rounding, overshoot, duration boundaries, looping and events."""
+    results = []
+    for enabled in (False, True):
+        char = EffectCharacter(0, "x", 1, 1)
+        scene = char.animation.new_scene(ease=ease, cache_easing=enabled, is_looping=loop)
+        events: list[str] = []
+        char.event_handler.register_event(
+            EventHandler.Event.SCENE_COMPLETE,
+            scene,
+            EventHandler.Action.CALLBACK,
+            EventHandler.Callback(lambda _c, event_log=events: event_log.append("complete")),
+        )
+        for index, duration in enumerate(durations):
+            scene.add_frame(chr(65 + index), duration)
+        char.animation.activate_scene(scene)
+        observed = []
+        for _ in range(sum(durations) * 2):
+            char.animation.step_animation()
+            observed.append(
+                (
+                    char.animation.current_character_visual.symbol,
+                    scene.easing_current_step,
+                    len(scene.frames),
+                    len(scene.played_frames),
+                    len(events),
+                ),
+            )
+            if char.animation.active_scene is None:
+                break
+        results.append(observed)
+    assert results[0] == results[1]
+
+
+@pytest.mark.usefixtures("empty_easing_cache")
+def test_cached_easing_shares_indices_without_mutable_playback() -> None:
+    """Equivalent scenes share only indices, regardless of symbols, colors or scene IDs."""
+    chars = [EffectCharacter(i, "x", 1, 1) for i in range(2)]
+    scenes = [c.animation.new_scene(ease=easing.linear, cache_easing=True) for c in chars]
+    for i, scene in enumerate(scenes):
+        for symbol in ("a", "b"):
+            scene.add_frame(symbol.upper() if i else symbol, 2, colors=ColorPair(fg=Color("ff0000" if i else "00ff00")))
+        chars[i].animation.activate_scene(scene)
+    assert scenes[0]._get_easing_schedule() is scenes[1]._get_easing_schedule()
+    assert scenes[0].frames[0] is not scenes[1].frames[0]
+    assert scenes[0].frames[0].character_visual is not scenes[1].frames[0].character_visual
+    chars[0].animation.step_animation()
+    assert scenes[1].easing_current_step == 0
+    scenes[0].frames[0].character_visual.symbol = "!"
+    assert scenes[1].frames[0].character_visual.symbol == "A"
+
+
+@pytest.mark.parametrize("change", ["ease", "append", "reset", "toggle", "visual"])
+def test_cached_easing_handles_changes_during_playback(change: str) -> None:
+    """Supported changes preserve the same playback as an uncached scene."""
+    results = []
+    for enabled in (False, True):
+        char = EffectCharacter(0, "x", 1, 1)
+        scene = char.animation.new_scene(ease=easing.linear, cache_easing=enabled)
+        for symbol in "abc":
+            scene.add_frame(symbol, 2)
+        char.animation.activate_scene(scene)
+        observed = []
+        for tick in range(12):
+            if tick == 1:
+                if change == "ease":
+                    scene.ease = easing.out_bounce
+                elif change == "append":
+                    scene.add_frame("界", 3)
+                elif change == "reset":
+                    scene.reset_scene()
+                elif change == "toggle":
+                    scene.cache_easing = False
+                else:
+                    scene.frames[-1].character_visual.symbol = "!"
+            if tick == 2 and change == "toggle":
+                scene.cache_easing = enabled
+            char.animation.step_animation()
+            observed.append((char.animation.current_character_visual.symbol, scene.easing_current_step))
+            if char.animation.active_scene is None:
+                break
+        results.append(observed)
+    assert results[0] == results[1]
+
+
+@pytest.mark.usefixtures("empty_easing_cache")
+def test_cached_easing_releases_evicted_schedule_and_resumes_playback() -> None:
+    """Live scenes cannot keep evicted schedules alive and can reacquire them mid-playback."""
+    char = EffectCharacter(0, "x", 1, 1)
+    scene = char.animation.new_scene(ease=easing.linear, cache_easing=True)
+    scene.add_frame("a", 2)
+    scene.add_frame("b", 2)
+    char.animation.activate_scene(scene)
+    char.animation.step_animation()
+    entry = scene._get_easing_schedule()
+    assert entry is not None
+    reference = weakref.ref(entry)
+    del entry
+    for total in range(10, 10 + animation._MAX_EASING_SCHEDULES + 1):
+        other = Scene("other", ease=easing.linear, cache_easing=True)
+        other.add_frame("x", total)
+        other._get_easing_schedule()
+    assert animation._get_easing_schedule.cache_info().currsize == animation._MAX_EASING_SCHEDULES
+    assert reference() is None
+    char.animation.step_animation()
+    assert char.animation.current_character_visual.symbol == "a"
+    char.animation.step_animation()
+    assert char.animation.current_character_visual.symbol == "b"
+
+
+@pytest.mark.usefixtures("empty_easing_cache")
+def test_cached_easing_custom_unhashable_callable_keeps_per_tick_calls() -> None:
+    """Opting in does not precompute or hash an arbitrary stateful callable."""
+
+    class StatefulEasing:  # noqa: PLW1641 - deliberately unhashable to exercise callable eligibility
+        def __init__(self) -> None:
+            self.calls: list[float] = []
+
+        def __eq__(self, _other: object) -> bool:
+            message = "Cache eligibility must use identity"
+            raise AssertionError(message)
+
+        def __call__(self, progress: float) -> float:
+            self.calls.append(progress)
+            return progress if len(self.calls) % 2 else 1 - progress
+
+    ease = StatefulEasing()
+    with pytest.raises(TypeError):
+        hash(ease)
+    char = EffectCharacter(0, "x", 1, 1)
+    scene = char.animation.new_scene(ease=ease, cache_easing=True)
+    for symbol in "abc":
+        scene.add_frame(symbol, 1)
+    char.animation.activate_scene(scene)
+    observed = []
+    for _ in range(3):
+        char.animation.step_animation()
+        observed.append(char.animation.current_character_visual.symbol)
+    assert ease.calls == [0, 0.5, 1]
+    assert observed == ["a", "b", "c"]
+    assert animation._get_easing_schedule.cache_info().currsize == 0
+
+
+@pytest.mark.usefixtures("empty_easing_cache")
+def test_cached_easing_long_and_synced_scenes_keep_original_path() -> None:
+    """Entry limits and motion synchronization take precedence over schedule reuse."""
+    char = EffectCharacter(0, "x", 1, 1)
+    scene = char.animation.new_scene(ease=easing.linear, cache_easing=True)
+    scene.add_frame("a", animation._MAX_EASING_SCHEDULE_STEPS + 1)
+    char.animation.activate_scene(scene)
+    char.animation.step_animation()
+    assert scene.easing_current_step == 1
+    assert animation._get_easing_schedule.cache_info().currsize == 0
+
+    synced = char.animation.new_scene(ease=easing.linear, cache_easing=True, sync=Scene.SyncMetric.STEP)
+    synced.add_frame("a", 1)
+    synced.add_frame("b", 1)
+    path = char.motion.new_path(speed=1)
+    path.new_waypoint(Coord(3, 1))
+    char.motion.activate_path(path)
+    char.animation.activate_scene(synced)
+    char.motion.move()
+    char.animation.step_animation()
+    assert char.animation.current_character_visual.symbol == "a"
+    assert animation._get_easing_schedule.cache_info().currsize == 0
+
+
+@pytest.mark.parametrize("step", [-2, 6])
+def test_cached_easing_preserves_clamping_for_manually_changed_cursor(step: int) -> None:
+    """Out-of-range cursors keep ordinary easing/clamping rather than indexing a schedule."""
+    results = []
+    for enabled in (False, True):
+        char = EffectCharacter(0, "x", 1, 1)
+        scene = char.animation.new_scene(ease=easing.linear, cache_easing=enabled)
+        for symbol in "abc":
+            scene.add_frame(symbol, 2)
+        char.animation.activate_scene(scene)
+        scene.easing_current_step = step
+        char.animation.step_animation()
+        results.append((char.animation.current_character_visual.symbol, scene.easing_current_step))
+    assert results[0] == results[1]
+
+
+@pytest.mark.usefixtures("empty_easing_cache")
+def test_cached_easing_falls_back_for_integral_float_duration() -> None:
+    """A duration accepted by ordinary playback must not fail during schedule construction."""
+    char = EffectCharacter(0, "x", 1, 1)
+    scene = char.animation.new_scene(ease=easing.linear, cache_easing=True)
+    scene.add_frame("a", 2.0)  # pyright: ignore[reportArgumentType]
+    char.animation.activate_scene(scene)
+    char.animation.step_animation()
+    assert char.animation.current_character_visual.symbol == "a"
+    assert animation._get_easing_schedule.cache_info().currsize == 0

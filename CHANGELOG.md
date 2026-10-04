@@ -35,6 +35,13 @@
 
 ---
 
+* Added opt-in `Scene.cache_easing` / `Animation.new_scene(cache_easing=True)` to reuse immutable
+  frame-index schedules for built-in easing functions. The shared cache holds at most 32 schedules
+  of up to 4096 ticks each; weak scene references allow evicted schedules to be released. Custom
+  easing callables, longer scenes, and motion-synced scenes retain ordinary playback. Waves opts in,
+  preserving independent frames, visuals, playback counters, and completion events. Paired production
+  dense Waves measurements reduced iteration time 19.7% and total time 11.1%; peak traced allocation
+  increased about 0.2 MiB. The default shared-engine suite passes, and complete output comparisons match.
 * Motion path activation now calculates straight-line origin distances directly with terminal-scaled `math.hypot`,
   avoiding geometry-cache key hashing for this small calculation. Bézier distance caching, fresh origin objects,
   activation resets, and event behavior are preserved. Added retained-reference and callback-restart regression tests.

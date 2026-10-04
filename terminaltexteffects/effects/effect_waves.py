@@ -249,7 +249,7 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                 self.character_final_color_map[character] = ColorPair(
                     fg=final_gradient_mapping[character.input_coord],
                 )
-            wave_scn = character.animation.new_scene()
+            wave_scn = character.animation.new_scene(cache_easing=True)
             wave_scn.ease = self.config.wave_easing
             for _ in range(self.config.wave_count):
                 for symbol, colors in wave_recipe:
