@@ -1,0 +1,1 @@
+Empty or whitespace-only CLI input is a successful no-op instead of displaying `No Input.`. Library effects raise `EmptyInputError` when no visible input remains; empty text-boundary coordinate selection raises `ValueError`.

@@ -1,0 +1,1 @@
+Cached coordinate lists can be modified without affecting later calls. Bézier lengths include the endpoint without rasterization inflation; signed ray offsets, degenerate shapes, and offset canvas centers now behave consistently.

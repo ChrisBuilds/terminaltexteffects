@@ -36,6 +36,11 @@ jobs:
         env:
           QUALITY_BASE: ${{ github.event.pull_request.base.sha || (github.ref == 'refs/heads/main' && github.event.before) || 'origin/main' }}
         run: .venv/bin/python tools/check_quality.py --base "$QUALITY_BASE"
+      - name: Check changelog fragments and preview
+        env:
+          QUALITY_BASE: ${{ github.event.pull_request.base.sha || (github.ref == 'refs/heads/main' && github.event.before) || 'origin/main' }}
+        run: |
+          .venv/bin/python tools/generate_changelog.py --check --base "$QUALITY_BASE"
 
   tests:
     name: Python ${{ matrix.python-version }}

@@ -52,8 +52,11 @@ testing for pre-release validation unless diagnosing the full parameter matrix. 
 claims require before/after measurements and checks that seeded output and frame behavior are
 preserved, or an explanation of intentional changes.
 
-Regenerate shell completions when CLI options change. Update the changelog for user-facing
-changes; fixes to bugs introduced in the same unreleased version do not need a separate entry.
+Regenerate shell completions when CLI options change. Add an issue-numbered fragment in
+`changelog.d` for each change, then refresh the generated Unreleased preview with
+`./.venv/bin/python tools/generate_changelog.py`. User-facing changes need a concise note;
+internal changes and fixes introduced in the same unreleased version need a `.skip.md` fragment
+explaining why no release note is needed. See [fragment guidance](changelog.d/README.md).
 
 ## 4. Open the pull request
 
@@ -82,3 +85,33 @@ Assigning an issue to an agent for implementation authorizes branch creation, im
 within the agreed scope, commits, pushes, and draft PR creation. Separate permission is not
 needed for those steps. Merging requires an explicit maintainer instruction. Scope changes
 that alter agreed behavior require agreement before implementation.
+
+## Release notes
+
+`CHANGELOG.md` is the canonical user-facing history. Its Unreleased preview is generated from
+Towncrier fragments; never edit that block directly. New PRs add a real issue-numbered fragment,
+or an explicit skip-reason fragment. The `Code quality` job validates fragment names and content,
+preview freshness, and the branch's changelog decision. Published history before 0.16.0 retains
+its original format. The ChangeBlog is optional and holds demos or extended explanations.
+
+Prepare release notes in a dedicated release issue and PR after reviewing all pending fragments:
+
+1. Run `uv sync --locked --group dev` and preview with
+   `./.venv/bin/towncrier build --draft --version 0.16.0 --date YYYY-MM-DD`.
+2. Edit fragments to consolidate overlapping notes and make migration instructions clear.
+3. Clear the generated preview with `./.venv/bin/python tools/generate_changelog.py --clear`.
+4. Assemble the dated section with
+   `./.venv/bin/towncrier build --yes --version 0.16.0 --date YYYY-MM-DD`.
+   Towncrier inserts it above published history and consumes the fragments, including skip reasons.
+5. Refresh the now-empty preview with `./.venv/bin/python tools/generate_changelog.py`, update
+   the project version, and commit the release section and fragment deletions together.
+6. Review the release PR and complete pre-release validation. After the maintainer authorizes
+   publishing, use the same dated section for the GitHub release. Documentation includes the
+   canonical changelog directly; it does not require a separately maintained copy.
+
+Substitute the intended version and actual release date for the examples. Release preparation
+does not authorize merging, creating a release tag, or publishing packages or a GitHub release.
+
+After committing, check the branch's changelog decision with
+`./.venv/bin/python tools/generate_changelog.py --check --base origin/main`.
+Preview edits alone do not satisfy this check; release PRs must consume fragments into a new dated section.

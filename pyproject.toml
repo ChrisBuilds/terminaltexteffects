@@ -81,6 +81,55 @@ testpaths = ["tests"]
 [tool.pyright]
 pythonVersion = "3.9"
 
+[tool.towncrier]
+directory = "changelog.d"
+filename = "CHANGELOG.md"
+template = "changelog.d/template.md.jinja"
+start_string = "<!-- towncrier release notes start -->\n"
+title_format = false
+issue_format = "[#{issue}](https://github.com/ChrisBuilds/terminaltexteffects/issues/{issue})"
+wrap = true
+
+[[tool.towncrier.type]]
+directory = "breaking"
+name = "Breaking changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "added"
+name = "Added"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "changed"
+name = "Changed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "deprecated"
+name = "Deprecated"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removed"
+name = "Removed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "fixed"
+name = "Fixed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "security"
+name = "Security"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "skip"
+name = "Skip reasons"
+showcontent = true
+
 [tool.hatch.build.targets.sdist]
 exclude = ["docs/**", "tests/**"]
 
@@ -98,6 +147,7 @@ test = [
     "pytest-cov>=5.0.0",
     "pytest-xdist>=3.6.1",
     "shtab==1.9.2",
+    "towncrier==25.8.0",
 ]
 dev = [
     { include-group = "test" },

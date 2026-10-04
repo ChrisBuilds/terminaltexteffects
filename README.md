@@ -331,8 +331,10 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 ## Latest Release Notes
 
-Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/changeblog/) for release write-ups and
-the [CHANGELOG](./CHANGELOG.md) for the current full release history.
+See the [CHANGELOG](./CHANGELOG.md) for release history and upcoming user-facing changes, also available
+in the [documentation](https://chrisbuilds.github.io/terminaltexteffects/changelog/).
+The [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/changeblog/) provides optional release
+write-ups and demos.
 
 ## License
 

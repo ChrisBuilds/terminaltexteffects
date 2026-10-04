@@ -1,0 +1,1 @@
+Grouped retrieval consistently excludes off-canvas characters. Characters from different terminals no longer compare equal merely because their local IDs match; active-character callbacks can safely change the active set.

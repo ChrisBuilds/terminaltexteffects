@@ -1,0 +1,1 @@
+Matrix swap chances are probabilities in `[0, 1]`; RandomSequence speed, Rings gaps, and Spotlights falloff enforce their documented ranges. ErrorCorrect rounds displaced characters to whole pairs and handles zero or very small pair ratios.
