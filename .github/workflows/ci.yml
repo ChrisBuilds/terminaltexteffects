@@ -59,8 +59,10 @@ jobs:
           cache-suffix: python-${{ matrix.python-version }}
       - name: Install test shells
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes zsh
+          # Zsh needs only Ubuntu packages; unrelated third-party repositories can fail independently.
+          apt_options=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install --yes zsh
       - name: Install package and locked test dependencies
         run: uv sync --locked --no-default-groups --group test --no-editable
       - name: Check installed package outside the checkout
