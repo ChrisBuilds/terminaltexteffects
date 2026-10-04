@@ -1,0 +1,1 @@
+Restored supported zero values for Bubbles' `bubble_delay`, Rings' `spin_duration` and `disperse_duration`, ErrorCorrect's `swap_delay`, Overflow's cycle range, and ColorShift's infinite cycling. Thunderstorm accepts fractional storm durations.

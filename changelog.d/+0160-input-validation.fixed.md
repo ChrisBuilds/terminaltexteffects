@@ -1,0 +1,1 @@
+Malformed or unsupported ANSI input, control bytes, symbols, and character mutations are rejected consistently. Wrapped input includes every row when terminal dimensions are ignored, and odd-sized text centers anchor correctly.

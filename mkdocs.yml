@@ -40,7 +40,8 @@ markdown_extensions:
 
 nav:
   - Intro to TTE: index.md
-  - Change[B]log: 
+  - Changelog: changelog.md
+  - ChangeBlog:
     - changeblog/changeblog.md
     - changeblog/changeblog_0.15.0.md
     - changeblog/changeblog_0.14.0.md

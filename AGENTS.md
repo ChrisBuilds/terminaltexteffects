@@ -68,5 +68,10 @@
 - Run the exhaustive effect-argument suite only as part of pre-release validation, unless the task explicitly requires
   diagnosing the complete parameter matrix.
 - Documentation-only changes do not require pytest, Ruff, or Pyright; run an appropriate formatting or diff check.
-- Update the changelog for user-facing changes. Fixes to bugs introduced in the same unreleased version do not
-  need their own changelog entry.
+- For each issue, add an issue-numbered fragment in `changelog.d` using the categories in its README. User-facing
+  changes need a concise note; internal changes and fixes introduced in the same unreleased version need a
+  `.skip.md` fragment explaining the exemption. Run `./.venv/bin/python tools/generate_changelog.py` and commit
+  the refreshed preview with the fragment. Never edit the generated Unreleased preview directly.
+- Run `./.venv/bin/python tools/generate_changelog.py --check` for fragment or changelog-tooling changes.
+  Assemble dated releases only in release-preparation PRs as described in `CONTRIBUTING.md`; publishing requires
+  an explicit maintainer instruction.

@@ -1,0 +1,1 @@
+Input parsing preserves styled spaces and internal gaps while excluding trailing unstyled spaces and cursor-only gaps from automatic geometry. Painter order is deterministic: higher layers, then higher character IDs, win collisions.

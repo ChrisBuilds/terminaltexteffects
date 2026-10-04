@@ -1,0 +1,15 @@
+{{- "## " ~ versiondata.version ~ (" - " ~ versiondata.date if versiondata.version != "Unreleased" else "") ~ "\n\n" -}}
+{%- set visible = namespace(count=0) -%}
+{%- for section, categories in sections.items() -%}
+{%- for category, definition in definitions.items() if category != "skip" and category in categories -%}
+{{- "### " ~ definition.name ~ "\n\n" -}}
+{%- for text, issues in categories[category].items() -%}
+{%- set visible.count = visible.count + 1 -%}
+{{- "- " ~ text ~ (" (" ~ (issues | join(", ")) ~ ")" if issues else "") ~ "\n" -}}
+{%- endfor -%}
+{{- "\n" -}}
+{%- endfor -%}
+{%- endfor -%}
+{%- if visible.count == 0 -%}
+{{- "No pending user-facing changes.\n" -}}
+{%- endif -%}

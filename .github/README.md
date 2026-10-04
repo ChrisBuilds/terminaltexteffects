@@ -45,3 +45,10 @@ pushes to `main` compare with the previous revision. No Python changes means a p
 Whole-project quality enforcement is deferred while existing findings are cleaned up in separate
 issues. All findings in changed files must be resolved. All eight required checks are restricted
 to results from GitHub Actions.
+
+The same job validates changelog fragments, the generated Unreleased preview, and the branch's
+changelog decision for PRs and branch pushes. Manual runs and tag pushes validate fragments and
+preview freshness without requiring a new changelog decision. Add a user-facing fragment or an
+explicit `.skip.md` reason. Release branches
+are accepted when they consume fragments into a new dated section of the canonical changelog.
+Preview edits alone do not bypass the fragment requirement. All checks are read-only.

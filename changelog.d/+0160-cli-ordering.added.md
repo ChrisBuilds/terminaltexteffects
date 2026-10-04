@@ -1,0 +1,1 @@
+Wipe, Highlight, Sweep, Waves, and LaserEtch accept unified character orders, including spirals and circular groups. Added direction-reversal flags for these effects and `--travel-speed` to Sweep and Waves; its default of `1` preserves their existing pacing.

@@ -1,0 +1,1 @@
+Motion callbacks can safely stop, replace, or restart paths without corrupting state. Every completed segment emits enter/exit events in order, and synced scenes reset to their first frame when paths reactivate.

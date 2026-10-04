@@ -1,0 +1,1 @@
+Blackhole handles short text and compact canvases and uses its configured explosion palette. Beams emits characters as soon as progress reaches a whole unit; Spotlights handles zero falloff on wide continuation cells; Swarm compares complete area indices.

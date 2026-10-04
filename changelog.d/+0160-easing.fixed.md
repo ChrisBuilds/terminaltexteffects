@@ -1,0 +1,1 @@
+Cubic Bézier easing converges accurately at flat endpoints, easing step counts are validated, `EasingTracker.clamp` reflects the active setting, and `SequenceEaser` includes its final element despite endpoint rounding.

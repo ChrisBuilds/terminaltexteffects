@@ -1,0 +1,1 @@
+Added opt-in `Scene(cache_appearance=True)`, `Scene(cache_easing=True)`, and corresponding `Animation.new_scene()` options, plus `Animation.set_appearance_if_changed()` and `Terminal.enable_row_cache()` for custom effects.

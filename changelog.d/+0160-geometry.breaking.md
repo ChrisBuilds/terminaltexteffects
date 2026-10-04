@@ -1,0 +1,1 @@
+`find_coords_in_circle()` now calls its size argument `radius`, rather than `diameter`. Line, Bézier, and ray distances are terminal-adjusted by default; pass `terminal_adjusted=False` for Cartesian distance.

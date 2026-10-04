@@ -1,0 +1,1 @@
+Direct config construction produces usable defaults, partial namespaces preserve dataclass defaults and factories, explicitly supplied falsey configs are retained, and CLI help displays defaults in valid command-line syntax.

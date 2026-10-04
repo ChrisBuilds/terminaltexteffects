@@ -1,0 +1,1 @@
+Corrected long and descending RGB gradients, directional and radial coordinate normalization, and fractional color lookup. Gradient steps represent transitions; single-stop gradients contain one color and looping leaves source stops unchanged.
