@@ -39,8 +39,13 @@ jobs:
       - name: Check changelog fragments and preview
         env:
           QUALITY_BASE: ${{ github.event.pull_request.base.sha || (github.ref == 'refs/heads/main' && github.event.before) || 'origin/main' }}
+          REQUIRE_CHANGELOG_DECISION: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) }}
         run: |
-          .venv/bin/python tools/generate_changelog.py --check --base "$QUALITY_BASE"
+          args=(--check)
+          if [[ "$REQUIRE_CHANGELOG_DECISION" == 'true' ]]; then
+            args+=(--base "$QUALITY_BASE")
+          fi
+          .venv/bin/python tools/generate_changelog.py "${args[@]}"
 
   tests:
     name: Python ${{ matrix.python-version }}
