@@ -138,6 +138,8 @@ def build_parser(
         terminaltexteffects.effects.__path__,
         terminaltexteffects.effects.__name__ + ".",
     ):
+        if not include_user_effects and module_info.name == "terminaltexteffects.effects.effect_dev":
+            continue
         module = importlib.import_module(module_info.name)
         _register_effect_from_module(module)
 

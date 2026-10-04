@@ -9,6 +9,7 @@ is visible on the physical terminal and clips rendered output to that visible re
 from __future__ import annotations
 
 import random
+import sys
 import typing
 from dataclasses import dataclass
 from typing import Literal
@@ -18,8 +19,10 @@ from terminaltexteffects.utils.geometry import Coord
 if typing.TYPE_CHECKING:
     from collections.abc import Sequence
 
+_DATACLASS_SLOT_OPTIONS = {"slots": True} if sys.version_info >= (3, 10) else {}
 
-@dataclass(frozen=True, slots=True)
+
+@dataclass(frozen=True, **_DATACLASS_SLOT_OPTIONS)
 class TextPlacement:
     """Describe the retained placement of one source text cell.
 
@@ -38,7 +41,7 @@ class TextPlacement:
     coord: Coord
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, **_DATACLASS_SLOT_OPTIONS)
 class TextBounds:
     """Describe the inclusive bounds of text retained within a canvas.
 
@@ -84,7 +87,7 @@ class TextBounds:
         return self.left + ((self.right - self.left) // 2) if self.left else 0
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, **_DATACLASS_SLOT_OPTIONS)
 class TextLayout:
     """Contain the immutable result of laying out text cells on a canvas.
 

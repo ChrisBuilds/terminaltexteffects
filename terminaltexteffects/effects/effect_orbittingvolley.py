@@ -350,7 +350,11 @@ class OrbittingVolleyIterator(BaseEffectIterator[OrbittingVolleyConfig]):
     def _load_next_ring(self) -> None:
         """Load the next circular ring and prepare its arrival tracker."""
         self._current_ring_in_flight = set()
-        for launcher, magazine in zip(self._launchers, self._pending_rings.popleft(), strict=True):
+        magazines = self._pending_rings.popleft()
+        if len(self._launchers) != len(magazines):
+            msg = "Each circular ring must have one magazine per launcher."
+            raise ValueError(msg)
+        for launcher, magazine in zip(self._launchers, magazines):
             launcher.magazine = magazine
 
     def _set_launcher_coordinates(self, parent: Launcher, child: Launcher) -> None:

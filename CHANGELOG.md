@@ -18,6 +18,8 @@
 
 ---
 
+* Raised the minimum supported Python version to 3.9. GitHub Actions runs the default test suite on
+  Python 3.9 through 3.14 for pushes and pull requests, with installed-package and shell completion checks.
 * Added a stdlib-only performance benchmarking workflow via `tools/perf/benchmark_effects.py`.
   The harness measures effect iterator build time, render iteration time, total time, frame counts,
   and output character counts without terminal stdout rendering or frame-rate sleeps.

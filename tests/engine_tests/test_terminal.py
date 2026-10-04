@@ -1097,7 +1097,8 @@ def test_terminal_get_characters_grouped_preserves_order_with_offset_canvas_boun
     )
     source_characters = terminal._input_characters
     terminal._input_characters = [source_characters[item.source_index] for item in layout.placements]
-    for character, placement in zip(terminal._input_characters, layout.placements, strict=True):
+    assert len(terminal._input_characters) == len(layout.placements)
+    for character, placement in zip(terminal._input_characters, layout.placements):
         character._set_input_coord(placement.coord)
 
     groups = terminal.get_characters_grouped(grouping)

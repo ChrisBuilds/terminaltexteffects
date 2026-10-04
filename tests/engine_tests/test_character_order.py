@@ -91,7 +91,9 @@ def test_character_order_selection_clipping_and_duplicate_coordinates(
     terminal = Terminal("界 a\nb 界", TerminalConfig(canvas_width=6, canvas_height=4, anchor_text="c"))
     terminal.add_character("Z", Coord(100, -100))
     terminal.add_character("Y", terminal.get_characters()[0].input_coord)
-    flags = dict(zip(("input_chars", "inner_fill_chars", "outer_fill_chars", "added_chars"), selection, strict=True))
+    names = ("input_chars", "inner_fill_chars", "outer_fill_chars", "added_chars")
+    assert len(names) == len(selection)
+    flags = dict(zip(names, selection))
     inventory = terminal.get_characters(**flags)
     clipped = order.is_grouped if canvas_only is None else canvas_only
     if clipped:

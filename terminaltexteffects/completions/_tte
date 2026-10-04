@@ -19,7 +19,6 @@ _shtab_tte_commands() {
     colorshift:'Display a gradient that shifts colors across the terminal.'
     crumble:'crumble | Characters lose color and crumble into dust, vacuumed up, and reformed.'
     decrypt:'decrypt | Movie style decryption effect.'
-    dev:'dev | Demonstrate thin and supercover line rasterization.'
     errorcorrect:'errorcorrect | Some characters start in the wrong position and are corrected in sequence.'
     expand:'expand | Expands the text from a single point.'
     fireworks:'fireworks | Characters explode like fireworks and fall into place.'
@@ -59,8 +58,8 @@ _shtab_tte_options=(
   "--print-completion[Print completion setup commands, or a completion script for the requested shell, and exit.]:print_completion:(bash zsh)"
   {--random-effect,-R}"[Randomly select an effect to apply]"
   "--seed[Seed to use for random effect selection]:seed:"
-  "--include-effects[Space-separated list of Effects to include when randomly selecting an effect]:include_effects:(beams binarypath blackhole bouncyballs bubbles burn colorshift crumble decrypt dev errorcorrect expand fireworks highlight laseretch matrix middleout orbittingvolley overflow pour print rain randomsequence rings scattered slice slide smoke spotlights spray swarm sweep synthgrid thunderstorm unstable vhstape waves wipe)"
-  "--exclude-effects[Space-separated list of Effects to exclude when randomly selecting an effect]:exclude_effects:(beams binarypath blackhole bouncyballs bubbles burn colorshift crumble decrypt dev errorcorrect expand fireworks highlight laseretch matrix middleout orbittingvolley overflow pour print rain randomsequence rings scattered slice slide smoke spotlights spray swarm sweep synthgrid thunderstorm unstable vhstape waves wipe)"
+  "--include-effects[Space-separated list of Effects to include when randomly selecting an effect]:include_effects:(beams binarypath blackhole bouncyballs bubbles burn colorshift crumble decrypt errorcorrect expand fireworks highlight laseretch matrix middleout orbittingvolley overflow pour print rain randomsequence rings scattered slice slide smoke spotlights spray swarm sweep synthgrid thunderstorm unstable vhstape waves wipe)"
+  "--exclude-effects[Space-separated list of Effects to exclude when randomly selecting an effect]:exclude_effects:(beams binarypath blackhole bouncyballs bubbles burn colorshift crumble decrypt errorcorrect expand fireworks highlight laseretch matrix middleout orbittingvolley overflow pour print rain randomsequence rings scattered slice slide smoke spotlights spray swarm sweep synthgrid thunderstorm unstable vhstape waves wipe)"
   "--tab-width[Number of spaces to use for a tab character.]:tab_width:"
   "--xterm-colors[Convert any colors specified in 24-bit RGB hex to the closest 8-bit XTerm-256 color.]"
   "--no-color[Disable all colors in the effect.]"
@@ -211,13 +210,6 @@ _shtab_tte_decrypt_options=(
 
 # guard to ensure default positional specs are added only once per session
 _shtab_tte_decrypt_defaults_added=0
-
-_shtab_tte_dev_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-)
-
-# guard to ensure default positional specs are added only once per session
-_shtab_tte_dev_defaults_added=0
 
 _shtab_tte_errorcorrect_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
@@ -681,7 +673,6 @@ _shtab_tte() {
         colorshift) _arguments -C -s $_shtab_tte_colorshift_options ;;
         crumble) _arguments -C -s $_shtab_tte_crumble_options ;;
         decrypt) _arguments -C -s $_shtab_tte_decrypt_options ;;
-        dev) _arguments -C -s $_shtab_tte_dev_options ;;
         errorcorrect) _arguments -C -s $_shtab_tte_errorcorrect_options ;;
         expand) _arguments -C -s $_shtab_tte_expand_options ;;
         fireworks) _arguments -C -s $_shtab_tte_fireworks_options ;;

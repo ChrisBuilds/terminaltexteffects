@@ -17,6 +17,7 @@ from terminaltexteffects.utils.shell_completion import get_completion_script
 
 if TYPE_CHECKING:
     from pathlib import Path
+    from pkgutil import ModuleInfo
 
 pytestmark = [pytest.mark.smoke]
 
@@ -96,6 +97,31 @@ def test_build_parser_registers_effects() -> None:
     help_output = parser.format_help()
     assert "matrix" in help_output
     assert "highlight" in help_output
+
+
+def test_bundled_parser_does_not_import_local_development_effect(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Bundled parser generation excludes the gitignored local development module."""
+    original_iter_modules = __main__.pkgutil.iter_modules
+    original_import_module = __main__.importlib.import_module
+    dev_name = "terminaltexteffects.effects.effect_dev"
+
+    def iter_modules(path: list[str] | None = None, prefix: str = "") -> list[ModuleInfo]:
+        modules = list(original_iter_modules(path, prefix))
+        modules.append(
+            __main__.pkgutil.ModuleInfo(module_finder=modules[0].module_finder, name=dev_name, ispkg=False),
+        )
+        return modules
+
+    def import_module(name: str) -> object:
+        assert name != dev_name
+        return original_import_module(name)
+
+    monkeypatch.setattr(__main__.pkgutil, "iter_modules", iter_modules)
+    monkeypatch.setattr(__main__.importlib, "import_module", import_module)
+    _, effects = __main__.build_parser(include_user_effects=False)
+
+    assert "dev" not in effects
+    assert "matrix" in effects
 
 
 def test_wipe_help_renders_direction_default_as_cli_value() -> None:

@@ -44,6 +44,9 @@ from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
 from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
+if typing.TYPE_CHECKING:
+    from collections.abc import Callable
+
 _CHARACTER_ID_KEY = attrgetter("_character_id")
 _LAYER_KEY = attrgetter("_layer")
 _SPIRAL_SORT_OPTIONS: dict[CharacterOrder, tuple[int, tuple[int, ...]]] = {
@@ -54,6 +57,26 @@ _SPIRAL_SORT_OPTIONS: dict[CharacterOrder, tuple[int, tuple[int, ...]]] = {
     CharacterOrder.SPIRAL_CLOCKWISE_QUAD: (1, (0, 1, 2, 3)),
     CharacterOrder.SPIRAL_COUNTER_CLOCKWISE_QUAD: (-1, (0, 1, 2, 3)),
 }
+
+
+def _bisect_left_by_character_id(
+    characters: list[EffectCharacter],
+    character_id: int,
+    *,
+    key: Callable[[EffectCharacter], int],
+) -> int:
+    """Find a character ID's insertion point on Python versions without keyed bisection."""
+    low, high = 0, len(characters)
+    while low < high:
+        middle = (low + high) // 2
+        if key(characters[middle]) < character_id:
+            low = middle + 1
+        else:
+            high = middle
+    return low
+
+
+_bisect_visible_characters = bisect_left if sys.version_info >= (3, 10) else _bisect_left_by_character_id
 
 
 @dataclass
@@ -1347,7 +1370,7 @@ class Terminal:
         if is_visible:
             if character not in self._visible_characters:
                 self._visible_characters.add(character)
-                insertion_index = bisect_left(
+                insertion_index = _bisect_visible_characters(
                     self._visible_characters_by_id,
                     character._character_id,
                     key=_CHARACTER_ID_KEY,
@@ -1361,7 +1384,7 @@ class Terminal:
                 self._visible_character_order_dirty = True
         elif character in self._visible_characters:
             self._visible_characters.remove(character)
-            character_index = bisect_left(
+            character_index = _bisect_visible_characters(
                 self._visible_characters_by_id,
                 character._character_id,
                 key=_CHARACTER_ID_KEY,

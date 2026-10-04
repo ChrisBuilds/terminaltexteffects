@@ -3,7 +3,7 @@ name = "terminaltexteffects"
 version = "0.15.0"
 description = "TerminalTextEffects (TTE) is a terminal visual effects engine."
 authors = [{ name = "Chris", email = "741258@pm.me" }]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 readme = "README.md"
 license = "MIT"
 
@@ -27,7 +27,7 @@ docs = [
 show-fixes = true
 unsafe-fixes = true
 line-length = 120
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 ignore = [
@@ -83,13 +83,16 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
+test = [
+    "pytest>=8.3.5",
+    "pytest-cov>=5.0.0",
+    "pytest-xdist>=3.6.1",
+    "shtab==1.9.2",
+]
 dev = [
+    { include-group = "test" },
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.22",
     "mkdocstrings-python>=1.11.1",
     "pymdown-extensions>=10.15",
-    "pytest>=8.3.5",
-    "pytest-cov>=5.0.0",
-    "pytest-xdist>=3.6.1",
-    "shtab==1.9.2; python_version >= '3.9'",
 ]
