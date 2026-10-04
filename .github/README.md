@@ -16,7 +16,7 @@ Manual, visual, and exhaustive effect-argument tests remain outside this workflo
 New pushes cancel obsolete runs for the same branch or pull request. Each Python version
 reports separately, and a failure on one version does not cancel the other matrix jobs.
 
-The intended protection for `main` requires these checks before merging:
+Branch protection for `main` requires these checks before merging:
 
 - `Python 3.9`
 - `Python 3.10`
@@ -27,8 +27,8 @@ The intended protection for `main` requires these checks before merging:
 - `Shell completions`
 - `Code quality`
 
-Configure GitHub branch protection to require PRs, the checks above, resolved conversations,
-and enforcement for administrators. Keep mandatory external approvals at zero for solo
+GitHub branch protection requires PRs, the checks above, resolved conversations,
+and enforcement for administrators. Mandatory external approvals remain at zero for solo
 maintenance; the maintainer still reviews and decides when to merge. Use squash merging
 and delete merged issue branches. Workflow configuration and templates alone do not enforce
 these rules; required checks and branch protection enforce them at merge time.
@@ -43,5 +43,5 @@ files. PRs compare with their target branch's merge base; branch pushes compare 
 pushes to `main` compare with the previous revision. No Python changes means a passing check.
 
 Whole-project quality enforcement is deferred while existing findings are cleaned up in separate
-issues. All findings in changed files must be resolved. Once this job has run on GitHub, add
-`Code quality` to the required branch-protection checks alongside the existing seven jobs.
+issues. All findings in changed files must be resolved. All eight required checks are restricted
+to results from GitHub Actions.

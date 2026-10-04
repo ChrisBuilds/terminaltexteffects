@@ -70,9 +70,9 @@ for review. The maintainer verifies acceptance criteria and resolves outstanding
 The maintainer decides when to merge. Use squash merging for one coherent commit per issue,
 then delete the branch. The linked issue closes when the PR merges into `main`.
 
-The intended `main` protection requires PRs, all eight checks listed in
+The `main` protection requires PRs, all eight checks listed in
 [.github/README.md](.github/README.md), resolved review conversations, and enforcement for
-administrators. These protections must be configured in GitHub settings; repository documents
+administrators. These protections are configured in GitHub settings; repository documents
 and templates do not enforce them. As a solo-maintainer project, mandatory external approvals
 can remain at zero while the maintainer performs the final review.
 
