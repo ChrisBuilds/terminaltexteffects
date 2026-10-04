@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, ColorPair, EffectCharacter, EventHandler, Gradient, easing
+from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, EventHandler, Gradient, Scene, easing
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -36,9 +36,8 @@ class WavesConfig(BaseConfig):
     """Configuration for the Waves effect.
 
     Attributes:
-        wave_symbols (tuple[str, ...] | str): Symbols to use for the wave animation. Multi-character strings will be
-            used in sequence to create an animation.
-        wave_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
+        wave_symbols (tuple[str, ...]): Individually printable symbols to use in sequence for the wave animation.
+        wave_gradient_stops (tuple[Color, ...]): Tuple of colors for the animated wave gradient. If only one color is
             provided, the characters will be displayed in that color.
         wave_gradient_steps (tuple[int, ...]): Tuple of the number of gradient steps to use. More steps will create a
             smoother and longer gradient animation. Valid values are n > 0.
@@ -78,13 +77,9 @@ class WavesConfig(BaseConfig):
         nargs="+",
         action=argutils.TupleAction,
         metavar=argutils.Symbol.METAVAR,
-        help="Symbols to use for the wave animation. Multi-character strings will be used in sequence to create an "
-        "animation.",
+        help="Space separated, individually printable symbols to use in sequence for the wave animation.",
     )  # pyright: ignore[reportAssignmentType]
-    (
-        "tuple[str, ...] : Symbols to use for the wave animation. Multi-character strings will be used in sequence to "
-        "create an animation."
-    )
+    ("tuple[str, ...] : Individually printable symbols to use in sequence for the wave animation.")
 
     wave_gradient_stops: tuple[Color, ...] = argutils.ArgSpec(
         name="--wave-gradient-stops",
@@ -93,11 +88,11 @@ class WavesConfig(BaseConfig):
         action=argutils.TupleAction,
         default=(Color("#f0ff65"), Color("#ffb102"), Color("#31a0d4"), Color("#ffb102"), Color("#f0ff65")),
         metavar=argutils.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the character gradient (applied across the canvas). If "
+        help="Space separated, unquoted, list of colors for the animated wave gradient. If "
         "only one color is provided, the characters will be displayed in that color.",
     )  # pyright: ignore[reportAssignmentType]
     (
-        "tuple[Color, ...] : Tuple of colors for the final color gradient. If only one color is provided, the "
+        "tuple[Color, ...] : Tuple of colors for the animated wave gradient. If only one color is provided, the "
         "characters will be displayed in that color."
     )
 
@@ -206,20 +201,44 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
 
     def build(self) -> None:
         """Build the effect."""
-        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
-        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.canvas.text_bottom,
-            self.terminal.canvas.text_top,
-            self.terminal.canvas.text_left,
-            self.terminal.canvas.text_right,
-            self.config.final_gradient_direction,
-        )
+        final_gradient_mapping: dict[Coord, Color] = {}
+        if self.terminal.config.existing_color_handling != "dynamic":
+            final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+            final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+                self.terminal.canvas.text_bottom,
+                self.terminal.canvas.text_top,
+                self.terminal.canvas.text_left,
+                self.terminal.canvas.text_right,
+                self.config.final_gradient_direction,
+            )
         final_transition_steps = (
             self.config.final_gradient_steps[0]
             if isinstance(self.config.final_gradient_steps, tuple)
             else self.config.final_gradient_steps
         )
         wave_gradient = Gradient(*self.config.wave_gradient_stops, steps=self.config.wave_gradient_steps)
+        transition_gradients: dict[Color, Gradient] = {}
+
+        def transition_gradient(color: Color) -> Gradient:
+            """Reuse a settling gradient for each endpoint color during construction."""
+            if color not in transition_gradients:
+                transition_gradients[color] = Gradient(
+                    wave_gradient.spectrum[-1],
+                    color,
+                    steps=final_transition_steps,
+                )
+            return transition_gradients[color]
+
+        # Distribute symbols and immutable colors once; each character still owns its playback frames and visuals.
+        recipe_scene = Scene(scene_id="wave_recipe")
+        recipe_scene.apply_gradient_to_symbols(
+            self.config.wave_symbols,
+            duration=self.config.wave_length,
+            fg_gradient=wave_gradient,
+        )
+        wave_recipe = tuple(
+            (frame.character_visual.symbol, frame.character_visual.colors) for frame in recipe_scene.frames
+        )
         for character in self.terminal.get_characters():
             if self.terminal.config.existing_color_handling == "dynamic":
                 self.character_final_color_map[character] = ColorPair(
@@ -233,11 +252,8 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
             wave_scn = character.animation.new_scene()
             wave_scn.ease = self.config.wave_easing
             for _ in range(self.config.wave_count):
-                wave_scn.apply_gradient_to_symbols(
-                    self.config.wave_symbols,
-                    duration=self.config.wave_length,
-                    fg_gradient=wave_gradient,
-                )
+                for symbol, colors in wave_recipe:
+                    wave_scn.add_frame(symbol, self.config.wave_length, colors=colors)
             final_scn = character.animation.new_scene()
             if self.terminal.config.existing_color_handling == "dynamic":
                 final_colors = self.character_final_color_map[character]
@@ -249,35 +265,15 @@ class WavesIterator(BaseEffectIterator[WavesConfig]):
                     final_scn.apply_gradient_to_symbols(
                         character.input_symbol,
                         duration=10,
-                        fg_gradient=(
-                            Gradient(
-                                wave_gradient.spectrum[-1],
-                                final_fg_color,
-                                steps=final_transition_steps,
-                            )
-                            if final_fg_color is not None
-                            else None
-                        ),
-                        bg_gradient=(
-                            Gradient(
-                                wave_gradient.spectrum[-1],
-                                final_bg_color,
-                                steps=final_transition_steps,
-                            )
-                            if final_bg_color is not None
-                            else None
-                        ),
+                        fg_gradient=(transition_gradient(final_fg_color) if final_fg_color is not None else None),
+                        bg_gradient=(transition_gradient(final_bg_color) if final_bg_color is not None else None),
                     )
                     if final_fg_color is None:
                         final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(bg=final_bg_color))
             else:
                 final_fg_color = self.character_final_color_map[character].fg
                 assert final_fg_color is not None
-                for step in Gradient(
-                    wave_gradient.spectrum[-1],
-                    final_fg_color,
-                    steps=final_transition_steps,
-                ):
+                for step in transition_gradient(final_fg_color):
                     final_scn.add_frame(character.input_symbol, 10, colors=ColorPair(fg=step))
             character.event_handler.register_event(
                 EventHandler.Event.SCENE_COMPLETE,
@@ -310,7 +306,7 @@ class Waves(BaseEffect[WavesConfig]):
     """Creates waves that travel across the terminal, leaving behind the characters.
 
     Attributes:
-        effect_config (ExpandConfig): Configuration for the effect.
+        effect_config (WavesConfig): Configuration for the effect.
         terminal_config (TerminalConfig): Configuration for the terminal.
 
     """

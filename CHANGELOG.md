@@ -94,6 +94,10 @@
 
 ---
 
+* Waves now builds its symbol/color recipe once, reuses settling gradients during construction,
+  and skips the unused spatial gradient in dynamic color mode. Characters retain independent
+  playback frames and visuals, with unchanged animation timing and output. Corrected Waves'
+  symbol, palette, and configuration descriptions.
 * Added Sweep's `--travel-speed` option to advance multiple easing steps per frame in both phases.
   The positive-integer default is `1`, preserving original pacing. Faster sweeps retain every scheduled
   character/group, the easing curve, direction/reversal, and next-frame phase handoff; animations advance
