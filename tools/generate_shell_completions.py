@@ -106,7 +106,7 @@ def _register_aliases(script: str, shell: str) -> str:
             "#compdef tte terminaltexteffects\n\n"
             "autoload -Uz compinit\n"
             "if ! whence compdef >/dev/null 2>&1; then\n"
-            "  compinit\n"
+            "  compinit -i\n"
             "fi\n",
             1,
         )
