@@ -2,6 +2,18 @@
 
 ## Development Workflow
 
+- Follow `CONTRIBUTING.md`: issue ticket -> branch -> pull request -> maintainer merge.
+- When the maintainer assigns an issue for implementation, that assignment authorizes creating the branch,
+  implementing the agreed scope, committing, pushing, and opening a draft PR. Do not ask again for those routine
+  steps. Merging remains the maintainer's decision; never merge without an explicit instruction.
+- Start issue branches from up-to-date `main`, named `<type>/<issue-number>-<short-description>`.
+  Do not commit development changes directly to `main` or bypass branch protection.
+- Verify reported bugs and establish acceptance criteria before implementation. For changes to effect options,
+  defaults, or visual behavior, present the proposed behavior and obtain agreement before changing it.
+- Keep commits scoped to the issue, including relevant tests, documentation, and generated artifacts. Keep local
+  review notes in the sibling `dev_notes` workspace untracked and out of commits.
+- Use `Closes #<issue-number>` in the PR description, describe resulting behavior and validation, and report any
+  unresolved limitations. Leave the PR in draft until local verification and required CI checks pass.
 - Before running project tools, check the project root for a `.venv` and prefer the tool binaries from that environment.
 - Use the repo venv paths directly when available:
   - `./.venv/bin/pytest`
@@ -32,18 +44,29 @@
   `--exhaustive-effect-args` during normal development.
 - Reserve exhaustive effect-argument testing for pre-release validation:
   - `./.venv/bin/pytest -n auto --exhaustive-effect-args`
-- Run the default full suite when a change affects shared engine behavior, pytest infrastructure, or several effects:
-  - `./.venv/bin/pytest -n auto`
-- After targeted pytest passes, run `ruff check` on the touched implementation and test files. For example:
+- Broad suites, including shared-engine, pytest-infrastructure, and cross-cutting changes, run in GitHub Actions
+  after pushes and on PRs. Run broad suites locally when diagnosing failures or when explicitly requested;
+  they are not a routine prerequisite for committing or pushing.
+- Format touched Python files with `./.venv/bin/ruff format <files>` before running focused tests.
+  Use safe lint fixes only (`ruff check --fix`); review unsafe fixes deliberately rather than enabling them globally.
+- After targeted pytest passes, run `ruff format --check` and `ruff check` on the touched implementation and test files.
+  For example:
+  - `./.venv/bin/ruff format --check terminaltexteffects/effects/effect_<effect>.py tests/effects_tests/test_<effect>.py`
   - `./.venv/bin/ruff check terminaltexteffects/effects/effect_<effect>.py tests/effects_tests/test_<effect>.py`
 - After Ruff passes, run Pyright on those same files. For example:
   - `./.venv/bin/pyright --pythonpath ./.venv/bin/python terminaltexteffects/effects/effect_<effect>.py tests/effects_tests/test_<effect>.py`
+- Install locked development tools with `uv sync --locked --group dev`. Pyright targets Python 3.9 in `pyproject.toml`.
+  The `Code quality` CI job runs read-only formatting, lint, and type checks on changed Python files. To reproduce
+  its branch checks locally, run `./.venv/bin/python tools/check_quality.py --base origin/main` after committing.
 
 ## Completion Criteria
 
-- Do not consider code work finished until the focused pytest tests and `ruff check` and `pyright` runs for the touched
-  files have passed.
-- Run the default full suite in addition to focused tests when the change is cross-cutting or changes test collection.
+- Do not consider code work finished until focused pytest, `ruff format --check`, `ruff check`, and Pyright pass
+  for touched Python implementation and test files.
+- Required GitHub Actions checks must pass for the latest PR revision before the work is ready to merge.
+  If CI is pending, report that status instead of blocking the conversation while the broad suites run.
 - Run the exhaustive effect-argument suite only as part of pre-release validation, unless the task explicitly requires
   diagnosing the complete parameter matrix.
 - Documentation-only changes do not require pytest, Ruff, or Pyright; run an appropriate formatting or diff check.
+- Update the changelog for user-facing changes. Fixes to bugs introduced in the same unreleased version do not
+  need their own changelog entry.

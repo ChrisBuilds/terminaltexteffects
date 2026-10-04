@@ -1,0 +1,31 @@
+name: Feature or improvement
+description: Propose a scoped feature, improvement, or documentation change.
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Problem or goal
+      description: Describe the need this change would address.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Proposed behavior
+      description: Include option names, defaults, and visual impact where relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Describe what belongs in this change and any boundaries.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Describe observable conditions for considering the work complete.
+    validations:
+      required: true

@@ -25,12 +25,15 @@ docs = [
 
 [tool.ruff]
 show-fixes = true
-unsafe-fixes = true
+unsafe-fixes = false
 line-length = 120
 target-version = "py39"
 
 [tool.ruff.lint]
 ignore = [
+    "COM812", # formatting owns trailing commas
+    "D203",   # use D211: no blank line before class docstrings
+    "D213",   # use D212: summary on the first line
     "C90",
     "CPY001",
     "ANN401",
@@ -75,6 +78,9 @@ markers = [
 ]
 testpaths = ["tests"]
 
+[tool.pyright]
+pythonVersion = "3.9"
+
 [tool.hatch.build.targets.sdist]
 exclude = ["docs/**", "tests/**"]
 
@@ -83,6 +89,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
+quality = [
+    "ruff==0.15.9",
+    "pyright==1.1.408",
+]
 test = [
     "pytest>=8.3.5",
     "pytest-cov>=5.0.0",
@@ -91,6 +101,7 @@ test = [
 ]
 dev = [
     { include-group = "test" },
+    { include-group = "quality" },
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.22",
     "mkdocstrings-python>=1.11.1",
