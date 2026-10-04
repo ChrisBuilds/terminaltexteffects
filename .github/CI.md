@@ -1,17 +1,28 @@
 # Continuous integration
 
 The development process is defined in [CONTRIBUTING.md](../CONTRIBUTING.md).
-Focused verification runs locally; broad default suites run here after pushes and on PRs.
+Focused verification runs locally; broad default suites run here on PRs and pushes to `main`.
 Broad local runs are reserved for diagnosing failures or explicit requests.
 
-`workflows/ci.yml` runs on pushes, pull requests, and manual dispatch. Local commits
-start these checks once pushed to GitHub; no local commit hook or private runner is needed.
+`workflows/ci.yml` runs on pull requests (including drafts), pushes to `main`, and manual dispatch.
+Pushes to an issue branch with an open PR trigger one PR run, not a duplicate push run.
+For a branch without a PR, open a draft PR or manually dispatch CI. Tag pushes do not trigger CI;
+manual dispatch always requests full validation. No local commit hook or private runner is needed.
 
 The matrix runs the default pytest suite on Python 3.9 through 3.14 using Ubuntu 24.04.
 It uses locked test dependencies, installs a non-editable package, and checks package import
 and CLI startup from outside the checkout. Bash and Zsh completion behavior is covered by
 the tests, and a separate job checks that the committed completion scripts are current.
 Manual, visual, and exhaustive effect-argument tests remain outside this workflow.
+Pytest reports the 20 slowest test durations to guide future test optimization.
+
+The quality job classifies the committed diff, including deleted files and both sides of renames.
+Only Markdown prose in the root, documentation, changelog, and non-workflow GitHub directories,
+plus documentation images, may bypass the matrix and completion generation. Unknown files,
+Python source, tests, dependencies, packaging, and CI configuration require the full matrix.
+Documentation changes run a strict MkDocs build with documentation link validation. All changes
+retain changelog validation. Documentation-only matrix and completion jobs perform a short success
+step so all eight required check names remain present; the whole workflow is never path-filtered.
 
 New pushes cancel obsolete runs for the same branch or pull request. Each Python version
 reports separately, and a failure on one version does not cancel the other matrix jobs.
@@ -47,7 +58,7 @@ issues. All findings in changed files must be resolved. All eight required check
 to results from GitHub Actions.
 
 The same job validates changelog fragments, the generated Unreleased preview, and the branch's
-changelog decision for PRs and branch pushes. Manual runs and tag pushes validate fragments and
+changelog decision for PRs and pushes to `main`. Manual runs validate fragments and
 preview freshness without requiring a new changelog decision. Add a user-facing fragment or an
 explicit `.skip.md` reason. Release branches
 are accepted when they consume fragments into a new dated section of the canonical changelog.

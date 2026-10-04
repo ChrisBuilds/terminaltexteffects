@@ -42,8 +42,12 @@ catch regressions in callers outside the changed files.
 After committing, reproduce the CI checks with
 `./.venv/bin/python tools/check_quality.py --base origin/main`.
 
-GitHub Actions runs the broad default suite across supported Python versions after pushes and
-on PRs. This includes shared-engine and cross-cutting changes. Broad local runs are for diagnosing
+GitHub Actions runs the broad default suite across supported Python versions on PRs (including
+drafts), pushes to `main`, and manual dispatch. Issue-branch pushes use the open PR's run;
+open a draft PR or use manual dispatch to check a branch without a PR. Strictly documentation-only
+changes run documentation and changelog checks, with successful required matrix check names
+without executing pytest. Code, dependency, packaging, test, and CI changes retain the full matrix.
+This includes shared-engine and cross-cutting changes. Broad local runs are for diagnosing
 failures or explicit requests, rather than a routine prerequisite for committing or pushing.
 Report pending CI and continue the conversation without waiting for the broad suites.
 
