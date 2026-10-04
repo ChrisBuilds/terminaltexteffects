@@ -1229,3 +1229,161 @@ def test_cached_easing_falls_back_for_integral_float_duration() -> None:
     char.animation.step_animation()
     assert char.animation.current_character_visual.symbol == "a"
     assert animation._get_easing_schedule.cache_info().currsize == 0
+
+
+@pytest.mark.parametrize("symbol", ["a", "界", "😀"])
+@pytest.mark.parametrize("modes", range(256))
+def test_cached_appearance_matches_styles_and_preserves_ownership(symbol: str, modes: int) -> None:
+    """Share immutable strings while preserving every style and independent mutable objects."""
+    flags = dict(
+        zip(
+            ("bold", "dim", "italic", "underline", "blink", "reverse", "hidden", "strike"),
+            (bool(modes & (1 << bit)) for bit in range(8)),
+        ),
+    )
+    ordinary = Scene("ordinary")
+    cached = Scene("cached", cache_appearance=True)
+    for scene in (ordinary, cached):
+        scene.add_frame(symbol, 3, colors=ColorPair("123456", "abcdef"), **flags)
+        scene.add_frame(symbol, 3, colors=ColorPair("123456", "abcdef"), **flags)
+    first, second = (frame.character_visual for frame in cached.frames)
+    reference = ordinary.frames[0].character_visual
+    assert first.formatted_symbol == reference.formatted_symbol
+    assert first.cell_width == reference.cell_width
+    assert first.formatted_symbol is second.formatted_symbol
+    assert first is not second
+    assert cached.frames[0] is not cached.frames[1]
+    assert first.colors is not second.colors
+    generation = CharacterVisual._format_generation
+    first.formatted_symbol = "edited"
+    assert CharacterVisual._format_generation == generation + 1
+    assert second.formatted_symbol == reference.formatted_symbol
+    first.bold = not first.bold
+    assert first.format_symbol() != reference.formatted_symbol
+    first.__post_init__()
+    assert first.formatted_symbol == first.format_symbol()
+    assert second.formatted_symbol == reference.formatted_symbol
+
+
+@pytest.mark.parametrize(("no_color", "xterm"), [(False, False), (False, True), (True, False)])
+@pytest.mark.parametrize("preexisting", [False, True])
+def test_cached_appearance_resolves_scene_color_policy(*, no_color: bool, xterm: bool, preexisting: bool) -> None:
+    """Key encodings after applying terminal policy and preexisting colors and bold."""
+    scenes = [
+        Scene(str(enabled), cache_appearance=enabled, no_color=no_color, use_xterm_colors=xterm)
+        for enabled in (False, True)
+    ]
+    for scene in scenes:
+        if preexisting:
+            scene.preexisting_colors = ColorPair(196, 21)
+            scene.preexisting_bold = True
+        scene.add_frame("a", 1, colors=ColorPair("123456", "abcdef"))
+    assert scenes[0].frames[0].character_visual == scenes[1].frames[0].character_visual
+    assert (
+        scenes[0].frames[0].character_visual.formatted_symbol == scenes[1].frames[0].character_visual.formatted_symbol
+    )
+
+
+def test_cached_appearance_opt_in_and_eviction(character: EffectCharacter) -> None:
+    """Default scenes bypass the bounded cache and evicted strings remain owned by visuals."""
+    cache = animation._get_encoded_appearance
+    cache.cache_clear()
+    default = character.animation.new_scene()
+    assert not default.cache_appearance
+    default.add_frame("a", 1, colors=ColorPair("123456"))
+    assert cache.cache_info().currsize == 0
+    scene = character.animation.new_scene(cache_appearance=True)
+    scene.add_frame("a", 1, colors=ColorPair("000000"))
+    original = scene.frames[0].character_visual.formatted_symbol
+    for code in range(animation._MAX_ENCODED_APPEARANCES + 1):
+        scene.add_frame("a", 1, colors=ColorPair(f"{code:06x}"))
+    assert cache.cache_info().currsize == animation._MAX_ENCODED_APPEARANCES
+    assert scene.frames[0].character_visual.formatted_symbol is original
+    scene.cache_appearance = False
+    before = cache.cache_info()
+    scene.add_frame("a", 1, colors=ColorPair("ffffff"))
+    assert cache.cache_info() == before
+    cache.cache_clear()
+
+
+def test_cached_appearance_preserves_custom_formatters(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Subclass, class and instance overrides keep ordinary formatting behavior."""
+
+    class CustomVisual(CharacterVisual):
+        def format_symbol(self) -> str:
+            return "custom"
+
+    assert CustomVisual("a", _cache_appearance=True).formatted_symbol == "custom"
+    visual = CharacterVisual("a", _cache_appearance=True)
+    monkeypatch.setattr(visual, "format_symbol", lambda: "instance")
+    visual.__post_init__()
+    assert visual.formatted_symbol == "instance"
+    monkeypatch.setattr(CharacterVisual, "format_symbol", lambda _self: "class")
+    scene = Scene("override", cache_appearance=True)
+    scene.add_frame("a", 1)
+    assert scene.frames[0].character_visual.formatted_symbol == "class"
+
+
+def test_cached_appearance_custom_truth_callback_mutation() -> None:
+    """Do not pre-evaluate custom styles that mutate the visual during formatting."""
+
+    def exercise(*, enabled: bool) -> tuple[str, int]:
+        visual = CharacterVisual("a", _fg_color_code="123456", _cache_appearance=enabled)
+        calls = []
+
+        class MutatingFlag:
+            def __bool__(self) -> bool:
+                calls.append(1)
+                visual.symbol = "long edited symbol"
+                visual._fg_color_code = "abcdef"
+                return True
+
+        visual.bold = typing.cast("bool", MutatingFlag())
+        visual.__post_init__()
+        return visual.formatted_symbol, len(calls)
+
+    ordinary = exercise(enabled=False)
+    assert exercise(enabled=True) == ordinary
+    assert ordinary[1] == 1
+
+
+@pytest.mark.parametrize("symbol", ["", "ab", "\n", "\u0301"])
+def test_cached_appearance_invalid_symbols_match(symbol: str) -> None:
+    """Validate symbols before encoding cache access."""
+    for enabled in (False, True):
+        with pytest.raises(InvalidSymbolError):
+            Scene("invalid", cache_appearance=enabled).add_frame(symbol, 1)
+
+
+@pytest.mark.parametrize(
+    ("code", "error"),
+    [(True, TypeError), ([], TypeError), (256, ValueError), ("invalid", ValueError)],
+)
+def test_cached_appearance_invalid_codes_match(code: object, error: type[Exception]) -> None:
+    """Invalid native and custom codes preserve the ordinary formatter's errors."""
+    for enabled in (False, True):
+        with pytest.raises(error):
+            CharacterVisual("a", _fg_color_code=typing.cast("int", code), _cache_appearance=enabled)
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_cached_appearance_initial_custom_style_bypasses_cache(*, enabled: bool) -> None:
+    """Custom native-construction flags run once without becoming cache keys."""
+    calls = []
+
+    class CustomFlag:
+        def __hash__(self) -> int:
+            """Reject accidental hashing of custom styles."""
+            msg = "Custom styles must not become cache keys"
+            raise AssertionError(msg)
+
+        def __bool__(self) -> bool:
+            calls.append(1)
+            return enabled
+
+    cache = animation._get_encoded_appearance
+    before = cache.cache_info()
+    visual = CharacterVisual("a", bold=typing.cast("bool", CustomFlag()), _cache_appearance=True)
+    assert len(calls) == 1
+    assert cache.cache_info() == before
+    assert visual.formatted_symbol == CharacterVisual("a", bold=enabled).formatted_symbol

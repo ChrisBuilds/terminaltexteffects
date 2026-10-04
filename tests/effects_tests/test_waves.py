@@ -525,3 +525,11 @@ def test_waves_dynamic_keeps_wave_scene_effect_colored() -> None:
         Color("#111111").rgb_color,
         Color("#222222").rgb_color,
     }
+
+
+def test_waves_caches_only_repeated_wave_appearances() -> None:
+    """Only the repeated wave scene opts into construction encoding reuse."""
+    iterator = iter(effect_waves.Waves("abc"))
+    for character in iterator.terminal.get_characters():
+        assert character.animation.scenes["0"].cache_appearance
+        assert not character.animation.scenes["1"].cache_appearance

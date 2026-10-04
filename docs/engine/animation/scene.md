@@ -14,3 +14,19 @@ Opt in after measuring an effect: distinct layouts, short playback, and frequent
 than schedule reuse saves.
 
 ::: terminaltexteffects.engine.animation.Scene
+
+## Encoded appearance reuse
+
+Set `cache_appearance=True` on `Scene` or `Animation.new_scene` to reuse immutable ANSI strings when
+constructing frames with repeated symbols, styles, and resolved foreground/background colors. The option
+defaults to `False`. Frames, visuals, colors and playback state retain their usual independent ownership;
+editing a visual's formatted string still invalidates terminal output. Explicit `format_symbol()` calls
+retain ordinary formatting.
+
+The shared LRU holds at most 2048 encodings. Existing visuals retain their strings after eviction.
+Subclass/formatter overrides and custom style or color-code values use the ordinary path. Unicode symbol
+validation and width calculation remain unchanged. Color policy is applied before selecting an encoding,
+including preexisting colors/bold, XTerm conversion and no-color output.
+
+Waves enables this option only for its repeated wave scene. Measure construction time and allocation before
+enabling it elsewhere: lookup overhead can outweigh reuse when appearances vary.

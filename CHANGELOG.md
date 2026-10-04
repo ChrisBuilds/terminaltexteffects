@@ -8,6 +8,10 @@
 
 ### New Features (0.16.0)
 
+* Added opt-in scene appearance encoding reuse through `Scene(cache_appearance=True)` and
+  `Animation.new_scene(cache_appearance=True)`. Waves reuses immutable ANSI strings for repeated wave
+  frames while preserving independent mutable visuals, color policies, and output invalidation.
+
 ---
 
 #### Development Tooling (0.16.0)

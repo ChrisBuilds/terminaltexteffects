@@ -229,3 +229,30 @@ A fresh-process dense seed-1339 trace changed peak Python allocation from 154.20
 BinaryPath/Expand kept caching disabled; their small total-time variations (+0.9%/-1.8%) did not establish
 a meaningful change. Thunderstorm remains disabled and has no timing claim because its output is not
 reproducible under the existing benchmark. These are local measurements, not universal guarantees or RSS.
+
+## Opt-in encoded appearance construction
+
+`Animation.new_scene(cache_appearance=True)` or `Scene(..., cache_appearance=True)` shares immutable ANSI
+strings during frame construction. Every frame and visual remains a fresh mutable object. The engine
+retains at most 2048 encodings, keyed by symbol, style mask and colors resolved after terminal policy.
+Only native inputs use the cache; custom values and formatting overrides preserve ordinary behavior.
+Explicit formatting calls remain uncached, and visual edits keep their existing output invalidation.
+
+The option defaults to disabled. Waves enables it for the repeated wave scene. Use it after measuring
+both construction time and peak allocation: a high hit rate alone does not establish a speedup.
+
+Production measurements against the already optimized Waves with easing schedules, using seven samples,
+two warmups, rotated isolated workers and cold caches per iteration:
+
+| Dense Waves mode | Build delta | Iteration delta | Total delta | Peak allocation delta |
+|---|---:|---:|---:|---:|
+| ignore | +1.2% | -3.6% | -1.3% | -18.1% |
+| always | +6.8% | -2.7% | +1.6% | -10.0% |
+| dynamic | -0.1% | -5.3% | -2.6% | -19.6% |
+
+The main benefit is allocation reduction: dense ignore peak decreased from 154.4 MiB to 126.5 MiB.
+Medium/Unicode/always totals measured 1.6–2.8% slower. Disabled BinaryPath/Expand controls measured
+about 1% slower in the final run and slightly faster in the initial run; no control speedup is claimed.
+Construction metadata and guards still have a cost, so further enablement requires separate measurements.
+Timing frame/output counts matched, as did 68 paired complete-animation hashes and final states.
+Memory tracing and correctness checks ran outside timing.

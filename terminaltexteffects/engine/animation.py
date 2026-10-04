@@ -31,6 +31,8 @@ if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character, motion  # pragma: no cover
 
 
+_MAX_ENCODED_APPEARANCES = 2048
+_NATIVE_COLOR_CODE_TYPES = (str, int, type(None))
 _MAX_XTERM_COLOR_CACHE_SIZE = 1024
 _MAX_EASING_SCHEDULES = 32
 _MAX_EASING_SCHEDULE_STEPS = 4096
@@ -158,13 +160,18 @@ class CharacterVisual:
     # config args these are used by colorterm to produce the ansi sequences
     _fg_color_code: str | int | None = None
     _bg_color_code: str | int | None = None
+    _cache_appearance: bool = field(default=False, repr=False, compare=False)
     cell_width: int = field(init=False)
     _format_generation: typing.ClassVar[int] = 0
 
     def __post_init__(self) -> None:
         """Create the formatted symbol by applying ANSI sequences for any active modes and color."""
         self.cell_width = get_symbol_cell_width(self.symbol)
-        formatted_symbol = self.format_symbol()
+        formatted_symbol = (
+            _format_cached_appearance(self)
+            if self._cache_appearance and not hasattr(self, "_formatted_symbol")
+            else self.format_symbol()
+        )
         if hasattr(self, "_formatted_symbol"):
             self.formatted_symbol = formatted_symbol
         else:
@@ -209,6 +216,76 @@ class CharacterVisual:
         return f"{formatting_string}{self.symbol}{ansitools.reset_all() if formatting_string else ''}"
 
 
+_ORIGINAL_FORMAT_SYMBOL = CharacterVisual.format_symbol
+
+
+@lru_cache(maxsize=_MAX_ENCODED_APPEARANCES)
+def _get_encoded_appearance(symbol: str, modes: int, fg: str | int | None, bg: str | int | None) -> str:
+    """Share immutable encodings without retaining mutable visuals or color objects."""
+    formatting = ""
+    for bit, sequence in enumerate(
+        (
+            ansitools.apply_bold,
+            ansitools.apply_dim,
+            ansitools.apply_italic,
+            ansitools.apply_underline,
+            ansitools.apply_blink,
+            ansitools.apply_reverse,
+            ansitools.apply_hidden,
+            ansitools.apply_strikethrough,
+        ),
+    ):
+        if modes & (1 << bit):
+            formatting += sequence()
+    if fg is not None:
+        formatting += colorterm.fg(fg)
+    if bg is not None:
+        formatting += colorterm.bg(bg)
+    return f"{formatting}{symbol}{ansitools.reset_all() if formatting else ''}"
+
+
+def _format_cached_appearance(visual: CharacterVisual) -> str:
+    """Cache native construction inputs; preserve custom formatting and truth-value callbacks."""
+    if (
+        type(visual) is not CharacterVisual
+        or CharacterVisual.format_symbol is not _ORIGINAL_FORMAT_SYMBOL
+        or type(visual.symbol) is not str
+        or len(visual.symbol) != 1
+        or type(visual._fg_color_code) not in _NATIVE_COLOR_CODE_TYPES
+        or type(visual._bg_color_code) not in _NATIVE_COLOR_CODE_TYPES
+    ):
+        return visual.format_symbol()
+    # Most scenes only use bold. Identity checks avoid executing arbitrary truth-value callbacks.
+    if (
+        visual.dim is False
+        and visual.italic is False
+        and visual.underline is False
+        and visual.blink is False
+        and visual.reverse is False
+        and visual.hidden is False
+        and visual.strike is False
+        and (visual.bold is False or visual.bold is True)
+    ):
+        modes = 1 if visual.bold else 0
+    else:
+        flags = (
+            visual.bold,
+            visual.dim,
+            visual.italic,
+            visual.underline,
+            visual.blink,
+            visual.reverse,
+            visual.hidden,
+            visual.strike,
+        )
+        if any(type(flag) is not bool for flag in flags):
+            return visual.format_symbol()
+        modes = sum(int(flag) << bit for bit, flag in enumerate(flags))
+    if not modes and visual._fg_color_code is None and visual._bg_color_code is None:
+        return visual.symbol
+    return _get_encoded_appearance(visual.symbol, modes, visual._fg_color_code, visual._bg_color_code)
+
+
 @dataclass
 class Frame:
     """A Frame is a CharacterVisual with a duration.
@@ -248,6 +325,7 @@ class Scene:
         sync (Scene.SyncMetric | None): The type of sync to use for the Scene
         ease (easing.EasingFunction | None): The easing function to use for the Scene
         cache_easing (bool): Opt into shared frame schedules for built-in easing functions.
+        cache_appearance (bool): Reuse immutable encoded strings during frame construction.
         no_color (bool): Whether to ignore colors
         use_xterm_colors (bool): Whether to convert all colors to XTerm-256 colors
         frames (list[Frame]): The list of Frames in the Scene
@@ -283,6 +361,7 @@ class Scene:
         sync: SyncMetric | None = None,
         ease: easing.EasingFunction | None = None,
         cache_easing: bool = False,
+        cache_appearance: bool = False,
         no_color: bool = False,
         use_xterm_colors: bool = False,
     ) -> None:
@@ -295,6 +374,8 @@ class Scene:
             ease (easing.EasingFunction | None, optional): The easing function to use for the Scene. Defaults to None.
             cache_easing (bool, optional): Reuse built-in easing schedules up to 4096 ticks. Defaults to False.
                 Custom callables retain per-tick evaluation. Frames and playback state remain independent.
+            cache_appearance (bool, optional): Share bounded immutable encodings during construction.
+                Defaults to False. Mutable visuals and frames remain independently owned.
             no_color (bool, optional): Whether to colors should be ignored. Defaults to False.
             use_xterm_colors (bool, optional): Whether to convert all colors to XTerm-256 colors. Defaults to False.
 
@@ -304,6 +385,7 @@ class Scene:
         self.sync: Scene.SyncMetric | None = sync
         self.ease: easing.EasingFunction | None = ease
         self.cache_easing = cache_easing
+        self.cache_appearance = cache_appearance
         self._easing_schedule: (
             tuple[
                 easing.EasingFunction,
@@ -441,6 +523,7 @@ class Scene:
             colors=colors,
             _fg_color_code=char_vis_fg_color,
             _bg_color_code=char_vis_bg_color,
+            _cache_appearance=self.cache_appearance,
         )
         width_bit = 1 << (char_vis.cell_width - 1)
         if not self._visual_width_mask & width_bit:
@@ -713,6 +796,7 @@ class Animation:
         sync: Scene.SyncMetric | None = None,
         ease: easing.EasingFunction | None = None,
         cache_easing: bool = False,
+        cache_appearance: bool = False,
         scene_id: str = "",
     ) -> Scene:
         """Create a new Scene and add it to the Animation.
@@ -727,6 +811,7 @@ class Animation:
             sync (Scene.SyncMetric | None): The type of sync to use for the scene.
             ease (easing.EasingFunction | None): The easing function to use for the scene.
             cache_easing (bool): Opt into shared built-in easing schedules. Defaults to False.
+            cache_appearance (bool): Share encoded frame appearances during construction. Defaults to False.
 
         Returns:
             Scene: The new Scene.
@@ -758,6 +843,7 @@ class Animation:
             sync=sync,
             ease=ease,
             cache_easing=cache_easing,
+            cache_appearance=cache_appearance,
             no_color=self.no_color,
             use_xterm_colors=self.use_xterm_colors,
         )
@@ -1054,11 +1140,7 @@ class Animation:
         """Return the scene frame index for the active path's progress."""
         final_frame_index = len(scene.frames) - 1
         if scene.sync == Scene.SyncMetric.STEP:
-            progress_ratio = (
-                active_path.current_step / active_path.max_steps
-                if active_path.max_steps > 0
-                else 0.0
-            )
+            progress_ratio = active_path.current_step / active_path.max_steps if active_path.max_steps > 0 else 0.0
         else:
             progress_ratio = (
                 active_path.last_distance_reached / active_path.total_distance
