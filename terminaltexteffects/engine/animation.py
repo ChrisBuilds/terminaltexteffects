@@ -98,11 +98,28 @@ class CharacterVisual:
     _fg_color_code: str | int | None = None
     _bg_color_code: str | int | None = None
     cell_width: int = field(init=False)
+    _format_generation: typing.ClassVar[int] = 0
 
     def __post_init__(self) -> None:
         """Create the formatted symbol by applying ANSI sequences for any active modes and color."""
         self.cell_width = get_symbol_cell_width(self.symbol)
-        self.formatted_symbol = self.format_symbol()
+        formatted_symbol = self.format_symbol()
+        if hasattr(self, "_formatted_symbol"):
+            self.formatted_symbol = formatted_symbol
+        else:
+            self._formatted_symbol = formatted_symbol
+
+    @property
+    def formatted_symbol(self) -> str:
+        """Return the formatted symbol stored for terminal rendering."""
+        return self._formatted_symbol
+
+    @formatted_symbol.setter
+    def formatted_symbol(self, value: str) -> None:
+        """Invalidate cached output following a direct edit, including edits to shared visuals."""
+        if value != self._formatted_symbol:
+            CharacterVisual._format_generation += 1
+        self._formatted_symbol = value
 
     def format_symbol(self) -> str:
         """Format the symbol for printing by applying ANSI sequences for active modes and color."""
@@ -534,6 +551,7 @@ class Animation:
         query_scene: Returns a Scene from the Animation.
         active_scene_is_complete: Returns whether the active scene is complete.
         set_appearance: Applies a symbol and color to the character.
+        set_appearance_if_changed: Applies appearance only when its effective visual has changed.
         adjust_color_brightness: Adjusts the brightness of a given color.
         _ease_animation: Returns the percentage of total distance that should be moved based on the easing function.
         step_animation: Apply the next symbol in the scene to the character.
@@ -728,6 +746,54 @@ class Animation:
         self.current_character_visual = visual
         if previous_width != visual.cell_width:
             self.character._notify_current_visual_width_changed(previous_width)
+
+    def set_appearance_if_changed(self, symbol: str | None = None, colors: graphics.ColorPair | None = None) -> None:
+        """Apply appearance while reusing an unchanged visual from the previous call.
+
+        Arguments, color overrides, and width tracking follow `set_appearance`. Unlike
+        that method, an identical effective appearance retains the current visual object.
+        Changes to the visual's fields, replacement by a scene or ordinary setter, and
+        changes to color policy cause the appearance to be reapplied. Requested colors
+        do not affect the comparison when input colors override them in `"always"` mode.
+
+        State is allocated only for animations using this helper. It retains one visual
+        snapshot per animation; visuals are never shared between characters.
+
+        Args:
+            symbol (str | None): The symbol to apply, or the input symbol when omitted.
+            colors (graphics.ColorPair | None): The colors to apply, or no colors when omitted.
+
+        Raises:
+            InvalidSymbolError: If `symbol` does not contain one independently printable Unicode code point.
+
+        """
+        if symbol is None:
+            symbol = self.character.input_symbol
+        override = self.existing_color_handling == "always" and self.character.uses_input_preexisting_colors
+        key_colors = None if override else (colors if colors is not None else graphics.ColorPair())
+        policy = (
+            self.no_color,
+            self.use_xterm_colors,
+            self.existing_color_handling,
+            self.input_fg_color,
+            self.input_bg_color,
+            self.input_bold,
+            self.character.uses_input_preexisting_colors,
+        )
+        visual = self.current_character_visual
+        previous = getattr(self, "_appearance_state", None)
+        if (
+            previous is not None
+            and previous[0] == symbol
+            and previous[1] == key_colors
+            and previous[2] == policy
+            and previous[3] is visual
+            and previous[4] == visual.__dict__
+        ):
+            return
+        self.set_appearance(symbol, colors)
+        visual = self.current_character_visual
+        self._appearance_state = (symbol, key_colors, policy, visual, visual.__dict__.copy())
 
     @staticmethod
     def adjust_color_brightness(color: graphics.Color, brightness: float) -> graphics.Color:

@@ -1,4 +1,5 @@
 """Tests for the Path, Segment, Waypoint and Motion classes."""
+from __future__ import annotations
 
 import pytest
 
@@ -763,3 +764,69 @@ def test_motion_callback_deactivating_other_path_continues(character: EffectChar
 
     assert character.motion.active_path is path
     assert character.motion.current_coord == Coord(1, 0)
+
+
+@pytest.mark.parametrize("bezier_control", [None, Coord(2, 8)])
+def test_motion_reactivation_preserves_retained_origin_objects(
+    character: EffectCharacter,
+    bezier_control: Coord | None,
+) -> None:
+    """Repeated origins stay fresh while retained segments keep their previous state."""
+    path = character.motion.new_path(speed=0.7, hold_time=2)
+    path.new_waypoint(Coord(4, 4), bezier_control=bezier_control)
+    path.new_waypoint(Coord(7, 6))
+    character.motion.set_coordinate(Coord(1, 2))
+    character.motion.activate_path(path)
+    retained = path.origin_segment
+    assert retained is not None
+    distance = path.total_distance
+    retained.enter_event_triggered = True
+    retained.exit_event_triggered = True
+    expected = vars(retained).copy()
+    path.current_step = 5
+    path.last_distance_reached = 2
+    path.hold_time_remaining = 0
+
+    character.motion.activate_path(path)
+
+    assert path.origin_segment is not None
+    assert path.origin_segment is not retained
+    assert path.origin_segment.start is not retained.start
+    assert vars(retained) == expected
+    assert path.total_distance == distance
+    assert path.current_step == path.last_distance_reached == 0
+    assert path.hold_time_remaining == 2
+    assert not path.origin_segment.enter_event_triggered
+    assert not path.origin_segment.exit_event_triggered
+
+
+def test_motion_activation_callback_restarts_from_new_origin(character: EffectCharacter) -> None:
+    """An activation callback may restart the same path without stale origin data."""
+    path = character.motion.new_path(speed=1)
+    path.new_waypoint(Coord(4, 4))
+    origins: list[Segment] = []
+
+    def restart(char: EffectCharacter) -> None:
+        assert path.origin_segment is not None
+        origins.append(path.origin_segment)
+        if len(origins) == 1:
+            char.motion.set_coordinate(Coord(4, 3))
+            char.motion.activate_path(path)
+
+    character.event_handler.register_event(
+        EventHandler.Event.PATH_ACTIVATED,
+        path,
+        EventHandler.Action.CALLBACK,
+        EventHandler.Callback(restart),
+    )
+    character.motion.set_coordinate(Coord(1, 2))
+    character.motion.activate_path(path)
+
+    assert len(origins) == 2
+    assert origins[0] is not origins[1]
+    assert origins[0].start.coord == Coord(1, 2)
+    assert origins[1].start.coord == Coord(4, 3)
+    assert path.origin_segment is origins[1]
+    assert path.total_distance == pytest.approx(2)
+    assert path.max_steps == 2
+    assert character.motion.current_coord == Coord(4, 3)

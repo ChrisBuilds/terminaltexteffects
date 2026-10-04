@@ -7,6 +7,7 @@ Classes:
 
 from __future__ import annotations
 
+import argparse
 import math
 import random
 import shutil
@@ -22,15 +23,17 @@ from operator import attrgetter
 from typing import Literal
 
 from terminaltexteffects.engine import canvas as canvas_module
+from terminaltexteffects.engine._row_cache import RowCache
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.terminal_input import ParsedCharacter, VirtualScreenParser
 from terminaltexteffects.utils import ansitools, argutils, geometry
-from terminaltexteffects.utils.argutils import CharacterGroup, CharacterSort, ColorSort
+from terminaltexteffects.utils.argutils import CharacterGroup, CharacterOrder, CharacterSort, ColorSort
 from terminaltexteffects.utils.exceptions import (
     InvalidCharacterCoordinateError,
     InvalidCharacterError,
     InvalidCharacterGroupError,
+    InvalidCharacterOrderError,
     InvalidCharacterSortError,
     InvalidCharacterVisibilityError,
     InvalidColorSortError,
@@ -43,6 +46,14 @@ from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 _CHARACTER_ID_KEY = attrgetter("_character_id")
 _LAYER_KEY = attrgetter("_layer")
+_SPIRAL_SORT_OPTIONS: dict[CharacterOrder, tuple[int, tuple[int, ...]]] = {
+    CharacterOrder.SPIRAL_CLOCKWISE: (1, (0,)),
+    CharacterOrder.SPIRAL_COUNTER_CLOCKWISE: (-1, (0,)),
+    CharacterOrder.SPIRAL_CLOCKWISE_DOUBLE: (1, (0, 2)),
+    CharacterOrder.SPIRAL_COUNTER_CLOCKWISE_DOUBLE: (-1, (0, 2)),
+    CharacterOrder.SPIRAL_CLOCKWISE_QUAD: (1, (0, 1, 2, 3)),
+    CharacterOrder.SPIRAL_COUNTER_CLOCKWISE_QUAD: (-1, (0, 1, 2, 3)),
+}
 
 
 @dataclass
@@ -412,6 +423,26 @@ class Terminal:
         self._visible_wide_character_count = 0
         self._blank_row = " " * self.visible_right
         self._blank_terminal_state = [self._blank_row] * self.visible_top
+        self._row_cache: RowCache | None = None
+
+    def enable_row_cache(self) -> None:
+        """Opt into caching unchanged output rows for this terminal.
+
+        Effects should enable this only after measuring a benefit for their input
+        sizes and update patterns. Visibility, motion, animation, layers and direct
+        `CharacterVisual.formatted_symbol` edits invalidate cached output. Wide
+        characters use the existing width-aware renderer.
+        """
+        if self._row_cache is not None:
+            return
+        self._row_cache = RowCache(self)
+        for character in (
+            *self._input_characters,
+            *self._inner_fill_characters,
+            *self._outer_fill_characters,
+            *self._added_characters,
+        ):
+            self._row_cache.track(character)
 
     def _build_input_character(self, parsed_character: ParsedCharacter, character_id_offset: int) -> EffectCharacter:
         """Allocate one terminal-owned character from parser output."""
@@ -691,6 +722,8 @@ class Terminal:
             self._inner_fill_characters.append(fill_char)
         else:
             self._outer_fill_characters.append(fill_char)
+        if self._row_cache is not None:
+            self._row_cache.track(fill_char)
         return fill_char
 
     def _ensure_fill_characters(self) -> None:
@@ -761,6 +794,8 @@ class Terminal:
 
         self._added_characters.append(character)
         self._next_character_id += 1
+        if self._row_cache is not None:
+            self._row_cache.track(character)
         return character
 
     def get_input_colors(self, sort: ColorSort = ColorSort.MOST_TO_LEAST) -> list[Color]:
@@ -827,75 +862,107 @@ class Terminal:
         inner_fill_chars: bool = False,
         outer_fill_chars: bool = False,
         added_chars: bool = False,
-        sort: CharacterSort = CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT,
+        sort: CharacterSort | CharacterOrder | None = None,
+        order: CharacterOrder | CharacterGroup | CharacterSort | str | None = None,
+        reverse: bool = False,
+        canvas_only: bool | None = None,
+        serpentine: bool = False,
     ) -> list[EffectCharacter]:
-        """Get all selected `EffectCharacter` instances with an optional sort.
+        """Get selected characters in their complete traversal order.
 
-        Sorting uses each character's immutable input coordinate, not its current motion
-        coordinate. Unlike `get_characters_grouped()`, this inventory includes selected
-        added characters whose input coordinates are outside the canvas.
+        `order` accepts `CharacterOrder`, CLI names, and legacy group/sort enums.
+        Spatial orders are flattened without losing their internal ordering. Individual
+        orders use immutable input coordinates; spirals wind inward through the selected
+        coordinates' bounding box, skipping empty cells and interleaving multiple arms.
+        The default remains top-to-bottom, left-to-right. Legacy `sort` remains supported;
+        pass either `sort` or `order`, not both.
 
-        The row-based outside/middle sorts order complete rows by their distance from
-        the vertical midpoint of the selected rows. Rows equidistant from the midpoint
-        are ordered top-first, and characters within each row remain left-to-right.
+        `reverse` reverses the complete traversal after optional serpentine traversal.
+        `serpentine` reverses alternate spatial groups before flattening; singleton orders
+        are unaffected. Moving characters does not change their order.
 
         Args:
-            input_chars (bool, optional): whether to include input characters. Defaults to True.
-            inner_fill_chars (bool, optional): whether to include inner fill characters. Defaults to False.
-            outer_fill_chars (bool, optional): whether to include outer fill characters. Defaults to False.
-            added_chars (bool, optional): whether to include added characters. Defaults to False.
-            sort (CharacterSort, optional): order to sort the characters.
-                Defaults to CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT.
+            input_chars (bool): Include input characters. Defaults to True.
+            inner_fill_chars (bool): Include inner fill characters. Defaults to False.
+            outer_fill_chars (bool): Include outer fill characters. Defaults to False.
+            added_chars (bool): Include added characters. Defaults to False.
+            sort (CharacterSort | CharacterOrder | None): Compatibility ordering argument.
+            order (CharacterOrder | CharacterGroup | CharacterSort | str | None): Character traversal.
+            reverse (bool): Reverse the final traversal. Defaults to False.
+            canvas_only (bool | None): Exclude off-canvas input coordinates. Defaults to True
+                for spatial orders and False for individual orders, independently of output form.
+            serpentine (bool): Reverse alternate spatial groups. Defaults to False.
 
         Returns:
-            list[EffectCharacter]: list of EffectCharacters in the terminal
+            list[EffectCharacter]: Selected characters in traversal order.
 
         Raises:
-            InvalidCharacterSortError: If an invalid sort option is provided.
+            InvalidCharacterSortError: If the compatibility `sort` value is invalid.
+            InvalidCharacterOrderError: If `order` is invalid.
+            ValueError: If both ordering arguments are supplied.
+            TypeError: If a traversal flag is not a boolean.
 
         """
-        all_characters = self._get_selected_characters(
+        if order is not None and sort is not None:
+            msg = "Pass either order or sort, not both."
+            raise ValueError(msg)
+        if order is None:
+            if sort is not None and not isinstance(sort, (CharacterSort, CharacterOrder)):
+                raise InvalidCharacterSortError(sort)
+            order = sort if sort is not None else CharacterOrder.TOP_TO_BOTTOM_LEFT_TO_RIGHT
+        characters, groups = self._resolve_character_order(
+            order,
             input_chars=input_chars,
             inner_fill_chars=inner_fill_chars,
             outer_fill_chars=outer_fill_chars,
             added_chars=added_chars,
+            reverse=reverse,
+            canvas_only=canvas_only,
+            serpentine=serpentine,
         )
+        return characters if characters is not None else [character for group in groups or [] for character in group]
 
+    def _sort_characters(
+        self,
+        all_characters: list[EffectCharacter],
+        sort: CharacterOrder,
+    ) -> list[EffectCharacter]:
+        """Order an inventory using an individual `CharacterOrder` traversal."""
         # default sort TOP_TO_BOTTOM_LEFT_TO_RIGHT
         all_characters.sort(
             key=lambda character: (-character.input_coord.row, character.input_coord.column),
         )
 
-        if sort is CharacterSort.RANDOM:
+        if sort is CharacterOrder.RANDOM:
             random.shuffle(all_characters)
 
         elif sort in (
-            CharacterSort.TOP_TO_BOTTOM_LEFT_TO_RIGHT,
-            CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT,
+            CharacterOrder.TOP_TO_BOTTOM_LEFT_TO_RIGHT,
+            CharacterOrder.BOTTOM_TO_TOP_RIGHT_TO_LEFT,
         ):
-            if sort is CharacterSort.BOTTOM_TO_TOP_RIGHT_TO_LEFT:
+            if sort is CharacterOrder.BOTTOM_TO_TOP_RIGHT_TO_LEFT:
                 all_characters.reverse()
 
         elif sort in (
-            CharacterSort.BOTTOM_TO_TOP_LEFT_TO_RIGHT,
-            CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT,
+            CharacterOrder.BOTTOM_TO_TOP_LEFT_TO_RIGHT,
+            CharacterOrder.TOP_TO_BOTTOM_RIGHT_TO_LEFT,
         ):
             all_characters.sort(
                 key=lambda character: (character.input_coord.row, character.input_coord.column),
             )
-            if sort is CharacterSort.TOP_TO_BOTTOM_RIGHT_TO_LEFT:
+            if sort is CharacterOrder.TOP_TO_BOTTOM_RIGHT_TO_LEFT:
                 all_characters.reverse()
 
         elif sort in (
-            CharacterSort.OUTSIDE_ROW_TO_MIDDLE,
-            CharacterSort.MIDDLE_ROW_TO_OUTSIDE,
+            CharacterOrder.OUTSIDE_ROW_TO_MIDDLE,
+            CharacterOrder.MIDDLE_ROW_TO_OUTSIDE,
         ):
             characters_by_row: dict[int, list[EffectCharacter]] = {}
             for character in all_characters:
                 characters_by_row.setdefault(character.input_coord.row, []).append(character)
             if characters_by_row:
                 row_midpoint_sum = min(characters_by_row) + max(characters_by_row)
-                distance_sign = -1 if sort is CharacterSort.OUTSIDE_ROW_TO_MIDDLE else 1
+                distance_sign = -1 if sort is CharacterOrder.OUTSIDE_ROW_TO_MIDDLE else 1
                 ordered_rows = sorted(
                     characters_by_row,
                     key=lambda row: (
@@ -904,10 +971,60 @@ class Terminal:
                     ),
                 )
                 all_characters = [character for row in ordered_rows for character in characters_by_row[row]]
+        elif isinstance(sort, CharacterOrder) and sort in _SPIRAL_SORT_OPTIONS:
+            direction, corners = _SPIRAL_SORT_OPTIONS[sort]
+            self._sort_characters_in_spiral(all_characters, direction, corners)
         else:
-            raise InvalidCharacterSortError(sort)
+            raise InvalidCharacterOrderError(sort)
 
         return all_characters
+
+    @staticmethod
+    def _sort_characters_in_spiral(
+        characters: list[EffectCharacter],
+        direction: int,
+        corners: tuple[int, ...],
+    ) -> None:
+        """Sort occupied coordinates by ring and distance from each starting corner.
+
+        `direction` is 1 for clockwise and -1 for counterclockwise. `corners`
+        indexes top-left, top-right, bottom-right, and bottom-left respectively.
+        Computing a rank per character avoids walking empty bounding-box cells.
+        """
+        if not characters:
+            return
+        left = min(character.input_coord.column for character in characters)
+        right = max(character.input_coord.column for character in characters)
+        bottom = min(character.input_coord.row for character in characters)
+        top = max(character.input_coord.row for character in characters)
+
+        def spiral_key(character: EffectCharacter) -> tuple[int, int, int]:
+            column, row = character.input_coord.column, character.input_coord.row
+            ring = min(column - left, right - column, row - bottom, top - row)
+            width = right - left + 1 - 2 * ring
+            height = top - bottom + 1 - 2 * ring
+            x, y = column - left - ring, top - row - ring
+            if height == 1:
+                distances = tuple(x if corner in (0, 3) else width - 1 - x for corner in corners)
+            elif width == 1:
+                distances = tuple(y if corner in (0, 1) else height - 1 - y for corner in corners)
+            else:
+                # Clockwise perimeter offsets measured from the top-left corner.
+                if y == 0:
+                    offset = x
+                elif x == width - 1:
+                    offset = width - 1 + y
+                elif y == height - 1:
+                    offset = 2 * (width - 1) + height - 1 - x
+                else:
+                    offset = 2 * (width - 1) + 2 * (height - 1) - y
+                perimeter = 2 * (width + height - 2)
+                starts = (0, width - 1, width + height - 2, 2 * width + height - 3)
+                distances = tuple(direction * (offset - starts[corner]) % perimeter for corner in corners)
+            distance, arm = min((distance, arm) for arm, distance in enumerate(distances))
+            return ring, distance, arm
+
+        characters.sort(key=spiral_key)
 
     def get_characters_grouped_by_grid(
         self,
@@ -917,6 +1034,7 @@ class Terminal:
         inner_fill_chars: bool = False,
         outer_fill_chars: bool = False,
         added_chars: bool = False,
+        reverse: bool = False,
     ) -> list[list[EffectCharacter]]:
         """Group selected characters by their input coordinates within `grid`.
 
@@ -931,11 +1049,18 @@ class Terminal:
             inner_fill_chars (bool): Include inner fill characters. Defaults to False.
             outer_fill_chars (bool): Include outer fill characters. Defaults to False.
             added_chars (bool): Include added characters. Defaults to False.
+            reverse (bool): Reverse both cells and their internal traversal. Defaults to False.
 
         Returns:
             list[list[EffectCharacter]]: Nonempty character groups in grid order.
 
+        Raises:
+            TypeError: If `reverse` is not a boolean.
+
         """
+        if not isinstance(reverse, bool):
+            msg = "reverse must be a boolean."
+            raise TypeError(msg)
         groups: dict[tuple[int, int], list[EffectCharacter]] = {}
         columns, rows = grid.column_boundaries, grid.row_boundaries
         for character in self._get_selected_characters(
@@ -953,67 +1078,142 @@ class Terminal:
                 continue
             key = (bisect_right(rows, coord.row) - 1, bisect_right(columns, coord.column) - 1)
             groups.setdefault(key, []).append(character)
-        return [groups[key] for key in sorted(groups)]
+        ordered_groups = [groups[key] for key in sorted(groups)]
+        if reverse:
+            self._reverse_character_groups(ordered_groups)
+        return ordered_groups
 
     def get_characters_grouped(
         self,
-        grouping: CharacterGroup = CharacterGroup.ROW_TOP_TO_BOTTOM,
+        grouping: CharacterGroup | CharacterOrder | None = None,
         *,
         input_chars: bool = True,
         inner_fill_chars: bool = False,
         outer_fill_chars: bool = False,
         added_chars: bool = False,
+        order: CharacterOrder | CharacterGroup | CharacterSort | str | None = None,
+        reverse: bool = False,
+        canvas_only: bool | None = None,
+        serpentine: bool = False,
     ) -> list[list[EffectCharacter]]:
-        """Get visible-canvas EffectCharacters grouped by the specified `CharacterGroup` grouping.
+        """Get selected characters as ordered spatial or singleton groups.
 
-        Grouping uses each character's immutable input coordinate, not its current
-        motion coordinate. Because the groups represent spatial regions of the canvas,
-        selected added characters with input coordinates outside the canvas are omitted.
-        Use `get_characters()` when a complete inventory, including off-canvas added
-        characters, is required.
+        Spatial orders retain their existing boundaries and internal order. Individual
+        orders, including spirals, produce one character per group. The default remains
+        complete rows from top to bottom. Legacy `grouping` remains supported; supply
+        either `grouping` or `order`, not both.
 
-        The `CIRCLE_*` groupings use terminal-adjusted Euclidean distance from
-        the text bounds' geometric midpoint, rounded up to an integer radius.
-        Each group is a one-column-wide radial band; empty bands are omitted.
+        `reverse` reverses both the groups and the characters within each group, after
+        optional serpentine traversal. Flattening the result therefore gives the same
+        traversal as `get_characters()` with identical options. Circular groups use
+        terminal-adjusted radial bands; diamond groups use Manhattan distance.
 
         Args:
-            grouping (CharacterGroup, optional): order to group the characters. Defaults to ROW_TOP_TO_BOTTOM.
-            input_chars (bool, optional): whether to include input characters. Defaults to True.
-            inner_fill_chars (bool, optional): whether to include inner fill characters. Defaults to False.
-            outer_fill_chars (bool, optional): whether to include outer fill characters. Defaults to False.
-            added_chars (bool, optional): whether to include added characters. Defaults to False.
+            grouping (CharacterGroup | CharacterOrder | None): Compatibility grouping argument.
+            input_chars (bool): Include input characters. Defaults to True.
+            inner_fill_chars (bool): Include inner fill characters. Defaults to False.
+            outer_fill_chars (bool): Include outer fill characters. Defaults to False.
+            added_chars (bool): Include added characters. Defaults to False.
+            order (CharacterOrder | CharacterGroup | CharacterSort | str | None): Character traversal.
+            reverse (bool): Reverse the final traversal, preserving membership. Defaults to False.
+            canvas_only (bool | None): Exclude off-canvas input coordinates. Defaults to True
+                for spatial orders and False for individual orders, independently of output form.
+            serpentine (bool): Reverse alternate spatial groups. Defaults to False.
 
         Returns:
-            list[list[EffectCharacter]]: List of lists of selected EffectCharacters within the visible canvas. Inner
-                lists correspond to groups as specified in the grouping.
+            list[list[EffectCharacter]]: Nonempty groups in traversal order.
 
         Raises:
-            InvalidCharacterGroupError: If an invalid grouping option is provided.
+            InvalidCharacterGroupError: If the compatibility `grouping` value is invalid.
+            InvalidCharacterOrderError: If `order` is invalid.
+            ValueError: If both ordering arguments are supplied.
+            TypeError: If a traversal flag is not a boolean.
 
         """
-        all_characters = self._get_selected_characters(
+        if order is not None and grouping is not None:
+            msg = "Pass either order or grouping, not both."
+            raise ValueError(msg)
+        if order is None:
+            if grouping is not None and not isinstance(grouping, (CharacterGroup, CharacterOrder)):
+                raise InvalidCharacterGroupError(grouping)
+            order = grouping if grouping is not None else CharacterOrder.ROW_TOP_TO_BOTTOM
+        characters, groups = self._resolve_character_order(
+            order,
+            input_chars=input_chars,
+            inner_fill_chars=inner_fill_chars,
+            outer_fill_chars=outer_fill_chars,
+            added_chars=added_chars,
+            reverse=reverse,
+            canvas_only=canvas_only,
+            serpentine=serpentine,
+        )
+        return groups if groups is not None else [[character] for character in characters or []]
+
+    def _resolve_character_order(
+        self,
+        order: CharacterOrder | CharacterGroup | CharacterSort | str,
+        *,
+        input_chars: bool,
+        inner_fill_chars: bool,
+        outer_fill_chars: bool,
+        added_chars: bool,
+        reverse: bool,
+        canvas_only: bool | None,
+        serpentine: bool,
+    ) -> tuple[list[EffectCharacter] | None, list[list[EffectCharacter]] | None]:
+        """Resolve selection and traversal once, retaining the order's native output form."""
+        try:
+            normalized = argutils.CharacterOrderArg.type_parser(order)
+        except argparse.ArgumentTypeError as error:
+            raise InvalidCharacterOrderError(order) from error
+        for name, value in (("reverse", reverse), ("serpentine", serpentine), ("canvas_only", canvas_only)):
+            if not isinstance(value, bool) and not (name == "canvas_only" and value is None):
+                msg = f"{name} must be a boolean" + (" or None." if name == "canvas_only" else ".")
+                raise TypeError(msg)
+        characters = self._get_selected_characters(
             input_chars=input_chars,
             inner_fill_chars=inner_fill_chars,
             outer_fill_chars=outer_fill_chars,
             added_chars=added_chars,
         )
+        clip_to_canvas = normalized.is_grouped if canvas_only is None else canvas_only
+        if clip_to_canvas:
+            characters = [
+                character for character in characters if self.canvas.coord_is_in_canvas(character.input_coord)
+            ]
+        if normalized.is_grouped:
+            groups = self._group_characters(characters, normalized)
+            if serpentine:
+                for group in groups[1::2]:
+                    group.reverse()
+            if reverse:
+                self._reverse_character_groups(groups)
+            return None, groups
+        characters = self._sort_characters(characters, normalized)
+        if reverse:
+            characters.reverse()
+        return characters, None
 
-        all_characters = [
-            character
-            for character in all_characters
-            if (
-                self.canvas.left <= character.input_coord.column <= self.canvas.right
-                and self.canvas.bottom <= character.input_coord.row <= self.canvas.top
-            )
-        ]
+    @staticmethod
+    def _reverse_character_groups(groups: list[list[EffectCharacter]]) -> None:
+        """Reverse a complete traversal without changing its group membership."""
+        groups.reverse()
+        for group in groups:
+            group.reverse()
 
+    def _group_characters(
+        self,
+        all_characters: list[EffectCharacter],
+        grouping: CharacterOrder,
+    ) -> list[list[EffectCharacter]]:
+        """Partition an inventory into ordered spatial groups."""
         all_characters.sort(
             key=lambda character: (character.input_coord.row, character.input_coord.column),
         )
 
         if grouping in (
-            CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-            CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+            CharacterOrder.COLUMN_LEFT_TO_RIGHT,
+            CharacterOrder.COLUMN_RIGHT_TO_LEFT,
         ):
             characters_by_column: dict[int, list[EffectCharacter]] = {}
             for character in all_characters:
@@ -1021,13 +1221,13 @@ class Terminal:
                 characters_by_column.setdefault(column_index, []).append(character)
             ordered_columns = sorted(
                 characters_by_column,
-                reverse=grouping is CharacterGroup.COLUMN_RIGHT_TO_LEFT,
+                reverse=grouping is CharacterOrder.COLUMN_RIGHT_TO_LEFT,
             )
             return [characters_by_column[column_index] for column_index in ordered_columns]
 
         if grouping in (
-            CharacterGroup.ROW_BOTTOM_TO_TOP,
-            CharacterGroup.ROW_TOP_TO_BOTTOM,
+            CharacterOrder.ROW_BOTTOM_TO_TOP,
+            CharacterOrder.ROW_TOP_TO_BOTTOM,
         ):
             characters_by_row: dict[int, list[EffectCharacter]] = {}
             for character in all_characters:
@@ -1035,12 +1235,12 @@ class Terminal:
                 characters_by_row.setdefault(row_index, []).append(character)
             ordered_rows = sorted(
                 characters_by_row,
-                reverse=grouping is CharacterGroup.ROW_TOP_TO_BOTTOM,
+                reverse=grouping is CharacterOrder.ROW_TOP_TO_BOTTOM,
             )
             return [characters_by_row[row_index] for row_index in ordered_rows]
         if grouping in (
-            CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
-            CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+            CharacterOrder.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+            CharacterOrder.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
         ):
             characters_by_diagonal: dict[int, list[EffectCharacter]] = {}
             for character in all_characters:
@@ -1048,12 +1248,12 @@ class Terminal:
                 characters_by_diagonal.setdefault(diagonal_index, []).append(character)
             ordered_diagonals = sorted(
                 characters_by_diagonal,
-                reverse=grouping is CharacterGroup.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
+                reverse=grouping is CharacterOrder.DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT,
             )
             return [characters_by_diagonal[diagonal_index] for diagonal_index in ordered_diagonals]
         if grouping in (
-            CharacterGroup.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
-            CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+            CharacterOrder.DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT,
+            CharacterOrder.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
         ):
             characters_by_diagonal = {}
             for character in all_characters:
@@ -1061,12 +1261,12 @@ class Terminal:
                 characters_by_diagonal.setdefault(diagonal_index, []).append(character)
             ordered_diagonals = sorted(
                 characters_by_diagonal,
-                reverse=grouping is CharacterGroup.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
+                reverse=grouping is CharacterOrder.DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT,
             )
             return [characters_by_diagonal[diagonal_index] for diagonal_index in ordered_diagonals]
         if grouping in (
-            CharacterGroup.CENTER_TO_OUTSIDE,
-            CharacterGroup.OUTSIDE_TO_CENTER,
+            CharacterOrder.DIAMONDS_CENTER_TO_OUTSIDE,
+            CharacterOrder.DIAMONDS_OUTSIDE_TO_CENTER,
         ):
             distance_map: dict[int, list[EffectCharacter]] = {}
             for character in all_characters:
@@ -1078,13 +1278,13 @@ class Terminal:
                 distance_map[distance].append(character)
             ordered_distances = sorted(
                 distance_map.keys(),
-                reverse=grouping is CharacterGroup.OUTSIDE_TO_CENTER,
+                reverse=grouping is CharacterOrder.DIAMONDS_OUTSIDE_TO_CENTER,
             )
             return [distance_map[distance] for distance in ordered_distances]
 
         if grouping in (
-            CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE,
-            CharacterGroup.CIRCLE_OUTSIDE_TO_CENTER,
+            CharacterOrder.CIRCLE_CENTER_TO_OUTSIDE,
+            CharacterOrder.CIRCLE_OUTSIDE_TO_CENTER,
         ):
             center_column = (self.canvas.text_left + self.canvas.text_right) / 2
             center_row = (self.canvas.text_bottom + self.canvas.text_top) / 2
@@ -1098,11 +1298,10 @@ class Terminal:
                 )
                 rings.setdefault(radius, []).append(character)
             return [
-                rings[radius]
-                for radius in sorted(rings, reverse=grouping is CharacterGroup.CIRCLE_OUTSIDE_TO_CENTER)
+                rings[radius] for radius in sorted(rings, reverse=grouping is CharacterOrder.CIRCLE_OUTSIDE_TO_CENTER)
             ]
 
-        raise InvalidCharacterGroupError(grouping)
+        raise InvalidCharacterOrderError(grouping)
 
     def get_character_by_input_coord(self, coord: Coord) -> EffectCharacter | None:
         """Get an EffectCharacter by its input coordinates.
@@ -1143,6 +1342,7 @@ class Terminal:
             raise InvalidCharacterError(character)
         if not isinstance(is_visible, bool):
             raise InvalidCharacterVisibilityError(is_visible)
+        visibility_changed = character._is_visible != is_visible
         character._is_visible = is_visible
         if is_visible:
             if character not in self._visible_characters:
@@ -1176,6 +1376,9 @@ class Terminal:
                 self._visible_wide_character_count -= 1
             self._visible_character_order_dirty = True
 
+        if visibility_changed and self._row_cache is not None:
+            self._row_cache.visibility_changed(character, visible=is_visible)
+
     def _notify_character_layer_changed(self, character: EffectCharacter, previous_layer: int) -> None:
         """Update visible-layer counts after an owned character's layer changes."""
         if character not in self._visible_characters:
@@ -1189,6 +1392,8 @@ class Terminal:
             self._visible_character_layer_counts.get(character.layer, 0) + 1
         )
         self._visible_character_order_dirty = True
+        if self._row_cache is not None:
+            self._row_cache.layer_changed(character)
 
     def _notify_character_cell_width_changed(self, character: EffectCharacter, previous_width: int) -> None:
         """Update the visible wide-character count after a visual-width transition."""
@@ -1236,7 +1441,7 @@ class Terminal:
                 row = character.motion.current_coord.row + self.canvas_row_offset
                 column = character.motion.current_coord.column + self.canvas_column_offset
                 if self.visible_bottom <= row <= self.visible_top and self.visible_left <= column <= self.visible_right:
-                    dense_rows[row - 1][column - 1] = character.animation.current_character_visual.formatted_symbol
+                    dense_rows[row - 1][column - 1] = character.animation.current_character_visual._formatted_symbol
             return ["".join(row) for row in dense_rows]
 
         rows: list[list[str] | None] = [None] * self.visible_top
@@ -1249,7 +1454,7 @@ class Terminal:
                 if row_cells is None:
                     row_cells = list(self._blank_row)
                     rows[row_index] = row_cells
-                row_cells[column - 1] = character.animation.current_character_visual.formatted_symbol
+                row_cells[column - 1] = character.animation.current_character_visual._formatted_symbol
         return [self._blank_row if row is None else "".join(row) for row in rows]
 
     def _render_width_aware_characters(self, visible_characters: list[EffectCharacter]) -> list[str]:
@@ -1296,7 +1501,7 @@ class Terminal:
                         if old_row_owners[old_column_index] is overwritten_character:
                             old_row_owners[old_column_index] = None
                             old_row_cells[old_column_index] = " "
-                row_cells[column_index] = visual.formatted_symbol
+                row_cells[column_index] = visual._formatted_symbol
                 row_owners[column_index] = character
                 for continuation_column in range(column_index + 1, column_index + visual.cell_width):
                     row_cells[continuation_column] = ""
@@ -1313,6 +1518,11 @@ class Terminal:
         collision. Characters outside the visible bounds are skipped.
         """
         visible_characters = self._get_visible_characters_in_painter_order()
+        if self._row_cache is not None:
+            cached_rows = self._row_cache.render(self)
+            if cached_rows is not None:
+                self.terminal_state = cached_rows
+                return
         if self._visible_wide_character_count:
             self.terminal_state = self._render_width_aware_characters(visible_characters)
         else:

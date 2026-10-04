@@ -38,7 +38,9 @@ class HighlightConfig(BaseConfig):
     Attributes:
         highlight_brightness (float): Brightness of the highlight color. Values less than 1 will darken the highlight
             color, while values greater than 1 will brighten the highlight color.
-        highlight_direction (CharacterGroup): Direction the highlight will travel.
+        reverse_highlight_direction (bool): Reverse the complete traversal while preserving group membership.
+        highlight_direction (`CharacterOrder`): Grouping or character order for
+            highlight activation. Sort values follow the exact sorted order, including spiral patterns.
         highlight_width (int): Width of the highlight. n >= 1
         final_gradient_stops (tuple[Color, ...]): Tuple of colors for the final color gradient. If only one color is
             provided, the characters will be displayed in that color.
@@ -73,14 +75,22 @@ class HighlightConfig(BaseConfig):
         "values greater than 1 will brighten the highlight color."
     )
 
-    highlight_direction: argutils.CharacterGroup = argutils.ArgSpec(
+    highlight_direction: argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort = argutils.ArgSpec(
         name="--highlight-direction",
-        default=argutils.CharacterGroup.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
-        metavar=" ".join(argutils.CharacterGroupArg.METAVAR),
-        help="Direction the highlight will travel.",
-        type=argutils.CharacterGroupArg.type_parser,
+        default=argutils.CharacterOrder.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT,
+        metavar=" ".join(argutils.CharacterOrderArg.METAVAR),
+        help="Character order for highlight activation: spatial groups or individual traversal, including spirals.",
+        type=argutils.CharacterOrderArg.type_parser,
     )  # pyright: ignore[reportAssignmentType]
-    ("CharacterGroup : Direction the highlight will travel.")
+    ("CharacterOrder : Grouping or character order for highlight activation.")
+
+    reverse_highlight_direction: bool = argutils.ArgSpec(
+        name="--reverse-highlight-direction",
+        default=False,
+        action="store_true",
+        help="Reverse the complete highlight direction traversal.",
+    )  # pyright: ignore[reportAssignmentType]
+    "bool : Reverse the complete traversal, preserving group membership."
 
     highlight_width: int = argutils.ArgSpec(
         name="--highlight-width",
@@ -126,8 +136,12 @@ class HighlightIterator(BaseEffectIterator[HighlightConfig]):
         super().__init__(effect)
         self.character_final_color_map: dict[EffectCharacter, Color | None] = {}
         self.pending_characters: list[list[EffectCharacter]] = []
+        groups = self.terminal.get_characters_grouped(
+            order=self.config.highlight_direction,
+            reverse=self.config.reverse_highlight_direction,
+        )
         self.easer = easing.SequenceEaser(
-            sequence=self.terminal.get_characters_grouped(self.config.highlight_direction),
+            sequence=groups,
             easing_function=easing.in_out_circ,
         )
         self.build()

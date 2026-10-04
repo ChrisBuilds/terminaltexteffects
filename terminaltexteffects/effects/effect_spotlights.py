@@ -8,8 +8,11 @@ Classes:
 
 from __future__ import annotations
 
+import math
 import random
+from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
+from functools import lru_cache
 
 from terminaltexteffects import Color, ColorPair, Coord, EffectCharacter, Gradient, easing, geometry
 from terminaltexteffects.engine import animation, motion
@@ -150,6 +153,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
     """Effect iterator for the Spotlights effect."""
 
     DYNAMIC_NEUTRAL_GRAY = Color("#808080")
+    BRIGHTNESS_CACHE_SIZE = 4096
 
     def __init__(self, effect: Spotlights) -> None:
         """Initialize the effect iterator.
@@ -162,6 +166,14 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
         self.pending_chars: list[EffectCharacter] = []
         self.illuminated_chars: set[EffectCharacter] = set()
         self.character_color_map: dict[EffectCharacter, tuple[ColorPair, ColorPair]] = {}
+        # Cache immutable results per iterator without retaining this iterator in the wrapper.
+        self._cached_color_pair_brightness = lru_cache(maxsize=self.BRIGHTNESS_CACHE_SIZE)(
+            self._adjust_color_pair_brightness,
+        )
+        self._appearance_state: dict[
+            EffectCharacter,
+            tuple[ColorPair, tuple[object, ...], animation.CharacterVisual, dict[str, object]],
+        ] = {}
         self.build()
 
     @staticmethod
@@ -261,43 +273,35 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
             range_ (int): The range of the spotlights.
 
         """
-        coords_in_range: list[Coord] = []
-        for spotlight in self.spotlights:
-            coords_in_range.extend(geometry.find_coords_in_circle(spotlight.motion.current_coord, radius=range_))
-        chars_in_range: set[EffectCharacter] = set()
-        for coord in coords_in_range:
-            character = self.terminal.get_character_by_input_coord(coord)
-            if character and self._is_spotlightable(character):
-                chars_in_range.add(character)
+        chars_in_range = self._get_chars_in_range(range_)
         chars_no_longer_in_range = self.illuminated_chars - chars_in_range
         for character in chars_no_longer_in_range:
             expand_override = self._get_expand_color_override(character)
             if expand_override is None:
-                character.animation.set_appearance(
-                    character.input_symbol,
-                    self.character_color_map[character][1],
-                )
+                self._set_appearance(character, self.character_color_map[character][1])
             else:
-                character.animation.set_appearance(character.input_symbol, expand_override)
+                self._set_appearance(character, expand_override)
 
+        centers = tuple(spotlight.motion.current_coord for spotlight in self.spotlights)
         for character in chars_in_range:
-            distance = min(
-                [
-                    geometry.find_length_of_line(
-                        spotlight.motion.current_coord,
-                        character.input_coord,
-                        terminal_adjusted=True,
-                    )
-                    for spotlight in self.spotlights
-                ],
-            )
+            distance = math.inf
+            coord = character.input_coord
+            for center in centers:
+                beam_distance = math.hypot(
+                    coord.column - center.column,
+                    (coord.row - center.row) * geometry.TERMINAL_ROW_SCALE,
+                )
+                if beam_distance < distance:  # noqa: PLR1730 - Avoid a function call for each beam.
+                    distance = beam_distance
 
-            if distance > range_ * (1 - self.config.beam_falloff):
+            # A continuation cell can be covered even when its leading cell is outside the beam.
+            # Zero falloff is a hard edge: every covered character receives full brightness.
+            if self.config.beam_falloff and distance > range_ * (1 - self.config.beam_falloff):
                 brightness_factor = max(
                     1 - (distance - range_ * (1 - self.config.beam_falloff)) / (range_ * self.config.beam_falloff),
                     0.2,
                 )
-                adjusted_color = self._adjust_color_pair_brightness(
+                adjusted_color = self._cached_color_pair_brightness(
                     self.character_color_map[character][0],
                     brightness_factor,
                 )
@@ -305,10 +309,91 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                 adjusted_color = self.character_color_map[character][0]
             expand_override = self._get_expand_color_override(character)
             if expand_override is None:
-                character.animation.set_appearance(character.input_symbol, adjusted_color)
+                self._set_appearance(character, adjusted_color)
             else:
-                character.animation.set_appearance(character.input_symbol, expand_override)
+                self._set_appearance(character, expand_override)
         self.illuminated_chars = chars_in_range
+
+    def _set_appearance(self, character: EffectCharacter, colors: ColorPair) -> None:
+        """Reuse this effect's unchanged visuals, restoring appearance after external edits.
+
+        Snapshot all instance fields, including styles and the formatted symbol, and the
+        animation color policy. A changed or replaced visual goes through `set_appearance`
+        again. Input-color overrides use the engine helper to compare effective colors.
+        """
+        anim = character.animation
+        if anim.existing_color_handling == "always":
+            anim.set_appearance_if_changed(character.input_symbol, colors)
+            return
+        visual = anim.current_character_visual
+        policy = (
+            anim.no_color,
+            anim.use_xterm_colors,
+            anim.existing_color_handling,
+            anim.input_fg_color,
+            anim.input_bg_color,
+            anim.input_bold,
+            character.uses_input_preexisting_colors,
+        )
+        previous = self._appearance_state.get(character)
+        if (
+            previous is not None
+            and previous[0] == colors
+            and previous[1] == policy
+            and previous[2] is visual
+            and previous[3] == visual.__dict__
+        ):
+            return
+        anim.set_appearance(character.input_symbol, colors)
+        visual = anim.current_character_visual
+        self._appearance_state[character] = (colors, policy, visual, visual.__dict__.copy())
+
+    def _build_spotlight_index(self) -> None:
+        """Index authored input cells, including wide continuations and colored spaces.
+
+        Input coordinates and symbols remain fixed during this effect. Build after applying
+        each input symbol so the current visual width matches its authored footprint.
+        Uncolored fill cells never participate in illumination and need not be materialized.
+        """
+        column_cells: dict[int, list[tuple[int, EffectCharacter]]] = {}
+        for character in self.character_color_map:
+            if not self._is_spotlightable(character):
+                continue
+            coord = character.input_coord
+            for offset in range(character.animation.current_character_visual.cell_width):
+                column_cells.setdefault(coord.column + offset, []).append((coord.row, character))
+        self._spotlight_columns = sorted(column_cells)
+        self._spotlight_cells: dict[int, tuple[tuple[int, ...], tuple[EffectCharacter, ...]]] = {}
+        for column, cells in column_cells.items():
+            cells.sort(key=lambda cell: cell[0])
+            self._spotlight_cells[column] = (
+                tuple(row for row, _ in cells),
+                tuple(character for _, character in cells),
+            )
+
+    def _get_chars_in_range(self, range_: int) -> set[EffectCharacter]:
+        """Select occupied cells using the same floating ellipse spans as the geometry helper."""
+        if range_ < 0:
+            msg = "radius must be non-negative."
+            raise ValueError(msg)
+        chars_in_range: set[EffectCharacter] = set()
+        a_squared = range_**2
+        b_squared = (range_ / geometry.TERMINAL_ROW_SCALE) ** 2
+        for spotlight in self.spotlights:
+            center = spotlight.motion.current_coord
+            start = bisect_left(self._spotlight_columns, center.column - range_)
+            stop = bisect_right(self._spotlight_columns, center.column + range_)
+            for column in self._spotlight_columns[start:stop]:
+                offset = (
+                    int((b_squared * (1 - ((column - center.column) ** 2) / a_squared)) ** 0.5)
+                    if range_
+                    else 0
+                )
+                rows, characters = self._spotlight_cells[column]
+                lo = bisect_left(rows, center.row - offset)
+                hi = bisect_right(rows, center.row + offset)
+                chars_in_range.update(characters[lo:hi])
+        return chars_in_range
 
     def build(self) -> None:
         """Build the initial state of the effect."""
@@ -331,30 +416,16 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
                         fg=bright_fg,
                         bg=character.animation.input_bg_color,
                     )
-                    dark_pair = ColorPair(
-                        fg=(
-                            animation.Animation.adjust_color_brightness(bright_fg, 0.2)
-                            if bright_fg
-                            else None
-                        ),
-                        bg=(
-                            animation.Animation.adjust_color_brightness(character.animation.input_bg_color, 0.2)
-                            if character.animation.input_bg_color
-                            else None
-                        ),
-                    )
                 else:
                     bright_pair = ColorPair(fg=self.DYNAMIC_NEUTRAL_GRAY)
-                    dark_pair = ColorPair(
-                        fg=animation.Animation.adjust_color_brightness(self.DYNAMIC_NEUTRAL_GRAY, 0.2),
-                    )
             else:
                 color_bright = final_gradient_mapping[character.input_coord]
                 bright_pair = ColorPair(fg=color_bright)
-                dark_pair = ColorPair(fg=animation.Animation.adjust_color_brightness(color_bright, 0.2))
+            dark_pair = self._cached_color_pair_brightness(bright_pair, 0.2)
             self.terminal.set_character_visibility(character, is_visible=True)
             self.character_color_map[character] = (bright_pair, dark_pair)
-            character.animation.set_appearance(character.input_symbol, dark_pair)
+            self._set_appearance(character, dark_pair)
+        self._build_spotlight_index()
         smallest_dimension = min(self.terminal.canvas.right, self.terminal.canvas.top)
         self.illuminate_range = max(
             int(

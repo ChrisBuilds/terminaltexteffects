@@ -61,23 +61,52 @@ class SweepConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "tuple[str, ...] | str : Tuple of symbols to use for the sweep shimmer."
 
-    first_sweep_direction: argutils.CharacterGroup = argutils.ArgSpec(
-        name="--first-sweep-direction",
-        default=argutils.CharacterGroup.COLUMN_RIGHT_TO_LEFT,
-        type=argutils.CharacterGroupArg.type_parser,
-        metavar=" ".join(argutils.CharacterGroupArg.METAVAR),
-        help="Direction of the first sweep, revealing uncolored characters.",
+    first_sweep_direction: argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort = (
+        argutils.ArgSpec(
+            name="--first-sweep-direction",
+            default=argutils.CharacterOrder.COLUMN_RIGHT_TO_LEFT,
+            type=argutils.CharacterOrderArg.type_parser,
+            metavar=" ".join(argutils.CharacterOrderArg.METAVAR),
+            help="Grouping or character sort order for the first sweep, revealing uncolored characters.",
+        )
     )  # pyright: ignore[reportAssignmentType]
-    "CharacterGroup : Direction of the first sweep, revealing uncolored characters."
+    "CharacterOrder : Order of the first sweep, revealing uncolored characters."
 
-    second_sweep_direction: argutils.CharacterGroup = argutils.ArgSpec(
-        name="--second-sweep-direction",
-        default=argutils.CharacterGroup.COLUMN_LEFT_TO_RIGHT,
-        type=argutils.CharacterGroupArg.type_parser,
-        metavar=" ".join(argutils.CharacterGroupArg.METAVAR),
-        help="Direction of the second sweep, coloring the characters.",
+    reverse_first_sweep_direction: bool = argutils.ArgSpec(
+        name="--reverse-first-sweep-direction",
+        default=False,
+        action="store_true",
+        help="Reverse the complete first sweep direction traversal.",
     )  # pyright: ignore[reportAssignmentType]
-    "CharacterGroup : Direction of the second sweep, coloring the characters."
+    "bool : Reverse the complete traversal, preserving group membership."
+
+    second_sweep_direction: argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort = (
+        argutils.ArgSpec(
+            name="--second-sweep-direction",
+            default=argutils.CharacterOrder.COLUMN_LEFT_TO_RIGHT,
+            type=argutils.CharacterOrderArg.type_parser,
+            metavar=" ".join(argutils.CharacterOrderArg.METAVAR),
+            help="Grouping or character sort order for the second sweep, coloring the characters.",
+        )
+    )  # pyright: ignore[reportAssignmentType]
+    "CharacterOrder : Order of the second sweep, coloring the characters."
+
+    reverse_second_sweep_direction: bool = argutils.ArgSpec(
+        name="--reverse-second-sweep-direction",
+        default=False,
+        action="store_true",
+        help="Reverse the complete second sweep direction traversal.",
+    )  # pyright: ignore[reportAssignmentType]
+    "bool : Reverse the complete traversal, preserving group membership."
+
+    travel_speed: int = argutils.ArgSpec(
+        name="--travel-speed",
+        type=argutils.PositiveInt.type_parser,
+        default=1,
+        metavar=argutils.PositiveInt.METAVAR,
+        help="Number of sweep easing steps to advance per frame, for both phases. n > 0.",
+    )  # pyright: ignore[reportAssignmentType]
+    "int : Easing steps per frame for both sweeps; animations advance once per frame. Defaults to 1."
 
     final_gradient_stops: tuple[tte.Color, ...] = FinalGradientStopsArg(
         default=(tte.Color("#8A008A"), tte.Color("#00D1FF"), tte.Color("#ffffff")),
@@ -190,17 +219,27 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
                 ),
             )
 
-        self.groups_first_sweep = self.terminal.get_characters_grouped(
-            self.config.first_sweep_direction,
-            inner_fill_chars=True,
-            outer_fill_chars=True,
+        self.groups_first_sweep = self._get_sweep_groups(
+            self.config.first_sweep_direction, reverse=self.config.reverse_first_sweep_direction,
         )
         self.easer = tte.easing.SequenceEaser(
             sequence=self.groups_first_sweep,
             easing_function=tte.easing.in_out_circ,
         )
-        self.groups_second_sweep = self.terminal.get_characters_grouped(
-            self.config.second_sweep_direction,
+        self.groups_second_sweep = self._get_sweep_groups(
+            self.config.second_sweep_direction, reverse=self.config.reverse_second_sweep_direction,
+        )
+
+    def _get_sweep_groups(
+        self,
+        direction: argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort,
+        *,
+        reverse: bool,
+    ) -> list[list[tte.EffectCharacter]]:
+        """Schedule ordered groups or singletons, including all canvas fill."""
+        return self.terminal.get_characters_grouped(
+            order=direction,
+            reverse=reverse,
             inner_fill_chars=True,
             outer_fill_chars=True,
         )
@@ -208,16 +247,19 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
     def __next__(self) -> str:
         """Return the next frame in the effect."""
         while self.active_characters or not self.complete:
-            self.easer.step()
-            group: list[tte.EffectCharacter]
-            for group in self.easer.added:
-                for character in group:
-                    if self.phase == "first sweep":
-                        self.terminal.set_character_visibility(character, is_visible=True)
-                    character.animation.activate_scene(
-                        "initial_sweep" if self.phase == "first sweep" else "second_sweep",
-                    )
-                self.active_characters.update(group)
+            for _ in range(self.config.travel_speed):
+                self.easer.step()
+                group: list[tte.EffectCharacter]
+                for group in self.easer.added:
+                    for character in group:
+                        if self.phase == "first sweep":
+                            self.terminal.set_character_visibility(character, is_visible=True)
+                        character.animation.activate_scene(
+                            "initial_sweep" if self.phase == "first sweep" else "second_sweep",
+                        )
+                    self.active_characters.update(group)
+                if self.easer.is_complete():
+                    break
             if self.easer.is_complete() and self.phase == "first sweep":
                 self.easer.sequence = self.groups_second_sweep
                 self.easer.reset()

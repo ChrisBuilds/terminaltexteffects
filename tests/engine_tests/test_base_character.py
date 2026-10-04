@@ -245,6 +245,29 @@ def test_eventhandler_register_event_duplicate_raises_error(eventhandler: EventH
         eventhandler.register_event(EventHandler.Event.PATH_COMPLETE, p1, EventHandler.Action.ACTIVATE_PATH, p2)
 
 
+def test_eventhandler_registrations_remain_independent_between_characters() -> None:
+    """Shared validation rules keep equal path IDs and action lists independent."""
+    first = EffectCharacter(0, "a", 1, 1)
+    second = EffectCharacter(1, "b", 2, 1)
+    first_path = first.motion.new_path(path_id="shared")
+    second_path = second.motion.new_path(path_id="shared")
+    event = EventHandler.Event.PATH_COMPLETE
+    action = EventHandler.Action.SET_LAYER
+
+    first.event_handler.register_event(event, first_path, action, 1)
+    second.event_handler.register_event(event, second_path, action, 2)
+    first.event_handler._handle_event(event, first_path)
+    assert first.layer == 1
+    assert second.layer == 0
+
+    first.event_handler.registered_events.clear()
+    first.event_handler.register_event(event, first_path, action, 3)
+    second.event_handler._handle_event(event, second_path)
+    first.event_handler._handle_event(event, first_path)
+    assert first.layer == 3
+    assert second.layer == 2
+
+
 def test_eventhandler_handle_event(eventhandler: EventHandler) -> None:
     """Test handling an event."""
     p1 = Path("a")

@@ -361,6 +361,7 @@ printf 'easing:%s\\n' "${COMPREPLY[*]}"
         ("sweep", "--first-sweep-direction"),
         ("sweep", "--second-sweep-direction"),
         ("laseretch", "--etch-pattern"),
+        ("waves", "--wave-direction"),
     ],
 )
 def test_completion_suggests_all_supported_groupings(command: str, option: str) -> None:
@@ -376,10 +377,12 @@ printf '%s\\n' "${{COMPREPLY[@]}}"
     )
     expected = argutils.CharacterGroupArg.COMPLETION_CHOICES
     if command == "laseretch":
-        expected = ("algorithm", *expected)
+        expected = ("algorithm", *argutils.CharacterOrderArg.COMPLETION_CHOICES)
+    elif command in ("wipe", "highlight", "sweep", "waves"):
+        expected = argutils.CharacterOrderArg.COMPLETION_CHOICES
     assert set(result.stdout.splitlines()) == set(expected)
     destination = option.removeprefix("--").replace("-", "_")
-    zsh_choices = f"]:{destination}:({' '.join(expected)})\""
+    zsh_choices = f']:{destination}:({" ".join(expected)})"'
     assert zsh_choices in get_completion_script("zsh")
 
     parser, _ = __main__.build_parser(include_user_effects=False)
@@ -387,25 +390,78 @@ printf '%s\\n' "${{COMPREPLY[@]}}"
         parser.parse_args([command, option, choice])
 
 
-def test_waves_completion_suggests_circular_directions() -> None:
-    """Waves advertises both circular directions in completions and accepts them on the CLI."""
+@pytest.mark.parametrize("prefix", ["circle_", "diamonds_"])
+def test_waves_completion_suggests_radial_directions(prefix: str) -> None:
+    """Waves advertises both directions for diamond and circular bands."""
     result = _run_bash(
         f"""
 eval "$({sys.executable} -m terminaltexteffects --print-completion bash)"
-COMP_WORDS=(tte waves --wave-direction circle_)
+COMP_WORDS=(tte waves --wave-direction {prefix})
 COMP_CWORD=3
 _shtab_tte
 printf '%s\\n' "${{COMPREPLY[@]}}"
 """,
     )
-    expected = {"circle_center_to_outside", "circle_outside_to_center"}
+    expected = {f"{prefix}center_to_outside", f"{prefix}outside_to_center"}
     assert set(result.stdout.splitlines()) == expected
     zsh_completion = get_completion_script("zsh")
-    assert 'outside_to_center circle_center_to_outside circle_outside_to_center)"' in zsh_completion
+    assert (
+        "diamonds_center_to_outside diamonds_outside_to_center circle_center_to_outside circle_outside_to_center "
+        in zsh_completion
+    )
     parser, _ = __main__.build_parser(include_user_effects=False)
     for direction in expected:
         parsed = parser.parse_args(["waves", "--wave-direction", direction])
-        assert parsed.wave_direction == direction
+        assert parsed.wave_direction is argutils.CharacterOrder[direction.upper()]
+
+
+@pytest.mark.parametrize(
+    ("command", "flags"),
+    [
+        ("wipe", ["--reverse-wipe-direction"]),
+        ("highlight", ["--reverse-highlight-direction"]),
+        ("waves", ["--reverse-wave-direction"]),
+        ("laseretch", ["--reverse-etch-pattern"]),
+        ("sweep", ["--reverse-first-sweep-direction", "--reverse-second-sweep-direction"]),
+    ],
+)
+def test_character_order_reverse_flags_parse_and_complete(command: str, flags: list[str]) -> None:
+    """Both shells suggest the actual boolean flags, which default to False and accept CLI activation."""
+    result = _run_bash(
+        f"""
+eval "$({sys.executable} -m terminaltexteffects --print-completion bash)"
+COMP_WORDS=(tte {command} --reverse-)
+COMP_CWORD=2
+_shtab_tte
+printf '%s\\n' "${{COMPREPLY[@]}}"
+""",
+    )
+    assert set(result.stdout.splitlines()) == set(flags)
+    parser, _ = __main__.build_parser(include_user_effects=False)
+    defaults = parser.parse_args([command])
+    enabled = parser.parse_args([command, *flags])
+    zsh_completion = get_completion_script("zsh")
+    for flag in flags:
+        field = flag.removeprefix("--").replace("-", "_")
+        assert getattr(defaults, field) is False
+        assert getattr(enabled, field) is True
+        assert f'"{flag}[' in zsh_completion
+
+
+@pytest.mark.parametrize("command", ["waves", "sweep"])
+def test_travel_speed_option_completes_in_bash_and_zsh(command: str) -> None:
+    """Both bundled shells advertise the effects' travel-speed arguments."""
+    result = _run_bash(
+        f"""
+eval "$({sys.executable} -m terminaltexteffects --print-completion bash)"
+COMP_WORDS=(tte {command} --travel-)
+COMP_CWORD=2
+_shtab_tte
+printf '%s\\n' "${{COMPREPLY[@]}}"
+""",
+    )
+    assert result.stdout.splitlines() == ["--travel-speed"]
+    assert '"--travel-speed[' in get_completion_script("zsh")
 
 
 def test_bash_completion_suggests_choice_and_file_values(tmp_path: Path) -> None:

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import random
 from typing import TYPE_CHECKING, Literal, cast
 
 import pytest
 
 from terminaltexteffects.effects import effect_highlight
 from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.graphics import ColorPair
 
 if TYPE_CHECKING:
@@ -23,6 +25,117 @@ def _make_terminal_config(
     terminal_config.frame_rate = 0
     terminal_config.existing_color_handling = existing_color_handling
     return terminal_config
+
+
+@pytest.mark.parametrize("direction", [*argutils.CharacterGroup, *argutils.CharacterSort])
+def test_highlight_direction_normalizes_groups_and_sorts(
+    direction: argutils.CharacterGroup | argutils.CharacterSort,
+) -> None:
+    """CLI spellings and native groups/sorts normalize on construction and assignment."""
+    for value in (direction, direction.name.lower(), direction.name):
+        config = effect_highlight.HighlightConfig(highlight_direction=value)  # pyright: ignore[reportArgumentType]
+        assert config.highlight_direction is argutils.CharacterOrder[direction.name]
+        config = effect_highlight.HighlightConfig()
+        config.highlight_direction = value  # pyright: ignore[reportAttributeAccessIssue]
+        assert config.highlight_direction is argutils.CharacterOrder[direction.name]
+
+
+@pytest.mark.parametrize("value", ["invalid", "", None, True, False, 1, [], {}, argutils.ColorSort.RANDOM])
+def test_highlight_direction_rejects_invalid_values(value: object) -> None:
+    """Malformed directions fail at configuration normalization."""
+    with pytest.raises(ValueError, match="highlight_direction"):
+        effect_highlight.HighlightConfig(highlight_direction=value)  # pyright: ignore[reportArgumentType]
+    config = effect_highlight.HighlightConfig()
+    with pytest.raises(ValueError, match="highlight_direction"):
+        config.highlight_direction = value  # pyright: ignore[reportAttributeAccessIssue]
+
+
+@pytest.mark.parametrize("direction", argutils.CharacterGroup)
+def test_highlight_group_directions_preserve_complete_groups(direction: argutils.CharacterGroup) -> None:
+    """Group directions retain complete spatial groups and the original diagonal default."""
+    effect = effect_highlight.Highlight("abc\ndef\nghi")
+    effect.terminal_config = _make_terminal_config("ignore")
+    effect.effect_config.highlight_direction = direction
+    iterator = cast("effect_highlight.HighlightIterator", iter(effect))
+    assert iterator.easer.sequence == iterator.terminal.get_characters_grouped(direction)
+    assert (
+        effect_highlight.HighlightConfig().highlight_direction
+        is argutils.CharacterOrder.DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT
+    )
+
+
+@pytest.mark.parametrize("direction", argutils.CharacterSort)
+@pytest.mark.parametrize("input_data", ["X", "abcde", "a\nb\nc", "abcde\nfghij\nklmno", "界 a\nb 界"])
+def test_highlight_sorted_direction_schedules_exact_order_and_restores_base_colors(
+    direction: argutils.CharacterSort,
+    input_data: str,
+) -> None:
+    """Sorted modes activate singleton entries in order while leaving all text visible."""
+    random.seed(1337)
+    effect = effect_highlight.Highlight(input_data)
+    effect.terminal_config = _make_terminal_config("ignore")
+    effect.effect_config.highlight_direction = direction
+    iterator = cast("effect_highlight.HighlightIterator", iter(effect))
+    ordered = [group[0] for group in iterator.easer.sequence]
+    characters = iterator.terminal.get_characters()
+    assert all(len(group) == 1 for group in iterator.easer.sequence)
+    assert len(ordered) == len(characters)
+    assert set(ordered) == set(characters)
+    if direction is not argutils.CharacterSort.RANDOM:
+        assert ordered == iterator.terminal.get_characters(sort=direction)
+    base_colors = {character: character.animation.current_character_visual.colors for character in characters}
+    assert all(character.is_visible and character.animation.active_scene is None for character in characters)
+    scheduled = []
+    for _ in iterator:
+        added = [group[0] for group in iterator.easer.added]
+        scheduled.extend(added)
+        assert scheduled == ordered[:len(scheduled)]
+        assert all(character.is_visible for character in characters)
+        assert all(
+            character.animation.active_scene is character.animation.query_scene("highlight") for character in added
+        )
+    assert scheduled == ordered
+    assert all(
+        character.animation.current_character_visual.symbol == character.input_symbol
+        and character.animation.current_character_visual.colors == base_colors[character]
+        for character in characters
+    )
+
+
+@pytest.mark.parametrize("highlight_width", [1, 20])
+@pytest.mark.parametrize("color_handling", ["ignore", "dynamic", "always"])
+def test_highlight_sorted_direction_keeps_scene_duration_and_restores_input_colors(
+    highlight_width: int,
+    color_handling: Literal["ignore", "dynamic", "always"],
+) -> None:
+    """Sort order does not change width-dependent scene duration or final colors."""
+    input_data = "\x1b[38;5;196m\x1b[48;5;21m界 a\nb 界\x1b[0m"
+    grouped = effect_highlight.Highlight(input_data)
+    sorted_effect = effect_highlight.Highlight(input_data)
+    for effect in (grouped, sorted_effect):
+        effect.terminal_config = _make_terminal_config(color_handling)
+        effect.effect_config.highlight_width = highlight_width
+    sorted_effect.effect_config.highlight_direction = argutils.CharacterSort.SPIRAL_COUNTER_CLOCKWISE_QUAD
+    group_iterator = cast("effect_highlight.HighlightIterator", iter(grouped))
+    sort_iterator = cast("effect_highlight.HighlightIterator", iter(sorted_effect))
+    for group_character, sort_character in zip(
+        group_iterator.terminal.get_characters(),
+        sort_iterator.terminal.get_characters(),
+    ):
+        group_scene = group_character.animation.query_scene("highlight")
+        sort_scene = sort_character.animation.query_scene("highlight")
+        assert [(frame.duration, frame.character_visual.colors) for frame in sort_scene.frames] == [
+            (frame.duration, frame.character_visual.colors) for frame in group_scene.frames
+        ]
+    for _ in sort_iterator:
+        pass
+    assert all(
+        character.is_visible
+        and character.animation.current_character_visual.symbol == character.input_symbol
+        and character.animation.current_character_visual.colors
+        == character.animation.query_scene("highlight").frames[-1].character_visual.colors
+        for character in sort_iterator.terminal.get_characters()
+    )
 
 
 @pytest.mark.parametrize(

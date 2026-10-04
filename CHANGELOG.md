@@ -35,6 +35,46 @@
 
 ---
 
+* Motion path activation now calculates straight-line origin distances directly with terminal-scaled `math.hypot`,
+  avoiding geometry-cache key hashing for this small calculation. Bézier distance caching, fresh origin objects,
+  activation resets, and event behavior are preserved. Added retained-reference and callback-restart regression tests.
+  Paired production Rings iterator benchmarks (seven samples, two warmups) reduced dense total time 2.5%, with
+  identical output; the full shared-engine suite passes.
+* Added opt-in `Animation.set_appearance_if_changed()` to reuse unchanged effective visuals while detecting
+  direct visual edits, scene replacement, color-policy changes, and width transitions. The ordinary appearance
+  setter retains fresh-visual semantics. Overflow row coloring and Spotlights use the helper in `always` input-color
+  mode; other color modes retain their existing appearance paths. Paired dense iterator measurements reduced
+  total time by 32.2% and 17.2%, respectively, with identical output. Overflow peak traced allocation increased
+  21.6%; Spotlights stayed near parity.
+* Reuse read-only event-registration validation tables across characters instead of rebuilding them for each
+  registration. Caller and target validation, ID resolution, duplicate detection, and per-character actions retain
+  their existing behavior. Added coverage for independent registrations when characters use the same path IDs.
+  Paired dense 80-by-24 Rings benchmarks (seven samples, two warmups, seed 1337, no terminal printing) reduced
+  build time from 0.408s to 0.297s (27.3%) and total time from 2.964s to 2.860s (3.5%), with identical output.
+* Added opt-in `Terminal.enable_row_cache()` to reuse unchanged single-cell output rows while tracking motion,
+  animation, visibility, layering, and direct formatted-symbol edits. Wide characters retain width-aware rendering.
+  Matrix enables caching on canvases with at least four rows and 256 cells. Fixed-clock dense 80-by-24 benchmarks
+  (seven samples, two warmups, seed 1337) reduced render time from 0.400s to 0.310s (22%) and total time from
+  0.471s to 0.386s (18%), with identical frames and output. A separate traced-memory sample increased peak memory
+  from 14.0 MB to 15.3 MB (9%); small Matrix and uncached Wipe timings were essentially unchanged.
+* Print, Pour, BouncyBalls, ErrorCorrect, SynthGrid, and Rain now enable row caching within measured size,
+  occupancy, and display-width ranges. Horizontal Pour retains ordinary rendering after caching regressed its
+  timing. Seven-sample iterator benchmarks (two warmups, seed 1337, dense 80-by-24 input, no terminal printing)
+  reduced total time by 62.5%, 25.0%, 15.9%, 19.7%, 15.4%, and 10.1%, respectively. All 124 seeded output
+  signatures matched, including color modes, offsets, alternate configurations, and width-aware helper rendering.
+  Added activation-boundary and width-transition tests and documented the effect-specific gates in `docs/performance.md`.
+* Added `CharacterOrder` and `CharacterOrderArg` to unify spatial grouping and individual traversal.
+  Both `Terminal.get_characters(order=...)` and `get_characters_grouped(order=...)` accept every order:
+  spatial groups flatten into character sequences, and individual sorts produce singleton groups.
+  Legacy enums and `sort` / `grouping` arguments remain supported. `canvas_only` makes off-canvas selection explicit.
+* Added `reverse=True` to flat, grouped, and grid character retrieval. Grouped reversal reverses both group order
+  and internal character order while preserving membership. Optional `serpentine=True` on order-based retrieval
+  reverses alternate spatial groups before global reversal, without reshuffling random traversals.
+* Added clockwise and counterclockwise single, double, and quad spiral `CharacterSort` options for
+  `Terminal.get_characters()`. Spirals wind inward through the selected coordinates' bounding box, with
+  interleaved arms starting at top-left, opposite corners, or all four corners respectively.
+  CLI keys are `spiral_clockwise`, `spiral_clockwise_double`, `spiral_clockwise_quad`,
+  `spiral_counter_clockwise`, `spiral_counter_clockwise_double`, and `spiral_counter_clockwise_quad`.
 * Added `CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE` and `CIRCLE_OUTSIDE_TO_CENTER`, which group characters in
   terminal-adjusted circular bands around the text's geometric midpoint. Bands are one column wide, empty bands
   are omitted, and even-sized text is grouped symmetrically.
@@ -56,13 +96,42 @@
 
 * Added `--repeat COUNT` to replay the selected CLI effect without buffering frames. The default remains one
   playback; `--repeat 0` replays until interrupted, and effects that yield no frames stop immediately.
+* Added Sweep's `--travel-speed` option to advance multiple easing steps per frame in both phases.
+  The positive-integer default is `1`, preserving original pacing. Faster sweeps retain every scheduled
+  character/group, the easing curve, direction/reversal, and next-frame phase handoff; animations advance
+  once per frame. Updated documentation and Bash/Zsh completions, with ordering and restoration coverage.
+* Added Waves' `--travel-speed` option to activate multiple ordered entries per frame: individual characters
+  for sorts or whole groups for spatial orders. The positive-integer default is `1`, preserving current pacing.
+  Partial final batches retain the selected order and reversal, and animations still advance once per frame.
+  Updated documentation and bundled Bash/Zsh completions, with scheduling and final-appearance coverage.
+* Wipe, Highlight, Sweep, Waves, and LaserEtch now normalize their direction/pattern options to `CharacterOrder`.
+  Waves accepts every order, including diagonals and spirals, while retaining its circular default. Spatial
+  orders activate whole groups and individual orders activate singleton entries through each effect's scheduler.
+* Added `--reverse-wipe-direction`, `--reverse-highlight-direction`, `--reverse-wave-direction`,
+  `--reverse-etch-pattern`, and independent `--reverse-first-sweep-direction` / `--reverse-second-sweep-direction`
+  flags. Defaults remain off; LaserEtch reverses the completed serpentine or algorithm path. Updated help,
+  documentation, and bundled Bash/Zsh completions, with regression coverage for traversal and final appearance.
 * Shell completions are now generated with `shtab` during development and bundled with the package. Completion no
   longer imports user effect plugins during generation, and zsh now receives a native completion script.
 * Running `tte --print-completion` without a shell argument now prints copy-and-paste setup commands for bash and zsh.
 * Shell completion now suggests valid values for custom enum-like arguments, including gradient directions,
   character grouping modes, and easing functions.
-* LaserEtch pattern completion now includes `algorithm` and every character grouping, including both circular modes,
-  in the bundled Bash and Zsh scripts.
+* LaserEtch's `--etch-pattern` now accepts every `CharacterSort`, including clockwise and counterclockwise single,
+  double, and quad spirals, while retaining the `algorithm` default and serpentine character-group patterns.
+  The reusable `CharacterGroupOrSortArg` validator supports CLI names and native enum values, and bundled Bash
+  and Zsh completions advertise the full pattern set.
+* Wipe's `--wipe-direction` now accepts every `CharacterSort`, including all six spiral patterns, alongside
+  existing character groups. Sorted modes reveal individual characters through the existing easing and delay
+  controls; the default diagonal grouping is unchanged. Bash and Zsh completions include the new choices,
+  with coverage for ordering, non-monotonic easing, and final color restoration.
+* Highlight's `--highlight-direction` now accepts every `CharacterSort`, including all six spiral patterns,
+  alongside existing character groups. Sorted modes activate highlights in exact character order while keeping
+  the original diagonal default, scene-width behavior, and final colors. Updated Bash/Zsh completions, help,
+  and documentation, with regression coverage for scheduling and color restoration.
+* Sweep's `--first-sweep-direction` and `--second-sweep-direction` now independently accept every `CharacterSort`,
+  including all six spiral patterns, alongside existing character groups. Sorted phases preserve full-canvas fill
+  selection, the existing easing schedule, and final text/color restoration. Updated help, docs, and Bash/Zsh
+  completions, with coverage for mixed group/sort phases and opposite spiral directions.
 * Bundled Bash and Zsh completions now include both circular grouping modes for Wipe, Highlight, and both Sweep
   directions, with regression coverage for completion choices and runtime parser acceptance.
 
@@ -74,6 +143,10 @@
 
 ---
 
+* Renamed the diamond-shaped character groups to `DIAMONDS_CENTER_TO_OUTSIDE` and
+  `DIAMONDS_OUTSIDE_TO_CENTER`, with CLI keys `diamonds_center_to_outside` and `diamonds_outside_to_center`.
+  Updated Waves, help, documentation, and Bash/Zsh completions to use the explicit names. The original enum
+  names and CLI spellings remain accepted as compatibility aliases; grouping behavior is unchanged.
 * Step- and distance-synced scenes now start at their first frame before motion and reset progress when a path is
   reactivated.
 * Spanning-tree generators now track their own visitation state and reject pre-linked character graphs instead of
@@ -190,6 +263,14 @@
 
 ---
 
+* Spotlights now calculates nearest-beam distances directly and reuses brightness results in a bounded,
+  iterator-owned cache. An occupied-column index preserves the original ellipse spans, colored spaces,
+  and wide continuation cells while avoiding empty-cell enumeration and fill-character allocation.
+  Unchanged visuals are reused within the effect, with direct visual edits and color-policy changes
+  detected before skipping an appearance update. The shared animation API retains its existing behavior.
+  Paired iterator benchmarks (seven samples, two warmups, seed 1337, no terminal printing) reduced dense
+  80-by-24 total time from 2.302s to 0.948s (58.8%) and sparse total time by 93.4%, with identical output.
+  A fresh-process traced-memory sample reduced dense peak allocation from 25.46 MB to 8.27 MB (67.5%).
 * SynthGrid now divides the full canvas into balanced cells whose widths and heights differ by at most one position,
   choosing counts that favor visually square cells. The layout supports odd, narrow, large, and offset canvases.
   Grid lines share intersection characters and omit decoration on tiny cells; single-cell canvases, including one
@@ -211,6 +292,15 @@
   from 1.879 to 0.513 seconds (72.7%) on generated 80-by-24 input and from 0.0157 to 0.00610 seconds (61.2%) on medium
   input. Frame counts and output lengths matched for each seed; these timings exclude terminal printing.
 * Matrix tracks completed fill columns without list scans and retains dropped characters in one pass.
+* Matrix skips visual reads and symbol/color comparisons when neither random swap is selected, preserving random
+  draws and rendered frames while reducing work in the rain, fill, and resolve phases. A seven-sample, fixed-clock
+  benchmark on generated 80-by-24 input measured mean render time falling from 484 to 405 ms (16.3%) and total
+  iterator time from 555 to 476 ms (14.2%). Frame counts and output lengths matched; terminal printing was excluded.
+* Matrix reuses resolve gradients by endpoint color during scene construction and skips the unused final-gradient
+  mapping in dynamic color mode. Characters retain independent scenes and playback state. A seven-sample,
+  fixed-clock benchmark on generated 80-by-24 input measured mean construction time falling from 95.2 to 71.0 ms
+  (25.3%) and total iterator time from 584 to 550 ms (5.8%), with matching frame counts and output lengths.
+  These timings exclude terminal printing.
 * Blackhole now uses a border-character set for membership checks during starfield construction and consumption,
   while retaining the ordered list for ring movement.
 * Beams now releases its build-only final-color mapping after scene construction and consumes character, pending-group,
@@ -250,6 +340,8 @@
 * Rings now enforces the documented `ring_gap` range and accepts zero `disperse_duration`.
 * Slice's copyable CLI example now separates `--slice-direction` and `--movement-speed` correctly.
 * Spotlights now rejects `beam_falloff` values above 1, matching its documented percentage range.
+* Spotlights now handles zero beam falloff when only a wide character's continuation cell is covered,
+  illuminating the character at full brightness instead of dividing by zero.
 * Swarm now compares complete area indices and documents the zero behavior of `swarm_size` and `swarm_coordination`.
 * VHSTape glitch-wave paths now animate with the configured `glitch_wave_colors` palette.
 * Blackhole now keeps input stars available for consumption on short text, uses helper border stars when necessary,

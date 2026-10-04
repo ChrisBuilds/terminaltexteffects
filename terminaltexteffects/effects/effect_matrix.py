@@ -404,24 +404,26 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             # randomly change the symbol and/or color of the characters
             next_color: Color | None
             for character in self.visible_characters:
+                symbol_swap = random.random() < self.config.symbol_swap_chance
+                next_symbol = random.choice(self.matrix_symbols) if symbol_swap else None
+                color_swap = random.random() < self.config.color_swap_chance
+                next_color = random.choice(self.rain_colors) if color_swap else None
+                if not (symbol_swap or color_swap):
+                    continue
                 current_visual = character.animation.current_character_visual
-                if random.random() < self.config.symbol_swap_chance:
-                    next_symbol = random.choice(self.matrix_symbols)
-                else:
+                if not symbol_swap:
                     next_symbol = current_visual.symbol
-                if random.random() < self.config.color_swap_chance:
-                    next_color = random.choice(self.rain_colors)
-                elif current_visual.colors:
-                    next_color = current_visual.colors.fg
-                else:
-                    next_color = None
                 current_color = current_visual.colors.fg if current_visual.colors else None
+                if not color_swap:
+                    next_color = current_color
                 if next_symbol != current_visual.symbol or next_color != current_color:
                     character.animation.set_appearance(next_symbol, colors=ColorPair(fg=next_color))
 
     def __init__(self, effect: Matrix) -> None:
         """Initialize the Matrix effect iterator."""
         super().__init__(effect)
+        if self.terminal.visible_top >= 4 and self.terminal.visible_top * self.terminal.visible_right >= 256:
+            self.terminal.enable_row_cache()
         self.pending_columns: list[MatrixIterator.RainColumn] = []
         self.character_final_color_map: dict[EffectCharacter, ColorPair] = {}
         self.active_columns: list[MatrixIterator.RainColumn] = []
@@ -441,14 +443,24 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
 
     def build(self) -> None:
         """Build the initial state of the effect."""
-        final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
-        final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
-            self.terminal.canvas.text_bottom,
-            self.terminal.canvas.text_top,
-            self.terminal.canvas.text_left,
-            self.terminal.canvas.text_right,
-            self.config.final_gradient_direction,
-        )
+        resolve_gradients: dict[Color, Gradient] = {}
+
+        def resolve_gradient(color: Color) -> Gradient:
+            """Reuse a resolve gradient for each endpoint color during scene construction."""
+            if color not in resolve_gradients:
+                resolve_gradients[color] = Gradient(self.config.highlight_color, color, steps=8)
+            return resolve_gradients[color]
+
+        final_gradient_mapping: dict[Coord, Color] = {}
+        if self.terminal.config.existing_color_handling != "dynamic":
+            final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
+            final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
+                self.terminal.canvas.text_bottom,
+                self.terminal.canvas.text_top,
+                self.terminal.canvas.text_left,
+                self.terminal.canvas.text_right,
+                self.config.final_gradient_direction,
+            )
         for character in self.terminal.get_characters():
             if self.terminal.config.existing_color_handling == "dynamic":
                 self.character_final_color_map[character] = ColorPair(
@@ -464,12 +476,12 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             resolve_scn = character.animation.new_scene(scene_id="resolve")
             if self.terminal.config.existing_color_handling == "dynamic":
                 fg_gradient = (
-                    Gradient(self.config.highlight_color, final_fg_color, steps=8)
+                    resolve_gradient(final_fg_color)
                     if final_fg_color
                     else None
                 )
                 bg_gradient = (
-                    Gradient(self.config.highlight_color, final_bg_color, steps=8)
+                    resolve_gradient(final_bg_color)
                     if final_bg_color
                     else None
                 )
@@ -488,11 +500,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
                     )
             else:
                 assert final_fg_color is not None
-                for color in Gradient(
-                    self.config.highlight_color,
-                    final_fg_color,
-                    steps=8,
-                ):
+                for color in resolve_gradient(final_fg_color):
                     resolve_scn.add_frame(
                         character.input_symbol,
                         self.config.final_gradient_frames,

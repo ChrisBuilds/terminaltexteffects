@@ -14,6 +14,7 @@ from terminaltexteffects.engine.motion import (
 )
 from terminaltexteffects.engine.terminal import Terminal
 from terminaltexteffects.utils import easing, geometry, graphics
+from terminaltexteffects.utils.argutils import CharacterOrder
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 

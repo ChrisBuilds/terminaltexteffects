@@ -10,6 +10,9 @@ Classes:
     CharacterGroupArg: Argument type for character groupings.
     CharacterSort: An enum specifying character sorts.
     CharacterSortArg: Argument type for character sorts.
+    CharacterOrder: Unified spatial grouping and individual traversal options.
+    CharacterOrderArg: Argument type normalizing character orders and compatibility enums.
+    CharacterGroupOrSortArg: Argument type accepting character groups or sorts.
     ColorSort: An enum specifying color sorts.
     ColorSortArg: Argument type for color sorts.
     TupleAction: Custom argparse action to convert a list of values into a tuple.
@@ -186,9 +189,10 @@ class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescri
 class CharacterGroup(Enum):
     """Specify character groupings based on immutable input coordinates.
 
-    `CENTER_TO_OUTSIDE` and `OUTSIDE_TO_CENTER` use Manhattan distance from the
+    `DIAMONDS_CENTER_TO_OUTSIDE` and `DIAMONDS_OUTSIDE_TO_CENTER` use Manhattan distance from the
     text's lower central cell. The `CIRCLE_*` options use one-column-wide radial
     bands around the text's geometric midpoint, accounting for terminal cell height.
+    Retained for compatibility; use `CharacterOrder` for new ordering configurations.
     """
 
     COLUMN_LEFT_TO_RIGHT = auto()
@@ -199,10 +203,14 @@ class CharacterGroup(Enum):
     DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT = auto()
     DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT = auto()
     DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT = auto()
-    CENTER_TO_OUTSIDE = auto()
-    OUTSIDE_TO_CENTER = auto()
+    DIAMONDS_CENTER_TO_OUTSIDE = auto()
+    DIAMONDS_OUTSIDE_TO_CENTER = auto()
     CIRCLE_CENTER_TO_OUTSIDE = auto()
     CIRCLE_OUTSIDE_TO_CENTER = auto()
+
+    # Preserve existing API names without advertising them as canonical CLI choices.
+    CENTER_TO_OUTSIDE = DIAMONDS_CENTER_TO_OUTSIDE
+    OUTSIDE_TO_CENTER = DIAMONDS_OUTSIDE_TO_CENTER
 
 
 class CharacterGroupArg:
@@ -245,6 +253,12 @@ class CharacterSort(Enum):
     The outside/middle options order complete rows by distance from the selected
     rows' vertical midpoint, retain left-to-right order within a row, and place the
     top row first when two rows are equally distant from the midpoint.
+
+    Spiral options wind inward through rectangular rings of the selected input
+    coordinates' bounding box. Single spirals start at top-left, double spirals
+    at top-left and bottom-right, and quad spirals at all four corners. Multiple
+    arms are interleaved by distance traveled around each ring.
+    Retained for compatibility; use `CharacterOrder` for new ordering configurations.
     """
 
     RANDOM = auto()
@@ -254,6 +268,12 @@ class CharacterSort(Enum):
     BOTTOM_TO_TOP_RIGHT_TO_LEFT = auto()
     OUTSIDE_ROW_TO_MIDDLE = auto()
     MIDDLE_ROW_TO_OUTSIDE = auto()
+    SPIRAL_CLOCKWISE = auto()
+    SPIRAL_COUNTER_CLOCKWISE = auto()
+    SPIRAL_CLOCKWISE_DOUBLE = auto()
+    SPIRAL_COUNTER_CLOCKWISE_DOUBLE = auto()
+    SPIRAL_CLOCKWISE_QUAD = auto()
+    SPIRAL_COUNTER_CLOCKWISE_QUAD = auto()
 
 
 class CharacterSortArg:
@@ -288,6 +308,113 @@ class CharacterSortArg:
         except (AttributeError, KeyError):
             msg = f"invalid CharacterSort: '{arg}' is not a valid CharacterSort."
             raise argparse.ArgumentTypeError(msg) from None
+
+
+class CharacterOrder(Enum):
+    """Specify ordered spatial groups or individual character traversal.
+
+    Spatial options retain their original group boundaries and internal ordering.
+    Individual traversal options, including spirals and random order, produce singleton
+    groups. Flattening either form yields its complete character traversal.
+    """
+
+    COLUMN_LEFT_TO_RIGHT = auto()
+    COLUMN_RIGHT_TO_LEFT = auto()
+    ROW_TOP_TO_BOTTOM = auto()
+    ROW_BOTTOM_TO_TOP = auto()
+    DIAGONAL_TOP_LEFT_TO_BOTTOM_RIGHT = auto()
+    DIAGONAL_BOTTOM_LEFT_TO_TOP_RIGHT = auto()
+    DIAGONAL_TOP_RIGHT_TO_BOTTOM_LEFT = auto()
+    DIAGONAL_BOTTOM_RIGHT_TO_TOP_LEFT = auto()
+    DIAMONDS_CENTER_TO_OUTSIDE = auto()
+    DIAMONDS_OUTSIDE_TO_CENTER = auto()
+    CIRCLE_CENTER_TO_OUTSIDE = auto()
+    CIRCLE_OUTSIDE_TO_CENTER = auto()
+    RANDOM = auto()
+    TOP_TO_BOTTOM_LEFT_TO_RIGHT = auto()
+    TOP_TO_BOTTOM_RIGHT_TO_LEFT = auto()
+    BOTTOM_TO_TOP_LEFT_TO_RIGHT = auto()
+    BOTTOM_TO_TOP_RIGHT_TO_LEFT = auto()
+    OUTSIDE_ROW_TO_MIDDLE = auto()
+    MIDDLE_ROW_TO_OUTSIDE = auto()
+    SPIRAL_CLOCKWISE = auto()
+    SPIRAL_COUNTER_CLOCKWISE = auto()
+    SPIRAL_CLOCKWISE_DOUBLE = auto()
+    SPIRAL_COUNTER_CLOCKWISE_DOUBLE = auto()
+    SPIRAL_CLOCKWISE_QUAD = auto()
+    SPIRAL_COUNTER_CLOCKWISE_QUAD = auto()
+
+    CENTER_TO_OUTSIDE = DIAMONDS_CENTER_TO_OUTSIDE
+    OUTSIDE_TO_CENTER = DIAMONDS_OUTSIDE_TO_CENTER
+
+    @property
+    def is_grouped(self) -> bool:
+        """Whether this order has spatial groups rather than singleton entries."""
+        return self.name in CharacterGroup.__members__
+
+
+class CharacterOrderArg:
+    """Normalize character orders, including legacy group and sort values."""
+
+    COMPLETION_CHOICES = tuple(member.name.lower() for member in CharacterOrder)
+    METAVAR = COMPLETION_CHOICES
+
+    @staticmethod
+    def type_parser(arg: str | CharacterOrder | CharacterGroup | CharacterSort) -> CharacterOrder:
+        """Accept CLI names, `CharacterOrder`, and compatibility enum values.
+
+        Args:
+            arg (str | CharacterOrder | CharacterGroup | CharacterSort): Traversal choice.
+
+        Returns:
+            CharacterOrder: The canonical character order.
+
+        Raises:
+            argparse.ArgumentTypeError: If the value is not a valid character order.
+
+        """
+        if isinstance(arg, CharacterOrder):
+            return arg
+        if isinstance(arg, (CharacterGroup, CharacterSort)):
+            return CharacterOrder[arg.name]
+        if isinstance(arg, str):
+            member = CharacterOrder.__members__.get(arg.upper())
+            if member is not None:
+                return member
+        msg = f"invalid character order: '{arg}' is not a valid CharacterOrder."
+        raise argparse.ArgumentTypeError(msg)
+
+
+class CharacterGroupOrSortArg:
+    """Validate a `CharacterGroup` or `CharacterSort` ordering choice."""
+
+    COMPLETION_CHOICES = (*CharacterGroupArg.COMPLETION_CHOICES, *CharacterSortArg.COMPLETION_CHOICES)
+    METAVAR = COMPLETION_CHOICES
+
+    @staticmethod
+    def type_parser(arg: str | CharacterGroup | CharacterSort) -> CharacterGroup | CharacterSort:
+        """Accept case-insensitive CLI names or canonical group/sort enum values.
+
+        Args:
+            arg (str | CharacterGroup | CharacterSort): Ordering choice to normalize.
+
+        Returns:
+            CharacterGroup | CharacterSort: The selected grouping or sorting enum.
+
+        Raises:
+            argparse.ArgumentTypeError: If `arg` is not a valid group or sort.
+
+        """
+        if isinstance(arg, (CharacterGroup, CharacterSort)):
+            return arg
+        if isinstance(arg, str):
+            name = arg.upper()
+            for enum_type in (CharacterGroup, CharacterSort):
+                member = enum_type.__members__.get(name)
+                if member is not None:
+                    return member
+        msg = f"invalid character order: '{arg}' is not a valid CharacterGroup or CharacterSort."
+        raise argparse.ArgumentTypeError(msg)
 
 
 class ColorSort(Enum):

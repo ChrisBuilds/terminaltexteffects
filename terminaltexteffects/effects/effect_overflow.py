@@ -166,10 +166,13 @@ class OverflowIterator(BaseEffectIterator[OverflowConfig]):
         def set_color(self, fg_color: Color | None = None, bg_color: Color | None = None) -> None:
             """Set the color of the row."""
             for character in self.characters:
-                character.animation.set_appearance(
-                    character.input_symbol,
-                    ColorPair(fg=fg_color, bg=bg_color),
+                animation = character.animation
+                setter = (
+                    animation.set_appearance_if_changed
+                    if animation.existing_color_handling == "always"
+                    else animation.set_appearance
                 )
+                setter(character.input_symbol, ColorPair(fg=fg_color, bg=bg_color))
 
     def __init__(self, effect: Overflow) -> None:
         """Initialize the effect iterator."""

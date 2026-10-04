@@ -519,8 +519,10 @@ Run a specular highlight across the text.
     --highlight-brightness (float > 0)
                         Brightness of the highlight color. Values less than 1 will darken the highlight color,
                         while values greater than 1 will brighten the highlight color. (default: 1.75)
-    --highlight-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,outside_to_center,center_to_outside}
-                        Direction the highlight will travel. (default: diagonal_bottom_left_to_top_right)
+    --highlight-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,diamonds_center_to_outside,diamonds_outside_to_center,circle_center_to_outside,circle_outside_to_center,random,top_to_bottom_left_to_right,top_to_bottom_right_to_left,bottom_to_top_left_to_right,bottom_to_top_right_to_left,outside_row_to_middle,middle_row_to_outside,spiral_clockwise,spiral_counter_clockwise,spiral_clockwise_double,spiral_counter_clockwise_double,spiral_clockwise_quad,spiral_counter_clockwise_quad}
+                        Character order for highlight activation: spatial groups or individual traversal, including spirals. (default: diagonal_bottom_left_to_top_right)
+    --reverse-highlight-direction
+                        Reverse the complete traversal, preserving group membership. (default: False)
     --highlight-width (int > 0)
                         Width of the highlight. n >= 1 (default: 8)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
@@ -550,8 +552,10 @@ A laser etches characters onto the terminal.
 ??? example "LaserEtch Command Line Arguments"
 
     ```
-    --etch-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,outside_to_center,center_to_outside}
-                        Pattern used to etch the text. (default: row_top_to_bottom)
+    --etch-pattern {algorithm,column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,diamonds_center_to_outside,diamonds_outside_to_center,circle_center_to_outside,circle_outside_to_center,random,top_to_bottom_left_to_right,top_to_bottom_right_to_left,bottom_to_top_left_to_right,bottom_to_top_right_to_left,outside_row_to_middle,middle_row_to_outside,spiral_clockwise,spiral_counter_clockwise,spiral_clockwise_double,spiral_counter_clockwise_double,spiral_clockwise_quad,spiral_counter_clockwise_quad}
+                        Pattern used to etch the text: algorithm, serpentine character groups, or exact character sorts. (default: algorithm)
+    --reverse-etch-pattern
+                        Reverse the complete traversal, preserving group membership. (default: False)
     --etch-speed (int > 0)
                         Along with etch_delay, determines the speed at which the characters are etched onto the terminal. This value specifies the number of characters to etch simultaneously. (default: 1)
     --etch-delay (int >= 0)
@@ -1379,12 +1383,16 @@ Sweep across the canvas to reveal uncolored text, reverse sweep to color the tex
     --sweep-symbols (ASCII/UTF-8 character) [(ASCII/UTF-8 character) ...]
                         Space separated list of symbols to use for the sweep shimmer. (default: ('█',
                         '▓', '▒', '░'))
-    --first-sweep-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,outside_to_center,center_to_outside}
-                        Direction of the first sweep, revealing uncolored characters. (default:
-                        column_right_to_left)
-    --second-sweep-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,outside_to_center,center_to_outside}
-                        Direction of the second sweep, coloring the characters. (default:
-                        column_left_to_right)
+    --first-sweep-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,diamonds_center_to_outside,diamonds_outside_to_center,circle_center_to_outside,circle_outside_to_center,random,top_to_bottom_left_to_right,top_to_bottom_right_to_left,bottom_to_top_left_to_right,bottom_to_top_right_to_left,outside_row_to_middle,middle_row_to_outside,spiral_clockwise,spiral_counter_clockwise,spiral_clockwise_double,spiral_counter_clockwise_double,spiral_clockwise_quad,spiral_counter_clockwise_quad}
+                        Grouping or character sort order for the first sweep, revealing uncolored characters. (default: column_right_to_left)
+    --reverse-first-sweep-direction
+                        Reverse the complete traversal, preserving group membership. (default: False)
+    --second-sweep-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,diamonds_center_to_outside,diamonds_outside_to_center,circle_center_to_outside,circle_outside_to_center,random,top_to_bottom_left_to_right,top_to_bottom_right_to_left,bottom_to_top_left_to_right,bottom_to_top_right_to_left,outside_row_to_middle,middle_row_to_outside,spiral_clockwise,spiral_counter_clockwise,spiral_clockwise_double,spiral_counter_clockwise_double,spiral_clockwise_quad,spiral_counter_clockwise_quad}
+                        Grouping or character sort order for the second sweep, coloring the characters. (default: column_left_to_right)
+    --reverse-second-sweep-direction
+                        Reverse the complete traversal, preserving group membership. (default: False)
+    --travel-speed (int > 0)
+                        Number of sweep easing steps to advance per frame, for both phases. n > 0. (default: 1)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the character gradient (applied
                         from bottom to top). If only one color is provided, the characters will be
@@ -1604,8 +1612,12 @@ Waves travel across the terminal leaving behind the characters.
                         Number of waves to generate. n > 0. (default: 7)
     --wave-length (int > 0)
                         The number of frames for each step of the wave. Higher wave-lengths will create a slower wave. (default: 2)
-    --wave-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,center_to_outside,outside_to_center,circle_center_to_outside,circle_outside_to_center}
-                        Direction of the wave. (default: circle_center_to_outside)
+    --wave-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,diamonds_center_to_outside,diamonds_outside_to_center,circle_center_to_outside,circle_outside_to_center,random,top_to_bottom_left_to_right,top_to_bottom_right_to_left,bottom_to_top_left_to_right,bottom_to_top_right_to_left,outside_row_to_middle,middle_row_to_outside,spiral_clockwise,spiral_counter_clockwise,spiral_clockwise_double,spiral_counter_clockwise_double,spiral_clockwise_quad,spiral_counter_clockwise_quad}
+                        Character order for wave activation; spatial groups or individual characters, including spirals. (default: circle_center_to_outside)
+    --reverse-wave-direction
+                        Reverse the complete traversal, preserving group membership. (default: False)
+    --travel-speed (int > 0)
+                        Number of ordered entries to activate per frame: whole spatial groups or individual characters. n > 0. (default: 1)
     --wave-easing WAVE_EASING
                         Easing function to use for wave travel. (default: in_out_sine)
 
@@ -1649,8 +1661,10 @@ Performs a wipe across the terminal to reveal characters.
 ??? example "Wipe Command Line Arguments"
 
     ```
-    --wipe-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,outside_to_center,center_to_outside}
-                        Direction the text will wipe. (default: diagonal_bottom_left_to_top_right)
+    --wipe-direction {column_left_to_right,column_right_to_left,row_top_to_bottom,row_bottom_to_top,diagonal_top_left_to_bottom_right,diagonal_bottom_left_to_top_right,diagonal_top_right_to_bottom_left,diagonal_bottom_right_to_top_left,diamonds_center_to_outside,diamonds_outside_to_center,circle_center_to_outside,circle_outside_to_center,random,top_to_bottom_left_to_right,top_to_bottom_right_to_left,bottom_to_top_left_to_right,bottom_to_top_right_to_left,outside_row_to_middle,middle_row_to_outside,spiral_clockwise,spiral_counter_clockwise,spiral_clockwise_double,spiral_counter_clockwise_double,spiral_clockwise_quad,spiral_counter_clockwise_quad}
+                        Character order for the wipe: spatial groups or individual traversal, including spirals. (default: diagonal_top_left_to_bottom_right)
+    --reverse-wipe-direction
+                        Reverse the complete traversal, preserving group membership. (default: False)
     --final-gradient-stops (XTerm [0-255] OR RGB Hex [000000-ffffff]) [(XTerm [0-255] OR RGB Hex [000000-ffffff]) ...]
                         Space separated, unquoted, list of colors for the wipe gradient. (default: (Color(#833ab4), Color(#fd1d1d), Color(#fcb045)))
     --final-gradient-steps (int > 0) [(int > 0) ...]
