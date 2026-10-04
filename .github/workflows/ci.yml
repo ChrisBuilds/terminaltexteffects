@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -17,6 +18,8 @@ jobs:
     name: Code quality
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    outputs:
+      run_tests: ${{ steps.changes.outputs.run_tests }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -25,6 +28,16 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.14"
+      - name: Select checks from committed changes
+        id: changes
+        env:
+          CHANGE_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          args=()
+          if [[ -n "$CHANGE_BASE" ]]; then
+            args+=(--base "$CHANGE_BASE")
+          fi
+          python -m tools.classify_ci "${args[@]}" >> "$GITHUB_OUTPUT"
       - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           enable-cache: true
@@ -46,9 +59,13 @@ jobs:
             args+=(--base "$QUALITY_BASE")
           fi
           .venv/bin/python tools/generate_changelog.py "${args[@]}"
+      - name: Build documentation and check links
+        if: steps.changes.outputs.build_docs == 'true'
+        run: .venv/bin/python -m mkdocs build --strict --site-dir "$RUNNER_TEMP/docs"
 
   tests:
     name: Python ${{ matrix.python-version }}
+    needs: quality
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
@@ -56,50 +73,69 @@ jobs:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
+      - name: Documentation-only changes
+        if: needs.quality.outputs.run_tests != 'true'
+        run: echo 'Documentation-only changes; Python tests are not required.'
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.quality.outputs.run_tests == 'true'
         with:
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: needs.quality.outputs.run_tests == 'true'
         with:
           python-version: ${{ matrix.python-version }}
       - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        if: needs.quality.outputs.run_tests == 'true'
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
           cache-suffix: python-${{ matrix.python-version }}
       - name: Install test shells
+        if: needs.quality.outputs.run_tests == 'true'
         run: |
           # Zsh needs only Ubuntu packages; unrelated third-party repositories can fail independently.
           apt_options=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${apt_options[@]}" update
           sudo apt-get "${apt_options[@]}" install --yes zsh
       - name: Install package and locked test dependencies
+        if: needs.quality.outputs.run_tests == 'true'
         run: uv sync --locked --no-default-groups --group test --no-editable
       - name: Check installed package outside the checkout
+        if: needs.quality.outputs.run_tests == 'true'
         working-directory: ${{ runner.temp }}
         run: |
           "$GITHUB_WORKSPACE/.venv/bin/python" -c "import terminaltexteffects"
           "$GITHUB_WORKSPACE/.venv/bin/tte" --help
       - name: Run default test suite
-        run: .venv/bin/python -m pytest -n auto
+        if: needs.quality.outputs.run_tests == 'true'
+        run: .venv/bin/python -m pytest -n auto --durations=20
 
   completions:
     name: Shell completions
+    needs: quality
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
+      - name: Documentation-only changes
+        if: needs.quality.outputs.run_tests != 'true'
+        run: echo 'Documentation-only changes; shell completion generation is not required.'
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.quality.outputs.run_tests == 'true'
         with:
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: needs.quality.outputs.run_tests == 'true'
         with:
           python-version: "3.14"
       - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        if: needs.quality.outputs.run_tests == 'true'
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
           cache-suffix: completions
       - name: Install package and locked test dependencies
+        if: needs.quality.outputs.run_tests == 'true'
         run: uv sync --locked --no-default-groups --group test --no-editable
       - name: Check generated shell completions
+        if: needs.quality.outputs.run_tests == 'true'
         run: .venv/bin/python tools/generate_shell_completions.py --check
