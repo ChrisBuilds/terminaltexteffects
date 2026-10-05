@@ -15,7 +15,9 @@
   Promotion into the shipped package requires reviewed tests, docs, completions, and a changelog fragment.
 - Keep commits scoped to the issue, including relevant tests, documentation, and generated artifacts. Keep local
   review notes in the sibling `dev_notes` workspace untracked and out of commits.
-- Use `Closes #<issue-number>` in the PR description, describe resulting behavior and validation, and report any
+- Use `Closes #<issue-number>` in ordinary PR descriptions. Release PRs use `Refs #<release-issue>`
+  to keep the tracking issue open until publication and verification complete; follow `RELEASING.md`.
+  Describe resulting behavior and validation, and report any
   unresolved limitations. Leave the PR in draft until local verification and required CI checks pass.
 - Before running project tools, check the project root for a `.venv` and prefer the tool binaries from that environment.
 - Use the repo venv paths directly when available:
@@ -84,6 +86,7 @@
   changes need a concise note; internal changes and fixes introduced in the same unreleased version need a
   `.skip.md` fragment explaining the exemption. Run `./.venv/bin/python tools/generate_changelog.py` and commit
   the refreshed preview with the fragment. Never edit the generated Unreleased preview directly.
+- Release-preparation PRs consume pending fragments into a dated section instead of adding a new fragment.
 - Run `./.venv/bin/python tools/generate_changelog.py --check` for fragment or changelog-tooling changes.
   Assemble dated releases only in release-preparation PRs as described in `CONTRIBUTING.md`; publishing requires
-  an explicit maintainer instruction.
+  an explicit maintainer instruction naming the version, commit, tag, and approved artifacts.
