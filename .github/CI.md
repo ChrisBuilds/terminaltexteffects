@@ -9,6 +9,9 @@ Pushes to an issue branch with an open PR trigger one PR run, not a duplicate pu
 For a branch without a PR, open a draft PR or manually dispatch CI. Tag pushes do not trigger CI;
 manual dispatch always requests full validation. Local QA hooks are optional; no private runner is needed.
 
+[Dependency update automation](DEPENDENCIES.md) groups routine Dependabot PRs. They retain
+the same required checks and need a tracking issue and changelog decision before merge.
+
 The matrix runs the default pytest suite on Python 3.9 through 3.14 using Ubuntu 24.04.
 It uses locked test dependencies, installs a non-editable package, and checks package import
 and CLI startup from outside the checkout. Bash and Zsh completion behavior is covered by
