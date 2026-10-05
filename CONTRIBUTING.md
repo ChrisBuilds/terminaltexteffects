@@ -169,3 +169,9 @@ Release tracking issues stay open through publication. Release PRs use `Refs #<r
 instead of auto-closing that issue on merge; ordinary development PRs continue to use `Closes`.
 Preparation and merge approval do not authorize tagging or publishing. Publishing automation
 is deferred; follow the documented manual procedure with explicit maintainer authorization.
+
+## Public documentation
+
+The public site follows development `main` after successful main push CI, with a banner
+linking the built commit. PRs validate docs without publishing. See
+[documentation deployment](.github/DOCUMENTATION.md) for setup, local preview, and recovery.

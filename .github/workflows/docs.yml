@@ -1,0 +1,108 @@
+name: Documentation deployment
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      publish: ${{ steps.revision.outputs.publish }}
+      sha: ${{ steps.revision.outputs.sha }}
+    steps:
+      - name: Select current main with successful CI
+        id: revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CI_SHA: ${{ github.event.workflow_run.head_sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          main_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          if [[ "$EVENT_NAME" == 'workflow_dispatch' ]]; then
+            CI_SHA=$(gh api --method GET "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs" \
+              -f branch=main -f event=push -f status=success -f per_page=1 \
+              --jq '.workflow_runs[0].head_sha // ""')
+          fi
+          if [[ "$CI_SHA" != "$main_sha" ]]; then
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+            echo 'Skipped: current main has no matching successful push CI run.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo 'publish=true' >> "$GITHUB_OUTPUT"
+          echo "sha=$CI_SHA" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: steps.revision.outputs.publish == 'true'
+        with:
+          ref: ${{ steps.revision.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: steps.revision.outputs.publish == 'true'
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        if: steps.revision.outputs.publish == 'true'
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          cache-suffix: docs
+      - name: Build exact tested documentation
+        if: steps.revision.outputs.publish == 'true'
+        env:
+          DOCS_REVISION: ${{ steps.revision.outputs.sha }}
+        run: |
+          uv sync --locked --group dev
+          .venv/bin/python -m mkdocs build --strict --site-dir "$RUNNER_TEMP/site"
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: steps.revision.outputs.publish == 'true'
+        with:
+          path: ${{ runner.temp }}/site
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Skip a build superseded by newer main
+        id: current
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DOCS_REVISION: ${{ needs.build.outputs.sha }}
+        run: |
+          main_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          if [[ "$DOCS_REVISION" == "$main_sha" ]]; then
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Skipped: main advanced while documentation was building.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Deploy GitHub Pages
+        id: deployment
+        if: steps.current.outputs.publish == 'true'
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

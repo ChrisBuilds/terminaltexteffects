@@ -30,7 +30,7 @@ def classify_changes(root: Path, base: str | None, head: str = "HEAD") -> tuple[
     changed = git_output(root, "diff", "--name-only", "--no-renames", "-z", ancestor, head, "--")
     names = [name.decode() for name in changed.split(b"\0") if name]
     run_tests = any(not is_documentation(name) for name in names)
-    build_docs = any(is_documentation(name) or name == "mkdocs.yml" for name in names)
+    build_docs = any(is_documentation(name) or name == "mkdocs.yml" or name.startswith("overrides/") for name in names)
     return run_tests, build_docs
 
 

@@ -49,6 +49,8 @@ def repository(tmp_path: Path) -> Path:
         ("docs/script.py", (True, False)),
         ("changelog.d/template.md.jinja", (True, False)),
         ("mkdocs.yml", (True, True)),
+        ("overrides/main.html", (True, True)),
+        ("overrides/assets/style.css", (True, True)),
         ("unknown-file", (True, False)),
     ],
 )

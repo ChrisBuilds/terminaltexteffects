@@ -178,8 +178,10 @@ editable installs or development-effect settings. Verify package and effect impo
 Python version and confirm package metadata and published file checksums match the approved files.
 
 Check the PyPI description/license, GitHub tag and notes, and public documentation links/version.
-Documentation deployment is currently separate; a strict local build does not publish the site.
-Record whether deployed documentation is current or link an explicit follow-up before sign-off.
+The site follows development `main` after successful push CI; it is not a versioned release site.
+Verify the deployed commit banner, release notes, and relevant API pages using the
+[deployment guide](.github/DOCUMENTATION.md). A strict local build does not publish the site.
+Record the deployed commit or link an explicit follow-up before sign-off.
 Attach publication URLs and verification evidence, then complete the release issue checklist and close the tracking issue.
 
 ## Failed or incomplete publication

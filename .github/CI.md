@@ -20,7 +20,7 @@ The quality job classifies the committed diff, including deleted files and both 
 Only Markdown prose in the root, documentation, changelog, and non-workflow GitHub directories,
 plus documentation images, may bypass the matrix and completion generation. Unknown files,
 Python source, tests, dependencies, packaging, and CI configuration require the full matrix.
-Documentation changes run a strict MkDocs build with documentation link validation. All changes
+Documentation and `overrides/` theme changes run a strict MkDocs build with documentation link validation. All changes
 retain changelog validation. Documentation-only matrix and completion jobs perform a short success
 step so all eight required check names remain present; the whole workflow is never path-filtered.
 
@@ -84,4 +84,11 @@ exhaustive pre-release configuration tests, human visual/terminal QA, relevant p
 evidence, final-commit validation, and exact-artifact approval. Exhaustive runs are dedicated
 pre-release work; the existing CI workflow runs the default pairwise suite even on manual dispatch.
 Publication remains manual and requires explicit maintainer authorization. Future publishing
-automation and documentation deployment are separate improvements.
+automation is a separate improvement.
+
+## Documentation publication
+
+Successful main push CI triggers the separate [documentation deployment workflow](DOCUMENTATION.md).
+It strictly rebuilds the exact tested current-main commit and publishes through GitHub Pages.
+PRs never publish; the site identifies itself as development documentation. See the linked
+guide for the one-time Pages cutover, environment settings, retry, and recovery.
