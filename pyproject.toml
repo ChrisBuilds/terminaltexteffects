@@ -150,6 +150,7 @@ test = [
     "towncrier==25.8.0",
 ]
 dev = [
+    { include-group = "artifacts" },
     { include-group = "test" },
     { include-group = "quality" },
     "mkdocs>=1.6.1",
@@ -157,4 +158,9 @@ dev = [
     "mkdocstrings-python>=1.11.1",
     "pre-commit>=3.8",
     "pymdown-extensions>=10.15",
+]
+artifacts = [
+    "hatchling>=1.27",
+    "tomli>=2",
+    "twine>=6",
 ]
