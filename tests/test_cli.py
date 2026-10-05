@@ -711,3 +711,22 @@ def test_completion_requests_skip_broken_prototypes(
     args, effects = __main__.build_parsers_and_parse_args()
     assert args.print_completion == "bash"
     assert "wipe" in effects
+
+
+@pytest.mark.parametrize("effect_option", ["--print", "--p"])
+def test_prototype_options_do_not_disable_discovery(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    effect_option: str,
+) -> None:
+    """Completion-like effect options remain scoped to their subcommand."""
+    _write_demo_plugin(tmp_path)
+    directory = tmp_path / "terminaltexteffects" / "effects"
+    plugin = directory / "plugin_demo.py"
+    plugin.write_text(plugin.read_text().replace("--plugin-speed", "--print"))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty-config"))
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(directory))
+    monkeypatch.setattr(sys, "argv", ["tte", "--seed", "94", "plugindemo", effect_option, "2"])
+    args, effects = __main__.build_parsers_and_parse_args()
+    assert args.plugin_speed == 2
+    assert "plugindemo" in effects
