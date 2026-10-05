@@ -15,6 +15,8 @@ and CLI startup from outside the checkout. Bash and Zsh completion behavior is c
 the tests, and a separate job checks that the committed completion scripts are current.
 Manual, visual, and exhaustive effect-argument tests remain outside this workflow.
 Pytest reports the 20 slowest test durations to guide future test optimization.
+Only the Linux Python 3.14 job instruments this same run for [line and branch coverage](COVERAGE.md),
+with a summary and short-lived report artifacts. No percentage threshold is enforced.
 
 Focused native-platform jobs run on `windows-2025` and `macos-15`, each with Python 3.14.
 They use locked non-editable installations, check both CLI entry points from outside the
