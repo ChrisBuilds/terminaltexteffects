@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
-from itertools import combinations
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 import pytest
 
+from terminaltexteffects import EffectCharacter, ParticlePool
 from terminaltexteffects.effects import (
     effect_beams,
     effect_binarypath,
@@ -84,12 +83,15 @@ from terminaltexteffects.utils.easing import (
     out_sine,
 )
 from terminaltexteffects.utils.graphics import Color, Gradient
+from tests.pairwise import select_pairwise_indices
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
 
     from terminaltexteffects.engine.base_effect import BaseEffect
+    from terminaltexteffects.engine.terminal import Terminal
 
+INPUT_COMPACT = "ab\ncd"
 INPUT_EMPTY = ""
 INPUT_SINGLE_CHAR = "a"
 INPUT_SINGLE_COLUMN = """
@@ -141,6 +143,7 @@ COLOR_SEQUENCES = (
 
 TEST_INPUTS = {
     "empty": INPUT_EMPTY,
+    "compact": INPUT_COMPACT,
     "single_char": INPUT_SINGLE_CHAR,
     "single_column": INPUT_SINGLE_COLUMN,
     "single_row": INPUT_SINGLE_ROW,
@@ -226,9 +229,9 @@ EASING_FUNCTIONS = [
 
 ANCHORS = ["sw", "s", "se", "e", "ne", "n", "nw", "w", "c"]
 
-# These tests only assert that complete animations accept their configuration.
-# Pairwise selection covers every individual value and every two-option interaction
-# without repeatedly rendering the full Cartesian product.
+# Configuration matrices cover every individual value and every two-option interaction
+# without repeatedly rendering the full Cartesian product. Keep dedicated default
+# integration and geometry tests alongside these selected combinations.
 PAIRWISE_EFFECT_TESTS = frozenset(
     {
         ("test_beams.py", "test_beams_effect_args"),
@@ -268,74 +271,65 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
-def _parameter_key(value: object) -> object:
-    """Return a hashable identity for a parametrized value."""
-    try:
-        hash(value)
-    except TypeError:
-        return repr(value)
-    return value
+@pytest.hookimpl(hookwrapper=True)
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> Generator[None, None, None]:
+    """Select pairwise calls after parametrization, before pytest creates test items.
 
-
-def _pairwise_coverage(item: pytest.Item, parameter_names: list[str]) -> set[tuple[object, ...]]:
-    """Return the value and value-pair coverage tokens for one test item."""
-    callspec = cast("Any", item).callspec
-    parameter_values = {name: _parameter_key(callspec.params[name]) for name in parameter_names}
-    coverage: set[tuple[object, ...]] = {
-        ("value", name, value) for name, value in parameter_values.items()
-    }
-    coverage.update(
-        ("pair", first_name, parameter_values[first_name], second_name, parameter_values[second_name])
-        for first_name, second_name in combinations(parameter_names, 2)
-    )
-    return coverage
-
-
-def _select_pairwise_items(items: list[pytest.Item]) -> set[pytest.Item]:
-    """Select a deterministic greedy set covering every value and pair of values."""
-    callspecs: list[Any] = [cast("Any", item).callspec for item in items]
-    parameter_names = sorted(
-        name
-        for name in callspecs[0].params
-        if len({_parameter_key(callspec.params[name]) for callspec in callspecs}) > 1
-    )
-    coverage_by_item = {item: _pairwise_coverage(item, parameter_names) for item in items}
-    uncovered = set().union(*coverage_by_item.values())
-    remaining = list(items)
-    selected: set[pytest.Item] = set()
-
-    while uncovered:
-        best_item = max(remaining, key=lambda item: len(coverage_by_item[item] & uncovered))
-        selected.add(best_item)
-        uncovered.difference_update(coverage_by_item[best_item])
-        remaining.remove(best_item)
-
-    return selected
-
-
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    """Reduce selected Cartesian products to pairwise coverage unless explicitly requested."""
-    if config.getoption("--exhaustive-effect-args"):
+    Pytest has no public API for removing generated calls. Keep the private
+    `Metafunc._calls` access here; collection regression tests cover fixture
+    scopes, indirect values, IDs, deterministic selection, and exhaustive mode.
+    """
+    yield
+    test_id = (metafunc.definition.path.name, metafunc.function.__name__)
+    if test_id not in PAIRWISE_EFFECT_TESTS or metafunc.config.getoption("--exhaustive-effect-args"):
         return
+    calls = cast("Any", metafunc)._calls
+    selected = select_pairwise_indices([call.params for call in calls])
+    cast("Any", metafunc)._calls = [calls[index] for index in selected]
 
-    grouped_items: dict[tuple[str, str], list[pytest.Item]] = defaultdict(list)
-    selected_items: set[pytest.Item] = set()
-    for item in items:
-        test_id = (item.path.name, getattr(item, "originalname", None) or item.name)
-        if test_id not in PAIRWISE_EFFECT_TESTS:
-            selected_items.add(item)
-            continue
-        grouped_items[test_id].append(item)
 
-    deselected_items: list[pytest.Item] = []
-    for grouped_test_items in grouped_items.values():
-        selected_group_items = _select_pairwise_items(grouped_test_items)
-        selected_items.update(selected_group_items)
-        deselected_items.extend(item for item in grouped_test_items if item not in selected_group_items)
+@pytest.fixture
+def bounded_laseretch_sparks(
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Generator[None, None, None]:
+    """Use real sparks sized for contract tests, retaining default-capacity integration.
 
-    if deselected_items:
-        config.hook.pytest_deselected(items=deselected_items)
-    items[:] = [item for item in items if item in selected_items]
+    Scope this fixture explicitly to LaserEtch and ordering tests. General smoke
+    cases bypass it for other effects, which share the `tte.ParticlePool` symbol.
+    Unexpected growth fails rather than silently increasing fixture capacity.
+    """
+    if request.node.name == "test_laseretch_default_spark_pool_emits_and_reclaims" or (
+        request.node.path.name == "test_effects.py"
+        and cast("Any", request.node).callspec.params["effect"] is not effect_laseretch.LaserEtch
+    ):
+        yield
+        return
+    pools: list[ParticlePool] = []
+
+    def unexpected_growth(symbol: str | None = None) -> EffectCharacter:
+        del symbol
+        pytest.fail("LaserEtch contract input exceeded its bounded spark pool; review coverage and capacity.")
+
+    def make_pool(
+        terminal: Terminal,
+        active_characters: set[EffectCharacter],
+        symbols: tuple[str, ...],
+        *,
+        initial_count: int,
+        initializer: Callable[[EffectCharacter], None],
+    ) -> ParticlePool:
+        capacity = max(16, len(terminal.get_characters()))
+        assert initial_count >= capacity
+        pool = ParticlePool(terminal, active_characters, symbols, initial_count=capacity, initializer=initializer)
+        monkeypatch.setattr(pool, "_create_particle", unexpected_growth)
+        pools.append(pool)
+        return pool
+
+    monkeypatch.setattr(effect_laseretch.tte, "ParticlePool", make_pool)
+    yield
+    for pool in pools:
+        assert len(pool.available) == len(pool.particles)
 
 
 @pytest.fixture(autouse=True)

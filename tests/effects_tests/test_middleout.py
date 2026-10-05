@@ -70,7 +70,7 @@ def test_middleout_final_gradient(
 @pytest.mark.parametrize("expand_direction", ["horizontal", "vertical"])
 @pytest.mark.parametrize("center_movement_speed", [0.001, 2.0])
 @pytest.mark.parametrize("full_movement_speed", [0.001, 2.0])
-@pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
+@pytest.mark.parametrize("input_data", ["single_char", "compact"], indirect=True)
 def test_middleout_args(
     terminal_config_default_no_framerate: TerminalConfig,
     input_data: str,
@@ -86,9 +86,20 @@ def test_middleout_args(
     effect.effect_config.expand_direction = expand_direction
     effect.effect_config.center_movement_speed = center_movement_speed
     effect.effect_config.full_movement_speed = full_movement_speed
+    iterator = cast("effect_middleout.MiddleOutIterator", iter(effect))
+    characters = iterator.terminal.get_characters()
+    for character in characters:
+        assert character.motion.paths["0"].speed == center_movement_speed
+        assert character.motion.paths["full"].speed == full_movement_speed
     with effect.terminal_output() as terminal:
-        for frame in effect:
+        for frame in iterator:
             terminal.print(frame)
+    assert not iterator.active_characters
+    for character in characters:
+        assert character.is_visible
+        assert character.motion.current_coord == character.input_coord
+        assert character.animation.current_character_visual.symbol == character.input_symbol
+        assert character.animation.current_character_visual.colors == iterator.character_final_color_map[character]
 
 
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)

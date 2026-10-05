@@ -48,7 +48,7 @@ def _print_visual_test_parameters(test_name: str, **parameters: str) -> None:
 
 @pytest.mark.smoke
 @pytest.mark.effects
-@pytest.mark.usefixtures("advance_timed_effect_clocks")
+@pytest.mark.usefixtures("advance_timed_effect_clocks", "bounded_laseretch_sparks")
 @pytest.mark.parametrize(
     "input_data",
     ["single_char", "single_column", "single_row", "medium", "tabs", "color_sequences"],
@@ -83,7 +83,7 @@ def test_effect_rejects_empty_input(effect: type[BaseEffect[Any]]) -> None:
 
 @pytest.mark.smoke
 @pytest.mark.effects
-@pytest.mark.usefixtures("advance_timed_effect_clocks")
+@pytest.mark.usefixtures("advance_timed_effect_clocks", "bounded_laseretch_sparks")
 @pytest.mark.parametrize("input_data", ["medium", "color_sequences"], indirect=True)
 @pytest.mark.parametrize("existing_color_handling", ["always", "dynamic", "ignore"])
 def test_effect_color_sequence_handling(
