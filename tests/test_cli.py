@@ -695,13 +695,16 @@ def test_development_launcher_selects_checkout_directory(monkeypatch: pytest.Mon
     assert calls == [["tools.dev", "prototype", "--help"]]
 
 
-@pytest.mark.parametrize("completion_args", [["--print-completion", "bash"], ["--print-completion=bash"]])
+@pytest.mark.parametrize(
+    "completion_args",
+    [["--print-completion", "bash"], ["--print-completion=bash"], ["--print-c", "bash"], ["--print-c=bash"]],
+)
 def test_completion_requests_skip_broken_prototypes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     completion_args: list[str],
 ) -> None:
-    """Both argparse option forms avoid executing unfinished development code."""
+    """Full and abbreviated argparse option forms avoid executing unfinished development code."""
     (tmp_path / "broken.py").write_text('raise RuntimeError("unfinished prototype")\n')
     monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path))
     monkeypatch.setattr(sys, "argv", ["tte", *completion_args])

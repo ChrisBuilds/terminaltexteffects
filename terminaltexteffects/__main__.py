@@ -177,7 +177,10 @@ def build_parser(
 def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
     """Build the CLI parser, discover available effects, and parse arguments."""
     include_user_effects = not any(
-        argument == "--print-completion" or argument.startswith("--print-completion=") for argument in sys.argv[1:]
+        argument.startswith("--")
+        and len(argument.partition("=")[0]) > 2
+        and "--print-completion".startswith(argument.partition("=")[0])
+        for argument in sys.argv[1:]
     )
     parser, effect_resource_map = build_parser(include_user_effects=include_user_effects)
     return parser.parse_args(), effect_resource_map
