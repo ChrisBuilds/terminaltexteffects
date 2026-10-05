@@ -64,8 +64,10 @@ maintenance; the maintainer still reviews and decides when to merge. Use squash 
 and delete merged issue branches. Workflow configuration and templates alone do not enforce
 these rules; required checks and branch protection enforce them at merge time.
 
+GitHub Actions owns the supported-version matrix. Local verification uses the repository
+venv commands in [CONTRIBUTING.md](../CONTRIBUTING.md).
 When changing the minimum supported Python version or adding a supported version, update
-the matrix alongside `pyproject.toml` and `tox.ini`.
+the workflow matrix alongside `pyproject.toml` and its Ruff/Pyright version targets as appropriate.
 
 `Code quality` runs once on Python 3.14 with locked development dependencies. Ruff checks
 formatting and lint; Pyright checks types targeting Python 3.9. These checks are read-only
