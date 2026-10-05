@@ -12,7 +12,7 @@ from typing import Literal
 
 import pytest
 
-from tools import run_hook
+from tools import generate_changelog, run_hook
 
 
 @pytest.mark.parametrize("check", ["lint", "format", "types"])
@@ -58,6 +58,8 @@ def test_changelog_hook_detects_deleted_and_renamed_staged_inputs(
 ) -> None:
     """A missing fragment can still trigger validation through the staged Git diff."""
     commands: list[list[str]] = []
+    validated: list[Path] = []
+    monkeypatch.setattr(run_hook, "validate_staged_changelog", lambda root: validated.append(root) or 0)
 
     def capture(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
         commands.append(command)
@@ -67,10 +69,8 @@ def test_changelog_hook_detects_deleted_and_renamed_staged_inputs(
     assert run_hook.main(["changelog"]) == 0
     assert "--cached" in commands[0]
     assert "--no-renames" in commands[0]
-    assert len(commands) == (1 if changed.startswith(b"tools/example.py") else 2)
-    if len(commands) == 2:
-        assert commands[1][-1] == "--check"
-        assert "--base" not in commands[1]
+    assert len(commands) == 1
+    assert bool(validated) is not changed.startswith(b"tools/example.py")
 
 
 @pytest.mark.skipif(
@@ -129,3 +129,186 @@ def test_pre_commit_fixes_require_restaging_and_preserve_unstaged_changes(
     result = run(sys.executable, "-m", "pre_commit", "run", "pyright")
     assert result.returncode == 1, result.stdout + result.stderr
     assert "reportAssignmentType" in result.stdout
+
+
+@pytest.fixture
+def changelog_repository(tmp_path: Path) -> Path:
+    """Create a real indexed changelog with the project's renderer and configuration."""
+    root = Path(__file__).resolve().parents[1]
+    (tmp_path / "tools").mkdir()
+    for name in ("tools/run_hook.py", "tools/generate_changelog.py", "pyproject.toml"):
+        shutil.copy(root / name, tmp_path / name)
+    fragments = tmp_path / "changelog.d"
+    fragments.mkdir()
+    shutil.copy(root / "changelog.d/template.md.jinja", fragments / "template.md.jinja")
+    (fragments / "123.fixed.md").write_text("Baseline release note.\n", encoding="utf-8")
+    (tmp_path / "CHANGELOG.md").write_text(
+        f"# Changelog\n{generate_changelog.PREVIEW_START}\n{generate_changelog.PREVIEW_END}\n"
+        f"{generate_changelog.RELEASE_START}\n## 0.15.0\nPublished history.\n",
+        encoding="utf-8",
+    )
+    assert changelog_command(tmp_path, "generate_changelog.py").returncode == 0
+    git_changelog(tmp_path, "init")
+    git_changelog(tmp_path, "add", ".")
+    git_changelog(
+        tmp_path,
+        "-c",
+        "user.name=Hook Test",
+        "-c",
+        "user.email=test@example.com",
+        "commit",
+        "--no-verify",
+        "-m",
+        "Baseline",
+    )
+    (fragments / "124.skip.md").write_text("Internal tooling.\n", encoding="utf-8")
+    git_changelog(tmp_path, "add", "changelog.d/124.skip.md")
+    return tmp_path
+
+
+def changelog_command(root: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
+    """Run a real renderer or hook against the disposable repository."""
+    return subprocess.run(  # noqa: S603 - Separated arguments; no shell.
+        [sys.executable, str(root / "tools" / arguments[0]), *arguments[1:]],
+        cwd=root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def test_changelog_hook_ignores_untracked_invalid_fragments(changelog_repository: Path) -> None:
+    """An untracked invalid note cannot block a valid indexed changelog."""
+    fragment = changelog_repository / "changelog.d" / "not-a-fragment.txt"
+    fragment.write_text("Unrelated draft", encoding="utf-8")
+    result = changelog_command(changelog_repository, "run_hook.py", "changelog")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert fragment.read_text(encoding="utf-8") == "Unrelated draft"
+
+
+def git_changelog(root: Path, *arguments: str) -> str:
+    """Inspect and update only the disposable repository's index."""
+    return subprocess.run(  # noqa: S603 - Separated Git arguments without a shell.
+        ["git", *arguments],  # noqa: S607 - Use the environment's Git binary.
+        cwd=root,
+        check=True,
+        text=True,
+        capture_output=True,
+    ).stdout
+
+
+def test_changelog_hook_rejects_preview_including_untracked_note(changelog_repository: Path) -> None:
+    """A staged preview cannot pass by referring to a fragment absent from the index."""
+    fragment = changelog_repository / "changelog.d/125.fixed.md"
+    fragment.write_text("Uncommitted change.\n", encoding="utf-8")
+    assert changelog_command(changelog_repository, "generate_changelog.py").returncode == 0
+    git_changelog(changelog_repository, "add", "CHANGELOG.md")
+    before = git_changelog(changelog_repository, "diff", "--cached")
+    result = changelog_command(changelog_repository, "run_hook.py", "changelog")
+    assert result.returncode == 1
+    assert "preview is stale" in result.stdout
+    assert git_changelog(changelog_repository, "diff", "--cached") == before
+    assert fragment.read_text(encoding="utf-8") == "Uncommitted change.\n"
+
+
+def test_changelog_hook_uses_staged_fragment_preview_and_renderer(changelog_repository: Path) -> None:
+    """Partial staging validates indexed content and preserves every unstaged edit."""
+    fragment = changelog_repository / "changelog.d/125.fixed.md"
+    fragment.write_text("Staged change.\n", encoding="utf-8")
+    assert changelog_command(changelog_repository, "generate_changelog.py").returncode == 0
+    git_changelog(changelog_repository, "add", "changelog.d/125.fixed.md", "CHANGELOG.md")
+    fragment.write_text("", encoding="utf-8")
+    preview = changelog_repository / "CHANGELOG.md"
+    preview.write_text("Unstaged preview edit", encoding="utf-8")
+    renderer = changelog_repository / "tools/generate_changelog.py"
+    renderer.write_text('raise RuntimeError("Unstaged renderer")\n', encoding="utf-8")
+    before = git_changelog(changelog_repository, "diff", "--cached")
+    result = changelog_command(changelog_repository, "run_hook.py", "changelog")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert fragment.read_text(encoding="utf-8") == ""
+    assert preview.read_text(encoding="utf-8") == "Unstaged preview edit"
+    assert "Unstaged renderer" in renderer.read_text(encoding="utf-8")
+    assert git_changelog(changelog_repository, "diff", "--cached") == before
+
+
+@pytest.mark.parametrize("fault", ["empty", "invalid-name"])
+def test_changelog_hook_rejects_invalid_staged_fragment(changelog_repository: Path, fault: str) -> None:
+    """Invalid index content fails even when working-directory content looks valid."""
+    name = "125.fixed.md" if fault == "empty" else "invalid.md"
+    fragment = changelog_repository / "changelog.d" / name
+    fragment.write_text("" if fault == "empty" else "Invalid filename", encoding="utf-8")
+    git_changelog(changelog_repository, "add", f"changelog.d/{name}")
+    fragment.write_text("Valid unstaged content", encoding="utf-8")
+    result = changelog_command(changelog_repository, "run_hook.py", "changelog")
+    assert result.returncode != 0
+    assert ("Empty changelog" if fault == "empty" else "Invalid changelog fragment") in result.stderr
+    assert fragment.read_text(encoding="utf-8") == "Valid unstaged content"
+
+
+@pytest.mark.parametrize("operation", ["delete", "rename"])
+def test_changelog_hook_respects_index_deletion_and_rename(changelog_repository: Path, operation: str) -> None:
+    """Removed fragment paths stay absent from validation even if they reappear locally."""
+    fragment = changelog_repository / "changelog.d/123.fixed.md"
+    if operation == "delete":
+        git_changelog(changelog_repository, "rm", "changelog.d/123.fixed.md")
+    else:
+        git_changelog(changelog_repository, "mv", "changelog.d/123.fixed.md", "changelog.d/126.fixed.md")
+    assert changelog_command(changelog_repository, "generate_changelog.py").returncode == 0
+    git_changelog(changelog_repository, "add", "CHANGELOG.md")
+    fragment.write_text("", encoding="utf-8")
+    before = git_changelog(changelog_repository, "diff", "--cached")
+    result = changelog_command(changelog_repository, "run_hook.py", "changelog")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert fragment.read_text(encoding="utf-8") == ""
+    assert git_changelog(changelog_repository, "diff", "--cached") == before
+
+
+@pytest.mark.skipif(find_spec("pre_commit") is None, reason="Real pre-commit integration runs in Code quality.")
+def test_pre_commit_changelog_preserves_untracked_and_unstaged_files(changelog_repository: Path) -> None:
+    """Exercise staged-only validation through pre-commit's real stash and restoration."""
+    root = Path(__file__).resolve().parents[1]
+    shutil.copy(root / ".pre-commit-config.yaml", changelog_repository / ".pre-commit-config.yaml")
+    (changelog_repository / ".venv").symlink_to(Path(sys.executable).parent.parent, target_is_directory=True)
+    git_changelog(changelog_repository, "add", ".pre-commit-config.yaml")
+    untracked = changelog_repository / "changelog.d/unfinished.txt"
+    untracked.write_text("Untracked draft", encoding="utf-8")
+    tracked = changelog_repository / "changelog.d/123.fixed.md"
+    tracked.write_text("", encoding="utf-8")
+    before = git_changelog(changelog_repository, "diff", "--cached")
+    result = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "changelog"],
+        cwd=changelog_repository,
+        env={**os.environ, "PRE_COMMIT_HOME": str(changelog_repository / "cache")},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert untracked.read_text(encoding="utf-8") == "Untracked draft"
+    assert tracked.read_text(encoding="utf-8") == ""
+    assert git_changelog(changelog_repository, "diff", "--cached") == before
+
+
+def test_changelog_hook_materializes_sparse_index_files(changelog_repository: Path) -> None:
+    """Changelog files outside a sparse checkout still participate in staged validation."""
+    git_changelog(
+        changelog_repository,
+        "-c",
+        "user.name=Hook Test",
+        "-c",
+        "user.email=test@example.com",
+        "commit",
+        "--no-verify",
+        "-m",
+        "Commit fixture inputs",
+    )
+    git_changelog(changelog_repository, "sparse-checkout", "set", "--cone", "tools")
+    assert not (changelog_repository / "changelog.d").exists()
+    config = changelog_repository / "pyproject.toml"
+    config.write_text(config.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    git_changelog(changelog_repository, "add", "pyproject.toml")
+    flags = git_changelog(changelog_repository, "ls-files", "-v")
+    result = changelog_command(changelog_repository, "run_hook.py", "changelog")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not (changelog_repository / "changelog.d").exists()
+    assert git_changelog(changelog_repository, "ls-files", "-v") == flags

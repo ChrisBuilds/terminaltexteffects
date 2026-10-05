@@ -43,8 +43,10 @@ uv sync --locked --group dev
 Hooks use this checkout's `.venv`, avoiding separate Ruff/Pyright versions or isolated environments
 without project dependencies. Staged Python files and stubs run safe Ruff lint fixes, Ruff formatting,
 then read-only Pyright with the Python 3.9 target. Related changelog files trigger fragment and preview
-validation; staged deletions and both sides of renames are included. This local check validates the
-pending snapshot, while CI checks the issue's changelog decision against committed revisions.
+validation; staged deletions and both sides of renames are included. The changelog hook copies
+its inputs and renderer from the Git index into a temporary directory, so untracked fragments
+and unstaged edits cannot affect validation. It leaves working files and staging untouched.
+CI checks the issue's changelog decision against committed revisions.
 
 If a hook changes files, review and stage those fixes, then retry the commit. Pre-commit temporarily
 sets aside unstaged tracked changes and restores them afterward. If those changes conflict with
