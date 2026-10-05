@@ -1,4 +1,5 @@
 site_name: TerminalTextEffects Docs
+site_url: https://chrisbuilds.github.io/terminaltexteffects/
 site_description: TerminalTextEffects Documentation
 site_author: ChrisBuilds
 repo_url: https://github.com/ChrisBuilds/terminaltexteffects
@@ -7,11 +8,15 @@ docs_dir: docs
 
 theme:
   name: material
+  custom_dir: overrides
   palette:
     scheme: slate
   features:
     - content.code.copy
     - content.code.annotate
+
+extra:
+  docs_revision: !ENV [DOCS_REVISION, ""]
 
 plugins:
   - mkdocstrings

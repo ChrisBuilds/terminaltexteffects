@@ -70,6 +70,10 @@ Detailed examples and explanations may appear in the optional
 
 ### Changed
 
+- The documentation site now follows development main automatically after
+  successful CI and identifies the built commit, distinguishing development
+  APIs from the published PyPI release.
+  ([#100](https://github.com/ChrisBuilds/terminaltexteffects/issues/100))
 - Diamond-shaped groups are named `DIAMONDS_CENTER_TO_OUTSIDE` and
   `DIAMONDS_OUTSIDE_TO_CENTER`. Existing enum names and CLI spellings remain
   accepted as aliases.
