@@ -10,6 +10,9 @@
   Do not commit development changes directly to `main` or bypass branch protection.
 - Verify reported bugs and establish acceptance criteria before implementation. For changes to effect options,
   defaults, or visual behavior, present the proposed behavior and obtain agreement before changing it.
+- Create unfinished effects in root `dev_effects/`, never in `terminaltexteffects/effects/`.
+  Use `python -m tools.dev <effect>` or `TTE_DEV_EFFECTS_DIR` for development discovery.
+  Promotion into the shipped package requires reviewed tests, docs, completions, and a changelog fragment.
 - Keep commits scoped to the issue, including relevant tests, documentation, and generated artifacts. Keep local
   review notes in the sibling `dev_notes` workspace untracked and out of commits.
 - Use `Closes #<issue-number>` in the PR description, describe resulting behavior and validation, and report any

@@ -131,7 +131,11 @@ name = "Skip reasons"
 showcontent = true
 
 [tool.hatch.build.targets.sdist]
-exclude = ["docs/**", "tests/**"]
+exclude = ["docs/**", "tests/**", "/dev_effects/**", "/terminaltexteffects/effects/effect_dev.py"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["terminaltexteffects"]
+exclude = ["/dev_effects/**", "/terminaltexteffects/effects/effect_dev.py"]
 
 [build-system]
 requires = ["hatchling"]

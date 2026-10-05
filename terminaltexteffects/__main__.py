@@ -23,10 +23,25 @@ from terminaltexteffects.utils.shell_completion import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from types import ModuleType
 
     from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
+
+
+def _external_effect_modules(directory: Path, prefix: str = "") -> Iterator[ModuleType]:
+    """Load flat external modules deterministically without altering the import path."""
+    for plugin_file in sorted(directory.glob("*.py")):
+        if plugin_file.name == "__init__.py":
+            continue
+        module_name = prefix + plugin_file.stem
+        spec = importlib.util.spec_from_file_location(module_name, plugin_file)
+        if spec and spec.loader:
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = module
+            spec.loader.exec_module(module)
+            yield module
 
 
 def build_parser(
@@ -36,12 +51,12 @@ def build_parser(
     """Build the CLI parser and discover available effects.
 
     This registers built-in effect modules and, when requested, user-provided
-    effect modules from the XDG config effects directory. It returns the parsed
+    effect modules from the XDG config effects directory and `TTE_DEV_EFFECTS_DIR`. It returns the parsed
     CLI parser together with a mapping of effect command names to their effect
     and config classes.
 
     Args:
-        include_user_effects: Whether to discover effects from the user's XDG config directory.
+        include_user_effects: Whether to load external effects, including opted-in development effects.
 
     Returns:
         tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The CLI parser and a
@@ -144,16 +159,16 @@ def build_parser(
         _register_effect_from_module(module)
 
     plugins_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "terminaltexteffects" / "effects"
-    if include_user_effects and plugins_dir.exists():
-        for plugin_file in plugins_dir.glob("*.py"):
-            if plugin_file.name == "__init__.py":
-                continue
-            module_name = plugin_file.stem
-            spec = importlib.util.spec_from_file_location(module_name, plugin_file)
-            if spec and spec.loader:
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[module_name] = module
-                spec.loader.exec_module(module)
+    if include_user_effects:
+        for module in _external_effect_modules(plugins_dir):
+            _register_effect_from_module(module)
+        development_dir = os.environ.get("TTE_DEV_EFFECTS_DIR")
+        if development_dir is not None:
+            directory = Path(development_dir).expanduser().resolve()
+            if not development_dir or not directory.is_dir():
+                msg = f"TTE_DEV_EFFECTS_DIR must name an existing directory: {development_dir!r}"
+                raise ValueError(msg)
+            for module in _external_effect_modules(directory, "_tte_dev_"):
                 _register_effect_from_module(module)
 
     return parser, effect_resource_map

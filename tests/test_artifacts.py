@@ -37,7 +37,7 @@ def make_artifact(tmp_path: Path, kind: str, files: dict[str, bytes]) -> Path:
 
 
 @pytest.mark.parametrize("kind", ["whl", "tar.gz"])
-@pytest.mark.parametrize("fault", ["none", "runtime", "metadata", "version", "python"])
+@pytest.mark.parametrize("fault", ["none", "runtime", "metadata", "version", "python", "development", "legacy"])
 def test_archive_inventory_and_metadata(tmp_path: Path, kind: str, fault: str) -> None:
     """Both archive formats reject omitted runtime files and incorrect required metadata."""
     metadata_name = "example.dist-info/METADATA" if kind == "whl" else "PKG-INFO"
@@ -50,11 +50,17 @@ def test_archive_inventory_and_metadata(tmp_path: Path, kind: str, fault: str) -
         files[metadata_name] = METADATA.replace(b"0.15.0", b"0.14.0")
     elif fault == "python":
         files[metadata_name] = METADATA.replace(b">=3.9", b">=3.10")
+    if fault == "development":
+        files["dev_effects/arbitrary_prototype.py"] = b""
+    elif fault == "legacy":
+        files["terminaltexteffects/effects/effect_dev.py"] = b""
     artifact = make_artifact(tmp_path, kind, files)
     if fault == "none":
         check_artifacts.validate_artifact(artifact, {RUNTIME}, PROJECT)
     else:
         pattern = {
+            "development": "Development files",
+            "legacy": "Development files",
             "runtime": "Missing runtime",
             "metadata": "Expected one",
             "version": "Version",
@@ -80,6 +86,7 @@ def test_run_isolates_environment_and_propagates_failure(tmp_path: Path, monkeyp
     """Checkout import overrides are removed, and failed subprocesses fail validation."""
     monkeypatch.setenv("PYTHONPATH", "/checkout")
     monkeypatch.setenv("PYTHONHOME", "/checkout")
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", "/checkout/dev_effects")
 
     def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
         assert kwargs["cwd"] == tmp_path
@@ -87,6 +94,8 @@ def test_run_isolates_environment_and_propagates_failure(tmp_path: Path, monkeyp
         assert isinstance(environment, dict)
         assert "PYTHONPATH" not in environment
         assert "PYTHONHOME" not in environment
+        assert "TTE_DEV_EFFECTS_DIR" not in environment
+        assert environment["XDG_CONFIG_HOME"] == str(tmp_path / ".empty-config")
         return subprocess.CompletedProcess(command, 1, "", "broken build")
 
     monkeypatch.setattr(check_artifacts.subprocess, "run", fake_run)
