@@ -11,6 +11,9 @@ from terminaltexteffects.effects import effect_laseretch
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.graphics import Color, ColorPair
+from tests.effects_tests.assertions import assert_final_gradient
+
+pytestmark = pytest.mark.usefixtures("bounded_laseretch_sparks")
 
 
 def _make_terminal_config(
@@ -214,9 +217,11 @@ def test_laseretch_final_gradient(
     effect.effect_config.final_gradient_direction = gradient_direction
     effect.effect_config.final_gradient_frames = gradient_frames
     effect.terminal_config = terminal_config_default_no_framerate
+    iterator = iter(effect)
     with effect.terminal_output() as terminal:
-        for frame in effect:
+        for frame in iterator:
             terminal.print(frame)
+    assert_final_gradient(iterator, gradient_stops, gradient_steps, gradient_direction)
 
 
 @pytest.mark.parametrize(

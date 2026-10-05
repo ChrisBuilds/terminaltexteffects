@@ -7,16 +7,13 @@ from typing import TYPE_CHECKING, Literal
 
 import pytest
 
-from terminaltexteffects import CharacterOrder, ColorPair, EffectCharacter, ParticlePool
+from terminaltexteffects import CharacterOrder, ColorPair, EffectCharacter
 from terminaltexteffects.effects import effect_highlight, effect_laseretch, effect_sweep, effect_waves, effect_wipe
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils import argutils
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator
-
     from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-    from terminaltexteffects.engine.terminal import Terminal
 
 _EFFECTS = {
     "wipe": (effect_wipe.Wipe, "wipe_direction"),
@@ -35,40 +32,7 @@ _CONFIG_FIELDS = [
 ]
 
 
-@pytest.fixture(autouse=True)
-def bounded_ordering_sparks(monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, None]:
-    """Keep real sparks for tiny ordering inputs without preallocating 2,000 unused particles.
-
-    Default-resource integration stays in `test_laseretch.py`. Unexpected growth fails immediately,
-    and teardown verifies that the existing completion tests reclaimed every spark.
-    """
-    capacity = 16
-    pools: list[ParticlePool] = []
-
-    def unexpected_growth(symbol: str | None = None) -> EffectCharacter:
-        del symbol
-        pytest.fail("Ordering input exceeded the bounded spark fixture; review its capacity and coverage.")
-
-    def make_pool(
-        terminal: Terminal,
-        active_characters: set[EffectCharacter],
-        symbols: tuple[str, ...],
-        *,
-        initial_count: int,
-        initializer: Callable[[EffectCharacter], None],
-    ) -> ParticlePool:
-        assert initial_count >= capacity
-        assert len(terminal.get_characters()) <= capacity
-        pool = ParticlePool(terminal, active_characters, symbols, initial_count=capacity, initializer=initializer)
-        monkeypatch.setattr(pool, "_create_particle", unexpected_growth)
-        pools.append(pool)
-        return pool
-
-    monkeypatch.setattr(effect_laseretch.tte, "ParticlePool", make_pool)
-    yield
-    for pool in pools:
-        assert len(pool.particles) == capacity
-        assert len(pool.available) == capacity
+pytestmark = pytest.mark.usefixtures("bounded_laseretch_sparks")
 
 
 def _make_effect(
