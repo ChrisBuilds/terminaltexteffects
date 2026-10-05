@@ -155,5 +155,6 @@ dev = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.22",
     "mkdocstrings-python>=1.11.1",
+    "pre-commit>=3.8",
     "pymdown-extensions>=10.15",
 ]

@@ -56,6 +56,12 @@
   For example:
   - `./.venv/bin/ruff format --check terminaltexteffects/effects/effect_<effect>.py tests/effects_tests/test_<effect>.py`
   - `./.venv/bin/ruff check terminaltexteffects/effects/effect_<effect>.py tests/effects_tests/test_<effect>.py`
+- Optional staged-file QA hooks are configured in `.pre-commit-config.yaml`. Install with
+  `./.venv/bin/pre-commit install --allow-missing-config` after syncing locked development tools.
+  Hooks run safe Ruff lint fixes, formatting, read-only Pyright, and relevant changelog validation.
+  Review and restage hook edits; preserve unrelated unstaged changes. Do not run hooks with
+  `--all-files` as a routine check while project-wide cleanup is pending. Hooks do not replace focused tests
+  or the required CI checks.
 - After Ruff passes, run Pyright on those same files. For example:
   - `./.venv/bin/pyright --pythonpath ./.venv/bin/python terminaltexteffects/effects/effect_<effect>.py tests/effects_tests/test_<effect>.py`
 - Install locked development tools with `uv sync --locked --group dev`. Pyright targets Python 3.9 in `pyproject.toml`.

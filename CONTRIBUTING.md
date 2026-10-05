@@ -30,7 +30,38 @@ Use the repository's `.venv` tools when available. Follow the commands and focus
 requirements in [AGENTS.md](AGENTS.md): format touched Python files with Ruff, run focused pytest,
 then check formatting, lint, and types. Install reproducible tools with `uv sync --locked --group dev`.
 Ruff applies safe fixes by default; apply unsafe fixes only after deliberate review. Pyright targets
-Python 3.9. Documentation-only changes need formatting or diff checks. Commit hooks are optional.
+Python 3.9. Documentation-only changes need formatting or diff checks.
+
+Optional pre-commit hooks catch formatting, lint, type, and changelog problems before committing.
+Install them once per clone after syncing the locked development environment:
+
+```bash
+uv sync --locked --group dev
+./.venv/bin/pre-commit install --allow-missing-config
+```
+
+Hooks use this checkout's `.venv`, avoiding separate Ruff/Pyright versions or isolated environments
+without project dependencies. Staged Python files and stubs run safe Ruff lint fixes, Ruff formatting,
+then read-only Pyright with the Python 3.9 target. Related changelog files trigger fragment and preview
+validation; staged deletions and both sides of renames are included. This local check validates the
+pending snapshot, while CI checks the issue's changelog decision against committed revisions.
+
+If a hook changes files, review and stage those fixes, then retry the commit. Pre-commit temporarily
+sets aside unstaged tracked changes and restores them afterward. If those changes conflict with
+automatic fixes, it rolls back the fixes and preserves your unstaged work; format the file deliberately,
+then stage only the intended changes. Hook installation permits older branches without a configuration
+to skip hooks. Keep the development environment synced when switching branches.
+
+To run hooks manually on selected files:
+
+```bash
+./.venv/bin/pre-commit run --files tools/example.py tests/test_example.py
+```
+
+Do not use `--all-files` as a routine check while whole-project quality cleanup is pending.
+Focused pytest remains a development QA step; broad compatibility suites remain in CI. Hooks are
+optional and bypassable, so successful CI checks remain the enforced merge gate. Remove the local
+installation with `./.venv/bin/pre-commit uninstall`.
 
 The `Code quality` CI job checks changed Python files, including stubs, without modifying them.
 PR and branch checks compare against the merge base with the target branch; pushes to `main`

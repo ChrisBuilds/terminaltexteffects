@@ -7,7 +7,7 @@ Broad local runs are reserved for diagnosing failures or explicit requests.
 `workflows/ci.yml` runs on pull requests (including drafts), pushes to `main`, and manual dispatch.
 Pushes to an issue branch with an open PR trigger one PR run, not a duplicate push run.
 For a branch without a PR, open a draft PR or manually dispatch CI. Tag pushes do not trigger CI;
-manual dispatch always requests full validation. No local commit hook or private runner is needed.
+manual dispatch always requests full validation. Local QA hooks are optional; no private runner is needed.
 
 The matrix runs the default pytest suite on Python 3.9 through 3.14 using Ubuntu 24.04.
 It uses locked test dependencies, installs a non-editable package, and checks package import
@@ -52,6 +52,13 @@ formatting and lint; Pyright checks types targeting Python 3.9. These checks are
 and cover changed Python files and stubs, including rename destinations and excluding deleted
 files. PRs compare with their target branch's merge base; branch pushes compare with `main`;
 pushes to `main` compare with the previous revision. No Python changes means a passing check.
+
+For code-bearing changes, the quality job also validates `.pre-commit-config.yaml` and runs the
+focused hook regression tests.
+Real hook integration uses the locked development environment here; matrix jobs run the hook dispatcher
+unit tests and skip integration cases when development-only tools are absent. Local hooks use the same
+Ruff and Pyright settings, run on staged files, and do not replace CI enforcement. See the installation
+and staging guidance in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 Whole-project quality enforcement is deferred while existing findings are cleaned up in separate
 issues. All findings in changed files must be resolved. All eight required checks are restricted
