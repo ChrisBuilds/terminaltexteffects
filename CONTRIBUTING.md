@@ -82,6 +82,24 @@ This includes shared-engine and cross-cutting changes. Broad local runs are for 
 failures or explicit requests, rather than a routine prerequisite for committing or pushing.
 Report pending CI and continue the conversation without waiting for the broad suites.
 
+Release artifacts are validated once in `Code quality` for code-bearing changes and manual
+runs. This builds a wheel and source distribution with an isolated, locked build backend,
+then rebuilds a wheel from the source archive. All three distributions must include the
+tracked runtime files, match project metadata, and pass `twine check --strict` for metadata
+and README rendering. Each wheel is installed into a separate temporary environment outside
+the checkout; package and effect imports, both CLI entry points, and a seeded effect run
+must work. The existing Python matrix continues to check supported interpreter versions.
+
+To reproduce after syncing development tools, run:
+
+```sh
+./.venv/bin/python tools/check_artifacts.py
+```
+
+Temporary builds and environments are removed automatically. Optionally pass
+`--output-dir /path/to/empty-directory` to retain the distributions for inspection.
+This check does not publish artifacts. Documentation-only changes skip artifact validation.
+
 Run manual or visual tests when human inspection is needed. Reserve exhaustive effect-argument
 testing for pre-release validation unless diagnosing the full parameter matrix. Performance
 claims require before/after measurements and checks that seeded output and frame behavior are

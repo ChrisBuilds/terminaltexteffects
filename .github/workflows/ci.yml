@@ -54,6 +54,9 @@ jobs:
         run: |
           .venv/bin/pre-commit validate-config
           .venv/bin/python -m pytest -q tests/test_hooks.py
+      - name: Validate release artifacts
+        if: steps.changes.outputs.run_tests == 'true'
+        run: .venv/bin/python tools/check_artifacts.py
       - name: Check changelog fragments and preview
         env:
           QUALITY_BASE: ${{ github.event.pull_request.base.sha || (github.ref == 'refs/heads/main' && github.event.before) || 'origin/main' }}
