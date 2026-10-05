@@ -124,7 +124,8 @@ explaining why no release note is needed. See [fragment guidance](changelog.d/RE
 
 ## 4. Open the pull request
 
-Open a draft PR targeting `main`. Include `Closes #<issue-number>`, explain resulting behavior,
+Open a draft PR targeting `main`. Include `Closes #<issue-number>` (release tracking PRs use
+`Refs #<release-issue>`), explain resulting behavior,
 record local validation, and identify remaining limitations. Draft PRs may be opened early for
 discussion and CI feedback. Fix failures on the same branch and update the PR description when
 scope changes.
@@ -135,7 +136,8 @@ for review. The maintainer verifies acceptance criteria and resolves outstanding
 ## 5. Merge and close
 
 The maintainer decides when to merge. Use squash merging for one coherent commit per issue,
-then delete the branch. The linked issue closes when the PR merges into `main`.
+then delete the branch. Ordinary linked issues close when the PR merges into `main`;
+release tracking issues remain open through publication and post-release verification.
 
 The `main` protection requires PRs, all eight checks listed in
 [.github/CI.md](.github/CI.md), resolved review conversations, and enforcement for
@@ -158,24 +160,12 @@ or an explicit skip-reason fragment. The `Code quality` job validates fragment n
 preview freshness, and the branch's changelog decision. Published history before 0.16.0 retains
 its original format. The ChangeBlog is optional and holds demos or extended explanations.
 
-Prepare release notes in a dedicated release issue and PR after reviewing all pending fragments:
+Follow [RELEASING.md](RELEASING.md) for the complete release process: version/lockfile
+updates, Towncrier assembly, automated and human QA, maintainer review, exact artifact
+approval, manual publishing, and post-release verification. Use the
+[release issue template](.github/ISSUE_TEMPLATE/release.md) to record evidence and approvals.
 
-1. Run `uv sync --locked --group dev` and preview with
-   `./.venv/bin/towncrier build --draft --version 0.16.0 --date YYYY-MM-DD`.
-2. Edit fragments to consolidate overlapping notes and make migration instructions clear.
-3. Clear the generated preview with `./.venv/bin/python tools/generate_changelog.py --clear`.
-4. Assemble the dated section with
-   `./.venv/bin/towncrier build --yes --version 0.16.0 --date YYYY-MM-DD`.
-   Towncrier inserts it above published history and consumes the fragments, including skip reasons.
-5. Refresh the now-empty preview with `./.venv/bin/python tools/generate_changelog.py`, update
-   the project version, and commit the release section and fragment deletions together.
-6. Review the release PR and complete pre-release validation. After the maintainer authorizes
-   publishing, use the same dated section for the GitHub release. Documentation includes the
-   canonical changelog directly; it does not require a separately maintained copy.
-
-Substitute the intended version and actual release date for the examples. Release preparation
-does not authorize merging, creating a release tag, or publishing packages or a GitHub release.
-
-After committing, check the branch's changelog decision with
-`./.venv/bin/python tools/generate_changelog.py --check --base origin/main`.
-Preview edits alone do not satisfy this check; release PRs must consume fragments into a new dated section.
+Release tracking issues stay open through publication. Release PRs use `Refs #<release-issue>`
+instead of auto-closing that issue on merge; ordinary development PRs continue to use `Closes`.
+Preparation and merge approval do not authorize tagging or publishing. Publishing automation
+is deferred; follow the documented manual procedure with explicit maintainer authorization.

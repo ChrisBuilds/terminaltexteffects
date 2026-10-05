@@ -70,3 +70,18 @@ preview freshness without requiring a new changelog decision. Add a user-facing 
 explicit `.skip.md` reason. Release branches
 are accepted when they consume fragments into a new dated section of the canonical changelog.
 Preview edits alone do not bypass the fragment requirement. All checks are read-only.
+
+
+## Release validation
+
+Code-bearing changes also run `tools/check_artifacts.py` once in Code quality: wheel/source
+builds, source-rebuilt wheel validation, metadata/README checks, prototype exclusion, and
+clean installations outside the checkout. Documentation-only changes skip this step.
+
+Routine CI is a release prerequisite, not publication approval. The
+[release runbook](../RELEASING.md) and [release checklist](ISSUE_TEMPLATE/release.md) add
+exhaustive pre-release configuration tests, human visual/terminal QA, relevant performance
+evidence, final-commit validation, and exact-artifact approval. Exhaustive runs are dedicated
+pre-release work; the existing CI workflow runs the default pairwise suite even on manual dispatch.
+Publication remains manual and requires explicit maintainer authorization. Future publishing
+automation and documentation deployment are separate improvements.

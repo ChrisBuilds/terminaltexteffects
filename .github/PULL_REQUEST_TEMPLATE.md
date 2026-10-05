@@ -2,6 +2,7 @@
 
 <!-- Explain the problem and the behavior this change delivers. -->
 
+<!-- Ordinary PRs: Closes #<issue>. Release PRs: Refs #<release-issue>; keep it open through publication. -->
 Closes #<!-- issue number -->
 
 ## Validation
@@ -17,5 +18,5 @@ Closes #<!-- issue number -->
 - [ ] The linked issue's acceptance criteria are met.
 - [ ] Changes stay within the agreed scope.
 - [ ] Relevant documentation and generated completions are current.
-- [ ] Issue-numbered changelog note or explicit `.skip.md` reason added; preview refreshed.
+- [ ] Changelog note/skip reason added, or release fragments consumed into dated notes; preview refreshed.
 - [ ] Required CI checks pass for the latest revision.
