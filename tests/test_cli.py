@@ -185,6 +185,7 @@ def test_main_print_completion_without_shell_outputs_setup_commands(
         "Enable completions in the current shell:\n"
         '  Bash: eval "$(tte --print-completion bash)"\n'
         '  Zsh:  eval "$(tte --print-completion zsh)"\n'
+        "  PowerShell 7+: tte --print-completion powershell | Out-String | Invoke-Expression\n"
     )
 
 
@@ -539,7 +540,7 @@ printf 'included:%s\\n' "${{COMPREPLY[*]}}"
 """,
     )
 
-    assert "shells:bash zsh" in result.stdout
+    assert "shells:bash zsh powershell" in result.stdout
     assert str(completion_file) in result.stdout
     assert "included:matrix" in result.stdout
 
@@ -695,21 +696,24 @@ def test_development_launcher_selects_checkout_directory(monkeypatch: pytest.Mon
     assert calls == [["tools.dev", "prototype", "--help"]]
 
 
-@pytest.mark.parametrize(
-    "completion_args",
-    [["--print-completion", "bash"], ["--print-completion=bash"], ["--print-c", "bash"], ["--print-c=bash"]],
-)
+@pytest.mark.parametrize("shell", ["bash", "powershell"])
+@pytest.mark.parametrize("option", ["--print-completion", "--print-c"])
+@pytest.mark.parametrize("equals_form", [False, True])
 def test_completion_requests_skip_broken_prototypes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    completion_args: list[str],
+    shell: str,
+    option: str,
+    *,
+    equals_form: bool,
 ) -> None:
     """Full and abbreviated argparse option forms avoid executing unfinished development code."""
     (tmp_path / "broken.py").write_text('raise RuntimeError("unfinished prototype")\n')
     monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path))
+    completion_args = [f"{option}={shell}"] if equals_form else [option, shell]
     monkeypatch.setattr(sys, "argv", ["tte", *completion_args])
     args, effects = __main__.build_parsers_and_parse_args()
-    assert args.print_completion == "bash"
+    assert args.print_completion == shell
     assert "wipe" in effects
 
 

@@ -139,7 +139,7 @@ The maintainer decides when to merge. Use squash merging for one coherent commit
 then delete the branch. Ordinary linked issues close when the PR merges into `main`;
 release tracking issues remain open through publication and post-release verification.
 
-The `main` protection requires PRs, all eight checks listed in
+The `main` protection requires PRs, all ten checks listed in
 [.github/CI.md](.github/CI.md), resolved review conversations, and enforcement for
 administrators. These protections are configured in GitHub settings; repository documents
 and templates do not enforce them. As a solo-maintainer project, mandatory external approvals

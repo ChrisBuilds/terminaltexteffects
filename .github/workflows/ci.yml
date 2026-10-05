@@ -166,6 +166,7 @@ jobs:
         shell: bash
     env:
       PYTHONUTF8: "1"
+      TTE_REQUIRE_PWSH: "1"
     steps:
       - name: Documentation-only changes
         if: needs.quality.outputs.run_tests != 'true'
@@ -235,6 +236,7 @@ jobs:
             tests/engine_tests/test_terminal_unicode.py \
             tests/engine_tests/test_terminal_ansi_sequences.py \
             tests/engine_tests/test_base_config.py \
+            tests/test_powershell_completion.py \
             tests/test_cli.py::test_build_parser_registers_effects \
             tests/test_cli.py::test_runtime_parser_includes_plugin_effect \
             tests/test_cli.py::test_main_unsupported_ansi_sequence_exits_with_error \

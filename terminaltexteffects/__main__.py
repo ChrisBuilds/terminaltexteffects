@@ -66,7 +66,7 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
         nargs="?",
         const="",
         type=parse_completion_shell,
-        metavar="{bash,zsh}",
+        metavar="{bash,zsh,powershell}",
         help="Print completion setup commands, or a completion script for the requested shell, and exit.",
     )
     parser.add_argument("--random-effect", "-R", action="store_true", help="Randomly select an effect to apply")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 from typing import cast
 
@@ -18,6 +19,7 @@ COMPLETION_DIR = PROJECT_ROOT / "terminaltexteffects" / "completions"
 COMPLETION_PATHS = {
     "bash": COMPLETION_DIR / "tte.bash",
     "zsh": COMPLETION_DIR / "_tte",
+    "powershell": COMPLETION_DIR / "tte.ps1",
 }
 
 _COMPLETION_CHOICES_BY_TYPE = {
@@ -117,12 +119,58 @@ def _register_aliases(script: str, shell: str) -> str:
     return f"{script.rstrip()}\n"
 
 
+def parser_metadata(parser: argparse.ArgumentParser) -> dict[str, object]:
+    """Describe options, arity, and subcommands without serializing executable validators."""
+    options: dict[str, object] = {}
+    effects: dict[str, object] = {}
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            for name, child in cast("dict[str, argparse.ArgumentParser]", action.choices).items():
+                effects[name] = parser_metadata(child)["root"]
+            continue
+        if not action.option_strings or action.help == argparse.SUPPRESS:
+            continue
+        nargs = action.nargs
+        if nargs is None:
+            minimum, maximum = 1, 1
+        elif isinstance(nargs, int):
+            minimum, maximum = nargs, nargs
+        elif nargs == "?":
+            minimum, maximum = 0, 1
+        elif nargs in ("+", "*"):
+            minimum, maximum = int(nargs == "+"), -1
+        else:
+            msg = f"Unsupported PowerShell completion arity: {nargs!r}"
+            raise ValueError(msg)
+        info = {
+            "min": minimum,
+            "max": maximum,
+            "choices": [str(value) for value in action.choices] if action.choices is not None else [],
+            "file": "--input-file" in action.option_strings,
+            "help": action.help or action.dest,
+        }
+        for name in action.option_strings:
+            options[name] = info
+    return {"root": {"options": options}, "effects": effects}
+
+
+def build_powershell_script(parser: argparse.ArgumentParser) -> str:
+    """Embed parser data into a PowerShell 7 template using a literal JSON here-string."""
+    template = Path(__file__).with_name("completions") / "powershell.ps1"
+    metadata = json.dumps(parser_metadata(parser), ensure_ascii=True, indent=2)
+    return template.read_text(encoding="utf-8").replace("__TTE_METADATA__", metadata)
+
+
 def build_completion_scripts() -> dict[str, str]:
     """Build completion scripts containing bundled effects only."""
     parser, effect_resource_map = tte_main.build_parser(include_user_effects=False)
     _configure_completers(parser, tuple(effect_resource_map))
     return {
-        shell: _register_aliases(shtab.complete(parser, shell=shell), shell)
+        shell: (
+            build_powershell_script(parser)
+            if shell == "powershell"
+            else _register_aliases(shtab.complete(parser, shell=shell), shell)
+        )
         for shell in COMPLETION_PATHS
     }
 
