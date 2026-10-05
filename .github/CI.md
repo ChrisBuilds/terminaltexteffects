@@ -30,8 +30,7 @@ part of the release checklist. Full effect-configuration coverage stays in the L
 
 New job names are `Windows / Python 3.14` and `macOS / Python 3.14`. They run on code-bearing
 changes and manual dispatch, with lightweight success steps for documentation-only PRs.
-The existing eight required checks remain configured; add these two names to branch
-protection once their first PR run is verified, before treating them as enforced merge gates.
+Both names are required in main branch protection alongside the original eight checks.
 
 The quality job classifies the committed diff, including deleted files and both sides of renames.
 Only Markdown prose in the root, documentation, changelog, and non-workflow GitHub directories,
@@ -39,7 +38,7 @@ plus documentation images, may bypass the matrix and completion generation. Unkn
 Python source, tests, dependencies, packaging, and CI configuration require the full matrix.
 Documentation and `overrides/` theme changes run a strict MkDocs build with documentation link validation. All changes
 retain changelog validation. Documentation-only matrix and completion jobs perform a short success
-step so all eight required check names remain present; the whole workflow is never path-filtered.
+step so all ten required check names remain present; the whole workflow is never path-filtered.
 
 New pushes cancel obsolete runs for the same branch or pull request. Each Python version
 reports separately, and a failure on one version does not cancel the other matrix jobs.
@@ -54,6 +53,8 @@ Branch protection for `main` requires these checks before merging:
 - `Python 3.14`
 - `Shell completions`
 - `Code quality`
+- `Windows / Python 3.14`
+- `macOS / Python 3.14`
 
 GitHub branch protection requires PRs, the checks above, resolved conversations,
 and enforcement for administrators. Mandatory external approvals remain at zero for solo
@@ -78,7 +79,7 @@ Ruff and Pyright settings, run on staged files, and do not replace CI enforcemen
 and staging guidance in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 Whole-project quality enforcement is deferred while existing findings are cleaned up in separate
-issues. All findings in changed files must be resolved. All eight required checks are restricted
+issues. All findings in changed files must be resolved. All ten required checks are restricted
 to results from GitHub Actions.
 
 The same job validates changelog fragments, the generated Unreleased preview, and the branch's

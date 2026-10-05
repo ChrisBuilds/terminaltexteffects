@@ -21,7 +21,7 @@ active upload; its next successful CI run then publishes the newer site.
 
 This rebuild runs once per successful current-main push, including source-only changes,
 so generated API reference pages stay current. It does not rerun pytest or add matrix jobs.
-The ordinary eight required CI checks are unchanged; deployment is a post-merge check.
+The required CI checks are unchanged by documentation deployment; deployment is a post-merge check.
 
 ## One-time cutover after the workflow PR merges
 
