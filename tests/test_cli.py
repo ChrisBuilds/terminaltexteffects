@@ -728,5 +728,5 @@ def test_prototype_options_do_not_disable_discovery(
     monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(directory))
     monkeypatch.setattr(sys, "argv", ["tte", "--seed", "94", "plugindemo", effect_option, "2"])
     args, effects = __main__.build_parsers_and_parse_args()
-    assert args.plugin_speed == 2
+    assert args.print == 2
     assert "plugindemo" in effects
