@@ -84,7 +84,9 @@ class NormalizedConfig(BaseConfig):
     )
     ease: object = argutils.ArgSpec(name="--ease", default=easing.linear, type=argutils.Ease.type_parser)  # pyright: ignore[reportAssignmentType]
     span: tuple[int, int] = argutils.ArgSpec(  # pyright: ignore[reportAssignmentType]
-        name="--span", default=(1, 2), type=argutils.PositiveIntRange.type_parser,
+        name="--span",
+        default=(1, 2),
+        type=argutils.PositiveIntRange.type_parser,
     )
 
 

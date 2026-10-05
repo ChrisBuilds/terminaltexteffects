@@ -24,7 +24,8 @@ def test_native_range_rejects_nonpositive_endpoints(value: tuple[float, float] |
     [("0.1-0.1", (0.1, 0.1)), ((0.1, 0.1), (0.1, 0.1)), ([0.1, 1], (0.1, 1.0))],
 )
 def test_range_accepts_positive_endpoints(
-    value: str | tuple[float, float] | list[float], expected: tuple[float, float],
+    value: str | tuple[float, float] | list[float],
+    expected: tuple[float, float],
 ) -> None:
     """CLI strings and native ranges retain valid inclusive endpoints."""
     assert PositiveFloatRange.type_parser(value) == expected

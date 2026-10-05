@@ -36,8 +36,7 @@ def _input(width: int, height: int, style: str) -> str:
         return "\n".join(["A" * (width - 2) + "界"] * height)
     numerator = {"dense": 8, "half": 4, "three_quarters": 6, "seven_eighths": 7}[style]
     return "\n".join(
-        "".join("A" if (row + column) % 8 < numerator else " " for column in range(width))
-        for row in range(height)
+        "".join("A" if (row + column) % 8 < numerator else " " for column in range(width)) for row in range(height)
     )
 
 

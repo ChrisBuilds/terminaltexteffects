@@ -242,7 +242,9 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
                     digital_path.new_waypoint(coord)
                 bin_effectchar.motion.activate_path(digital_path)
                 bin_effectchar.layer = 1
-                bin_effectchar.animation.set_appearance(colors=tte.ColorPair(fg=random.choice(self.config.binary_colors)))
+                bin_effectchar.animation.set_appearance(
+                    colors=tte.ColorPair(fg=random.choice(self.config.binary_colors))
+                )
 
         for character in self.terminal.get_characters():
             collapse_scn = character.animation.new_scene(ease=tte.easing.in_quad, scene_id="collapse_scn")
@@ -252,16 +254,8 @@ class BinaryPathIterator(BaseEffectIterator[BinaryPathConfig]):
             else:
                 final_fg_color = final_gradient_mapping[character.input_coord]
                 final_bg_color = None
-            dim_fg_color = (
-                character.animation.adjust_color_brightness(final_fg_color, 0.5)
-                if final_fg_color
-                else None
-            )
-            dim_bg_color = (
-                character.animation.adjust_color_brightness(final_bg_color, 0.5)
-                if final_bg_color
-                else None
-            )
+            dim_fg_color = character.animation.adjust_color_brightness(final_fg_color, 0.5) if final_fg_color else None
+            dim_bg_color = character.animation.adjust_color_brightness(final_bg_color, 0.5) if final_bg_color else None
             collapse_fg_gradient = tte.Gradient(tte.Color("#ffffff"), dim_fg_color, steps=7) if dim_fg_color else None
             collapse_bg_gradient = tte.Gradient(tte.Color("#ffffff"), dim_bg_color, steps=7) if dim_bg_color else None
             if collapse_fg_gradient or collapse_bg_gradient:

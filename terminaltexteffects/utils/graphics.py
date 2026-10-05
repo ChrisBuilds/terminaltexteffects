@@ -108,10 +108,7 @@ class Color:
         """Return a string representation of the Color object."""
         color_block = f"{colorterm.fg(self.rgb_color)}█████{ansitools.reset_all()}"
         xterm_display = f" | XTerm Color: {self.xterm_color}" if self.xterm_color is not None else ""
-        return (
-            f"Color Code: {self.rgb_color}{xterm_display}"
-            f"\nColor Appearance: {color_block}"
-        )
+        return f"Color Code: {self.rgb_color}{xterm_display}\nColor Appearance: {color_block}"
 
     def __eq__(self, other: object) -> bool:
         """Return whether this color has the same normalized specification as another `Color`.
@@ -422,9 +419,7 @@ class Gradient:
             diagonal_span = (row_span * geometry.TERMINAL_ROW_SCALE) + column_span
             for row_value in range(min_row, max_row + 1):
                 for column_value in range(min_column, max_column + 1):
-                    fraction = (
-                        ((row_value - min_row) * geometry.TERMINAL_ROW_SCALE) + (column_value - min_column)
-                    )
+                    fraction = ((row_value - min_row) * geometry.TERMINAL_ROW_SCALE) + (column_value - min_column)
                     fraction = fraction / diagonal_span if diagonal_span else 0
                     color = self.get_color_at_fraction(fraction)
                     gradient_mapping[geometry.Coord(column_value, row_value)] = color

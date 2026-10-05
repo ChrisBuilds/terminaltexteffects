@@ -206,13 +206,11 @@ class GridLine:
         occupied = occupied_coords if occupied_coords is not None else set()
         if direction == "horizontal":
             coords = (
-                Coord(column, origin.row)
-                for column in range(self.terminal.canvas.left, self.terminal.canvas.right + 1)
+                Coord(column, origin.row) for column in range(self.terminal.canvas.left, self.terminal.canvas.right + 1)
             )
         else:
             coords = (
-                Coord(origin.column, row)
-                for row in range(self.terminal.canvas.bottom, self.terminal.canvas.top + 1)
+                Coord(origin.column, row) for row in range(self.terminal.canvas.bottom, self.terminal.canvas.top + 1)
             )
         for coord in coords:
             if coord in occupied:
@@ -306,8 +304,7 @@ class SynthGridIterator(BaseEffectIterator[SynthGridConfig]):
         line_origins: list[tuple[Coord, str]] = []
         if canvas.height >= 3 and min_height >= 2:
             line_origins.extend(
-                (Coord(canvas.left, row), "horizontal")
-                for row in sorted({rows[0], rows[-1] - 1, *rows[1:-1]})
+                (Coord(canvas.left, row), "horizontal") for row in sorted({rows[0], rows[-1] - 1, *rows[1:-1]})
             )
         if canvas.width >= 3 and min_width >= 2:
             line_origins.extend(

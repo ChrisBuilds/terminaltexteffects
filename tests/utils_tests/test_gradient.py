@@ -750,10 +750,13 @@ def test_color_pair_repr_round_trip(color_pair: ColorPair, expected_repr: str) -
     color_pair_repr = repr(color_pair)
 
     assert color_pair_repr == expected_repr
-    assert eval(  # noqa: S307
-        color_pair_repr,
-        {"__builtins__": {}, "Color": Color, "ColorPair": ColorPair},
-    ) == color_pair
+    assert (
+        eval(  # noqa: S307
+            color_pair_repr,
+            {"__builtins__": {}, "Color": Color, "ColorPair": ColorPair},
+        )
+        == color_pair
+    )
 
 
 def test_color_str() -> None:

@@ -52,8 +52,7 @@ class InvalidCharacterCoordinateError(TerminalTextEffectsError):
         """
         self.coord = coord
         self.message = (
-            "Character coordinates must be a Coord containing integer column and row values. "
-            f"Received: {coord!r}."
+            f"Character coordinates must be a Coord containing integer column and row values. Received: {coord!r}."
         )
         super().__init__(self.message)
 

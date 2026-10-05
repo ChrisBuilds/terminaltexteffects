@@ -78,8 +78,28 @@ def test_documentation_only_diff_selects_no_python_files(repository: Path) -> No
     assert check_quality.changed_python_files(repository, "main", "HEAD") == []
 
 
+def test_tracked_files_include_unchanged_code_but_not_local_experiments(repository: Path) -> None:
+    """Whole-project checks include unchanged code and stubs without claiming local prototypes."""
+    for name in ("-leading-dash.py", "stub with spaces.pyi", "README.md"):
+        (repository / name).write_text("# tracked\n")
+    (repository / ".gitignore").write_text("dev_effects/\n")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "Track quality inputs")
+    (repository / "local.py").write_text("# untracked\n")
+    (repository / "dev_effects").mkdir()
+    (repository / "dev_effects" / "effect_dev.py").write_text("# ignored\n")
+    (repository / "deleted.py").unlink()
+    assert check_quality.tracked_python_files(repository) == [
+        "./-leading-dash.py",
+        "./modified.py",
+        "./renamed.py",
+        "./stub with spaces.pyi",
+    ]
+
+
 @pytest.mark.parametrize("failure_index", [0, 1, 2])
-def test_quality_failure_stops_later_checks(monkeypatch: pytest.MonkeyPatch, failure_index: int) -> None:
+@pytest.mark.parametrize("mode", ["changed", "all"])
+def test_quality_failure_stops_later_checks(monkeypatch: pytest.MonkeyPatch, failure_index: int, mode: str) -> None:
     """Any formatter, linter, or type-check failure reaches CI without running later tools."""
     commands: list[list[str]] = []
 
@@ -88,8 +108,10 @@ def test_quality_failure_stops_later_checks(monkeypatch: pytest.MonkeyPatch, fai
         commands.append(command)
         return subprocess.CompletedProcess(command, 7 if len(commands) == failure_index + 1 else 0)
 
-    monkeypatch.setattr(check_quality.sys, "argv", ["check_quality.py", "--base", "main"])
-    monkeypatch.setattr(check_quality, "changed_python_files", lambda *_args: ["./file with spaces.py"])
+    args = ["--all"] if mode == "all" else ["--base", "main"]
+    selector = "tracked_python_files" if mode == "all" else "changed_python_files"
+    monkeypatch.setattr(check_quality.sys, "argv", ["check_quality.py", *args])
+    monkeypatch.setattr(check_quality, selector, lambda *_args: ["./file with spaces.py"])
     monkeypatch.setattr(check_quality.subprocess, "run", run)
     assert check_quality.main() == 7
     assert len(commands) == failure_index + 1

@@ -352,14 +352,10 @@ def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> lis
     """
     _validate_nonnegative_dimensions(half_width=half_width, half_height=half_height)
     if not half_width:
-        return [
-            Coord(origin.column, row)
-            for row in range(origin.row - half_height, origin.row + half_height + 1)
-        ]
+        return [Coord(origin.column, row) for row in range(origin.row - half_height, origin.row + half_height + 1)]
     if not half_height:
         return [
-            Coord(column, origin.row)
-            for column in range(origin.column - half_width, origin.column + half_width + 1)
+            Coord(column, origin.row) for column in range(origin.column - half_width, origin.column + half_width + 1)
         ]
     coords: list[Coord] = []
     for column in range(origin.column - half_width, origin.column + half_width + 1):

@@ -395,7 +395,8 @@ _EVENT_CALLER_TYPES: typing.Mapping[EventHandler.Event, type[animation.Scene | m
     )
 )
 _ACTION_TARGET_TYPES: typing.Mapping[
-    EventHandler.Action, type[animation.Scene | motion.Path | int | Coord | EventHandler.Callback | None],
+    EventHandler.Action,
+    type[animation.Scene | motion.Path | int | Coord | EventHandler.Callback | None],
 ] = MappingProxyType(
     {
         EventHandler.Action.ACTIVATE_PATH: motion.Path,

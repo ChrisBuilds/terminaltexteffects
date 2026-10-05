@@ -88,19 +88,19 @@ To run hooks manually on selected files:
 ./.venv/bin/pre-commit run --files tools/example.py tests/test_example.py
 ```
 
-Do not use `--all-files` as a routine check while whole-project quality cleanup is pending.
-Focused pytest remains a development QA step; broad compatibility suites remain in CI. Hooks are
-optional and bypassable, so successful CI checks remain the enforced merge gate. Remove the local
-installation with `./.venv/bin/pre-commit uninstall`.
+Use selected-file hooks for routine development. Focused pytest remains a development QA
+step; broad compatibility suites remain in CI. Hooks are optional and bypassable, so successful
+CI checks remain the enforced merge gate. Remove the local installation with
+`./.venv/bin/pre-commit uninstall`.
 
-The `Code quality` CI job checks changed Python files, including stubs, without modifying them.
-PR and branch checks compare against the merge base with the target branch; pushes to `main`
-compare against the previous revision. Deleted files are excluded. Documentation-only diffs pass
-without running Python tools. Changed files must pass all checks, including existing findings in
-those files. Track broader cleanup separately; whole-project type checking remains the goal to
-catch regressions in callers outside the changed files.
+The `Code quality` CI job checks every tracked Python file, including stubs, without modifying
+them. This includes implementation, tests, tools, and archived experiments, so changes cannot
+silently break types in unchanged callers. Ignored and untracked local prototypes are excluded.
+Documentation-only changes still run these read-only quality checks but skip pytest.
 
-After committing, reproduce the CI checks with
+Reproduce the full CI quality checks with
+`./.venv/bin/python tools/check_quality.py --all`.
+For a focused branch check after committing, use
 `./.venv/bin/python tools/check_quality.py --base origin/main`.
 
 GitHub Actions runs the broad default suite across supported Python versions on PRs (including

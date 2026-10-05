@@ -75,14 +75,14 @@
 - Optional staged-file QA hooks are configured in `.pre-commit-config.yaml`. Install with
   `./.venv/bin/pre-commit install --allow-missing-config` after syncing locked development tools.
   Hooks run safe Ruff lint fixes, formatting, read-only Pyright, and relevant changelog validation.
-  Review and restage hook edits; preserve unrelated unstaged changes. Do not run hooks with
-  `--all-files` as a routine check while project-wide cleanup is pending. Hooks do not replace focused tests
-  or the required CI checks.
+  Review and restage hook edits; preserve unrelated unstaged changes. Use selected-file hooks for
+  routine development. Hooks do not replace focused tests or the required CI checks.
 - After Ruff passes, run Pyright on those same files. For example:
   - `./.venv/bin/pyright --pythonpath ./.venv/bin/python terminaltexteffects/effects/effect_<effect>.py tests/effects_tests/test_<effect>.py`
 - Install locked development tools with `uv sync --locked --group dev`. Pyright targets Python 3.9 in `pyproject.toml`.
-  The `Code quality` CI job runs read-only formatting, lint, and type checks on changed Python files. To reproduce
-  its branch checks locally, run `./.venv/bin/python tools/check_quality.py --base origin/main` after committing.
+  The `Code quality` CI job runs read-only formatting, lint, and type checks on all tracked Python files,
+  including tests, tools, and archived experiments. Ignored local prototypes are excluded. Reproduce CI with `./.venv/bin/python tools/check_quality.py --all`; use
+  `--base origin/main` for focused branch checks after committing.
 
 ## Completion Criteria
 

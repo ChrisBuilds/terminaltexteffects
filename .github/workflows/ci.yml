@@ -45,10 +45,8 @@ jobs:
           cache-suffix: quality
       - name: Install package and locked development tools
         run: uv sync --locked --group dev
-      - name: Check changed Python files
-        env:
-          QUALITY_BASE: ${{ github.event.pull_request.base.sha || (github.ref == 'refs/heads/main' && github.event.before) || 'origin/main' }}
-        run: .venv/bin/python tools/check_quality.py --base "$QUALITY_BASE"
+      - name: Check all tracked Python files
+        run: .venv/bin/python tools/check_quality.py --all
       - name: Check local QA hooks
         if: steps.changes.outputs.run_tests == 'true'
         run: |
