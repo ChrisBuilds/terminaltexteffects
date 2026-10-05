@@ -1,0 +1,29 @@
+default_stages: [pre-commit]
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff lint (safe fixes)
+        entry: .venv/bin/python tools/run_hook.py lint --
+        language: system
+        files: '\.(py|pyi)$'
+        require_serial: true
+      - id: ruff-format
+        name: Ruff format
+        entry: .venv/bin/python tools/run_hook.py format --
+        language: system
+        files: '\.(py|pyi)$'
+        require_serial: true
+      - id: pyright
+        name: Pyright (Python 3.9 target)
+        entry: .venv/bin/python tools/run_hook.py types --
+        language: system
+        files: '\.(py|pyi)$'
+        require_serial: true
+      - id: changelog
+        name: Changelog fragments and preview
+        entry: .venv/bin/python tools/run_hook.py changelog --
+        language: system
+        files: '^(CHANGELOG\.md|changelog\.d/.*|tools/generate_changelog\.py|pyproject\.toml|uv\.lock)$'
+        always_run: true
+        require_serial: true
