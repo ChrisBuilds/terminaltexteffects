@@ -69,9 +69,11 @@ the matrix alongside `pyproject.toml` and `tox.ini`.
 
 `Code quality` runs once on Python 3.14 with locked development dependencies. Ruff checks
 formatting and lint; Pyright checks types targeting Python 3.9. These checks are read-only
-and cover changed Python files and stubs, including rename destinations and excluding deleted
-files. PRs compare with their target branch's merge base; branch pushes compare with `main`;
-pushes to `main` compare with the previous revision. No Python changes means a passing check.
+and cover every tracked Python file and stub, including unchanged callers, tests, tools, and
+archived experiments. Ignored and untracked local prototypes stay outside CI's inventory.
+Documentation-only changes still run quality checks. Reproduce them locally with
+`./.venv/bin/python tools/check_quality.py --all`; changed-file checks remain available with
+`--base origin/main` for focused development.
 
 For code-bearing changes, the quality job also validates `.pre-commit-config.yaml` and runs the
 focused hook regression tests.
@@ -80,9 +82,7 @@ unit tests and skip integration cases when development-only tools are absent. Lo
 Ruff and Pyright settings, run on staged files, and do not replace CI enforcement. See the installation
 and staging guidance in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Whole-project quality enforcement is deferred while existing findings are cleaned up in separate
-issues. All findings in changed files must be resolved. All ten required checks are restricted
-to results from GitHub Actions.
+All ten required checks are restricted to results from GitHub Actions.
 
 The same job validates changelog fragments, the generated Unreleased preview, and the branch's
 changelog decision for PRs and pushes to `main`. Manual runs validate fragments and

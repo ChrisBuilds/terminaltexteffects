@@ -89,7 +89,7 @@ def test_highlight_sorted_direction_schedules_exact_order_and_restores_base_colo
     for _ in iterator:
         added = [group[0] for group in iterator.easer.added]
         scheduled.extend(added)
-        assert scheduled == ordered[:len(scheduled)]
+        assert scheduled == ordered[: len(scheduled)]
         assert all(character.is_visible for character in characters)
         assert all(
             character.animation.active_scene is character.animation.query_scene("highlight") for character in added

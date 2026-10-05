@@ -1,4 +1,5 @@
 """Tests for the Path, Segment, Waypoint and Motion classes."""
+
 from __future__ import annotations
 
 import pytest

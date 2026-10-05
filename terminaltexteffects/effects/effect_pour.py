@@ -240,14 +240,10 @@ class PourIterator(BaseEffectIterator[PourConfig]):
                     final_fg_color = self.character_final_color_map[character].fg
                     final_bg_color = self.character_final_color_map[character].bg
                     fg_gradient = (
-                        Gradient(self.config.starting_color, final_fg_color, steps=10)
-                        if final_fg_color
-                        else None
+                        Gradient(self.config.starting_color, final_fg_color, steps=10) if final_fg_color else None
                     )
                     bg_gradient = (
-                        Gradient(self.config.starting_color, final_bg_color, steps=10)
-                        if final_bg_color
-                        else None
+                        Gradient(self.config.starting_color, final_bg_color, steps=10) if final_bg_color else None
                     )
                     if fg_gradient or bg_gradient:
                         pour_scn.apply_gradient_to_symbols(

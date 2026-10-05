@@ -692,11 +692,7 @@ class Terminal:
         for row, line in enumerate(formatted_lines):
             for character in line:
                 logical_column = self._preprocessed_character_columns[character]
-                column = (
-                    self._wrapped_character_columns[character] + 1
-                    if self.config.wrap_text
-                    else logical_column + 1
-                )
+                column = self._wrapped_character_columns[character] + 1 if self.config.wrap_text else logical_column + 1
                 if character._input_symbol != " " or any(
                     (character.animation.input_fg_color, character.animation.input_bg_color),
                 ):
@@ -1508,11 +1504,7 @@ class Terminal:
                     owners[row_index] = row_owners
                 else:
                     row_owners = existing_row_owners
-                overwritten_characters = {
-                    owner
-                    for owner in row_owners[column_index:right_column]
-                    if owner is not None
-                }
+                overwritten_characters = {owner for owner in row_owners[column_index:right_column] if owner is not None}
                 for overwritten_character in overwritten_characters:
                     old_row, old_column, old_width = footprints.pop(overwritten_character)
                     old_row_owners = owners[old_row]
@@ -1574,9 +1566,7 @@ class Terminal:
         """
         if self._output_prepared:
             return
-        active_terminal = (
-            self._active_output_terminal() if self._active_output_terminal is not None else None
-        )
+        active_terminal = self._active_output_terminal() if self._active_output_terminal is not None else None
         if active_terminal is not None:
             raise TerminalOutputActiveError
         self._output_prepared = True
@@ -1599,9 +1589,7 @@ class Terminal:
     def _release_output_ownership(self) -> None:
         """Mark output inactive and release this terminal's global cursor ownership."""
         self._output_prepared = False
-        active_terminal = (
-            self._active_output_terminal() if self._active_output_terminal is not None else None
-        )
+        active_terminal = self._active_output_terminal() if self._active_output_terminal is not None else None
         if active_terminal is self:
             type(self)._active_output_terminal = None
 

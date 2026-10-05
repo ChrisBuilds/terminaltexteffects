@@ -401,11 +401,7 @@ def test_spotlights_illuminates_wide_continuation_cell(input_data: str, beam_fal
 
     assert character in iterator.illuminated_chars
     bright_pair, _ = iterator.character_color_map[character]
-    expected = (
-        bright_pair
-        if beam_falloff == 0
-        else iterator._adjust_color_pair_brightness(bright_pair, 0.2)
-    )
+    expected = bright_pair if beam_falloff == 0 else iterator._adjust_color_pair_brightness(bright_pair, 0.2)
     assert character.animation.current_character_visual.colors == expected
 
 

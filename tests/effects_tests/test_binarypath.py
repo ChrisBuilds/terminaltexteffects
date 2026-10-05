@@ -76,8 +76,7 @@ def test_binarypath_routes_have_no_zero_distance_or_diagonal_segments() -> None:
     for segment in path.segments:
         assert segment.start.coord != segment.end.coord
         assert (
-            segment.start.coord.column == segment.end.coord.column
-            or segment.start.coord.row == segment.end.coord.row
+            segment.start.coord.column == segment.end.coord.column or segment.start.coord.row == segment.end.coord.row
         )
 
 

@@ -1,3 +1,7 @@
+"""Test colorshift rendering and input-color handling."""
+
+from __future__ import annotations
+
 from typing import Literal
 
 import pytest
@@ -5,10 +9,11 @@ import pytest
 from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_colorshift
 from terminaltexteffects.engine.terminal import TerminalConfig
-from terminaltexteffects.utils.graphics import Color
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 def _make_terminal_config(existing_color_handling: Literal["always", "dynamic", "ignore"]) -> TerminalConfig:
+    """Build a zero-framerate terminal with the requested input-color policy."""
     terminal_config = TerminalConfig._build_config()
     terminal_config.frame_rate = 0
     terminal_config.existing_color_handling = existing_color_handling
@@ -20,7 +25,8 @@ def _make_terminal_config(existing_color_handling: Literal["always", "dynamic", 
     ["single_char", "single_column", "single_row", "medium", "tabs"],
     indirect=True,
 )
-def test_colorshift_effect_all_inputs(input_data, terminal_config_default_no_framerate) -> None:
+def test_colorshift_effect_all_inputs(input_data: str, terminal_config_default_no_framerate: TerminalConfig) -> None:
+    """Render the effect for representative input shapes."""
     effect = effect_colorshift.ColorShift(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
     with effect.terminal_output() as terminal:
@@ -29,7 +35,10 @@ def test_colorshift_effect_all_inputs(input_data, terminal_config_default_no_fra
 
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
-def test_colorshift_effect_terminal_color_options(input_data, terminal_config_with_color_options) -> None:
+def test_colorshift_effect_terminal_color_options(
+    input_data: str, terminal_config_with_color_options: TerminalConfig
+) -> None:
+    """Render the effect with terminal color modes."""
     effect = effect_colorshift.ColorShift(input_data)
     effect.terminal_config = terminal_config_with_color_options
     with effect.terminal_output() as terminal:
@@ -39,12 +48,13 @@ def test_colorshift_effect_terminal_color_options(input_data, terminal_config_wi
 
 @pytest.mark.parametrize("input_data", ["medium"], indirect=True)
 def test_colorshift_final_gradient(
-    terminal_config_default_no_framerate,
-    input_data,
-    gradient_direction,
-    gradient_steps,
-    gradient_stops,
+    terminal_config_default_no_framerate: TerminalConfig,
+    input_data: str,
+    gradient_direction: Gradient.Direction,
+    gradient_steps: tuple[int, ...],
+    gradient_stops: tuple[Color, ...],
 ) -> None:
+    """Render the effect across final-gradient stops, steps, and directions."""
     effect = effect_colorshift.ColorShift(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.final_gradient_direction = gradient_direction
@@ -62,18 +72,20 @@ def test_colorshift_final_gradient(
 @pytest.mark.parametrize("skip_final_gradient", [True, False])
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
 def test_colorshift_args(
-    input_data,
-    no_loop,
-    no_travel,
-    reverse_travel_direction,
-    cycles,
-    terminal_config_default_no_framerate,
-    skip_final_gradient,
-    gradient_direction,
-    gradient_stops,
-    gradient_steps,
-    gradient_frames,
+    *,
+    input_data: str,
+    no_loop: bool,
+    no_travel: bool,
+    reverse_travel_direction: bool,
+    cycles: int,
+    terminal_config_default_no_framerate: TerminalConfig,
+    skip_final_gradient: bool,
+    gradient_direction: Gradient.Direction,
+    gradient_stops: tuple[Color, ...],
+    gradient_steps: tuple[int, ...],
+    gradient_frames: int,
 ) -> None:
+    """Render the effect with pairwise coverage of configuration values."""
     effect = effect_colorshift.ColorShift(input_data)
     effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.gradient_stops = gradient_stops
@@ -106,6 +118,7 @@ def test_colorshift_zero_cycles_parses_and_keeps_gradient_looping() -> None:
 
 
 def test_colorshift_dynamic_without_preexisting_colors_has_uncolored_final_frame() -> None:
+    """Verify colorshift dynamic without preexisting colors has uncolored final frame."""
     effect = effect_colorshift.ColorShift("A")
     effect.terminal_config = _make_terminal_config("dynamic")
 
@@ -121,6 +134,7 @@ def test_colorshift_dynamic_without_preexisting_colors_has_uncolored_final_frame
 
 
 def test_colorshift_dynamic_with_preexisting_fg_uses_input_fg_color() -> None:
+    """Verify colorshift dynamic with preexisting fg uses input fg color."""
     effect = effect_colorshift.ColorShift("\x1b[38;5;196mA\x1b[0m")
     effect.terminal_config = _make_terminal_config("dynamic")
 
@@ -136,6 +150,7 @@ def test_colorshift_dynamic_with_preexisting_fg_uses_input_fg_color() -> None:
 
 
 def test_colorshift_dynamic_with_preexisting_fg_and_bg_uses_input_colors() -> None:
+    """Verify colorshift dynamic with preexisting fg and bg uses input colors."""
     effect = effect_colorshift.ColorShift("\x1b[38;5;196m\x1b[48;5;106mA\x1b[0m")
     effect.terminal_config = _make_terminal_config("dynamic")
 
@@ -151,6 +166,7 @@ def test_colorshift_dynamic_with_preexisting_fg_and_bg_uses_input_colors() -> No
 
 
 def test_colorshift_dynamic_with_preexisting_bg_only_uses_input_bg_color() -> None:
+    """Verify colorshift dynamic with preexisting bg only uses input bg color."""
     effect = effect_colorshift.ColorShift("\x1b[48;5;106mA\x1b[0m")
     effect.terminal_config = _make_terminal_config("dynamic")
 
@@ -166,6 +182,7 @@ def test_colorshift_dynamic_with_preexisting_bg_only_uses_input_bg_color() -> No
 
 
 def test_colorshift_ignore_with_preexisting_colors_uses_effect_gradient() -> None:
+    """Verify colorshift ignore with preexisting colors uses effect gradient."""
     effect = effect_colorshift.ColorShift("\x1b[38;5;196mA\x1b[0m")
     effect.terminal_config = _make_terminal_config("ignore")
 
@@ -181,6 +198,7 @@ def test_colorshift_ignore_with_preexisting_colors_uses_effect_gradient() -> Non
 
 
 def test_colorshift_always_with_preexisting_colors_uses_input_colors() -> None:
+    """Verify colorshift always with preexisting colors uses input colors."""
     effect = effect_colorshift.ColorShift("\x1b[38;5;196m\x1b[48;5;106mA\x1b[0m")
     effect.terminal_config = _make_terminal_config("always")
 

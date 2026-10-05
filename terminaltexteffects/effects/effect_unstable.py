@@ -233,10 +233,7 @@ class UnstableIterator(BaseEffectIterator[UnstableConfig]):
             if self.terminal.config.existing_color_handling == "dynamic":
                 final_fg_color = self.character_final_color_map[character].fg
                 final_bg_color = self.character_final_color_map[character].bg
-                if (
-                    final_fg_color is None
-                    and final_bg_color is None
-                ):
+                if final_fg_color is None and final_bg_color is None:
                     final_scn.apply_gradient_to_symbols(
                         character.input_symbol,
                         3,

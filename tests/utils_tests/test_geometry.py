@@ -35,7 +35,9 @@ def test_coord_equalities(coord: geometry.Coord) -> None:
     [(80, 24, (5, 3)), (81, 25, (5, 3)), (1, 1, (1, 1)), (200, 3, (33, 1)), (1000, 500, (5, 5))],
 )
 def test_balanced_grid_selects_terminal_adjusted_cell_counts(
-    width: int, height: int, counts: tuple[int, int],
+    width: int,
+    height: int,
+    counts: tuple[int, int],
 ) -> None:
     """Counts favor visually square cells, including large and narrow canvases."""
     grid = geometry.find_balanced_grid(1, 1, width, height)
@@ -48,7 +50,10 @@ def test_balanced_grid_covers_small_and_odd_rectangles(origin: geometry.Coord) -
     for width in range(1, 22):
         for height in range(1, 14):
             grid = geometry.find_balanced_grid(
-                origin.column, origin.row, origin.column + width - 1, origin.row + height - 1,
+                origin.column,
+                origin.row,
+                origin.column + width - 1,
+                origin.row + height - 1,
             )
             for boundaries, start, length, minimum in (
                 (grid.column_boundaries, origin.column, width, 4),
@@ -203,10 +208,7 @@ def test_find_coords_in_circle_terminal_adjusted_bounds() -> None:
     assert max(coord.column for coord in coords) == center.column + radius
     assert min(coord.row for coord in coords) == center.row - radius // geometry.TERMINAL_ROW_SCALE
     assert max(coord.row for coord in coords) == center.row + radius // geometry.TERMINAL_ROW_SCALE
-    assert all(
-        geometry.find_length_of_line(center, coord, terminal_adjusted=True) <= radius
-        for coord in coords
-    )
+    assert all(geometry.find_length_of_line(center, coord, terminal_adjusted=True) <= radius for coord in coords)
 
 
 def test_find_coords_in_circle_zero_radius(coord: geometry.Coord) -> None:

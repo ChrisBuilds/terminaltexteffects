@@ -246,7 +246,8 @@ def test_matrix_fill_registers_each_full_column_once() -> None:
 
 
 @pytest.mark.parametrize(
-    ("width", "height", "enabled"), [(63, 4, False), (64, 4, True), (80, 3, False), (80, 24, True)],
+    ("width", "height", "enabled"),
+    [(63, 4, False), (64, 4, True), (80, 3, False), (80, 24, True)],
 )
 def test_matrix_row_cache_activation(width: int, height: int, *, enabled: bool) -> None:
     """Matrix opts in only for canvases large enough to benefit from row caching."""
@@ -314,6 +315,7 @@ def test_matrix_matching_resolve_gradients_keep_independent_playback(
 
 def test_matrix_dynamic_skips_final_gradient_mapping(monkeypatch: pytest.MonkeyPatch) -> None:
     """Dynamic resolution uses input colors without constructing a coordinate color mapping."""
+
     def reject_mapping(*_args: object, **_kwargs: object) -> dict[effect_matrix.Coord, Color]:
         pytest.fail("Dynamic mode should not build the unused final-gradient mapping")
 
