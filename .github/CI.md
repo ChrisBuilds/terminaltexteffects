@@ -16,6 +16,20 @@ the tests, and a separate job checks that the committed completion scripts are c
 Manual, visual, and exhaustive effect-argument tests remain outside this workflow.
 Pytest reports the 20 slowest test durations to guide future test optimization.
 
+Focused native-platform jobs run on `windows-2025` and `macos-15`, each with Python 3.14.
+They use locked non-editable installations, check both CLI entry points from outside the
+checkout with seeded piped input and cursor restoration, and run terminal/ANSI/Unicode,
+configuration, and selected platform-independent CLI regressions. UTF-8 mode is explicit.
+Bash is used only to orchestrate commands on Windows; the Python interpreter and console
+entry points are native Windows executables. No WSL or private CI server is required.
+These checks do not verify how a human terminal displays the animation; visual QA remains
+part of the release checklist. Full effect-configuration coverage stays in the Linux matrix.
+
+New job names are `Windows / Python 3.14` and `macOS / Python 3.14`. They run on code-bearing
+changes and manual dispatch, with lightweight success steps for documentation-only PRs.
+The existing eight required checks remain configured; add these two names to branch
+protection once their first PR run is verified, before treating them as enforced merge gates.
+
 The quality job classifies the committed diff, including deleted files and both sides of renames.
 Only Markdown prose in the root, documentation, changelog, and non-workflow GitHub directories,
 plus documentation images, may bypass the matrix and completion generation. Unknown files,

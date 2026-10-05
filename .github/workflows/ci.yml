@@ -147,3 +147,97 @@ jobs:
       - name: Check generated shell completions
         if: needs.quality.outputs.run_tests == 'true'
         run: .venv/bin/python tools/generate_shell_completions.py --check
+
+  platforms:
+    name: ${{ matrix.name }} / Python 3.14
+    needs: quality
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-2025
+          - name: macOS
+            os: macos-15
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - name: Documentation-only changes
+        if: needs.quality.outputs.run_tests != 'true'
+        run: echo 'Documentation-only changes; platform tests are not required.'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          cache-suffix: platform-${{ matrix.os }}
+      - name: Install package and locked test dependencies
+        if: needs.quality.outputs.run_tests == 'true'
+        run: uv sync --locked --no-default-groups --group test --no-editable
+      - name: Check installed CLI and piped input outside the checkout
+        if: needs.quality.outputs.run_tests == 'true'
+        run: |
+          uv run --no-sync python - <<'PY'
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          outside = Path(os.environ["RUNNER_TEMP"]) / "tte-platform-smoke"
+          outside.mkdir(exist_ok=True)
+          env = {key: value for key, value in os.environ.items()
+                 if key not in {"PYTHONPATH", "PYTHONHOME", "TTE_DEV_EFFECTS_DIR"}}
+          env["XDG_CONFIG_HOME"] = str(outside / "empty-config")
+          probe = (
+              "import pathlib, sys, terminaltexteffects; "
+              "assert pathlib.Path(terminaltexteffects.__file__).resolve().is_relative_to("
+              "pathlib.Path(sys.prefix).resolve()); "
+              "from terminaltexteffects.__main__ import build_parser; "
+              "assert 'wipe' in build_parser()[1]"
+          )
+          subprocess.run([sys.executable, "-I", "-c", probe], cwd=outside, env=env, check=True)
+          for entry in ("tte", "terminaltexteffects"):
+              executable = Path(sys.executable).parent / (entry + (".exe" if os.name == "nt" else ""))
+              result = subprocess.run([str(executable), "--help"], cwd=outside, env=env,
+                                      capture_output=True, text=True, encoding="utf-8", check=True)
+              assert "wipe" in result.stdout, result.stdout
+              result = subprocess.run(
+                  [str(executable), "--seed", "102", "--frame-rate", "0", "--no-color",
+                   "--canvas-width", "2", "--canvas-height", "1", "--ignore-terminal-dimensions",
+                   "wipe", "--final-gradient-stops", "ffffff", "--final-gradient-steps", "1",
+                   "--final-gradient-frames", "1"],
+                  cwd=outside, env=env, input="OK", capture_output=True, text=True,
+                  encoding="utf-8", check=True,
+              )
+              assert "OK" in result.stdout, result.stdout
+              assert "\x1b[?25l" in result.stdout and "\x1b[?25h" in result.stdout, result.stdout
+              print(f"{entry}: installed CLI help, piped input, rendering, and cursor restoration passed")
+          PY
+      - name: Run focused terminal and CLI regressions
+        if: needs.quality.outputs.run_tests == 'true'
+        run: |
+          uv run --no-sync python -m pytest -q --durations=10 \
+            tests/engine_tests/test_terminal.py \
+            tests/engine_tests/test_terminal_input.py \
+            tests/engine_tests/test_terminal_unicode.py \
+            tests/engine_tests/test_terminal_ansi_sequences.py \
+            tests/engine_tests/test_base_config.py \
+            tests/test_cli.py::test_build_parser_registers_effects \
+            tests/test_cli.py::test_runtime_parser_includes_plugin_effect \
+            tests/test_cli.py::test_main_unsupported_ansi_sequence_exits_with_error \
+            tests/test_cli.py::test_main_empty_input_is_silent_success \
+            tests/test_cli.py::test_main_empty_renderable_input_exits_with_error \
+            tests/test_cli.py::test_development_effects_require_explicit_opt_in
