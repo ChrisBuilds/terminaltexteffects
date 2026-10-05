@@ -115,8 +115,65 @@ jobs:
           "$GITHUB_WORKSPACE/.venv/bin/python" -c "import terminaltexteffects"
           "$GITHUB_WORKSPACE/.venv/bin/tte" --help
       - name: Run default test suite
+        id: pytest
         if: needs.quality.outputs.run_tests == 'true'
-        run: .venv/bin/python -m pytest -n auto --durations=20
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          coverage_args=()
+          if [[ "$PYTHON_VERSION" == '3.14' ]]; then
+            coverage_args+=(--cov=terminaltexteffects --cov-branch --cov-config=pyproject.toml
+              --cov-report=term-missing --cov-report=xml:coverage/coverage.xml
+              --cov-report=json:coverage/coverage.json --cov-report=html:coverage/html)
+          fi
+          .venv/bin/python -m pytest -n auto --durations=20 "${coverage_args[@]}"
+      - name: Summarize package line and branch coverage
+        if: >-
+          !cancelled() && matrix.python-version == '3.14' &&
+          needs.quality.outputs.run_tests == 'true' &&
+          (steps.pytest.outcome == 'success' || hashFiles('coverage/coverage.json') != '')
+        env:
+          COVERAGE_REVISION: ${{ github.sha }}
+          TEST_OUTCOME: ${{ steps.pytest.outcome }}
+        run: |
+          test -s coverage/coverage.xml
+          test -s coverage/html/index.html
+          .venv/bin/python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          import os
+          from pathlib import Path
+
+          report = json.loads(Path("coverage/coverage.json").read_text(encoding="utf-8"))
+          assert report["meta"]["branch_coverage"], "Branch coverage was not collected"
+          assert report["files"] and all(
+              name.startswith("terminaltexteffects/") for name in report["files"]
+          ), "Coverage must measure the runtime package only"
+          totals = report["totals"]
+          assert totals["num_statements"] > 0 and totals["num_branches"] > 0, "Empty coverage report"
+          print("## Package coverage — Linux / Python 3.14\n")
+          print(f"Tested revision: `{os.environ['COVERAGE_REVISION']}`  ")
+          print(f"Test step outcome: `{os.environ['TEST_OUTCOME']}`\n")
+          print("| Metric | Covered | Total | Coverage |")
+          print("| --- | ---: | ---: | ---: |")
+          for label, covered, total in (
+              ("Lines", totals["covered_lines"], totals["num_statements"]),
+              ("Branches", totals["covered_branches"], totals["num_branches"]),
+          ):
+              print(f"| {label} | {covered} | {total} | {100 * covered / total:.2f}% |")
+          print("\nDefault pairwise suite; manual/visual/exhaustive tests are excluded. "
+                "No percentage gate is enforced. A failed test run is diagnostic, not a baseline.")
+          print("\nDownload `coverage-python-3.14` for per-file HTML, XML, and JSON reports.")
+          PY
+      - name: Upload package coverage reports
+        if: >-
+          !cancelled() && matrix.python-version == '3.14' &&
+          needs.quality.outputs.run_tests == 'true' && hashFiles('coverage/coverage.json') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-python-3.14
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: error
 
   completions:
     name: Shell completions
