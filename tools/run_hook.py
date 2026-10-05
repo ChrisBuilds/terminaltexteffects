@@ -52,7 +52,14 @@ def validate_staged_changelog(root: Path) -> int:
     with tempfile.TemporaryDirectory(prefix="tte-staged-changelog-") as temporary:
         snapshot = Path(temporary)
         subprocess.run(  # noqa: S603 - NUL-delimited index paths, no shell or worktree writes.
-            ["git", "checkout-index", "--stdin", "-z", f"--prefix={snapshot.as_posix()}/"],  # noqa: S607
+            [  # noqa: S607 - Use the environment's Git binary.
+                "git",
+                "checkout-index",
+                "--stdin",
+                "-z",
+                "--ignore-skip-worktree-bits",
+                f"--prefix={snapshot.as_posix()}/",
+            ],
             cwd=root,
             input=files,
             check=True,

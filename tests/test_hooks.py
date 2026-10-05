@@ -287,3 +287,28 @@ def test_pre_commit_changelog_preserves_untracked_and_unstaged_files(changelog_r
     assert untracked.read_text(encoding="utf-8") == "Untracked draft"
     assert tracked.read_text(encoding="utf-8") == ""
     assert git_changelog(changelog_repository, "diff", "--cached") == before
+
+
+def test_changelog_hook_materializes_sparse_index_files(changelog_repository: Path) -> None:
+    """Changelog files outside a sparse checkout still participate in staged validation."""
+    git_changelog(
+        changelog_repository,
+        "-c",
+        "user.name=Hook Test",
+        "-c",
+        "user.email=test@example.com",
+        "commit",
+        "--no-verify",
+        "-m",
+        "Commit fixture inputs",
+    )
+    git_changelog(changelog_repository, "sparse-checkout", "set", "--cone", "tools")
+    assert not (changelog_repository / "changelog.d").exists()
+    config = changelog_repository / "pyproject.toml"
+    config.write_text(config.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    git_changelog(changelog_repository, "add", "pyproject.toml")
+    flags = git_changelog(changelog_repository, "ls-files", "-v")
+    result = changelog_command(changelog_repository, "run_hook.py", "changelog")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not (changelog_repository / "changelog.d").exists()
+    assert git_changelog(changelog_repository, "ls-files", "-v") == flags
