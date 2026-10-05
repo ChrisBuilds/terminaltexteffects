@@ -6,6 +6,17 @@
 - When the maintainer assigns an issue for implementation, that assignment authorizes creating the branch,
   implementing the agreed scope, committing, pushing, and opening a draft PR. Do not ask again for those routine
   steps. Merging remains the maintainer's decision; never merge without an explicit instruction.
+- Fill agent-created issue metadata at creation, not as later cleanup: assign `ChrisBuilds`, select exactly
+  one type label (`bug`, `enhancement`, `documentation`, or `maintenance`), and add at least one relevant
+  area label (`effects`, `engine`, `cli`, `ci`, or `release`). Use existing labels from this taxonomy.
+- Set the intended release milestone at issue creation when the work is scheduled for a known release.
+  Check current milestones; do not put the whole backlog into the next release. If unscheduled, leave the
+  milestone unset and state "Release target: not scheduled" in the issue body. Do not assign a Project yet.
+- At PR creation, assign `ChrisBuilds` and mirror the linked issue's type/area labels and release milestone.
+  For `ChrisBuilds`-authored PRs, do not request self-review; assignment records maintainer review/merge ownership.
+  For other PR authors, request `ChrisBuilds` as reviewer. This metadata never authorizes merging.
+- Apply `blocked` or `needs-decision` only when an actual prerequisite or maintainer decision prevents progress,
+  and explain it in the issue/PR. Do not duplicate draft status, CI results, or release milestones with labels.
 - Start issue branches from up-to-date `main`, named `<type>/<issue-number>-<short-description>`.
   Do not commit development changes directly to `main` or bypass branch protection.
 - Verify reported bugs and establish acceptance criteria before implementation. For changes to effect options,

@@ -1,5 +1,7 @@
 name: Feature or improvement
-description: Propose a scoped feature, improvement, or documentation change.
+description: Propose a scoped feature or improvement.
+assignees: [ChrisBuilds]
+labels: [enhancement]
 body:
   - type: textarea
     id: goal

@@ -2,6 +2,8 @@
 name: Release preparation
 about: Prepare a release and record automated QA, human QA, and publication approval.
 title: 'Release <version>'
+assignees: ChrisBuilds
+labels: maintenance, release
 ---
 
 Follow the [release runbook](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/RELEASING.md). Update this issue as evidence becomes available.
