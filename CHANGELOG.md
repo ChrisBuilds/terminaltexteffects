@@ -41,6 +41,10 @@ Detailed examples and explanations may appear in the optional
 - Support explicitly loading development effects through `TTE_DEV_EFFECTS_DIR`,
   while excluding repository development effects from release archives.
   ([#94](https://github.com/ChrisBuilds/terminaltexteffects/issues/94))
+- Added native PowerShell 7 completion for both CLI entry points. Use `tte
+  --print-completion powershell` for effect names, options, allowed values, and
+  input-file paths.
+  ([#104](https://github.com/ChrisBuilds/terminaltexteffects/issues/104))
 - Added `CharacterOrder` and `CharacterOrderArg` for shared flat and grouped
   retrieval. Retrieval also supports `reverse=True`, optional serpentine group
   traversal, and explicit off-canvas selection.

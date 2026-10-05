@@ -45,7 +45,7 @@ _shtab_tte___input_file_COMPGEN=_shtab_compgen_files
 _shtab_tte__i_COMPGEN=_shtab_compgen_files
 
 _shtab_tte_pos_0_choices=(beams binarypath blackhole bouncyballs bubbles burn colorshift crumble decrypt errorcorrect expand fireworks highlight laseretch matrix middleout orbittingvolley overflow pour print rain randomsequence rings scattered slice slide smoke spotlights spray swarm sweep synthgrid thunderstorm unstable vhstape waves wipe)
-_shtab_tte___print_completion_choices=(bash zsh)
+_shtab_tte___print_completion_choices=(bash zsh powershell)
 _shtab_tte___include_effects_choices=(beams binarypath blackhole bouncyballs bubbles burn colorshift crumble decrypt errorcorrect expand fireworks highlight laseretch matrix middleout orbittingvolley overflow pour print rain randomsequence rings scattered slice slide smoke spotlights spray swarm sweep synthgrid thunderstorm unstable vhstape waves wipe)
 _shtab_tte___exclude_effects_choices=(beams binarypath blackhole bouncyballs bubbles burn colorshift crumble decrypt errorcorrect expand fireworks highlight laseretch matrix middleout orbittingvolley overflow pour print rain randomsequence rings scattered slice slide smoke spotlights spray swarm sweep synthgrid thunderstorm unstable vhstape waves wipe)
 _shtab_tte___existing_color_handling_choices=(always dynamic ignore)

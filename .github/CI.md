@@ -19,7 +19,10 @@ Pytest reports the 20 slowest test durations to guide future test optimization.
 Focused native-platform jobs run on `windows-2025` and `macos-15`, each with Python 3.14.
 They use locked non-editable installations, check both CLI entry points from outside the
 checkout with seeded piped input and cursor restoration, and run terminal/ANSI/Unicode,
-configuration, and selected platform-independent CLI regressions. UTF-8 mode is explicit.
+configuration, and selected platform-independent CLI regressions. PowerShell 7 integration
+tests exercise native completion for both CLI names, options/values, quoting, file paths,
+and prototype isolation. PowerShell must be available in these jobs; absence fails rather
+than silently skipping integration checks. UTF-8 mode is explicit.
 Bash is used only to orchestrate commands on Windows; the Python interpreter and console
 entry points are native Windows executables. No WSL or private CI server is required.
 These checks do not verify how a human terminal displays the animation; visual QA remains
