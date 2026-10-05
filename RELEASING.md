@@ -21,7 +21,8 @@ promote finished effects through their own reviewed PRs before preparing the rel
 ## 2. Prepare the version and release notes
 
 Update `[project].version` in `pyproject.toml` to the intended release version, then run
-`uv lock` to refresh project metadata in `uv.lock` and sync the development environment.
+`uv lock` to refresh project metadata in `uv.lock`, followed by
+`uv sync --locked --group dev` to refresh the editable installation and its version metadata.
 Keep `requires-python`, supported-version CI, and compatibility documentation consistent.
 Use the following commands with the actual version and publication date:
 
