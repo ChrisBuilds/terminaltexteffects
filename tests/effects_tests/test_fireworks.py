@@ -100,10 +100,14 @@ def test_fireworks_args(
             terminal.print(frame)
 
 
-def test_fireworks_shells_skip_initial_empty_group(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_fireworks_shells_skip_initial_empty_group(
+    monkeypatch: pytest.MonkeyPatch,
+    terminal_config_default_no_framerate: TerminalConfig,
+) -> None:
     """Verify seeded shell preparation queues only populated groups and launches them without an empty delay."""
     monkeypatch.setattr(effect_fireworks, "random", random.Random(1234))
     effect = effect_fireworks.Fireworks("ABCD")
+    effect.terminal_config = terminal_config_default_no_framerate
     effect.effect_config.firework_volume = 0.5
     effect.effect_config.launch_delay = 0
 

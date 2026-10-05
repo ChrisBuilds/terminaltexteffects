@@ -22,6 +22,28 @@ def _make_terminal_config(
     return terminal_config
 
 
+def test_laseretch_default_spark_pool_emits_and_reclaims(
+    terminal_config_default_no_framerate: TerminalConfig,
+) -> None:
+    """Default-capacity sparks still emit and recycle outside the bounded ordering fixture."""
+    random.seed(836)
+    effect = effect_laseretch.LaserEtch("X")
+    effect.terminal_config = terminal_config_default_no_framerate
+    iterator = cast("effect_laseretch.LaserEtchIterator", iter(effect))
+    pool = iterator.laser.sparks_pool
+    assert len(pool.particles) == 2000
+    assert len(pool.available) == len(pool.particles)
+    next(iterator)
+    assert len(pool.available) == len(pool.particles) - 1
+    for _ in iterator:
+        pass
+    assert len(pool.available) == len(pool.particles)
+    assert not iterator.active_characters
+    character = iterator.terminal.get_characters()[0]
+    assert character.is_visible
+    assert character.animation.current_character_visual.symbol == character.input_symbol
+
+
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
@@ -34,8 +56,12 @@ def _make_terminal_config(
 )
 def test_laseretch_etch_pattern_normalizes_cli_and_native_values(value: object, expected: object) -> None:
     """LaserEtch normalizes its sentinel, groups, and sorts on construction and assignment."""
-    canonical = expected if expected == "algorithm" else argutils.CharacterOrderArg.type_parser(
-        cast("argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort | str", expected),
+    canonical = (
+        expected
+        if expected == "algorithm"
+        else argutils.CharacterOrderArg.type_parser(
+            cast("argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort | str", expected),
+        )
     )
     config = effect_laseretch.LaserEtchConfig(etch_pattern=value)  # pyright: ignore[reportArgumentType]
     assert config.etch_pattern == canonical
