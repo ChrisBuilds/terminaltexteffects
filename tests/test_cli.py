@@ -358,7 +358,9 @@ def test_bash_completion_suggests_effect_names_and_options() -> None:
     """Bash completion should suggest built-in effects and effect-specific options."""
     result = _run_bash(
         """
-eval "$(""" + f"{sys.executable}" + """ -m terminaltexteffects --print-completion bash)"
+eval "$("""
+        f"{sys.executable}"
+        """ -m terminaltexteffects --print-completion bash)"
 COMP_WORDS=(tte ma)
 COMP_CWORD=1
 _shtab_tte
@@ -379,7 +381,9 @@ def test_bash_completion_suggests_custom_validator_values() -> None:
     """Bash completion should expose enum-like and easing values from custom validators."""
     result = _run_bash(
         """
-eval "$(""" + f"{sys.executable}" + """ -m terminaltexteffects --print-completion bash)"
+eval "$("""
+        f"{sys.executable}"
+        """ -m terminaltexteffects --print-completion bash)"
 COMP_WORDS=(tte beams --final-gradient-direction "")
 COMP_CWORD=3
 _shtab_tte
@@ -546,7 +550,9 @@ def test_bash_completion_excludes_plugin_effect_in_clean_shell(tmp_path: Path) -
 
     result = _run_bash(
         """
-eval "$(""" + f"{sys.executable}" + """ -m terminaltexteffects --print-completion bash)"
+eval "$("""
+        f"{sys.executable}"
+        """ -m terminaltexteffects --print-completion bash)"
 COMP_WORDS=(tte pl)
 COMP_CWORD=1
 _shtab_tte
@@ -570,3 +576,157 @@ def test_bundled_completion_scripts_are_current() -> None:
     generator = importlib.import_module("tools.generate_shell_completions")
 
     assert generator.write_completion_scripts(check=True)
+
+
+@pytest.mark.parametrize("include_external", [True, False])
+def test_development_effects_require_explicit_opt_in(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    include_external: bool,
+) -> None:
+    """The shared parser exposes selected prototypes while bundled discovery excludes them."""
+    _write_demo_plugin(tmp_path)
+    directory = tmp_path / "terminaltexteffects" / "effects"
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty-config"))
+    monkeypatch.delenv("TTE_DEV_EFFECTS_DIR", raising=False)
+    assert "plugindemo" not in __main__.build_parser()[1]
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(directory))
+    parser, effects = __main__.build_parser(include_user_effects=include_external)
+    assert ("plugindemo" in effects) is include_external
+    if include_external:
+        assert parser.parse_args(["plugindemo", "--plugin-speed", "7"]).plugin_speed == 7
+
+
+def test_builtin_discovery_does_not_execute_development_code(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Completion generation remains independent of broken unfinished effects."""
+    (tmp_path / "effect_unfinished.py").write_text('raise RuntimeError("unfinished")\n')
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path))
+    assert "wipe" in __main__.build_parser(include_user_effects=False)[1]
+    with pytest.raises(RuntimeError, match="unfinished"):
+        __main__.build_parser()
+
+
+@pytest.mark.parametrize("directory", ["", "missing-directory"])
+def test_development_directory_must_exist(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    directory: str,
+) -> None:
+    """A mistaken opt-in path fails clearly instead of silently hiding prototypes."""
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path / directory) if directory else "")
+    with pytest.raises(ValueError, match="must name an existing directory"):
+        __main__.build_parser()
+
+
+def test_development_effect_cannot_shadow_a_builtin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Development effects use the same duplicate-command protection as other effects."""
+    _write_demo_plugin(tmp_path)
+    directory = tmp_path / "terminaltexteffects" / "effects"
+    plugin = directory / "plugin_demo.py"
+    plugin.write_text(plugin.read_text().replace("plugindemo", "wipe"))
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(directory))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty-config"))
+    with pytest.raises(ValueError, match="Duplicate effect command detected: wipe"):
+        __main__.build_parser()
+
+
+def test_development_effect_runs_from_installed_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A real prototype uses the normal CLI execution path and effect options."""
+    (tmp_path / "effect_prototype.py").write_text(
+        """from dataclasses import dataclass
+from terminaltexteffects.effects.effect_wipe import Wipe, WipeConfig
+from terminaltexteffects.utils import argutils
+
+@dataclass
+class PrototypeConfig(WipeConfig):
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
+        name="prototype", help="Prototype", description="Prototype", epilog=""
+    )
+
+def get_effect_resources():
+    return "prototype", Wipe, PrototypeConfig
+""",
+    )
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty-config"))
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "terminaltexteffects",
+            "--seed",
+            "94",
+            "--frame-rate",
+            "0",
+            "--no-color",
+            "--canvas-width",
+            "2",
+            "--canvas-height",
+            "1",
+            "--ignore-terminal-dimensions",
+            "prototype",
+            "--final-gradient-stops",
+            "ffffff",
+            "--final-gradient-steps",
+            "1",
+            "--final-gradient-frames",
+            "1",
+        ],
+        cwd=tmp_path,
+        input="OK",
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert "OK" in result.stdout
+
+
+def test_development_launcher_selects_checkout_directory(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The launcher selects this checkout and forwards arguments to the ordinary CLI."""
+    from tools import dev  # noqa: PLC0415 - Only this launcher test imports development tooling.
+
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", "some-other-checkout")
+    monkeypatch.setattr(sys, "argv", ["tools.dev", "prototype", "--help"])
+    calls: list[list[str]] = []
+    monkeypatch.setattr(dev, "main", lambda: calls.append(sys.argv.copy()))
+    dev.run()
+    assert os.environ["TTE_DEV_EFFECTS_DIR"] == str(__main__.Path(dev.__file__).resolve().parents[1] / "dev_effects")
+    assert calls == [["tools.dev", "prototype", "--help"]]
+
+
+@pytest.mark.parametrize(
+    "completion_args",
+    [["--print-completion", "bash"], ["--print-completion=bash"], ["--print-c", "bash"], ["--print-c=bash"]],
+)
+def test_completion_requests_skip_broken_prototypes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    completion_args: list[str],
+) -> None:
+    """Full and abbreviated argparse option forms avoid executing unfinished development code."""
+    (tmp_path / "broken.py").write_text('raise RuntimeError("unfinished prototype")\n')
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path))
+    monkeypatch.setattr(sys, "argv", ["tte", *completion_args])
+    args, effects = __main__.build_parsers_and_parse_args()
+    assert args.print_completion == "bash"
+    assert "wipe" in effects
+
+
+@pytest.mark.parametrize("effect_option", ["--print", "--p"])
+def test_prototype_options_do_not_disable_discovery(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    effect_option: str,
+) -> None:
+    """Completion-like effect options remain scoped to their subcommand."""
+    _write_demo_plugin(tmp_path)
+    directory = tmp_path / "terminaltexteffects" / "effects"
+    plugin = directory / "plugin_demo.py"
+    plugin.write_text(plugin.read_text().replace("--plugin-speed", "--print"))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty-config"))
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(directory))
+    monkeypatch.setattr(sys, "argv", ["tte", "--seed", "94", "plugindemo", effect_option, "2"])
+    args, effects = __main__.build_parsers_and_parse_args()
+    assert args.print == 2
+    assert "plugindemo" in effects

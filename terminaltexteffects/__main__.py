@@ -23,36 +23,32 @@ from terminaltexteffects.utils.shell_completion import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from types import ModuleType
 
     from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
 
 
-def build_parser(
-    *,
-    include_user_effects: bool = True,
-) -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
-    """Build the CLI parser and discover available effects.
+def _external_effect_modules(directory: Path, prefix: str = "") -> Iterator[ModuleType]:
+    """Load flat external modules deterministically without altering the import path."""
+    for plugin_file in sorted(directory.glob("*.py")):
+        if plugin_file.name == "__init__.py":
+            continue
+        module_name = prefix + plugin_file.stem
+        spec = importlib.util.spec_from_file_location(module_name, plugin_file)
+        if spec and spec.loader:
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = module
+            spec.loader.exec_module(module)
+            yield module
 
-    This registers built-in effect modules and, when requested, user-provided
-    effect modules from the XDG config effects directory. It returns the parsed
-    CLI parser together with a mapping of effect command names to their effect
-    and config classes.
 
-    Args:
-        include_user_effects: Whether to discover effects from the user's XDG config directory.
-
-    Returns:
-        tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The CLI parser and a
-            mapping of effect names to their classes and configurations.
-
-    Raises:
-        ValueError: If two discovered effect modules register the same effect command.
-
-    """
+def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
+    """Build global options independently of effect discovery."""
     parser = argparse.ArgumentParser(
         prog="tte",
+        add_help=add_help,
         description="A terminal visual effects engine, application, and library",
         epilog="Ex: ls -a | tte decrypt --typing-speed 2 --ciphertext-colors 008000 00cb00 00ff00 "
         "--final-gradient-stops eda000 --final-gradient-steps 12 --final-gradient-direction vertical",
@@ -97,6 +93,33 @@ def build_parser(
     # Future: add a CLI argument for a default text color so dynamic color-handling effects can use
     # it when input characters have no parsed colors.
     TerminalConfig._populate_parser(parser)
+
+    return parser
+
+
+def build_parser(
+    *,
+    include_user_effects: bool = True,
+) -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
+    """Build the CLI parser and discover available effects.
+
+    This registers built-in effect modules and, when requested, user-provided
+    effect modules from the XDG config effects directory and `TTE_DEV_EFFECTS_DIR`. It returns the parsed
+    CLI parser together with a mapping of effect command names to their effect
+    and config classes.
+
+    Args:
+        include_user_effects: Whether to load external effects, including opted-in development effects.
+
+    Returns:
+        tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The CLI parser and a
+            mapping of effect names to their classes and configurations.
+
+    Raises:
+        ValueError: If two discovered effect modules register the same effect command.
+
+    """
+    parser = _build_global_parser()
 
     subparsers = parser.add_subparsers(
         title="Effect",
@@ -144,16 +167,16 @@ def build_parser(
         _register_effect_from_module(module)
 
     plugins_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "terminaltexteffects" / "effects"
-    if include_user_effects and plugins_dir.exists():
-        for plugin_file in plugins_dir.glob("*.py"):
-            if plugin_file.name == "__init__.py":
-                continue
-            module_name = plugin_file.stem
-            spec = importlib.util.spec_from_file_location(module_name, plugin_file)
-            if spec and spec.loader:
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[module_name] = module
-                spec.loader.exec_module(module)
+    if include_user_effects:
+        for module in _external_effect_modules(plugins_dir):
+            _register_effect_from_module(module)
+        development_dir = os.environ.get("TTE_DEV_EFFECTS_DIR")
+        if development_dir is not None:
+            directory = Path(development_dir).expanduser().resolve()
+            if not development_dir or not directory.is_dir():
+                msg = f"TTE_DEV_EFFECTS_DIR must name an existing directory: {development_dir!r}"
+                raise ValueError(msg)
+            for module in _external_effect_modules(directory, "_tte_dev_"):
                 _register_effect_from_module(module)
 
     return parser, effect_resource_map
@@ -161,7 +184,10 @@ def build_parser(
 
 def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
     """Build the CLI parser, discover available effects, and parse arguments."""
-    include_user_effects = "--print-completion" not in sys.argv[1:]
+    preliminary = _build_global_parser(add_help=False)
+    preliminary.add_argument("effect_arguments", nargs=argparse.REMAINDER)
+    global_args, _ = preliminary.parse_known_args()
+    include_user_effects = global_args.print_completion is None
     parser, effect_resource_map = build_parser(include_user_effects=include_user_effects)
     return parser.parse_args(), effect_resource_map
 

@@ -63,6 +63,11 @@ Custom effect modules are discovered from `${XDG_CONFIG_HOME}/terminaltexteffect
 `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set. Any `.py` file in that directory that
 provides `get_effect_resources()` can register an effect command alongside the built-in effects.
 
+For prototypes kept outside the shipped package, set `TTE_DEV_EFFECTS_DIR` to a directory of
+effect modules. These modules use the same `get_effect_resources()` interface. The setting
+is explicit and does not affect bundled shell completion generation. Contributors can use
+`python -m tools.dev <effect>` from a checkout to load its `dev_effects/` directory.
+
 The example below will pass the output of the `ls` command to TTE with the following options:
 
 * *Global* options:

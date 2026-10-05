@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -15,7 +16,12 @@ from zipfile import ZipFile
 
 def run(command: list[str], cwd: Path, *, input_text: str | None = None) -> str:
     """Run an isolated check, preserving diagnostic output and blocking on failure."""
-    environment = {name: value for name, value in os.environ.items() if name not in {"PYTHONPATH", "PYTHONHOME"}}
+    environment = {
+        name: value
+        for name, value in os.environ.items()
+        if name not in {"PYTHONPATH", "PYTHONHOME", "TTE_DEV_EFFECTS_DIR"}
+    }
+    environment["XDG_CONFIG_HOME"] = str(cwd / ".empty-config")
     result = subprocess.run(  # noqa: S603 - Separated arguments; no shell.
         command,
         cwd=cwd,
@@ -57,6 +63,12 @@ def validate_artifact(artifact: Path, expected_files: set[str], project: dict[st
                 raise ValueError(msg)
             with stream:
                 metadata = stream.read()
+    forbidden = {
+        name for name in files if name.startswith("dev_effects/") or name == "terminaltexteffects/effects/effect_dev.py"
+    }
+    if forbidden:
+        msg = f"Development files in {artifact.name}: {', '.join(sorted(forbidden))}"
+        raise ValueError(msg)
     missing = expected_files - files
     if missing:
         msg = f"Missing runtime files in {artifact.name}: {', '.join(sorted(missing))}"
@@ -91,6 +103,10 @@ def smoke_install(wheel: Path, scratch: Path, label: str) -> None:
         "installed = pathlib.Path(terminaltexteffects.__file__).resolve(); "
         "assert installed.is_relative_to(pathlib.Path(sys.prefix).resolve()); "
         "import terminaltexteffects.effects; "
+        "assert not (installed.parent / 'effects' / 'effect_dev.py').exists(); "
+        "assert not (installed.parent.parent / 'dev_effects').exists(); "
+        "from terminaltexteffects.__main__ import build_parser; "
+        "assert 'artifact_dev_probe' not in build_parser()[1]; "
         "[importlib.import_module(module.name) for module in pkgutil.iter_modules("
         "terminaltexteffects.effects.__path__, terminaltexteffects.effects.__name__ + '.')]; "
         "print('Installed package and effect modules imported successfully.')"
@@ -99,6 +115,9 @@ def smoke_install(wheel: Path, scratch: Path, label: str) -> None:
     for entry in ("tte", "terminaltexteffects"):
         executable = binaries / (f"{entry}.exe" if os.name == "nt" else entry)
         help_text = run([str(executable), "--help"], outside)
+        if "artifact_dev_probe" in help_text:
+            msg = f"{entry} exposed the injected development effect."
+            raise ValueError(msg)
         if "wipe" not in help_text:
             msg = f"{entry} did not register the Wipe effect."
             raise ValueError(msg)
@@ -140,11 +159,37 @@ def check_artifacts(root: Path, scratch: Path, output: Path) -> None:
         raise ValueError(msg)
     output.mkdir(parents=True, exist_ok=True)
     project = tomli.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
-    tracked = run(["git", "ls-files", "-z", "--", "terminaltexteffects"], root)
-    expected = {name for name in tracked.split("\0") if name}
+    tracked = run(["git", "ls-files", "-z"], root)
+    tracked_files = {name for name in tracked.split("\0") if name}
+    expected = {name for name in tracked_files if name.startswith("terminaltexteffects/")}
+    expected.discard("terminaltexteffects/effects/effect_dev.py")
     if not expected:
         msg = "No tracked runtime package files found."
         raise ValueError(msg)
+    build_source = scratch / "source"
+    for name in tracked_files:
+        source_file = root / name
+        destination = build_source / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_file, destination)
+    development = build_source / "dev_effects"
+    development.mkdir(exist_ok=True)
+    (development / "effect_artifact_dev_probe.py").write_text(
+        "from dataclasses import dataclass\n"
+        "from terminaltexteffects.effects.effect_wipe import Wipe, WipeConfig\n"
+        "from terminaltexteffects.utils.argutils import ParserSpec\n"
+        "@dataclass\n"
+        "class ProbeConfig(WipeConfig):\n"
+        "    parser_spec: ParserSpec = ParserSpec(name='artifact_dev_probe', help='Probe', "
+        "description='Probe', epilog='')\n"
+        "def get_effect_resources():\n"
+        "    return 'artifact_dev_probe', Wipe, ProbeConfig\n",
+        encoding="utf-8",
+    )
+    (build_source / "terminaltexteffects" / "effects" / "effect_dev.py").write_text(
+        'raise RuntimeError("Legacy development effect leaked into a release.")\n',
+        encoding="utf-8",
+    )
     constraints = scratch / "build-constraints.txt"
     run(
         [
@@ -163,7 +208,7 @@ def check_artifacts(root: Path, scratch: Path, output: Path) -> None:
     )
     build_options = ["--python", sys.executable, "--no-sources", "--build-constraints", str(constraints)]
     print("Building the wheel and source distribution.", flush=True)
-    run(["uv", "build", str(root), "--sdist", "--wheel", *build_options, "--out-dir", str(output)], root)
+    run(["uv", "build", str(build_source), "--sdist", "--wheel", *build_options, "--out-dir", str(output)], scratch)
     direct = single_artifact(output, "*.whl")
     source = single_artifact(output, "*.tar.gz")
     rebuilt_directory = output / "from-sdist"
