@@ -1,6 +1,8 @@
 name: Bug report
 description: Report incorrect behavior with reproduction steps and acceptance criteria.
 title: "[Bug]: "
+assignees: [ChrisBuilds]
+labels: [bug]
 body:
   - type: textarea
     id: problem

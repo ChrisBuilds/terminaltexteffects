@@ -7,7 +7,35 @@ Use one issue and one PR for a coherent change. Track unrelated discoveries in s
 
 Describe the problem or desired behavior, scope, and acceptance criteria. Bug reports should
 include reproduction steps, expected and actual behavior, and relevant environment information.
-Assign a release milestone when appropriate.
+Fill agent-created issue metadata **when creating the issue**:
+
+- Assignee: `ChrisBuilds`, as the accountable maintainer even when an agent implements the change.
+- Type: exactly one of `bug`, `enhancement`, `documentation`, or `maintenance`.
+- Area: one or more of `effects`, `engine`, `cli`, `ci`, or `release`.
+- Milestone: the intended release when scheduled. Check current milestones and select only a release
+  this work is intended to ship in. Unscheduled work leaves the milestone unset and includes
+  `Release target: not scheduled` in its body; do not invent a target to fill the field.
+- Project: leave unset for now. Issues, PRs, CI, and release milestones are sufficient for this workflow.
+
+Reuse the agreed labels; do not add synonyms for existing categories. The `ci` area includes QA
+and development workflow tooling. Add `blocked` or `needs-decision` only for an actual impediment,
+with a reason in the issue/PR; remove it when resolved. Draft status, CI results, and milestones
+already describe readiness and release targets, so they do not need extra labels. Other existing
+labels may remain for their original purposes.
+
+For example, coverage reporting uses `maintenance` + `ci`; PowerShell completion uses
+`enhancement` + `cli`. A scheduled issue can be created with all metadata in one command:
+
+```sh
+gh issue create --title 'Describe the change' --body-file /path/to/issue.md \
+  --assignee ChrisBuilds --label maintenance --label ci --milestone 0.16.0
+```
+
+Use the actual approved release milestone; `0.16.0` is an example, not a permanent default.
+The issue templates supply owner/type defaults (and the release area for release preparation).
+They cannot choose a dynamic release milestone or infer every area: agents must set those
+fields explicitly through GitHub or the CLI **before submission**. Verify the resulting metadata.
+External reports may need maintainer triage; these creation requirements apply to agent-managed work.
 
 Verify reported bugs before implementing a fix. Agree on changes to effect options, defaults,
 and visual behavior before implementation. Record the agreed behavior in the issue.
@@ -124,7 +152,12 @@ explaining why no release note is needed. See [fragment guidance](changelog.d/RE
 
 ## 4. Open the pull request
 
-Open a draft PR targeting `main`. Include `Closes #<issue-number>` (release tracking PRs use
+Open a draft PR targeting `main`. At creation, assign `ChrisBuilds` and copy the linked issue's
+labels and milestone. Do not assign a Project. If the author is `ChrisBuilds`, do not request
+self-review: the assignee records maintainer review/merge responsibility. For another author,
+request `ChrisBuilds` as reviewer. Assignment is ownership, not a formal approval or merge permission.
+
+Include `Closes #<issue-number>` (release tracking PRs use
 `Refs #<release-issue>`), explain resulting behavior,
 record local validation, and identify remaining limitations. Draft PRs may be opened early for
 discussion and CI feedback. Fix failures on the same branch and update the PR description when
