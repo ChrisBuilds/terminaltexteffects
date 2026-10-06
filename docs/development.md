@@ -483,6 +483,16 @@ The PR dependency gate blocks newly introduced high/critical findings; it does n
 
 The existing `Graph Update: uv` runs provide dependency information to GitHub; they are separate from CI test jobs and from update PRs. Their success does not establish test compatibility. A documentation/release-tool update can matter to security without adding runtime dependencies to the core package.
 
+### Scheduled source and workflow analysis
+
+**Trigger:** CodeQL runs on main every Wednesday at 06:17 UTC or by manual dispatch selecting main. This initial rollout has no PR/push trigger or required merge gate.
+
+`.github/workflows/codeql.yml` uses SHA-pinned official init/analyze actions in independent Ubuntu/Python and Actions-language jobs, default security queries and `build-mode: none`. It analyzes source without another test suite, dependency installation or publishing step. Only the main-only analysis job can upload security events; PR workflows do not receive that permission. Findings appear in Security -> Code scanning.
+
+After merge, manually verify both language analyses and uploads, the scanned commit/source scope, initial findings and runtime. A successful scan is not proof of zero alerts; a failed or stale scan is not a clean result. Review source/sink traces and realistic exposure, then use the normal scoped issue/fix/PR process. Keep sensitive details private. Maintainer approval is required for dismissals or accepted risk; record evidence rather than adding blanket exclusions. Required checks, PR/push triggers and wider query suites remain separate future decisions. Dependabot maintains the pinned action references.
+
+See [CodeQL activation and triage](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/CODEQL.md) for first-run verification, failure diagnosis, alert handling and configuration maintenance.
+
 ### Security reporting and support policies
 
 Security fixes target the latest stable release; users of older releases should upgrade. GitHub private vulnerability reporting is enabled. Use the private vulnerability form for reports, avoiding public exploit details until coordinated disclosure. External plugins/prototypes execute Python and are not sandboxed.
@@ -510,6 +520,7 @@ See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/S
 | pytest-cov | Line/branch reports | Coverage settings and Python 3.14 CI steps | One existing Linux matrix run |
 | GitHub Actions | Hosted CI and Pages deployment | `.github/workflows/` | PR/main push/manual CI; successful-main workflow completion |
 | Dependency review and lock guard | New high/critical dependency findings and changed uv graph completeness | Pinned CI action, `tools/check_dependency_review.py` | PR CI; offline guard fixtures on every run |
+| CodeQL | Source/workflow security analysis and alerts | `.github/workflows/codeql.yml`, CodeQL triage guidance | Weekly Wednesday 06:17 UTC; manual main scan |
 | Dependabot | Proposed dependency/action updates | `.github/dependabot.yml` and repository security setting | Weekly version check or security update |
 
 Tox is no longer part of this workflow. GitHub Actions owns the interpreter matrix; uv supplies reproducible environments. No private runner or separate local matrix orchestrator is required for routine development.

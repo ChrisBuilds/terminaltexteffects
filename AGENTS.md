@@ -103,6 +103,17 @@
   and ShellCheck installed (or `TTE_ACTIONLINT`/`TTE_SHELLCHECK` executable overrides). Follow
   `.github/CI.md#workflow-linting`; the optional workflow hook runs only in the manual stage.
 
+## CodeQL Security Findings
+
+- Follow `.github/CODEQL.md` for scheduled/manual main scanning and alert triage. Current
+  default-query scans are not required PR gates; failures or stale scans are not clean security results.
+- Verify alert traces and exposure before implementing a fix. Use a normal scoped issue/branch/PR
+  and focused regression coverage; keep sensitive exploit details in the private security route.
+- Do not dismiss alerts, accept risk, add blanket query/path exclusions, enable duplicate default
+  setup, or introduce required scan gates without explicit maintainer approval.
+- After scan workflow changes merge, verify hosted extraction/upload for both languages and record
+  scope, findings and runtime. Local workflow lint alone does not establish a successful scan.
+
 ## Completion Criteria
 
 - Do not consider code work finished until focused pytest, `ruff format --check`, `ruff check`, and Pyright pass
