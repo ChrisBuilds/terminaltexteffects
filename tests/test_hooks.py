@@ -106,7 +106,11 @@ def test_pre_commit_fixes_require_restaging_and_preserve_unstaged_changes(
     shutil.copy(root / "tools/run_hook.py", tmp_path / "tools/run_hook.py")
     shutil.copy(root / ".pre-commit-config.yaml", tmp_path / ".pre-commit-config.yaml")
     (tmp_path / ".venv").symlink_to(Path(sys.executable).parent.parent, target_is_directory=True)
-    (tmp_path / "pyproject.toml").write_text('[tool.pyright]\npythonVersion = "3.9"\n', encoding="utf-8")
+    # Isolate staging/formatting semantics from changes to Ruff's default rule selection.
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.ruff.lint]\nselect = ["F"]\n\n[tool.pyright]\npythonVersion = "3.9"\n',
+        encoding="utf-8",
+    )
     source = tmp_path / "example.py"
     tail = "" if layout == "overlapping" else "".join(f"value_{index}: int = {index}\n" for index in range(6))
     staged = "value: int=1\n" + tail

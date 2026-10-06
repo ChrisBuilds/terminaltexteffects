@@ -11,7 +11,7 @@ import random
 import sys
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import terminaltexteffects.effects
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
@@ -24,6 +24,7 @@ from terminaltexteffects.utils.shell_completion import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from importlib.machinery import SourceFileLoader
     from types import ModuleType
 
     from terminaltexteffects.engine.base_config import BaseConfig
@@ -40,7 +41,8 @@ def _external_effect_modules(directory: Path, prefix: str = "") -> Iterator[Modu
         if spec and spec.loader:
             module = importlib.util.module_from_spec(spec)
             sys.modules[module_name] = module
-            spec.loader.exec_module(module)
+            # Flat .py paths resolve to SourceFileLoader; typeshed also permits legacy loaders.
+            cast("SourceFileLoader", spec.loader).exec_module(module)
             yield module
 
 

@@ -202,8 +202,12 @@ def test_main_print_completion_zsh_outputs_script(
     assert output.startswith("#compdef tte terminaltexteffects")
     assert "_arguments" in output
     assert "compdef _shtab_tte -N tte terminaltexteffects" in output
-    assert ":final_gradient_direction:(diagonal horizontal vertical radial)" in output
-    assert ":wipe_ease:(linear in_sine" in output
+    direction_spec = next(
+        line for line in output.splitlines() if line.lstrip().startswith('"--final-gradient-direction[')
+    )
+    assert direction_spec.endswith(':(diagonal horizontal vertical radial)"')
+    easing_spec = next(line for line in output.splitlines() if line.lstrip().startswith('"--wipe-ease['))
+    assert ":(linear in_sine" in easing_spec
     assert "in_out_bounce)" in output
     assert "bashcompinit" not in output
 
@@ -434,9 +438,10 @@ printf '%s\\n' "${{COMPREPLY[@]}}"
     elif command in ("wipe", "highlight", "sweep", "waves"):
         expected = argutils.CharacterOrderArg.COMPLETION_CHOICES
     assert set(result.stdout.splitlines()) == set(expected)
-    destination = option.removeprefix("--").replace("-", "_")
-    zsh_choices = f']:{destination}:({" ".join(expected)})"'
-    assert zsh_choices in get_completion_script("zsh")
+    zsh_spec = next(
+        line for line in get_completion_script("zsh").splitlines() if line.lstrip().startswith(f'"{option}[')
+    )
+    assert zsh_spec.endswith(f':({" ".join(expected)})"')
 
     parser, _ = __main__.build_parser(include_user_effects=False)
     for choice in expected:
