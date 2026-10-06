@@ -26,6 +26,9 @@
   tracking issue with required metadata before merge. Triage its milestone and changelog decision per
   `.github/DEPENDENCIES.md`; add an issue-numbered fragment and regenerate the preview on the bot branch.
   Do not exempt bot PRs from changelog/CI gates or auto-merge them. Review later bot rebases again.
+- Dependency gate failures require advisory remediation or graph diagnostics; never use
+  warn-only, blanket exclusions, or continue-on-error. No exceptions are approved; future
+  exemptions require explicit maintainer review and expiry validation per `.github/DEPENDENCIES.md`.
 - Verify reported bugs and establish acceptance criteria before implementation. For changes to effect options,
   defaults, or visual behavior, present the proposed behavior and obtain agreement before changing it.
 - Create unfinished effects in root `dev_effects/`, never in `terminaltexteffects/effects/`.
