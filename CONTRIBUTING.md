@@ -1,5 +1,9 @@
 # Development process
 
+New to TTE? Start with the [developer pipeline guide](docs/development.md) for an explanation
+of each stage, its purpose, triggers, tooling, and completion criteria. This file defines
+the contribution rules; the guide explains how they fit together.
+
 Development follows an issue ticket -> branch -> pull request -> maintainer merge process.
 Use one issue and one PR for a coherent change. Track unrelated discoveries in separate issues.
 

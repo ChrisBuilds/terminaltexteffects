@@ -46,6 +46,7 @@ markdown_extensions:
 nav:
   - Intro to TTE: index.md
   - Changelog: changelog.md
+  - Contributing to TTE: development.md
   - Support and Compatibility: support.md
   - Security Policy: security.md
   - ChangeBlog:
