@@ -152,14 +152,14 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 quality = [
-    "ruff==0.15.9",
-    "pyright==1.1.408",
+    "ruff==0.16.10",
+    "pyright==1.1.414",
 ]
 test = [
     "pytest>=8.3.5",
     "pytest-cov>=5.0.0",
     "pytest-xdist>=3.6.1",
-    "shtab==1.9.2",
+    "shtab==1.12.1",
     "towncrier==25.8.0",
 ]
 dev = [
