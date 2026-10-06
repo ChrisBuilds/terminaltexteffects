@@ -173,6 +173,9 @@ Detailed examples and explanations may appear in the optional
 - Require patched cryptography in release tooling and remove vulnerable legacy
   dependency selections.
   ([#122](https://github.com/ChrisBuilds/terminaltexteffects/issues/122))
+- Update idna and Pygments to address security vulnerabilities in documentation
+  and release tooling.
+  ([#128](https://github.com/ChrisBuilds/terminaltexteffects/issues/128))
 
 <!-- unreleased notes end -->
 
