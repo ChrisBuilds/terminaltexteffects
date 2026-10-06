@@ -186,12 +186,14 @@ for review. The maintainer verifies acceptance criteria and resolves outstanding
 ## 5. Merge and close
 
 The maintainer decides when to merge. Use squash merging for one coherent commit per issue,
-then delete the branch. Ordinary linked issues close when the PR merges into `main`;
+then delete the branch. Before merging, the PR branch must include current `main` and all
+required checks must pass for the refreshed revision. If `main` advances again, refresh
+and recheck before merging. Ordinary linked issues close when the PR merges into `main`;
 release tracking issues remain open through publication and post-release verification.
 
 The `main` protection requires PRs, all ten checks listed in
-[.github/CI.md](.github/CI.md), resolved review conversations, and enforcement for
-administrators. These protections are configured in GitHub settings; repository documents
+[.github/CI.md](.github/CI.md), resolved review conversations, up-to-date branches (strict status checks), and enforcement
+for administrators. These protections are configured in GitHub settings; repository documents
 and templates do not enforce them. As a solo-maintainer project, mandatory external approvals
 can remain at zero while the maintainer performs the final review.
 
@@ -225,3 +227,30 @@ is deferred; follow the documented manual procedure with explicit maintainer aut
 The public site follows development `main` after successful main push CI, with a banner
 linking the built commit. PRs validate docs without publishing. See
 [documentation deployment](.github/DOCUMENTATION.md) for setup, local preview, and recovery.
+
+## Refresh a PR before merging
+
+Refresh the next PR intended for merge when it is behind `main`. Preserve local work, fetch,
+and merge current main into its issue branch; GitHub's **Update branch** option is an
+alternative when available:
+
+```sh
+git fetch origin
+git switch <issue-branch>
+git merge origin/main
+```
+
+Resolve conflicts deliberately and review the combined diff. For lockfile conflicts, review
+and resolve the dependency graph; regenerate the changelog preview from fragments instead
+of choosing a stale generated block. Run focused verification where the integration changed
+behavior, commit the resolution, and push the branch. The open PR starts fresh CI; wait for
+all required checks on that revision before merging. Re-running an old workflow does not
+bring an outdated branch up to date. Never bypass protection to use stale results.
+
+For stacked PRs, merge the prerequisite only with maintainer authorization, retarget its
+dependent PR to `main`, and incorporate current main after the prerequisite's squash merge.
+Check the resulting diff and latest CI. A green check against the former base is insufficient.
+
+Strict checking may add a CI run when another PR merges first. Refresh the next PR to merge
+rather than every queued branch after each main update. Concurrency cancels superseded runs;
+documentation-only changes retain their lightweight matrix steps. No merge queue is configured.

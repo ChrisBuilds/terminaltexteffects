@@ -62,11 +62,24 @@ Branch protection for `main` requires these checks before merging:
 - `Windows / Python 3.14`
 - `macOS / Python 3.14`
 
-GitHub branch protection requires PRs, the checks above, resolved conversations,
+GitHub branch protection requires PRs, the checks above, up-to-date PR branches
+(`required_status_checks.strict=true`), resolved conversations,
 and enforcement for administrators. Mandatory external approvals remain at zero for solo
 maintenance; the maintainer still reviews and decides when to merge. Use squash merging
 and delete merged issue branches. Workflow configuration and templates alone do not enforce
 these rules; required checks and branch protection enforce them at merge time.
+
+Strict status checking requires the PR branch to include current `main`. When main advances,
+refresh the next PR intended for merge, review any conflict resolutions, push, and wait for
+all required checks on the new revision. If main advances again, refresh and recheck.
+Retarget stacked PRs to main after their prerequisites merge, then integrate the squash
+merge and revalidate. Re-running an old revision or bypassing protection is not a substitute.
+See [branch refresh instructions](../CONTRIBUTING.md#refresh-a-pr-before-merging).
+
+This adds no job or required check name. It can require another ordinary CI cycle for an
+outdated PR. Refresh only the next PR to merge to avoid repeatedly testing every waiting
+branch. Existing diff classification and obsolete-run cancellation continue to control cost.
+GitHub settings enforce this requirement; editing these documents does not change it.
 
 GitHub Actions owns the supported-version matrix. Local verification uses the repository
 venv commands in [CONTRIBUTING.md](../CONTRIBUTING.md).
