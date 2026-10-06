@@ -40,6 +40,7 @@ ignore = [
     "EXE",
     "PLR0912", # too many branches
     "PLR0913", # too many function args
+    "PLR0917", # positional-argument count follows the same policy as PLR0913
     "PLR2004", # magic numbers
     "RUF009",  # function-call-in-dataclass-default-argument
     "S101",    # use of assert
