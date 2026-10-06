@@ -38,7 +38,7 @@ jobs:
             args+=(--base "$CHANGE_BASE")
           fi
           python -m tools.classify_ci "${args[@]}" >> "$GITHUB_OUTPUT"
-      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -90,7 +90,7 @@ jobs:
         if: needs.quality.outputs.run_tests == 'true'
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         if: needs.quality.outputs.run_tests == 'true'
         with:
           enable-cache: true
@@ -190,7 +190,7 @@ jobs:
         if: needs.quality.outputs.run_tests == 'true'
         with:
           python-version: "3.14"
-      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         if: needs.quality.outputs.run_tests == 'true'
         with:
           enable-cache: true
@@ -234,7 +234,7 @@ jobs:
         if: needs.quality.outputs.run_tests == 'true'
         with:
           python-version: "3.14"
-      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         if: needs.quality.outputs.run_tests == 'true'
         with:
           enable-cache: true

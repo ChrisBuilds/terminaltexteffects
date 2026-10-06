@@ -162,6 +162,12 @@ Detailed examples and explanations may appear in the optional
   overwrites and clipping. Brightness factor `1` preserves RGB colors, and
   color representations use reconstructible constructor syntax.
 
+### Security
+
+- Update the documentation theme to fix a cross-site scripting vulnerability in
+  search suggestions (GHSA-xvg9-69gf-fjrf).
+  ([#121](https://github.com/ChrisBuilds/terminaltexteffects/issues/121))
+
 <!-- unreleased notes end -->
 
 <!-- towncrier release notes start -->
