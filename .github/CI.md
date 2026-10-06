@@ -287,3 +287,12 @@ results. Examples needing files should supply temporary fixtures. Do not blanket
 installation commands, interactive snippets, demonstrations, or every Markdown fence.
 These checks supplement strict MkDocs/link validation; they do not verify visual fidelity,
 all examples, or every terminal/shell. Human visual and release QA remain necessary.
+
+## Scheduled source and workflow security analysis
+
+[CodeQL security scanning](CODEQL.md) is a separate weekly/manual main-only workflow
+for Python and GitHub Actions. Its initial default-query results are reviewed in Security
+-> Code scanning; it is outside required PR CI and branch protection. Only its analysis
+job has security-events upload permission. There is no extra test suite or publishing step.
+PR Code quality still lints the workflow configuration. Activation, initial hosted scan
+verification, triage and dismissal rules are described in the linked guide.

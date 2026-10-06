@@ -258,6 +258,14 @@ instead of auto-closing that issue on merge; ordinary development PRs continue t
 Preparation and merge approval do not authorize tagging or publishing. Publishing automation
 is deferred; follow the documented manual procedure with explicit maintainer authorization.
 
+## Source and workflow security findings
+
+CodeQL scans main's Python and GitHub Actions code weekly and on manual dispatch.
+This initial rollout is separate from required PR checks; review findings before deciding
+on enforcement. Follow [CodeQL triage and verification](.github/CODEQL.md) to investigate,
+create a scoped fix issue, validate remediation, and obtain maintainer review before dismissal.
+Use [SECURITY.md](SECURITY.md) for private vulnerability details.
+
 ## Public documentation
 
 The public site follows development `main` after successful main push CI, with a banner
