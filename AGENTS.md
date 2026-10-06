@@ -99,7 +99,12 @@
 
 - Do not consider code work finished until focused pytest, `ruff format --check`, `ruff check`, and Pyright pass
   for touched Python implementation and test files.
-- Required GitHub Actions checks must pass for the latest PR revision before the work is ready to merge.
+- Before merging, fetch current `main` and update an outdated PR branch; retarget stacked PRs
+  to `main` after prerequisites merge and incorporate their squash merges. Review integration
+  conflicts and verify changed behavior. Never bypass strict branch protection or reuse stale CI.
+  Refresh the next PR to merge rather than all queued branches after each main update.
+- Required GitHub Actions checks must pass for the latest PR revision including current `main`
+  before the work is ready to merge.
   If CI is pending, report that status instead of blocking the conversation while the broad suites run.
 - Run the exhaustive effect-argument suite only as part of pre-release validation, unless the task explicitly requires
   diagnosing the complete parameter matrix.
