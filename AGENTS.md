@@ -19,6 +19,10 @@
   and explain it in the issue/PR. Do not duplicate draft status, CI results, or release milestones with labels.
 - Start issue branches from up-to-date `main`, named `<type>/<issue-number>-<short-description>`.
   Do not commit development changes directly to `main` or bypass branch protection.
+- Dependabot is the narrow issue-order/branch-name exception: retain its generated branch, but create/link a
+  tracking issue with required metadata before merge. Triage its milestone and changelog decision per
+  `.github/DEPENDENCIES.md`; add an issue-numbered fragment and regenerate the preview on the bot branch.
+  Do not exempt bot PRs from changelog/CI gates or auto-merge them. Review later bot rebases again.
 - Verify reported bugs and establish acceptance criteria before implementation. For changes to effect options,
   defaults, or visual behavior, present the proposed behavior and obtain agreement before changing it.
 - Create unfinished effects in root `dev_effects/`, never in `terminaltexteffects/effects/`.
