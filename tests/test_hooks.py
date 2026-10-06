@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import sysconfig
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Literal
@@ -13,6 +14,81 @@ from typing import Literal
 import pytest
 
 from tools import generate_changelog, run_hook
+
+
+@pytest.fixture(autouse=True)
+def isolated_uv_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep disposable hook environments and uv metadata away from personal caches."""
+    monkeypatch.setenv("UV_CACHE_DIR", str(tmp_path / "uv-cache"))
+
+
+@pytest.fixture(autouse=True)
+def require_integration_tools() -> None:
+    """Fail required CI integration instead of silently skipping missing QA tools."""
+    if os.environ.get("TTE_REQUIRE_HOOK_INTEGRATION") == "1":
+        missing = [module for module in ("pre_commit", "ruff", "pyright") if find_spec(module) is None]
+        assert not missing, f"Required hook tools missing: {missing}"
+        assert shutil.which("uv") is not None, "Required hook integration needs uv on PATH"
+
+
+def prepare_hook_environment(root: Path) -> None:
+    """Create a native venv without symlink privileges or reinstalling locked test tools."""
+    uv = shutil.which("uv")
+    if uv is None:
+        pytest.fail("Real hook integration requires uv on PATH")
+    result = subprocess.run(  # noqa: S603 - Explicit local venv creation without a shell.
+        [uv, "venv", "--offline", "--python", sys.executable, str(root / ".venv")],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    python = root / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    site = subprocess.run(  # noqa: S603 - Query only the disposable environment.
+        [str(python), "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    Path(site, "locked-test-tools.pth").write_text(sysconfig.get_path("purelib") + "\n", encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("name", "data", "expected"),
+    [
+        ("with spaces.txt", b"valid\r\n", 0),
+        ("notes.txt", b"invalid \n", 1),
+        ("notes.txt", b"invalid\t\r\n", 1),
+        ("notes.md", b"hard break  \r\n", 0),
+        ("notes.md", b"single space \n", 1),
+        ("notes.md", b" \t\n", 1),
+        ("notes.md", b"hard break\t \n", 1),
+        ("notes.txt", b"<<<<<<< HEAD\n", 1),
+        ("notes.txt", b">>>>>>> branch\n", 1),
+        ("notes.txt", b"||||||| base\n", 1),
+        ("notes.txt", b"=======\n", 1),
+        ("notes.txt", b"======== ordinary text\n", 0),
+        ("data.bin", b"\0<<<<<<< HEAD\ninvalid \n", 0),
+    ],
+)
+def test_hygiene_is_read_only_and_preserves_markdown_breaks(
+    tmp_path: Path,
+    name: str,
+    data: bytes,
+    expected: int,
+) -> None:
+    """Validate text hygiene with CRLF, Markdown, paths with spaces, and binary inputs."""
+    selected = tmp_path / name
+    selected.write_bytes(data)
+    assert run_hook.main(["hygiene", "--", str(selected)]) == expected
+    assert selected.read_bytes() == data
+
+
+def test_hygiene_checks_only_selected_existing_files(tmp_path: Path) -> None:
+    """Unselected files and deletions cannot expand a hook into a whole checkout scan."""
+    (tmp_path / "unselected.txt").write_text("invalid \n", encoding="utf-8")
+    assert run_hook.main(["hygiene"]) == 0
+    assert run_hook.main(["hygiene", str(tmp_path / "deleted.txt")]) == 0
 
 
 @pytest.mark.parametrize("check", ["lint", "format", "types"])
@@ -105,7 +181,7 @@ def test_pre_commit_fixes_require_restaging_and_preserve_unstaged_changes(
     (tmp_path / "tools").mkdir()
     shutil.copy(root / "tools/run_hook.py", tmp_path / "tools/run_hook.py")
     shutil.copy(root / ".pre-commit-config.yaml", tmp_path / ".pre-commit-config.yaml")
-    (tmp_path / ".venv").symlink_to(Path(sys.executable).parent.parent, target_is_directory=True)
+    prepare_hook_environment(tmp_path)
     # Isolate staging/formatting semantics from changes to Ruff's default rule selection.
     (tmp_path / "pyproject.toml").write_text(
         '[tool.ruff.lint]\nselect = ["F"]\n\n[tool.pyright]\npythonVersion = "3.9"\n',
@@ -201,6 +277,54 @@ def git_changelog(root: Path, *arguments: str) -> str:
     ).stdout
 
 
+def test_ci_hygiene_selects_additions_and_rename_destinations(changelog_repository: Path) -> None:
+    """Committed selection includes spaces/renames, excludes deletions and untracked drafts."""
+    root = changelog_repository
+    git_changelog(root, "mv", "changelog.d/123.fixed.md", "renamed file.md")
+    git_changelog(root, "rm", "CHANGELOG.md")
+    (root / "new.txt").write_text("invalid \n", encoding="utf-8")
+    (root / "draft.txt").write_text("untracked \n", encoding="utf-8")
+    git_changelog(root, "add", "new.txt")
+    git_changelog(
+        root, "-c", "user.name=Hook Test", "-c", "user.email=test@example.com", "commit", "--no-verify", "-m", "Change"
+    )
+    names = {Path(name).relative_to(root).as_posix() for name in run_hook.changed_hygiene_files(root, "HEAD^")}
+    assert names == {"new.txt", "renamed file.md", "changelog.d/124.skip.md"}
+    assert run_hook.check_hygiene(run_hook.changed_hygiene_files(root, "HEAD^")) == 1
+    assert run_hook.changed_hygiene_files(root, "HEAD") == []
+
+
+@pytest.mark.skipif(find_spec("pre_commit") is None, reason="Real hook integration requires locked tools.")
+@pytest.mark.parametrize("staged_bad", [False, True])
+def test_pre_commit_hygiene_validates_index_preserving_worktree(
+    changelog_repository: Path, *, staged_bad: bool
+) -> None:
+    """Neither clean unstaged text nor bad unstaged text can change the index-only result."""
+    root = Path(__file__).resolve().parents[1]
+    repository = changelog_repository
+    shutil.copy(root / ".pre-commit-config.yaml", repository / ".pre-commit-config.yaml")
+    prepare_hook_environment(repository)
+    selected = repository / "notes with spaces.txt"
+    staged = "bad \n" if staged_bad else "good\n"
+    unstaged = "good\n" if staged_bad else "<<<<<<< HEAD\n"
+    selected.write_text(staged, encoding="utf-8")
+    git_changelog(repository, "add", ".pre-commit-config.yaml", selected.name)
+    selected.write_text(unstaged, encoding="utf-8")
+    before = git_changelog(repository, "diff", "--cached")
+    result = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "hygiene"],
+        cwd=repository,
+        env={**os.environ, "PRE_COMMIT_HOME": str(repository / "cache")},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == int(staged_bad), result.stdout + result.stderr
+    assert selected.read_text(encoding="utf-8") == unstaged
+    assert git_changelog(repository, "diff", "--cached") == before
+    assert not (repository / "uv.lock").exists()
+
+
 def test_changelog_hook_rejects_preview_including_untracked_note(changelog_repository: Path) -> None:
     """A staged preview cannot pass by referring to a fragment absent from the index."""
     fragment = changelog_repository / "changelog.d/125.fixed.md"
@@ -272,7 +396,7 @@ def test_pre_commit_changelog_preserves_untracked_and_unstaged_files(changelog_r
     """Exercise staged-only validation through pre-commit's real stash and restoration."""
     root = Path(__file__).resolve().parents[1]
     shutil.copy(root / ".pre-commit-config.yaml", changelog_repository / ".pre-commit-config.yaml")
-    (changelog_repository / ".venv").symlink_to(Path(sys.executable).parent.parent, target_is_directory=True)
+    prepare_hook_environment(changelog_repository)
     git_changelog(changelog_repository, "add", ".pre-commit-config.yaml")
     untracked = changelog_repository / "changelog.d/unfinished.txt"
     untracked.write_text("Untracked draft", encoding="utf-8")
