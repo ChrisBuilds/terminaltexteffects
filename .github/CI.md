@@ -118,3 +118,47 @@ Successful main push CI triggers the separate [documentation deployment workflow
 It strictly rebuilds the exact tested current-main commit and publishes through GitHub Pages.
 PRs never publish; the site identifies itself as development documentation. See the linked
 guide for the one-time Pages cutover, environment settings, retry, and recovery.
+
+## Workflow linting
+
+Every Code quality run checks all existing tracked `.github/workflows/*.yml` and `.yaml`
+files with actionlint **1.7.12**, including documentation-only PRs. CI downloads the exact
+Linux release archive, verifies its committed SHA-256, and runs
+`tools/check_workflows.py`. Update the version constant, download URL, and checksum together
+when upgrading; review the upstream release and rerun the fixtures. Dependabot does not
+manage this binary pin.
+
+Actionlint validates workflow structure, expressions/contexts, dependencies, runner labels,
+and action usage. ShellCheck is required explicitly for Bash/sh `run` steps. CI uses the
+Ubuntu hosted image's ShellCheck installation and prints its version; its version is not
+pinned by this repository. Missing tools and a different actionlint version fail clearly.
+Pyflakes integration is explicitly disabled so results do not vary with incidental PATH
+contents. This does not lint PowerShell, Python heredocs, or prove a remote action works;
+existing Python tests/types and native-platform checks remain necessary.
+
+For local checks, install the official [actionlint 1.7.12 platform release](https://github.com/rhysd/actionlint/releases/tag/v1.7.12)
+(verify its published checksum) and [ShellCheck](https://github.com/koalaman/shellcheck#installing)
+on PATH. Alternatively set `TTE_ACTIONLINT` and `TTE_SHELLCHECK` to their executable paths.
+Then run:
+
+```sh
+./.venv/bin/python tools/check_workflows.py
+TTE_REQUIRE_ACTIONLINT=1 ./.venv/bin/pytest -q tests/test_workflow_lint.py
+```
+
+The helper is read-only, downloads nothing, and accepts explicit workflow paths for focused
+checks. Its default inventory excludes untracked scratch workflows and deleted files.
+Real-tool fixtures prove rejection of invalid expressions, nonexistent job dependencies,
+and unquoted shell values. Code quality requires them; matrix jobs skip these integration
+fixtures when external tools are absent and still run dispatcher/selection tests.
+
+The optional `workflows` pre-commit hook uses the same helper and has only the `manual`
+stage. It does not run during ordinary commits, so existing commit hooks need no new tools.
+Invoke it after installing the tools:
+
+```sh
+./.venv/bin/pre-commit run workflows --hook-stage manual --files .github/workflows/ci.yml
+```
+
+Pre-commit handles staged/unstaged isolation when invoked on the index; the linter never
+modifies files or staging. No extra required job or duplicate matrix run is added.
