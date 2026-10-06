@@ -167,14 +167,17 @@ test = [
     "shtab==1.12.1",
     "towncrier==26.9.0",
 ]
+hooks = [
+    { include-group = "quality" },
+    "pre-commit>=3.8",
+]
 dev = [
     { include-group = "artifacts" },
     { include-group = "test" },
-    { include-group = "quality" },
+    { include-group = "hooks" },
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.22",
     "mkdocstrings-python>=1.11.1",
-    "pre-commit>=3.8",
     "pymdown-extensions>=10.15",
 ]
 artifacts = [
