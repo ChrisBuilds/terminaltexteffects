@@ -12,7 +12,7 @@ publication approval for the version and commit. A green CI run does not grant t
 
 Start from current `main` and use `release/<issue-number>-<version>` for the branch.
 Record the intended version, release date, Python support, included issues, and any
-migration instructions. The next planned release is 0.16.0 with Python 3.9 minimum.
+migration instructions. The next planned release is 0.16.0 with Python 3.9.2 minimum.
 Do not change the version or create a tag merely while improving this runbook.
 
 Sync locked tools with `uv sync --locked --group dev`. Keep prototypes in `dev_effects/`;
@@ -58,7 +58,7 @@ publication and post-release verification finish. Link the checklist, describe t
 and record the head SHA. Follow the usual focused local QA for changed code and resolve every
 required CI failure. Required checks are listed in [.github/CI.md](.github/CI.md).
 
-The default CI matrix covers Python 3.9–3.14, shell completions, changed-file formatting/lint/types,
+The default CI matrix covers Python 3.9–3.14, shell completions, whole-project formatting/lint/types,
 changelog validation, relevant strict documentation builds, and artifact validation for code-bearing
 changes. Documentation-only successful check names are not evidence that tests actually ran.
 Release version and packaging changes must execute the full matrix.

@@ -46,7 +46,7 @@ TerminalTextEffects (TTE) is a terminal visual effects engine. TTE can be instal
 
 ## Requirements
 
-TerminalTextEffects requires Python 3.9 or newer and does not require any 3rd party modules. Terminal interactions use standard ANSI terminal sequences and should work in most modern terminals.
+TerminalTextEffects requires Python 3.9.2 or newer and does not require any 3rd party modules. Terminal interactions use standard ANSI terminal sequences and should work in most modern terminals.
 
 ## Installation
 
