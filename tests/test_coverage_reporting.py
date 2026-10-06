@@ -248,11 +248,22 @@ def test_unavailable_diff_does_not_claim_no_changed_lines(report: coverage.Repor
     assert "No added/modified runtime Python lines" not in text
 
 
-def test_changed_unmeasured_files_are_visible(report: coverage.Report, current: dict[str, object]) -> None:
-    """Files omitted from collection cannot be silently treated as covered."""
-    text = coverage.summary(report, current, None, BASE, "missing baseline", "", {"terminaltexteffects/new.py": {1}})
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"terminaltexteffects/new.py": {1}},
+        {"terminaltexteffects/example.py": {2}, "terminaltexteffects/new.py": {1}},
+    ],
+)
+def test_changed_unmeasured_files_suppress_incomplete_aggregate(
+    report: coverage.Report, current: dict[str, object], changes: dict[str, set[int]]
+) -> None:
+    """Missing coverage detail must not produce a partial or zero-valued aggregate."""
+    text = coverage.summary(report, current, None, BASE, "missing baseline", "", changes)
     assert "new.py`" in text
     assert "changed file absent from coverage report" in text
+    assert "numeric aggregate is suppressed" in text
+    assert " exercised; " not in text
 
 
 def test_context_tracks_measurement_changes_without_unrelated_settings(

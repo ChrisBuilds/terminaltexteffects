@@ -282,11 +282,13 @@ def summary(
         )
     output.append("\n".join(table))
     executed = missing = 0
+    unknown_files = 0
     details: list[str] = []
     for name, added in sorted((changes or {}).items()):
         safe_name = html.escape(name).replace("`", "&#96;").replace("|", "&#124;")
         measured = report["files"].get(name)
         if measured is None:
+            unknown_files += 1
             details.append(f"- `{safe_name}`: changed file absent from coverage report.")
             continue
         gaps = sorted(added.intersection(measured["missing_lines"]))
@@ -296,11 +298,17 @@ def summary(
             numbers = ", ".join(map(str, gaps[:50])) + (" …" if len(gaps) > 50 else "")
             details.append(f"- `{safe_name}`: untested changed lines {numbers}.")
     if changes:
-        output.append(
-            "### Added/modified executable runtime lines\n\n"
-            f"{executed}/{executed + missing} exercised; {missing} untested. "
-            "Comments/excluded lines do not count. Renames are treated as new destination files."
-        )
+        if unknown_files:
+            line_summary = (
+                f"Coverage totals omitted: {unknown_files} changed file(s) are absent from the coverage report; "
+                "the numeric aggregate is suppressed."
+            )
+        else:
+            line_summary = (
+                f"{executed}/{executed + missing} exercised; {missing} untested. "
+                "Comments/excluded lines do not count. Renames are treated as new destination files."
+            )
+        output.append(f"### Added/modified executable runtime lines\n\n{line_summary}")
         output += details[:20]
         if len(details) > 20:
             output.append(f"Additional files omitted: {len(details) - 20}; inspect the full HTML artifact.")

@@ -55,7 +55,9 @@ The same summary lists added/modified executable runtime lines that current test
 exercise. This uses the base-to-tested-commit Git diff and current coverage data, so it can work
 even without a compatible historical artifact. Comments and excluded lines are not counted;
 rename destinations count as new files. Changed files absent from coverage and unavailable
-diffs are reported explicitly. Detail is capped at 20 files/50 missing lines per file; the full
+diffs are reported explicitly. If any changed file is absent from coverage, the numeric
+changed-line aggregate is suppressed because the total is incomplete. Detail is capped at
+20 files/50 missing lines per file; the full
 HTML/JSON artifacts remain available. This is changed-line coverage, not changed-branch analysis.
 
 Review missing paths and the context behind a change. Coverage shows which paths executed;
