@@ -42,9 +42,17 @@ The quality job classifies the committed diff, including deleted files and both 
 Only Markdown prose in the root, documentation, changelog, and non-workflow GitHub directories,
 plus documentation images, may bypass the matrix and completion generation. Unknown files,
 Python source, tests, dependencies, packaging, and CI configuration require the full matrix.
-Documentation and `overrides/` theme changes run a strict MkDocs build with documentation link validation. All changes
-retain changelog validation. Documentation-only matrix and completion jobs perform a short success
-step so all ten required check names remain present; the whole workflow is never path-filtered.
+The existing strict MkDocs build runs once in Code quality when changes touch recognized
+prose, anything under `docs/` or `overrides/`, the runtime `terminaltexteffects/` package,
+`mkdocs.yml`, `pyproject.toml`, `uv.lock`, or the CI/documentation deployment workflows.
+Source-only and dependency-only changes therefore validate API rendering and documentation
+integration without depending on an accompanying Markdown changelog fragment. Deletions
+and both sides of renames count as inputs. Tests-only and unrelated tool/workflow changes
+do not independently request docs; manual runs still request full validation.
+Classification regression tests run in Code quality on every run, including documentation-only
+changes. The matrix does not repeat the docs build; the separate post-merge deployment
+still rebuilds the exact tested main commit. All changes retain changelog validation.
+Documentation-only matrix and completion jobs perform a short success step so all ten required check names remain present; the whole workflow is never path-filtered.
 
 New pushes cancel obsolete runs for the same branch or pull request. Each Python version
 reports separately, and a failure on one version does not cancel the other matrix jobs.

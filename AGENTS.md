@@ -70,7 +70,8 @@
 - Broad suites, including shared-engine, pytest-infrastructure, and cross-cutting changes, run in GitHub Actions
   on PRs (including drafts), pushes to `main`, and manual dispatch. Open a draft PR to test issue-branch pushes
   without duplicate runs. Strictly documentation-only changes use documentation and changelog checks instead
-  of pytest, while preserving successful required check names. Run broad suites locally when diagnosing failures
+  of the broad pytest matrix, while preserving successful required check names. Focused CI-tool
+  regressions still run in Code quality. Run broad suites locally when diagnosing failures
   or when explicitly requested;
   they are not a routine prerequisite for committing or pushing.
 - Format touched Python files with `./.venv/bin/ruff format <files>` before running focused tests.

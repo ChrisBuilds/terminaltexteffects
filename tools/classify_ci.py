@@ -22,6 +22,15 @@ def is_documentation(name: str) -> bool:
     return path.parts[0] == ".github" and path.suffix == ".md" and "workflows" not in path.parts
 
 
+def needs_documentation_build(name: str) -> bool:
+    """Recognize direct docs inputs and code/configuration used by API rendering and installation."""
+    return (
+        is_documentation(name)
+        or name.startswith(("terminaltexteffects/", "docs/", "overrides/"))
+        or name in {"mkdocs.yml", "pyproject.toml", "uv.lock", ".github/workflows/ci.yml", ".github/workflows/docs.yml"}
+    )
+
+
 def classify_changes(root: Path, base: str | None, head: str = "HEAD") -> tuple[bool, bool]:
     """Return test and documentation requirements, including deletions and both rename paths."""
     if not base or set(base) == {"0"}:
@@ -30,7 +39,7 @@ def classify_changes(root: Path, base: str | None, head: str = "HEAD") -> tuple[
     changed = git_output(root, "diff", "--name-only", "--no-renames", "-z", ancestor, head, "--")
     names = [name.decode() for name in changed.split(b"\0") if name]
     run_tests = any(not is_documentation(name) for name in names)
-    build_docs = any(is_documentation(name) or name == "mkdocs.yml" or name.startswith("overrides/") for name in names)
+    build_docs = any(needs_documentation_build(name) for name in names)
     return run_tests, build_docs
 
 
