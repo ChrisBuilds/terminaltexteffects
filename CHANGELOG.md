@@ -48,6 +48,10 @@ Detailed examples and explanations may appear in the optional
   --print-completion powershell` for effect names, options, allowed values, and
   input-file paths.
   ([#104](https://github.com/ChrisBuilds/terminaltexteffects/issues/104))
+- Publish security-reporting and support policies, including a private GitHub
+  vulnerability-reporting route and guidance on Python, platforms, terminals,
+  and shell completion.
+  ([#129](https://github.com/ChrisBuilds/terminaltexteffects/issues/129))
 - Added `CharacterOrder` and `CharacterOrderArg` for shared flat and grouped
   retrieval. Retrieval also supports `reverse=True`, optional serpentine group
   traversal, and explicit off-canvas selection.
