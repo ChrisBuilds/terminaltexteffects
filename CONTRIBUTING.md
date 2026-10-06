@@ -11,6 +11,10 @@ For compatibility and ordinary bug reports, see [SUPPORT.md](SUPPORT.md). Report
 privately as described in [SECURITY.md](SECURITY.md); keep exploit details out of public tickets,
 fragments, and PRs until coordinated disclosure.
 
+PR CI also checks newly introduced high/critical dependency vulnerabilities and verifies
+uv graph coverage; see [the dependency gate and exception policy](.github/DEPENDENCIES.md#dependency-vulnerability-gate).
+Unchanged alerts still need Dependabot triage. Do not bypass a gate failure.
+
 Dependabot's generated update PRs are the narrow exception to issue-first creation and branch
 naming. Before merging, create/link a tracking issue, complete metadata and the changelog
 decision, and require latest CI. Follow [dependency update triage](.github/DEPENDENCIES.md).

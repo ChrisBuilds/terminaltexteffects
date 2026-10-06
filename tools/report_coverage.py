@@ -297,7 +297,7 @@ def summary(
             details.append(f"- `{safe_name}`: untested changed lines {numbers}.")
     if changes:
         output.append(
-            "### Added/modified executable runtime lines\n"
+            "### Added/modified executable runtime lines\n\n"
             f"{executed}/{executed + missing} exercised; {missing} untested. "
             "Comments/excluded lines do not count. Renames are treated as new destination files."
         )
