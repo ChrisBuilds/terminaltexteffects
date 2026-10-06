@@ -124,7 +124,10 @@ GitHub Actions runs the broad default suite across supported Python versions on 
 drafts), pushes to `main`, and manual dispatch. Issue-branch pushes use the open PR's run;
 open a draft PR or use manual dispatch to check a branch without a PR. Strictly documentation-only
 changes run documentation and changelog checks, with successful required matrix check names
-without executing pytest. Code, dependency, packaging, test, and CI changes retain the full matrix.
+without executing the broad pytest matrix. Focused CI-tool regression tests still run in
+Code quality. Code, dependency, packaging, test, and CI changes retain the full matrix.
+Runtime source and dependency/configuration changes also explicitly request the strict docs
+build in Code quality, so API rendering and documentation integration are checked before merge.
 This includes shared-engine and cross-cutting changes. Broad local runs are for diagnosing
 failures or explicit requests, rather than a routine prerequisite for committing or pushing.
 Report pending CI and continue the conversation without waiting for the broad suites.
