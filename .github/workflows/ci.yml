@@ -57,12 +57,12 @@ jobs:
           echo "TTE_ACTIONLINT=$RUNNER_TEMP/actionlint/actionlint" >> "$GITHUB_ENV"
           # ShellCheck is part of the Ubuntu hosted image; require it explicitly.
           shellcheck --version
-      - name: Check GitHub Actions workflows and lint regressions
+      - name: Check workflows and CI selection regressions
         env:
           TTE_REQUIRE_ACTIONLINT: "1"
         run: |
           .venv/bin/python tools/check_workflows.py
-          .venv/bin/python -m pytest -q tests/test_workflow_lint.py
+          .venv/bin/python -m pytest -q tests/test_workflow_lint.py tests/test_ci_classification.py
       - name: Check all tracked Python files
         run: .venv/bin/python tools/check_quality.py --all
       - name: Check local QA hooks

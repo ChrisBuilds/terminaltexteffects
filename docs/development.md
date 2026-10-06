@@ -293,14 +293,14 @@ The workflow listens to `pull_request`, pushes to `main`, and `workflow_dispatch
 
 `.github/workflows/ci.yml` runs this job on Ubuntu 24.04 with Python 3.14. It checks out history, installs locked development tools, and runs:
 
-1. **Classify the committed diff.** `tools/classify_ci.py` compares against the base, including deletions and both sides of renames. Recognized prose/images may skip the test matrix. Code, dependencies, package configuration, workflows, unknown paths, and YAML configuration request full tests. For example, a `mkdocs.yml` navigation change can trigger full tests even when the intent is documentation-only. Manual runs request full validation.
-2. **Workflow linting on every run.** CI verifies the actionlint 1.7.12 archive checksum and runs the workflow helper with required ShellCheck plus focused regression fixtures. Documentation-only changes also receive this check. Pyflakes integration is disabled explicitly; ShellCheck comes from the hosted Ubuntu image.
+1. **Classify the committed diff.** `tools/classify_ci.py` compares against the base, including deletions and both sides of renames. Recognized prose/images may skip the test matrix. Code, dependencies, package configuration, workflows, unknown paths, and YAML configuration request full tests. For example, a `mkdocs.yml` navigation change can trigger full tests even when the intent is documentation-only. Manual runs request full validation. Classification regressions run in Code quality even when the matrix is bypassed.
+2. **Workflow linting on every run.** CI verifies the actionlint 1.7.12 archive checksum and runs the workflow helper with required ShellCheck plus focused workflow and change-classification regression fixtures. Documentation-only changes also receive this check. Pyflakes integration is disabled explicitly; ShellCheck comes from the hosted Ubuntu image.
 3. **Read-only whole-project quality.** `tools/check_quality.py --all` checks all tracked `.py`/`.pyi` files with Ruff formatting/lint and Pyright, including unchanged callers, tests, tools, and tracked experiments. Ignored/untracked personal prototypes are outside its inventory.
 4. **Hook regressions for code-bearing changes.** Validate pre-commit configuration and run `tests/test_hooks.py`.
 5. **Shipped effect inventory on every run.** The helper and focused fixtures connect each shipped module to built-in CLI registration, matching command/config names, nonempty command-named docs, a real navigation entry, and a permanent test file with test definitions. It rejects stray shipped prototypes. This does not prove useful assertions or visual fidelity; the separate completion job verifies generated-resource freshness.
 6. **Artifact validation for code-bearing changes.** Run `tools/check_artifacts.py`; see below.
 7. **Changelog validation on every change.** Check fragment naming/content, preview freshness, and the committed branch's decision. Release-note consumption into a new dated section is supported.
-8. **Strict documentation build when classified as relevant.** Markdown/docs images, `mkdocs.yml`, and theme overrides request this build. The main documentation deployment later rebuilds all documentation even after source-only changes.
+8. **Strict documentation build when classified as relevant.** Recognized prose, all `docs/` and theme files, runtime package changes, `mkdocs.yml`, `pyproject.toml`, `uv.lock`, and the CI/docs deployment workflows request this build explicitly. Source-only or dependency-only changes need no accompanying fragment to trigger it. Deletions and both sides of renames count. Tests-only and unrelated tool/workflow changes do not independently request it. This is one build in Code quality, not one per matrix job; the separate main deployment rebuilds the tested revision for publication.
 
 ### Why validate artifacts before a release?
 
@@ -353,11 +353,11 @@ The duration report identifies slow tests for separate investigations. Do not re
 
 Open the failing job and first failing step. Distinguish a test assertion, quality error, packaging problem, missing changelog decision, dependency integration failure, and runner/infrastructure delay. A queued job has not yet produced a result. Reproduce the relevant focused check locally, fix on the same branch, push, and wait for that revision's checks. Diagnose broad suites locally when necessary; they are not a routine pre-push prerequisite.
 
-When main advances, update the branch if needed, preserving reviewed scope. Lockfile conflicts need dependency-graph review/resolution; generated-preview conflicts should be resolved from fragments using the generator. A resolver success alone cannot prove a security update safe. Recheck integration after substantive updates; stale green checks do not validate a new head.
+Before merging, the branch must include current main: GitHub enforces strict required status checks. If main advances, fetch and merge it into the next PR intended for merge (or use GitHub’s Update branch option), preserving reviewed scope. Push the refreshed revision and wait for its required checks; re-running old checks does not update the branch. Lockfile conflicts need dependency-graph review/resolution; generated-preview conflicts should be resolved from fragments using the generator. A resolver success alone cannot prove a security update safe. Recheck integration after substantive updates; stale green checks do not validate a new head.
 
 Mark the PR **ready for review** after local QA and required latest CI pass. The maintainer checks acceptance criteria, scope, docs/notes, and validation. When automated review provides feedback, read its inline findings as well as its summary. Address valid findings and resolve conversations. Automated review is advisory, not maintainer merge permission.
 
-A PR author cannot formally approve their own PR. This solo-maintainer repository does not require an external approval count, but does require PRs, required checks, and resolved conversations. Contributors and agents still leave the merge decision to the maintainer.
+A PR author cannot formally approve their own PR. This solo-maintainer repository does not require an external approval count, but does require PRs, required checks, and resolved conversations. Contributors and agents still leave the merge decision to the maintainer. If main advances again before merging, refresh and recheck; do not bypass protection.
 
 **Complete when:** latest required checks pass, acceptance criteria are met, relevant review findings are addressed, and the maintainer decides to merge.
 
@@ -366,6 +366,10 @@ A PR author cannot formally approve their own PR. This solo-maintainer repositor
 **Trigger:** explicit maintainer merge decision.
 
 **Purpose:** integrate one coherent issue as one mainline commit.
+
+For stacked PRs, merge the prerequisite only with authorization, retarget the dependent PR to main, incorporate the prerequisite’s squash merge, and revalidate its diff and latest CI. Green checks against its former base are insufficient.
+
+Refresh only the next PR to merge rather than every queued PR after each merge. Strict checking can add another normal CI cycle for an outdated branch; existing diff classification and cancellation of superseded runs limit unnecessary work. No merge queue is configured. See [branch refresh commands](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CONTRIBUTING.md#refresh-a-pr-before-merging).
 
 Use **Squash and merge**. Review/edit the resulting commit title and body in GitHub; its defaults are not a reason to leave noisy development history. The issue branch may contain multiple commits, but main receives the reviewed combined change as one commit.
 

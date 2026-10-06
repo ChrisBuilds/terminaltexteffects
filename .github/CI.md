@@ -42,9 +42,17 @@ The quality job classifies the committed diff, including deleted files and both 
 Only Markdown prose in the root, documentation, changelog, and non-workflow GitHub directories,
 plus documentation images, may bypass the matrix and completion generation. Unknown files,
 Python source, tests, dependencies, packaging, and CI configuration require the full matrix.
-Documentation and `overrides/` theme changes run a strict MkDocs build with documentation link validation. All changes
-retain changelog validation. Documentation-only matrix and completion jobs perform a short success
-step so all ten required check names remain present; the whole workflow is never path-filtered.
+The existing strict MkDocs build runs once in Code quality when changes touch recognized
+prose, anything under `docs/` or `overrides/`, the runtime `terminaltexteffects/` package,
+`mkdocs.yml`, `pyproject.toml`, `uv.lock`, or the CI/documentation deployment workflows.
+Source-only and dependency-only changes therefore validate API rendering and documentation
+integration without depending on an accompanying Markdown changelog fragment. Deletions
+and both sides of renames count as inputs. Tests-only and unrelated tool/workflow changes
+do not independently request docs; manual runs still request full validation.
+Classification regression tests run in Code quality on every run, including documentation-only
+changes. The matrix does not repeat the docs build; the separate post-merge deployment
+still rebuilds the exact tested main commit. All changes retain changelog validation.
+Documentation-only matrix and completion jobs perform a short success step so all ten required check names remain present; the whole workflow is never path-filtered.
 
 New pushes cancel obsolete runs for the same branch or pull request. Each Python version
 reports separately, and a failure on one version does not cancel the other matrix jobs.
@@ -62,11 +70,24 @@ Branch protection for `main` requires these checks before merging:
 - `Windows / Python 3.14`
 - `macOS / Python 3.14`
 
-GitHub branch protection requires PRs, the checks above, resolved conversations,
+GitHub branch protection requires PRs, the checks above, up-to-date PR branches
+(`required_status_checks.strict=true`), resolved conversations,
 and enforcement for administrators. Mandatory external approvals remain at zero for solo
 maintenance; the maintainer still reviews and decides when to merge. Use squash merging
 and delete merged issue branches. Workflow configuration and templates alone do not enforce
 these rules; required checks and branch protection enforce them at merge time.
+
+Strict status checking requires the PR branch to include current `main`. When main advances,
+refresh the next PR intended for merge, review any conflict resolutions, push, and wait for
+all required checks on the new revision. If main advances again, refresh and recheck.
+Retarget stacked PRs to main after their prerequisites merge, then integrate the squash
+merge and revalidate. Re-running an old revision or bypassing protection is not a substitute.
+See [branch refresh instructions](../CONTRIBUTING.md#refresh-a-pr-before-merging).
+
+This adds no job or required check name. It can require another ordinary CI cycle for an
+outdated PR. Refresh only the next PR to merge to avoid repeatedly testing every waiting
+branch. Existing diff classification and obsolete-run cancellation continue to control cost.
+GitHub settings enforce this requirement; editing these documents does not change it.
 
 GitHub Actions owns the supported-version matrix. Local verification uses the repository
 venv commands in [CONTRIBUTING.md](../CONTRIBUTING.md).
