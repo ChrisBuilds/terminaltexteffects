@@ -167,6 +167,9 @@ Detailed examples and explanations may appear in the optional
 
 ### Security
 
+- Update the documentation theme to fix a cross-site scripting vulnerability in
+  search suggestions (GHSA-xvg9-69gf-fjrf).
+  ([#121](https://github.com/ChrisBuilds/terminaltexteffects/issues/121))
 - Require patched cryptography in release tooling and remove vulnerable legacy
   dependency selections.
   ([#122](https://github.com/ChrisBuilds/terminaltexteffects/issues/122))

@@ -73,8 +73,8 @@ This is separate from routine pairwise CI. Run it as a dedicated pre-release tas
 Python version, exact SHA, exit status, and log, and allow it to finish. It is not a routine local
 commit prerequisite. A skipped, interrupted, or partial run is not a passing exhaustive result.
 
-Do not claim a whole-project Ruff/Pyright gate: CI currently enforces changed files, with broader
-cleanup tracked separately. Record any remaining release-relevant findings in the issue.
+CI enforces whole-project Ruff formatting, lint, and Pyright checks on tracked Python files.
+Record any remaining release-relevant findings in the issue.
 
 ## 4. Complete human QA
 
