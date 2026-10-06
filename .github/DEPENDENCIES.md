@@ -53,9 +53,8 @@ Major upgrades get individual migration review even for development tools.
 
 Security fixes have a separate Python group so an urgent fix does not wait for the
 weekly version-update batch. Grouping does not enable security updates by itself.
-At setup, the repository reported automatic security updates disabled. After this
-configuration is merged, enable **Dependabot security updates** under repository
-Settings -> Advanced Security / Code security, with dependency graph and alerts enabled.
+Automatic security updates, dependency graph, and alerts are enabled in GitHub settings.
+Verify these under Settings -> Advanced Security / Code security when maintaining the setup.
 The security group may include a necessary major upgrade; review its migration before merging.
 Security updates still require triage and explicit merge authorization. This setup does
 not resolve existing vulnerability alerts or enable automatic merging.
@@ -64,3 +63,64 @@ GitHub's [supported ecosystems](https://docs.github.com/en/code-security/referen
 and [configuration reference](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference)
 describe uv support, grouping, schedules, and limits. Verify the actual update logs and
 first PR after activation; local YAML validation cannot exercise GitHub's updater.
+
+## Dependency vulnerability gate
+
+On every `pull_request` CI run (including drafts), Code quality runs the SHA-pinned official
+[dependency-review action](https://github.com/actions/dependency-review-action). It blocks
+newly introduced **high or critical** vulnerabilities in runtime, development, and unknown
+scopes. License enforcement is disabled; this is a vulnerability gate, not a license policy.
+The action uses existing `contents: read`, writes its job summary, and does not post PR
+comments or need additional secrets/write permissions. It retries pending dependency
+snapshots for up to 120 seconds.
+
+The companion `tools/check_dependency_review.py` compares the action's reported uv changes
+with both committed universal lockfiles. Every added/removed registry package/version pair
+must appear, including transitive, development/build, and conditional Python/platform
+alternatives. It normalizes Python package names and fails missing/empty/malformed output
+for actual dependency changes. This guards against incomplete snapshots being mistaken for
+clean reviews. The local project entry is excluded; non-registry dependencies in the head
+lock fail pending explicit support/review. Removed unsupported dependencies do not prevent
+remediation. The helper does not install packages or make network requests.
+
+GitHub's graph was checked against the complete current lock and a historical dependency
+update before introducing the gate. That does not guarantee future parser coverage; retain
+the pair-diff guard and inspect graph warnings and results when dependencies change. The
+review action also covers supported GitHub Actions changes; the pair guard checks uv only.
+Source-only PRs with unchanged registry pairs legitimately have an empty uv comparison.
+
+This is a differential check, not a full vulnerability audit. Unchanged vulnerable versions
+and newly published advisories against existing dependencies can remain open; Dependabot
+alerts/security updates remain the ongoing remediation channel. Registry markers are
+reviewed conservatively: an affected conditional dependency is not exempt merely because
+it is unused on the current CI interpreter. Unknown/unpublished vulnerabilities and unsafe
+behavior without an advisory are outside this gate. Review release notes and integration.
+
+Main pushes and manual CI runs do not run the PR differential action; they still run its
+offline guard fixtures and normal QA. They do not substitute for ongoing Dependabot alerts.
+No required check name is added: a gate failure fails the existing Code quality check.
+
+### Diagnose a gate failure
+
+- For a high/critical advisory, update/remove the affected version and review compatibility;
+  preserve the supported Python minimum. Do not blanket-ignore older conditional versions.
+- For missing pairs or snapshot warnings, wait for GitHub's graph update and retry the
+  current revision. Inspect base/head refs and graph parsing before changing the guard.
+  An API/graph outage is not a clean security result.
+- Reproduce guard logic offline with captured dependency-review JSON in `DEPENDENCY_CHANGES`
+  and `./.venv/bin/python tools/check_dependency_review.py --base <base-sha> --head <head-sha>`.
+  Run `./.venv/bin/pytest -q tests/test_dependency_review.py` for fixtures. The official
+  action requires GitHub's API; these fixtures do not claim to exercise hosted permissions.
+
+### Exceptions
+
+There are **no approved advisory exceptions** and no installed advisory allowlist. Existing
+alerts are not automatically exemptions for newly introduced versions. Do not use warn-only,
+`continue-on-error`, runtime-only scope, or blanket package exclusions to get a PR through.
+
+Any future exception needs explicit maintainer approval in its own reviewed PR: exact
+advisory/package/version scope, a linked tracking issue, exposure assessment and justification,
+remediation plan, and expiry/review date. The PR must implement expiry validation before
+introducing a timed allowlist so an expired exemption fails CI. Consider that the official
+`allow-ghsas` input applies globally by advisory ID; do not pretend it is version-scoped.
+Until that support is reviewed, fix the dependency instead of adding a bypass.

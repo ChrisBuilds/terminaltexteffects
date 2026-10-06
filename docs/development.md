@@ -291,7 +291,15 @@ The workflow listens to `pull_request`, pushes to `main`, and `workflow_dispatch
 
 **Purpose:** stop downstream matrix jobs when basic quality, packaging, or changelog requirements fail.
 
-`.github/workflows/ci.yml` runs this job on Ubuntu 24.04 with Python 3.14. It checks out history, installs locked development tools, and runs:
+`.github/workflows/ci.yml` runs this job on Ubuntu 24.04 with Python 3.14. It checks out history, installs locked development tools. On PR events it also uses the pinned official dependency-review action to block
+newly introduced high/critical vulnerabilities across runtime, development, and unknown scopes.
+A companion guard checks every added/removed registry pair in both universal uv locks against
+the action's output, including conditional versions. Snapshots retry for up to 120 seconds;
+missing pairs fail rather than look clean. Push/manual events omit the differential action
+but run offline guard fixtures. This uses read-only permissions and job summaries, with no
+PR comments or added required check name. See [dependency gate limitations and exceptions](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/DEPENDENCIES.md#dependency-vulnerability-gate).
+
+The other checks are:
 
 1. **Classify the committed diff.** `tools/classify_ci.py` compares against the base, including deletions and both sides of renames. Recognized prose/images may skip the test matrix. Code, dependencies, package configuration, workflows, unknown paths, and YAML configuration request full tests. For example, a `mkdocs.yml` navigation change can trigger full tests even when the intent is documentation-only. Manual runs request full validation. Classification regressions run in Code quality even when the matrix is bypassed.
 2. **Workflow linting on every run.** CI verifies the actionlint 1.7.12 archive checksum and runs the workflow helper with required ShellCheck plus focused workflow and change-classification regression fixtures. Documentation-only changes also receive this check. Pyflakes integration is disabled explicitly; ShellCheck comes from the hosted Ubuntu image.
@@ -468,6 +476,8 @@ For partial uploads, inspect the existing published file and checksum before upl
 
 Dependabot creates the PR first. Triage creates a real tracking issue, completes metadata/reviewer/milestone, puts the PR in draft while adapting it, adds the appropriate fragment, installs its locked tools, and runs relevant integration checks. Keep action references SHA-pinned. Review Python compatibility, transitive fallbacks, and release notes; a “security” label does not prove the generated dependency graph is safe. Fresh CI and explicit merge authorization remain required. There is no auto-merge bypass.
 
+The PR dependency gate blocks newly introduced high/critical findings; it does not clear unchanged alerts or audit unknown vulnerabilities. No exemptions are installed. Fix affected versions or diagnose missing graph coverage; any future exception requires explicit maintainer review and expiry enforcement.
+
 The existing `Graph Update: uv` runs provide dependency information to GitHub; they are separate from CI test jobs and from update PRs. Their success does not establish test compatibility. A documentation/release-tool update can matter to security without adding runtime dependencies to the core package.
 
 ### Security reporting and support policies
@@ -495,6 +505,7 @@ See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/S
 | MkDocs, Material, mkdocstrings | Render documentation and API pages | `mkdocs.yml`, docs, theme overrides | Relevant PR checks; tested-main deployment |
 | pytest-cov | Line/branch reports | Coverage settings and Python 3.14 CI steps | One existing Linux matrix run |
 | GitHub Actions | Hosted CI and Pages deployment | `.github/workflows/` | PR/main push/manual CI; successful-main workflow completion |
+| Dependency review and lock guard | New high/critical dependency findings and changed uv graph completeness | Pinned CI action, `tools/check_dependency_review.py` | PR CI; offline guard fixtures on every run |
 | Dependabot | Proposed dependency/action updates | `.github/dependabot.yml` and repository security setting | Weekly version check or security update |
 
 Tox is no longer part of this workflow. GitHub Actions owns the interpreter matrix; uv supplies reproducible environments. No private runner or separate local matrix orchestrator is required for routine development.

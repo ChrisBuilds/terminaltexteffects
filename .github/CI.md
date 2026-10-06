@@ -102,6 +102,12 @@ Documentation-only changes still run quality checks. Reproduce them locally with
 `./.venv/bin/python tools/check_quality.py --all`; changed-file checks remain available with
 `--base origin/main` for focused development.
 
+On PR events, Code quality first runs the pinned [dependency vulnerability review](DEPENDENCIES.md#dependency-vulnerability-gate)
+for newly introduced high/critical findings across runtime/development/unknown scopes, then
+checks reported uv changes against both universal locks. Missing dependency pairs fail;
+unchanged alerts remain Dependabot's responsibility. Push/manual runs omit the differential
+review but still run offline guard regressions. No new required job or write permission is added.
+
 For code-bearing changes, the quality job also validates `.pre-commit-config.yaml` and runs the
 focused hook regression tests.
 Real hook integration uses the locked development environment here; matrix jobs run the hook dispatcher
