@@ -31,6 +31,8 @@
 - Create unfinished effects in root `dev_effects/`, never in `terminaltexteffects/effects/`.
   Use `python -m tools.dev <effect>` or `TTE_DEV_EFFECTS_DIR` for development discovery.
   Promotion into the shipped package requires reviewed tests, docs, completions, and a changelog fragment.
+  Follow `dev_effects/README.md#promotion-checklist`, run `tools/check_effect_inventory.py` with
+  locked development tools, and record human visual/terminal QA; structural presence is not coverage.
 - Keep commits scoped to the issue, including relevant tests, documentation, and generated artifacts. Keep local
   review notes in the sibling `dev_notes` workspace untracked and out of commits.
 - Use `Closes #<issue-number>` in ordinary PR descriptions. Release PRs use `Refs #<release-issue>`

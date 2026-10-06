@@ -109,6 +109,16 @@ unit tests and skip integration cases when development-only tools are absent. Lo
 Ruff and Pyright settings, run on staged files, and do not replace CI enforcement. See the installation
 and staging guidance in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
+Code quality also runs the read-only shipped-effect inventory and its focused fixtures on
+every run, using locked development tools. `tools/check_effect_inventory.py` connects shipped
+`effect_*.py` modules to built-in command registration, permanent command-named test files
+with test definitions, nonempty documentation pages, and structural MkDocs navigation entries.
+It disables user/development discovery and rejects stray shipped prototypes or command/config
+name mismatches. This structural gate does not prove test quality or visual correctness.
+The existing Shell completions job remains responsible for generated-resource freshness;
+completion generation is not duplicated in the inventory check. Follow the
+[effect promotion checklist](../dev_effects/README.md#promotion-checklist).
+
 All ten required checks are restricted to results from GitHub Actions.
 
 The same job validates changelog fragments, the generated Unreleased preview, and the branch's
