@@ -13,9 +13,12 @@ percentages. Download the `coverage-python-3.14` artifact from the run for:
 - `coverage.json`: per-file and total line/branch counts.
 - `coverage.xml`: machine-readable Cobertura report.
 - `html/index.html`: browsable source with missing lines and branches highlighted.
+- `context.json`: measurement profile, configuration/tool versions, tested revision, and run provenance.
 
 Extract the artifact and open `html/index.html` locally. Reports are retained for 14 days.
-No external service, token, PR comment bot, or public coverage site is involved. Where
+No external service, custom token, PR comment bot, or public coverage site is involved.
+The reporting step uses the built-in GitHub token with read-only Actions access to retrieve
+a main-run artifact; it never executes or extracts artifact code. Where
 coverage data exists after failed tests, summary/artifact publication still runs; the
 summary identifies the failed test outcome. Do not use incomplete or failing runs as baselines.
 
@@ -24,18 +27,38 @@ tests, development prototypes, or maintenance tools. Xdist worker data is combin
 pytest-cov. The terminal/HTML overall percentage combines lines and branches; the job
 summary computes each separately, so avoid comparing unlike metrics.
 
-## Establish and compare the baseline
+## Automatic informational comparison
 
-Record the first complete successful default-suite CI report in the local development QA
-log with its commit, run URL, line/branch counts and percentages, Python/OS, test results,
-and test-step duration. A focused local run verifies reporting but is not a project baseline.
-The initial baseline is pending that CI run; no percentage target is assumed.
+For code-bearing PRs, the Python 3.14 job summary compares separate line and branch counts
+and percentages with a successful `CI` push on the **exact PR base commit** on `main`.
+Changes are percentage points, not relative percentage changes. Both denominators are shown
+because adding or removing code can change the overall percentage without changing tests.
+No threshold is enforced: decreases do not fail CI.
 
-Compare subsequent successful runs with the same scope and configuration. Treat changes
-in the statement/branch denominator, skipped tests, or supported environment as context
-for differences. Coverage shows which paths executed; it does not prove useful assertions,
-visual fidelity, or adequate edge-case testing. Review the missing paths before setting
-an eventual regression policy or adding tests.
+The comparison requires a complete successful main workflow, a nonexpired coverage artifact,
+and matching metadata: Linux/Python 3.14, default pairwise profile, pytest/coverage configuration,
+selection helper/conftest fingerprint, JSON format, and coverage/pytest-cov/pytest/xdist versions.
+Artifact metadata must match its run ID, attempt, repository, commit, push event, main branch,
+and successful test outcome. Reports from PRs or failed tests cannot become baselines.
+
+Missing/expired artifacts, API failures, changed settings, or a base commit without a successful
+coverage run produce **baseline unavailable**, with no numerical delta and no CI failure.
+There is no fallback to an older or unrelated commit. Existing artifacts without `context.json`
+are intentionally incompatible; the first successful main run after this change seeds comparison.
+Documentation-only main commits can also lack an exact coverage baseline because their tests
+are skipped. Current collection errors and test failures still fail their existing checks.
+
+The same summary lists added/modified executable runtime lines that current tests did not
+exercise. This uses the base-to-tested-commit Git diff and current coverage data, so it can work
+even without a compatible historical artifact. Comments and excluded lines are not counted;
+rename destinations count as new files. Changed files absent from coverage and unavailable
+diffs are reported explicitly. Detail is capped at 20 files/50 missing lines per file; the full
+HTML/JSON artifacts remain available. This is changed-line coverage, not changed-branch analysis.
+
+Review missing paths and the context behind a change. Coverage shows which paths executed;
+it does not prove useful assertions, visual fidelity, or adequate edge-case testing. Main/manual
+runs publish current totals and metadata without fetching a PR baseline. Failed test reports
+remain diagnostic, with comparison disabled. No extra test suite, job, or external service runs.
 
 The baseline uses deterministic pairwise effect-argument coverage. Manual, visual, and
 exhaustive pre-release tests remain excluded by the normal pytest configuration. Fresh
@@ -61,7 +84,7 @@ append one focused test file instead; label the resulting report as partial. Out
 unless `--cov` is supplied. For reliable comparisons, use the canonical Linux CI report;
 local platform/interpreter/dependency differences may change results and timing.
 
-The initial CI run will also provide instrumentation timing evidence. Compare its test-step
+Use successful CI runs to measure instrumentation timing. Compare its test-step
 time with recent Python 3.14 runs before considering further optimization; coverage runs
 once and does not add another suite or matrix job. Do not disable instrumentation merely
 to obtain a preferred percentage.
