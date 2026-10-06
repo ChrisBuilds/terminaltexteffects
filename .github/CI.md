@@ -200,6 +200,60 @@ Invoke it after installing the tools:
 Pre-commit handles staged/unstaged isolation when invoked on the index; the linter never
 modifies files or staging. No extra required job or duplicate matrix run is added.
 
+## Informational coverage comparisons
+
+`tools/report_coverage.py` replaces the inline coverage summary in the existing Linux/Python
+3.14 run. It publishes separate line/branch percentage-point changes against successful main
+CI at the exact PR base SHA, plus untested added/modified executable runtime lines. Baselines
+require matching collection/selection configuration (including the CI workflow fingerprint),
+profile/tool versions and successful
+main provenance. Unavailable or incompatible baselines show a reason without a delta;
+coverage decreases do not fail CI. Current collection errors and test failures still fail.
+
+The matrix job has read-only `contents` and `actions` permissions; only its reporting step
+receives the built-in token. It reads two JSON archive members, without extracting/executing
+artifacts or posting comments. Requests are individually bounded at 20 seconds. Python 3.14
+checkout fetches two commits of depth to read the tested merge parents; a missing exact
+base diff is reported as unavailable. Other matrix checkouts retain depth one. No new suite,
+job, service or dependency is added. Focused reporting regressions run in Code quality.
+
+`context.json` accompanies existing artifacts for 14 days. Older artifacts without this
+metadata cannot be compared; successful main CI after deployment establishes the first
+compatible baseline. See [coverage reporting](COVERAGE.md) for selection, missing-baseline
+behavior, changed-line detail and interpretation.
+
+## Portable hooks and text hygiene
+
+After `uv sync --locked --group dev`, install optional commit hooks with
+`uv run --no-sync --offline python -m pre_commit install --allow-missing-config`.
+The same entries work on POSIX and native Windows without hard-coded venv binary
+paths. Keep uv on PATH when committing in terminals or editors. No-sync/offline
+execution uses already-installed tools without lock updates or dependency installation;
+it does not verify that an old environment is current. Sync explicitly after branch changes.
+
+The read-only `hygiene` hook rejects trailing spaces/tabs and standalone Git conflict
+markers in selected text files. Markdown hard breaks with two or more trailing spaces
+are permitted; whitespace-only lines and trailing tabs are rejected. Binary files,
+symlinks and deletions are excluded. Entire selected files are checked, so existing
+issues in a touched file need correction. Local staging isolation is provided by
+pre-commit; use its selected-file interface instead of directly calling the dispatcher
+when you need index-only validation. The changelog hook retains its index snapshot.
+
+Code quality repeats hygiene on changed files from the committed merge-base diff,
+including documentation-only PRs. It does not scan unrelated historical files; a manual
+run on unchanged main has no changed files. Reproduce after committing with:
+
+```sh
+./.venv/bin/python tools/run_hook.py hygiene --base origin/main
+```
+
+The existing Windows job syncs only `test` + `hooks` for real pre-commit integration.
+The new group reuses locked Ruff, Pyright, and pre-commit without adding packages or
+changing versions; full `dev` still includes those tools. Regression tests cover real
+fix/restage behavior, overlapping unstaged changes, read-only hygiene, paths with spaces,
+and changelog snapshots. `TTE_REQUIRE_HOOK_INTEGRATION=1` makes missing integration
+tools a failure in Code quality and Windows rather than silently skipping these tests.
+
 ## Executable documentation examples
 
 Code quality runs `tests/test_documented_examples.py` on every run, including

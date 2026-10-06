@@ -2,34 +2,40 @@ default_stages: [pre-commit]
 repos:
   - repo: local
     hooks:
+      - id: hygiene
+        name: Text whitespace and merge-conflict markers (read-only)
+        entry: uv run --no-sync --offline python tools/run_hook.py hygiene --
+        language: system
+        types: [text]
+        require_serial: true
       - id: ruff-check
         name: Ruff lint (safe fixes)
-        entry: .venv/bin/python tools/run_hook.py lint --
+        entry: uv run --no-sync --offline python tools/run_hook.py lint --
         language: system
         files: '\.(py|pyi)$'
         require_serial: true
       - id: ruff-format
         name: Ruff format
-        entry: .venv/bin/python tools/run_hook.py format --
+        entry: uv run --no-sync --offline python tools/run_hook.py format --
         language: system
         files: '\.(py|pyi)$'
         require_serial: true
       - id: pyright
         name: Pyright (Python 3.9 target)
-        entry: .venv/bin/python tools/run_hook.py types --
+        entry: uv run --no-sync --offline python tools/run_hook.py types --
         language: system
         files: '\.(py|pyi)$'
         require_serial: true
       - id: changelog
         name: Changelog fragments and preview
-        entry: .venv/bin/python tools/run_hook.py changelog --
+        entry: uv run --no-sync --offline python tools/run_hook.py changelog --
         language: system
         files: '^(CHANGELOG\.md|changelog\.d/.*|tools/generate_changelog\.py|pyproject\.toml|uv\.lock)$'
         always_run: true
         require_serial: true
       - id: workflows
         name: GitHub Actions workflows (actionlint and ShellCheck)
-        entry: .venv/bin/python tools/check_workflows.py
+        entry: uv run --no-sync --offline python tools/check_workflows.py
         language: system
         files: '^\.github/workflows/.*\.ya?ml$'
         stages: [manual]

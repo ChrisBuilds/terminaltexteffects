@@ -3,10 +3,55 @@
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+
+def changed_hygiene_files(root: Path, base: str) -> list[str]:
+    """Select existing files changed from the merge base for read-only CI hygiene."""
+    ancestor = subprocess.run(  # noqa: S603 - Explicit Git revision argument, no shell.
+        ["git", "merge-base", base, "HEAD"],  # noqa: S607 - Use the environment's Git binary.
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    selected = subprocess.run(  # noqa: S603 - Paths are NUL-delimited; no shell.
+        ["git", "diff", "--name-only", "--diff-filter=ACMR", "-z", ancestor, "HEAD", "--"],  # noqa: S607
+        cwd=root,
+        capture_output=True,
+        check=True,
+    ).stdout
+    return [str(root / name.decode("utf-8")) for name in selected.split(b"\0") if name]
+
+
+def check_hygiene(files: list[str]) -> int:
+    """Reject trailing whitespace and conflict markers without modifying selected files."""
+    failed = False
+    for name in files:
+        path = Path(name)
+        if path.is_symlink() or not path.is_file():
+            continue
+        data = path.read_bytes()
+        if b"\0" in data:
+            continue
+        for number, raw in enumerate(data.splitlines(), 1):
+            line = raw.rstrip(b"\r\n")
+            clean = line.rstrip(b" \t")
+            suffix = line[len(clean) :]
+            markdown_break = (
+                path.suffix.lower() == ".md" and bool(clean) and len(suffix) >= 2 and not suffix.strip(b" ")
+            )
+            if suffix and not markdown_break:
+                print(f"{name}:{number}: trailing whitespace")
+                failed = True
+            if re.match(rb"^(?:<{7,}|>{7,}|\|{7,})(?: |$)", line) or re.fullmatch(rb"={7,}", line):
+                print(f"{name}:{number}: merge-conflict marker")
+                failed = True
+    return int(failed)
 
 
 def changelog_path(name: str) -> bool:
@@ -74,10 +119,15 @@ def validate_staged_changelog(root: Path) -> int:
 def main(argv: list[str] | None = None) -> int:
     """Run one hook and propagate failures; never expand an empty list to the whole project."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("check", choices=("lint", "format", "types", "changelog"))
+    parser.add_argument("check", choices=("lint", "format", "types", "changelog", "hygiene"))
+    parser.add_argument("--base", help="Check committed changed files for CI hygiene.")
     parser.add_argument("files", nargs="*")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
+    if args.base and (args.check != "hygiene" or args.files):
+        parser.error("--base is only supported for hygiene without explicit filenames")
+    if args.check == "hygiene":
+        return check_hygiene(changed_hygiene_files(root, args.base) if args.base else args.files)
     if args.check == "changelog":
         if not any(changelog_path(name) for name in args.files) and not staged_changelog_changes(root):
             return 0

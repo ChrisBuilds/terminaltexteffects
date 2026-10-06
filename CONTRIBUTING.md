@@ -76,16 +76,25 @@ then check formatting, lint, and types. Install reproducible tools with `uv sync
 Ruff applies safe fixes by default; apply unsafe fixes only after deliberate review. Pyright targets
 Python 3.9. Documentation-only changes need formatting or diff checks.
 
-Optional pre-commit hooks catch formatting, lint, type, and changelog problems before committing.
+Optional pre-commit hooks catch text hygiene, formatting, lint, type, and changelog problems before committing.
 Install them once per clone after syncing the locked development environment:
 
 ```bash
 uv sync --locked --group dev
-./.venv/bin/pre-commit install --allow-missing-config
+uv run --no-sync --offline python -m pre_commit install --allow-missing-config
 ```
 
-Hooks use this checkout's `.venv`, avoiding separate Ruff/Pyright versions or isolated environments
-without project dependencies. Staged Python files and stubs run safe Ruff lint fixes, Ruff formatting,
+These commands and hook entries work on POSIX and native Windows. Keep uv on `PATH` for Git
+commits, including commits made through an editor. Hooks use `uv run --no-sync --offline` to select
+the project environment without updating the lock or installing dependencies; sync locked tools
+explicitly after switching branches. They use the same Ruff/Pyright versions and project dependencies
+as CI. The `hooks` dependency group contains only pre-commit and the quality tools; `dev` includes it.
+
+Selected text files first run read-only trailing-whitespace and merge-conflict-marker checks.
+Markdown lines ending in two or more spaces retain their intentional hard breaks; blank-line
+whitespace and trailing tabs still fail. Deleted files, symlinks, and binary files are excluded.
+Checks cover the whole selected file, so existing issues in a touched file need correction.
+Staged Python files and stubs run safe Ruff lint fixes, Ruff formatting,
 then read-only Pyright with the Python 3.9 target. Related changelog files trigger fragment and preview
 validation; staged deletions and both sides of renames are included. The changelog hook copies
 its inputs and renderer from the Git index into a temporary directory, so untracked fragments
@@ -101,7 +110,7 @@ to skip hooks. Keep the development environment synced when switching branches.
 To run hooks manually on selected files:
 
 ```bash
-./.venv/bin/pre-commit run --files tools/example.py tests/test_example.py
+uv run --no-sync --offline python -m pre_commit run --files tools/example.py tests/test_example.py
 ```
 
 Use selected-file hooks for routine development. Focused pytest remains a development QA
@@ -111,8 +120,10 @@ Workflow edits also have a read-only actionlint/ShellCheck command and an option
 `workflows` hook. Install the pinned actionlint release and ShellCheck before invoking it; see
 [workflow linting](.github/CI.md#workflow-linting). Code quality enforces this check on every run.
 
-Hooks are optional and bypassable, so successful CI checks remain the enforced merge gate. Remove the local installation with
-`./.venv/bin/pre-commit uninstall`.
+Hooks are optional and bypassable, so successful CI checks remain the enforced merge gate.
+Code quality repeats read-only hygiene checks on files changed from the merge base; it does not
+scan unrelated legacy files. Manual dispatch on unchanged main has no changed files to check. Remove the local installation with
+`uv run --no-sync --offline python -m pre_commit uninstall`.
 
 The `Code quality` CI job checks every tracked Python file, including stubs, without modifying
 them. This includes implementation, tests, tools, and archived experiments, so changes cannot
@@ -182,6 +193,15 @@ Regenerate shell completions when CLI options change. Add an issue-numbered frag
 `./.venv/bin/python tools/generate_changelog.py`. User-facing changes need a concise note;
 internal changes and fixes introduced in the same unreleased version need a `.skip.md` fragment
 explaining why no release note is needed. See [fragment guidance](changelog.d/README.md).
+
+### Read coverage changes
+
+For code-bearing PRs, the Linux/Python 3.14 summary reports separate line/branch changes
+against a compatible successful main run at the exact base commit, and identifies untested
+added/modified executable runtime lines. Review missing paths when adding code. The report
+is informational: a percentage drop does not fail CI, and coverage does not establish useful
+assertions or visual quality. Unavailable baselines are shown explicitly; inspect the current
+HTML artifact instead. See [coverage comparison rules](.github/COVERAGE.md#automatic-informational-comparison).
 
 ## 4. Open the pull request
 

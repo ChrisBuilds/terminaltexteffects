@@ -1822,6 +1822,12 @@ dev = [
     { name = "twine", version = "6.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "twine", version = "7.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
+hooks = [
+    { name = "pre-commit", version = "4.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "pre-commit", version = "4.6.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "pyright" },
+    { name = "ruff" },
+]
 quality = [
     { name = "pyright" },
     { name = "ruff" },
@@ -1865,6 +1871,11 @@ dev = [
     { name = "tomli", specifier = ">=2" },
     { name = "towncrier", specifier = "==26.9.0" },
     { name = "twine", specifier = ">=6" },
+]
+hooks = [
+    { name = "pre-commit", specifier = ">=3.8" },
+    { name = "pyright", specifier = "==1.1.414" },
+    { name = "ruff", specifier = "==0.16.10" },
 ]
 quality = [
     { name = "pyright", specifier = "==1.1.414" },

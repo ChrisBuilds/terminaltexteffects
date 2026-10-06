@@ -246,14 +246,14 @@ git commit -m 'Fix the concrete behavior described by the issue'
 Install once per compatible clone after syncing locked tools:
 
 ```sh
-./.venv/bin/pre-commit install --allow-missing-config
+uv run --no-sync --offline python -m pre_commit install --allow-missing-config
 ```
 
-`.pre-commit-config.yaml` defines local hooks implemented through `tools/run_hook.py`. On `git commit`, staged Python files run safe Ruff lint fixes, formatting, and read-only Pyright. Changelog-related staged changes run fragment/preview validation. The changelog hook constructs a temporary snapshot from the Git index, including the renderer/configuration; untracked fragments and unstaged edits cannot make the check pass accidentally.
+`.pre-commit-config.yaml` defines local hooks implemented through `tools/run_hook.py`. Portable entries use `uv run --no-sync --offline`: uv must be on `PATH`, including in editors, and locked development tools must already be synced. Commits do not install tools or update the lock. The `hooks` dependency group supplies pre-commit, Ruff, and Pyright without documentation/artifact tooling; `dev` includes it. On `git commit`, selected text files first receive read-only trailing-whitespace and conflict-marker checks. Intentional Markdown hard breaks (two or more trailing spaces) remain valid; trailing tabs and whitespace-only lines fail. Binary files, symlinks, and deleted files are excluded. Hygiene covers whole selected files, so existing issues in a touched file require correction. Staged Python files run safe Ruff lint fixes, formatting, and read-only Pyright. Changelog-related staged changes run fragment/preview validation. The changelog hook constructs a temporary snapshot from the Git index, including the renderer/configuration; untracked fragments and unstaged edits cannot make the check pass accidentally.
 
 If a hook edits files, the commit stops: review, restage, and retry. Pre-commit sets aside unstaged tracked edits and restores them; overlapping changes can force rollback of hook edits to preserve your work. Resolve that situation deliberately. `--allow-missing-config` allows older branches without the hook configuration to skip it.
 
-Manual targeted hook invocation is available with `pre-commit run --files ...`. Hooks are optional and bypassable; they do not replace focused tests or required CI. Avoid routine `--all-files` hook runs that apply fixes outside your scope. CI uses read-only whole-project checks instead.
+Manual targeted hook invocation is available with `uv run --no-sync --offline python -m pre_commit run --files ...`. Hooks are optional and bypassable; they do not replace focused tests or required CI. Avoid routine `--all-files` hook runs that apply fixes outside your scope. CI uses read-only whole-project checks instead.
 
 **Important:** a local Git commit does not start GitHub Actions. Hooks run locally at commit time; remote CI starts on the events in step 7.
 
@@ -306,7 +306,7 @@ The other checks are:
 1. **Classify the committed diff.** `tools/classify_ci.py` compares against the base, including deletions and both sides of renames. Recognized prose/images may skip the test matrix. Code, dependencies, package configuration, workflows, unknown paths, and YAML configuration request full tests. For example, a `mkdocs.yml` navigation change can trigger full tests even when the intent is documentation-only. Manual runs request full validation. Classification regressions run in Code quality even when the matrix is bypassed.
 2. **Workflow linting on every run.** CI verifies the actionlint 1.7.12 archive checksum and runs the workflow helper with required ShellCheck plus focused workflow and change-classification regression fixtures. Documentation-only changes also receive this check. Pyflakes integration is disabled explicitly; ShellCheck comes from the hosted Ubuntu image.
 3. **Read-only whole-project quality.** `tools/check_quality.py --all` checks all tracked `.py`/`.pyi` files with Ruff formatting/lint and Pyright, including unchanged callers, tests, tools, and tracked experiments. Ignored/untracked personal prototypes are outside its inventory.
-4. **Hook regressions for code-bearing changes.** Validate pre-commit configuration and run `tests/test_hooks.py`.
+4. **Text hygiene and hook regressions.** Read-only hygiene checks cover files changed from the merge base, including documentation-only PRs. Unchanged main/manual runs have no changed files to check. For code-bearing changes, validate pre-commit configuration and run `tests/test_hooks.py`; the existing Windows job also executes real hooks using native virtual environments and the locked `hooks` group.
 5. **Shipped effect inventory on every run.** The helper and focused fixtures connect each shipped module to built-in CLI registration, matching command/config names, nonempty command-named docs, a real navigation entry, and a permanent test file with test definitions. It rejects stray shipped prototypes. This does not prove useful assertions or visual fidelity; the separate completion job verifies generated-resource freshness.
 6. **Artifact validation for code-bearing changes.** Run `tools/check_artifacts.py`; see below.
 7. **Changelog validation on every change.** Check fragment naming/content, preview freshness, and the committed branch's decision. Release-note consumption into a new dated section is supported.
@@ -350,7 +350,9 @@ For recognized documentation-only changes, matrix and completion jobs execute li
 
 ### Coverage and slow-test reports
 
-Only Linux/Python 3.14 instruments its existing default pytest run with pytest-cov. It measures runtime-package line and branch coverage, merges xdist results, and publishes a job summary plus `coverage-python-3.14` artifacts: JSON, XML, and browsable HTML. Artifacts last 14 days. There is no percentage threshold, external coverage service, or additional coverage-only test run.
+Only Linux/Python 3.14 instruments its existing default pytest run with pytest-cov. It measures runtime-package line and branch coverage, merges xdist results, and publishes a job summary plus `coverage-python-3.14` artifacts: JSON, XML, browsable HTML, and `context.json` measurement/provenance metadata. Artifacts last 14 days. There is no percentage threshold, external coverage service, or additional coverage-only test run.
+
+PR summaries also show informational line/branch changes against successful main CI at the exact base commit and untested added/modified executable runtime lines. Baselines require matching scope, test selection/configuration and tool versions plus successful main provenance. Missing, expired, older metadata-free or incompatible artifacts show baseline unavailable without a delta; coverage decreases do not fail CI. Changed-line analysis can still work without a baseline. The built-in token has read-only Actions access, and downloaded JSON is never executed. No PR comment bot, extra suite or coverage service is involved. Main/manual summaries do not fetch a baseline. See [coverage comparison rules](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/COVERAGE.md#automatic-informational-comparison).
 
 Download the artifact and open `html/index.html` to find missing paths. Compare complete successful runs with the same scope; changing denominators, skipped tests, or environments affects percentages. Reports after failed tests are diagnostic, not a baseline. Coverage does not prove visual fidelity or useful assertions. Arbitrary CLI subprocesses are not included by the current coverage configuration.
 
@@ -517,7 +519,7 @@ See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/S
 | Hatchling, artifact checker, Twine | Build/validate installed distributions; approved upload | Build settings, `tools/check_artifacts.py`, release runbook | Code-bearing CI; release validation; manual publication |
 | Documented example tests | Selected actual Python/CLI snippets remain executable | `tests/test_documented_examples.py`, marked public guide blocks | Example edits; every Code quality run and default Linux matrix |
 | MkDocs, Material, mkdocstrings | Render documentation and API pages | `mkdocs.yml`, docs, theme overrides | Relevant PR checks; tested-main deployment |
-| pytest-cov | Line/branch reports | Coverage settings and Python 3.14 CI steps | One existing Linux matrix run |
+| pytest-cov and coverage reporter | Line/branch totals, informational deltas and untested changed lines | Coverage settings, `tools/report_coverage.py`, Python 3.14 CI steps | One existing Linux matrix run |
 | GitHub Actions | Hosted CI and Pages deployment | `.github/workflows/` | PR/main push/manual CI; successful-main workflow completion |
 | Dependency review and lock guard | New high/critical dependency findings and changed uv graph completeness | Pinned CI action, `tools/check_dependency_review.py` | PR CI; offline guard fixtures on every run |
 | CodeQL | Source/workflow security analysis and alerts | `.github/workflows/codeql.yml`, CodeQL triage guidance | Weekly Wednesday 06:17 UTC; manual main scan |
