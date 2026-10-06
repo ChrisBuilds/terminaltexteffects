@@ -199,3 +199,37 @@ Invoke it after installing the tools:
 
 Pre-commit handles staged/unstaged isolation when invoked on the index; the linter never
 modifies files or staging. No extra required job or duplicate matrix run is added.
+
+## Executable documentation examples
+
+Code quality runs `tests/test_documented_examples.py` on every run, including
+documentation-only PRs. The same small suite also runs in the ordinary Linux Python matrix.
+It reads two explicitly marked standalone code blocks directly from `docs/libguide.md`
+(`library-wipe`, Python) and `docs/appguide.md` (`cli-wipe`, Bash). There is no separate
+copy of their implementation in tests and no execution of arbitrary other docs blocks.
+
+The Python example consumes an effect iterator and checks its final frame. The CLI example
+uses literal piped input and global/effect options, checking final text and cursor restoration.
+Both run in subprocesses outside the checkout with empty user configuration, explicit UTF-8,
+a fixed small canvas, zero playback delay, and a 10-second timeout each. The Python example
+uses this environment's interpreter; the CLI check verifies the selected `tte` comes from
+that environment. Bash profiles/startup overrides and prototype discovery are excluded.
+Bash is mandatory in Code quality; local runs without Bash may skip only the POSIX CLI case.
+
+Run locally after syncing locked tools:
+
+```sh
+TTE_REQUIRE_DOC_EXAMPLES=1 ./.venv/bin/pytest -q tests/test_documented_examples.py
+```
+
+Keep each marker unique in its page and directly before a flush-left `python` or `bash`
+fence with a closing fence. Missing/duplicate markers and incorrect/unterminated fences
+fail clearly. When editing a selected example, run this check and update semantic assertions
+if its intended result changes. Follow normal review for changed public behavior.
+
+Add selections deliberately: keep them short, standalone, deterministic in their assertions,
+free of network/installation/credential requirements, and with explicit timeouts and meaningful
+results. Examples needing files should supply temporary fixtures. Do not blanket-execute
+installation commands, interactive snippets, demonstrations, or every Markdown fence.
+These checks supplement strict MkDocs/link validation; they do not verify visual fidelity,
+all examples, or every terminal/shell. Human visual and release QA remain necessary.
